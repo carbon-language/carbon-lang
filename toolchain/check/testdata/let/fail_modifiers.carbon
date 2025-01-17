@@ -71,16 +71,17 @@ default default let g: i32 = 1;
 // CHECK:STDERR:
 protected private let h: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:11: error: `protected` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `protected` repeated on declaration [ModifierRepeated]
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:1: note: `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `protected` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 protected protected let i: i32 = 1;
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
@@ -221,17 +222,17 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %i32 = binding_pattern i
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc84_28: type = splice_block %i32.loc84 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc84: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc84: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc85_28: type = splice_block %i32.loc85 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc85: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc85: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc84: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc84: <bound method> = bound_method @__global_init.%int_1.loc84, %impl.elem0.loc84 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn.loc84: <specific function> = specific_function %Convert.bound.loc84, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc84: init %i32 = call %Convert.specific_fn.loc84(@__global_init.%int_1.loc84) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc84_34.1: %i32 = value_of_initializer %int.convert_checked.loc84 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc84_34.2: %i32 = converted @__global_init.%int_1.loc84, %.loc84_34.1 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %i: %i32 = bind_name i, %.loc84_34.2
+// CHECK:STDOUT:   %impl.elem0.loc85: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc85: <bound method> = bound_method @__global_init.%int_1.loc85, %impl.elem0.loc85 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn.loc85: <specific function> = specific_function %Convert.bound.loc85, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked.loc85: init %i32 = call %Convert.specific_fn.loc85(@__global_init.%int_1.loc85) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc85_34.1: %i32 = value_of_initializer %int.convert_checked.loc85 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc85_34.2: %i32 = converted @__global_init.%int_1.loc85, %.loc85_34.1 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %i: %i32 = bind_name i, %.loc85_34.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -243,7 +244,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %int_1.loc46: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_1.loc59: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_1.loc72: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc84: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc85: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

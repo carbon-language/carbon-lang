@@ -88,9 +88,10 @@ library "[[@TEST_NAME]]";
 import library "export_import_then_name";
 import library "export_name_then_import";
 
-// CHECK:STDERR: fail_nonexport_use_both.carbon:[[@LINE+3]]:8: error: name `D` not found [NameNotFound]
+// CHECK:STDERR: fail_nonexport_use_both.carbon:[[@LINE+4]]:8: error: name `D` not found [NameNotFound]
 // CHECK:STDERR: var d: D = {.y = ()};
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 var d: D = {.y = ()};
 
 // --- use_both_reversed.carbon
@@ -403,7 +404,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: <error> = binding_pattern d
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %d.patt
+// CHECK:STDOUT:     %.loc11: <error> = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref <error> = var d
 // CHECK:STDOUT:   %D.ref: <error> = name_ref D, <error> [template = <error>]
@@ -412,8 +413,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_19: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_20: %struct_type.y = struct_literal (%.loc10_19)
+// CHECK:STDOUT:   %.loc11_19: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_20: %struct_type.y = struct_literal (%.loc11_19)
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -8,12 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_value_as_type.carbon
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:8: error: cannot implicitly convert from `{.a: Core.IntLiteral}` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+7]]:8: error: cannot implicitly convert from `{.a: Core.IntLiteral}` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var x: {.a = 1};
 // CHECK:STDERR:        ^~~~~~~~
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: note: type `{.a: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+4]]:8: note: type `{.a: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: {.a = 1};
 // CHECK:STDERR:        ^~~~~~~~
+// CHECK:STDERR:
 var x: {.a = 1};
 
 // CHECK:STDOUT: --- fail_value_as_type.carbon
@@ -39,13 +40,13 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %.loc17_15.1: %struct_type.a = struct_literal (%int_1)
-// CHECK:STDOUT:     %.loc17_15.2: type = converted %.loc17_15.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc18_15.1: %struct_type.a = struct_literal (%int_1)
+// CHECK:STDOUT:     %.loc18_15.2: type = converted %.loc18_15.1, <error> [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = bind_name x, <error>
 // CHECK:STDOUT: }

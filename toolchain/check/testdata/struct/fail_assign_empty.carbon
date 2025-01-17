@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
 
-// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:20: error: cannot initialize struct with 1 field from struct with 0 fields [StructInitElementCountMismatch]
+// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+4]]:20: error: cannot initialize struct with 1 field from struct with 0 fields [StructInitElementCountMismatch]
 // CHECK:STDERR: var x: {.a: i32} = {};
 // CHECK:STDERR:                    ^~
+// CHECK:STDERR:
 var x: {.a: i32} = {};
 
 // CHECK:STDOUT: --- fail_assign_empty.carbon
@@ -38,10 +39,10 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %struct_type.a = binding_pattern x
-// CHECK:STDOUT:     %.loc14_1: %struct_type.a = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc15_1: %struct_type.a = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
-// CHECK:STDOUT:   %.loc14_16: type = splice_block %struct_type.a [template = constants.%struct_type.a] {
+// CHECK:STDOUT:   %.loc15_16: type = splice_block %struct_type.a [template = constants.%struct_type.a] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
@@ -51,7 +52,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -32,9 +32,10 @@ fn G(U:! NOT_DECLARED where .Self == bool);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var.carbon:[[@LINE+3]]:8: error: name `e` not found [NameNotFound]
+// CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:8: error: name `e` not found [NameNotFound]
 // CHECK:STDERR: var v: e where .x = 3;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 var v: e where .x = 3;
 
 // CHECK:STDOUT: --- fail_left_where_not_facet.carbon
@@ -166,16 +167,16 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
-// CHECK:STDOUT:     %.loc7_1: <error> = var_pattern %v.patt
+// CHECK:STDOUT:     %.loc8_1: <error> = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
-// CHECK:STDOUT:   %.loc7_10.1: type = splice_block %.loc7_10.2 [template = <error>] {
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.2 [template = <error>] {
 // CHECK:STDOUT:     %e.ref: <error> = name_ref e, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self [template = <error>]
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:     %.loc7_10.2: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:     %.loc8_10.2: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %x.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

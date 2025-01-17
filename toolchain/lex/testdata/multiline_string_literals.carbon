@@ -32,6 +32,7 @@ a
 // CHECK:STDERR: fail_quotes.carbon:2:1: error: use `'''` delimiters for a multi-line string literal, not `"""` [MultiLineStringWithDoubleQuotes]
 // CHECK:STDERR: """
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_indent_mismatch.carbon
 // CHECK:STDOUT:   tokens:
 // CHECK:STDOUT:   - { index: 1, kind: 'StringLiteral', line: {{ *}}2, column: 3, indent: 3, spelling: ''''

@@ -8,12 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_redecl.carbon
 
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+6]]:14: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+7]]:14: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:              ^
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:6: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+4]]:6: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:      ^
+// CHECK:STDERR:
 fn F(n: i32, n: i32);
 
 // CHECK:STDOUT: --- fail_param_redecl.carbon
@@ -40,25 +41,25 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %n.patt.loc17_6: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt.loc17_7: %i32 = value_param_pattern %n.patt.loc17_6, runtime_param0
-// CHECK:STDOUT:     %n.patt.loc17_14: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt.loc17_15: %i32 = value_param_pattern %n.patt.loc17_14, runtime_param1
+// CHECK:STDOUT:     %n.patt.loc18_6: %i32 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt.loc18_7: %i32 = value_param_pattern %n.patt.loc18_6, runtime_param0
+// CHECK:STDOUT:     %n.patt.loc18_14: %i32 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt.loc18_15: %i32 = value_param_pattern %n.patt.loc18_14, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param.loc17_7: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc17_9: type = splice_block %i32.loc17_9 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc17_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc17_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %n.param.loc18_7: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc18_9: type = splice_block %i32.loc18_9 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc18_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc18_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc17_6: %i32 = bind_name n, %n.param.loc17_7
-// CHECK:STDOUT:     %n.param.loc17_15: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %.loc17_17: type = splice_block %i32.loc17_17 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc17_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc17_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %n.loc18_6: %i32 = bind_name n, %n.param.loc18_7
+// CHECK:STDOUT:     %n.param.loc18_15: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc18_17: type = splice_block %i32.loc18_17 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc18_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc18_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc17_14: %i32 = bind_name n, %n.param.loc17_15
+// CHECK:STDOUT:     %n.loc18_14: %i32 = bind_name n, %n.param.loc18_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param_patt.loc17_7: %i32, %n.param_patt.loc17_15: %i32);
+// CHECK:STDOUT: fn @F(%n.param_patt.loc18_7: %i32, %n.param_patt.loc18_15: %i32);
 // CHECK:STDOUT:

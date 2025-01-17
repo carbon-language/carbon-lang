@@ -36,9 +36,10 @@ private protected var c: ();
 // CHECK:STDERR:
 protected protected var d: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `abstract` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: abstract var e: ();
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 abstract var e: ();
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
@@ -86,12 +87,12 @@ abstract var e: ();
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %empty_tuple.type = binding_pattern e
-// CHECK:STDOUT:     %.loc42_10: %empty_tuple.type = var_pattern %e.patt
+// CHECK:STDOUT:     %.loc43_10: %empty_tuple.type = var_pattern %e.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
-// CHECK:STDOUT:   %.loc42_18.1: type = splice_block %.loc42_18.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc42_18.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc42_18.3: type = converted %.loc42_18.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc43_18.1: type = splice_block %.loc43_18.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc43_18.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc43_18.3: type = converted %.loc43_18.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }

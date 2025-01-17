@@ -33,9 +33,10 @@ fn ChosenBranchIsNonConstant(t: type) {
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var v: if true then t else i32 = 1;
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var w: if false then i32 else t = 1;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   var w: if false then i32 else t = 1;
 }
 
@@ -181,31 +182,31 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: <error> = binding_pattern w
-// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %w.patt
+// CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %w.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref <error> = var w
-// CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   assign %w.var, <error>
-// CHECK:STDOUT:   br !.loc13_13
+// CHECK:STDOUT:   br !.loc14_13
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc13_13:
+// CHECK:STDOUT: !.loc14_13:
 // CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
-// CHECK:STDOUT:   if %false br !if.expr.then.loc13 else br !if.expr.else.loc13
+// CHECK:STDOUT:   if %false br !if.expr.then.loc14 else br !if.expr.else.loc14
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc13:
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   br !if.expr.result.loc13(%i32.loc13)
+// CHECK:STDOUT: !if.expr.then.loc14:
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   br !if.expr.result.loc14(%i32.loc14)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc13:
-// CHECK:STDOUT:   %t.ref.loc13: type = name_ref t, %t
-// CHECK:STDOUT:   br !if.expr.result.loc13(%t.ref.loc13)
+// CHECK:STDOUT: !if.expr.else.loc14:
+// CHECK:STDOUT:   %t.ref.loc14: type = name_ref t, %t
+// CHECK:STDOUT:   br !if.expr.result.loc14(%t.ref.loc14)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc13:
-// CHECK:STDOUT:   %.loc13_10: type = block_arg !if.expr.result.loc13
-// CHECK:STDOUT:   br !.loc13_7
+// CHECK:STDOUT: !if.expr.result.loc14:
+// CHECK:STDOUT:   %.loc14_10: type = block_arg !if.expr.result.loc14
+// CHECK:STDOUT:   br !.loc14_7
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc13_7:
+// CHECK:STDOUT: !.loc14_7:
 // CHECK:STDOUT:   %w: <error> = bind_name w, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

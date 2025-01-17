@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_var_in_type.carbon
 
 var x: type = i32;
-// CHECK:STDERR: fail_var_in_type.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_var_in_type.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
+// CHECK:STDERR:
 fn Six() -> x { return 6; }
 
 // CHECK:STDOUT: --- fail_var_in_type.carbon
@@ -50,7 +51,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, file.%x
-// CHECK:STDOUT:     %.loc15: type = bind_value %x.ref
+// CHECK:STDOUT:     %.loc16: type = bind_value %x.ref
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

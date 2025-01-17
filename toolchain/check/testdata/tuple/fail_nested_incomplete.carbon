@@ -10,12 +10,13 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:8: error: variable has incomplete type `(i32, Incomplete)` [IncompleteTypeInVarDecl]
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+7]]:8: error: variable has incomplete type `(i32, Incomplete)` [IncompleteTypeInVarDecl]
 // CHECK:STDERR: var t: (i32, Incomplete);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var t: (i32, Incomplete);
 
 var p: Incomplete* = &t[1];
@@ -51,24 +52,24 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: <error> = binding_pattern t
-// CHECK:STDOUT:     %.loc19_1: <error> = var_pattern %t.patt
+// CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %t.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref <error> = var t
-// CHECK:STDOUT:   %.loc19_24.1: type = splice_block %.loc19_24.3 [template = constants.%tuple.type.8a4] {
+// CHECK:STDOUT:   %.loc20_24.1: type = splice_block %.loc20_24.3 [template = constants.%tuple.type.8a4] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %.loc19_24.2: %tuple.type.24b = tuple_literal (%i32, %Incomplete.ref.loc19)
-// CHECK:STDOUT:     %.loc19_24.3: type = converted %.loc19_24.2, constants.%tuple.type.8a4 [template = constants.%tuple.type.8a4]
+// CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
+// CHECK:STDOUT:     %.loc20_24.2: %tuple.type.24b = tuple_literal (%i32, %Incomplete.ref.loc20)
+// CHECK:STDOUT:     %.loc20_24.3: type = converted %.loc20_24.2, constants.%tuple.type.8a4 [template = constants.%tuple.type.8a4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: <error> = bind_name t, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %.loc21_1: %ptr = var_pattern %p.patt
+// CHECK:STDOUT:     %.loc22_1: %ptr = var_pattern %p.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
-// CHECK:STDOUT:   %.loc21_18: type = splice_block %ptr [template = constants.%ptr] {
-// CHECK:STDOUT:     %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
+// CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete [template = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var

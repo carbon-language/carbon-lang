@@ -19,12 +19,13 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
   let x: T = 5;
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   return x;
 }
 
@@ -90,7 +91,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc21: %T = converted %int_5, <error> [template = <error>]
 // CHECK:STDOUT:   %x: %T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
-// CHECK:STDOUT:   %.loc28: %i32 = converted %x.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc29: %i32 = converted %x.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

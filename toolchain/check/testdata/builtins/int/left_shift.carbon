@@ -215,10 +215,11 @@ let bad2: Core.IntLiteral() = LeftShiftOfLit(a_lit, an_i32);
 let bad3: i32 = LeftShiftByLit(an_i32, 12);
 
 // TODO: This could be valid because we don't actually need the return value at runtime.
-// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+6]]:31: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:31: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-39]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn LeftShiftOfLit(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.left_shift";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);

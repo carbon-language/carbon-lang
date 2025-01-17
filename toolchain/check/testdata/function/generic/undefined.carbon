@@ -41,12 +41,13 @@ library "[[@TEST_NAME]]";
 fn Undefined[T:! type](x: T) -> T;
 
 fn CallUndefined() -> i32 {
-  // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE+6]]:10: error: use of undefined generic function [MissingGenericFunctionDefinition]
+  // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE+7]]:10: error: use of undefined generic function [MissingGenericFunctionDefinition]
   // CHECK:STDERR:   return Undefined(0 as i32);
   // CHECK:STDERR:          ^~~~~~~~~
   // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE-6]]:1: note: generic function declared here [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR: fn Undefined[T:! type](x: T) -> T;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return Undefined(0 as i32);
 }
 
@@ -374,19 +375,19 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Undefined.ref: %Undefined.type = name_ref Undefined, file.%Undefined.decl [template = constants.%Undefined]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.99b = impl_witness_access constants.%impl_witness.882, element0 [template = constants.%Convert.197]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.5(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc13_22.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc13_22.2: %i32 = converted %int_0, %.loc13_22.1 [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc14_22.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc14_22.2: %i32 = converted %int_0, %.loc14_22.1 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %Undefined.specific_fn: <specific function> = specific_function %Undefined.ref, @Undefined(constants.%i32) [template = constants.%Undefined.specific_fn]
-// CHECK:STDOUT:   %Undefined.call: init %i32 = call %Undefined.specific_fn(%.loc13_22.2)
-// CHECK:STDOUT:   %.loc13_29.1: %i32 = value_of_initializer %Undefined.call
-// CHECK:STDOUT:   %.loc13_29.2: %i32 = converted %Undefined.call, %.loc13_29.1
-// CHECK:STDOUT:   return %.loc13_29.2
+// CHECK:STDOUT:   %Undefined.call: init %i32 = call %Undefined.specific_fn(%.loc14_22.2)
+// CHECK:STDOUT:   %.loc14_29.1: %i32 = value_of_initializer %Undefined.call
+// CHECK:STDOUT:   %.loc14_29.2: %i32 = converted %Undefined.call, %.loc14_29.1
+// CHECK:STDOUT:   return %.loc14_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Undefined(constants.%T) {

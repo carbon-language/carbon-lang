@@ -16,9 +16,10 @@ interface Bar Baz {}
 
 interface Foo
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+13]]:21: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+14]]:21: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_missing_open_curly.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

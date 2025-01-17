@@ -14,12 +14,13 @@
 // CHECK:STDERR:
 var a: [i32; 39999999999999999993];
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:9: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:9: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
+// CHECK:STDERR:
 var b: [1; 39999999999999999993];
 
 // CHECK:STDOUT: --- fail_bound_overflow.carbon
@@ -61,14 +62,14 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
-// CHECK:STDOUT:     %.loc23_1: <error> = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %.loc23_32: type = splice_block %array_type.loc23 [template = <error>] {
+// CHECK:STDOUT:   %.loc24_32: type = splice_block %array_type.loc24 [template = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %int_39999999999999999993.loc23: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
-// CHECK:STDOUT:     %.loc23_9: type = converted %int_1, <error> [template = <error>]
-// CHECK:STDOUT:     %array_type.loc23: type = array_type %int_39999999999999999993.loc23, <error> [template = <error>]
+// CHECK:STDOUT:     %int_39999999999999999993.loc24: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
+// CHECK:STDOUT:     %.loc24_9: type = converted %int_1, <error> [template = <error>]
+// CHECK:STDOUT:     %array_type.loc24: type = array_type %int_39999999999999999993.loc24, <error> [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }

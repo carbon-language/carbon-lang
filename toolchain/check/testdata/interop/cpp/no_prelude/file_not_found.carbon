@@ -8,6 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/file_not_found.carbon
 // CHECK:STDERR: not_found.h: error: error opening file for read: No such file or directory [ErrorOpeningFile]
+// CHECK:STDERR:
 
 // --- fail_cpp_file_not_found.carbon
 

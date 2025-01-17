@@ -34,9 +34,10 @@ fn F() {
   // CHECK:STDERR:      ^~~~
   // CHECK:STDERR:
   p->Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   p->while;
   // CHECK:STDERR:      ^~~~~
+  // CHECK:STDERR:
   p->while;
 }
 

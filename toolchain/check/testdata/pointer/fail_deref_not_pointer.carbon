@@ -34,9 +34,10 @@ fn Deref(n: i32) {
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   *{};
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:5: error: cannot apply `->` operator to non-pointer type `{}` [ArrowOperatorOfNonPointer]
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:5: error: cannot apply `->` operator to non-pointer type `{}` [ArrowOperatorOfNonPointer]
   // CHECK:STDERR:   {}->foo;
   // CHECK:STDERR:     ^~
+  // CHECK:STDERR:
   {}->foo;
 }
 
@@ -100,11 +101,11 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %empty_struct.loc36: %empty_struct_type = struct_value () [template = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc36_5.2: %empty_struct_type = converted %.loc36_5.1, %empty_struct.loc36 [template = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc36_3: ref <error> = deref %.loc36_5.2
-// CHECK:STDOUT:   %.loc40_4.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %empty_struct.loc40: %empty_struct_type = struct_value () [template = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc40_4.2: %empty_struct_type = converted %.loc40_4.1, %empty_struct.loc40 [template = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc40_5: ref <error> = deref %.loc40_4.2
-// CHECK:STDOUT:   %foo.ref.loc40: <error> = name_ref foo, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc41_4.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %empty_struct.loc41: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc41_4.2: %empty_struct_type = converted %.loc41_4.1, %empty_struct.loc41 [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc41_5: ref <error> = deref %.loc41_4.2
+// CHECK:STDOUT:   %foo.ref.loc41: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

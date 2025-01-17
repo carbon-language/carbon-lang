@@ -25,9 +25,10 @@ interface Outer {
     // CHECK:STDERR:
     fn Outer.F();
   }
-  // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+3]]:12: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
+  // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:12: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
   // CHECK:STDERR:   fn Inner.F();
   // CHECK:STDERR:            ^
+  // CHECK:STDERR:
   fn Inner.F();
 }
 

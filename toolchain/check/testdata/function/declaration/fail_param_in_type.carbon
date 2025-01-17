@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_in_type.carbon
 
-// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+4]]:23: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: fn F(n: i32, a: [i32; n]*);
 // CHECK:STDERR:                       ^
+// CHECK:STDERR:
 fn F(n: i32, a: [i32; n]*);
 
 // CHECK:STDOUT: --- fail_param_in_type.carbon
@@ -43,15 +44,15 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc14_9: type = splice_block %i32.loc14_9 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc14_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc14_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_9: type = splice_block %i32.loc15_9 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc15_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc15_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %a.param: <error> = value_param runtime_param1
-// CHECK:STDOUT:     %.loc14_25: type = splice_block %ptr [template = <error>] {
-// CHECK:STDOUT:       %int_32.loc14_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc14_18: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_25: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:       %int_32.loc15_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc15_18: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     }

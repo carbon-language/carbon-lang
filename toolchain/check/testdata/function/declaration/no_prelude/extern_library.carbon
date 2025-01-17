@@ -150,9 +150,10 @@ extern library "extern_of_import" fn F();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_library_on_definition.carbon:[[@LINE+3]]:1: error: a library cannot be provided for an `extern` modifier on a definition [ExternLibraryOnDefinition]
+// CHECK:STDERR: fail_extern_library_on_definition.carbon:[[@LINE+4]]:1: error: a library cannot be provided for an `extern` modifier on a definition [ExternLibraryOnDefinition]
 // CHECK:STDERR: extern library "extern_library_owner" fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern library "extern_library_owner" fn F() {}
 
 // CHECK:STDOUT: --- extern_library.carbon

@@ -15,9 +15,10 @@ var b: (i32,) = a;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR:
 var c: i32 = b.1;
-// CHECK:STDERR: fail_large_index.carbon:[[@LINE+3]]:14: error: tuple element index `2147483647` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
+// CHECK:STDERR: fail_large_index.carbon:[[@LINE+4]]:14: error: tuple element index `2147483647` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var d: i32 = b.(0x7FFF_FFFF);
 
 // CHECK:STDOUT: --- fail_large_index.carbon
@@ -95,12 +96,12 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %i32 = binding_pattern d
-// CHECK:STDOUT:     %.loc21_1: %i32 = var_pattern %d.patt
+// CHECK:STDOUT:     %.loc22_1: %i32 = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
-// CHECK:STDOUT:   %.loc21_8: type = splice_block %i32.loc21 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc22_8: type = splice_block %i32.loc22 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }
@@ -126,7 +127,7 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %b.ref.loc17: ref %tuple.type.a1c = name_ref b, file.%b
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %b.ref.loc21: ref %tuple.type.a1c = name_ref b, file.%b
+// CHECK:STDOUT:   %b.ref.loc22: ref %tuple.type.a1c = name_ref b, file.%b
 // CHECK:STDOUT:   %int_2147483647: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return

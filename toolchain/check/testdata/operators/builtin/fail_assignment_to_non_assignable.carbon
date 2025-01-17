@@ -50,9 +50,10 @@ fn Main() {
 
   // Under #911, if expressions are never reference expressions.
   var a: i32;
-  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+3]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   (if true then a else a) = 10;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   (if true then a else a) = 10;
 }
 
@@ -270,28 +271,28 @@ fn Main() {
 // CHECK:STDOUT:     %i32.loc52: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %true.loc56: bool = bool_literal true [template = constants.%true]
-// CHECK:STDOUT:   if %true.loc56 br !if.expr.then.loc56 else br !if.expr.else.loc56
+// CHECK:STDOUT:   %true.loc57: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc57 br !if.expr.then.loc57 else br !if.expr.else.loc57
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc56:
-// CHECK:STDOUT:   %a.ref.loc56_17: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc56_17: %i32 = bind_value %a.ref.loc56_17
-// CHECK:STDOUT:   br !if.expr.result.loc56(%.loc56_17)
+// CHECK:STDOUT: !if.expr.then.loc57:
+// CHECK:STDOUT:   %a.ref.loc57_17: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc57_17: %i32 = bind_value %a.ref.loc57_17
+// CHECK:STDOUT:   br !if.expr.result.loc57(%.loc57_17)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc56:
-// CHECK:STDOUT:   %a.ref.loc56_24: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc56_24: %i32 = bind_value %a.ref.loc56_24
-// CHECK:STDOUT:   br !if.expr.result.loc56(%.loc56_24)
+// CHECK:STDOUT: !if.expr.else.loc57:
+// CHECK:STDOUT:   %a.ref.loc57_24: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc57_24: %i32 = bind_value %a.ref.loc57_24
+// CHECK:STDOUT:   br !if.expr.result.loc57(%.loc57_24)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc56:
-// CHECK:STDOUT:   %.loc56_4: %i32 = block_arg !if.expr.result.loc56
+// CHECK:STDOUT: !if.expr.result.loc57:
+// CHECK:STDOUT:   %.loc57_4: %i32 = block_arg !if.expr.result.loc57
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10.64f]
-// CHECK:STDOUT:   %impl.elem0.loc56: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc56: <bound method> = bound_method %int_10, %impl.elem0.loc56 [template = constants.%Convert.bound.491]
-// CHECK:STDOUT:   %Convert.specific_fn.loc56: <specific function> = specific_function %Convert.bound.loc56, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.e67]
-// CHECK:STDOUT:   %int.convert_checked.loc56: init %i32 = call %Convert.specific_fn.loc56(%int_10) [template = constants.%int_10.265]
-// CHECK:STDOUT:   %.loc56_27: init %i32 = converted %int_10, %int.convert_checked.loc56 [template = constants.%int_10.265]
-// CHECK:STDOUT:   assign %.loc56_4, %.loc56_27
+// CHECK:STDOUT:   %impl.elem0.loc57: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc57: <bound method> = bound_method %int_10, %impl.elem0.loc57 [template = constants.%Convert.bound.491]
+// CHECK:STDOUT:   %Convert.specific_fn.loc57: <specific function> = specific_function %Convert.bound.loc57, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.e67]
+// CHECK:STDOUT:   %int.convert_checked.loc57: init %i32 = call %Convert.specific_fn.loc57(%int_10) [template = constants.%int_10.265]
+// CHECK:STDOUT:   %.loc57_27: init %i32 = converted %int_10, %int.convert_checked.loc57 [template = constants.%int_10.265]
+// CHECK:STDOUT:   assign %.loc57_4, %.loc57_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

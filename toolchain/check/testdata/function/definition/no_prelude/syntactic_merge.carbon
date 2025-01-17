@@ -156,16 +156,17 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:11: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:11: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: fn Foo(a: const (const C)) {}
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:17: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:17: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Foo(a: const (const C)) {}
 // CHECK:STDERR:                 ^
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: fn Foo(a: const C);
 // CHECK:STDERR:                 ^
+// CHECK:STDERR:
 fn Foo(a: const (const C)) {}
 
 // CHECK:STDOUT: --- basic.carbon
@@ -823,10 +824,10 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param runtime_param0
-// CHECK:STDOUT:     %.loc17: type = splice_block %const.loc17_11 [template = constants.%const] {
+// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_11 [template = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %const.loc17_18: type = const_type %C [template = constants.%const]
-// CHECK:STDOUT:       %const.loc17_11: type = const_type %const [template = constants.%const]
+// CHECK:STDOUT:       %const.loc18_18: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:       %const.loc18_11: type = const_type %const [template = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %const = bind_name a, %a.param
 // CHECK:STDOUT:   }

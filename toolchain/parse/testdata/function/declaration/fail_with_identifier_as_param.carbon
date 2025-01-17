@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_with_identifier_as_param.carbon
 
-// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+3]]:11: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+4]]:11: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: fn foo(bar);
 // CHECK:STDERR:           ^
+// CHECK:STDERR:
 fn foo(bar);
 
 // CHECK:STDOUT: - filename: fail_with_identifier_as_param.carbon

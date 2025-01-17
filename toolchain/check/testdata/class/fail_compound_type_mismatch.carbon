@@ -17,12 +17,13 @@ class B {
 }
 
 fn AccessBInA(a: A) -> i32 {
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `A` to `B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `A` to `B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return a.(B.b);
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+3]]:10: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+4]]:10: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return a.(B.b);
   // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR:
   return a.(B.b);
 }
 
@@ -103,8 +104,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
-// CHECK:STDOUT:   %.loc26_11.1: %B = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc26_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc27_11.1: %B = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc27_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

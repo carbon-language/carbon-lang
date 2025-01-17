@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/fail_bool_value.carbon
 
-// CHECK:STDERR: fail_bool_value.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
+// CHECK:STDERR: fail_bool_value.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias a = false;
 // CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:
 alias a = false;
 let a_test: bool = a;
 
@@ -42,10 +43,10 @@ let a_test: bool = a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_test.patt: bool = binding_pattern a_test
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_13.1: type = splice_block %.loc15_13.3 [template = bool] {
+// CHECK:STDOUT:   %.loc16_13.1: type = splice_block %.loc16_13.3 [template = bool] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc15_13.2: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc15_13.3: type = converted %bool.make_type, %.loc15_13.2 [template = bool]
+// CHECK:STDOUT:     %.loc16_13.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc16_13.3: type = converted %bool.make_type, %.loc16_13.2 [template = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
 // CHECK:STDOUT: }

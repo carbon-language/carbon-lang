@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_mix_type_and_value.carbon
 
-// CHECK:STDERR: fail_mix_type_and_value.carbon:[[@LINE+3]]:21: error: expected `.field: field_type` [ExpectedStructLiteralField]
+// CHECK:STDERR: fail_mix_type_and_value.carbon:[[@LINE+4]]:21: error: expected `.field: field_type` [ExpectedStructLiteralField]
 // CHECK:STDERR: var x: {.a: i32, .b = 0} = {};
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 var x: {.a: i32, .b = 0} = {};
 
 // CHECK:STDOUT: - filename: fail_mix_type_and_value.carbon

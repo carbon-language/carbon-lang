@@ -57,9 +57,10 @@ fn F() {
 }
 
 interface I {
-  // CHECK:STDERR: fail_misplaced.carbon:[[@LINE+3]]:3: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
+  // CHECK:STDERR: fail_misplaced.carbon:[[@LINE+4]]:3: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   adapt i32;
 }
 

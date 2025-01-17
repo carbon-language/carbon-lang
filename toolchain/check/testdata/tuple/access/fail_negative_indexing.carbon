@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_negative_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:14: error: tuple element index `-10` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+4]]:14: error: tuple element index `-10` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var b: i32 = a.(-10);
 // CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:
 var b: i32 = a.(-10);
 
 // CHECK:STDOUT: --- fail_negative_indexing.carbon
@@ -77,12 +78,12 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %a: ref %tuple.type.d07 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc15_1: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
-// CHECK:STDOUT:   %.loc15_8: type = splice_block %i32.loc15 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32.loc16 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -111,11 +112,11 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_1
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
-// CHECK:STDOUT:   %impl.elem0.loc15: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc15 [template = constants.%Op.bound]
+// CHECK:STDOUT:   %impl.elem0.loc16: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc16 [template = constants.%Op.bound]
 // CHECK:STDOUT:   %int.snegate: init Core.IntLiteral = call %Op.bound(%int_10) [template = constants.%int_-10]
-// CHECK:STDOUT:   %.loc15_17.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10]
-// CHECK:STDOUT:   %.loc15_17.2: Core.IntLiteral = converted %int.snegate, %.loc15_17.1 [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc16_17.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc16_17.2: Core.IntLiteral = converted %int.snegate, %.loc16_17.1 [template = constants.%int_-10]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

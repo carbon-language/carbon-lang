@@ -122,9 +122,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:13: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:13: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var f: () = Test.Forward();
 // CHECK:STDERR:             ^~~~~~~~~~~~
+// CHECK:STDERR:
 var f: () = Test.Forward();
 
 // --- todo_fail_private_on_redecl.carbon
@@ -593,12 +594,12 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
-// CHECK:STDOUT:     %.loc9_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
-// CHECK:STDOUT:   %.loc9_9.1: type = splice_block %.loc9_9.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9_9.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc9_9.3: type = converted %.loc9_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }

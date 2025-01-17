@@ -65,12 +65,13 @@ base class Base {}
 class AdaptWithBaseAndFields {
   extend base: Base;
   var n: i32;
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: error: adapter with base class [AdaptWithBase]
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+7]]:3: error: adapter with base class [AdaptWithBase]
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: note: `base` declaration is here [AdaptWithBaseHere]
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   adapt {};
 }
 
@@ -228,9 +229,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:     %.loc8_3: %AdaptWithBaseAndFields.elem.ddf = var_pattern %.loc8_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %AdaptWithBaseAndFields.elem.ddf = var <invalid>
-// CHECK:STDOUT:   %.loc15_10: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   adapt_decl %.loc15_11 [template]
+// CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   adapt_decl %.loc16_11 [template]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

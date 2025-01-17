@@ -38,13 +38,14 @@ fn NS();
 // we don't move it.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import [InImport]
 // CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 fn NS();
 
 // CHECK:STDOUT: --- namespace.carbon
@@ -93,7 +94,7 @@ fn NS();
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl.loc18: %.type.b6a92a.1 = fn_decl @.1 [template = constants.%.d852be.1] {} {}
 // CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc31: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
+// CHECK:STDOUT:   %.decl.loc32: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

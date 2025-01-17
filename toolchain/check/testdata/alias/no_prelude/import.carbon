@@ -58,10 +58,11 @@ var b: () = a_alias;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var3.carbon:[[@LINE+4]]:1: in import [InImport]
+// CHECK:STDERR: fail_var3.carbon:[[@LINE+5]]:1: in import [InImport]
 // CHECK:STDERR: var2.carbon:8:5: error: semantics TODO: `Non-constant ImportRefLoaded (comes up with var)` [SemanticsTodo]
 // CHECK:STDERR: var b: () = a_alias;
 // CHECK:STDERR:     ^
+// CHECK:STDERR:
 import library "var2";
 
 var c: () = a_alias_alias;
@@ -281,12 +282,12 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %empty_tuple.type = binding_pattern c
-// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %c.patt
+// CHECK:STDOUT:     %.loc11_1: %empty_tuple.type = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
-// CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc11_9.1: type = splice_block %.loc11_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc11_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_9.3: type = converted %.loc11_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -294,9 +295,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_alias_alias.ref: ref %empty_tuple.type = name_ref a_alias_alias, imports.%import_ref.692 [template = <error>]
-// CHECK:STDOUT:   %.loc10_13: init %empty_tuple.type = tuple_init () to file.%c.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_1: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%c.var, %.loc10_1
+// CHECK:STDOUT:   %.loc11_13: init %empty_tuple.type = tuple_init () to file.%c.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc11_1: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc11_13 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%c.var, %.loc11_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

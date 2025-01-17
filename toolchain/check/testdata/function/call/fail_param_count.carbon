@@ -55,12 +55,13 @@ fn Main() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Run2();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run2(0);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Run2(0);
 }
 
@@ -159,8 +160,8 @@ fn Main() {
 // CHECK:STDOUT:   %int_0.loc48: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %int_1.loc48: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %Run2.ref.loc57: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %Run2.ref.loc64: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %int_0.loc64: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %Run2.ref.loc65: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
+// CHECK:STDOUT:   %int_0.loc65: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

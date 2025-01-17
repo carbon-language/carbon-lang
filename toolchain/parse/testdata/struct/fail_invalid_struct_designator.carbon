@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_invalid_struct_designator.carbon
 
-// CHECK:STDERR: fail_invalid_struct_designator.carbon:[[@LINE+3]]:16: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR: fail_invalid_struct_designator.carbon:[[@LINE+4]]:16: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
 // CHECK:STDERR: var x: i32 = {.7 = 8};
 // CHECK:STDERR:                ^
+// CHECK:STDERR:
 var x: i32 = {.7 = 8};
 
 // CHECK:STDOUT: - filename: fail_invalid_struct_designator.carbon

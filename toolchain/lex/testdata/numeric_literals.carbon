@@ -137,8 +137,9 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_unknown_base.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unknown_base.carbon:[[@LINE+3]]:1: error: unknown base specifier in numeric literal [UnknownBaseSpecifier]
+// CHECK:STDERR: fail_unknown_base.carbon:[[@LINE+4]]:1: error: unknown base specifier in numeric literal [UnknownBaseSpecifier]
 // CHECK:STDERR: 05
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 05
 // CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '05', has_leading_space: true }

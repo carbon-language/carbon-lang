@@ -13,9 +13,10 @@ interface Simple {
 }
 
 impl i32 as Simple {
-  // CHECK:STDERR: fail_call_invalid.carbon:[[@LINE+3]]:14: error: name `Undeclared` not found [NameNotFound]
+  // CHECK:STDERR: fail_call_invalid.carbon:[[@LINE+4]]:14: error: name `Undeclared` not found [NameNotFound]
   // CHECK:STDERR:   fn G[self: Undeclared]();
   // CHECK:STDERR:              ^~~~~~~~~~
+  // CHECK:STDERR:
   fn G[self: Undeclared]();
 }
 
@@ -70,7 +71,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc22: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %.loc23: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }

@@ -14,9 +14,10 @@ interface I {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default let T:! type = (i32, i32);
-  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   default let N:! i32 = 42;
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default let N:! i32 = 42;
 }
 
@@ -78,8 +79,8 @@ interface I {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_42) [template = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc20_27.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc20_27.2: %i32 = converted %int_42, %.loc20_27.1 [template = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc21_27.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc21_27.2: %i32 = converted %int_42, %.loc21_27.1 [template = constants.%int_42.c68]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

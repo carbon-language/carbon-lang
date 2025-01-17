@@ -14,9 +14,10 @@
 // CHECK:STDERR:
 choice InvalidBraces |
   Some
-// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+3]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR: |
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 |
 
 // CHECK:STDOUT: - filename: fail_invalid_braces.carbon

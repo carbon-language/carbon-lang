@@ -40,9 +40,10 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   private var v: {};
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+3]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+  // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
   // CHECK:STDERR:   protected var w: {};
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   protected var w: {};
 }
 
@@ -109,12 +110,12 @@ fn F() {
 // CHECK:STDOUT:   %v: ref %empty_struct_type = bind_name v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %empty_struct_type = binding_pattern w
-// CHECK:STDOUT:     %.loc13_13: %empty_struct_type = var_pattern %w.patt
+// CHECK:STDOUT:     %.loc14_13: %empty_struct_type = var_pattern %w.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_struct_type = var w
-// CHECK:STDOUT:   %.loc13_21.1: type = splice_block %.loc13_21.3 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc13_21.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc13_21.3: type = converted %.loc13_21.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc14_21.1: type = splice_block %.loc14_21.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc14_21.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc14_21.3: type = converted %.loc14_21.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: ref %empty_struct_type = bind_name w, %w.var
 // CHECK:STDOUT:   return

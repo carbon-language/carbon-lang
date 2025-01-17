@@ -8,12 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_type_assign.carbon
 
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `type` to `{.a: i32}` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `type` to `{.a: i32}` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:1: note: type `type` does not implement interface `Core.ImplicitAs({.a: i32})` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+4]]:1: note: type `type` does not implement interface `Core.ImplicitAs({.a: i32})` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var x: {.a: i32} = {.a: i32};
 
 // CHECK:STDOUT: --- fail_type_assign.carbon
@@ -41,10 +42,10 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %struct_type.a = binding_pattern x
-// CHECK:STDOUT:     %.loc17_1: %struct_type.a = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc18_1: %struct_type.a = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
-// CHECK:STDOUT:   %.loc17_16: type = splice_block %struct_type.a [template = constants.%struct_type.a] {
+// CHECK:STDOUT:   %.loc18_16: type = splice_block %struct_type.a [template = constants.%struct_type.a] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
@@ -57,7 +58,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
-// CHECK:STDOUT:   %.loc17: %struct_type.a = converted %struct_type.a, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18: %struct_type.a = converted %struct_type.a, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

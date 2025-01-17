@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if_expr/fail_then_expr_missing.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_then_expr_missing.carbon:[[@LINE+3]]:28: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_then_expr_missing.carbon:[[@LINE+4]]:28: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   var n: i32 = if true then;
   // CHECK:STDERR:                            ^
+  // CHECK:STDERR:
   var n: i32 = if true then;
 }
 

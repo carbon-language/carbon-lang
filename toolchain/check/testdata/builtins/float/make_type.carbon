@@ -39,9 +39,10 @@ import library "types";
 var invalid_float: Float(32);
 
 var dyn_size: i32 = 64;
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var dyn: Float(dyn_size);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var dyn: Float(dyn_size);
 
 // CHECK:STDOUT: --- types.carbon
@@ -251,16 +252,16 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %dyn_size: ref %i32 = bind_name dyn_size, %dyn_size.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %dyn.patt: <error> = binding_pattern dyn
-// CHECK:STDOUT:     %.loc16_1: <error> = var_pattern %dyn.patt
+// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %dyn.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %dyn.var: ref <error> = var dyn
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
-// CHECK:STDOUT:     %Float.ref.loc16: %Float.type = name_ref Float, imports.%import_ref.fb8 [template = constants.%Float]
+// CHECK:STDOUT:     %Float.ref.loc17: %Float.type = name_ref Float, imports.%import_ref.fb8 [template = constants.%Float]
 // CHECK:STDOUT:     %dyn_size.ref: ref %i32 = name_ref dyn_size, %dyn_size
-// CHECK:STDOUT:     %.loc16_16: %i32 = bind_value %dyn_size.ref
-// CHECK:STDOUT:     %float.make_type.loc16: init type = call %Float.ref.loc16(%.loc16_16)
-// CHECK:STDOUT:     %.loc16_24.1: type = value_of_initializer %float.make_type.loc16
-// CHECK:STDOUT:     %.loc16_24.2: type = converted %float.make_type.loc16, %.loc16_24.1
+// CHECK:STDOUT:     %.loc17_16: %i32 = bind_value %dyn_size.ref
+// CHECK:STDOUT:     %float.make_type.loc17: init type = call %Float.ref.loc17(%.loc17_16)
+// CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %float.make_type.loc17
+// CHECK:STDOUT:     %.loc17_24.2: type = converted %float.make_type.loc17, %.loc17_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %dyn: <error> = bind_name dyn, <error>
 // CHECK:STDOUT: }

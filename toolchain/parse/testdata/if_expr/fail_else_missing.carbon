@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if_expr/fail_else_missing.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_else_missing.carbon:[[@LINE+3]]:30: error: expected `else` after `if ... then ...` [ExpectedElseAfterIf]
+  // CHECK:STDERR: fail_else_missing.carbon:[[@LINE+4]]:30: error: expected `else` after `if ... then ...` [ExpectedElseAfterIf]
   // CHECK:STDERR:   var n: i32 = if true then 1;
   // CHECK:STDERR:                              ^
+  // CHECK:STDERR:
   var n: i32 = if true then 1;
 }
 

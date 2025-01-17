@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:17: error: cannot implicitly convert from `Core.IntLiteral` to `bool` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:17: error: cannot implicitly convert from `Core.IntLiteral` to `bool` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
+  // CHECK:STDERR:
   var x: bool = not 12;
 }
 
@@ -50,17 +51,17 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: bool = binding_pattern x
-// CHECK:STDOUT:     %.loc18_3: bool = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc19_3: bool = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
-// CHECK:STDOUT:   %.loc18_17.1: bool = converted %int_12, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_17.2: <error> = not <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_17.1: bool = converted %int_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_17.2: <error> = not <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc18_10.1: type = splice_block %.loc18_10.3 [template = bool] {
+// CHECK:STDOUT:   %.loc19_10.1: type = splice_block %.loc19_10.3 [template = bool] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc18_10.2: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc18_10.3: type = converted %bool.make_type, %.loc18_10.2 [template = bool]
+// CHECK:STDOUT:     %.loc19_10.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc19_10.3: type = converted %bool.make_type, %.loc19_10.2 [template = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   return

@@ -62,12 +62,13 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64, c: f64) -> f64 {
 }
 
 fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-29]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn BadReturnType(a: f64) -> bool = "float.negate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return BadReturnType(a, b);
 }
 

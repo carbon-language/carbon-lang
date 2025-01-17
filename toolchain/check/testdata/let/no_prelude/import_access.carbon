@@ -46,9 +46,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: error: member name `v` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:14: error: member name `v` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: let v2: () = Test.v;
 // CHECK:STDERR:              ^~~~~~
+// CHECK:STDERR:
 let v2: () = Test.v;
 
 // CHECK:STDOUT: --- def.carbon
@@ -161,9 +162,9 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_10.1: type = splice_block %.loc9_10.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9_10.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc9_10.3: type = converted %.loc9_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: %empty_tuple.type = bind_name v2, <error>
 // CHECK:STDOUT: }

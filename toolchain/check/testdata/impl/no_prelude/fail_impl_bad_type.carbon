@@ -10,9 +10,10 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+4]]:6: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: impl true as I {}
 // CHECK:STDERR:      ^~~~
+// CHECK:STDERR:
 impl true as I {}
 
 // CHECK:STDOUT: --- fail_impl_bad_type.carbon
@@ -31,7 +32,7 @@ impl true as I {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %true: bool = bool_literal true [template = constants.%true]
-// CHECK:STDOUT:     %.loc16: type = converted %true, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc17: type = converted %true, <error> [template = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]

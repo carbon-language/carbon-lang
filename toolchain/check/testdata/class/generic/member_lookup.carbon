@@ -63,9 +63,10 @@ fn AccessMissingDerived[T:! type](x: Derived(T)) -> T {
 }
 
 fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+3]]:10: error: member name `nonesuch` not found in `Derived(i32)` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Derived(i32)` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return x.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR:
   return x.nonesuch;
 }
 

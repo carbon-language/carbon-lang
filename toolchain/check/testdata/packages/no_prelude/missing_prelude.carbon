@@ -80,9 +80,10 @@ class Core {
   fn Int[T:! type](N:! T) -> {} { return {}; }
 }
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:13: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: var n: {} = i32;
 // CHECK:STDERR:             ^~~
+// CHECK:STDERR:
 var n: {} = i32;
 
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
@@ -484,12 +485,12 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Core.decl: type = class_decl @Core [template = constants.%Core] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %empty_struct_type = binding_pattern n
-// CHECK:STDOUT:     %.loc12_1: %empty_struct_type = var_pattern %n.patt
+// CHECK:STDOUT:     %.loc13_1: %empty_struct_type = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
-// CHECK:STDOUT:   %.loc12_9.1: type = splice_block %.loc12_9.3 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc12_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc12_9.3: type = converted %.loc12_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc13_9.1: type = splice_block %.loc13_9.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc13_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc13_9.3: type = converted %.loc13_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }

@@ -78,9 +78,10 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
 class Class(U:! type) {
-  // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+3]]:10: error: name `T` not found [NameNotFound]
+  // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+4]]:10: error: name `T` not found [NameNotFound]
   // CHECK:STDERR:   var x: T;
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   var x: T;
 }
 
@@ -785,9 +786,9 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc16_8: <error> = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc17_8: <error> = field_decl x, element0 [template]
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc16_3: <error> = var_pattern %.loc16_8
+// CHECK:STDOUT:       %.loc17_3: <error> = var_pattern %.loc17_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref <error> = var <invalid>
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [template = <error>]

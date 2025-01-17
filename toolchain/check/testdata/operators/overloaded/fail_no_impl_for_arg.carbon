@@ -36,15 +36,16 @@ fn Test(a: C, b: D) -> C {
 
 fn TestAssign(b: D) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `D` to `C` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:8: error: cannot implicitly convert from `D` to `C` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:8: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:8: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:24: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:                        ^~~~~~~~
+  // CHECK:STDERR:
   a += b;
 }
 
@@ -230,7 +231,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %impl.elem0: %Op.type.421 = impl_witness_access constants.%impl_witness.95d, element0 [template = constants.%Op.d8e]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %a.ref
-// CHECK:STDOUT:   %.loc48: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc49: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr, <error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

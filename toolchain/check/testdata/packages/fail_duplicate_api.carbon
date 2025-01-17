@@ -44,9 +44,10 @@ package Package library "lib";
 
 // --- fail_package_lib2.carbon
 
-// CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+3]]:1: error: library's API previously provided by `package_lib1.carbon` [DuplicateLibraryApi]
+// CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+4]]:1: error: library's API previously provided by `package_lib1.carbon` [DuplicateLibraryApi]
 // CHECK:STDERR: package Package library "lib";
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 package Package library "lib";
 
 // CHECK:STDOUT: --- main1.carbon

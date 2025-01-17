@@ -92,12 +92,13 @@ fn RuntimeCallIsValidTooMany(a: u32, b: u32, c: u32) -> u32 {
 }
 
 fn RuntimeCallIsValidBadReturnType(a: u32, b: u32) -> bool {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn BadReturnType(a: u32) -> bool = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return BadReturnType(a, b);
 }
 

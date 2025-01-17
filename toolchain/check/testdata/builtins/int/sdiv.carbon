@@ -82,7 +82,8 @@ let b: i32 = Div(0, 0);
 // CHECK:STDERR:
 let c: Core.IntLiteral() = DivLit(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+3]]:28: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:28: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR: let d: Core.IntLiteral() = DivLit(0, 0);
 // CHECK:STDERR:                            ^~~~~~~~~~~~
+// CHECK:STDERR:
 let d: Core.IntLiteral() = DivLit(0, 0);

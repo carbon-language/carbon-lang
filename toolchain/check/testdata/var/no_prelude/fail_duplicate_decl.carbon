@@ -11,12 +11,13 @@
 
 fn Main() {
   var x: () = ();
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+7]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
   // CHECK:STDERR:   var x: () = ();
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:   var x: () = ();
   // CHECK:STDERR:       ^
+  // CHECK:STDERR:
   var x: () = ();
 }
 
@@ -53,19 +54,19 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.loc13: ref %empty_tuple.type = bind_name x, %x.var.loc13
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt.loc20: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %.loc20_3.1: %empty_tuple.type = var_pattern %x.patt.loc20
+// CHECK:STDOUT:     %x.patt.loc21: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc21_3.1: %empty_tuple.type = var_pattern %x.patt.loc21
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var.loc20: ref %empty_tuple.type = var x
-// CHECK:STDOUT:   %.loc20_16.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc20_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc20 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc20_3.2: init %empty_tuple.type = converted %.loc20_16.1, %.loc20_16.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var.loc20, %.loc20_3.2
-// CHECK:STDOUT:   %.loc20_11.1: type = splice_block %.loc20_11.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc20_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc20_11.3: type = converted %.loc20_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %x.var.loc21: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %.loc21_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc21_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc21 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc21_3.2: init %empty_tuple.type = converted %.loc21_16.1, %.loc21_16.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var.loc21, %.loc21_3.2
+// CHECK:STDOUT:   %.loc21_11.1: type = splice_block %.loc21_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc21_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc21_11.3: type = converted %.loc21_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.loc20: ref %empty_tuple.type = bind_name x, %x.var.loc20
+// CHECK:STDOUT:   %x.loc21: ref %empty_tuple.type = bind_name x, %x.var.loc21
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

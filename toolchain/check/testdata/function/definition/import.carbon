@@ -98,13 +98,14 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn D` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn D` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: fns.carbon:7:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 extern fn D();
 
 fn D() {}
@@ -467,13 +468,13 @@ fn D() {}
 // CHECK:STDOUT:     .A = imports.%import_ref.0c3
 // CHECK:STDOUT:     .B = imports.%import_ref.8cc
 // CHECK:STDOUT:     .C = imports.%import_ref.b05
-// CHECK:STDOUT:     .D = %D.decl.loc13
+// CHECK:STDOUT:     .D = %D.decl.loc14
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %D.decl.loc13: %D.type = fn_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   %D.decl.loc15: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc14: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc16: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() [from "fns.carbon"] {

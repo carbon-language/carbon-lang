@@ -16,9 +16,10 @@ fn Main() {
   0[1];
 
   var non_tuple: [i32; 2] = (5, 5);
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+3]]:20: error: type `[i32; 2]` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
+  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:20: error: type `[i32; 2]` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
   // CHECK:STDERR:   var first: i32 = non_tuple.0;
   // CHECK:STDERR:                    ^~~~~~~~~~~
+  // CHECK:STDERR:
   var first: i32 = non_tuple.0;
 }
 
@@ -104,15 +105,15 @@ fn Main() {
 // CHECK:STDOUT:   %non_tuple: ref %array_type = bind_name non_tuple, %non_tuple.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %first.patt: %i32 = binding_pattern first
-// CHECK:STDOUT:     %.loc22_3: %i32 = var_pattern %first.patt
+// CHECK:STDOUT:     %.loc23_3: %i32 = var_pattern %first.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %first.var: ref %i32 = var first
 // CHECK:STDOUT:   %non_tuple.ref: ref %array_type = name_ref non_tuple, %non_tuple
-// CHECK:STDOUT:   %int_0.loc22: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %int_0.loc23: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   assign %first.var, <error>
-// CHECK:STDOUT:   %.loc22_14: type = splice_block %i32.loc22 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc23_14: type = splice_block %i32.loc23 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %first: ref %i32 = bind_name first, %first.var
 // CHECK:STDOUT:   return

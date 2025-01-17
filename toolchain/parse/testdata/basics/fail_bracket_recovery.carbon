@@ -15,17 +15,18 @@ fn F() {
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
   var x: ([i32; 3) = (0, 1, 2);
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+11]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+12]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+7]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+8]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                          ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+3]]:27: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:27: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                           ^
+  // CHECK:STDERR:
   var x: {.y: (} = {.y = ((};
 }
 

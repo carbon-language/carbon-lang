@@ -34,9 +34,10 @@ var b: [i32; 3] = t1;
 var c: [i32; 3] = (1, 2);
 
 var t2: (i32, i32);
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:19: error: cannot initialize array of 3 elements from tuple with 2 elements [ArrayInitFromExprArgCountMismatch]
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: error: cannot initialize array of 3 elements from tuple with 2 elements [ArrayInitFromExprArgCountMismatch]
 // CHECK:STDERR: var d: [i32; 3] = t2;
 // CHECK:STDERR:                   ^~
+// CHECK:STDERR:
 var d: [i32; 3] = t2;
 
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
@@ -150,14 +151,14 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %t2: ref %tuple.type.d07 = bind_name t2, %t2.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %array_type = binding_pattern d
-// CHECK:STDOUT:     %.loc40_1: %array_type = var_pattern %d.patt
+// CHECK:STDOUT:     %.loc41_1: %array_type = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %array_type = var d
-// CHECK:STDOUT:   %.loc40_15: type = splice_block %array_type.loc40 [template = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc40: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_3.loc40: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc40: type = array_type %int_3.loc40, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %.loc41_15: type = splice_block %array_type.loc41 [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc41: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc41: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_3.loc41: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:     %array_type.loc41: type = array_type %int_3.loc41, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %array_type = bind_name d, %d.var
 // CHECK:STDOUT: }

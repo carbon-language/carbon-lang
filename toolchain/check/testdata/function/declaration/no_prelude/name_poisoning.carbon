@@ -329,9 +329,10 @@ fn F() {
   class B {
     var v: A;
 
-    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+3]]:5: note: declared here [NameUseBeforeDeclNote]
+    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+4]]:5: note: declared here [NameUseBeforeDeclNote]
     // CHECK:STDERR:     class A {}
     // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR:
     class A {}
   }
 }

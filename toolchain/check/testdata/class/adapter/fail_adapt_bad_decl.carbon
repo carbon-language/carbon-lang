@@ -95,9 +95,10 @@ interface I {
 
 class C {
   interface I {
-    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
+    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:5: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
     // CHECK:STDERR:     adapt {};
     // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR:
     adapt {};
   }
 }
@@ -290,7 +291,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.2 {
 // CHECK:STDOUT:   %Self: %I.type.e30 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.6ef]
-// CHECK:STDOUT:   %.loc23: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc24: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

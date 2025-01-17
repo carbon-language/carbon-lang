@@ -91,9 +91,10 @@ impl forall [T:! type] D as J(T) {}
 // CHECK:STDERR:
 impl forall [T:! type] D as J(T*);
 
-// CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+3]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as J(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type] D as J(T*) {}
 
 // CHECK:STDOUT: --- import_generic.carbon
@@ -786,18 +787,18 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc20: <witness> = impl_witness (), @impl.5(constants.%T) [symbolic = @impl.5.%impl_witness (constants.%impl_witness.b80f53.2)]
 // CHECK:STDOUT:   impl_decl @impl.6 [template] {
-// CHECK:STDOUT:     %T.patt.loc25_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc25_14.1, runtime_param<invalid> [symbolic = %T.patt.loc25_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc26_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc26_14.1, runtime_param<invalid> [symbolic = %T.patt.loc26_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.b0a [template = constants.%D]
 // CHECK:STDOUT:     %J.ref: %J.type.2b8 = name_ref J, imports.%import_ref.0eb [template = constants.%J.generic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc25_14.1 [symbolic = %T.loc25_14.2 (constants.%T)]
-// CHECK:STDOUT:     %ptr.loc25_32.1: type = ptr_type %T [symbolic = %ptr.loc25_32.2 (constants.%ptr)]
-// CHECK:STDOUT:     %J.type.loc25_33.1: type = facet_type <@J, @J(constants.%ptr)> [symbolic = %J.type.loc25_33.2 (constants.%J.type.628)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc26_14.1 [symbolic = %T.loc26_14.2 (constants.%T)]
+// CHECK:STDOUT:     %ptr.loc26_32.1: type = ptr_type %T [symbolic = %ptr.loc26_32.2 (constants.%ptr)]
+// CHECK:STDOUT:     %J.type.loc26_33.1: type = facet_type <@J, @J(constants.%ptr)> [symbolic = %J.type.loc26_33.2 (constants.%J.type.628)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc25_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc25_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc26_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc26_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc25: <witness> = impl_witness (), @impl.6(constants.%T) [symbolic = @impl.6.%impl_witness (constants.%impl_witness.b80f53.3)]
+// CHECK:STDOUT:   %impl_witness.loc26: <witness> = impl_witness (), @impl.6(constants.%T) [symbolic = @impl.6.%impl_witness (constants.%impl_witness.b80f53.3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @J(constants.%T: type) [from "fail_import_generic_decl.carbon"] {
@@ -872,19 +873,19 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   impl: %D.ref as %J.type.loc20_33.1;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.6(%T.loc25_14.1: type) {
-// CHECK:STDOUT:   %T.loc25_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc25_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc25_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %ptr.loc25_32.2: type = ptr_type @impl.6.%T.loc25_14.2 (%T) [symbolic = %ptr.loc25_32.2 (constants.%ptr)]
-// CHECK:STDOUT:   %J.type.loc25_33.2: type = facet_type <@J, @J(%ptr.loc25_32.2)> [symbolic = %J.type.loc25_33.2 (constants.%J.type.628)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.6.%J.type.loc25_33.2 (%J.type.628) [symbolic = %require_complete (constants.%require_complete.c60)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.6(%T.loc25_14.2) [symbolic = %impl_witness (constants.%impl_witness.b80f53.3)]
+// CHECK:STDOUT: generic impl @impl.6(%T.loc26_14.1: type) {
+// CHECK:STDOUT:   %T.loc26_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc26_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc26_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %ptr.loc26_32.2: type = ptr_type @impl.6.%T.loc26_14.2 (%T) [symbolic = %ptr.loc26_32.2 (constants.%ptr)]
+// CHECK:STDOUT:   %J.type.loc26_33.2: type = facet_type <@J, @J(%ptr.loc26_32.2)> [symbolic = %J.type.loc26_33.2 (constants.%J.type.628)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.6.%J.type.loc26_33.2 (%J.type.628) [symbolic = %require_complete (constants.%require_complete.c60)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.6(%T.loc26_14.2) [symbolic = %impl_witness (constants.%impl_witness.b80f53.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %D.ref as %J.type.loc25_33.1 {
+// CHECK:STDOUT:   impl: %D.ref as %J.type.loc26_33.1 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%impl_witness.loc25
+// CHECK:STDOUT:     witness = file.%impl_witness.loc26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -975,15 +976,15 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT: specific @impl.5(%T.loc20_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.6(constants.%T) {
-// CHECK:STDOUT:   %T.loc25_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc25_14.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc25_32.2 => constants.%ptr
-// CHECK:STDOUT:   %J.type.loc25_33.2 => constants.%J.type.628
+// CHECK:STDOUT:   %T.loc26_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc26_14.2 => constants.%T
+// CHECK:STDOUT:   %ptr.loc26_32.2 => constants.%ptr
+// CHECK:STDOUT:   %J.type.loc26_33.2 => constants.%J.type.628
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.c60
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.b80f53.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.6.%ptr.loc25_32.2) {}
+// CHECK:STDOUT: specific @J(@impl.6.%ptr.loc26_32.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6(%T.loc25_14.2) {}
+// CHECK:STDOUT: specific @impl.6(%T.loc26_14.2) {}
 // CHECK:STDOUT:

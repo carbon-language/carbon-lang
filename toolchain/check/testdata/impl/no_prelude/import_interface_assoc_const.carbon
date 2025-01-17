@@ -148,13 +148,14 @@ import library "interface";
 
 class CA { }
 
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+7]]:25: error: name `BAD7` not found [NameNotFound]
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+8]]:25: error: name `BAD7` not found [NameNotFound]
 // CHECK:STDERR: impl CA as I where .T = BAD7 and .T = BAD8 { }
 // CHECK:STDERR:                         ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+3]]:39: error: name `BAD8` not found [NameNotFound]
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+4]]:39: error: name `BAD8` not found [NameNotFound]
 // CHECK:STDERR: impl CA as I where .T = BAD7 and .T = BAD8 { }
 // CHECK:STDERR:                                       ^~~~
+// CHECK:STDERR:
 impl CA as I where .T = BAD7 and .T = BAD8 { }
 
 // --- repeated.carbon
@@ -994,19 +995,19 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     %CA.ref: type = name_ref CA, file.%CA.decl [template = constants.%CA]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc13_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc13_20: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_wit.loc13_20: <witness> = facet_access_witness %.Self.ref.loc13_20 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc13_20: type = impl_witness_access %.Self.as_wit.loc13_20, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.Self.ref.loc14_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc14_20: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit.loc14_20: <witness> = facet_access_witness %.Self.ref.loc14_20 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0.loc14_20: type = impl_witness_access %.Self.as_wit.loc14_20, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %BAD7.ref: <error> = name_ref BAD7, <error> [template = <error>]
-// CHECK:STDOUT:     %.Self.ref.loc13_34: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc13_34: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_wit.loc13_34: <witness> = facet_access_witness %.Self.ref.loc13_34 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc13_34: type = impl_witness_access %.Self.as_wit.loc13_34, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.Self.ref.loc14_34: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc14_34: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit.loc14_34: <witness> = facet_access_witness %.Self.ref.loc14_34 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0.loc14_34: type = impl_witness_access %.Self.as_wit.loc14_34, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %BAD8.ref: <error> = name_ref BAD8, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc13: type = where_expr %.Self [template = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_20, <error>
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_34, <error>
+// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc14_20, <error>
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc14_34, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1018,7 +1019,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%import_ref.08d)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %CA.ref as %.loc13 {
+// CHECK:STDOUT: impl @impl: %CA.ref as %.loc14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

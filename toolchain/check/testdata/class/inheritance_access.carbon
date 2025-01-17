@@ -200,12 +200,13 @@ base class A {
 class B {
   extend base: A;
   fn F[self: Self]() {
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+6]]:11: error: cannot access private member `x` of type `A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+7]]:11: error: cannot access private member `x` of type `A` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     self.(A.x);
     // CHECK:STDERR:           ^~~
     // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   private var x: i32;
     // CHECK:STDERR:               ^~~~~~
+    // CHECK:STDERR:
     self.(A.x);
   }
 }

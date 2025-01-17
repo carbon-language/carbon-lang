@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/fail_qualifier_unsupported.carbon
 
-// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:10: error: type `bool` does not support qualified expressions [QualifiedExprUnsupported]
+// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+4]]:10: error: type `bool` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR: fn F() { true.b; }
 // CHECK:STDERR:          ^~~~~~
+// CHECK:STDERR:
 fn F() { true.b; }
 
 // CHECK:STDOUT: --- fail_qualifier_unsupported.carbon

@@ -14,9 +14,10 @@ class D {}
 alias c = C;
 var d: D = {};
 
-// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+3]]:16: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+4]]:16: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: let c_var: c = d;
 // CHECK:STDERR:                ^
+// CHECK:STDERR:
 let c_var: c = d;
 
 // CHECK:STDOUT: --- fail_aliased_name_in_diag.carbon
@@ -52,7 +53,7 @@ let c_var: c = d;
 // CHECK:STDOUT:     %c_var.patt: %C = binding_pattern c_var
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
-// CHECK:STDOUT:   %.loc20: %C = converted @__global_init.%d.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21: %C = converted @__global_init.%d.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+4]]:10: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   var x: 1 = 1;
 }
 
@@ -47,14 +48,14 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %.loc18_3: <error> = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc19_3: <error> = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var x
-// CHECK:STDOUT:   %int_1.loc18_14: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc19_14: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
-// CHECK:STDOUT:     %int_1.loc18_10: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %.loc18_10: type = converted %int_1.loc18_10, <error> [template = <error>]
+// CHECK:STDOUT:     %int_1.loc19_10: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:     %.loc19_10: type = converted %int_1.loc19_10, <error> [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = bind_name x, <error>
 // CHECK:STDOUT:   return

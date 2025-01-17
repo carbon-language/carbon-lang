@@ -118,9 +118,10 @@ var test_f1000000000000: f1000000000000;
 library "[[@TEST_NAME]]";
 
 // TODO: Some or all of these should eventually work.
-// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+3]]:15: error: semantics TODO: `Currently only f64 is allowed` [SemanticsTodo]
+// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+4]]:15: error: semantics TODO: `Currently only f64 is allowed` [SemanticsTodo]
 // CHECK:STDERR: var test_f16: f16;
 // CHECK:STDERR:               ^~~
+// CHECK:STDERR:
 var test_f16: f16;
 var test_f32: f32;
 var test_f128: f128;

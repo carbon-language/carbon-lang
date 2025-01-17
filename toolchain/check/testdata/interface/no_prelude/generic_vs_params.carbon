@@ -42,9 +42,10 @@ interface A[T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:13: error: parameters of generic types must be constant [GenericParamMustBeConstant]
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+4]]:13: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR: interface A(T: type) {}
 // CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR:
 interface A(T: type) {}
 
 // CHECK:STDOUT: --- params.carbon

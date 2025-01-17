@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_colon_instead_of_in.carbon
 
 fn foo() {
-  // CHECK:STDERR: fail_colon_instead_of_in.carbon:[[@LINE+3]]:19: error: `:` should be replaced by `in` [ExpectedInNotColon]
+  // CHECK:STDERR: fail_colon_instead_of_in.carbon:[[@LINE+4]]:19: error: `:` should be replaced by `in` [ExpectedInNotColon]
   // CHECK:STDERR:   for (var x: i32 : y) {
   // CHECK:STDERR:                   ^
+  // CHECK:STDERR:
   for (var x: i32 : y) {
     Print(x);
   }

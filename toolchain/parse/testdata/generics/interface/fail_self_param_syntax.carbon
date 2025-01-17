@@ -15,9 +15,10 @@ interface Foo {
   // CHECK:STDERR:
   fn Sub[me Self](b: Self) -> Self;
 
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
   // CHECK:STDERR:   fn Mul[Self](b: Self) -> Self;
   // CHECK:STDERR:          ^~~~
+  // CHECK:STDERR:
   fn Mul[Self](b: Self) -> Self;
 }
 

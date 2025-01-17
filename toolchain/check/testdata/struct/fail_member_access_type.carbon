@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_member_access_type.carbon
 
 var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:14: error: type `{.a: f64}` does not have a member `b` [QualifiedExprNameNotFound]
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+4]]:14: error: type `{.a: f64}` does not have a member `b` [QualifiedExprNameNotFound]
 // CHECK:STDERR: var y: i32 = x.b;
 // CHECK:STDERR:              ^~~
+// CHECK:STDERR:
 var y: i32 = x.b;
 
 // CHECK:STDOUT: --- fail_member_access_type.carbon
@@ -58,10 +59,10 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc15_1: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
-// CHECK:STDOUT:   %.loc15_8: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }

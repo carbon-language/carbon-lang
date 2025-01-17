@@ -78,12 +78,13 @@ class D(T:! i32) {}
 library "[[@TEST_NAME]]";
 
 class E(T:! type);
-// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+6]]:9: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+7]]:9: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: class E(U:! type) {}
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE-4]]:9: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: class E(T:! type);
 // CHECK:STDERR:         ^~~~~~~~
+// CHECK:STDERR:
 class E(U:! type) {}
 
 // CHECK:STDOUT: --- valid.carbon
@@ -492,11 +493,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
-// CHECK:STDOUT:     %U.patt.loc11_9.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_9.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc11_9.1, runtime_param<invalid> [symbolic = %U.patt.loc11_9.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc12_9.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_9.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc12_9.1, runtime_param<invalid> [symbolic = %U.patt.loc12_9.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11_9.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_9.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc12_9.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc12_9.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -507,9 +508,9 @@ class E(U:! type) {}
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%U.loc11_9.1: type) {
-// CHECK:STDOUT:   %U.loc11_9.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc11_9.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc11_9.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_9.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic class @.1(%U.loc12_9.1: type) {
+// CHECK:STDOUT:   %U.loc12_9.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc12_9.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc12_9.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_9.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -525,7 +526,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U) {
-// CHECK:STDOUT:   %U.loc11_9.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc11_9.2 => constants.%U
+// CHECK:STDOUT:   %U.loc12_9.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc12_9.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

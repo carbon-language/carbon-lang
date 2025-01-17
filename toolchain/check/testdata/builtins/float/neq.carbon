@@ -28,9 +28,10 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "float.neq" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.neq" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 
 // CHECK:STDOUT: --- float_neq.carbon
@@ -251,24 +252,24 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_64.loc7_35: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc7_35: init type = call constants.%Float(%int_64.loc7_35) [template = f64]
-// CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %float.make_type.loc7_35 [template = f64]
-// CHECK:STDOUT:     %.loc7_35.2: type = converted %float.make_type.loc7_35, %.loc7_35.1 [template = f64]
+// CHECK:STDOUT:     %int_64.loc8_35: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc8_35: init type = call constants.%Float(%int_64.loc8_35) [template = f64]
+// CHECK:STDOUT:     %.loc8_35.1: type = value_of_initializer %float.make_type.loc8_35 [template = f64]
+// CHECK:STDOUT:     %.loc8_35.2: type = converted %float.make_type.loc8_35, %.loc8_35.1 [template = f64]
 // CHECK:STDOUT:     %a.param: f64 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc7_19.1: type = splice_block %.loc7_19.3 [template = f64] {
-// CHECK:STDOUT:       %int_64.loc7_19: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:       %float.make_type.loc7_19: init type = call constants.%Float(%int_64.loc7_19) [template = f64]
-// CHECK:STDOUT:       %.loc7_19.2: type = value_of_initializer %float.make_type.loc7_19 [template = f64]
-// CHECK:STDOUT:       %.loc7_19.3: type = converted %float.make_type.loc7_19, %.loc7_19.2 [template = f64]
+// CHECK:STDOUT:     %.loc8_19.1: type = splice_block %.loc8_19.3 [template = f64] {
+// CHECK:STDOUT:       %int_64.loc8_19: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:       %float.make_type.loc8_19: init type = call constants.%Float(%int_64.loc8_19) [template = f64]
+// CHECK:STDOUT:       %.loc8_19.2: type = value_of_initializer %float.make_type.loc8_19 [template = f64]
+// CHECK:STDOUT:       %.loc8_19.3: type = converted %float.make_type.loc8_19, %.loc8_19.2 [template = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: f64 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: f64 = value_param runtime_param1
-// CHECK:STDOUT:     %.loc7_27.1: type = splice_block %.loc7_27.3 [template = f64] {
-// CHECK:STDOUT:       %int_64.loc7_27: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:       %float.make_type.loc7_27: init type = call constants.%Float(%int_64.loc7_27) [template = f64]
-// CHECK:STDOUT:       %.loc7_27.2: type = value_of_initializer %float.make_type.loc7_27 [template = f64]
-// CHECK:STDOUT:       %.loc7_27.3: type = converted %float.make_type.loc7_27, %.loc7_27.2 [template = f64]
+// CHECK:STDOUT:     %.loc8_27.1: type = splice_block %.loc8_27.3 [template = f64] {
+// CHECK:STDOUT:       %int_64.loc8_27: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:       %float.make_type.loc8_27: init type = call constants.%Float(%int_64.loc8_27) [template = f64]
+// CHECK:STDOUT:       %.loc8_27.2: type = value_of_initializer %float.make_type.loc8_27 [template = f64]
+// CHECK:STDOUT:       %.loc8_27.3: type = converted %float.make_type.loc8_27, %.loc8_27.2 [template = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: f64 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param2

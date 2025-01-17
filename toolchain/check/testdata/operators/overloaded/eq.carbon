@@ -76,9 +76,10 @@ fn TestRhsBad(a: C, b: D) -> bool {
 }
 
 fn TestLhsBad(a: D, b: C) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Core.Eq` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Eq` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a != b;
   // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR:
   return a != b;
 }
 

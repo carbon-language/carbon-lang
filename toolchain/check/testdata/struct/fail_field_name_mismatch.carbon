@@ -14,9 +14,10 @@
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type [StructInitMissingFieldInConversion]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type [StructInitMissingFieldInConversion]
 // CHECK:STDERR: var y: {.b: i32} = x;
 // CHECK:STDERR:                    ^
+// CHECK:STDERR:
 var y: {.b: i32} = x;
 
 // CHECK:STDOUT: --- fail_field_name_mismatch.carbon
@@ -58,12 +59,12 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %struct_type.b.0a3 = binding_pattern y
-// CHECK:STDOUT:     %.loc20_1: %struct_type.b.0a3 = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc21_1: %struct_type.b.0a3 = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.0a3 = var y
-// CHECK:STDOUT:   %.loc20_16: type = splice_block %struct_type.b [template = constants.%struct_type.b.0a3] {
-// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc21_16: type = splice_block %struct_type.b [template = constants.%struct_type.b.0a3] {
+// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %i32} [template = constants.%struct_type.b.0a3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.b.0a3 = bind_name y, %y.var

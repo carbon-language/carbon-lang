@@ -32,9 +32,10 @@ let c: i32 = 0x8000_0000;
 // CHECK:STDERR:
 let d: f64 = 39999999999999999993.0e3;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+3]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
 // CHECK:STDERR: let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let e: f64 = 5.0e39999999999999999993;
 
 // CHECK:STDOUT: --- fail_numeric_literal_overflow.carbon
@@ -134,11 +135,11 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: f64 = binding_pattern e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc38_8.1: type = splice_block %.loc38_8.3 [template = f64] {
-// CHECK:STDOUT:     %int_64.loc38: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc38: init type = call constants.%Float(%int_64.loc38) [template = f64]
-// CHECK:STDOUT:     %.loc38_8.2: type = value_of_initializer %float.make_type.loc38 [template = f64]
-// CHECK:STDOUT:     %.loc38_8.3: type = converted %float.make_type.loc38, %.loc38_8.2 [template = f64]
+// CHECK:STDOUT:   %.loc39_8.1: type = splice_block %.loc39_8.3 [template = f64] {
+// CHECK:STDOUT:     %int_64.loc39: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc39: init type = call constants.%Float(%int_64.loc39) [template = f64]
+// CHECK:STDOUT:     %.loc39_8.2: type = value_of_initializer %float.make_type.loc39 [template = f64]
+// CHECK:STDOUT:     %.loc39_8.3: type = converted %float.make_type.loc39, %.loc39_8.2 [template = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: f64 = bind_name e, <error>
 // CHECK:STDOUT: }

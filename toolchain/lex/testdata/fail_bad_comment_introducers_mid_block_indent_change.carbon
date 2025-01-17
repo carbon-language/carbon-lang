@@ -34,6 +34,7 @@
 // CHECK:STDERR: fail_bad_comment_introducers_mid_block_indent_change.carbon:[[@LINE-19]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
 // CHECK:STDERR: //abc
 // CHECK:STDERR:   ^
+// CHECK:STDERR:
 
 // CHECK:STDOUT: - filename: fail_bad_comment_introducers_mid_block_indent_change.carbon
 // CHECK:STDOUT:   tokens:

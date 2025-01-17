@@ -27,9 +27,10 @@ impl package Implicit;
 // CHECK:STDERR:        ^~
 // CHECK:STDERR:
 var a: T*;
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var b: T = *a;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 var b: T = *a;
 
 // CHECK:STDOUT: --- fail_implicit.carbon
@@ -98,17 +99,17 @@ var b: T = *a;
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
-// CHECK:STDOUT:     %.loc12: <error> = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc13: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, imports.%import_ref
+// CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%import_ref
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc12: ref <error> = deref <error>
+// CHECK:STDOUT:   %.loc13: ref <error> = deref <error>
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

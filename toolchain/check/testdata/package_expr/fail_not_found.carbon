@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/package_expr/fail_not_found.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:16: error: member name `x` not found in `package` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_not_found.carbon:[[@LINE+4]]:16: error: member name `x` not found in `package` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   var y: i32 = package.x;
   // CHECK:STDERR:                ^~~~~~~~~
+  // CHECK:STDERR:
   var y: i32 = package.x;
 }
 
@@ -45,13 +46,13 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc15_3: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc16_3: %i32 = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   assign %y.var, <error>
-// CHECK:STDOUT:   %.loc15_10: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:   %.loc16_10: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }

@@ -131,9 +131,10 @@ class IntAdapter {
 
 fn F(a: IntAdapter) -> i32 {
   // Builtin types have no member names.
-  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+3]]:10: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+4]]:10: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return a.foo;
   // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
   return a.foo;
 }
 

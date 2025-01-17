@@ -12,9 +12,10 @@ fn Main() {
   var x: ();
 }
 
-// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+3]]:13: error: name `x` not found [NameNotFound]
+// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var y: () = x;
 // CHECK:STDERR:             ^
+// CHECK:STDERR:
 var y: () = x;
 
 // CHECK:STDOUT: --- fail_lookup_outside_scope.carbon
@@ -33,12 +34,12 @@ var y: () = x;
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %empty_tuple.type = binding_pattern y
-// CHECK:STDOUT:     %.loc18_1: %empty_tuple.type = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc19_1: %empty_tuple.type = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var y
-// CHECK:STDOUT:   %.loc18_9.1: type = splice_block %.loc18_9.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc18_9.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc18_9.3: type = converted %.loc18_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc19_9.1: type = splice_block %.loc19_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc19_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_9.3: type = converted %.loc19_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = bind_name y, %y.var
 // CHECK:STDOUT: }

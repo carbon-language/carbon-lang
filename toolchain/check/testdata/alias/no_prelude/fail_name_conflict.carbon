@@ -21,12 +21,13 @@ alias a = C;
 var a: C = {};
 
 var b: C = {};
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: alias b = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: var b: C = {};
 // CHECK:STDERR:     ^
+// CHECK:STDERR:
 alias b = C;
 
 // CHECK:STDOUT: --- fail_name_conflict.carbon
@@ -61,8 +62,8 @@ alias b = C;
 // CHECK:STDOUT:   %b.var: ref %C = var b
 // CHECK:STDOUT:   %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %b: ref %C = bind_name b, %b.var
-// CHECK:STDOUT:   %C.ref.loc30: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc30: type = bind_alias <invalid>, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc31: type = bind_alias <invalid>, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

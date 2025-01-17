@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_missing_var.carbon
 
 fn foo() {
-  // CHECK:STDERR: fail_missing_var.carbon:[[@LINE+3]]:8: error: expected `var` declaration [ExpectedVariableDecl]
+  // CHECK:STDERR: fail_missing_var.carbon:[[@LINE+4]]:8: error: expected `var` declaration [ExpectedVariableDecl]
   // CHECK:STDERR:   for (x: i32 in y) {
   // CHECK:STDERR:        ^
+  // CHECK:STDERR:
   for (x: i32 in y) {
     Print(x);
   }

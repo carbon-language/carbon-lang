@@ -92,12 +92,13 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
   // CHECK:STDERR:                                     ^
   // CHECK:STDERR:
   var b: AdaptNoncopyableIndirect = a;
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+6]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+7]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
   // CHECK:STDERR:   return b;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+3]]:10: note: in copy of `AdaptNoncopyableIndirect` [InCopy]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+4]]:10: note: in copy of `AdaptNoncopyableIndirect` [InCopy]
   // CHECK:STDERR:   return b;
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   return b;
 }
 
@@ -595,14 +596,14 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptNoncopyableIndirect.ref.loc20: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [template = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyableIndirect = bind_name b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %AdaptNoncopyableIndirect = name_ref b, %b
-// CHECK:STDOUT:   %.loc27_11.1: ref %tuple.type.c9a = as_compatible %b.ref
-// CHECK:STDOUT:   %tuple.elem0.loc27_11.1: ref %i32 = tuple_access %.loc27_11.1, element0
-// CHECK:STDOUT:   %.loc27_11.2: %i32 = bind_value %tuple.elem0.loc27_11.1
-// CHECK:STDOUT:   %.loc27_11.3: ref %tuple.type.c9a = as_compatible %return
-// CHECK:STDOUT:   %tuple.elem0.loc27_11.2: ref %i32 = tuple_access %.loc27_11.3, element0
-// CHECK:STDOUT:   %.loc27_11.4: init %i32 = initialize_from %.loc27_11.2 to %tuple.elem0.loc27_11.2
-// CHECK:STDOUT:   %tuple.elem1.loc27: ref %Noncopyable = tuple_access %.loc27_11.1, element1
-// CHECK:STDOUT:   %.loc27_11.5: %Noncopyable = bind_value %tuple.elem1.loc27
+// CHECK:STDOUT:   %.loc28_11.1: ref %tuple.type.c9a = as_compatible %b.ref
+// CHECK:STDOUT:   %tuple.elem0.loc28_11.1: ref %i32 = tuple_access %.loc28_11.1, element0
+// CHECK:STDOUT:   %.loc28_11.2: %i32 = bind_value %tuple.elem0.loc28_11.1
+// CHECK:STDOUT:   %.loc28_11.3: ref %tuple.type.c9a = as_compatible %return
+// CHECK:STDOUT:   %tuple.elem0.loc28_11.2: ref %i32 = tuple_access %.loc28_11.3, element0
+// CHECK:STDOUT:   %.loc28_11.4: init %i32 = initialize_from %.loc28_11.2 to %tuple.elem0.loc28_11.2
+// CHECK:STDOUT:   %tuple.elem1.loc28: ref %Noncopyable = tuple_access %.loc28_11.1, element1
+// CHECK:STDOUT:   %.loc28_11.5: %Noncopyable = bind_value %tuple.elem1.loc28
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

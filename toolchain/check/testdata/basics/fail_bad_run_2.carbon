@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_bad_run_2.carbon
 
-// CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+3]]:1: error: invalid signature for `Main.Run` function; expected `fn ()` or `fn () -> i32` [InvalidMainRunSignature]
+// CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+4]]:1: error: invalid signature for `Main.Run` function; expected `fn ()` or `fn () -> i32` [InvalidMainRunSignature]
 // CHECK:STDERR: fn Run(n: i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Run(n: i32) {}
 
 // CHECK:STDOUT: --- fail_bad_run_2.carbon
@@ -41,7 +42,7 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc14: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %.loc15: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }

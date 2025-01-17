@@ -27,9 +27,10 @@ var b_ref: {.a = x};
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 var c_ref: (x,);
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: error: name `x` not found [NameNotFound]
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var d_ref: x*;
 // CHECK:STDERR:            ^
+// CHECK:STDERR:
 var d_ref: x*;
 
 // --- implicit.impl.carbon
@@ -90,11 +91,11 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %c_ref: <error> = bind_name c_ref, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d_ref.patt: <error> = binding_pattern d_ref
-// CHECK:STDOUT:     %.loc22_1: <error> = var_pattern %d_ref.patt
+// CHECK:STDOUT:     %.loc23_1: <error> = var_pattern %d_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref.var: ref <error> = var d_ref
-// CHECK:STDOUT:   %.loc22_13: type = splice_block %ptr [template = <error>] {
-// CHECK:STDOUT:     %x.ref.loc22: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_13: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:     %x.ref.loc23: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref: <error> = bind_name d_ref, <error>

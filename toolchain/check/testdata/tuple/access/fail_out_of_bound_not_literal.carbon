@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_out_of_bound_not_literal.carbon
 
 var a: (i32, i32) = (12, 34);
-// CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+3]]:14: error: tuple element index `2` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
+// CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+4]]:14: error: tuple element index `2` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var b: i32 = a.({.index = 2}.index);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var b: i32 = a.({.index = 2}.index);
 
 // CHECK:STDOUT: --- fail_out_of_bound_not_literal.carbon
@@ -72,12 +73,12 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %a: ref %tuple.type.d07 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc15_1: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
-// CHECK:STDOUT:   %.loc15_8: type = splice_block %i32.loc15 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32.loc16 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -106,10 +107,10 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_1
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %.loc15_28.1: %struct_type.index = struct_literal (%int_2)
+// CHECK:STDOUT:   %.loc16_28.1: %struct_type.index = struct_literal (%int_2)
 // CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int_2) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_28.2: %struct_type.index = converted %.loc15_28.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_29: Core.IntLiteral = struct_access %.loc15_28.2, element0 [template = constants.%int_2]
+// CHECK:STDOUT:   %.loc16_28.2: %struct_type.index = converted %.loc16_28.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc16_29: Core.IntLiteral = struct_access %.loc16_28.2, element0 [template = constants.%int_2]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -53,9 +53,10 @@ library "[[@TEST_NAME]]";
 
 import library "export";
 
-// CHECK:STDERR: fail_orig_name_not_in_export.carbon:[[@LINE+3]]:8: error: name `C` not found [NameNotFound]
+// CHECK:STDERR: fail_orig_name_not_in_export.carbon:[[@LINE+4]]:8: error: name `C` not found [NameNotFound]
 // CHECK:STDERR: var c: C = {};
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 var c: C = {};
 
 // --- indirect_compat.carbon
@@ -205,7 +206,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %.loc9: <error> = var_pattern %c.patt
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
@@ -214,7 +215,7 @@ var d: D* = &c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -78,9 +78,10 @@ package SwappedExt;
 
 // --- fail_swapped_ext.carbon
 
-// CHECK:STDERR: fail_swapped_ext.carbon:[[@LINE+3]]:6: error: file extension of `.impl.carbon` required for `impl` [IncorrectExtension]
+// CHECK:STDERR: fail_swapped_ext.carbon:[[@LINE+4]]:6: error: file extension of `.impl.carbon` required for `impl` [IncorrectExtension]
 // CHECK:STDERR: impl package SwappedExt;
 // CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:
 impl package SwappedExt;
 
 

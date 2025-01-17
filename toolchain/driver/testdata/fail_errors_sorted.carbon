@@ -17,7 +17,8 @@
 fn run(String program) {
   return True;
 
-// CHECK:STDERR: fail_errors_sorted.carbon:[[@LINE+3]]:10: error: invalid digit 'a' in decimal numeric literal
+// CHECK:STDERR: fail_errors_sorted.carbon:[[@LINE+4]]:10: error: invalid digit 'a' in decimal numeric literal
 // CHECK:STDERR: var x = 3a;
 // CHECK:STDERR:          ^
+// CHECK:STDERR:
 var x = 3a;

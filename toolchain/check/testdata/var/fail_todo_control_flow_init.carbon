@@ -58,17 +58,18 @@ var x2: () = if false then () else ();
 // CHECK:STDERR:
 var y: bool = true or false;
 
-// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+11]]:16: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+12]]:16: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var y2: bool = false or true;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+7]]:16: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+8]]:16: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var y2: bool = false or true;
 // CHECK:STDERR:                ^~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+3]]:16: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+4]]:16: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var y2: bool = false or true;
 // CHECK:STDERR:                ^~~~~~~~~~~~~
+// CHECK:STDERR:
 var y2: bool = false or true;
 
 // CHECK:STDOUT: --- fail_todo_control_flow_init.carbon
@@ -130,13 +131,13 @@ var y2: bool = false or true;
 // CHECK:STDOUT:   %y: ref bool = bind_name y, %y.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y2.patt: bool = binding_pattern y2
-// CHECK:STDOUT:     %.loc72_1: bool = var_pattern %y2.patt
+// CHECK:STDOUT:     %.loc73_1: bool = var_pattern %y2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y2.var: ref bool = var y2
-// CHECK:STDOUT:   %.loc72_9.1: type = splice_block %.loc72_9.3 [template = bool] {
-// CHECK:STDOUT:     %bool.make_type.loc72: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc72_9.2: type = value_of_initializer %bool.make_type.loc72 [template = bool]
-// CHECK:STDOUT:     %.loc72_9.3: type = converted %bool.make_type.loc72, %.loc72_9.2 [template = bool]
+// CHECK:STDOUT:   %.loc73_9.1: type = splice_block %.loc73_9.3 [template = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc73: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc73_9.2: type = value_of_initializer %bool.make_type.loc73 [template = bool]
+// CHECK:STDOUT:     %.loc73_9.3: type = converted %bool.make_type.loc73, %.loc73_9.2 [template = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y2: ref bool = bind_name y2, %y2.var
 // CHECK:STDOUT: }

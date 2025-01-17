@@ -46,9 +46,10 @@ fn F(n: i32) {
   // CHECK:STDERR:            ^~
   // CHECK:STDERR:
   6 as i32 == 7;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:10: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:10: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
   // CHECK:STDERR:   8 <= 9 as i32;
   // CHECK:STDERR:          ^~
+  // CHECK:STDERR:
   8 <= 9 as i32;
 }
 

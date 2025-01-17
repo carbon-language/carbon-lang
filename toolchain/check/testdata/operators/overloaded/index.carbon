@@ -70,9 +70,10 @@ library "[[@TEST_NAME]]";
 class C { }
 
 let c: C = {};
-// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+3]]:14: error: type `C` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+4]]:14: error: type `C` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: let x: i32 = c[0];
 // CHECK:STDERR:              ^~~~
+// CHECK:STDERR:
 let x: i32 = c[0];
 
 
@@ -552,7 +553,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:   %.loc11: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }

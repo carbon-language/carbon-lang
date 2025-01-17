@@ -18,13 +18,14 @@
 // CHECK:STDERR:
 var x: i32 = {.a = 1, .b, .c: i32};
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+7]]:26: error: expected `.field: field_type` [ExpectedStructLiteralField]
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+8]]:26: error: expected `.field: field_type` [ExpectedStructLiteralField]
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                          ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+3]]:31: error: expected `.field: field_type` [ExpectedStructLiteralField]
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+4]]:31: error: expected `.field: field_type` [ExpectedStructLiteralField]
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                               ^
+// CHECK:STDERR:
 var x: i32 = {.a: i32, .b, .c = 1};
 
 // CHECK:STDOUT: - filename: fail_mix_with_unknown.carbon

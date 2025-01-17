@@ -94,9 +94,10 @@ impl library "[[@TEST_NAME]]";
 
 interface D {}
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as D;
 
 // CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.carbon
@@ -357,8 +358,8 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %D.decl: type = interface_decl @D [template = constants.%D.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc9_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
@@ -372,5 +373,5 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc9_7.2 as %D.ref;
+// CHECK:STDOUT: impl @impl: %.loc10_7.2 as %D.ref;
 // CHECK:STDOUT:

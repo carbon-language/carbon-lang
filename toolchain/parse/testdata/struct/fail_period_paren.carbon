@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_period_paren.carbon
 
-// CHECK:STDERR: fail_period_paren.carbon:[[@LINE+3]]:10: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR: fail_period_paren.carbon:[[@LINE+4]]:10: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
 // CHECK:STDERR: var x: {.(a) = 1};
 // CHECK:STDERR:          ^
+// CHECK:STDERR:
 var x: {.(a) = 1};
 
 // CHECK:STDOUT: - filename: fail_period_paren.carbon

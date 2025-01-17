@@ -16,9 +16,10 @@
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
 var p: *i32;
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+3]]:12: error: cannot apply `->` operator to non-pointer type `type` [ArrowOperatorOfNonPointer]
+// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+4]]:12: error: cannot apply `->` operator to non-pointer type `type` [ArrowOperatorOfNonPointer]
 // CHECK:STDERR: var p2: i32->foo;
 // CHECK:STDERR:            ^~
+// CHECK:STDERR:
 var p2: i32->foo;
 
 // CHECK:STDOUT: --- fail_deref_type.carbon
@@ -56,13 +57,13 @@ var p2: i32->foo;
 // CHECK:STDOUT:   %p: <error> = bind_name p, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p2.patt: <error> = binding_pattern p2
-// CHECK:STDOUT:     %.loc22_1: <error> = var_pattern %p2.patt
+// CHECK:STDOUT:     %.loc23_1: <error> = var_pattern %p2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2.var: ref <error> = var p2
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [template = <error>] {
-// CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc22_12: ref <error> = deref %i32.loc22
+// CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc23_12: ref <error> = deref %i32.loc23
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2: <error> = bind_name p2, <error>

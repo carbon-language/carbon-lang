@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/const/collapse.carbon
 
 // OK, `const (const i32)` is the same type as `const i32`.
-// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: collapse.carbon:[[@LINE+4]]:25: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(p: const i32**) -> const (const i32)** {
   return p;
 }
@@ -48,19 +49,19 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     %return.patt: %ptr.3bc = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ptr.3bc = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc15_38: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15_38: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %const.loc15_32: type = const_type %i32 [template = constants.%const]
-// CHECK:STDOUT:     %const.loc15_25: type = const_type %const [template = constants.%const]
-// CHECK:STDOUT:     %ptr.loc15_42: type = ptr_type %const [template = constants.%ptr.36b]
-// CHECK:STDOUT:     %ptr.loc15_43: type = ptr_type %ptr.36b [template = constants.%ptr.3bc]
+// CHECK:STDOUT:     %int_32.loc16_38: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16_38: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %const.loc16_32: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:     %const.loc16_25: type = const_type %const [template = constants.%const]
+// CHECK:STDOUT:     %ptr.loc16_42: type = ptr_type %const [template = constants.%ptr.36b]
+// CHECK:STDOUT:     %ptr.loc16_43: type = ptr_type %ptr.36b [template = constants.%ptr.3bc]
 // CHECK:STDOUT:     %p.param: %ptr.3bc = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_19 [template = constants.%ptr.3bc] {
-// CHECK:STDOUT:       %int_32.loc15_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %const.loc15_9: type = const_type %i32 [template = constants.%const]
-// CHECK:STDOUT:       %ptr.loc15_18: type = ptr_type %const [template = constants.%ptr.36b]
-// CHECK:STDOUT:       %ptr.loc15_19: type = ptr_type %ptr.36b [template = constants.%ptr.3bc]
+// CHECK:STDOUT:     %.loc16: type = splice_block %ptr.loc16_19 [template = constants.%ptr.3bc] {
+// CHECK:STDOUT:       %int_32.loc16_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc16_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %const.loc16_9: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:       %ptr.loc16_18: type = ptr_type %const [template = constants.%ptr.36b]
+// CHECK:STDOUT:       %ptr.loc16_19: type = ptr_type %ptr.36b [template = constants.%ptr.3bc]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.3bc = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.3bc = out_param runtime_param1

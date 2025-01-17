@@ -66,9 +66,10 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 fn D();
 
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.carbon

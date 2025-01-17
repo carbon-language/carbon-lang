@@ -30,9 +30,10 @@ library "fail_member_inline.carbon";
 
 class C(T:! type) {
   fn F() {
-    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+3]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
+    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+4]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
     // CHECK:STDERR:     data;
     // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR:
     data;
   }
   var data: {};
@@ -245,9 +246,9 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {} {}
-// CHECK:STDOUT:     %.loc11_11: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
+// CHECK:STDOUT:     %.loc12_11: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc11_3: @C.%C.elem (%C.elem) = var_pattern %.loc11_11
+// CHECK:STDOUT:       %.loc12_3: @C.%C.elem (%C.elem) = var_pattern %.loc12_11
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [template = constants.%complete_type]
@@ -263,7 +264,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc11_11 [template = @C.%.loc11_11]
+// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc12_11 [template = @C.%.loc12_11]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

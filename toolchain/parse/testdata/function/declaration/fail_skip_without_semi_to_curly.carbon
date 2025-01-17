@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_skip_without_semi_to_curly.carbon
 
-// CHECK:STDERR: fail_skip_without_semi_to_curly.carbon:[[@LINE+3]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR: fail_skip_without_semi_to_curly.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR: struct X { fn () }
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 struct X { fn () }
 fn F();
 

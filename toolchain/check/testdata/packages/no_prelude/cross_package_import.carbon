@@ -201,9 +201,10 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn_use";
 
-// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+3]]:13: error: member name `F` not found in `Other` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+4]]:13: error: member name `F` not found in `Other` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn UseF() { Other.F(); }
 // CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR:
 fn UseF() { Other.F(); }
 
 // CHECK:STDOUT: --- other_fn.carbon

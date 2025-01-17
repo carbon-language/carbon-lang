@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_not_binding.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_not_binding.carbon:[[@LINE+3]]:3: error: semantics TODO: `tuple pattern in let/var` [SemanticsTodo]
+  // CHECK:STDERR: fail_assoc_const_not_binding.carbon:[[@LINE+4]]:3: error: semantics TODO: `tuple pattern in let/var` [SemanticsTodo]
   // CHECK:STDERR:   let (T:! type, U:! type);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let (T:! type, U:! type);
 }
 
@@ -25,8 +26,8 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = <unexpected>.inst15
-// CHECK:STDOUT:   .T = <unexpected>.inst19.loc15_9
-// CHECK:STDOUT:   .U = <unexpected>.inst22.loc15_19
+// CHECK:STDOUT:   .T = <unexpected>.inst19.loc16_9
+// CHECK:STDOUT:   .U = <unexpected>.inst22.loc16_19
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -21,9 +21,10 @@ fn F(x: X) {
   var s: String = "hello";
 
   // TODO: Decide on rules for when classes are copyable.
-  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:14: error: cannot copy value of type `X` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+4]]:14: error: cannot copy value of type `X` [CopyOfUncopyableType]
   // CHECK:STDERR:   var y: X = x;
   // CHECK:STDERR:              ^
+  // CHECK:STDERR:
   var y: X = x;
 }
 
@@ -80,12 +81,12 @@ fn F(x: X) {
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %X = binding_pattern y
-// CHECK:STDOUT:     %.loc27: %X = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc28: %X = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %X = var y
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
-// CHECK:STDOUT:   %X.ref.loc27: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc28: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %y: ref %X = bind_name y, %y.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

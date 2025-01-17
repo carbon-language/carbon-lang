@@ -9,17 +9,18 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_square_brackets.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+11]]:6: error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+12]]:6: error: expected `(` after `if` [ExpectedParenAfter]
   // CHECK:STDERR:   if [] {}
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+7]]:7: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+8]]:7: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   if [] {}
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+3]]:7: error: expected `;` in array type [ExpectedArraySemi]
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+4]]:7: error: expected `;` in array type [ExpectedArraySemi]
   // CHECK:STDERR:   if [] {}
   // CHECK:STDERR:       ^
+  // CHECK:STDERR:
   if [] {}
 }
 

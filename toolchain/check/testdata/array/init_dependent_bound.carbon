@@ -25,9 +25,10 @@ fn F(N:! i32) {
 library "[[@TEST_NAME]]";
 
 // TODO: This should be valid.
-// CHECK:STDERR: fail_todo_init_template_dependent_bound.carbon:[[@LINE+3]]:6: error: semantics TODO: `HandleTemplate` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_init_template_dependent_bound.carbon:[[@LINE+4]]:6: error: semantics TODO: `HandleTemplate` [SemanticsTodo]
 // CHECK:STDERR: fn G(template N:! i32) {
 // CHECK:STDERR:      ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(template N:! i32) {
   var arr: [i32; N] = (1, 2, 3);
 }

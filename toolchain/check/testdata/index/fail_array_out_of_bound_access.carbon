@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_array_out_of_bound_access.carbon
 
 var a: [i32; 1] = (12,);
-// CHECK:STDERR: fail_array_out_of_bound_access.carbon:[[@LINE+3]]:16: error: array index `1` is past the end of type `[i32; 1]` [ArrayIndexOutOfBounds]
+// CHECK:STDERR: fail_array_out_of_bound_access.carbon:[[@LINE+4]]:16: error: array index `1` is past the end of type `[i32; 1]` [ArrayIndexOutOfBounds]
 // CHECK:STDERR: var b: i32 = a[1];
 // CHECK:STDERR:                ^
+// CHECK:STDERR:
 var b: i32 = a[1];
 
 // CHECK:STDOUT: --- fail_array_out_of_bound_access.carbon
@@ -67,12 +68,12 @@ var b: i32 = a[1];
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc15_1: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
-// CHECK:STDOUT:   %.loc15_8: type = splice_block %i32.loc15 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32.loc16 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -96,15 +97,15 @@ var b: i32 = a[1];
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc15: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc15: <bound method> = bound_method %int_1, %impl.elem0.loc15 [template = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %Convert.specific_fn.loc15: <specific function> = specific_function %Convert.bound.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %Convert.specific_fn.loc15(%int_1) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc15_16.1: %i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc15_16.2: %i32 = converted %int_1, %.loc15_16.1 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc15_17.1: ref %i32 = array_index %a.ref, %.loc15_16.2 [template = <error>]
-// CHECK:STDOUT:   %.loc15_17.2: %i32 = bind_value %.loc15_17.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc15_17.2
+// CHECK:STDOUT:   %impl.elem0.loc16: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc16: <bound method> = bound_method %int_1, %impl.elem0.loc16 [template = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %Convert.specific_fn.loc16: <specific function> = specific_function %Convert.bound.loc16, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
+// CHECK:STDOUT:   %int.convert_checked.loc16: init %i32 = call %Convert.specific_fn.loc16(%int_1) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc16_16.1: %i32 = value_of_initializer %int.convert_checked.loc16 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc16_16.2: %i32 = converted %int_1, %.loc16_16.1 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc16_17.1: ref %i32 = array_index %a.ref, %.loc16_16.2 [template = <error>]
+// CHECK:STDOUT:   %.loc16_17.2: %i32 = bind_value %.loc16_17.1
+// CHECK:STDOUT:   assign file.%b.var, %.loc16_17.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -31,9 +31,10 @@ fn F() {
   // CHECK:STDERR:       ^~
   // CHECK:STDERR:
   a + ++a;
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:5: error: parentheses are required around this unary `if` operator [UnaryOperatorRequiresParentheses]
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:5: error: parentheses are required around this unary `if` operator [UnaryOperatorRequiresParentheses]
   // CHECK:STDERR:   ++if c then a else b;
   // CHECK:STDERR:     ^~
+  // CHECK:STDERR:
   ++if c then a else b;
 }
 

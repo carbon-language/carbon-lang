@@ -121,9 +121,10 @@ fn M(l: L) {
    // CHECK:STDERR:    ^~~
    // CHECK:STDERR:
    L.K();
-   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+3]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+4]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
    // CHECK:STDERR:    l.K();
    // CHECK:STDERR:    ^~~
+   // CHECK:STDERR:
    l.K();
 }
 
@@ -713,7 +714,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %L.ref.loc24: type = name_ref L, file.%L.decl [template = constants.%L]
 // CHECK:STDOUT:   %K.ref.loc24: <error> = name_ref K, <error> [template = <error>]
 // CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
-// CHECK:STDOUT:   %K.ref.loc28: <error> = name_ref K, <error> [template = <error>]
+// CHECK:STDOUT:   %K.ref.loc29: <error> = name_ref K, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

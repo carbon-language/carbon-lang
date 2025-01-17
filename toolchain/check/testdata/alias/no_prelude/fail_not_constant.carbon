@@ -11,9 +11,10 @@
 fn F() {
   var a: () = ();
   var b: ()* = &a;
-  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:13: error: alias initializer must be a name reference [AliasRequiresNameRef]
+  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:13: error: alias initializer must be a name reference [AliasRequiresNameRef]
   // CHECK:STDERR:   alias c = *b;
   // CHECK:STDERR:             ^~
+  // CHECK:STDERR:
   alias c = *b;
 }
 
@@ -65,8 +66,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %ptr = name_ref b, %b
-// CHECK:STDOUT:   %.loc17_14: %ptr = bind_value %b.ref
-// CHECK:STDOUT:   %.loc17_13: ref %empty_tuple.type = deref %.loc17_14
+// CHECK:STDOUT:   %.loc18_14: %ptr = bind_value %b.ref
+// CHECK:STDOUT:   %.loc18_13: ref %empty_tuple.type = deref %.loc18_14
 // CHECK:STDOUT:   %c: <error> = bind_alias c, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

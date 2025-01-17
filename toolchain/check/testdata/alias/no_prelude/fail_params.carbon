@@ -8,13 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/no_prelude/fail_params.carbon
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR: fail_params.carbon:[[@LINE+8]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_params.carbon:[[@LINE+3]]:21: error: alias initializer must be a name reference [AliasRequiresNameRef]
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:21: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:                     ^~
+// CHECK:STDERR:
 alias A(T:! type) = T*;
 
 // CHECK:STDOUT: --- fail_params.carbon

@@ -25,9 +25,10 @@ base class B {
 // CHECK:STDERR:
 base class A {
   extend base: A;
-  // CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+3]]:10: error: name `C` not found [NameNotFound]
+  // CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+4]]:10: error: name `C` not found [NameNotFound]
   // CHECK:STDERR:   var c: C;
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   var c: C;
 }
 
@@ -79,9 +80,9 @@ base class A {
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc27: %.elem = base_decl %A.ref, element0 [template]
-// CHECK:STDOUT:   %.loc31_8: <error> = field_decl c, element1 [template]
+// CHECK:STDOUT:   %.loc32_8: <error> = field_decl c, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc31_3: <error> = var_pattern %.loc31_8
+// CHECK:STDOUT:     %.loc32_3: <error> = var_pattern %.loc32_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref <error> = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]

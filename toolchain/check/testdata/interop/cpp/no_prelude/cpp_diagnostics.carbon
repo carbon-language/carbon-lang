@@ -126,7 +126,7 @@ import Cpp library "one_error_and_one_warning.h";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+19]]:1: error: 2 errors and 3 warnings in `Cpp` import `multiple_errors_and_multiple_warnings.h`:
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+20]]:1: error: 2 errors and 3 warnings in `Cpp` import `multiple_errors_and_multiple_warnings.h`:
 // CHECK:STDERR: multiple_errors_and_multiple_warnings.h:2:2: error: "error1"
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
@@ -145,6 +145,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
 
 // CHECK:STDOUT: --- fail_import_cpp_file_with_one_error.carbon

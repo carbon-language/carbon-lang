@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_to_empty.carbon
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:13: error: cannot initialize struct with 0 fields from struct with 1 field [StructInitElementCountMismatch]
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+4]]:13: error: cannot initialize struct with 0 fields from struct with 1 field [StructInitElementCountMismatch]
 // CHECK:STDERR: var x: {} = {.a = 1};
 // CHECK:STDERR:             ^~~~~~~~
+// CHECK:STDERR:
 var x: {} = {.a = 1};
 
 // CHECK:STDOUT: --- fail_assign_to_empty.carbon
@@ -36,12 +37,12 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x
-// CHECK:STDOUT:     %.loc14_1: %empty_struct_type = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc15_1: %empty_struct_type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
-// CHECK:STDOUT:   %.loc14_9.1: type = splice_block %.loc14_9.3 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc14_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc14_9.3: type = converted %.loc14_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc15_9.1: type = splice_block %.loc15_9.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_9.3: type = converted %.loc15_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -49,7 +50,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %.loc14: %struct_type.a = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc15: %struct_type.a = struct_literal (%int_1)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

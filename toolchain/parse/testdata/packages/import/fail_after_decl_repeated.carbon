@@ -32,12 +32,13 @@ package D;
 
 fn E();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
 // CHECK:STDERR: import F;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-27]]:1: note: first declaration is here [FirstDecl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
+// CHECK:STDERR:
 import F;
 // Note this is still invalid, but doesn't warn because it's sequential.
 import G;

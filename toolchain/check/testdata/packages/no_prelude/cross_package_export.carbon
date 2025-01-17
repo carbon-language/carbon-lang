@@ -186,9 +186,10 @@ library "[[@TEST_NAME]]";
 import Other library "export_name";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+3]]:11: note: in name lookup for `C` [InNameLookup]
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+4]]:11: note: in name lookup for `C` [InNameLookup]
 // CHECK:STDERR: alias C = Other.C;
 // CHECK:STDERR:           ^~~~~~~
+// CHECK:STDERR:
 alias C = Other.C;
 
 // CHECK:STDOUT: --- base.carbon

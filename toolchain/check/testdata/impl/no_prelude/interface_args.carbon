@@ -72,9 +72,10 @@ impl library "[[@TEST_NAME]]";
 class C {}
 
 fn MakeC(a: A) -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return a.(Factory(C).Make)();
 }
 
@@ -965,10 +966,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%import_ref.e3d [template = constants.%Factory.generic]
-// CHECK:STDOUT:   %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc11: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [template = constants.%Factory.type.5c5]
-// CHECK:STDOUT:   %.loc10: %Make.assoc_type.2ea = specific_constant imports.%import_ref.b0a, @Factory(constants.%C) [template = constants.%assoc0.9a3]
-// CHECK:STDOUT:   %Make.ref: %Make.assoc_type.2ea = name_ref Make, %.loc10 [template = constants.%assoc0.9a3]
+// CHECK:STDOUT:   %.loc11: %Make.assoc_type.2ea = specific_constant imports.%import_ref.b0a, @Factory(constants.%C) [template = constants.%assoc0.9a3]
+// CHECK:STDOUT:   %Make.ref: %Make.assoc_type.2ea = name_ref Make, %.loc11 [template = constants.%assoc0.9a3]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

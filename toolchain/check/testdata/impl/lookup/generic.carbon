@@ -115,9 +115,10 @@ class B {}
 fn G(x: A) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we deduced two different values for `T`.
-  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+3]]:3: error: cannot access member of interface `HasF(B)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF(B)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   x.(HasF(B).F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   x.(HasF(B).F)();
 }
 
@@ -1183,8 +1184,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.fe3 = name_ref HasF, file.%HasF.decl [template = constants.%HasF.generic]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(constants.%B)> [template = constants.%HasF.type.2f5]
-// CHECK:STDOUT:   %.loc21: %F.assoc_type.00a = specific_constant @HasF.%assoc0.loc5_9.1, @HasF(constants.%B) [template = constants.%assoc0.c2a]
-// CHECK:STDOUT:   %F.ref: %F.assoc_type.00a = name_ref F, %.loc21 [template = constants.%assoc0.c2a]
+// CHECK:STDOUT:   %.loc22: %F.assoc_type.00a = specific_constant @HasF.%assoc0.loc5_9.1, @HasF(constants.%B) [template = constants.%assoc0.c2a]
+// CHECK:STDOUT:   %F.ref: %F.assoc_type.00a = name_ref F, %.loc22 [template = constants.%assoc0.c2a]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -22,9 +22,10 @@ fn F(c: C) {
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   c.F();
 }
 
@@ -100,7 +101,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc24: %F.assoc_type = name_ref F, @C.%F [template = constants.%assoc0]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc28: %F.assoc_type = name_ref F, @C.%F [template = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref.loc29: %F.assoc_type = name_ref F, @C.%F [template = constants.%assoc0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

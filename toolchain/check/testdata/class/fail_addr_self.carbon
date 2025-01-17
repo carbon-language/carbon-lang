@@ -18,12 +18,13 @@ class Class {
 }
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   c.F();
 
   c.G();
@@ -114,26 +115,26 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c.param_patt: %Class, %p.param_patt: %ptr.e71) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc27: %Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc27: %F.type.f1b = name_ref F, @Class.%F.decl [template = constants.%F.1f2]
-// CHECK:STDOUT:   %F.bound.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
-// CHECK:STDOUT:   %F.call.loc27: init %empty_tuple.type = call %F.bound.loc27(<error>)
-// CHECK:STDOUT:   %c.ref.loc29: %Class = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc29: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %G.bound.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
-// CHECK:STDOUT:   %G.call.loc29: init %empty_tuple.type = call %G.bound.loc29(%c.ref.loc29)
-// CHECK:STDOUT:   %p.ref.loc32: %ptr.e71 = name_ref p, %p
-// CHECK:STDOUT:   %.loc32: ref %Class = deref %p.ref.loc32
-// CHECK:STDOUT:   %F.ref.loc32: %F.type.f1b = name_ref F, @Class.%F.decl [template = constants.%F.1f2]
-// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc32
-// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr)
-// CHECK:STDOUT:   %p.ref.loc34: %ptr.e71 = name_ref p, %p
-// CHECK:STDOUT:   %.loc34_4.1: ref %Class = deref %p.ref.loc34
-// CHECK:STDOUT:   %G.ref.loc34: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %G.bound.loc34: <bound method> = bound_method %.loc34_4.1, %G.ref.loc34
-// CHECK:STDOUT:   %.loc34_4.2: %Class = bind_value %.loc34_4.1
-// CHECK:STDOUT:   %G.call.loc34: init %empty_tuple.type = call %G.bound.loc34(%.loc34_4.2)
+// CHECK:STDOUT:   %c.ref.loc28: %Class = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc28: %F.type.f1b = name_ref F, @Class.%F.decl [template = constants.%F.1f2]
+// CHECK:STDOUT:   %F.bound.loc28: <bound method> = bound_method %c.ref.loc28, %F.ref.loc28
+// CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %F.bound.loc28(<error>)
+// CHECK:STDOUT:   %c.ref.loc30: %Class = name_ref c, %c
+// CHECK:STDOUT:   %G.ref.loc30: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
+// CHECK:STDOUT:   %G.bound.loc30: <bound method> = bound_method %c.ref.loc30, %G.ref.loc30
+// CHECK:STDOUT:   %G.call.loc30: init %empty_tuple.type = call %G.bound.loc30(%c.ref.loc30)
+// CHECK:STDOUT:   %p.ref.loc33: %ptr.e71 = name_ref p, %p
+// CHECK:STDOUT:   %.loc33: ref %Class = deref %p.ref.loc33
+// CHECK:STDOUT:   %F.ref.loc33: %F.type.f1b = name_ref F, @Class.%F.decl [template = constants.%F.1f2]
+// CHECK:STDOUT:   %F.bound.loc33: <bound method> = bound_method %.loc33, %F.ref.loc33
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc33
+// CHECK:STDOUT:   %F.call.loc33: init %empty_tuple.type = call %F.bound.loc33(%addr)
+// CHECK:STDOUT:   %p.ref.loc35: %ptr.e71 = name_ref p, %p
+// CHECK:STDOUT:   %.loc35_4.1: ref %Class = deref %p.ref.loc35
+// CHECK:STDOUT:   %G.ref.loc35: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
+// CHECK:STDOUT:   %G.bound.loc35: <bound method> = bound_method %.loc35_4.1, %G.ref.loc35
+// CHECK:STDOUT:   %.loc35_4.2: %Class = bind_value %.loc35_4.1
+// CHECK:STDOUT:   %G.call.loc35: init %empty_tuple.type = call %G.bound.loc35(%.loc35_4.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

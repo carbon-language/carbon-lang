@@ -46,6 +46,13 @@ class ToolchainFileTest : public FileTestBase {
 
     Driver driver(fs, &installation_, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
+    // If any diagnostics have been produced, add a trailing newline to make the
+    // last diagnostic match intermediate diagnostics (that have a newline
+    // separator between them). This reduces churn when adding new diagnostics
+    // to test cases.
+    if (stderr.tell() > 0) {
+      stderr << '\n';
+    }
 
     RunResult result{
         .success = driver_result.success,

@@ -30,9 +30,10 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+3]]:6: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+4]]:6: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
 // CHECK:STDERR: fn C.(Self as Interface).F() {}
 // CHECK:STDERR:      ^
+// CHECK:STDERR:
 fn C.(Self as Interface).F() {}
 
 // CHECK:STDOUT: - filename: fail_out_of_line_member.carbon

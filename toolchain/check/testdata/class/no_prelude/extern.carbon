@@ -272,13 +272,14 @@ library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE+7]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE+8]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 extern class C;
 
 // CHECK:STDOUT: --- decl.carbon

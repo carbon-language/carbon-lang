@@ -49,9 +49,10 @@ private extern abstract base default final namespace A;
 // CHECK:STDERR:
 impl namespace B;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `extern` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `extern` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: extern namespace C;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 extern namespace C;
 
 // CHECK:STDOUT: --- fail_modifiers.carbon

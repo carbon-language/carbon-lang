@@ -24,9 +24,10 @@ class A(N:! i32) {
 }
 
 fn F(a: A(0)*) {
-  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:15: note: in `A(0)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:15: note: in `A(0)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   let b: B* = a;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
   let b: B* = a;
 }
 
@@ -189,15 +190,15 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %b.patt: %ptr.e79 = binding_pattern b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %ptr.b65 = name_ref a, %a
-// CHECK:STDOUT:   %.loc19_11: type = splice_block %ptr.loc19 [template = constants.%ptr.e79] {
+// CHECK:STDOUT:   %.loc20_11: type = splice_block %ptr.loc20 [template = constants.%ptr.e79] {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %B [template = constants.%ptr.e79]
+// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B [template = constants.%ptr.e79]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_15.1: ref %A.6fc = deref %a.ref
-// CHECK:STDOUT:   %.loc19_15.2: ref %B = class_element_access %.loc19_15.1, element0
-// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc19_15.2
-// CHECK:STDOUT:   %.loc19_15.3: %ptr.e79 = converted %a.ref, %addr
-// CHECK:STDOUT:   %b: %ptr.e79 = bind_name b, %.loc19_15.3
+// CHECK:STDOUT:   %.loc20_15.1: ref %A.6fc = deref %a.ref
+// CHECK:STDOUT:   %.loc20_15.2: ref %B = class_element_access %.loc20_15.1, element0
+// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc20_15.2
+// CHECK:STDOUT:   %.loc20_15.3: %ptr.e79 = converted %a.ref, %addr
+// CHECK:STDOUT:   %b: %ptr.e79 = bind_name b, %.loc20_15.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

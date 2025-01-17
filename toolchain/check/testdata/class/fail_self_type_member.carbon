@@ -14,13 +14,14 @@ class Class {
 
 fn F() -> bool {
   var c1: Class = {.b = true};
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+7]]:17: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+8]]:17: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+4]]:17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR:
   var c2: Class.Self = c1;
   return c2.b;
 }

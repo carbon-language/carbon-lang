@@ -26,9 +26,10 @@ fn F() {
 
 class C {
   fn F() {
-    // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:5: error: `base` declaration outside class [ClassSpecificDeclOutsideClass]
+    // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:5: error: `base` declaration outside class [ClassSpecificDeclOutsideClass]
     // CHECK:STDERR:     extend base: B;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~
+    // CHECK:STDERR:
     extend base: B;
   }
 }
