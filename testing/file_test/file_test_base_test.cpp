@@ -94,7 +94,7 @@ struct TestParams {
   llvm::ArrayRef<llvm::StringRef> files;
 };
 
-// Does printing and returns expected results for alternating_files.carbon.
+// Prints and returns expected results for alternating_files.carbon.
 static auto TestAlternatingFiles(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   params.output_stream << "unattached message 1\n"
@@ -112,7 +112,7 @@ static auto TestAlternatingFiles(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for capture_console_output.carbon.
+// Prints and returns expected results for capture_console_output.carbon.
 static auto TestCaptureConsoleOutput(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   llvm::errs() << "llvm::errs\n";
@@ -122,7 +122,7 @@ static auto TestCaptureConsoleOutput(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for example.carbon.
+// Prints and returns expected results for example.carbon.
 static auto TestExample(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   int delta_line = 10;
@@ -137,14 +137,14 @@ static auto TestExample(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for fail_example.carbon.
+// Prints and returns expected results for fail_example.carbon.
 static auto TestFailExample(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   params.error_stream << "Oops\n";
   return {{.success = false}};
 }
 
-// Does printing and returns expected results for
+// Prints and returns expected results for
 // file_only_re_multi_file.carbon.
 static auto TestFileOnlyREMultiFile(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
@@ -164,7 +164,7 @@ static auto TestFileOnlyREMultiFile(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for file_only_re_one_file.carbon.
+// Prints and returns expected results for file_only_re_one_file.carbon.
 static auto TestFileOnlyREOneFile(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   params.output_stream << "unattached message 1\n"
@@ -174,7 +174,7 @@ static auto TestFileOnlyREOneFile(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for no_line_number.carbon.
+// Prints and returns expected results for no_line_number.carbon.
 static auto TestNoLineNumber(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   params.output_stream << "a.carbon: msg1\n"
@@ -185,7 +185,7 @@ static auto TestNoLineNumber(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for stdin.carbon.
+// Prints and returns expected results for stdin.carbon.
 static auto TestStdin(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   CARBON_CHECK(params.input_stream);
@@ -200,7 +200,7 @@ static auto TestStdin(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for unattached_multi_file.carbon.
+// Prints and returns expected results for unattached_multi_file.carbon.
 static auto TestUnattachedMultiFile(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   params.output_stream << "unattached message 1\n"
@@ -210,7 +210,7 @@ static auto TestUnattachedMultiFile(TestParams& params)
   return {{.success = true}};
 }
 
-// Does printing and returns expected results for:
+// Prints and returns expected results for:
 // - fail_multi_success_overall_fail.carbon
 // - multi_success.carbon
 // - multi_success_and_fail.carbon
