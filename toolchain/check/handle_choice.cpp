@@ -48,7 +48,6 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   // Choices create a ClassId, since they ultimately turn into a class with
   // methods and some builtin impls.
-  // TODO: Should we make a separate SemIR::ChoiceId type?
   auto class_decl =
       SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
                        .class_id = SemIR::ClassId::Invalid,
@@ -114,10 +113,11 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   context.scope_stack().Push(class_decl_id, class_info.scope_id,
                              self_specific_id);
   // Checking the binding pattern for an alternative requires a non-empty stack.
-  // FIXME: Choice is incorrect as we're not parsing the pattern for a choice
-  // name, but there's no Lex token that's a decl introducer that we could
-  // safely use here. Is there a better way to communicate to
-  // `HandleAnyBindingPattern` that we're checking a choice alternative?
+  // FIXME: `Lex::TokenKind::Choice` is incorrect as we're not parsing the
+  // pattern for a choice name, but there's no Lex token that's a decl
+  // introducer that we could safely use here. Is there a better way to
+  // communicate to `HandleAnyBindingPattern` that we're checking a choice
+  // alternative?
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   StartGenericDefinition(context);
 
@@ -246,7 +246,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
       // An empty choice is not constructible (which can be a useful type). We
       // always add an empty tuple as a field to make it not constructible
       // directly.
-      // TODO: This can be done in a nicer way without adding an empty field.
+      // TODO: Find a way to produce a better diagnostic, and not require an
+      // empty field.
       return context.GetTupleType({});
     } else {
       return MakeIntType(context, node_id, SemIR::IntKind::Unsigned,
