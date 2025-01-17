@@ -29,8 +29,6 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return for_ir ? "vptr" : "<vptr>";
     case NameId::ChoiceDiscriminant.index:
       return "discriminant";
-    case NameId::ChoiceStorage.index:
-      return "choice_storage";
     default:
       CARBON_FATAL("Unknown special name");
   }

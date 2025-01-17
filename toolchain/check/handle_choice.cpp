@@ -140,142 +140,35 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
   context.choice_deferred_bindings().push_back({node_id, name_component});
 }
 
-struct Alternative {
-  // FIXME: Do we need this here? We can get them from context.type_blocks().
-  SemIR::TypeId tuple_type_id;
-  llvm::SmallVector<SemIR::TypeId> field_types;
-};
-
-static auto MakeAlternatives(
-    Context& context,
-    llvm::ArrayRef<Context::ChoiceDeferredBinding> deferred_bindings)
-    -> llvm::SmallVector<Alternative> {
-  llvm::SmallVector<Alternative> alternatives;
-
-  for (auto binding : deferred_bindings) {
-    llvm::SmallVector<SemIR::TypeId> alt_field_types;
-
-    if (binding.name_component.param_patterns_id.is_valid()) {
-      context.TODO(binding.node_id, "params for alternative not yet supported");
-      // Add types from the param_patterns_id instructions to `alt_field_types`.
-    }
-
-    auto tuple_type_id = context.GetTupleType(alt_field_types);
-    alternatives.push_back({.tuple_type_id = tuple_type_id,
-                            .field_types = std::move(alt_field_types)});
-  }
-
-  return alternatives;
-}
-
-static auto MakeDiscriminant(Context& context, Parse::NodeId node_id,
-                             int num_alternative_bits) -> SemIR::TypeId {
-  // TODO: Try to store the bits into padding or invalid states of the various
-  // alternative structs when possible.
-  return MakeIntType(context, node_id, SemIR::IntKind::Unsigned,
-                     context.ints().Add(num_alternative_bits));
-}
-
-static auto MakeStorageTuple(Context& context, llvm::ArrayRef<Alternative> alts)
-    -> SemIR::TypeId {
-  llvm::SmallVector<SemIR::TypeId> tuple_element_types;
-  for (const auto& alt : alts) {
-    tuple_element_types.push_back(alt.tuple_type_id);
-  }
-  return context.GetTupleType(tuple_element_types);
-}
-
 static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
                            SemIR::NameScopeId choice_name_scope_id,
-                           std::optional<SemIR::TypeId> discriminant_type_id,
-                           SemIR::TypeId storage_type_id, int index,
-                           int num_alternatives,
-                           const Context::ChoiceDeferredBinding& binding,
-                           const Alternative& alt) -> void {
-  // ===== Types =====
-
-  // An empty struct for inactive alternatives.
-  auto empty_tuple_value = SemIR::TupleLiteral{
-      .type_id = context.GetTupleType({}),
-      .elements_id = SemIR::InstBlockId::Empty,
-  };
-
-  // Struct literal type to hold the fields of Self for initialization.
+                           SemIR::TypeId discriminant_type_id, int index,
+                           int num_alternative_bits,
+                           const Context::ChoiceDeferredBinding& binding)
+    -> void {
   llvm::SmallVector<SemIR::StructTypeField, 2> self_fields;
-  if (discriminant_type_id) {
-    self_fields.push_back({
-        .name_id = SemIR::NameId::ChoiceDiscriminant,
-        .type_id = *discriminant_type_id,
-    });
-  }
   self_fields.push_back({
-      .name_id = SemIR::NameId::ChoiceStorage,
-      .type_id = storage_type_id,
+      .name_id = SemIR::NameId::ChoiceDiscriminant,
+      .type_id = discriminant_type_id,
   });
+
+  SemIR::InstId discriminant_value_id = [&] {
+    if (num_alternative_bits == 0) {
+      return context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
+          binding.node_id, SemIR::TupleLiteral{
+                               .type_id = context.GetTupleType({}),
+                               .elements_id = SemIR::InstBlockId::Empty,
+                           }));
+    } else {
+      return MakeIntLiteral(context, binding.node_id,
+                            context.ints().Add(index));
+    }
+  }();
+  discriminant_value_id = ConvertToValueOfType(
+      context, binding.node_id, discriminant_value_id, discriminant_type_id);
+
   auto self_struct_type_id = context.GetStructType(
       context.struct_type_fields().AddCanonical(self_fields));
-
-  // ===== Values =====
-
-  std::optional<SemIR::InstId> discriminant_value_id;
-  if (discriminant_type_id) {
-    // FIXME: Move to class' inst block.
-    discriminant_value_id = ConvertToValueOfType(
-        context, binding.node_id,
-        MakeIntLiteral(context, binding.node_id, context.ints().Add(index)),
-        *discriminant_type_id);
-  }
-
-  llvm::SmallVector<SemIR::InstId> storage_tuple_value_ids;
-  for (int i = 0; i < num_alternatives; ++i) {
-    if (i == index) {
-      llvm::SmallVector<SemIR::InstId> alt_fields_values;
-      if (!alt.field_types.empty()) {
-        // TODO: Construct alt.params values and add to `alt_fields_values`.
-        context.TODO(binding.node_id, "TODO: alt.params values here");
-      }
-
-      auto alt_value_id = ConvertToValueOfType(
-          context, binding.node_id,
-          context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
-              binding.node_id,
-              SemIR::TupleLiteral{
-                  .type_id = alt.tuple_type_id,
-                  .elements_id =
-                      [&] {
-                        context.inst_block_stack().Push();
-                        for (auto id : alt_fields_values) {
-                          context.inst_block_stack().AddInstId(id);
-                        }
-                        return context.inst_block_stack().Pop();
-                      }(),
-              })),
-          alt.tuple_type_id);
-      storage_tuple_value_ids.push_back(alt_value_id);
-    } else {
-      auto alt_struct_value_id =
-          context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(binding.node_id,
-                                                            empty_tuple_value));
-      storage_tuple_value_ids.push_back(alt_struct_value_id);
-    }
-  }
-
-  auto storage_value_id = ConvertToValueOfType(
-      context, binding.node_id,
-      context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
-          binding.node_id,
-          SemIR::TupleLiteral{
-              .type_id = storage_type_id,
-              .elements_id =
-                  [&] {
-                    context.inst_block_stack().Push();
-                    for (auto id : storage_tuple_value_ids) {
-                      context.inst_block_stack().AddInstId(id);
-                    }
-                    return context.inst_block_stack().Pop();
-                  }(),
-          })),
-      storage_type_id);
 
   auto self_value_id = ConvertToValueOfType(
       context, binding.node_id,
@@ -286,11 +179,7 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
               .elements_id =
                   [&] {
                     context.inst_block_stack().Push();
-                    if (discriminant_value_id) {
-                      context.inst_block_stack().AddInstId(
-                          *discriminant_value_id);
-                    }
-                    context.inst_block_stack().AddInstId(storage_value_id);
+                    context.inst_block_stack().AddInstId(discriminant_value_id);
                     return context.inst_block_stack().Pop();
                   }(),
           })),
@@ -313,82 +202,6 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
                     .access_kind = SemIR::AccessKind::Public});
 }
 
-static auto MakeFunctionBinding(
-    Context& context, SemIR::TypeId self_type_id,
-    SemIR::NameScopeId choice_name_scope_id,
-    std::optional<SemIR::TypeId> discriminant_type_id,
-    SemIR::TypeId storage_type_id, int index,
-    const Context::ChoiceDeferredBinding& binding, const Alternative& alt)
-    -> void {
-  (void)context;
-  (void)self_type_id;
-  (void)choice_name_scope_id;
-  (void)discriminant_type_id;
-  (void)storage_type_id;
-  (void)index;
-  (void)binding;
-  (void)alt;
-
-#if 0
-  auto decl_block_id = context.inst_block_stack()
-                           .PeekOrAdd();  // context.inst_block_stack().Pop();
-  auto self_specific_id = context.scope_stack().PeekSpecificId();
-
-  auto function_decl = SemIR::FunctionDecl{
-      SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
-  auto decl_id = context.AddPlaceholderInst(
-      SemIR::LocIdAndInst::UncheckedLoc(binding.node_id, function_decl));
-
-  auto function_info = SemIR::Function{
-      {binding.name_context.MakeEntityWithParamsBase(binding.name_component, decl_id, /*is_extern=*/false,
-                                             SemIR::LibraryNameId::Invalid)},
-      {.return_slot_pattern_id = binding.name_component.return_slot_pattern_id,
-       .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None}};
-  function_info.definition_id = decl_id;
-
-  {
-    context.inst_block_stack().Push();
-
-    {
-      context.inst_block_stack().Push();
-      // FIXME: Add the parameter values.
-    }
-    auto alt_values_block_id = context.inst_block_stack().Pop();
-
-    auto alt_struct_value = SemIR::StructLiteral{
-        .type_id = alt.struct_type_id,
-        .elements_id = alt_values_block_id,
-    };
-    auto alt_struct_value_id = context.AddInst(
-        SemIR::LocIdAndInst::UncheckedLoc(binding.node_id, alt_struct_value));
-    auto return_expr = SemIR::ReturnExpr{
-        .expr_id = alt_struct_value_id,
-        .dest_id = SemIR::InstId::Invalid,
-    };
-    context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(binding.node_id, return_expr));
-
-    auto body_block_id = context.inst_block_stack().Pop();
-    function_info.body_block_ids = {body_block_id};
-  }
-
-  function_decl.function_id = context.functions().Add(function_info);
-  function_decl.type_id =
-      context.GetFunctionType(function_decl.function_id, self_specific_id);
-
-  // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
-
-  // FIXME: How do we add an alternative? We have a name, where are its
-  // parameters if it has any? We need to add a method to the choice class.
-
-  // auto params_block_id = context.param_and_arg_refs_stack().Pop();
-
-  // Use the choice_name_scope_id instead:
-  //context.decl_name_stack().AddNameOrDiagnose(binding.name_context, decl_id,
-  //                                            SemIR::AccessKind::Public);
-#endif
-}
-
 auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     -> bool {
   // The last alternative may optionally not have a comma after it, in which
@@ -409,33 +222,23 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     }
   }();
 
-  llvm::SmallVector<Alternative> alternatives;
-  std::optional<SemIR::TypeId> discriminant_type_id;
-  if (num_alternatives == 0) {
-    // An empty choice is not constructible (which can be a useful type). We
-    // don't need to add any members to it.
-  } else {
-    alternatives =
-        MakeAlternatives(context, context.choice_deferred_bindings());
-    if (num_alternative_bits > 0) {
-      discriminant_type_id =
-          MakeDiscriminant(context, node_id, num_alternative_bits);
+  SemIR::TypeId discriminant_type_id = [&] {
+    if (num_alternative_bits == 0) {
+      // An empty choice is not constructible (which can be a useful type). We
+      // always add an empty tuple as a field to make it not constructible
+      // directly.
+      // TODO: This can be done in a nicer way without adding an empty field.
+      return context.GetTupleType({});
+    } else {
+      return MakeIntType(context, node_id, SemIR::IntKind::Unsigned,
+                         context.ints().Add(num_alternative_bits));
     }
-  }
-  SemIR::TypeId storage_type_inst_id = MakeStorageTuple(context, alternatives);
+  }();
 
-  // TODO: Change to a custom discriminated union storage instead of using
-  // struct representation and a tuple.
   llvm::SmallVector<SemIR::StructTypeField> struct_type_fields;
-  if (discriminant_type_id) {
-    struct_type_fields.push_back({
-        .name_id = SemIR::NameId::ChoiceDiscriminant,
-        .type_id = *discriminant_type_id,
-    });
-  }
   struct_type_fields.push_back({
-      .name_id = SemIR::NameId::ChoiceStorage,
-      .type_id = storage_type_inst_id,
+      .name_id = SemIR::NameId::ChoiceDiscriminant,
+      .type_id = discriminant_type_id,
   });
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
@@ -450,20 +253,10 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   auto self_type_id = context.classes().Get(class_id).self_type_id;
   auto name_scope_id = context.classes().Get(class_id).scope_id;
 
-  for (auto [index, pair] : llvm::enumerate(
-           llvm::zip(context.choice_deferred_bindings(), alternatives))) {
-    auto [binding, alt] = pair;
-    // If there's no params, then we make a let binding with the name of the
-    // alternative. Otherwise, we make a function.
-    if (alt.field_types.empty()) {
-      MakeLetBinding(context, self_type_id, name_scope_id, discriminant_type_id,
-                     storage_type_inst_id, index, num_alternatives, binding,
-                     alt);
-    } else {
-      MakeFunctionBinding(context, self_type_id, name_scope_id,
-                          discriminant_type_id, storage_type_inst_id, index,
-                          binding, alt);
-    }
+  for (auto [index, binding] :
+       llvm::enumerate(context.choice_deferred_bindings())) {
+    MakeLetBinding(context, self_type_id, name_scope_id, discriminant_type_id,
+                   index, num_alternative_bits, binding);
   }
 
   // The scopes and blocks for the choice itself.
