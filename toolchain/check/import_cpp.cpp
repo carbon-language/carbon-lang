@@ -21,6 +21,8 @@
 namespace Carbon::Check {
 namespace {
 
+// Generates a .generated.cpp_imports.h filename from the importing .carbon
+// filename.
 auto GenerateCppIncludesHeaderFilename(llvm::StringRef importing_file_path)
     -> std::string {
   return llvm::Twine(importing_file_path)
@@ -28,6 +30,7 @@ auto GenerateCppIncludesHeaderFilename(llvm::StringRef importing_file_path)
       .str();
 }
 
+// Generates C++ file contents to #include all requested imports.
 auto GenerateCppIncludesHeaderCode(
     llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports)
     -> std::string {
