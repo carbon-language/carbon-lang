@@ -20,15 +20,6 @@
 
 namespace Carbon::Check {
 
-// Generates a .generated.cpp_imports.h filename from the importing .carbon
-// filename.
-static auto GenerateCppIncludesHeaderFilename(
-    llvm::StringRef importing_file_path) -> std::string {
-  return llvm::Twine(importing_file_path)
-      .concat(".generated.cpp_imports.h")
-      .str();
-}
-
 // Generates C++ file contents to #include all requested imports.
 static auto GenerateCppIncludesHeaderCode(
     llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports)
@@ -65,7 +56,7 @@ auto ImportCppFiles(
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(imports), {},
-      GenerateCppIncludesHeaderFilename(importing_file_path), "clang-tool",
+      (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
       std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
