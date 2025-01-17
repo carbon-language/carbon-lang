@@ -137,7 +137,7 @@ impl
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'invalid'},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ']', has_error: yes},
-// CHECK:STDOUT:           {kind: 'BindingPattern', text: 'invalid', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: 'invalid', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImplForall', text: 'forall', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'IntTypeLiteral', text: 'i8'},

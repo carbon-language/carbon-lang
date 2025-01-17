@@ -17,7 +17,7 @@ var y: {} = {};
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},

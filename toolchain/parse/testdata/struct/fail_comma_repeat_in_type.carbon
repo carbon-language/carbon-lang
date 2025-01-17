@@ -28,7 +28,7 @@ var x: {.a: i32,,} = {};
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:             {kind: 'StructTypeLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'StructTypeLiteral', text: '}', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 11},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 12},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},

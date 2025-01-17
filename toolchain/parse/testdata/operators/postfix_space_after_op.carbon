@@ -16,7 +16,7 @@ var v: type = i8* ;
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'v'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i8'},

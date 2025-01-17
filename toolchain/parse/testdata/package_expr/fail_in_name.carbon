@@ -33,7 +33,7 @@ class package.C {
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'package', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: 'package', has_error: yes},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: 'package', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: 'package', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},

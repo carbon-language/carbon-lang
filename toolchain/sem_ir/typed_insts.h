@@ -672,7 +672,7 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::BindingPatternId>(
+      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
           {.ir_name = "field_decl", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
@@ -1437,7 +1437,7 @@ struct UnaryOperatorNot {
 // expression, such as `instance.(Class.field)`.
 struct UnboundElementType {
   static constexpr auto Kind = InstKind::UnboundElementType.Define<
-      Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::BindingPatternId>>(
+      Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::VarBindingPatternId>>(
       {.ir_name = "unbound_element_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional});

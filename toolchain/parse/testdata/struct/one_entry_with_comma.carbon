@@ -22,7 +22,7 @@ var z: {.n: i32,} = {.n = 4,};
 // CHECK:STDOUT:             {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
 // CHECK:STDOUT:             {kind: 'StructTypeLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'StructTypeLiteral', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},

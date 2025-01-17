@@ -19,7 +19,7 @@ fn foo(addr a: i32*);
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'Addr', text: 'addr', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},

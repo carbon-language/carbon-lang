@@ -20,7 +20,7 @@ var x: [i32; 10];
 // CHECK:STDOUT:             {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'IntLiteral', text: '10'},
 // CHECK:STDOUT:           {kind: 'ArrayExpr', text: ']', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

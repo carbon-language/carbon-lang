@@ -26,7 +26,7 @@ var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'StructTypeLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 13},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 13},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 14},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},

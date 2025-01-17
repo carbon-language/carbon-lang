@@ -18,7 +18,7 @@ var x: package.Foo = package.Bar;
 // CHECK:STDOUT:             {kind: 'PackageExpr', text: 'package'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
 // CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'PackageExpr', text: 'package'},

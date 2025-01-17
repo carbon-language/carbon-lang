@@ -22,7 +22,7 @@ var x: {i32} = {};
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: 'i32', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},

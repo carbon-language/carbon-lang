@@ -398,14 +398,15 @@ class NodeStack {
       }
       switch (node_kind) {
         case Parse::NodeKind::Addr:
-        case Parse::NodeKind::BindingPattern:
         case Parse::NodeKind::CallExprStart:
         case Parse::NodeKind::CompileTimeBindingPattern:
         case Parse::NodeKind::IfExprThen:
+        case Parse::NodeKind::LetBindingPattern:
         case Parse::NodeKind::ReturnType:
         case Parse::NodeKind::ShortCircuitOperandAnd:
         case Parse::NodeKind::ShortCircuitOperandOr:
         case Parse::NodeKind::StructLiteralField:
+        case Parse::NodeKind::VarBindingPattern:
         case Parse::NodeKind::VariablePattern:
         case Parse::NodeKind::WhereOperand:
           return Id::KindFor<SemIR::InstId>();

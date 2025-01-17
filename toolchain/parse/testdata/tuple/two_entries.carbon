@@ -20,7 +20,7 @@ var x: (i32, i32) = (1, 2);
 // CHECK:STDOUT:             {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},

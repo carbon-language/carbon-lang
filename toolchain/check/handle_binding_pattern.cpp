@@ -14,7 +14,7 @@
 namespace Carbon::Check {
 
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
-                                    bool is_generic) -> bool {
+                                    Parse::NodeKind node_kind) -> bool {
   // TODO: split this into smaller, more focused functions.
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
@@ -33,6 +33,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // bindings.
   // TODO: Consider using a different parse node kind to make this easier.
   bool is_associated_constant = false;
+  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
   if (is_generic) {
     auto inst_id = context.scope_stack().PeekInstId();
     is_associated_constant =
@@ -131,8 +132,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                          cast_type_id);
         });
     auto binding_id =
-        is_generic ? Parse::NodeId::Invalid
-                   : context.parse_tree().As<Parse::BindingPatternId>(node_id);
+        is_generic
+            ? Parse::NodeId::Invalid
+            : context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
     auto field_type_id =
         context.GetUnboundElementType(class_info.self_type_id, cast_type_id);
@@ -186,14 +188,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // error locations.
   switch (context_node_kind) {
     case Parse::NodeKind::VariableIntroducer: {
-      if (is_generic) {
-        CARBON_DIAGNOSTIC(
-            CompileTimeBindingInVarDecl, Error,
-            "`var` declaration cannot declare a compile-time binding");
-        context.emitter().Emit(type_node, CompileTimeBindingInVarDecl);
-        // Prevent lambda helpers from creating a compile time binding.
-        needs_compile_time_binding = false;
-      }
+      CARBON_CHECK(!is_generic);
 
       cast_type_id = context.AsConcreteType(
           cast_type_id, type_node,
@@ -309,14 +304,21 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::BindingPatternId node_id)
+auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
     -> bool {
-  return HandleAnyBindingPattern(context, node_id, /*is_generic=*/false);
+  return HandleAnyBindingPattern(context, node_id,
+                                 Parse::NodeKind::LetBindingPattern);
+}
+
+auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
+    -> bool {
+  return HandleAnyBindingPattern(context, node_id,
+                                 Parse::NodeKind::VarBindingPattern);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
-  bool is_generic = true;
+  auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
     // Disallow `let` outside of function and interface definitions.
@@ -331,12 +333,12 @@ auto HandleParseNode(Context& context,
         context.TODO(
             node_id,
             "`let` compile time binding outside function or interface");
-        is_generic = false;
+        node_kind = Parse::NodeKind::LetBindingPattern;
       }
     }
   }
 
-  return HandleAnyBindingPattern(context, node_id, is_generic);
+  return HandleAnyBindingPattern(context, node_id, node_kind);
 }
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {

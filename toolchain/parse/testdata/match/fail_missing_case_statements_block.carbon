@@ -38,7 +38,7 @@ fn f() -> i32 {
 // CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'MatchCaseEqualGreater', text: '=>'},
 // CHECK:STDOUT:           {kind: 'MatchCaseStart', text: 'default', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'MatchCase', text: 'default', has_error: yes, subtree_size: 7},

@@ -24,7 +24,7 @@ var n: i8 = n**p;
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'n'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},

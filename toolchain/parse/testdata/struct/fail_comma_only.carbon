@@ -23,7 +23,7 @@ var x: {,} = {};
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
