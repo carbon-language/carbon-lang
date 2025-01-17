@@ -142,7 +142,7 @@ class ErrorBuilder {
         out_(std::make_unique<RawStringOstream>()) {}
 
   ErrorBuilder(ErrorBuilder&&) = default;
-  ErrorBuilder& operator=(ErrorBuilder&&) = default;
+  auto operator=(ErrorBuilder&&) -> ErrorBuilder& = default;
 
   // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
   // the builder must be converted to an `Error` or `ErrorOr`.
