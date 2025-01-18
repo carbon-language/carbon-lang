@@ -12,8 +12,8 @@ namespace Carbon::LanguageServer {
 
 // Start the language server. input_stream and output_stream are used by LSP;
 // error_stream is primarily for errors that don't fit into LSP.
-auto Run(std::FILE* input_stream, llvm::raw_ostream* output_stream,
-         llvm::raw_ostream* error_stream) -> ErrorOr<Success>;
+auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
+         llvm::raw_ostream& error_stream) -> ErrorOr<Success>;
 
 }  // namespace Carbon::LanguageServer
 

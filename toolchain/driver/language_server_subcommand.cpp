@@ -25,8 +25,8 @@ auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   auto err =
-      LanguageServer::Run(driver_env.input_stream, driver_env.output_stream,
-                          driver_env.error_stream);
+      LanguageServer::Run(driver_env.input_stream, *driver_env.output_stream,
+                          *driver_env.error_stream);
   if (!err.ok()) {
     *driver_env.error_stream << "error: " << err.error() << "\n";
   }
