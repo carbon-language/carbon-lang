@@ -15,7 +15,7 @@ interface I {
   // CHECK:STDERR:
   // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   let a: i32;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:       ^~~~~~
   let a: i32;
 }
 

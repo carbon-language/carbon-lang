@@ -52,8 +52,9 @@ interface I {
 // CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T, 1, %T.param [symbolic = %T.loc12_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
-// CHECK:STDOUT:   %U: type = assoc_const_decl @U [template] {}
-// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, %U [template = constants.%assoc1]
+// CHECK:STDOUT:   %U: type = assoc_const_decl @U [template] {
+// CHECK:STDOUT:     %assoc1: %assoc_type = assoc_entity element1, @I.%U [template = constants.%assoc1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc16_8.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc16_8.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc16_8.2, runtime_param<invalid> [symbolic = %T.patt.loc16_8.1 (constants.%T.patt)]
@@ -66,7 +67,7 @@ interface I {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   .U = %assoc1
+// CHECK:STDOUT:   .U = @U.%assoc1
 // CHECK:STDOUT:   .G = %assoc2
 // CHECK:STDOUT:   witness = (%F.decl, %U, %G.decl)
 // CHECK:STDOUT: }

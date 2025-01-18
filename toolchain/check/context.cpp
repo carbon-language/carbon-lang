@@ -203,6 +203,15 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   FinishInst(inst_id, inst);
 }
 
+auto Context::ReplaceLocIdAndInstPreservingConstantValue(
+    SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
+  auto old_const_id = sem_ir().constant_values().Get(inst_id);
+  sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, loc_id_and_inst.inst);
+  auto new_const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
+  CARBON_CHECK(old_const_id == new_const_id);
+}
+
 auto Context::ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
                                                  SemIR::Inst inst) -> void {
   auto old_const_id = sem_ir().constant_values().Get(inst_id);

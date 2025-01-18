@@ -6,10 +6,12 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -38,60 +40,6 @@ static auto NotePreviousDecl(Context& context,
                     "impl previously declared here");
   const auto& impl = context.impls().Get(impl_id);
   builder.Note(impl.latest_decl_id(), ImplPreviousDeclHere);
-}
-
-// Gets the self specific of a generic declaration that is an interface member,
-// given a specific for an enclosing generic, plus a type to use as `Self`.
-static auto GetSelfSpecificForInterfaceMemberWithSelfType(
-    Context& context, SemIRLoc loc, SemIR::SpecificId enclosing_specific_id,
-    SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::SpecificId {
-  const auto& generic = context.generics().Get(generic_id);
-  auto bindings = context.inst_blocks().Get(generic.bindings_id);
-
-  llvm::SmallVector<SemIR::InstId> arg_ids;
-  arg_ids.reserve(bindings.size());
-
-  // Start with the enclosing arguments.
-  if (enclosing_specific_id.is_valid()) {
-    auto enclosing_specific_args_id =
-        context.specifics().Get(enclosing_specific_id).args_id;
-    auto enclosing_specific_args =
-        context.inst_blocks().Get(enclosing_specific_args_id);
-    arg_ids.assign(enclosing_specific_args.begin(),
-                   enclosing_specific_args.end());
-  }
-
-  // Add the `Self` argument. First find the `Self` binding.
-  auto self_binding =
-      context.insts().GetAs<SemIR::BindSymbolicName>(bindings[arg_ids.size()]);
-  CARBON_CHECK(
-      context.entity_names().Get(self_binding.entity_name_id).name_id ==
-          SemIR::NameId::SelfType,
-      "Expected a Self binding, found {0}", self_binding);
-  // Create a facet value to be the value of `Self` in the interface.
-  // This facet value consists of the type `self_type_id` and a witness that the
-  // type implements `self_binding.type_id`. Note that the witness is incomplete
-  // since we haven't finished defining the implementation here.
-  auto type_inst_id = context.types().GetInstId(self_type_id);
-  auto facet_value_const_id =
-      TryEvalInst(context, SemIR::InstId::Invalid,
-                  SemIR::FacetValue{.type_id = self_binding.type_id,
-                                    .type_inst_id = type_inst_id,
-                                    .witness_inst_id = witness_inst_id});
-  arg_ids.push_back(context.constant_values().GetInstId(facet_value_const_id));
-
-  // Take any trailing argument values from the self specific.
-  // TODO: If these refer to outer arguments, for example in their types, we may
-  // need to perform extra substitutions here.
-  auto self_specific_args = context.inst_blocks().Get(
-      context.specifics().Get(generic.self_specific_id).args_id);
-  for (auto arg_id : self_specific_args.drop_front(arg_ids.size())) {
-    arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
-  }
-
-  auto args_id = context.inst_blocks().AddCanonical(arg_ids);
-  return MakeSpecific(context, loc, generic_id, args_id);
 }
 
 // Checks that `impl_function_id` is a valid implementation of the function
@@ -270,10 +218,8 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
         CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
                           "associated constant {0} given two different values",
                           SemIR::NameId);
-        auto decl_id = assoc_entities[access.index.index];
-        decl_id = context.constant_values().GetInstId(
-            SemIR::GetConstantValueInSpecific(
-                context.sem_ir(), interface_type->specific_id, decl_id));
+        auto decl_id = context.constant_values().GetConstantInstId(
+            assoc_entities[access.index.index]);
         CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
         auto decl =
             context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
@@ -288,15 +234,54 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
 
   // For each non-function associated constant, update witness entry.
   for (auto index : llvm::seq(assoc_entities.size())) {
-    auto decl_id = assoc_entities[index];
-    decl_id =
-        context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), interface_type->specific_id, decl_id));
+    auto decl_id =
+        context.constant_values().GetConstantInstId(assoc_entities[index]);
     CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
+      const auto& assoc_const =
+          context.associated_constants().Get(decl->assoc_const_id);
       auto& witness_value = witness_block[index];
       auto rewrite_value = rewrite_values[index];
+
+      // If the associated constant has a symbolic type, convert the rewrite
+      // value to that type now we know the value of `Self`.
+      SemIR::TypeId assoc_const_type_id = decl->type_id;
+      if (context.types().GetConstantId(assoc_const_type_id).is_symbolic()) {
+        // Form a specific for the associated constant's generic.
+        SemIR::SpecificId assoc_const_specific_id =
+            GetSelfSpecificForInterfaceMemberWithSelfType(
+                context, impl.constraint_id, interface_type->specific_id,
+                assoc_const.generic_id,
+                context.GetTypeIdForTypeInst(impl.self_id), witness_id);
+        assoc_const_type_id = SemIR::GetTypeInSpecific(
+            context.sem_ir(), assoc_const_specific_id, assoc_const_type_id);
+
+        // Perform the conversion of the value to the type. We skipped this when
+        // forming the facet type because the type of the associated constant
+        // was symbolic.
+        auto converted_inst_id = ConvertToValueOfType(
+            context, context.insts().GetLocId(impl.constraint_id),
+            context.constant_values().GetInstId(rewrite_value),
+            assoc_const_type_id);
+        rewrite_value = context.constant_values().Get(converted_inst_id);
+
+        // The result of conversion can be non-constant even if the original
+        // value was constant.
+        if (!rewrite_value.is_constant() &&
+            rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+          CARBON_DIAGNOSTIC(
+              AssociatedConstantNotConstantAfterConversion, Error,
+              "associated constant {0} given value that is not constant "
+              "after conversion to {1}",
+              SemIR::NameId, SemIR::TypeId);
+          context.emitter().Emit(impl.constraint_id,
+                                 AssociatedConstantNotConstantAfterConversion,
+                                 assoc_const.name_id, assoc_const_type_id);
+          rewrite_value = SemIR::ErrorInst::SingletonConstantId;
+        }
+      }
+
       if (witness_value.is_valid() &&
           witness_value != SemIR::ErrorInst::SingletonInstId) {
         // TODO: Support just using the witness values if the redeclaration uses
@@ -308,7 +293,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
                             SemIR::NameId);
           auto builder = context.emitter().Build(
               impl.latest_decl_id(), AssociatedConstantMissingInRedecl,
-              context.associated_constants().Get(decl->assoc_const_id).name_id);
+              assoc_const.name_id);
           NotePreviousDecl(context, builder, prev_decl_id);
           builder.Emit();
           continue;
@@ -323,7 +308,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
               SemIR::NameId);
           auto builder = context.emitter().Build(
               impl.latest_decl_id(), AssociatedConstantDifferentInRedecl,
-              context.associated_constants().Get(decl->assoc_const_id).name_id);
+              assoc_const.name_id);
           NotePreviousDecl(context, builder, prev_decl_id);
           builder.Emit();
           continue;
@@ -363,9 +348,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   // witness.
   for (auto index : llvm::seq(assoc_entities.size())) {
     auto decl_id = assoc_entities[index];
-    decl_id =
-        context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), interface_type->specific_id, decl_id));
+    decl_id = context.constant_values().GetConstantInstId(decl_id);
     CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {

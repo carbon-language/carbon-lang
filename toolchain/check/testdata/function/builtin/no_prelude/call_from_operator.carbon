@@ -583,13 +583,13 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.95f: %Convert.type.843 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type.04d: type = facet_access_type %Self.65a [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.1e9: type = assoc_entity_type %As.type.eed, %Convert.type.843 [symbolic]
-// CHECK:STDOUT:   %assoc0.4ac002.1: %Convert.assoc_type.1e9 = assoc_entity element0, imports.%import_ref.4e8b20.1 [symbolic]
+// CHECK:STDOUT:   %assoc0.460: %Convert.assoc_type.1e9 = assoc_entity element0, imports.%import_ref.708 [symbolic]
 // CHECK:STDOUT:   %As.type.a6d: type = facet_type <@As, @As(%i32.builtin)> [template]
 // CHECK:STDOUT:   %Convert.type.378: type = fn_type @Convert.1, @As(%i32.builtin) [template]
 // CHECK:STDOUT:   %Convert.e51: %Convert.type.378 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.b93: type = assoc_entity_type %As.type.a6d, %Convert.type.378 [template]
-// CHECK:STDOUT:   %assoc0.9da: %Convert.assoc_type.b93 = assoc_entity element0, imports.%import_ref.4e8b20.1 [template]
-// CHECK:STDOUT:   %assoc0.4ac002.2: %Convert.assoc_type.1e9 = assoc_entity element0, imports.%import_ref.4e8b20.2 [symbolic]
+// CHECK:STDOUT:   %assoc0.c6b: %Convert.assoc_type.b93 = assoc_entity element0, imports.%import_ref.708 [template]
+// CHECK:STDOUT:   %assoc0.4ac: %Convert.assoc_type.1e9 = assoc_entity element0, imports.%import_ref.4e8 [symbolic]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self.a99: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
@@ -603,12 +603,12 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.type.059: type = fn_type @Convert.2, @ImplicitAs(%i32.builtin) [template]
 // CHECK:STDOUT:   %Convert.4d7: %Convert.type.059 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.40f: type = assoc_entity_type %ImplicitAs.type.61e, %Convert.type.059 [template]
-// CHECK:STDOUT:   %assoc0.44d: %Convert.assoc_type.40f = assoc_entity element0, imports.%import_ref.207961.2 [template]
+// CHECK:STDOUT:   %assoc0.046: %Convert.assoc_type.40f = assoc_entity element0, imports.%import_ref.1c752f.1 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.2fd: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [template]
 // CHECK:STDOUT:   %Convert.type.71e: type = fn_type @Convert.2, @ImplicitAs(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.0e2: %Convert.type.71e = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.94e: type = assoc_entity_type %ImplicitAs.type.2fd, %Convert.type.71e [template]
-// CHECK:STDOUT:   %assoc0.3db: %Convert.assoc_type.94e = assoc_entity element0, imports.%import_ref.207961.3 [template]
+// CHECK:STDOUT:   %assoc0.3d8: %Convert.assoc_type.94e = assoc_entity element0, imports.%import_ref.1c752f.2 [template]
 // CHECK:STDOUT:   %impl_witness.d9b: <witness> = impl_witness (imports.%import_ref.73a) [template]
 // CHECK:STDOUT:   %Convert.type.953: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.5bc: %Convert.type.953 = struct_value () [template]
@@ -616,12 +616,12 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Op.type.545: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Self.as_type.da9: type = facet_access_type %Self.a99 [symbolic]
 // CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.545 [template]
-// CHECK:STDOUT:   %assoc0.8e5: %Op.assoc_type = assoc_entity element0, imports.%import_ref.047 [template]
+// CHECK:STDOUT:   %assoc0.958: %Op.assoc_type = assoc_entity element0, imports.%import_ref.6dd [template]
 // CHECK:STDOUT:   %impl_witness.bd0: <witness> = impl_witness (imports.%import_ref.db4) [template]
 // CHECK:STDOUT:   %Op.type.240: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.0e2: %Op.type.240 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.a0f: %i32.builtin = int_value 3 [template]
-// CHECK:STDOUT:   %assoc0.5048c6.2: %Convert.assoc_type.c0e = assoc_entity element0, imports.%import_ref.207961.4 [symbolic]
+// CHECK:STDOUT:   %assoc0.5048c6.2: %Convert.assoc_type.c0e = assoc_entity element0, imports.%import_ref.207961.2 [symbolic]
 // CHECK:STDOUT:   %impl_witness.8f3: <witness> = impl_witness (imports.%import_ref.4f9) [template]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32.builtin [template]
@@ -650,12 +650,12 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.a7c = import_ref Core//default, inst85 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.638: @As.%Convert.assoc_type (%Convert.assoc_type.1e9) = import_ref Core//default, loc12_32, loaded [symbolic = @As.%assoc0 (constants.%assoc0.4ac002.2)]
+// CHECK:STDOUT:   %import_ref.638: @As.%Convert.assoc_type (%Convert.assoc_type.1e9) = import_ref Core//default, loc12_32, loaded [symbolic = @As.%assoc0 (constants.%assoc0.4ac)]
 // CHECK:STDOUT:   %import_ref.313 = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %import_ref.4e8b20.1 = import_ref Core//default, loc12_32, unloaded
+// CHECK:STDOUT:   %import_ref.708: @As.%Convert.type (%Convert.type.843) = import_ref Core//default, loc12_32, loaded [symbolic = @As.%Convert (constants.%Convert.95f)]
 // CHECK:STDOUT:   %import_ref.595: <witness> = import_ref Core//default, loc19_17, loaded [template = constants.%impl_witness.bd0]
 // CHECK:STDOUT:   %import_ref.07c = import_ref Core//default, inst39 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.a6b: %Op.assoc_type = import_ref Core//default, loc8_41, loaded [template = constants.%assoc0.8e5]
+// CHECK:STDOUT:   %import_ref.a6b: %Op.assoc_type = import_ref Core//default, loc8_41, loaded [template = constants.%assoc0.958]
 // CHECK:STDOUT:   %import_ref.044 = import_ref Core//default, Op, unloaded
 // CHECK:STDOUT:   %import_ref.c8c7cd.1: type = import_ref Core//default, loc19_6, loaded [template = constants.%i32.builtin]
 // CHECK:STDOUT:   %import_ref.bf0: type = import_ref Core//default, loc19_13, loaded [template = constants.%Add.type]
@@ -694,7 +694,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.1, @As(%T) [symbolic = %Convert.type (constants.%Convert.type.843)]
 // CHECK:STDOUT:   %Convert: @As.%Convert.type (%Convert.type.843) = struct_value () [symbolic = %Convert (constants.%Convert.95f)]
 // CHECK:STDOUT:   %Convert.assoc_type: type = assoc_entity_type @As.%As.type (%As.type.eed), @As.%Convert.type (%Convert.type.843) [symbolic = %Convert.assoc_type (constants.%Convert.assoc_type.1e9)]
-// CHECK:STDOUT:   %assoc0: @As.%Convert.assoc_type (%Convert.assoc_type.1e9) = assoc_entity element0, imports.%import_ref.4e8b20.1 [symbolic = %assoc0 (constants.%assoc0.4ac002.1)]
+// CHECK:STDOUT:   %assoc0: @As.%Convert.assoc_type (%Convert.assoc_type.1e9) = assoc_entity element0, imports.%import_ref.708 [symbolic = %assoc0 (constants.%assoc0.460)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -863,7 +863,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.378
 // CHECK:STDOUT:   %Convert => constants.%Convert.e51
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.b93
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.9da
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.c6b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%T) {
@@ -881,7 +881,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.059
 // CHECK:STDOUT:   %Convert => constants.%Convert.4d7
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.40f
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.44d
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.046
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(%T) {}
@@ -905,7 +905,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.71e
 // CHECK:STDOUT:   %Convert => constants.%Convert.0e2
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.94e
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.3db
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.3d8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Self.a99) {

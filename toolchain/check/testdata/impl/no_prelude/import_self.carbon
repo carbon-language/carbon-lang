@@ -116,7 +116,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.31b [template]
-// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, imports.%import_ref.047 [template]
+// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, imports.%import_ref.5a3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

@@ -119,7 +119,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.cf0 [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, imports.%import_ref.777 [template]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, imports.%import_ref.e03 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%import_ref.f6d) [template]
 // CHECK:STDOUT:   %F.type.f36: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.4c3: %F.type.f36 = struct_value () [template]

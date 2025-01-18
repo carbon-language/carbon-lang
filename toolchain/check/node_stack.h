@@ -442,7 +442,7 @@ class NodeStack {
           return Id::KindFor<SemIR::ImplId>();
         case Parse::NodeKind::LetInitializer:
         case Parse::NodeKind::VariableInitializer:
-          return Id::KindFor<SemIR::GenericId>();
+          return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();

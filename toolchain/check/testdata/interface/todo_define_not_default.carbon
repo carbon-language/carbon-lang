@@ -34,10 +34,12 @@ interface I {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %I.type, %G.type [template]
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, @I.%G.decl [template]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %assoc_type.579: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %assoc2: %assoc_type.579 = assoc_entity element2, @I.%T [template]
+// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [template]
+// CHECK:STDOUT:   %assoc_type.4fb: type = assoc_entity_type %I.type, %i32 [template]
+// CHECK:STDOUT:   %assoc3: %assoc_type.4fb = assoc_entity element3, @I.%N [template]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
@@ -46,8 +48,6 @@ interface I {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42.20e, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_42.c68: %i32 = int_value 42 [template]
-// CHECK:STDOUT:   %assoc_type.4fb: type = assoc_entity_type %I.type, %i32 [template]
-// CHECK:STDOUT:   %assoc3: %assoc_type.4fb = assoc_entity element3, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -99,6 +99,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, %G.decl [template = constants.%assoc1]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {
+// CHECK:STDOUT:     %assoc2: %assoc_type.579 = assoc_entity element2, @I.%T [template = constants.%assoc2]
 // CHECK:STDOUT:     %int_32.loc18_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc18_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -106,8 +107,8 @@ interface I {
 // CHECK:STDOUT:     %.loc18_27: %tuple.type.24b = tuple_literal (%i32.loc18_19, %i32.loc18_24)
 // CHECK:STDOUT:     %.loc18_28: type = converted %.loc18_27, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc2: %assoc_type.579 = assoc_entity element2, %T [template = constants.%assoc2]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [template] {
+// CHECK:STDOUT:     %assoc3: %assoc_type.4fb = assoc_entity element3, @I.%N [template = constants.%assoc3]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42.20e]
 // CHECK:STDOUT:     %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]
@@ -116,14 +117,13 @@ interface I {
 // CHECK:STDOUT:     %.loc19_19.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
 // CHECK:STDOUT:     %.loc19_19.2: %i32 = converted %int_42, %.loc19_19.1 [template = constants.%int_42.c68]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc3: %assoc_type.4fb = assoc_entity element3, %N [template = constants.%assoc3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   .G = %assoc1
-// CHECK:STDOUT:   .T = %assoc2
-// CHECK:STDOUT:   .N = %assoc3
+// CHECK:STDOUT:   .T = @T.%assoc2
+// CHECK:STDOUT:   .N = @N.%assoc3
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl, %T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

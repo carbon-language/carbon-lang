@@ -100,7 +100,9 @@ class D {
 // CHECK:STDOUT:   %T.patt: %I_where.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.258 [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self.258 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, %.Self.as_wit [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %U: %I_where.type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %I_where.type = symbolic_binding_pattern U, 0 [symbolic]
@@ -156,7 +158,9 @@ class D {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.258]
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.258]
-// CHECK:STDOUT:       %Member.ref: %assoc_type = name_ref Member, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %Member.ref: %assoc_type = name_ref Member, @Member.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc10_29: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc10_41: %empty_tuple.type = tuple_literal ()
@@ -185,12 +189,13 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {}
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Member [template = constants.%assoc0]
+// CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {
+// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @I.%Member [template = constants.%assoc0]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Member = %assoc0
+// CHECK:STDOUT:   .Member = @Member.%assoc0
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -225,6 +230,8 @@ class D {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Member(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
 // CHECK:STDOUT:   %U.loc10_17.2 => constants.%U
@@ -286,12 +293,13 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {}
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Member [template = constants.%assoc0]
+// CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {
+// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @J.%Member [template = constants.%assoc0]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Member = %assoc0
+// CHECK:STDOUT:   .Member = @Member.%assoc0
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

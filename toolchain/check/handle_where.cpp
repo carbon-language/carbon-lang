@@ -62,13 +62,27 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
   auto lhs = context.node_stack().PopExpr();
 
   // Convert rhs to type of lhs.
-  SemIR::InstId rhs_inst_id = ConvertToValueOfType(
-      context, rhs_node, rhs_id, context.insts().Get(lhs).type_id());
+  auto lhs_type_id = context.insts().Get(lhs).type_id();
+  if (context.types().GetConstantId(lhs_type_id).is_symbolic()) {
+    // If the type of the associated constant is symbolic, we defer conversion
+    // until the constraint is resolved, in case it depends on `Self` (which
+    // will now be a reference to `.Self`).
+    // TODO: It would be simpler to always defer this conversion until the
+    // constraint is resolved.
+    // For now we convert to a value expression eagerly because otherwise we'll
+    // often be unable to constant-evaluate the enclosing `where` expression.
+    // TODO: Find another way to handle this that allows us to only convert the
+    // RHS once.
+    rhs_id = ConvertToValueExpr(context, rhs_id);
+  } else {
+    rhs_id = ConvertToValueOfType(context, rhs_node, rhs_id,
+                                  context.insts().Get(lhs).type_id());
+  }
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       context.AddInstInNoBlock<SemIR::RequirementRewrite>(
-          node_id, {.lhs_id = lhs, .rhs_id = rhs_inst_id}));
+          node_id, {.lhs_id = lhs, .rhs_id = rhs_id}));
   return true;
 }
 

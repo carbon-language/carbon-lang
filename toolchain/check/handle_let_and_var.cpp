@@ -55,35 +55,118 @@ auto HandleParseNode(Context& context, Parse::ReturnedModifierId node_id)
 
 static auto HandleInitializer(
     Context& context, Parse::NodeId node_id,
-    SemIR::GenericId generic_id = SemIR::GenericId::Invalid) -> bool {
+    SemIR::InstId inst_id = SemIR::InstId::Invalid) -> bool {
   if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
     context.global_init().Resume();
   }
-  context.node_stack().PushOptional(node_id, generic_id);
+  context.node_stack().PushOptional(node_id, inst_id);
   return true;
+}
+
+// If the top node on the node stack is a TuplePattern, pops and discards it.
+// Returns true if it did so.
+// TODO: We use this because TuplePatterns don't have the same representation on
+// the node stack as other patterns.
+static auto TryPopAndDiscardTuplePattern(Context& context) -> bool {
+  if (!context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
+    return false;
+  }
+
+  context.node_stack().PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
+  // TODO: Tuple patterns leave behind an entry on the subpattern stack.
+  // Popping it here seems wrong, but it's not clear how this should work.
+  context.EndSubpatternAsEmpty();
+  return true;
+}
+
+// Builds an associated constant declaration for a `let`. This should be called
+// with the pattern in an interface-scope let declaration at the top of the node
+// stack. Pops the pattern and returns the new declaration.
+static auto HandleAssociatedConstantDecl(Context& context,
+                                         SemIR::InterfaceId interface_id)
+    -> SemIR::InstId {
+  auto& interface_info = context.interfaces().Get(interface_id);
+
+  // Pop the pattern.
+  auto pattern_node_id = context.node_stack().PeekNodeId();
+  SemIR::InstId pattern_id = SemIR::InstId::Invalid;
+  if (!TryPopAndDiscardTuplePattern(context)) {
+    pattern_id = context.node_stack().PopPattern();
+  }
+
+  auto binding_pattern =
+      pattern_id.is_valid()
+          ? context.insts().TryGetAs<SemIR::BindSymbolicName>(pattern_id)
+          : std::nullopt;
+  if (!binding_pattern) {
+    CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
+                      "pattern in associated constant declaration must be a "
+                      "single `:!` binding");
+    context.emitter().Emit(pattern_node_id,
+                           ExpectedSymbolicBindingInAssociatedConstant);
+    context.name_scopes().Get(interface_info.scope_id).set_has_error();
+    DiscardGenericDecl(context);
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
+  // TODO: Don't create the EntityName object for an associated constant. We
+  // don't use it.
+  auto entity_name =
+      context.entity_names().Get(binding_pattern->entity_name_id);
+
+  // The pattern instruction will be replaced by the associated constant
+  // declaration.
+  auto decl_id = pattern_id;
+
+  // Create the associated constant.
+  auto assoc_const_id = context.associated_constants().Add(
+      {.name_id = entity_name.name_id,
+       .parent_scope_id = entity_name.parent_scope_id,
+       .generic_id = SemIR::GenericId::Invalid,
+       .decl_id = decl_id,
+       .default_value_id = SemIR::InstId::Invalid});
+
+  // Replace the tentative BindSymbolicName instruction with the associated
+  // constant declaration. We will update this again with a location and a decl
+  // block at the end of the declaration.
+  context.ReplaceLocIdAndInstBeforeConstantUse(
+      decl_id, SemIR::LocIdAndInst::UncheckedLoc(
+                   SemIR::LocId::Invalid,
+                   SemIR::AssociatedConstantDecl{
+                       .type_id = binding_pattern->type_id,
+                       .assoc_const_id = assoc_const_id,
+                       .decl_block_id = SemIR::InstBlockId::Invalid}));
+
+  // Finish the declaration region of the generic associated constant.
+  // We can't do this before now because the region needs to contain the
+  // associated constant declaration itself, because its type may depend on
+  // Self.
+  context.associated_constants().Get(assoc_const_id).generic_id =
+      BuildGenericDecl(context, decl_id);
+
+  // Add a corresponding associated entity name to the interface scope.
+  // TODO: This ends up inside the decl block of the associated constant. Should
+  // it be outside instead?
+  auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
+  auto name_context = context.decl_name_stack().MakeUnqualifiedName(
+      pattern_node_id, entity_name.name_id);
+  context.decl_name_stack().AddNameOrDiagnose(
+      name_context, assoc_id,
+      context.decl_introducer_state_stack()
+          .innermost()
+          .modifier_set.GetAccessKind());
+  return decl_id;
 }
 
 auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
-  // For an associated constant, transition from processing the generic
-  // declaration to processing the generic definition.
-  auto generic_id = SemIR::GenericId::Invalid;
-  if (context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
-      // Tuple patterns don't have an InstId. This is diagnosed elsewhere; we're
-      // just recovering from the error here.
-      // TODO: Remove this once we have a uniform representation on the node
-      // stack for all patterns.
-      DiscardGenericDecl(context);
-    } else {
-      generic_id =
-          BuildGenericDecl(context, context.node_stack().PeekPattern());
-    }
-
+  auto decl_id = SemIR::InstId::Invalid;
+  if (auto interface_decl = context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+    decl_id = HandleAssociatedConstantDecl(context, interface_decl->interface_id);
     StartGenericDefinition(context);
   }
 
-  return HandleInitializer(context, node_id, generic_id);
+  return HandleInitializer(context, node_id, decl_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
@@ -125,10 +208,9 @@ struct DeclInfo {
   // The optional initializer.
   SemIR::InstId init_id = SemIR::InstId::Invalid;
   SemIR::InstId pattern_id = SemIR::InstId::Invalid;
+  SemIR::InstId assoc_const_id = SemIR::InstId::Invalid;
   std::optional<SemIR::Inst> parent_scope_inst = std::nullopt;
   DeclIntroducerState introducer = DeclIntroducerState();
-  // For an associated constant, the corresponding generic.
-  SemIR::GenericId generic_id = SemIR::GenericId::Invalid;
 };
 }  // namespace
 
@@ -148,17 +230,22 @@ static auto HandleDecl(Context& context) -> DeclInfo {
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
     decl_info.init_id = context.node_stack().PopExpr();
-    decl_info.generic_id = context.node_stack().Pop<InitializerNodeKind>();
+    decl_info.assoc_const_id = context.node_stack().Pop<InitializerNodeKind>();
   }
 
-  if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
-    auto paren_node_id =
-        context.node_stack()
-            .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
-    // TODO: Tuple patterns leave behind an entry on the subpattern stack.
-    // Popping it here seems wrong, but it's not clear how this should work.
-    context.EndSubpatternAsEmpty();
-    context.TODO(paren_node_id, "tuple pattern in let/var");
+  auto pattern_node_id = context.node_stack().PeekNodeId();
+
+  // Handle the pattern.
+  if (auto interface_decl = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
+      interface_decl && IntroducerTokenKind == Lex::TokenKind::Let) {
+    // This is an associated constant declaration. If it has an initializer, we
+    // already handled the pattern as part of handling the `=`.
+    if (!decl_info.assoc_const_id.is_valid()) {
+      decl_info.assoc_const_id =
+          HandleAssociatedConstantDecl(context, interface_decl->interface_id);
+    }
+  } else if (TryPopAndDiscardTuplePattern(context)) {
+    context.TODO(pattern_node_id, "tuple pattern in let/var");
     decl_info.pattern_id = SemIR::ErrorInst::SingletonInstId;
   } else {
     decl_info.pattern_id = context.node_stack().PopPattern();
@@ -187,72 +274,38 @@ static auto HandleDecl(Context& context) -> DeclInfo {
   return decl_info;
 }
 
-// Builds an associated constant declaration for a `let`.
-static auto BuildAssociatedConstantDecl(
-    Context& context, Parse::LetDeclId node_id, DeclInfo& decl_info,
-    SemIR::LocIdAndInst pattern, SemIR::InterfaceId interface_id) -> void {
-  auto& interface_info = context.interfaces().Get(interface_id);
-
-  auto decl_block_id = context.inst_block_stack().Pop();
-
-  auto binding_pattern = pattern.inst.TryAs<SemIR::BindSymbolicName>();
-  if (!binding_pattern) {
-    CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                      "pattern in associated constant declaration must be a "
-                      "single `:!` binding");
-    context.emitter().Emit(pattern.loc_id,
-                           ExpectedSymbolicBindingInAssociatedConstant);
-    context.name_scopes().Get(interface_info.scope_id).set_has_error();
-    DiscardGenericDecl(context);
+// Finishes an associated constant declaration. This is called at the `;` to
+// perform any final steps. We already built the declaration instruction.
+static auto FinishAssociatedConstantDecl(Context& context,
+                                         Parse::LetDeclId node_id,
+                                         DeclInfo& decl_info) -> void {
+  if (decl_info.assoc_const_id == SemIR::ErrorInst::SingletonInstId) {
+    context.inst_block_stack().Pop();
     return;
   }
 
-  // The pattern instruction will be replaced by the associated constant
-  // declaration.
-  auto decl_id = decl_info.pattern_id;
+  auto decl = context.insts().GetAs<SemIR::AssociatedConstantDecl>(
+      decl_info.assoc_const_id);
 
-  // An associated constant always has an associated generic. Finish it now.
-  // If there was an initializer, we're in the definition region, otherwise
-  // we're in the declaration region.
+  // If there was an initializer, convert it and store it on the constant.
   if (decl_info.init_id.is_valid()) {
     // TODO: Diagnose if the `default` modifier was not used.
-    FinishGenericDefinition(context, decl_info.generic_id);
+    auto default_value_id =
+        ConvertToValueOfType(context, node_id, decl_info.init_id, decl.type_id);
+    auto& assoc_const = context.associated_constants().Get(decl.assoc_const_id);
+    assoc_const.default_value_id = default_value_id;
+    FinishGenericDefinition(context, assoc_const.generic_id);
   } else {
     // TODO: Either allow redeclarations of associated constants or diagnose if
     // the `default` modifier was used.
-    decl_info.generic_id = BuildGenericDecl(context, decl_id);
   }
 
-  // TODO: Don't create the EntityName object for an associated constant. We
-  // don't use it.
-  auto entity_name =
-      context.entity_names().Get(binding_pattern->entity_name_id);
+  // Store the decl block on the declaration.
+  decl.decl_block_id = context.inst_block_stack().Pop();
+  context.ReplaceLocIdAndInstPreservingConstantValue(
+      decl_info.assoc_const_id, SemIR::LocIdAndInst(node_id, decl));
 
-  // Create the associated constant.
-  auto assoc_const_id = context.associated_constants().Add(
-      {.name_id = entity_name.name_id,
-       .parent_scope_id = entity_name.parent_scope_id,
-       .generic_id = decl_info.generic_id,
-       .decl_id = decl_id,
-       .default_value_id = decl_info.init_id});
-
-  // Replace the tentative BindSymbolicName instruction with the associated
-  // constant declaration.
-  context.ReplaceLocIdAndInstBeforeConstantUse(
-      decl_id,
-      SemIR::LocIdAndInst(node_id, SemIR::AssociatedConstantDecl{
-                                       .type_id = binding_pattern->type_id,
-                                       .assoc_const_id = assoc_const_id,
-                                       .decl_block_id = decl_block_id}));
-  context.inst_block_stack().AddInstId(decl_id);
-
-  // Add an associated entity name to the interface scope.
-  auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
-  auto name_context = context.decl_name_stack().MakeUnqualifiedName(
-      pattern.loc_id, entity_name.name_id);
-  context.decl_name_stack().AddNameOrDiagnose(
-      name_context, assoc_id,
-      decl_info.introducer.modifier_set.GetAccessKind());
+  context.inst_block_stack().AddInstId(decl_info.assoc_const_id);
 }
 
 auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
@@ -272,23 +325,20 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
                  "interface modifier");
   }
 
+  // At interface scope, we are forming an associated constant, which has
+  // different rules.
+  if (decl_info.assoc_const_id.is_valid()) {
+    FinishAssociatedConstantDecl(context, node_id, decl_info);
+    return true;
+  }
+
   auto pattern = context.insts().GetWithLocId(decl_info.pattern_id);
 
   if (decl_info.init_id.is_valid()) {
     // Convert the value to match the type of the pattern.
     decl_info.init_id = ConvertToValueOfType(
         context, node_id, decl_info.init_id, pattern.inst.type_id());
-  }
-
-  // At interface scope, we are forming an associated constant, which has
-  // different rules.
-  if (auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    BuildAssociatedConstantDecl(context, node_id, decl_info, pattern,
-                                interface_scope->interface_id);
-    return true;
-  }
-
-  if (!decl_info.init_id.is_valid()) {
+  } else {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "expected `=`; `let` declaration must have an initializer");

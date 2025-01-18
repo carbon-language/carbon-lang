@@ -45,15 +45,17 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {}
-// CHECK:STDOUT:   %assoc0: %assoc_type.579 = assoc_entity element0, %T [template = constants.%assoc0]
-// CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [template] {}
-// CHECK:STDOUT:   %assoc1: %assoc_type.4fb = assoc_entity element1, %N [template = constants.%assoc1]
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {
+// CHECK:STDOUT:     %assoc0: %assoc_type.579 = assoc_entity element0, @I.%T [template = constants.%assoc0]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [template] {
+// CHECK:STDOUT:     %assoc1: %assoc_type.4fb = assoc_entity element1, @I.%N [template = constants.%assoc1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %assoc0
-// CHECK:STDOUT:   .N = %assoc1
+// CHECK:STDOUT:   .T = @T.%assoc0
+// CHECK:STDOUT:   .N = @N.%assoc1
 // CHECK:STDOUT:   witness = (%T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
