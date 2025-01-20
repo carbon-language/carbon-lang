@@ -185,7 +185,7 @@ import Cpp library "multiple_warnings.h";
 library "[[@TEST_NAME]]";
 
 import Cpp library "one_error_and_one_warning.h";
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_warnings_and_errors.carbon:[[@LINE+27]]:1: error: 3 errors and 4 warnings in 2 `Cpp` imports:
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_warnings_and_errors.carbon:[[@LINE+28]]:1: error: 3 errors and 4 warnings in 2 `Cpp` imports:
 // CHECK:STDERR: In file included from fail_import_multiple_cpp_files_with_warnings_and_errors.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1"
 // CHECK:STDERR:     2 | #error "error1"

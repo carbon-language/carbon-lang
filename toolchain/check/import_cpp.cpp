@@ -54,7 +54,6 @@ auto ImportCppFiles(
       new clang::DiagnosticOptions());
   clang::TextDiagnosticPrinter diagnostics_consumer(diagnostics_stream,
                                                     diagnostic_options.get());
-
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(imports), {},
