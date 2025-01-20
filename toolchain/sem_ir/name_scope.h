@@ -71,8 +71,8 @@ class NameScope : public Printable<NameScope> {
   // using inst_id and access_kind and returns false with the new EntryId.
   //
   // This cannot be used to add poisoned entries; use LookupOrPoison instead.
-  auto LookupOrAdd(SemIR::NameId name_id, InstId inst_id,
-                   AccessKind access_kind) -> std::pair<bool, EntryId>;
+  auto LookupOrAdd(NameId name_id, InstId inst_id, AccessKind access_kind)
+      -> std::pair<bool, EntryId>;
 
   // Searches for the given name. If found, including if a poisoned entry is
   // found, returns the corresponding EntryId. Otherwise, returns nullopt and
@@ -83,7 +83,7 @@ class NameScope : public Printable<NameScope> {
     return extended_scopes_;
   }
 
-  auto AddExtendedScope(SemIR::InstId extended_scope) -> void {
+  auto AddExtendedScope(InstId extended_scope) -> void {
     extended_scopes_.push_back(extended_scope);
   }
 
@@ -111,13 +111,12 @@ class NameScope : public Printable<NameScope> {
   }
 
   auto import_ir_scopes() const
-      -> llvm::ArrayRef<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>> {
+      -> llvm::ArrayRef<std::pair<ImportIRId, NameScopeId>> {
     return import_ir_scopes_;
   }
 
   auto AddImportIRScope(
-      const std::pair<SemIR::ImportIRId, SemIR::NameScopeId>& import_ir_scope)
-      -> void {
+      const std::pair<ImportIRId, NameScopeId>& import_ir_scope) -> void {
     import_ir_scopes_.push_back(import_ir_scope);
   }
 
@@ -168,8 +167,7 @@ class NameScope : public Printable<NameScope> {
 
   // Imported IR scopes that compose this namespace. This will be empty for
   // scopes that correspond to the current package.
-  llvm::SmallVector<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>, 0>
-      import_ir_scopes_;
+  llvm::SmallVector<std::pair<ImportIRId, NameScopeId>, 0> import_ir_scopes_;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.
@@ -211,7 +209,7 @@ class NameScopeStore {
       return false;
     }
     // A package is either the current package or an imported package.
-    return scope_id == SemIR::NameScopeId::Package ||
+    return scope_id == NameScopeId::Package ||
            Get(scope_id).is_imported_package();
   }
 
