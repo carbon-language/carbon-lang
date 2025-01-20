@@ -58,13 +58,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .BitAnd = %import_ref.b14
-// CHECK:STDOUT:     .BitAndAssign = %import_ref.d81
+// CHECK:STDOUT:     .BitAnd = %Core.BitAnd
+// CHECK:STDOUT:     .BitAndAssign = %Core.BitAndAssign
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.b14: type = import_ref Core//prelude/operators/bitwise, BitAnd, loaded [template = constants.%BitAnd.type]
-// CHECK:STDOUT:   %import_ref.d81: type = import_ref Core//prelude/operators/bitwise, BitAndAssign, loaded [template = constants.%BitAndAssign.type]
+// CHECK:STDOUT:   %Core.BitAnd: type = import_ref Core//prelude/operators/bitwise, BitAnd, loaded [template = constants.%BitAnd.type]
+// CHECK:STDOUT:   %Core.BitAndAssign: type = import_ref Core//prelude/operators/bitwise, BitAndAssign, loaded [template = constants.%BitAndAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,13 +79,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %BitAnd.ref: type = name_ref BitAnd, imports.%import_ref.b14 [template = constants.%BitAnd.type]
+// CHECK:STDOUT:     %BitAnd.ref: type = name_ref BitAnd, imports.%Core.BitAnd [template = constants.%BitAnd.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness.5af]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %BitAndAssign.ref: type = name_ref BitAndAssign, imports.%import_ref.d81 [template = constants.%BitAndAssign.type]
+// CHECK:STDOUT:     %BitAndAssign.ref: type = name_ref BitAndAssign, imports.%Core.BitAndAssign [template = constants.%BitAndAssign.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.2.%Op.decl) [template = constants.%impl_witness.762]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {

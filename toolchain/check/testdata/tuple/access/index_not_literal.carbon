@@ -27,7 +27,7 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:   %tuple.type.3c2: type = tuple_type (bool, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.71e: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.82c: <bound method> = bound_method %int_34.3f9, %Convert.956 [template]
@@ -39,13 +39,13 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:   %struct.972: %struct_type.index.b1b = struct_value (%int_1.5b8) [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.4, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%import_ref.78a), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.5, @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.129: <bound method> = bound_method %int_0.5c6, %Convert.197 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.dc5: <specific function> = specific_function %Convert.bound.129, @Convert.5(%int_32) [template]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %impl_witness.023: <witness> = impl_witness (imports.%import_ref.85c), @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.023: <witness> = impl_witness (imports.%Core.import_ref.85c), @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.4ad: type = fn_type @Convert.3, @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.960: %Convert.type.4ad = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.0fd: <bound method> = bound_method %int_0.6a9, %Convert.960 [template]
@@ -61,10 +61,10 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
-// CHECK:STDOUT:     .As = %import_ref.16b
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

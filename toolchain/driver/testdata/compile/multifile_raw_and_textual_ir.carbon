@@ -190,10 +190,10 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %A: <namespace> = namespace file.%A.import, [template] {
-// CHECK:STDOUT:     .A = %import_ref
+// CHECK:STDOUT:     .A = %A.A
 // CHECK:STDOUT:     import A//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref A//default, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.A: %A.type = import_ref A//default, A, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -208,7 +208,7 @@ fn B() {
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc6_3: <namespace> = name_ref A, imports.%A [template = imports.%A]
-// CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%import_ref [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%A.A [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc6_4()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

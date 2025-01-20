@@ -691,7 +691,32 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
-        add_inst_name("import_ref");
+        // Build the base import name: <package>.<entity-name>
+        RawStringOstream out;
+
+        auto inst = untyped_inst.As<AnyImportRef>();
+        auto import_ir_inst =
+            sem_ir_->import_ir_insts().Get(inst.import_ir_inst_id);
+        const auto& import_ir =
+            *sem_ir_->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+        if (import_ir.package_id().is_valid()) {
+          out << import_ir.identifiers().Get(import_ir.package_id());
+        } else {
+          out << "Main";
+        }
+        out << ".";
+
+        // Add entity name if available.
+        if (inst.entity_name_id.is_valid()) {
+          auto name_id =
+              sem_ir_->entity_names().Get(inst.entity_name_id).name_id;
+          out << sem_ir_->names().GetIRBaseName(name_id);
+        } else {
+          out << "import_ref";
+        }
+
+        add_inst_name(out.TakeStr());
+
         // When building import refs, we frequently add instructions without
         // a block. Constants that refer to them need to be separately
         // named.

@@ -64,7 +64,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref
+// CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -291,7 +291,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
 // CHECK:STDOUT:   %Equal.type.79c: type = fn_type @Equal.1 [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%import_ref.998, imports.%import_ref.fb6) [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.998, imports.%Core.import_ref.fb6) [template]
 // CHECK:STDOUT:   %Equal.type.aa3: type = fn_type @Equal.2 [template]
 // CHECK:STDOUT:   %Equal.6e2: %Equal.type.aa3 = struct_value () [template]
 // CHECK:STDOUT:   %Equal.bound.fe0: <bound method> = bound_method %true, %Equal.6e2 [template]
@@ -300,8 +300,8 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .Eq = %import_ref.822
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Eq = %Core.Eq
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

@@ -68,8 +68,8 @@ fn Other.Nested.F();
 // CHECK:STDOUT:     .Nested = %Nested
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Other//default, Nested, loaded
-// CHECK:STDOUT:   %Nested: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:   %Other.Nested: <namespace> = import_ref Other//default, Nested, loaded
+// CHECK:STDOUT:   %Nested: <namespace> = namespace %Other.Nested, [template] {
 // CHECK:STDOUT:     .F = file.%F.decl
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }

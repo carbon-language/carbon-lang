@@ -68,12 +68,12 @@ let b: () = Other.a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Implicit//default, a, loaded
+// CHECK:STDOUT:   %Implicit.a: %empty_tuple.type = import_ref Implicit//default, a, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a = imports.%import_ref
+// CHECK:STDOUT:     .a = imports.%Implicit.a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
@@ -90,7 +90,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%import_ref
+// CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%Implicit.a
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,10 +131,10 @@ let b: () = Other.a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .a = %import_ref
+// CHECK:STDOUT:     .a = %Other.a
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Other//default, a, loaded
+// CHECK:STDOUT:   %Other.a: %empty_tuple.type = import_ref Other//default, a, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -156,7 +156,7 @@ let b: () = Other.a;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%import_ref
+// CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%Other.a
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

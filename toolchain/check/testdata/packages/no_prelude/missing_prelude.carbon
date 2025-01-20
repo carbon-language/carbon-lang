@@ -215,7 +215,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude_fake_int
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

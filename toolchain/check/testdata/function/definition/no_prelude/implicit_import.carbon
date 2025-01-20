@@ -310,12 +310,12 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//redef_after_def, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %Main.A: %A.type = import_ref Main//redef_after_def, A, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref
+// CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
@@ -358,14 +358,14 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0c3 = import_ref Main//def_alias, A, unloaded
-// CHECK:STDOUT:   %import_ref.9d1: %A.type = import_ref Main//def_alias, B, loaded [template = constants.%A]
+// CHECK:STDOUT:   %Main.A = import_ref Main//def_alias, A, unloaded
+// CHECK:STDOUT:   %Main.B: %A.type = import_ref Main//def_alias, B, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.0c3
-// CHECK:STDOUT:     .B = imports.%import_ref.9d1
+// CHECK:STDOUT:     .A = imports.%Main.A
+// CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>

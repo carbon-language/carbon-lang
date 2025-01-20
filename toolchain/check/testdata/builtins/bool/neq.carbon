@@ -64,7 +64,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref
+// CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -291,7 +291,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
 // CHECK:STDOUT:   %NotEqual.type.e6c: type = fn_type @NotEqual.1 [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%import_ref.85b, imports.%import_ref.67a) [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.85b, imports.%Core.import_ref.67a) [template]
 // CHECK:STDOUT:   %NotEqual.type.c0e: type = fn_type @NotEqual.2 [template]
 // CHECK:STDOUT:   %NotEqual.bf4: %NotEqual.type.c0e = struct_value () [template]
 // CHECK:STDOUT:   %NotEqual.bound.542: <bound method> = bound_method %true, %NotEqual.bf4 [template]
@@ -300,8 +300,8 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .Eq = %import_ref.822
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Eq = %Core.Eq
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

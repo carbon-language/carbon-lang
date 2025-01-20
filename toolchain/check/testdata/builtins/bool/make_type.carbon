@@ -62,7 +62,7 @@ var b: Bool() = false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Main//types, Bool, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %Main.Bool: %Bool.type = import_ref Main//types, Bool, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -71,7 +71,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Bool = imports.%import_ref
+// CHECK:STDOUT:     .Bool = imports.%Main.Bool
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
@@ -83,7 +83,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref bool = var b
 // CHECK:STDOUT:   %.loc6_13.1: type = splice_block %.loc6_13.3 [template = bool] {
-// CHECK:STDOUT:     %Bool.ref: %Bool.type = name_ref Bool, imports.%import_ref [template = constants.%Bool]
+// CHECK:STDOUT:     %Bool.ref: %Bool.type = name_ref Bool, imports.%Main.Bool [template = constants.%Bool]
 // CHECK:STDOUT:     %bool.make_type: init type = call %Bool.ref() [template = bool]
 // CHECK:STDOUT:     %.loc6_13.2: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc6_13.3: type = converted %bool.make_type, %.loc6_13.2 [template = bool]

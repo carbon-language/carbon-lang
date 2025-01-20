@@ -53,12 +53,12 @@ interface I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Main//a, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [template = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref
+// CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}

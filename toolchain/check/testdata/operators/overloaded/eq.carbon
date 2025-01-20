@@ -107,12 +107,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Eq = %import_ref.822
-// CHECK:STDOUT:     .Bool = %import_ref.783
+// CHECK:STDOUT:     .Eq = %Core.Eq
+// CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.822: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
+// CHECK:STDOUT:   %Core.Eq: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -127,7 +127,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.822 [template = constants.%Eq.type]
+// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%Core.Eq [template = constants.%Eq.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [template = constants.%TestEqual] {
@@ -272,8 +272,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .Eq = %import_ref.822
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Eq = %Core.Eq
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -376,13 +376,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Eq = %import_ref.822
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Eq = %Core.Eq
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.822: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
+// CHECK:STDOUT:   %Core.Eq: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -399,7 +399,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.822 [template = constants.%Eq.type]
+// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%Core.Eq [template = constants.%Eq.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestRhsBad.decl: %TestRhsBad.type = fn_decl @TestRhsBad [template = constants.%TestRhsBad] {

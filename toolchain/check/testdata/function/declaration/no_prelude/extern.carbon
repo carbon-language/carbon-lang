@@ -106,12 +106,12 @@ extern library "basic" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//basic, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//basic, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref
+// CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -131,7 +131,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return

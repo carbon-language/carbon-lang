@@ -38,15 +38,15 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.01d: <witness> = impl_witness (imports.%import_ref.344), @impl.14(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.01d: <witness> = impl_witness (imports.%Core.import_ref.344), @impl.14(%int_32) [template]
 // CHECK:STDOUT:   %Op.type.210: type = fn_type @Op.2, @impl.14(%int_32) [template]
 // CHECK:STDOUT:   %Op.c82: %Op.type.210 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Add = %import_ref.fe6
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Add = %Core.Add
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

@@ -292,14 +292,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.c0e: type = assoc_entity_type %ImplicitAs.type.d62, %Convert.type.275 [symbolic]
-// CHECK:STDOUT:   %assoc0.5048c6.1: %Convert.assoc_type.c0e = assoc_entity element0, imports.%import_ref.207961.1 [symbolic]
+// CHECK:STDOUT:   %assoc0.5048c6.1: %Convert.assoc_type.c0e = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.61e: type = facet_type <@ImplicitAs, @ImplicitAs(%i32.builtin)> [template]
 // CHECK:STDOUT:   %Convert.type.059: type = fn_type @Convert.1, @ImplicitAs(%i32.builtin) [template]
 // CHECK:STDOUT:   %Convert.4d7: %Convert.type.059 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.40f: type = assoc_entity_type %ImplicitAs.type.61e, %Convert.type.059 [template]
-// CHECK:STDOUT:   %assoc0.44d: %Convert.assoc_type.40f = assoc_entity element0, imports.%import_ref.207961.1 [template]
-// CHECK:STDOUT:   %assoc0.5048c6.2: %Convert.assoc_type.c0e = assoc_entity element0, imports.%import_ref.207961.2 [symbolic]
-// CHECK:STDOUT:   %impl_witness.39c7: <witness> = impl_witness (imports.%import_ref.f35) [template]
+// CHECK:STDOUT:   %assoc0.44d: %Convert.assoc_type.40f = assoc_entity element0, imports.%Core.import_ref.207961.1 [template]
+// CHECK:STDOUT:   %assoc0.5048c6.2: %Convert.assoc_type.c0e = assoc_entity element0, imports.%Core.import_ref.207961.2 [symbolic]
+// CHECK:STDOUT:   %impl_witness.39c7: <witness> = impl_witness (imports.%Core.import_ref.f35) [template]
 // CHECK:STDOUT:   %Convert.type.49f: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.cb5: %Convert.type.49f = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.04a: <bound method> = bound_method %int_0.5c6, %Convert.cb5 [template]
@@ -310,7 +310,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.type.010: type = fn_type @Convert.1, @ImplicitAs(%D) [template]
 // CHECK:STDOUT:   %Convert.d38: %Convert.type.010 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.514: type = assoc_entity_type %ImplicitAs.type.94e, %Convert.type.010 [template]
-// CHECK:STDOUT:   %assoc0.bce: %Convert.assoc_type.514 = assoc_entity element0, imports.%import_ref.207961.1 [template]
+// CHECK:STDOUT:   %assoc0.bce: %Convert.assoc_type.514 = assoc_entity element0, imports.%Core.import_ref.207961.1 [template]
 // CHECK:STDOUT:   %impl_witness.39cb: <witness> = impl_witness (@impl.2.%Convert.decl) [template]
 // CHECK:STDOUT:   %Convert.type.fff: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.606: %Convert.type.fff = struct_value () [template]
@@ -375,18 +375,18 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3b9
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.d44: %ImplicitAs.type.cc7 = import_ref Core//default, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %import_ref.ff5 = import_ref Core//default, inst49 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.589: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = import_ref Core//default, loc9_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.5048c6.2)]
-// CHECK:STDOUT:   %import_ref.582: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//default, Convert, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %import_ref.207961.1 = import_ref Core//default, loc9_32, unloaded
-// CHECK:STDOUT:   %import_ref.de9: <witness> = import_ref Core//default, loc12_38, loaded [template = constants.%impl_witness.39c7]
-// CHECK:STDOUT:   %import_ref.872: type = import_ref Core//default, loc12_17, loaded [template = Core.IntLiteral]
-// CHECK:STDOUT:   %import_ref.4d9: type = import_ref Core//default, loc12_36, loaded [template = constants.%ImplicitAs.type.61e]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//default, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst49 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.589: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = import_ref Core//default, loc9_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.5048c6.2)]
+// CHECK:STDOUT:   %Core.Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//default, Convert, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
+// CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc9_32, unloaded
+// CHECK:STDOUT:   %Core.import_ref.de9: <witness> = import_ref Core//default, loc12_38, loaded [template = constants.%impl_witness.39c7]
+// CHECK:STDOUT:   %Core.import_ref.872: type = import_ref Core//default, loc12_17, loaded [template = Core.IntLiteral]
+// CHECK:STDOUT:   %Core.import_ref.4d9: type = import_ref Core//default, loc12_36, loaded [template = constants.%ImplicitAs.type.61e]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -429,7 +429,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc10_9.2: %i32.builtin = converted %int_0, %.loc10_9.1 [template = constants.%int_0.a54]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_0.a54) [template = constants.%C.808]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -444,7 +444,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc11_9.2: %i32.builtin = converted %int_1, %.loc11_9.1 [template = constants.%int_1.f38]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_1.f38) [template = constants.%C.8be]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -459,7 +459,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc12_9.2: %i32.builtin = converted %int_2, %.loc12_9.1 [template = constants.%int_2.5a1]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_2.5a1) [template = constants.%C.c17]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -474,7 +474,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc13_9.2: %i32.builtin = converted %int_3, %.loc13_9.1 [template = constants.%int_3.a0f]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_3.a0f) [template = constants.%C.414]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -489,7 +489,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc14_9.2: %i32.builtin = converted %int_4, %.loc14_9.1 [template = constants.%int_4.4f1]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_4.4f1) [template = constants.%C.488]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -504,7 +504,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc15_9.2: %i32.builtin = converted %int_5, %.loc15_9.1 [template = constants.%int_5.967]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_5.967) [template = constants.%C.3e2]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -519,7 +519,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc16_9.2: %i32.builtin = converted %int_6, %.loc16_9.1 [template = constants.%int_6.ec5]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_6.ec5) [template = constants.%C.78c]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -534,7 +534,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc17_9.2: %i32.builtin = converted %int_7, %.loc17_9.1 [template = constants.%int_7.6ae]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_7.6ae) [template = constants.%C.6aa]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [template = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
@@ -551,19 +551,19 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.1, @ImplicitAs(%T) [symbolic = %Convert.type (constants.%Convert.type.275)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Convert.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62), @ImplicitAs.%Convert.type (%Convert.type.275) [symbolic = %Convert.assoc_type (constants.%Convert.assoc_type.c0e)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = assoc_entity element0, imports.%import_ref.207961.1 [symbolic = %assoc0 (constants.%assoc0.5048c6.1)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic = %assoc0 (constants.%assoc0.5048c6.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%import_ref.589
-// CHECK:STDOUT:     witness = (imports.%import_ref.582)
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.589
+// CHECK:STDOUT:     witness = (imports.%Core.Convert)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.872 as imports.%import_ref.4d9 [from "core.carbon"] {
+// CHECK:STDOUT: impl @impl.1: imports.%Core.import_ref.872 as imports.%Core.import_ref.4d9 [from "core.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.de9
+// CHECK:STDOUT:   witness = imports.%Core.import_ref.de9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %C as %ImplicitAs.type {
@@ -1047,14 +1047,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.c0e: type = assoc_entity_type %ImplicitAs.type.d62, %Convert.type.275 [symbolic]
-// CHECK:STDOUT:   %assoc0.5048c6.1: %Convert.assoc_type.c0e = assoc_entity element0, imports.%import_ref.207961.1 [symbolic]
+// CHECK:STDOUT:   %assoc0.5048c6.1: %Convert.assoc_type.c0e = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.61e: type = facet_type <@ImplicitAs, @ImplicitAs(%i32.builtin)> [template]
 // CHECK:STDOUT:   %Convert.type.059: type = fn_type @Convert.1, @ImplicitAs(%i32.builtin) [template]
 // CHECK:STDOUT:   %Convert.4d7: %Convert.type.059 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.40f: type = assoc_entity_type %ImplicitAs.type.61e, %Convert.type.059 [template]
-// CHECK:STDOUT:   %assoc0.44d: %Convert.assoc_type.40f = assoc_entity element0, imports.%import_ref.207961.1 [template]
-// CHECK:STDOUT:   %assoc0.5048c6.2: %Convert.assoc_type.c0e = assoc_entity element0, imports.%import_ref.207961.2 [symbolic]
-// CHECK:STDOUT:   %impl_witness.39c: <witness> = impl_witness (imports.%import_ref.f35) [template]
+// CHECK:STDOUT:   %assoc0.44d: %Convert.assoc_type.40f = assoc_entity element0, imports.%Core.import_ref.207961.1 [template]
+// CHECK:STDOUT:   %assoc0.5048c6.2: %Convert.assoc_type.c0e = assoc_entity element0, imports.%Core.import_ref.207961.2 [symbolic]
+// CHECK:STDOUT:   %impl_witness.39c: <witness> = impl_witness (imports.%Core.import_ref.f35) [template]
 // CHECK:STDOUT:   %Convert.type.49f: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.cb5: %Convert.type.49f = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.04a: <bound method> = bound_method %int_0.5c6, %Convert.cb5 [template]
@@ -1065,7 +1065,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.type.334: type = fn_type @Convert.1, @ImplicitAs(%D) [template]
 // CHECK:STDOUT:   %Convert.87c: %Convert.type.334 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.f99: type = assoc_entity_type %ImplicitAs.type.5f9, %Convert.type.334 [template]
-// CHECK:STDOUT:   %assoc0.4b2: %Convert.assoc_type.f99 = assoc_entity element0, imports.%import_ref.207961.1 [template]
+// CHECK:STDOUT:   %assoc0.4b2: %Convert.assoc_type.f99 = assoc_entity element0, imports.%Core.import_ref.207961.1 [template]
 // CHECK:STDOUT:   %int_1.f38: %i32.builtin = int_value 1 [template]
 // CHECK:STDOUT:   %C.012: type = class_type @C, @C(%int_1.f38) [template]
 // CHECK:STDOUT:   %int_2.5a1: %i32.builtin = int_value 2 [template]
@@ -1080,49 +1080,49 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.898: type = class_type @C, @C(%int_6.ec5) [template]
 // CHECK:STDOUT:   %int_7.6ae: %i32.builtin = int_value 7 [template]
 // CHECK:STDOUT:   %C.f0a: type = class_type @C, @C(%int_7.6ae) [template]
-// CHECK:STDOUT:   %impl_witness.368: <witness> = impl_witness (imports.%import_ref.5f3) [template]
+// CHECK:STDOUT:   %impl_witness.368: <witness> = impl_witness (imports.%P.import_ref.5f3) [template]
 // CHECK:STDOUT:   %Convert.type.c72: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.4f5: %Convert.type.c72 = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.bound.92d: <bound method> = bound_method %int_1.5b8, %Convert.cb5 [template]
 // CHECK:STDOUT:   %C.val.172: %C.012 = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.29f: <witness> = impl_witness (imports.%import_ref.4da) [template]
+// CHECK:STDOUT:   %impl_witness.29f: <witness> = impl_witness (imports.%P.import_ref.4da) [template]
 // CHECK:STDOUT:   %Convert.type.d88: type = fn_type @Convert.4 [template]
 // CHECK:STDOUT:   %Convert.ecc: %Convert.type.d88 = struct_value () [template]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.bound.1b9: <bound method> = bound_method %int_2.ecc, %Convert.cb5 [template]
 // CHECK:STDOUT:   %C.val.418: %C.3e6 = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.3ac: <witness> = impl_witness (imports.%import_ref.ebf) [template]
+// CHECK:STDOUT:   %impl_witness.3ac: <witness> = impl_witness (imports.%P.import_ref.ebf) [template]
 // CHECK:STDOUT:   %Convert.type.c17: type = fn_type @Convert.5 [template]
 // CHECK:STDOUT:   %Convert.c2b: %Convert.type.c17 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %Convert.bound.b6b: <bound method> = bound_method %int_3.1ba, %Convert.cb5 [template]
 // CHECK:STDOUT:   %C.val.bba: %C.4d9 = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.b40: <witness> = impl_witness (imports.%import_ref.f13) [template]
+// CHECK:STDOUT:   %impl_witness.b40: <witness> = impl_witness (imports.%P.import_ref.f13) [template]
 // CHECK:STDOUT:   %Convert.type.70f: type = fn_type @Convert.6 [template]
 // CHECK:STDOUT:   %Convert.2b5: %Convert.type.70f = struct_value () [template]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %Convert.bound.626: <bound method> = bound_method %int_4.0c1, %Convert.cb5 [template]
 // CHECK:STDOUT:   %C.val.4b6: %C.a67 = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.20f: <witness> = impl_witness (imports.%import_ref.97a) [template]
+// CHECK:STDOUT:   %impl_witness.20f: <witness> = impl_witness (imports.%P.import_ref.97a) [template]
 // CHECK:STDOUT:   %Convert.type.782: type = fn_type @Convert.7 [template]
 // CHECK:STDOUT:   %Convert.625: %Convert.type.782 = struct_value () [template]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %Convert.bound.910: <bound method> = bound_method %int_5.64b, %Convert.cb5 [template]
 // CHECK:STDOUT:   %C.val.75e: %C.65c = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.9b3: <witness> = impl_witness (imports.%import_ref.e04) [template]
+// CHECK:STDOUT:   %impl_witness.9b3: <witness> = impl_witness (imports.%P.import_ref.e04) [template]
 // CHECK:STDOUT:   %Convert.type.0e6: type = fn_type @Convert.8 [template]
 // CHECK:STDOUT:   %Convert.73d: %Convert.type.0e6 = struct_value () [template]
 // CHECK:STDOUT:   %int_6.462: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT:   %Convert.bound.e3a: <bound method> = bound_method %int_6.462, %Convert.cb5 [template]
 // CHECK:STDOUT:   %C.val.02a: %C.898 = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.b5b: <witness> = impl_witness (imports.%import_ref.6aa) [template]
+// CHECK:STDOUT:   %impl_witness.b5b: <witness> = impl_witness (imports.%P.import_ref.6aa) [template]
 // CHECK:STDOUT:   %Convert.type.9e9: type = fn_type @Convert.9 [template]
 // CHECK:STDOUT:   %Convert.e8e: %Convert.type.9e9 = struct_value () [template]
 // CHECK:STDOUT:   %int_7.29f: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %Convert.bound.06a: <bound method> = bound_method %int_7.29f, %Convert.cb5 [template]
 // CHECK:STDOUT:   %C.val.654: %C.f0a = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.dfb: <witness> = impl_witness (imports.%import_ref.243) [template]
+// CHECK:STDOUT:   %impl_witness.dfb: <witness> = impl_witness (imports.%P.import_ref.243) [template]
 // CHECK:STDOUT:   %Convert.type.fc1: type = fn_type @Convert.10 [template]
 // CHECK:STDOUT:   %Convert.430: %Convert.type.fc1 = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -1131,56 +1131,56 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %P: <namespace> = namespace file.%P.import, [template] {
-// CHECK:STDOUT:     .D = %import_ref.b0a
-// CHECK:STDOUT:     .C = %import_ref.f9e
-// CHECK:STDOUT:     .Make = %import_ref.981
+// CHECK:STDOUT:     .D = %P.D
+// CHECK:STDOUT:     .C = %P.C
+// CHECK:STDOUT:     .Make = %P.Make
 // CHECK:STDOUT:     import P//library
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3b9
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.b0a: type = import_ref P//library, D, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.7e5: <witness> = import_ref P//library, loc7_35, loaded [template = constants.%complete_type.682]
-// CHECK:STDOUT:   %import_ref.cab = import_ref P//library, inst47 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.a99 = import_ref P//library, loc7_16, unloaded
-// CHECK:STDOUT:   %import_ref.9d2 = import_ref P//library, loc7_28, unloaded
-// CHECK:STDOUT:   %import_ref.f9e: %C.type = import_ref P//library, C, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref P//library, loc6_19, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.d9b = import_ref P//library, inst42 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.ff5 = import_ref Core//default, inst49 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.589: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = import_ref Core//default, loc9_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.5048c6.2)]
-// CHECK:STDOUT:   %import_ref.e69 = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %import_ref.207961.1 = import_ref Core//default, loc9_32, unloaded
-// CHECK:STDOUT:   %import_ref.de9: <witness> = import_ref Core//default, loc12_38, loaded [template = constants.%impl_witness.39c]
-// CHECK:STDOUT:   %import_ref.872: type = import_ref Core//default, loc12_17, loaded [template = Core.IntLiteral]
-// CHECK:STDOUT:   %import_ref.4d9: type = import_ref Core//default, loc12_36, loaded [template = constants.%ImplicitAs.type.61e]
-// CHECK:STDOUT:   %import_ref.316: <witness> = import_ref P//library, loc10_33, loaded [template = constants.%impl_witness.368]
-// CHECK:STDOUT:   %import_ref.624: type = import_ref P//library, loc10_9, loaded [template = constants.%C.76d]
-// CHECK:STDOUT:   %import_ref.b769fa.1: type = import_ref P//library, loc10_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.776: <witness> = import_ref P//library, loc11_33, loaded [template = constants.%impl_witness.29f]
-// CHECK:STDOUT:   %import_ref.8ff: type = import_ref P//library, loc11_9, loaded [template = constants.%C.012]
-// CHECK:STDOUT:   %import_ref.b769fa.2: type = import_ref P//library, loc11_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.848: <witness> = import_ref P//library, loc12_33, loaded [template = constants.%impl_witness.3ac]
-// CHECK:STDOUT:   %import_ref.f4d: type = import_ref P//library, loc12_9, loaded [template = constants.%C.3e6]
-// CHECK:STDOUT:   %import_ref.b769fa.3: type = import_ref P//library, loc12_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.036: <witness> = import_ref P//library, loc13_33, loaded [template = constants.%impl_witness.b40]
-// CHECK:STDOUT:   %import_ref.dd2: type = import_ref P//library, loc13_9, loaded [template = constants.%C.4d9]
-// CHECK:STDOUT:   %import_ref.b769fa.4: type = import_ref P//library, loc13_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.e33: <witness> = import_ref P//library, loc14_33, loaded [template = constants.%impl_witness.20f]
-// CHECK:STDOUT:   %import_ref.2c7: type = import_ref P//library, loc14_9, loaded [template = constants.%C.a67]
-// CHECK:STDOUT:   %import_ref.b769fa.5: type = import_ref P//library, loc14_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.1aa: <witness> = import_ref P//library, loc15_33, loaded [template = constants.%impl_witness.9b3]
-// CHECK:STDOUT:   %import_ref.759: type = import_ref P//library, loc15_9, loaded [template = constants.%C.65c]
-// CHECK:STDOUT:   %import_ref.b769fa.6: type = import_ref P//library, loc15_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.058: <witness> = import_ref P//library, loc16_33, loaded [template = constants.%impl_witness.b5b]
-// CHECK:STDOUT:   %import_ref.56e: type = import_ref P//library, loc16_9, loaded [template = constants.%C.898]
-// CHECK:STDOUT:   %import_ref.b769fa.7: type = import_ref P//library, loc16_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.d6f: <witness> = import_ref P//library, loc17_33, loaded [template = constants.%impl_witness.dfb]
-// CHECK:STDOUT:   %import_ref.8ba: type = import_ref P//library, loc17_9, loaded [template = constants.%C.f0a]
-// CHECK:STDOUT:   %import_ref.b769fa.8: type = import_ref P//library, loc17_31, loaded [template = constants.%ImplicitAs.type.5f9]
-// CHECK:STDOUT:   %import_ref.981: %Make.type = import_ref P//library, Make, loaded [template = constants.%Make]
+// CHECK:STDOUT:   %P.D: type = import_ref P//library, D, loaded [template = constants.%D]
+// CHECK:STDOUT:   %P.import_ref.7e5: <witness> = import_ref P//library, loc7_35, loaded [template = constants.%complete_type.682]
+// CHECK:STDOUT:   %P.import_ref.cab = import_ref P//library, inst47 [no loc], unloaded
+// CHECK:STDOUT:   %P.import_ref.a99 = import_ref P//library, loc7_16, unloaded
+// CHECK:STDOUT:   %P.import_ref.9d2 = import_ref P//library, loc7_28, unloaded
+// CHECK:STDOUT:   %P.C: %C.type = import_ref P//library, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %P.import_ref.8f2: <witness> = import_ref P//library, loc6_19, loaded [template = constants.%complete_type.357]
+// CHECK:STDOUT:   %P.import_ref.d9b = import_ref P//library, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst49 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.589: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = import_ref Core//default, loc9_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.5048c6.2)]
+// CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
+// CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc9_32, unloaded
+// CHECK:STDOUT:   %Core.import_ref.de9: <witness> = import_ref Core//default, loc12_38, loaded [template = constants.%impl_witness.39c]
+// CHECK:STDOUT:   %Core.import_ref.872: type = import_ref Core//default, loc12_17, loaded [template = Core.IntLiteral]
+// CHECK:STDOUT:   %Core.import_ref.4d9: type = import_ref Core//default, loc12_36, loaded [template = constants.%ImplicitAs.type.61e]
+// CHECK:STDOUT:   %P.import_ref.316: <witness> = import_ref P//library, loc10_33, loaded [template = constants.%impl_witness.368]
+// CHECK:STDOUT:   %P.import_ref.624: type = import_ref P//library, loc10_9, loaded [template = constants.%C.76d]
+// CHECK:STDOUT:   %P.import_ref.b769fa.1: type = import_ref P//library, loc10_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.import_ref.776: <witness> = import_ref P//library, loc11_33, loaded [template = constants.%impl_witness.29f]
+// CHECK:STDOUT:   %P.import_ref.8ff: type = import_ref P//library, loc11_9, loaded [template = constants.%C.012]
+// CHECK:STDOUT:   %P.import_ref.b769fa.2: type = import_ref P//library, loc11_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.import_ref.848: <witness> = import_ref P//library, loc12_33, loaded [template = constants.%impl_witness.3ac]
+// CHECK:STDOUT:   %P.import_ref.f4d: type = import_ref P//library, loc12_9, loaded [template = constants.%C.3e6]
+// CHECK:STDOUT:   %P.import_ref.b769fa.3: type = import_ref P//library, loc12_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.import_ref.036: <witness> = import_ref P//library, loc13_33, loaded [template = constants.%impl_witness.b40]
+// CHECK:STDOUT:   %P.import_ref.dd2: type = import_ref P//library, loc13_9, loaded [template = constants.%C.4d9]
+// CHECK:STDOUT:   %P.import_ref.b769fa.4: type = import_ref P//library, loc13_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.import_ref.e33: <witness> = import_ref P//library, loc14_33, loaded [template = constants.%impl_witness.20f]
+// CHECK:STDOUT:   %P.import_ref.2c7: type = import_ref P//library, loc14_9, loaded [template = constants.%C.a67]
+// CHECK:STDOUT:   %P.import_ref.b769fa.5: type = import_ref P//library, loc14_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.import_ref.1aa: <witness> = import_ref P//library, loc15_33, loaded [template = constants.%impl_witness.9b3]
+// CHECK:STDOUT:   %P.import_ref.759: type = import_ref P//library, loc15_9, loaded [template = constants.%C.65c]
+// CHECK:STDOUT:   %P.import_ref.b769fa.6: type = import_ref P//library, loc15_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.import_ref.058: <witness> = import_ref P//library, loc16_33, loaded [template = constants.%impl_witness.b5b]
+// CHECK:STDOUT:   %P.import_ref.56e: type = import_ref P//library, loc16_9, loaded [template = constants.%C.898]
+// CHECK:STDOUT:   %P.import_ref.b769fa.7: type = import_ref P//library, loc16_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.import_ref.d6f: <witness> = import_ref P//library, loc17_33, loaded [template = constants.%impl_witness.dfb]
+// CHECK:STDOUT:   %P.import_ref.8ba: type = import_ref P//library, loc17_9, loaded [template = constants.%C.f0a]
+// CHECK:STDOUT:   %P.import_ref.b769fa.8: type = import_ref P//library, loc17_31, loaded [template = constants.%ImplicitAs.type.5f9]
+// CHECK:STDOUT:   %P.Make: %Make.type = import_ref P//library, Make, loaded [template = constants.%Make]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1198,7 +1198,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %P.ref.loc7: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.b0a [template = constants.%D]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%P.D [template = constants.%D]
 // CHECK:STDOUT:     %n.param: %i32.builtin = value_param runtime_param0
 // CHECK:STDOUT:     %.loc7_10.1: type = splice_block %.loc7_10.3 [template = constants.%i32.builtin] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -1222,68 +1222,68 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.1, @ImplicitAs(%T) [symbolic = %Convert.type (constants.%Convert.type.275)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Convert.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62), @ImplicitAs.%Convert.type (%Convert.type.275) [symbolic = %Convert.assoc_type (constants.%Convert.assoc_type.c0e)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = assoc_entity element0, imports.%import_ref.207961.1 [symbolic = %assoc0 (constants.%assoc0.5048c6.1)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic = %assoc0 (constants.%assoc0.5048c6.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%import_ref.589
-// CHECK:STDOUT:     witness = (imports.%import_ref.e69)
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.589
+// CHECK:STDOUT:     witness = (imports.%Core.Convert)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.872 as imports.%import_ref.4d9 [from "core.carbon"] {
+// CHECK:STDOUT: impl @impl.1: imports.%Core.import_ref.872 as imports.%Core.import_ref.4d9 [from "core.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.de9
+// CHECK:STDOUT:   witness = imports.%Core.import_ref.de9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: imports.%import_ref.624 as imports.%import_ref.b769fa.1 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.2: imports.%P.import_ref.624 as imports.%P.import_ref.b769fa.1 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.316
+// CHECK:STDOUT:   witness = imports.%P.import_ref.316
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: imports.%import_ref.8ff as imports.%import_ref.b769fa.2 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.3: imports.%P.import_ref.8ff as imports.%P.import_ref.b769fa.2 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.776
+// CHECK:STDOUT:   witness = imports.%P.import_ref.776
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: imports.%import_ref.f4d as imports.%import_ref.b769fa.3 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.4: imports.%P.import_ref.f4d as imports.%P.import_ref.b769fa.3 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.848
+// CHECK:STDOUT:   witness = imports.%P.import_ref.848
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.5: imports.%import_ref.dd2 as imports.%import_ref.b769fa.4 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.5: imports.%P.import_ref.dd2 as imports.%P.import_ref.b769fa.4 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.036
+// CHECK:STDOUT:   witness = imports.%P.import_ref.036
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.6: imports.%import_ref.2c7 as imports.%import_ref.b769fa.5 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.6: imports.%P.import_ref.2c7 as imports.%P.import_ref.b769fa.5 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.e33
+// CHECK:STDOUT:   witness = imports.%P.import_ref.e33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.7: imports.%import_ref.759 as imports.%import_ref.b769fa.6 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.7: imports.%P.import_ref.759 as imports.%P.import_ref.b769fa.6 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.1aa
+// CHECK:STDOUT:   witness = imports.%P.import_ref.1aa
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.8: imports.%import_ref.56e as imports.%import_ref.b769fa.7 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.8: imports.%P.import_ref.56e as imports.%P.import_ref.b769fa.7 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.058
+// CHECK:STDOUT:   witness = imports.%P.import_ref.058
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.9: imports.%import_ref.8ba as imports.%import_ref.b769fa.8 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.9: imports.%P.import_ref.8ba as imports.%P.import_ref.b769fa.8 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.d6f
+// CHECK:STDOUT:   witness = imports.%P.import_ref.d6f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "library.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.7e5
+// CHECK:STDOUT:   complete_type_witness = imports.%P.import_ref.7e5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.cab
-// CHECK:STDOUT:   .n = imports.%import_ref.a99
-// CHECK:STDOUT:   .m = imports.%import_ref.9d2
+// CHECK:STDOUT:   .Self = imports.%P.import_ref.cab
+// CHECK:STDOUT:   .n = imports.%P.import_ref.a99
+// CHECK:STDOUT:   .m = imports.%P.import_ref.9d2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%N: %i32.builtin) [from "library.carbon"] {
@@ -1293,10 +1293,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:     complete_type_witness = imports.%P.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.d9b
+// CHECK:STDOUT:     .Self = imports.%P.import_ref.d9b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1310,7 +1310,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc8:
 // CHECK:STDOUT:   %.loc8_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc8: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc8: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc8: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc8_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc8_34: <bound method> = bound_method %int_0, %impl.elem0.loc8_34 [template = constants.%Convert.bound.04a]
@@ -1337,7 +1337,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc9:
 // CHECK:STDOUT:   %.loc9_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc9: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc9: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc9: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc9_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc9_34: <bound method> = bound_method %int_1, %impl.elem0.loc9_34 [template = constants.%Convert.bound.92d]
@@ -1364,7 +1364,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc10:
 // CHECK:STDOUT:   %.loc10_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc10: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc10: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc10: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc10_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc10_34: <bound method> = bound_method %int_2, %impl.elem0.loc10_34 [template = constants.%Convert.bound.1b9]
@@ -1391,7 +1391,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc11:
 // CHECK:STDOUT:   %.loc11_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc11: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc11: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc11: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc11_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc11_34: <bound method> = bound_method %int_3, %impl.elem0.loc11_34 [template = constants.%Convert.bound.b6b]
@@ -1418,7 +1418,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc12:
 // CHECK:STDOUT:   %.loc12_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc12: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc12: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc12: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.0c1]
 // CHECK:STDOUT:   %impl.elem0.loc12_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc12_34: <bound method> = bound_method %int_4, %impl.elem0.loc12_34 [template = constants.%Convert.bound.626]
@@ -1445,7 +1445,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc13:
 // CHECK:STDOUT:   %.loc13_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc13: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc13: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc13: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.64b]
 // CHECK:STDOUT:   %impl.elem0.loc13_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc13_34: <bound method> = bound_method %int_5, %impl.elem0.loc13_34 [template = constants.%Convert.bound.910]
@@ -1472,7 +1472,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc14:
 // CHECK:STDOUT:   %.loc14_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc14: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc14: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc14: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template = constants.%int_6.462]
 // CHECK:STDOUT:   %impl.elem0.loc14_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc14_34: <bound method> = bound_method %int_6, %impl.elem0.loc14_34 [template = constants.%Convert.bound.e3a]
@@ -1499,7 +1499,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.then.loc15:
 // CHECK:STDOUT:   %.loc15_24.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc15: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %C.ref.loc15: %C.type = name_ref C, imports.%import_ref.f9e [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref.loc15: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7.29f]
 // CHECK:STDOUT:   %impl.elem0.loc15_34: %Convert.type.059 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %Convert.bound.loc15_34: <bound method> = bound_method %int_7, %impl.elem0.loc15_34 [template = constants.%Convert.bound.06a]
@@ -1521,7 +1521,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc15:
 // CHECK:STDOUT:   %P.ref.loc16: <namespace> = name_ref P, imports.%P [template = imports.%P]
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%import_ref.981 [template = constants.%Make]
+// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%P.Make [template = constants.%Make]
 // CHECK:STDOUT:   %.loc7_15: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc7_15
 // CHECK:STDOUT:   return %Make.call to %return

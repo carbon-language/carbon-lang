@@ -58,13 +58,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Mod = %import_ref.a4e
-// CHECK:STDOUT:     .ModAssign = %import_ref.246
+// CHECK:STDOUT:     .Mod = %Core.Mod
+// CHECK:STDOUT:     .ModAssign = %Core.ModAssign
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.a4e: type = import_ref Core//prelude/operators/arithmetic, Mod, loaded [template = constants.%Mod.type]
-// CHECK:STDOUT:   %import_ref.246: type = import_ref Core//prelude/operators/arithmetic, ModAssign, loaded [template = constants.%ModAssign.type]
+// CHECK:STDOUT:   %Core.Mod: type = import_ref Core//prelude/operators/arithmetic, Mod, loaded [template = constants.%Mod.type]
+// CHECK:STDOUT:   %Core.ModAssign: type = import_ref Core//prelude/operators/arithmetic, ModAssign, loaded [template = constants.%ModAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,13 +79,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Mod.ref: type = name_ref Mod, imports.%import_ref.a4e [template = constants.%Mod.type]
+// CHECK:STDOUT:     %Mod.ref: type = name_ref Mod, imports.%Core.Mod [template = constants.%Mod.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness.5d5]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ModAssign.ref: type = name_ref ModAssign, imports.%import_ref.246 [template = constants.%ModAssign.type]
+// CHECK:STDOUT:     %ModAssign.ref: type = name_ref ModAssign, imports.%Core.ModAssign [template = constants.%ModAssign.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.2.%Op.decl) [template = constants.%impl_witness.5ee]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {

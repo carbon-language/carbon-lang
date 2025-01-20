@@ -43,11 +43,11 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Inc = %import_ref.04f
+// CHECK:STDOUT:     .Inc = %Core.Inc
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.04f: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [template = constants.%Inc.type]
+// CHECK:STDOUT:   %Core.Inc: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [template = constants.%Inc.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,7 +61,7 @@ fn TestOp() {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%import_ref.04f [template = constants.%Inc.type]
+// CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%Core.Inc [template = constants.%Inc.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {} {}

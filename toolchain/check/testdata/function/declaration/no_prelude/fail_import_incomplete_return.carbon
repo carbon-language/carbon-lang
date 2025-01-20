@@ -198,26 +198,26 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//incomplete_return, C, unloaded
-// CHECK:STDOUT:   %import_ref.e8f = import_ref Main//incomplete_return, D, unloaded
-// CHECK:STDOUT:   %import_ref.c3e: %ReturnCUnused.type = import_ref Main//incomplete_return, ReturnCUnused, loaded [template = constants.%ReturnCUnused]
-// CHECK:STDOUT:   %import_ref.073: %ReturnCUsed.type = import_ref Main//incomplete_return, ReturnCUsed, loaded [template = constants.%ReturnCUsed]
-// CHECK:STDOUT:   %import_ref.c58: %ReturnDUnused.type = import_ref Main//incomplete_return, ReturnDUnused, loaded [template = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %import_ref.e1f: %ReturnDUsed.type = import_ref Main//incomplete_return, ReturnDUsed, loaded [template = constants.%ReturnDUsed]
-// CHECK:STDOUT:   %import_ref.2ce = import_ref Main//incomplete_return, Call, unloaded
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.cab = import_ref Main//incomplete_return, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.C = import_ref Main//incomplete_return, C, unloaded
+// CHECK:STDOUT:   %Main.D = import_ref Main//incomplete_return, D, unloaded
+// CHECK:STDOUT:   %Main.ReturnCUnused: %ReturnCUnused.type = import_ref Main//incomplete_return, ReturnCUnused, loaded [template = constants.%ReturnCUnused]
+// CHECK:STDOUT:   %Main.ReturnCUsed: %ReturnCUsed.type = import_ref Main//incomplete_return, ReturnCUsed, loaded [template = constants.%ReturnCUsed]
+// CHECK:STDOUT:   %Main.ReturnDUnused: %ReturnDUnused.type = import_ref Main//incomplete_return, ReturnDUnused, loaded [template = constants.%ReturnDUnused]
+// CHECK:STDOUT:   %Main.ReturnDUsed: %ReturnDUsed.type = import_ref Main//incomplete_return, ReturnDUsed, loaded [template = constants.%ReturnDUsed]
+// CHECK:STDOUT:   %Main.Call = import_ref Main//incomplete_return, Call, unloaded
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//incomplete_return, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
-// CHECK:STDOUT:     .D = imports.%import_ref.e8f
-// CHECK:STDOUT:     .ReturnCUnused = imports.%import_ref.c3e
-// CHECK:STDOUT:     .ReturnCUsed = imports.%import_ref.073
-// CHECK:STDOUT:     .ReturnDUnused = imports.%import_ref.c58
-// CHECK:STDOUT:     .ReturnDUsed = imports.%import_ref.e1f
-// CHECK:STDOUT:     .Call = imports.%import_ref.2ce
+// CHECK:STDOUT:     .C = imports.%Main.C
+// CHECK:STDOUT:     .D = imports.%Main.D
+// CHECK:STDOUT:     .ReturnCUnused = imports.%Main.ReturnCUnused
+// CHECK:STDOUT:     .ReturnCUsed = imports.%Main.ReturnCUsed
+// CHECK:STDOUT:     .ReturnDUnused = imports.%Main.ReturnDUnused
+// CHECK:STDOUT:     .ReturnDUsed = imports.%Main.ReturnDUsed
+// CHECK:STDOUT:     .Call = imports.%Main.Call
 // CHECK:STDOUT:     .CallFAndGIncomplete = %CallFAndGIncomplete.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -227,23 +227,23 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @C [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "fail_incomplete_return.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.cab
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReturnCUnused.ref: %ReturnCUnused.type = name_ref ReturnCUnused, imports.%import_ref.c3e [template = constants.%ReturnCUnused]
+// CHECK:STDOUT:   %ReturnCUnused.ref: %ReturnCUnused.type = name_ref ReturnCUnused, imports.%Main.ReturnCUnused [template = constants.%ReturnCUnused]
 // CHECK:STDOUT:   %ReturnCUnused.call: init <error> = call %ReturnCUnused.ref()
-// CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, imports.%import_ref.073 [template = constants.%ReturnCUsed]
+// CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, imports.%Main.ReturnCUsed [template = constants.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
-// CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, imports.%import_ref.c58 [template = constants.%ReturnDUnused]
+// CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, imports.%Main.ReturnDUnused [template = constants.%ReturnDUnused]
 // CHECK:STDOUT:   %.loc33_17.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref() to %.loc33_17.1
 // CHECK:STDOUT:   %.loc33_17.2: ref %D = temporary %.loc33_17.1, %ReturnDUnused.call
-// CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, imports.%import_ref.e1f [template = constants.%ReturnDUsed]
+// CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, imports.%Main.ReturnDUsed [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %.loc34_15.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %ReturnDUsed.call: init %D = call %ReturnDUsed.ref() to %.loc34_15.1
 // CHECK:STDOUT:   %.loc34_15.2: ref %D = temporary %.loc34_15.1, %ReturnDUsed.call

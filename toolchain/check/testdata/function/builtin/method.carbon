@@ -37,7 +37,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.1, @As(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.71e: type = fn_type @Convert.2, @ImplicitAs(Core.IntLiteral) [template]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%import_ref.78a), @impl.4(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.4(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.5, @impl.4(%int_32) [template]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.c1b: <bound method> = bound_method %int_1.5b8, %Convert.197 [template]
@@ -46,14 +46,14 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %int_1.5d2, %F.9ec [template]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.2, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.3, @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.ef9: <bound method> = bound_method %int_2.ecc, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.787: <specific function> = specific_function %Convert.bound.ef9, @Convert.3(%int_32) [template]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [template]
-// CHECK:STDOUT:   %impl_witness.023: <witness> = impl_witness (imports.%import_ref.85c), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.023: <witness> = impl_witness (imports.%Core.import_ref.85c), @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.4ad: type = fn_type @Convert.4, @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.960: %Convert.type.4ad = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.2d6: <bound method> = bound_method %int_3.822, %Convert.960 [template]
@@ -64,9 +64,9 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .As = %import_ref.16b
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .As = %Core.As
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
