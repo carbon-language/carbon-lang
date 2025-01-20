@@ -128,20 +128,6 @@ class NodeStack {
     return parse_tree_->node_kind(stack_[stack_.size() - 2].node_id) == kind;
   }
 
-  // Returns whether any node on the stack above the current node is a given
-  // kind.
-  template <const Parse::NodeKind& RequiredParseKind>
-  auto PeekContains() const -> bool {
-    CARBON_CHECK(stack_.size() >= 2);
-    for (int i = 0; i < static_cast<int>(stack_.size()) - 1; ++i) {
-      if (parse_tree_->node_kind(stack_[stack_.size() - 2 - i].node_id) ==
-          RequiredParseKind) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   // Pops the top of the stack without any verification.
   auto PopAndIgnore() -> void {
     Entry back = stack_.pop_back_val();

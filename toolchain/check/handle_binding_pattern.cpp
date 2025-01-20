@@ -242,10 +242,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           break;
         }
         case Lex::TokenKind::Choice:
-          if (context.node_stack()
-                  .PeekContains<Parse::NodeKind::ChoiceDefinitionStart>()) {
+          if (context.scope_stack().PeekInstId().is_valid()) {
             // We're building a pattern for a choice alternative, not the choice
-            // type itself.
+            // type itself. The Choice itself has an invalid instruction id on
+            // the scope stack, but the Choice's declaration instruction is
+            // present and valid for checking the alternatives.
             if (context_node_kind == Parse::NodeKind::ImplicitParamListStart) {
               CARBON_DIAGNOSTIC(ChoiceAlternativeImplicitParams, Error,
                                 "choice alternative with implicit parameters");

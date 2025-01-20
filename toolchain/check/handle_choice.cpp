@@ -113,11 +113,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   context.scope_stack().Push(class_decl_id, class_info.scope_id,
                              self_specific_id);
   // Checking the binding pattern for an alternative requires a non-empty stack.
-  // FIXME: `Lex::TokenKind::Choice` is incorrect as we're not parsing the
-  // pattern for a choice name, but there's no Lex token that's a decl
-  // introducer that we could safely use here. Is there a better way to
-  // communicate to `HandleAnyBindingPattern` that we're checking a choice
-  // alternative?
+  // We reuse the `Choice` token kind, along with the scope_stac() entry to let
+  // the pattern checking determine we are building a choice alternative.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   StartGenericDefinition(context);
 
