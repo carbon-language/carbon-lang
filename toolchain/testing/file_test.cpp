@@ -55,8 +55,8 @@ class ToolchainFileTest : public FileTestBase {
     // last diagnostic match intermediate diagnostics (that have a newline
     // separator between them). This reduces churn when adding new diagnostics
     // to test cases.
-    if (stderr.tell() > 0) {
-      stderr << '\n';
+    if (error_stream.tell() > 0) {
+      error_stream << '\n';
     }
 
     RunResult result{
