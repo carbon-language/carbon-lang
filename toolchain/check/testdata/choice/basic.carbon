@@ -41,60 +41,6 @@ fn H() {
   let inc: Ordering = Ordering.Incomparable;
 }
 
-// constants {
-//   %S: type = class_type @S [template]
-//   %TAlt: type = class_type @TAlt [template]
-//   %empty_struct_type: type = struct_type {} [template]
-//   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-//   %T.type: type = fn_type @T [template]
-//   %T: %T.type = struct_value () [template]
-// }
-//
-// imports {
-//   %Core: <namespace> = namespace file.%Core.import, [template] {
-//     import Core//prelude
-//     import Core//prelude/...
-//   }
-// }
-//
-// file {
-//   package: <namespace> = namespace [template] {
-//     .Core = imports.%Core
-//     .S = %S.decl
-//   }
-//   %Core.import = import Core
-//   %S.decl: type = class_decl @S [template = constants.%S] {} {}
-// }
-//
-// class @S {
-//   %TAlt.decl: type = class_decl @TAlt [template = constants.%TAlt] {} {}
-//   %T.decl: %T.type = fn_decl @T [template = constants.%T] {
-//     %return.patt: %S = return_slot_pattern
-//     %return.param_patt: %S = out_param_pattern %return.patt, runtime_param0
-//   } {
-//     %S.ref: type = name_ref S, file.%S.decl [template = constants.%S]
-//     %return.param: ref %S = out_param runtime_param0
-//     %return: ref %S = return_slot %return.param
-//   }
-//   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
-//
-// !members:
-//   .Self = constants.%S
-//   .TAlt = %TAlt.decl
-//   .T = %T.decl
-//   complete_type_witness = %complete_type
-// }
-//
-// class @TAlt {
-//   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
-//
-// !members:
-//   .Self = constants.%TAlt
-//   complete_type_witness = %complete_type
-// }
-//
-// fn @T() -> %S;
-
 // CHECK:STDOUT: --- no_alternative.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -171,16 +117,17 @@ fn H() {
 // CHECK:STDOUT:   %.loc5_1.10: ref %Always = converted %.loc5_1.3, %.loc5_1.9
 // CHECK:STDOUT:   %.loc5_1.11: %Always = bind_value %.loc5_1.10
 // CHECK:STDOUT:   %Sunny: %Always = bind_name Sunny, %.loc5_1.11
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Sunny = %Sunny
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Always.ref: type = name_ref Always, file.%Always.decl [template = constants.%Always]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %mood.patt: %Always = binding_pattern mood
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Always.ref.loc8_22: type = name_ref Always, file.%Always.decl [template = constants.%Always]
 // CHECK:STDOUT:   %Sunny.ref: %Always = name_ref Sunny, @Always.%Sunny
+// CHECK:STDOUT:   %Always.ref.loc8_13: type = name_ref Always, file.%Always.decl [template = constants.%Always]
 // CHECK:STDOUT:   %mood: %Always = bind_name mood, %Sunny.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -308,28 +255,38 @@ fn H() {
 // CHECK:STDOUT:   %.loc8_1.9: ref %Ordering = converted %.loc8_1.3, %.loc8_1.8
 // CHECK:STDOUT:   %.loc8_1.10: %Ordering = bind_value %.loc8_1.9
 // CHECK:STDOUT:   %Incomparable: %Ordering = bind_name Incomparable, %.loc8_1.10
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Less = %Less
-// CHECK:STDOUT:   .Equivalent = %Equivalent
-// CHECK:STDOUT:   .Greater = %Greater
-// CHECK:STDOUT:   .Incomparable = %Incomparable
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Ordering.ref.loc11: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %less.patt: %Ordering = binding_pattern less
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Ordering.ref.loc11_24: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %Less.ref: %Ordering = name_ref Less, @Ordering.%Less
+// CHECK:STDOUT:   %Ordering.ref.loc11_13: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %less: %Ordering = bind_name less, %Less.ref
-// CHECK:STDOUT:   %Ordering.ref.loc12: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %equiv.patt: %Ordering = binding_pattern equiv
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Ordering.ref.loc12_25: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %Equivalent.ref: %Ordering = name_ref Equivalent, @Ordering.%Equivalent
+// CHECK:STDOUT:   %Ordering.ref.loc12_14: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %equiv: %Ordering = bind_name equiv, %Equivalent.ref
-// CHECK:STDOUT:   %Ordering.ref.loc13: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %greater.patt: %Ordering = binding_pattern greater
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Ordering.ref.loc13_27: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %Greater.ref: %Ordering = name_ref Greater, @Ordering.%Greater
+// CHECK:STDOUT:   %Ordering.ref.loc13_16: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %greater: %Ordering = bind_name greater, %Greater.ref
-// CHECK:STDOUT:   %Ordering.ref.loc14: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inc.patt: %Ordering = binding_pattern inc
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Ordering.ref.loc14_23: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %Incomparable.ref: %Ordering = name_ref Incomparable, @Ordering.%Incomparable
+// CHECK:STDOUT:   %Ordering.ref.loc14_12: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %inc: %Ordering = bind_name inc, %Incomparable.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
