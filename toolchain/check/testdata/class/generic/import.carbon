@@ -98,6 +98,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type %CompleteClass.f97, %i32 [symbolic]
+// CHECK:STDOUT:   %require_complete.1c7: <witness> = require_complete_type %CompleteClass.elem [symbolic]
 // CHECK:STDOUT:   %F.type.14f: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.874: %F.type.14f = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
@@ -173,6 +174,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T.loc6_21.2) [symbolic = %CompleteClass (constants.%CompleteClass.f97)]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.f97), %i32 [symbolic = %CompleteClass.elem (constants.%CompleteClass.elem)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CompleteClass.%CompleteClass.elem (%CompleteClass.elem) [symbolic = %require_complete (constants.%require_complete.1c7)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @CompleteClass(%T.loc6_21.2) [symbolic = %F.type (constants.%F.type.14f)]
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.14f) = struct_value () [symbolic = %F (constants.%F.874)]
 // CHECK:STDOUT:
@@ -231,6 +233,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.f97
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1c7
 // CHECK:STDOUT:   %F.type => constants.%F.type.14f
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
@@ -256,6 +259,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.78c: <witness> = require_complete_type %Class.elem [symbolic]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x [symbolic]
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
@@ -264,12 +268,14 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %complete_type.a68: <witness> = complete_type_witness %struct_type.n.4d6 [template]
 // CHECK:STDOUT:   %CompleteClass.f97: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.9ef: type = unbound_element_type %CompleteClass.f97, %i32 [symbolic]
+// CHECK:STDOUT:   %require_complete.49c: <witness> = require_complete_type %CompleteClass.elem.9ef [symbolic]
 // CHECK:STDOUT:   %F.type.14f: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.874: %F.type.14f = struct_value () [symbolic]
 // CHECK:STDOUT:   %CompleteClass.a06: type = class_type @CompleteClass, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [template]
 // CHECK:STDOUT:   %CompleteClass.elem.426: type = unbound_element_type %CompleteClass.a06, %i32 [template]
+// CHECK:STDOUT:   %complete_type.9c7: <witness> = complete_type_witness %CompleteClass.elem.426 [template]
 // CHECK:STDOUT:   %F.type.0aa: type = fn_type @F.1, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %F.971: %F.type.0aa = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
@@ -333,9 +339,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.1 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc5_10: <witness> = require_complete_type @Class.%T.1 (%T) [symbolic = %require_complete.loc5_10 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.1 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %require_complete.loc5_3: <witness> = require_complete_type @Class.%Class.elem (%Class.elem) [symbolic = %require_complete.loc5_3 (constants.%require_complete.78c)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Class.%T.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x)]
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Class.%struct_type.x (%struct_type.x) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
@@ -361,6 +368,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.f97)]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.f97), %i32 [symbolic = %CompleteClass.elem (constants.%CompleteClass.elem.9ef)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.9ef) [symbolic = %require_complete (constants.%require_complete.49c)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @CompleteClass(%T) [symbolic = %F.type (constants.%F.type.14f)]
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.14f) = struct_value () [symbolic = %F (constants.%F.874)]
 // CHECK:STDOUT:
@@ -410,6 +418,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.f97
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.9ef
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.49c
 // CHECK:STDOUT:   %F.type => constants.%F.type.14f
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
@@ -425,6 +434,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.a06
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.426
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.9c7
 // CHECK:STDOUT:   %F.type => constants.%F.type.0aa
 // CHECK:STDOUT:   %F => constants.%F.971
 // CHECK:STDOUT: }
@@ -444,10 +454,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.f97: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.28a: type = unbound_element_type %CompleteClass.f97, %i32 [symbolic]
+// CHECK:STDOUT:   %require_complete.1c7: <witness> = require_complete_type %CompleteClass.elem.28a [symbolic]
 // CHECK:STDOUT:   %F.type.14f: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.874: %F.type.14f = struct_value () [symbolic]
 // CHECK:STDOUT:   %CompleteClass.e9e: type = class_type @CompleteClass, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %CompleteClass.elem.7fc: type = unbound_element_type %CompleteClass.e9e, %i32 [template]
+// CHECK:STDOUT:   %complete_type.595: <witness> = complete_type_witness %CompleteClass.elem.7fc [template]
 // CHECK:STDOUT:   %F.type.1bc: type = fn_type @F.1, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %F.f7c: %F.type.1bc = struct_value () [template]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [template]
@@ -510,6 +522,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.f97)]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.f97), %i32 [symbolic = %CompleteClass.elem (constants.%CompleteClass.elem.28a)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) [symbolic = %require_complete (constants.%require_complete.1c7)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @CompleteClass(%T) [symbolic = %F.type (constants.%F.type.14f)]
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.14f) = struct_value () [symbolic = %F (constants.%F.874)]
 // CHECK:STDOUT:
@@ -591,6 +604,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.f97
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.28a
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1c7
 // CHECK:STDOUT:   %F.type => constants.%F.type.14f
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
@@ -606,6 +620,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.e9e
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.7fc
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.595
 // CHECK:STDOUT:   %F.type => constants.%F.type.1bc
 // CHECK:STDOUT:   %F => constants.%F.f7c
 // CHECK:STDOUT: }
@@ -629,17 +644,20 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.f97: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.9ef: type = unbound_element_type %CompleteClass.f97, %i32 [symbolic]
+// CHECK:STDOUT:   %require_complete.49c: <witness> = require_complete_type %CompleteClass.elem.9ef [symbolic]
 // CHECK:STDOUT:   %F.type.14f: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.874: %F.type.14f = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.9e1: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %CompleteClass.0fe: type = class_type @CompleteClass, @CompleteClass(%ptr.9e1) [template]
 // CHECK:STDOUT:   %CompleteClass.elem.d29: type = unbound_element_type %CompleteClass.0fe, %i32 [template]
+// CHECK:STDOUT:   %complete_type.96a: <witness> = complete_type_witness %CompleteClass.elem.d29 [template]
 // CHECK:STDOUT:   %F.type.8cf: type = fn_type @F.1, @CompleteClass(%ptr.9e1) [template]
 // CHECK:STDOUT:   %F.012: %F.type.8cf = struct_value () [template]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [template]
 // CHECK:STDOUT:   %CompleteClass.a06: type = class_type @CompleteClass, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %CompleteClass.elem.426: type = unbound_element_type %CompleteClass.a06, %i32 [template]
+// CHECK:STDOUT:   %complete_type.9c7: <witness> = complete_type_witness %CompleteClass.elem.426 [template]
 // CHECK:STDOUT:   %F.type.0aa: type = fn_type @F.1, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %F.971: %F.type.0aa = struct_value () [template]
 // CHECK:STDOUT: }
@@ -680,6 +698,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.f97)]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.f97), %i32 [symbolic = %CompleteClass.elem (constants.%CompleteClass.elem.9ef)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.9ef) [symbolic = %require_complete (constants.%require_complete.49c)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @CompleteClass(%T) [symbolic = %F.type (constants.%F.type.14f)]
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.14f) = struct_value () [symbolic = %F (constants.%F.874)]
 // CHECK:STDOUT:
@@ -731,6 +750,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.f97
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.9ef
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.49c
 // CHECK:STDOUT:   %F.type => constants.%F.type.14f
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
@@ -746,6 +766,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.0fe
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.d29
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.96a
 // CHECK:STDOUT:   %F.type => constants.%F.type.8cf
 // CHECK:STDOUT:   %F => constants.%F.012
 // CHECK:STDOUT: }
@@ -757,6 +778,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.a06
 // CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.426
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.9c7
 // CHECK:STDOUT:   %F.type => constants.%F.type.0aa
 // CHECK:STDOUT:   %F => constants.%F.971
 // CHECK:STDOUT: }

@@ -53,6 +53,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.78c: <witness> = require_complete_type %Class.elem [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [symbolic]
 // CHECK:STDOUT:   %require_complete.4f8: <witness> = require_complete_type %Class [symbolic]
@@ -89,9 +90,10 @@ class C(T:! type) {
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T.loc4_13.2) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc13_10: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %require_complete.loc13_10 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.loc4_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %require_complete.loc13_3: <witness> = require_complete_type @Class.%Class.elem (%Class.elem) [symbolic = %require_complete.loc13_3 (constants.%require_complete.78c)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n)]
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.n (%struct_type.n) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
@@ -182,9 +184,10 @@ class C(T:! type) {
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT:   %G.type => constants.%G.type
 // CHECK:STDOUT:   %G => constants.%G
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
+// CHECK:STDOUT:   %require_complete.loc13_10 => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
+// CHECK:STDOUT:   %require_complete.loc13_3 => constants.%require_complete.78c
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
@@ -214,6 +217,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.elem [symbolic]
 // CHECK:STDOUT:   %struct_type.data: type = struct_type {.data: %empty_struct_type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.data [template]
 // CHECK:STDOUT: }
@@ -249,6 +253,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %F: @C.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_9.2) [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C), %empty_struct_type [symbolic = %C.elem (constants.%C.elem)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%C.elem (%C.elem) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {} {}
@@ -289,6 +294,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT:   %C => constants.%C
 // CHECK:STDOUT:   %C.elem => constants.%C.elem
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}

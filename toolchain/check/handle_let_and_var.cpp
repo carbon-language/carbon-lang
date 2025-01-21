@@ -24,7 +24,8 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::NameBindingDecl);
   context.BeginSubpattern();
   return true;
 }
@@ -63,7 +64,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
         context.entity_names().Get(binding_pattern->entity_name_id).name_id;
   }
   return context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
-      pattern.loc_id, SemIR::VarStorage{.type_id = subpattern.type_id(),
+      pattern.loc_id, SemIR::VarStorage{.type_id = pattern.inst.type_id(),
                                         .pretty_name_id = name_id}));
 }
 
@@ -82,6 +83,17 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     subpattern_id = context.node_stack().PopPattern();
   }
   auto type_id = context.insts().Get(subpattern_id).type_id();
+  type_id = context.AsConcreteType(
+      type_id, node_id,
+      [&]() -> Context::DiagnosticEmitter::DiagnosticBuilder {
+        CARBON_FATAL("Incomplete type should be diagnosed elsewhere");
+      },
+      [&] {
+        CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
+                          "variable pattern has abstract type {0}",
+                          SemIR::TypeId);
+        return context.emitter().Build(node_id, AbstractTypeInVarDecl, type_id);
+      });
 
   auto pattern_id = context.AddPatternInst<SemIR::VarPattern>(
       node_id, {.type_id = type_id, .subpattern_id = subpattern_id});

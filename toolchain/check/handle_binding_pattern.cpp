@@ -108,15 +108,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
   }
 
-  // TODO: The node stack is a fragile way of getting context information.
-  // Get this information from somewhere else.
-  auto context_node_kind = context.node_stack().PeekNodeKind();
-
   // A `var` binding in a class scope declares a field, not a true binding,
   // so we handle it separately.
   if (auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       parent_class_decl.has_value() &&
-      context_node_kind == Parse::NodeKind::VariableIntroducer) {
+      node_kind == Parse::NodeKind::VarBindingPattern) {
     cast_type_id = context.AsConcreteType(
         cast_type_id, type_node,
         [&] {
@@ -186,44 +182,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
-  switch (context_node_kind) {
-    case Parse::NodeKind::VariableIntroducer: {
-      CARBON_CHECK(!is_generic);
-
-      cast_type_id = context.AsConcreteType(
-          cast_type_id, type_node,
-          [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                              "variable has incomplete type {0}",
-                              SemIR::TypeId);
-            return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
-                                           cast_type_id);
-          },
-          [&] {
-            CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
-                              "variable has abstract type {0}", SemIR::TypeId);
-            return context.emitter().Build(type_node, AbstractTypeInVarDecl,
-                                           cast_type_id);
-          });
-
-      auto binding_pattern_id = make_binding_pattern();
-      if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
-        // TODO: Should we check this for the `var` as a whole, rather than for
-        // the name binding?
-        auto bind_id = context.bind_name_map()
-                           .Lookup(binding_pattern_id)
-                           .value()
-                           .bind_name_id;
-        RegisterReturnedVar(context,
-                            introducer.modifier_node_id(ModifierOrder::Decl),
-                            type_node, cast_type_id, bind_id);
-      }
-      context.node_stack().Push(node_id, binding_pattern_id);
-      break;
-    }
-
-    case Parse::NodeKind::ImplicitParamListStart:
-    case Parse::NodeKind::TuplePatternStart: {
+  switch (context.full_pattern_stack().CurrentKind()) {
+    case FullPatternStack::Kind::ImplicitParamList:
+    case FullPatternStack::Kind::ExplicitParamList: {
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
@@ -232,7 +193,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       bool had_error = false;
       switch (introducer.kind) {
         case Lex::TokenKind::Fn: {
-          if (context_node_kind == Parse::NodeKind::ImplicitParamListStart &&
+          if (context.full_pattern_stack().CurrentKind() ==
+                  FullPatternStack::Kind::ImplicitParamList &&
               !(is_generic || name_id == SemIR::NameId::SelfValue)) {
             CARBON_DIAGNOSTIC(
                 ImplictParamMustBeConstant, Error,
@@ -278,28 +240,37 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             });
       }
       context.node_stack().Push(node_id, param_pattern_id);
-
-      // TODO: Use the pattern insts to generate the pattern-match insts
-      // at the end of the full pattern, instead of eagerly generating them
-      // here.
       break;
     }
 
-    case Parse::NodeKind::LetIntroducer: {
+    case FullPatternStack::Kind::NameBindingDecl: {
       cast_type_id = context.AsCompleteType(cast_type_id, type_node, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                          "`let` binding has incomplete type {0}",
+        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Error,
+                          "binding pattern has incomplete type {0} in name "
+                          "binding declaration",
                           InstIdAsType);
-        return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
+        return context.emitter().Build(type_node, IncompleteTypeInBindingDecl,
                                        cast_type_inst_id);
       });
-      context.node_stack().Push(node_id, make_binding_pattern());
+      auto binding_pattern_id = make_binding_pattern();
+      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+        CARBON_CHECK(!is_generic);
+
+        if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
+          // TODO: Should we check this for the `var` as a whole, rather than
+          // for the name binding?
+          auto bind_id = context.bind_name_map()
+                             .Lookup(binding_pattern_id)
+                             .value()
+                             .bind_name_id;
+          RegisterReturnedVar(context,
+                              introducer.modifier_node_id(ModifierOrder::Decl),
+                              type_node, cast_type_id, bind_id);
+        }
+      }
+      context.node_stack().Push(node_id, binding_pattern_id);
       break;
     }
-
-    default:
-      CARBON_FATAL("Found a pattern binding in unexpected context {0}",
-                   context_node_kind);
   }
   return true;
 }

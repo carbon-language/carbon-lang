@@ -10,7 +10,7 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: variable has incomplete type `[Incomplete; 1]` [IncompleteTypeInVarDecl]
+// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `[Incomplete; 1]` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var a: [Incomplete; 1];
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]

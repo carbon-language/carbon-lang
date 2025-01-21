@@ -34,7 +34,7 @@ import library "a";
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:8: error: variable has incomplete type `Incomplete` [IncompleteTypeInVarDecl]
+// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:8: error: binding pattern has incomplete type `Incomplete` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import [InImport]

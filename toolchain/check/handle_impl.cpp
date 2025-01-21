@@ -42,7 +42,8 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
   // and only push a pattern block in `forall` case.
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 

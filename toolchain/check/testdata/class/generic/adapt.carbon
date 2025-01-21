@@ -131,6 +131,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.949: <witness> = require_complete_type %C.elem.66c [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [template]
@@ -140,6 +141,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %C.elem.476: type = unbound_element_type %C.98a, %i32 [template]
+// CHECK:STDOUT:   %complete_type.cae: <witness> = complete_type_witness %C.elem.476 [template]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [template]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
@@ -191,9 +193,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%T.loc4_9.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc5_10: <witness> = require_complete_type @C.%T.loc4_9.2 (%T) [symbolic = %require_complete.loc5_10 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_9.2) [symbolic = %C (constants.%C.f2e)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C.f2e), @C.%T.loc4_9.2 (%T) [symbolic = %C.elem (constants.%C.elem.66c)]
+// CHECK:STDOUT:   %require_complete.loc5_3: <witness> = require_complete_type @C.%C.elem (%C.elem.66c) [symbolic = %require_complete.loc5_3 (constants.%require_complete.949)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc4_9.2 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
@@ -252,9 +255,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.loc5_10 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %C => constants.%C.98a
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.476
+// CHECK:STDOUT:   %require_complete.loc5_3 => constants.%complete_type.cae
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
@@ -277,9 +281,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.c07: <witness> = complete_type_witness %struct_type.x.767 [template]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.949: <witness> = require_complete_type %C.elem.66c [symbolic]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %C.elem.ed6: type = unbound_element_type %C.239, %i32 [template]
+// CHECK:STDOUT:   %complete_type.05b: <witness> = complete_type_witness %C.elem.ed6 [template]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [template]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -297,7 +303,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %import_ref.4c0 = import_ref Main//adapt_specific_type, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//adapt_specific_type, loc5_8, loaded [template = %.22b]
 // CHECK:STDOUT:   %import_ref.709: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [template = constants.%complete_type.c07]
-// CHECK:STDOUT:   %import_ref.feb = import_ref Main//adapt_specific_type, inst45 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.feb = import_ref Main//adapt_specific_type, inst48 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -338,9 +344,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type @C.%T (%T) [symbolic = %require_complete.1 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C.f2e), @C.%T (%T) [symbolic = %C.elem (constants.%C.elem.66c)]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type @C.%C.elem (%C.elem.66c) [symbolic = %require_complete.2 (constants.%require_complete.949)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type (constants.%complete_type.433)]
 // CHECK:STDOUT:
@@ -378,9 +385,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %C => constants.%C.239
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.ed6
+// CHECK:STDOUT:   %require_complete.2 => constants.%complete_type.05b
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.767
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c07
 // CHECK:STDOUT: }
@@ -397,6 +405,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.949: <witness> = require_complete_type %C.elem.66c [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [template]
@@ -406,6 +415,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %C.elem.476: type = unbound_element_type %C.98a, %i32 [template]
+// CHECK:STDOUT:   %complete_type.cae: <witness> = complete_type_witness %C.elem.476 [template]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [template]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
@@ -458,9 +468,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%T.loc4_9.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc5_10: <witness> = require_complete_type @C.%T.loc4_9.2 (%T) [symbolic = %require_complete.loc5_10 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_9.2) [symbolic = %C (constants.%C.f2e)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C.f2e), @C.%T.loc4_9.2 (%T) [symbolic = %C.elem (constants.%C.elem.66c)]
+// CHECK:STDOUT:   %require_complete.loc5_3: <witness> = require_complete_type @C.%C.elem (%C.elem.66c) [symbolic = %require_complete.loc5_3 (constants.%require_complete.949)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc4_9.2 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
@@ -514,9 +525,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.loc5_10 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %C => constants.%C.98a
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.476
+// CHECK:STDOUT:   %require_complete.loc5_3 => constants.%complete_type.cae
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
@@ -531,6 +543,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.949: <witness> = require_complete_type %C.elem.66c [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [template]
@@ -540,6 +553,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %C.elem.476: type = unbound_element_type %C.98a, %i32 [template]
+// CHECK:STDOUT:   %complete_type.cae: <witness> = complete_type_witness %C.elem.476 [template]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [template]
 // CHECK:STDOUT: }
@@ -574,9 +588,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc7_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%T.loc7_9.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc8_10: <witness> = require_complete_type @C.%T.loc7_9.2 (%T) [symbolic = %require_complete.loc8_10 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc7_9.2) [symbolic = %C (constants.%C.f2e)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C.f2e), @C.%T.loc7_9.2 (%T) [symbolic = %C.elem (constants.%C.elem.66c)]
+// CHECK:STDOUT:   %require_complete.loc8_3: <witness> = require_complete_type @C.%C.elem (%C.elem.66c) [symbolic = %require_complete.loc8_3 (constants.%require_complete.949)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc7_9.2 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
@@ -621,9 +636,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc7_9.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.loc8_10 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %C => constants.%C.98a
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.476
+// CHECK:STDOUT:   %require_complete.loc8_3 => constants.%complete_type.cae
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc9_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
@@ -644,9 +660,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.c07: <witness> = complete_type_witness %struct_type.x.767 [template]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.949: <witness> = require_complete_type %C.elem.66c [symbolic]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %C.elem.ed6: type = unbound_element_type %C.239, %i32 [template]
+// CHECK:STDOUT:   %complete_type.05b: <witness> = complete_type_witness %C.elem.ed6 [template]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [template]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -664,7 +682,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %import_ref.4c0 = import_ref Main//extend_adapt_specific_type_library, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [template = %.22b]
 // CHECK:STDOUT:   %import_ref.709: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [template = constants.%complete_type.c07]
-// CHECK:STDOUT:   %import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst45 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst48 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.19d12e.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [template = constants.%C.239]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -706,9 +724,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type @C.%T (%T) [symbolic = %require_complete.1 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C.f2e), @C.%T (%T) [symbolic = %C.elem (constants.%C.elem.66c)]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type @C.%C.elem (%C.elem.66c) [symbolic = %require_complete.2 (constants.%require_complete.949)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type (constants.%complete_type.433)]
 // CHECK:STDOUT:
@@ -740,9 +759,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %C => constants.%C.239
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.ed6
+// CHECK:STDOUT:   %require_complete.2 => constants.%complete_type.05b
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.767
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c07
 // CHECK:STDOUT: }
