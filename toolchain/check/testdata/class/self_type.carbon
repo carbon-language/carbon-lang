@@ -99,6 +99,12 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type.56d]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .Make = %Make.decl
+// CHECK:STDOUT:   .p = %.loc18_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {

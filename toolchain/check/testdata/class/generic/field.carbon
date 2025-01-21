@@ -167,6 +167,10 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.e262de.1) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.x.2ac3f0.1 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Class.fe1b2d.1
+// CHECK:STDOUT:     .x = %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

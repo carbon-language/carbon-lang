@@ -79,6 +79,10 @@ fn Run() {
 // CHECK:STDOUT:   %.var: ref %Cycle.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Cycle
+// CHECK:STDOUT:   .c = %.loc10_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -102,6 +106,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.b93: <witness> = import_ref Main//a, loc11_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3a6 = import_ref Main//a, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.455: %Cycle.elem = import_ref Main//a, loc10_8, loaded [template = %.354]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -119,6 +124,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.b93
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.3a6
+// CHECK:STDOUT:   .c = imports.%import_ref.455
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

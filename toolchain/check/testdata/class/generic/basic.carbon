@@ -136,6 +136,12 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc22_1.1: <witness> = complete_type_witness %struct_type.k [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc22_1.1
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     .GetAddr = %GetAddr.decl
+// CHECK:STDOUT:     .GetValue = %GetValue.decl
+// CHECK:STDOUT:     .k = %.loc21_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

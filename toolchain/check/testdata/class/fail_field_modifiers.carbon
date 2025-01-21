@@ -119,5 +119,12 @@ class Class {
 // CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc35_22.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
+// CHECK:STDOUT:   .j = %.loc17_16
+// CHECK:STDOUT:   .k = %.loc23_14
+// CHECK:STDOUT:   .l = %l
+// CHECK:STDOUT:   .m = %m
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

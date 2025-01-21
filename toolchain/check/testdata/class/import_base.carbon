@@ -103,6 +103,13 @@ fn Run() {
 // CHECK:STDOUT:   %.var.loc9: ref %Base.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.20c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .Unused = %Unused.decl
+// CHECK:STDOUT:   .x = %.loc8_8
+// CHECK:STDOUT:   .unused = %.loc9_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
@@ -110,6 +117,11 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13: %Child.elem = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Child
+// CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
@@ -164,9 +176,15 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.239: <witness> = import_ref Main//a, loc10_1, loaded [template = constants.%complete_type.90f]
+// CHECK:STDOUT:   %import_ref.1f3 = import_ref Main//a, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.e8f: %F.type = import_ref Main//a, loc5_21, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.8bf = import_ref Main//a, loc6_26, unloaded
 // CHECK:STDOUT:   %import_ref.e67: %Base.elem = import_ref Main//a, loc8_8, loaded [template = %.720]
+// CHECK:STDOUT:   %import_ref.2e4 = import_ref Main//a, loc9_13, unloaded
 // CHECK:STDOUT:   %import_ref.c5f: <witness> = import_ref Main//a, loc14_1, loaded [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   %import_ref.9a9 = import_ref Main//a, inst76 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7e5 = import_ref Main//a, loc13_20, unloaded
+// CHECK:STDOUT:   %import_ref.a21640.2: type = import_ref Main//a, loc13_16, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -183,10 +201,22 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.c5f
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.9a9
+// CHECK:STDOUT:   .base = imports.%import_ref.7e5
+// CHECK:STDOUT:   extend imports.%import_ref.a21640.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.239
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.1f3
+// CHECK:STDOUT:   .F = imports.%import_ref.e8f
+// CHECK:STDOUT:   .Unused = imports.%import_ref.8bf
+// CHECK:STDOUT:   .x = imports.%import_ref.e67
+// CHECK:STDOUT:   .unused = imports.%import_ref.2e4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

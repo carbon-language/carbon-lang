@@ -100,6 +100,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class2.carbon
@@ -116,6 +119,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %import_ref.204: type = import_ref Main//class1, c_alias, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.6da = import_ref Main//class1, a, unloaded
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//class1, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//class1, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -143,6 +147,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "class1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class3.carbon
@@ -158,6 +165,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %import_ref.3fd: type = import_ref Main//class2, c_alias_alias, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.b9b = import_ref Main//class2, b, unloaded
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//class2, inst21 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//class2, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -181,6 +189,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "class2.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8db
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var1.carbon

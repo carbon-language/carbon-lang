@@ -183,6 +183,9 @@ import Other library "o1";
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c2.carbon
@@ -203,6 +206,9 @@ import Other library "o1";
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ns.carbon
@@ -226,6 +232,9 @@ import Other library "o1";
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- o1.carbon
@@ -246,6 +255,9 @@ import Other library "o1";
 // CHECK:STDOUT: class @O1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%O1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- o2.carbon
@@ -266,6 +278,9 @@ import Other library "o1";
 // CHECK:STDOUT: class @O2 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%O2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- local_other.carbon
@@ -286,6 +301,9 @@ import Other library "o1";
 // CHECK:STDOUT: class @Other {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_current_package.carbon
@@ -316,7 +334,9 @@ import Other library "o1";
 // CHECK:STDOUT:   %import_ref.0d9: type = import_ref Main//mix_current_package, C1, loaded [template = constants.%C1]
 // CHECK:STDOUT:   %import_ref.09c: type = import_ref Main//c2, C2, loaded [template = constants.%C2]
 // CHECK:STDOUT:   %import_ref.8f24d3.1: <witness> = import_ref Main//c1, loc4_11, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.eb7 = import_ref Main//c1, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.2: <witness> = import_ref Main//c2, loc4_11, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5b0 = import_ref Main//c2, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -346,10 +366,16 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.eb7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 [from "c2.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.5b0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -390,6 +416,7 @@ import Other library "o1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.0d9: type = import_ref Main//dup_c1, C1, loaded [template = constants.%C1]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//c1, loc4_11, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.eb7 = import_ref Main//c1, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -410,6 +437,9 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.eb7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -453,6 +483,7 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1c4: type = import_ref Main//use_ns, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//ns, loc5_13, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2dd = import_ref Main//ns, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -476,6 +507,9 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "ns.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2dd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -522,8 +556,10 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.880: type = import_ref Other//o1, O1, loaded [template = constants.%O1]
 // CHECK:STDOUT:   %import_ref.8f24d3.1: <witness> = import_ref Other//o1, loc4_11, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.481 = import_ref Other//o1, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.328: type = import_ref Other//o2, O2, loaded [template = constants.%O2]
 // CHECK:STDOUT:   %import_ref.8f24d3.2: <witness> = import_ref Other//o2, loc4_11, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2eb = import_ref Other//o2, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -559,10 +595,16 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.481
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O2 [from "o2.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2eb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -609,6 +651,7 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.880: type = import_ref Other//o1, O1, loaded [template = constants.%O1]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Other//o1, loc4_11, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.481 = import_ref Other//o1, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -633,6 +676,9 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.481
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

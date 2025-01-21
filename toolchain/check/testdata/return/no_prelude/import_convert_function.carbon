@@ -271,6 +271,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %N.patt: %i32.builtin = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.116: type = class_type @C, @C(%N) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
@@ -734,6 +735,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C.116
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -750,6 +754,11 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.var.loc7_23: ref %D.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.m.566 [template = constants.%complete_type.682]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   .n = %.loc7_16
+// CHECK:STDOUT:   .m = %.loc7_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "core.carbon"];
@@ -1134,8 +1143,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.b0a: type = import_ref P//library, D, loaded [template = constants.%D]
 // CHECK:STDOUT:   %import_ref.7e5: <witness> = import_ref P//library, loc7_35, loaded [template = constants.%complete_type.682]
+// CHECK:STDOUT:   %import_ref.cab = import_ref P//library, inst47 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.a99 = import_ref P//library, loc7_16, unloaded
+// CHECK:STDOUT:   %import_ref.9d2 = import_ref P//library, loc7_28, unloaded
 // CHECK:STDOUT:   %import_ref.f9e: %C.type = import_ref P//library, C, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref P//library, loc6_19, loaded [template = constants.%complete_type.357]
+// CHECK:STDOUT:   %import_ref.d9b = import_ref P//library, inst42 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.ff5 = import_ref Core//default, inst49 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.589: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.c0e) = import_ref Core//default, loc9_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.5048c6.2)]
 // CHECK:STDOUT:   %import_ref.e69 = import_ref Core//default, Convert, unloaded
@@ -1266,6 +1279,11 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "library.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.7e5
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.cab
+// CHECK:STDOUT:   .n = imports.%import_ref.a99
+// CHECK:STDOUT:   .m = imports.%import_ref.9d2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%N: %i32.builtin) [from "library.carbon"] {
@@ -1276,6 +1294,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.d9b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

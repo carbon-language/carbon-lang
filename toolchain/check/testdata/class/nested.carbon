@@ -123,6 +123,15 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.var.loc38: ref %Outer.elem.fe9 = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.po.qo.pi [template = constants.%complete_type.e99]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Outer
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .Inner = %Inner.decl
+// CHECK:STDOUT:   .H = %H.decl
+// CHECK:STDOUT:   .po = %.loc36_9
+// CHECK:STDOUT:   .qo = %.loc37_9
+// CHECK:STDOUT:   .pi = %.loc38_9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
@@ -144,6 +153,13 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.pi.po.qi [template = constants.%complete_type.7ae]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Inner
+// CHECK:STDOUT:   .pi = %.loc19_11
+// CHECK:STDOUT:   .po = %.loc20_11
+// CHECK:STDOUT:   .qi = %.loc21_11
+// CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {

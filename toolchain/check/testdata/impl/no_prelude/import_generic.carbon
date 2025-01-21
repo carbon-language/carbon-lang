@@ -219,6 +219,9 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -296,6 +299,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %import_ref.003 = import_ref Main//import_generic, loc8_33, unloaded
 // CHECK:STDOUT:   %import_ref.884 = import_ref Main//import_generic, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//import_generic, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.29aca8.1: type = import_ref Main//import_generic, loc8_24, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.4be: type = import_ref Main//import_generic, loc8_32, loaded [symbolic = @impl.1.%I.type (constants.%I.type.325)]
 // CHECK:STDOUT:   %import_ref.4e1 = import_ref Main//import_generic, loc12_35, unloaded
@@ -462,6 +466,9 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "import_generic.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -660,6 +667,9 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {
@@ -736,6 +746,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %import_ref.0eb: %J.type.2b8 = import_ref Main//import_generic_decl, J, loaded [template = constants.%J.generic]
 // CHECK:STDOUT:   %import_ref.ff5 = import_ref Main//import_generic_decl, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//import_generic_decl, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.cab = import_ref Main//import_generic_decl, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.aa9f8a.1: type = import_ref Main//import_generic_decl, loc11_24, loaded [template = constants.%D]
 // CHECK:STDOUT:   %import_ref.ded: type = import_ref Main//import_generic_decl, loc11_32, loaded [symbolic = @impl.1.%J.type (constants.%J.type.b72)]
 // CHECK:STDOUT:   %import_ref.aa9f8a.2: type = import_ref Main//import_generic_decl, loc17_24, loaded [template = constants.%D]
@@ -891,6 +902,9 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "fail_import_generic_decl.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.cab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {

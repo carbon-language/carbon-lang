@@ -80,6 +80,11 @@ interface I {
 // CHECK:STDOUT:     %.loc24: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [template = constants.%I.type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C.6b4
+// CHECK:STDOUT:     extend %.loc24
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
