@@ -241,7 +241,6 @@ CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
 // Choice checking.
 CARBON_DIAGNOSTIC_KIND(ChoiceAlternativeEmptyParams)
 CARBON_DIAGNOSTIC_KIND(ChoiceAlternativeEmptyParamsNote)
-CARBON_DIAGNOSTIC_KIND(ChoiceAlternativeImplicitParams)
 
 // Deduction.
 CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)
