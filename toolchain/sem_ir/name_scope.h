@@ -182,7 +182,7 @@ class NameScopeStore {
   }
 
   // Adds a name that is required to exist in a name scope, such as `Self`.
-  // The name must never conflict. inst_id must not be poisoned.
+  // The name must never conflict.
   auto AddRequiredName(NameScopeId scope_id, NameId name_id, InstId inst_id)
       -> void {
     Get(scope_id).AddRequired({.name_id = name_id,
