@@ -183,6 +183,40 @@ class Derived {
   impl fn F(v: i32);
 }
 
+// --- fail_todo_impl_conversion.carbon
+
+package FailTodoImplConversion;
+
+class T1 {
+}
+
+class T2 {
+}
+
+impl T2 as Core.ImplicitAs(T1) {
+  fn Convert[self: Self]() -> T1 {
+    return {};
+  }
+}
+
+
+
+base class Base {
+  virtual fn F() -> T1;
+}
+
+class Derived {
+  extend base: Base;
+  // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE+7]]:3: error: function redeclaration differs because return type is `T2` [FunctionRedeclReturnTypeDiffers]
+  // CHECK:STDERR:   impl fn F() -> T2;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE-8]]:3: note: previously declared with return type `T1` [FunctionRedeclReturnTypePrevious]
+  // CHECK:STDERR:   virtual fn F() -> T1;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  impl fn F() -> T2;
+}
+
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1124,4 +1158,138 @@ class Derived {
 // CHECK:STDOUT: virtual fn @F.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F.2(%v.param_patt: %i32);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_impl_conversion.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T1: type = class_type @T1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %T2: type = class_type @T2 [template]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type.e40: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [template]
+// CHECK:STDOUT:   %Convert.type.c41: type = fn_type @Convert.2 [template]
+// CHECK:STDOUT:   %Convert.f35: %Convert.type.c41 = struct_value () [template]
+// CHECK:STDOUT:   %T1.val: %T1 = struct_value () [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [template]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.5ee: <vtable> = vtable (%F.d17) [template]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [template]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.d44: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:     .T2 = %T2.decl
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [template = constants.%T1] {} {}
+// CHECK:STDOUT:   %T2.decl: type = class_decl @T2 [template = constants.%T2] {} {}
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [template = constants.%T2]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T1)> [template = constants.%ImplicitAs.type.e40]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %T2.ref as %ImplicitAs.type {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.c41 = fn_decl @Convert.2 [template = constants.%Convert.f35] {
+// CHECK:STDOUT:     %self.patt: %T2 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %T2 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:     %self.param: %T2 = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%T2.ref [template = constants.%T2]
+// CHECK:STDOUT:     %self: %T2 = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref %T1 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T2 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [template = constants.%F.d17] {
+// CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:     %return.param: ref %T1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc20: <vtable> = vtable (%F.decl) [template = constants.%.5ee]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:   %.loc23: %Derived.elem = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {
+// CHECK:STDOUT:     %return.patt: %T2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %T2 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [template = constants.%T2]
+// CHECK:STDOUT:     %return.param: ref %T2 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %T2 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc25: <vtable> = vtable (%F.decl) [template = constants.%.88d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert.2[%self.param_patt: %T2]() -> %return.param_patt: %T1 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_13.2: init %T1 = class_init (), %return [template = constants.%T1.val]
+// CHECK:STDOUT:   %.loc12_14: init %T1 = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%T1.val]
+// CHECK:STDOUT:   return %.loc12_14 to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F.1() -> %T1;
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F.2() -> %T2;
 // CHECK:STDOUT:
