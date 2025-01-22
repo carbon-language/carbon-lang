@@ -91,7 +91,7 @@ struct Function : public EntityWithParamsBase,
   // specified.  Returns `Invalid` if no return type was specified, in which
   // case the effective return type is an empty tuple.
   auto GetDeclaredReturnType(const File& file,
-                             SpecificId specific_id = SpecificId::Invalid) const
+                             SpecificId specific_id = SpecificId::None) const
       -> TypeId;
 };
 

@@ -52,7 +52,7 @@ struct NameComponent {
 // Pops a name component from the node stack (and pattern block stack, if it has
 // parameters).
 auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id =
-                                            SemIR::InstId::Invalid)
+                                            SemIR::InstId::None)
     -> NameComponent;
 
 // Equivalent to PopNameComponent, but also diagnoses if the name component has

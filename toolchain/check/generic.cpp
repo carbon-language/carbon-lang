@@ -334,7 +334,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
                                          .inst_id),
                  context.insts().Get(decl_id));
     context.generic_region_stack().Pop();
-    return SemIR::GenericId::Invalid;
+    return SemIR::GenericId::None;
   }
 
   // Build the new Generic object. Note that we intentionally do not hold a
@@ -346,7 +346,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   SemIR::GenericId generic_id = context.generics().Add(
       SemIR::Generic{.decl_id = decl_id,
                      .bindings_id = bindings_id,
-                     .self_specific_id = SemIR::SpecificId::Invalid});
+                     .self_specific_id = SemIR::SpecificId::None});
   // MakeSelfSpecificId could cause something to be imported, which would
   // invalidate the return value of `context.generics().Get(generic_id)`.
   auto self_specific_id = MakeSelfSpecificId(context, generic_id);
@@ -431,7 +431,7 @@ auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId {
   if (!generic_id.is_valid()) {
-    return SemIR::SpecificId::Invalid;
+    return SemIR::SpecificId::None;
   }
 
   auto& generic = context.generics().Get(generic_id);
@@ -499,7 +499,7 @@ auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
     }
     case SemIR::FunctionDecl::Kind: {
       return context.constant_values().GetInstId(
-          TryEvalInst(context, SemIR::InstId::Invalid,
+          TryEvalInst(context, SemIR::InstId::None,
                       SemIR::SpecificFunction{
                           .type_id = context.GetSingletonType(
                               SemIR::SpecificFunctionType::SingletonInstId),

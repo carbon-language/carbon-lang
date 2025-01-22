@@ -23,7 +23,7 @@ class NodeLoc {
   // TODO: Have some other way of representing diagnostic that applies to a file
   // as a whole.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeLoc(InvalidNodeId node_id) : NodeLoc(node_id, false) {}
+  NodeLoc(NoneNodeId node_id) : NodeLoc(node_id, false) {}
 
   auto node_id() const -> NodeId { return node_id_; }
   auto token_only() const -> bool { return token_only_; }
@@ -47,7 +47,7 @@ class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
       -> ConvertedDiagnosticLoc override {
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
-    if (!node_loc.node_id().is_valid()) {
+    if (!node_loc.node_id().has_value()) {
       return {{.filename = filename_}, -1};
     }
 

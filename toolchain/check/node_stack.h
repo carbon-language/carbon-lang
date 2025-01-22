@@ -20,7 +20,7 @@ namespace Carbon::Check {
 class IdUnion {
  public:
   // The default constructor forms an invalid ID.
-  explicit constexpr IdUnion() : index(AnyIdBase::InvalidIndex) {}
+  explicit constexpr IdUnion() : index(AnyIdBase::NoneIndex) {}
 
   template <typename IdT>
     requires SemIR::IdKind::Contains<IdT>
@@ -271,7 +271,7 @@ class NodeStack {
   auto PopWithNodeIdIf() -> std::pair<Parse::NodeIdForKind<RequiredParseKind>,
                                       decltype(PopIf<RequiredParseKind>())> {
     if (!PeekIs(RequiredParseKind)) {
-      return {Parse::NodeId::Invalid, std::nullopt};
+      return {Parse::NodeId::None, std::nullopt};
     }
     return PopWithNodeId<RequiredParseKind>();
   }
@@ -283,7 +283,7 @@ class NodeStack {
       -> std::pair<Parse::NodeIdInCategory<RequiredParseCategory>,
                    decltype(PopIf<RequiredParseCategory>())> {
     if (!PeekIs(RequiredParseCategory)) {
-      return {Parse::NodeId::Invalid, std::nullopt};
+      return {Parse::NodeId::None, std::nullopt};
     }
     return PopWithNodeId<RequiredParseCategory>();
   }

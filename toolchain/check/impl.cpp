@@ -75,7 +75,7 @@ static auto GetSelfSpecificForInterfaceMemberWithSelfType(
   // since we haven't finished defining the implementation here.
   auto type_inst_id = context.types().GetInstId(self_type_id);
   auto facet_value_const_id =
-      TryEvalInst(context, SemIR::InstId::Invalid,
+      TryEvalInst(context, SemIR::InstId::None,
                   SemIR::FacetValue{.type_id = self_binding.type_id,
                                     .type_inst_id = type_inst_id,
                                     .witness_inst_id = witness_inst_id});
@@ -192,7 +192,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
   }
 
   llvm::SmallVector<SemIR::InstId> table(assoc_entities.size(),
-                                         SemIR::InstId::Invalid);
+                                         SemIR::InstId::None);
   auto table_id = context.inst_blocks().Add(table);
   return context.AddInst<SemIR::ImplWitness>(
       context.insts().GetLocId(impl.latest_decl_id()),
@@ -245,8 +245,8 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
 
   // Scan through rewrites, produce map from element index to constant value.
   // TODO: Perhaps move this into facet type resolution?
-  llvm::SmallVector<SemIR::ConstantId> rewrite_values(
-      assoc_entities.size(), SemIR::ConstantId::Invalid);
+  llvm::SmallVector<SemIR::ConstantId> rewrite_values(assoc_entities.size(),
+                                                      SemIR::ConstantId::None);
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
     auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);

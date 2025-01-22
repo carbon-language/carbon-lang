@@ -77,7 +77,7 @@ TEST(ValueStore, Identifiers) {
   EXPECT_THAT(identifiers.Get(b_id), Eq(b));
 
   EXPECT_THAT(identifiers.Lookup(a), Eq(a_id));
-  EXPECT_THAT(identifiers.Lookup("c"), Eq(IdentifierId::Invalid));
+  EXPECT_THAT(identifiers.Lookup("c"), Eq(IdentifierId::None));
 }
 
 TEST(ValueStore, StringLiterals) {
@@ -96,7 +96,7 @@ TEST(ValueStore, StringLiterals) {
   EXPECT_THAT(string_literals.Get(b_id), Eq(b));
 
   EXPECT_THAT(string_literals.Lookup(a), Eq(a_id));
-  EXPECT_THAT(string_literals.Lookup("c"), Eq(StringLiteralValueId::Invalid));
+  EXPECT_THAT(string_literals.Lookup("c"), Eq(StringLiteralValueId::None));
 }
 
 }  // namespace

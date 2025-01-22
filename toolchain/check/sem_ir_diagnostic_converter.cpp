@@ -37,7 +37,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
     -> ConvertedDiagnosticLoc {
   // Cursors for the current IR and instruction in that IR.
   const auto* cursor_ir = sem_ir_;
-  auto cursor_inst_id = SemIR::InstId::Invalid;
+  auto cursor_inst_id = SemIR::InstId::None;
 
   // Notes an import on the diagnostic and updates cursors to point at the
   // imported IR.
@@ -135,7 +135,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
     }
 
     // Invalid parse node but not an import; just nothing to point at.
-    return ConvertLocInFile(cursor_ir, Parse::NodeId::Invalid, loc.token_only,
+    return ConvertLocInFile(cursor_ir, Parse::NodeId::None, loc.token_only,
                             context_fn);
   }
 }
@@ -146,7 +146,7 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     if (*library_name_id == SemIR::LibraryNameId::Default) {
       library_name = "default library";
     } else if (!library_name_id->is_valid()) {
-      library_name = "library <invalid>";
+      library_name = "library <none>";
     } else {
       RawStringOstream stream;
       stream << "library \""

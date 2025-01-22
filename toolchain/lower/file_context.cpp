@@ -84,7 +84,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
   // Append `__global_init` to `llvm::global_ctors` to initialize global
   // variables.
-  if (sem_ir().global_ctor_id().is_valid()) {
+  if (sem_ir().global_ctor_id().has_value()) {
     llvm::appendToGlobalCtors(llvm_module(),
                               GetFunction(sem_ir().global_ctor_id()),
                               /*Priority=*/0);
@@ -226,7 +226,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                          implicit_param_patterns.size() + param_patterns.size();
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
-  auto return_param_id = SemIR::InstId::Invalid;
+  auto return_param_id = SemIR::InstId::None;
   if (return_info.has_return_slot()) {
     param_types.push_back(
         llvm::PointerType::get(return_type, /*AddressSpace=*/0));
@@ -282,7 +282,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // Set up parameters and the return slot.
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
-    auto name_id = SemIR::NameId::Invalid;
+    auto name_id = SemIR::NameId::None;
     if (inst_id == return_param_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(
@@ -317,7 +317,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
                                     vlog_stream_);
 
   // TODO: Pass in a specific ID for generic functions.
-  const auto specific_id = SemIR::SpecificId::Invalid;
+  const auto specific_id = SemIR::SpecificId::None;
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
@@ -367,7 +367,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     lower_param(param_id);
   }
 
-  auto decl_block_id = SemIR::InstBlockId::Invalid;
+  auto decl_block_id = SemIR::InstBlockId::None;
   if (function_id == sem_ir().global_ctor_id()) {
     decl_block_id = SemIR::InstBlockId::Empty;
   } else {

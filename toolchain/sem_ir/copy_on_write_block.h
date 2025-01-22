@@ -52,7 +52,7 @@ class CopyOnWriteBlock {
   // Sets the element at index `i` within the block. Lazily allocates a new
   // block when the value changes for the first time.
   auto Set(int i, typename BlockIdType::ElementType value) -> void {
-    if (source_id_.is_valid() && (file_.*ValueStore)().Get(id_)[i] == value) {
+    if (source_id_.has_value() && (file_.*ValueStore)().Get(id_)[i] == value) {
       return;
     }
     if (id_ == source_id_) {

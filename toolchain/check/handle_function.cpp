@@ -125,8 +125,8 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     return;
   }
 
-  auto prev_function_id = SemIR::FunctionId::Invalid;
-  auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
+  auto prev_function_id = SemIR::FunctionId::None;
+  auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       prev_function_id = function_decl.function_id;
@@ -177,7 +177,7 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_slot_pattern_id = SemIR::InstId::Invalid;
+  auto return_slot_pattern_id = SemIR::InstId::None;
   if (auto [return_node, maybe_return_slot_pattern_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
       maybe_return_slot_pattern_id) {
@@ -236,7 +236,7 @@ static auto BuildFunctionDecl(Context& context,
   // Add the function declaration.
   auto decl_block_id = context.inst_block_stack().Pop();
   auto function_decl = SemIR::FunctionDecl{
-      SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
+      SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
   auto decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, function_decl));
 
@@ -291,7 +291,7 @@ static auto BuildFunctionDecl(Context& context,
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
   if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
-      !name_context.prev_inst_id().is_valid()) {
+      !name_context.prev_inst_id().has_value()) {
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = decl_id;
@@ -349,7 +349,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
   if (function.return_slot_pattern_id.is_valid()) {
     CheckFunctionReturnType(
         context, context.insts().GetLocId(function.return_slot_pattern_id),
-        function, SemIR::SpecificId::Invalid);
+        function, SemIR::SpecificId::None);
     params_to_complete = params_to_complete.drop_back();
   }
 

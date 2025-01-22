@@ -77,7 +77,7 @@ class StepStack {
     while (name_scope_id.is_valid() && name_scope_id != NameScopeId::Package) {
       const auto& name_scope = sem_ir_->name_scopes().Get(name_scope_id);
       // TODO: Decide how to print unnamed scopes.
-      if (name_scope.name_id().is_valid()) {
+      if (name_scope.name_id().has_value()) {
         PushString(".");
         // TODO: For a generic scope, pass a SpecificId to this function and
         // include the relevant arguments.

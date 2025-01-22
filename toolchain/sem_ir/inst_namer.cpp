@@ -46,7 +46,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     auto fn_scope = GetScopeFor(fn_id);
     // TODO: Provide a location for the function for use as a
     // disambiguator.
-    auto fn_loc = Parse::NodeId::Invalid;
+    auto fn_loc = Parse::NodeId::None;
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir->names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
@@ -68,7 +68,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     ClassId class_id(i);
     auto class_scope = GetScopeFor(class_id);
     // TODO: Provide a location for the class for use as a disambiguator.
-    auto class_loc = Parse::NodeId::Invalid;
+    auto class_loc = Parse::NodeId::None;
     GetScopeInfo(class_scope).name = globals_.AllocateName(
         *this, class_loc,
         sem_ir->names().GetIRBaseName(class_info.name_id).str());
@@ -83,7 +83,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     InterfaceId interface_id(i);
     auto interface_scope = GetScopeFor(interface_id);
     // TODO: Provide a location for the interface for use as a disambiguator.
-    auto interface_loc = Parse::NodeId::Invalid;
+    auto interface_loc = Parse::NodeId::None;
     GetScopeInfo(interface_scope).name = globals_.AllocateName(
         *this, interface_loc,
         sem_ir->names().GetIRBaseName(interface_info.name_id).str());
@@ -98,7 +98,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     ImplId impl_id(i);
     auto impl_scope = GetScopeFor(impl_id);
     // TODO: Provide a location for the impl for use as a disambiguator.
-    auto impl_loc = Parse::NodeId::Invalid;
+    auto impl_loc = Parse::NodeId::None;
     // TODO: Invent a name based on the self and constraint types.
     GetScopeInfo(impl_scope).name =
         globals_.AllocateName(*this, impl_loc, "impl");
@@ -308,7 +308,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
 // represents some kind of branch.
 auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
                               AnyBranch branch) -> void {
-  if (!loc_id.node_id().is_valid()) {
+  if (!loc_id.node_id().has_value()) {
     AddBlockLabel(scope_id, branch.target_id, "", loc_id);
     return;
   }
@@ -421,7 +421,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       ScopeId old_scope_id = insts_[inst_id.index].first;
       if (old_scope_id == ScopeId::None) {
         std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint =
-            SemIR::LocId::Invalid;
+            SemIR::LocId::None;
         if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
           loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
         } else {
@@ -459,7 +459,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                      facet_value_inst_id)) {
         return sem_ir_->entity_names().Get(symbolic->entity_name_id).name_id;
       }
-      return NameId::Invalid;
+      return NameId::None;
     };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
@@ -699,7 +699,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             sem_ir_->import_ir_insts().Get(inst.import_ir_inst_id);
         const auto& import_ir =
             *sem_ir_->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-        if (import_ir.package_id().is_valid()) {
+        if (import_ir.package_id().has_value()) {
           out << import_ir.identifiers().Get(import_ir.package_id());
         } else {
           out << "Main";

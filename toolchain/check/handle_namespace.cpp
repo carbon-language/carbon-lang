@@ -38,7 +38,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
 
   auto namespace_inst = SemIR::Namespace{
       context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
-      SemIR::NameScopeId::Invalid, SemIR::InstId::Invalid};
+      SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
 

@@ -454,7 +454,7 @@ class Context {
   PackagingState packaging_state_ = PackagingState::FileStart;
   // The first non-packaging token, starting as invalid. Used for packaging
   // state warnings.
-  Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
+  Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::None;
 };
 
 }  // namespace Carbon::Parse

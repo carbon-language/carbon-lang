@@ -146,7 +146,7 @@ struct EntityWithParamsBase {
   // The following members are set at the `{` of the definition.
 
   // The definition of the entity. This will be a <entity>Decl.
-  InstId definition_id = InstId::Invalid;
+  InstId definition_id = InstId::None;
 };
 
 }  // namespace Carbon::SemIR

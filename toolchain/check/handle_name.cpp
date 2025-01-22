@@ -210,7 +210,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
   } else {
     // Otherwise this is `.Member`, so look up `.Self` and then `Member` in
     // `.Self`.
-    SemIR::InstId period_self_id = SemIR::InstId::Invalid;
+    SemIR::InstId period_self_id = SemIR::InstId::None;
     {
       // TODO: Instead of annotating the diagnostic, should change
       // `HandleNameAsExpr` to optionally allow us to produce the diagnostic
@@ -222,7 +222,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
             CARBON_DIAGNOSTIC(
                 NoPeriodSelfForDesignator, Note,
                 "designator may only be used when `.Self` is in scope");
-            builder.Note(SemIR::LocId::Invalid, NoPeriodSelfForDesignator);
+            builder.Note(SemIR::LocId::None, NoPeriodSelfForDesignator);
           });
       period_self_id =
           HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);

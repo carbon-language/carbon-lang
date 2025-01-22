@@ -50,13 +50,13 @@ static auto BuildInterfaceDecl(Context& context,
   // Add the interface declaration.
   auto interface_decl =
       SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
-                           SemIR::InterfaceId::Invalid, decl_block_id};
+                           SemIR::InterfaceId::None, decl_block_id};
   auto interface_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,
-      SemIR::LibraryNameId::Invalid)};
+      SemIR::LibraryNameId::None)};
 
   // Check whether this is a redeclaration.
   auto [existing_id, is_poisoned] = context.decl_name_stack().LookupOrAddName(
@@ -84,7 +84,7 @@ static auto BuildInterfaceDecl(Context& context,
             RedeclInfo(interface_info, node_id, is_definition),
             RedeclInfo(existing_interface, existing_interface.latest_decl_id(),
                        existing_interface.has_definition_started()),
-            /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
+            /*prev_import_ir_id=*/SemIR::ImportIRId::None);
 
         // Can't merge interface definitions due to the generic requirements.
         if (!is_definition || !existing_interface.has_definition_started()) {
@@ -142,9 +142,8 @@ auto HandleParseNode(Context& context,
   CARBON_CHECK(!interface_info.has_definition_started(),
                "Can't merge with defined interfaces.");
   interface_info.definition_id = interface_decl_id;
-  interface_info.scope_id =
-      context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
-                                interface_info.parent_scope_id);
+  interface_info.scope_id = context.name_scopes().Add(
+      interface_decl_id, SemIR::NameId::None, interface_info.parent_scope_id);
 
   auto self_specific_id =
       context.generics().GetSelfSpecific(interface_info.generic_id);
@@ -161,7 +160,7 @@ auto HandleParseNode(Context& context,
   SemIR::FacetType facet_type =
       context.FacetTypeFromInterface(interface_id, self_specific_id);
   SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
-      TryEvalInst(context, SemIR::InstId::Invalid, facet_type));
+      TryEvalInst(context, SemIR::InstId::None, facet_type));
 
   // We model `Self` as a symbolic binding whose type is the interface.
   // Because there is no equivalent non-symbolic value, we use `Invalid` as
@@ -174,7 +173,7 @@ auto HandleParseNode(Context& context,
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
            .entity_name_id = entity_name_id,
-           .value_id = SemIR::InstId::Invalid}));
+           .value_id = SemIR::InstId::None}));
   context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
   context.name_scopes().AddRequiredName(interface_info.scope_id,
                                         SemIR::NameId::SelfType,

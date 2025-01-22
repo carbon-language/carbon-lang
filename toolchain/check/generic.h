@@ -22,7 +22,7 @@ auto StartGenericDefinition(Context& context) -> void;
 auto DiscardGenericDecl(Context& context) -> void;
 
 // Finish processing a potentially generic declaration and produce a
-// corresponding generic object. Returns SemIR::GenericId::Invalid if this
+// corresponding generic object. Returns SemIR::GenericId::None if this
 // declaration is not actually generic.
 auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId;
 
@@ -67,7 +67,7 @@ inline auto MakeSpecificIfGeneric(Context& context, SemIRLoc loc,
                                   SemIR::InstBlockId args_id)
     -> SemIR::SpecificId {
   return generic_id.is_valid() ? MakeSpecific(context, loc, generic_id, args_id)
-                               : SemIR::SpecificId::Invalid;
+                               : SemIR::SpecificId::None;
 }
 
 // Builds the specific that describes how the generic should refer to itself.

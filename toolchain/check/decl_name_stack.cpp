@@ -20,7 +20,7 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
   switch (state) {
     case NameContext::State::Error:
       // The name is invalid and a diagnostic has already been emitted.
-      return SemIR::InstId::Invalid;
+      return SemIR::InstId::None;
 
     case NameContext::State::Empty:
       CARBON_FATAL(
@@ -31,7 +31,7 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
       return resolved_inst_id;
 
     case NameContext::State::Unresolved:
-      return SemIR::InstId::Invalid;
+      return SemIR::InstId::None;
 
     case NameContext::State::Poisoned:
       CARBON_FATAL("Poisoned state should not call prev_inst_id()");
@@ -188,13 +188,13 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                     SemIR::AccessKind access_kind)
     -> std::pair<SemIR::InstId, bool> {
   if (name_context.state == NameContext::State::Poisoned) {
-    return {SemIR::InstId::Invalid, true};
+    return {SemIR::InstId::None, true};
   }
   if (auto id = name_context.prev_inst_id(); id.is_valid()) {
     return {id, false};
   }
   AddName(name_context, target_id, access_kind);
-  return {SemIR::InstId::Invalid, false};
+  return {SemIR::InstId::None, false};
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
@@ -374,7 +374,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                    const NameComponent& name) const
     -> std::pair<SemIR::NameScopeId, SemIR::SpecificId> {
   constexpr std::pair<SemIR::NameScopeId, SemIR::SpecificId> InvalidResult = {
-      SemIR::NameScopeId::Invalid, SemIR::SpecificId::Invalid};
+      SemIR::NameScopeId::None, SemIR::SpecificId::None};
 
   if (!CheckQualifierIsResolved(*context_, name_context)) {
     return InvalidResult;
@@ -429,9 +429,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       // This is specifically for qualified name handling.
       if (!CheckRedeclParamsMatch(
               *context_, new_params,
-              DeclParams(name_context.resolved_inst_id, Parse::NodeId::Invalid,
-                         Parse::NodeId::Invalid, SemIR::InstBlockId::Invalid,
-                         SemIR::InstBlockId::Invalid))) {
+              DeclParams(name_context.resolved_inst_id, Parse::NodeId::None,
+                         Parse::NodeId::None, SemIR::InstBlockId::None,
+                         SemIR::InstBlockId::None))) {
         return InvalidResult;
       }
       if (scope.is_closed_import()) {
@@ -441,7 +441,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
         // be used as a name qualifier.
         scope.set_is_closed_import(false);
       }
-      return {scope_id, SemIR::SpecificId::Invalid};
+      return {scope_id, SemIR::SpecificId::None};
     }
     default: {
       DiagnoseQualifiedDeclInNonScope(*context_, name_context.loc_id,

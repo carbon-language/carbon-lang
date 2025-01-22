@@ -53,7 +53,7 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
     if (is_valid()) {
       out << index;
     } else {
-      out << "<invalid>";
+      out << "<none>";
     }
   }
 

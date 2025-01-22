@@ -133,7 +133,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
                          SemIR::InstId expr_id) -> void {
   const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
-  auto return_slot_id = SemIR::InstId::Invalid;
+  auto return_slot_id = SemIR::InstId::None;
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
 
@@ -189,7 +189,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     // If we don't have a return slot, we're returning by value. Convert to a
     // value expression.
     returned_var_id = ConvertToValueExpr(context, returned_var_id);
-    return_slot_id = SemIR::InstId::Invalid;
+    return_slot_id = SemIR::InstId::None;
   }
 
   context.AddInst<SemIR::ReturnExpr>(

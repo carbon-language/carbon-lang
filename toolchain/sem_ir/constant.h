@@ -69,13 +69,13 @@ class ConstantValueStore {
     if (const_id.is_symbolic()) {
       return GetSymbolicConstant(const_id).inst_id;
     }
-    return InstId::Invalid;
+    return InstId::None;
   }
 
   // Gets the instruction ID that defines the value of the given constant.
   // Returns Invalid if the constant ID is non-constant or invalid.
   auto GetInstIdIfValid(ConstantId const_id) const -> InstId {
-    return const_id.is_valid() ? GetInstId(const_id) : InstId::Invalid;
+    return const_id.is_valid() ? GetInstId(const_id) : InstId::None;
   }
 
   // Given an instruction, returns the unique constant instruction that is

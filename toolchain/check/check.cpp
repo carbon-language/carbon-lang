@@ -66,7 +66,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
   IdentifierId file_package_id =
-      packaging ? packaging->names.package_id : IdentifierId::Invalid;
+      packaging ? packaging->names.package_id : IdentifierId::None;
   const auto import_key = GetImportKey(unit_info, file_package_id, import);
   const auto& [import_package_name, import_library_name] = import_key;
 
@@ -232,7 +232,7 @@ static auto BuildApiMapAndDiagnosePackaging(
     const auto& packaging = unit_info.parse_tree().packaging_decl();
     // An import key formed from the `package` or `library` declaration. Or, for
     // Main//default, a placeholder key.
-    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::Invalid,
+    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::None,
                                                packaging->names)
                                 // Construct a boring key for Main//default.
                                 : ImportKey{"", ""};
@@ -278,7 +278,7 @@ static auto BuildApiMapAndDiagnosePackaging(
                             "`Main//default` previously provided by `{0}`",
                             std::string);
           // Use the invalid node because there's no node to associate with.
-          unit_info.emitter.Emit(Parse::NodeId::Invalid, DuplicateMainApi,
+          unit_info.emitter.Emit(Parse::NodeId::None, DuplicateMainApi,
                                  prev_filename.str());
         }
       }
@@ -299,13 +299,13 @@ static auto BuildApiMapAndDiagnosePackaging(
             "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}",
             BoolAsSelect);
         auto diag = unit_info.emitter.Build(
-            packaging ? packaging->names.node_id : Parse::NodeId::Invalid,
+            packaging ? packaging->names.node_id : Parse::NodeId::None,
             IncorrectExtension, is_impl);
         if (is_api_with_impl_ext) {
           CARBON_DIAGNOSTIC(
               IncorrectExtensionImplNote, Note,
               "file extension of `.impl.carbon` only allowed for `impl`");
-          diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote);
+          diag.Note(Parse::NodeId::None, IncorrectExtensionImplNote);
         }
         diag.Emit();
       }
@@ -336,7 +336,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
-      implicit_names.package_id = IdentifierId::Invalid;
+      implicit_names.package_id = IdentifierId::None;
       TrackImport(api_map, nullptr, unit_info, implicit_names, fuzzing);
     }
 
@@ -351,7 +351,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
       TrackImport(api_map, &explicit_import_map, unit_info,
-                  {.node_id = Parse::InvalidNodeId(),
+                  {.node_id = Parse::NoneNodeId(),
                    .package_id = core_ident_id,
                    .library_id = prelude_id},
                   fuzzing);

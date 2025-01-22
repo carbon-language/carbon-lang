@@ -98,10 +98,10 @@ auto TreeAndSubtrees::Verify() const -> ErrorOr<Success> {
   }
 
   // Validate the roots. Also ensures Tree::ExtractFile() doesn't error.
-  if (!TryExtractNodeFromChildren<File>(NodeId::Invalid, roots(), nullptr)) {
+  if (!TryExtractNodeFromChildren<File>(NodeId::None, roots(), nullptr)) {
     ErrorBuilder trace;
     trace << "Roots of tree couldn't be extracted as a `File`. Trace:\n";
-    TryExtractNodeFromChildren<File>(NodeId::Invalid, roots(), &trace);
+    TryExtractNodeFromChildren<File>(NodeId::None, roots(), &trace);
     return trace;
   }
 
@@ -173,7 +173,7 @@ auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
   }
 
   while (!node_stack.empty()) {
-    NodeId n = NodeId::Invalid;
+    NodeId n = NodeId::None;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
     for (NodeId sibling_n : children(n)) {
@@ -206,7 +206,7 @@ auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
   }
 
   while (!node_stack.empty()) {
-    NodeId n = NodeId::Invalid;
+    NodeId n = NodeId::None;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
 

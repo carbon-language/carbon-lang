@@ -11,10 +11,10 @@
 namespace Carbon::SemIR {
 
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
-  CalleeFunction result = {.function_id = FunctionId::Invalid,
-                           .enclosing_specific_id = SpecificId::Invalid,
-                           .resolved_specific_id = SpecificId::Invalid,
-                           .self_id = InstId::Invalid,
+  CalleeFunction result = {.function_id = FunctionId::None,
+                           .enclosing_specific_id = SpecificId::None,
+                           .resolved_specific_id = SpecificId::None,
+                           .self_id = InstId::None,
                            .is_error = false};
 
   if (auto specific_function =
@@ -87,7 +87,7 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
   }
 
   if (inst_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::NameId::Invalid;
+    return SemIR::NameId::None;
   }
 
   auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
@@ -105,7 +105,7 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_slot_pattern_id.is_valid()) {
-    return TypeId::Invalid;
+    return TypeId::None;
   }
   return GetTypeInSpecific(file, specific_id,
                            file.insts().Get(return_slot_pattern_id).type_id());

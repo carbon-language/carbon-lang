@@ -136,7 +136,7 @@ class Inst : public Printable<Inst> {
     // self-referential TypeType.
     auto type_id = kind == InstKind::ErrorInst ? ErrorInst::SingletonTypeId
                                                : TypeType::SingletonTypeId;
-    return Inst(kind, type_id, InstId::InvalidIndex, InstId::InvalidIndex);
+    return Inst(kind, type_id, InstId::NoneIndex, InstId::NoneIndex);
   }
 
   template <typename TypedInst>
@@ -145,9 +145,9 @@ class Inst : public Printable<Inst> {
   Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
       : kind_(),
-        type_id_(TypeId::Invalid),
-        arg0_(InstId::InvalidIndex),
-        arg1_(InstId::InvalidIndex) {
+        type_id_(TypeId::None),
+        arg0_(InstId::NoneIndex),
+        arg1_(InstId::NoneIndex) {
     if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
       kind_ = typed_inst.kind.AsInt();
     } else {
@@ -322,7 +322,7 @@ struct LocIdAndInst {
   // constants block.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(LocId::Invalid, inst, /*is_unchecked=*/true);
+    return LocIdAndInst(LocId::None, inst, /*is_unchecked=*/true);
   }
 
   // Unsafely form a pair of a location and an instruction. Used in the cases

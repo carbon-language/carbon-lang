@@ -33,7 +33,7 @@ class EvalContext {
  public:
   explicit EvalContext(
       Context& context, SemIRLoc fallback_loc,
-      SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
       : context_(context),
         fallback_loc_(fallback_loc),
@@ -62,8 +62,8 @@ class EvalContext {
   // Returns `Invalid` if the value is not fixed in this context.
   auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
       -> SemIR::ConstantId {
-    if (!bind_index.is_valid() || !specific_id_.is_valid()) {
-      return SemIR::ConstantId::Invalid;
+    if (!bind_index.is_valid() || !specific_id_.has_value()) {
+      return SemIR::ConstantId::None;
     }
 
     const auto& specific = specifics().Get(specific_id_);
@@ -72,7 +72,7 @@ class EvalContext {
     // Bindings past the ones with known arguments can appear as local
     // bindings of entities declared within this generic.
     if (static_cast<size_t>(bind_index.index) >= args.size()) {
-      return SemIR::ConstantId::Invalid;
+      return SemIR::ConstantId::None;
     }
     return constant_values().Get(args[bind_index.index]);
   }
@@ -339,14 +339,14 @@ static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::InstBlockId inst_block_id, Phase* phase)
     -> SemIR::InstBlockId {
   if (!inst_block_id.is_valid()) {
-    return SemIR::InstBlockId::Invalid;
+    return SemIR::InstBlockId::None;
   }
   auto insts = eval_context.inst_blocks().Get(inst_block_id);
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
     auto const_inst_id = GetConstantValue(eval_context, inst_id, phase);
     if (!const_inst_id.is_valid()) {
-      return SemIR::InstBlockId::Invalid;
+      return SemIR::InstBlockId::None;
     }
 
     // Once we leave the small buffer, we know the first few elements are all
@@ -369,14 +369,14 @@ static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::StructTypeFieldsId fields_id, Phase* phase)
     -> SemIR::StructTypeFieldsId {
   if (!fields_id.is_valid()) {
-    return SemIR::StructTypeFieldsId::Invalid;
+    return SemIR::StructTypeFieldsId::None;
   }
   auto fields = eval_context.context().struct_type_fields().Get(fields_id);
   llvm::SmallVector<SemIR::StructTypeField> new_fields;
   for (auto field : fields) {
     auto new_type_id = GetConstantValue(eval_context, field.type_id, phase);
     if (!new_type_id.is_valid()) {
-      return SemIR::StructTypeFieldsId::Invalid;
+      return SemIR::StructTypeFieldsId::None;
     }
 
     // Once we leave the small buffer, we know the first few elements are all
@@ -399,14 +399,14 @@ static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::TypeBlockId type_block_id, Phase* phase)
     -> SemIR::TypeBlockId {
   if (!type_block_id.is_valid()) {
-    return SemIR::TypeBlockId::Invalid;
+    return SemIR::TypeBlockId::None;
   }
   auto types = eval_context.type_blocks().Get(type_block_id);
   llvm::SmallVector<SemIR::TypeId> new_types;
   for (auto type_id : types) {
     auto new_type_id = GetConstantValue(eval_context, type_id, phase);
     if (!new_type_id.is_valid()) {
-      return SemIR::TypeBlockId::Invalid;
+      return SemIR::TypeBlockId::None;
     }
 
     // Once we leave the small buffer, we know the first few elements are all
@@ -429,13 +429,13 @@ static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::SpecificId specific_id, Phase* phase)
     -> SemIR::SpecificId {
   if (!specific_id.is_valid()) {
-    return SemIR::SpecificId::Invalid;
+    return SemIR::SpecificId::None;
   }
 
   const auto& specific = eval_context.specifics().Get(specific_id);
   auto args_id = GetConstantValue(eval_context, specific.args_id, phase);
   if (!args_id.is_valid()) {
-    return SemIR::SpecificId::Invalid;
+    return SemIR::SpecificId::None;
   }
 
   if (args_id == specific.args_id) {
@@ -1430,7 +1430,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   // call.
   //
   // TODO: Use a better representation for this.
-  if (call.args_id == SemIR::InstBlockId::Invalid) {
+  if (call.args_id == SemIR::InstBlockId::None) {
     return SemIR::ErrorInst::SingletonConstantId;
   }
 
@@ -1710,7 +1710,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context.context(),
           SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                            .class_id = class_decl.class_id,
-                           .specific_id = SemIR::SpecificId::Invalid},
+                           .specific_id = SemIR::SpecificId::None},
           Phase::Template);
     }
 
@@ -1742,7 +1742,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return MakeConstantResult(
           eval_context.context(),
           eval_context.context().FacetTypeFromInterface(
-              interface_decl.interface_id, SemIR::SpecificId::Invalid),
+              interface_decl.interface_id, SemIR::SpecificId::None),
           Phase::Template);
     }
 
@@ -1885,7 +1885,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // original, with no equivalent value.
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-      bind.value_id = SemIR::InstId::Invalid;
+      bind.value_id = SemIR::InstId::None;
       if (!ReplaceFieldWithConstantValue(
               eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase)) {
         return MakeNonConstantResult(phase);
@@ -2114,7 +2114,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
   auto eval_block = context.inst_blocks().Get(eval_block_id);
 
   llvm::SmallVector<SemIR::InstId> result;
-  result.resize(eval_block.size(), SemIR::InstId::Invalid);
+  result.resize(eval_block.size(), SemIR::InstId::None);
 
   EvalContext eval_context(context, loc, specific_id,
                            SpecificEvalInfo{

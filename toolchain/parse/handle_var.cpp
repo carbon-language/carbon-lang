@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 
 // Handles VarAs(Decl|Returned).
 static auto HandleVar(Context& context, State finish_state,
-                      Lex::TokenIndex returned_token = Lex::TokenIndex::Invalid)
+                      Lex::TokenIndex returned_token = Lex::TokenIndex::None)
     -> void {
   auto state = context.PopState();
 

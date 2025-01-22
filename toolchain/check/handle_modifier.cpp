@@ -67,7 +67,7 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
   if (auto later_modifier_set = s.modifier_set & later_modifiers;
       !later_modifier_set.empty()) {
     // At least one later modifier is present. Diagnose using the closest.
-    Parse::NodeId closest_later_modifier = Parse::NodeId::Invalid;
+    Parse::NodeId closest_later_modifier = Parse::NodeId::None;
     for (auto later_order = static_cast<int8_t>(order) + 1;
          later_order <= static_cast<int8_t>(ModifierOrder::Last);
          ++later_order) {

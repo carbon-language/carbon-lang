@@ -68,7 +68,7 @@ struct ValueRepr : public Printable<ValueRepr> {
   // The kind of aggregate representation used by this type.
   AggregateKind aggregate_kind = AggregateKind::NotAggregate;
   // The type used to model the value representation.
-  TypeId type_id = TypeId::Invalid;
+  TypeId type_id = TypeId::None;
 };
 
 // Information stored about a TypeId corresponding to a complete type.
@@ -126,7 +126,7 @@ struct ReturnTypeInfo {
 
   // Builds return type information for a given function.
   static auto ForFunction(const File& file, const Function& function,
-                          SpecificId specific_id = SpecificId::Invalid)
+                          SpecificId specific_id = SpecificId::None)
       -> ReturnTypeInfo {
     return ForType(file, function.GetDeclaredReturnType(file, specific_id));
   }
@@ -181,7 +181,7 @@ struct NumericTypeLiteralInfo {
 };
 
 inline constexpr NumericTypeLiteralInfo NumericTypeLiteralInfo::Invalid = {
-    .kind = None, .bit_width_id = IntId::Invalid};
+    .kind = None, .bit_width_id = IntId::None};
 
 }  // namespace Carbon::SemIR
 

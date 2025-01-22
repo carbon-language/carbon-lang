@@ -290,7 +290,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         const auto& facet_type_info =
             context.facet_types().Get(facet_type.facet_type_id);
         // Witness that `T` implements the `*assoc_interface`.
-        SemIR::InstId witness_inst_id = SemIR::InstId::Invalid;
+        SemIR::InstId witness_inst_id = SemIR::InstId::None;
         for (auto base_interface : facet_type_info.impls_constraints) {
           // Get the witness that `T` implements `base_type_id`.
           if (base_interface == *assoc_interface) {

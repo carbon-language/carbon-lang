@@ -219,10 +219,10 @@ class File : public Printable<File> {
   CheckIRId check_ir_id_;
 
   // The file's package.
-  IdentifierId package_id_ = IdentifierId::Invalid;
+  IdentifierId package_id_ = IdentifierId::None;
 
   // The file's library.
-  LibraryNameId library_id_ = LibraryNameId::Invalid;
+  LibraryNameId library_id_ = LibraryNameId::None;
 
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;
@@ -284,10 +284,10 @@ class File : public Printable<File> {
   InstBlockStore inst_blocks_;
 
   // The top instruction block ID.
-  InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
+  InstBlockId top_inst_block_id_ = InstBlockId::None;
 
   // The global constructor function id.
-  FunctionId global_ctor_id_ = FunctionId::Invalid;
+  FunctionId global_ctor_id_ = FunctionId::None;
 
   // Storage for instructions that represent computed global constants, such as
   // types.

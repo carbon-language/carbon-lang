@@ -65,7 +65,7 @@ class IntId : public Printable<IntId> {
   // tokens or computed after lexing outside of this range.
   static constexpr int TokenIdBits = 23;
 
-  static const IntId Invalid;
+  static const IntId None;
 
   static auto MakeFromTokenPayload(uint32_t payload) -> IntId {
     // Token-associated IDs are signed `TokenIdBits` integers, so force sign
@@ -129,7 +129,7 @@ class IntId : public Printable<IntId> {
       out << "index: " << AsIndex();
     } else {
       CARBON_CHECK(!is_valid());
-      out << "<invalid>";
+      out << "<none>";
     }
     out << ")";
   }
@@ -205,12 +205,12 @@ class IntId : public Printable<IntId> {
   int32_t id_;
 };
 
-constexpr IntId IntId::Invalid(IntId::InvalidId);
+constexpr IntId IntId::None(IntId::InvalidId);
 
 // Note that we initialize the invalid index in a constexpr context which
 // ensures there is no UB in forming it. This helps ensure all the ID -> index
 // conversions are correct because the invalid ID is at the limit of that range.
-constexpr int32_t IntId::InvalidIndex = Invalid.AsIndex();
+constexpr int32_t IntId::NoneIndex = Invalid.AsIndex();
 
 // A canonicalizing value store with deep optimizations for integers.
 //
@@ -361,14 +361,14 @@ class IntStore {
   struct APIntId : IdBase<APIntId> {
     static constexpr llvm::StringLiteral Label = "ap_int";
     using ValueType = llvm::APInt;
-    static const APIntId Invalid;
+    static const APIntId None;
     using IdBase::IdBase;
   };
 
   static constexpr int MinAPWidth = 64;
 
   static auto MakeIndexOrInvalid(int index) -> IntId {
-    CARBON_DCHECK(index >= 0 && index <= IntId::InvalidIndex);
+    CARBON_DCHECK(index >= 0 && index <= IntId::NoneIndex);
     return IntId(IntId::ZeroIndexId - index);
   }
 
@@ -379,7 +379,7 @@ class IntStore {
       return IntId(value);
     }
 
-    return IntId::Invalid;
+    return IntId::None;
   }
 
   // Tries to make a signed APInt into an embedded value in the ID, and if
@@ -389,7 +389,7 @@ class IntStore {
       return IntId(value.getSExtValue());
     }
 
-    return IntId::Invalid;
+    return IntId::None;
   }
 
   // Tries to make an unsigned APInt into an embedded value in the ID, and if
@@ -399,7 +399,7 @@ class IntStore {
       return IntId(value.getZExtValue());
     }
 
-    return IntId::Invalid;
+    return IntId::None;
   }
 
   // Canonicalize an incoming signed APInt to the correct bit width.
@@ -423,8 +423,7 @@ class IntStore {
   CanonicalValueStore<APIntId> values_;
 };
 
-constexpr IntStore::APIntId IntStore::APIntId::Invalid(
-    IntId::Invalid.AsIndex());
+constexpr IntStore::APIntId IntStore::APIntId::None(IntId::None.AsIndex());
 
 }  // namespace Carbon
 

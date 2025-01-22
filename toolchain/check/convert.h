@@ -38,7 +38,7 @@ struct ConversionTarget {
   // The target type for the conversion.
   SemIR::TypeId type_id;
   // For an initializer, the object being initialized.
-  SemIR::InstId init_id = SemIR::InstId::Invalid;
+  SemIR::InstId init_id = SemIR::InstId::None;
   // For an initializer, a block of pending instructions that are needed to
   // form the value of `init_id`, and that can be discarded if no
   // initialization is needed.

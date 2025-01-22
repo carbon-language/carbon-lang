@@ -147,7 +147,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> void {
   llvm::errs() << '\n';
   if (inst_id.is_valid()) {
     Inst inst = file.insts().Get(inst_id);
-    if (inst.type_id().is_valid()) {
+    if (inst.type_id().has_value()) {
       llvm::errs() << "  - type ";
       Dump(file, inst.type_id());
     }
@@ -181,7 +181,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
   if (name_scope_id.is_valid()) {
     auto name_scope = file.name_scopes().Get(name_scope_id);
     llvm::errs() << ": " << name_scope;
-    if (name_scope.inst_id().is_valid()) {
+    if (name_scope.inst_id().has_value()) {
       llvm::errs() << " " << file.insts().Get(name_scope.inst_id());
     }
     DumpNameIfValid(file, name_scope.name_id());

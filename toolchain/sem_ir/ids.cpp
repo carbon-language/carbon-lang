@@ -52,7 +52,7 @@ auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
   if (is_valid()) {
     out << (region() == Declaration ? "_in_decl" : "_in_def") << index();
   } else {
-    out << "<invalid>";
+    out << "<none>";
   }
 }
 
@@ -80,7 +80,7 @@ auto NameId::ForIdentifier(IdentifierId id) -> NameId {
   if (id.index >= 0) {
     return NameId(id.index);
   } else if (!id.is_valid()) {
-    return NameId::Invalid;
+    return NameId::None;
   } else {
     CARBON_FATAL("Unexpected identifier ID {0}", id);
   }
@@ -144,7 +144,7 @@ auto TypeId::Print(llvm::raw_ostream& out) const -> void {
 auto LibraryNameId::ForStringLiteralValueId(StringLiteralValueId id)
     -> LibraryNameId {
   CARBON_CHECK(id.index >= InvalidIndex, "Unexpected library name ID {0}", id);
-  if (id == StringLiteralValueId::Invalid) {
+  if (id == StringLiteralValueId::None) {
     // Prior to SemIR, we use invalid to indicate `default`.
     return LibraryNameId::Default;
   } else {

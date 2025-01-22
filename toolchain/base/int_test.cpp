@@ -77,7 +77,7 @@ TEST(IntStore, Basic) {
 // Helper struct to hold test values and the resulting IDs.
 struct APAndId {
   llvm::APInt ap;
-  IntId id = IntId::Invalid;
+  IntId id = IntId::None;
 };
 
 TEST(IntStore, APSigned) {

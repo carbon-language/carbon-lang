@@ -225,7 +225,7 @@ class Context {
   // specified, `scope_index` specifies which lexical scope the name is inserted
   // into, otherwise the name is inserted into the current scope.
   auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::Invalid) -> void;
+                       ScopeIndex scope_index = ScopeIndex::None) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration. If scope_id is invalid, performs lookup into the lexical scope

@@ -59,7 +59,7 @@ Context::Context(DiagnosticEmitter* emitter,
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
-  check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::Invalid);
+  check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::None);
 
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
@@ -101,7 +101,7 @@ auto Context::GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   if (loc_id_and_inst.loc_id.is_implicit()) {
     auto const_id =
-        TryEvalInst(*this, SemIR::InstId::Invalid, loc_id_and_inst.inst);
+        TryEvalInst(*this, SemIR::InstId::None, loc_id_and_inst.inst);
     if (const_id.is_valid()) {
       CARBON_VLOG("GetOrAddInst: constant: {0}\n", loc_id_and_inst.inst);
       return constant_values().GetInstId(const_id);
@@ -179,7 +179,7 @@ auto Context::AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG("AddPlaceholderInst: {0}\n", loc_id_and_inst.inst);
-  constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
+  constant_values().Set(inst_id, SemIR::ConstantId::None);
   return inst_id;
 }
 
@@ -224,13 +224,13 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
 }
 
 auto Context::DiagnosePoisonedName(SemIRLoc loc) -> void {
-  // TODO: Improve the diagnostic to replace NodeId::Invalid with the location
+  // TODO: Improve the diagnostic to replace NodeId::None with the location
   // where the name was poisoned. See discussion in
   // https://github.com/carbon-language/carbon-lang/pull/4654#discussion_r1876607172
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name used before it was declared");
   CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
-  emitter_->Build(SemIR::LocId::Invalid, NameUseBeforeDecl)
+  emitter_->Build(SemIR::LocId::None, NameUseBeforeDecl)
       .Note(loc, NameUseBeforeDeclNote)
       .Emit();
 }
@@ -399,7 +399,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
     CARBON_DIAGNOSTIC(UsedBeforeInitialization, Error,
                       "`{0}` used before initialization", SemIR::NameId);
     emitter_->Emit(node_id, UsedBeforeInitialization, name_id);
-    return {.specific_id = SemIR::SpecificId::Invalid,
+    return {.specific_id = SemIR::SpecificId::None,
             .inst_id = SemIR::ErrorInst::SingletonInstId};
   }
 
@@ -407,8 +407,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
     // A lexical scope never needs an associated specific. If there's a
     // lexically enclosing generic, then it also encloses the point of use of
     // the name.
-    return {.specific_id = SemIR::SpecificId::Invalid,
-            .inst_id = lexical_result};
+    return {.specific_id = SemIR::SpecificId::None, .inst_id = lexical_result};
   }
 
   // We didn't find anything at all.
@@ -416,7 +415,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
     DiagnoseNameNotFound(node_id, name_id);
   }
 
-  return {.specific_id = SemIR::SpecificId::Invalid,
+  return {.specific_id = SemIR::SpecificId::None,
           .inst_id = SemIR::ErrorInst::SingletonInstId};
 }
 
@@ -431,7 +430,7 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
     if (!entry.is_poisoned) {
       LoadImportRef(*this, entry.inst_id);
     } else if (is_being_declared) {
-      entry.inst_id = SemIR::InstId::Invalid;
+      entry.inst_id = SemIR::InstId::None;
     }
     return {entry.inst_id, entry.access_kind, entry.is_poisoned};
   }
@@ -442,7 +441,7 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                        scope.import_ir_scopes(), name_id),
             SemIR::AccessKind::Public};
   }
-  return {SemIR::InstId::Invalid, SemIR::AccessKind::Public};
+  return {SemIR::InstId::None, SemIR::AccessKind::Public};
 }
 
 // Prints diagnostics on invalid qualified name access.
@@ -528,7 +527,7 @@ auto Context::AppendLookupScopesForConstant(
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     scopes->push_back(
         LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
-                    .specific_id = SemIR::SpecificId::Invalid});
+                    .specific_id = SemIR::SpecificId::None});
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
@@ -563,8 +562,8 @@ auto Context::AppendLookupScopesForConstant(
   }
   if (base_const_id == SemIR::ErrorInst::SingletonConstantId) {
     // Lookup into this scope should fail without producing an error.
-    scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::Invalid,
-                                  .specific_id = SemIR::SpecificId::Invalid});
+    scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
+                                  .specific_id = SemIR::SpecificId::None});
     return true;
   }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
@@ -584,8 +583,8 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
   // TODO: Support reporting of multiple prohibited access.
   llvm::SmallVector<ProhibitedAccessInfo> prohibited_accesses;
 
-  LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
-                         .inst_id = SemIR::InstId::Invalid};
+  LookupResult result = {.specific_id = SemIR::SpecificId::None,
+                         .inst_id = SemIR::InstId::None};
   bool has_error = false;
   bool is_parent_access = false;
 
@@ -651,7 +650,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
           SemIR::NameId);
       emitter_->Emit(loc_id, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
-      return {.specific_id = SemIR::SpecificId::Invalid,
+      return {.specific_id = SemIR::SpecificId::None,
               .inst_id = SemIR::ErrorInst::SingletonInstId};
     }
 
@@ -678,7 +677,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
       }
     }
 
-    return {.specific_id = SemIR::SpecificId::Invalid,
+    return {.specific_id = SemIR::SpecificId::None,
             .inst_id = SemIR::ErrorInst::SingletonInstId,
             .is_poisoned = result.is_poisoned};
   }
@@ -717,7 +716,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
       "`Core.{0}` implicitly referenced here, but package `Core` not found",
       std::string);
   context.emitter().Emit(loc, CoreNotFound, name.str());
-  return SemIR::NameScopeId::Invalid;
+  return SemIR::NameScopeId::None;
 }
 
 auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
@@ -1377,7 +1376,7 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc,
 
 auto Context::CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void {
   bool complete =
-      TypeCompleter(*this, SemIR::LocId::Invalid, nullptr).Complete(type_id);
+      TypeCompleter(*this, SemIR::LocId::None, nullptr).Complete(type_id);
   CARBON_CHECK(complete, "Expected {0} to be a complete type",
                types().GetAsInst(type_id));
 }
@@ -1492,7 +1491,7 @@ static auto GetTypeImpl(Context& context, EachArgT... each_arg)
   // TODO: Remove inst_id parameter from TryEvalInst.
   InstT inst = {SemIR::TypeType::SingletonTypeId, each_arg...};
   return context.GetTypeIdForTypeConstant(
-      TryEvalInst(context, SemIR::InstId::Invalid, inst));
+      TryEvalInst(context, SemIR::InstId::None, inst));
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments,

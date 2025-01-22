@@ -134,7 +134,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // considering impls that are for the same interface we're querying. We can
   // also skip impls that mention any types that aren't part of our impl query.
   for (const auto& impl : context.impls().array_ref()) {
-    auto specific_id = SemIR::SpecificId::Invalid;
+    auto specific_id = SemIR::SpecificId::None;
     if (impl.generic_id.is_valid()) {
       specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
                                         interface_const_id);
@@ -158,7 +158,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     }
     if (!impl.witness_id.is_valid()) {
       // TODO: Diagnose if the impl isn't defined yet?
-      return SemIR::InstId::Invalid;
+      return SemIR::InstId::None;
     }
     LoadImportRef(context, impl.witness_id);
     if (specific_id.is_valid()) {
@@ -170,7 +170,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                           impl.witness_id));
   }
-  return SemIR::InstId::Invalid;
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check

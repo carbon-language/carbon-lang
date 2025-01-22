@@ -117,8 +117,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
     return;
   }
 
-  auto prev_class_id = SemIR::ClassId::Invalid;
-  auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
+  auto prev_class_id = SemIR::ClassId::None;
+  auto prev_import_ir_id = SemIR::ImportIRId::None;
   auto prev = context.insts().Get(prev_id);
   CARBON_KIND_SWITCH(prev) {
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -212,7 +212,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   // Add the class declaration.
   auto class_decl =
       SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::Invalid,
+                       .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
   auto class_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, class_decl));
@@ -220,9 +220,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
       name_context.MakeEntityWithParamsBase(name, class_decl_id, is_extern,
-                                            SemIR::LibraryNameId::Invalid),
+                                            SemIR::LibraryNameId::None),
       {// `.self_type_id` depends on the ClassType, so is set below.
-       .self_type_id = SemIR::TypeId::Invalid,
+       .self_type_id = SemIR::TypeId::None,
        .inheritance_kind = inheritance_kind}};
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
@@ -256,7 +256,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     auto specific_id =
         context.generics().GetSelfSpecific(class_info.generic_id);
     class_info.self_type_id = context.GetTypeIdForTypeConstant(TryEvalInst(
-        context, SemIR::InstId::Invalid,
+        context, SemIR::InstId::None,
         SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                          .class_id = class_decl.class_id,
                          .specific_id = specific_id}));
@@ -285,7 +285,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   CARBON_CHECK(!class_info.has_definition_started());
   class_info.definition_id = class_decl_id;
   class_info.scope_id = context.name_scopes().Add(
-      class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
+      class_decl_id, SemIR::NameId::None, class_info.parent_scope_id);
 
   // Enter the class scope.
   context.scope_stack().Push(
@@ -442,7 +442,7 @@ struct BaseInfo {
 };
 constexpr BaseInfo BaseInfo::Error = {
     .type_id = SemIR::ErrorInst::SingletonTypeId,
-    .scope_id = SemIR::NameScopeId::Invalid,
+    .scope_id = SemIR::NameScopeId::None,
     .inst_id = SemIR::ErrorInst::SingletonInstId};
 }  // namespace
 
@@ -541,7 +541,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   class_info.base_id = context.AddInst<SemIR::BaseDecl>(
       node_id, {.type_id = field_type_id,
                 .base_type_inst_id = base_info.inst_id,
-                .index = SemIR::ElementIndex::Invalid});
+                .index = SemIR::ElementIndex::None});
 
   if (base_info.type_id != SemIR::ErrorInst::SingletonTypeId) {
     auto base_class_info = context.classes().Get(
@@ -618,7 +618,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
   // The object representation of the adapter is the object representation
   // of the adapted type.
   auto adapted_type_id =
-      class_info.GetAdaptedType(context.sem_ir(), SemIR::SpecificId::Invalid);
+      class_info.GetAdaptedType(context.sem_ir(), SemIR::SpecificId::None);
   auto object_repr_id = context.types().GetObjectRepr(adapted_type_id);
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
@@ -665,7 +665,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
 
   bool defining_vptr = class_info.is_dynamic;
   auto base_type_id =
-      class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::Invalid);
+      class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
   SemIR::Class* base_class_info = nullptr;
   if (base_type_id.is_valid()) {
     // TODO: If the base class is template dependent, we will need to decide

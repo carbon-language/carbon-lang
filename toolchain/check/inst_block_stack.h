@@ -33,7 +33,7 @@ class InstBlockStack {
 
   // Pushes a new instruction block. It will be invalid unless PeekOrAdd is
   // called in order to support lazy allocation.
-  auto Push() -> void { Push(SemIR::InstBlockId::Invalid); }
+  auto Push() -> void { Push(SemIR::InstBlockId::None); }
 
   // Pushes a new unreachable code block.
   auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }

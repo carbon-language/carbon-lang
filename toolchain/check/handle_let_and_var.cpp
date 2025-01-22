@@ -57,7 +57,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
       context.insts().Get(pattern.inst.As<SemIR::VarPattern>().subpattern_id);
 
   // Try to populate name_id on a best-effort basis.
-  auto name_id = SemIR::NameId::Invalid;
+  auto name_id = SemIR::NameId::None;
   if (auto binding_pattern = subpattern.TryAs<SemIR::BindingPattern>()) {
     name_id =
         context.entity_names().Get(binding_pattern->entity_name_id).name_id;
@@ -69,7 +69,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
-  auto subpattern_id = SemIR::InstId::Invalid;
+  auto subpattern_id = SemIR::InstId::None;
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
     context.node_stack().PopAndIgnore();
     CARBON_CHECK(
@@ -141,7 +141,7 @@ namespace {
 struct DeclInfo {
   // The optional initializer.
   std::optional<SemIR::InstId> init_id = std::nullopt;
-  SemIR::InstId pattern_id = SemIR::InstId::Invalid;
+  SemIR::InstId pattern_id = SemIR::InstId::None;
   std::optional<SemIR::Inst> parent_scope_inst = std::nullopt;
   DeclIntroducerState introducer = DeclIntroducerState();
 };
@@ -287,7 +287,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
     return true;
   }
   LocalPatternMatch(context, decl_info->pattern_id,
-                    decl_info->init_id.value_or(SemIR::InstId::Invalid));
+                    decl_info->init_id.value_or(SemIR::InstId::None));
 
   return true;
 }

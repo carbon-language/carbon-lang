@@ -11,8 +11,8 @@ namespace Carbon::Check {
 
 auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     -> NameComponent {
-  Parse::NodeId first_param_node_id = Parse::InvalidNodeId();
-  Parse::NodeId last_param_node_id = Parse::InvalidNodeId();
+  Parse::NodeId first_param_node_id = Parse::NoneNodeId();
+  Parse::NodeId last_param_node_id = Parse::NoneNodeId();
 
   // Explicit params.
   auto [params_loc_id, param_patterns_id] =
@@ -23,7 +23,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
             .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
     last_param_node_id = params_loc_id;
   } else {
-    param_patterns_id = SemIR::InstBlockId::Invalid;
+    param_patterns_id = SemIR::InstBlockId::None;
   }
 
   // Implicit params.
@@ -40,11 +40,11 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
       last_param_node_id = params_loc_id;
     }
   } else {
-    implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
+    implicit_param_patterns_id = SemIR::InstBlockId::None;
   }
 
-  auto call_params_id = SemIR::InstBlockId::Invalid;
-  auto pattern_block_id = SemIR::InstBlockId::Invalid;
+  auto call_params_id = SemIR::InstBlockId::None;
+  auto pattern_block_id = SemIR::InstBlockId::None;
   if (param_patterns_id->is_valid() || implicit_param_patterns_id->is_valid()) {
     call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
@@ -87,7 +87,7 @@ auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
                                : name.params_loc_id,
                            UnexpectedDeclNameParams, introducer);
 
-    name.call_params_id = SemIR::InstBlockId::Invalid;
+    name.call_params_id = SemIR::InstBlockId::None;
   }
   return name;
 }

@@ -36,10 +36,10 @@ struct ClassFields {
   // The following members are set at the `{` of the class definition.
 
   // The class scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
+  NameScopeId scope_id = NameScopeId::None;
   // The first block of the class body.
   // TODO: Handle control flow in the class body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
+  InstBlockId body_block_id = InstBlockId::None;
 
   // The following members are accumulated throughout the class definition.
 
@@ -47,10 +47,10 @@ struct ClassFields {
   // adapter. This is an AdaptDecl instruction.
   // TODO: Consider sharing the storage for `adapt_id` and `base_id`. A class
   // can't have both.
-  InstId adapt_id = InstId::Invalid;
+  InstId adapt_id = InstId::None;
   // The base class declaration. Invalid if the class has no base class. This is
   // a BaseDecl instruction.
-  InstId base_id = InstId::Invalid;
+  InstId base_id = InstId::None;
 
   // The following members are set at the `}` of the class definition.
 
@@ -58,11 +58,11 @@ struct ClassFields {
   // complete, and tracking its object representation. This is valid once the
   // class is defined. For an adapter, the object representation is the
   // non-adapter type that this class directly or transitively adapts.
-  InstId complete_type_witness_id = InstId::Invalid;
+  InstId complete_type_witness_id = InstId::None;
 
   // The virtual function table. Invalid if the class has no (direct or
   // inherited) virtual functions.
-  InstId vtable_id = InstId::Invalid;
+  InstId vtable_id = InstId::None;
 };
 
 // A class. See EntityWithParamsBase regarding the inheritance here.

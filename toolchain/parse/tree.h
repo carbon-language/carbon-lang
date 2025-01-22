@@ -29,13 +29,13 @@ struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
   static constexpr llvm::StringLiteral Label = "deferred_def";
   using ValueType = DeferredDefinition;
 
-  static const DeferredDefinitionIndex Invalid;
+  static const DeferredDefinitionIndex None;
 
   using IndexBase::IndexBase;
 };
 
-constexpr DeferredDefinitionIndex DeferredDefinitionIndex::Invalid =
-    DeferredDefinitionIndex(InvalidIndex);
+constexpr DeferredDefinitionIndex DeferredDefinitionIndex::None =
+    DeferredDefinitionIndex(NoneIndex);
 
 // A function whose definition is deferred because it is defined inline in a
 // class or similar scope.
@@ -47,10 +47,9 @@ struct DeferredDefinition {
   // The node that starts the function definition.
   FunctionDefinitionStartId start_id;
   // The function definition node.
-  FunctionDefinitionId definition_id = NodeId::Invalid;
+  FunctionDefinitionId definition_id = NodeId::None;
   // The index of the next method that is not nested within this one.
-  DeferredDefinitionIndex next_definition_index =
-      DeferredDefinitionIndex::Invalid;
+  DeferredDefinitionIndex next_definition_index = DeferredDefinitionIndex::None;
 };
 
 // Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
@@ -85,8 +84,8 @@ class Tree : public Printable<Tree> {
   // to the node for diagnostics.
   struct PackagingNames {
     ImportDeclId node_id;
-    IdentifierId package_id = IdentifierId::Invalid;
-    StringLiteralValueId library_id = StringLiteralValueId::Invalid;
+    IdentifierId package_id = IdentifierId::None;
+    StringLiteralValueId library_id = StringLiteralValueId::None;
     // Whether an import is exported. This is on the file's packaging
     // declaration even though it doesn't apply, for consistency in structure.
     bool is_export = false;

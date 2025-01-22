@@ -83,7 +83,7 @@ auto ScopeStack::Pop() -> void {
   if (scope.has_returned_var) {
     CARBON_CHECK(!return_scope_stack_.empty());
     CARBON_CHECK(return_scope_stack_.back().returned_var.is_valid());
-    return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
+    return_scope_stack_.back().returned_var = SemIR::InstId::None;
   }
 
   VerifyNextCompileTimeBindIndex("Pop", scope);
@@ -104,12 +104,12 @@ auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
     -> SemIR::InstId {
   auto& lexical_results = lexical_lookup_.Get(name_id);
   if (lexical_results.empty()) {
-    return SemIR::InstId::Invalid;
+    return SemIR::InstId::None;
   }
 
   auto result = lexical_results.back();
   if (result.scope_index < scope_index) {
-    return SemIR::InstId::Invalid;
+    return SemIR::InstId::None;
   }
 
   return result.inst_id;
@@ -125,7 +125,7 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
   // If we have no lexical results, check all non-lexical scopes.
   if (lexical_results.empty()) {
     return {LexicalLookupHasLoadError() ? SemIR::ErrorInst::SingletonInstId
-                                        : SemIR::InstId::Invalid,
+                                        : SemIR::InstId::None,
             non_lexical_scope_stack_};
   }
 
@@ -178,7 +178,7 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
 
   // Add a corresponding lexical lookup result.
   lexical_results.push_back({.inst_id = target_id, .scope_index = scope_index});
-  return SemIR::InstId::Invalid;
+  return SemIR::InstId::None;
 }
 
 auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
@@ -195,7 +195,7 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
   if (inst_id.is_valid()) {
     scope_stack_.back().has_returned_var = true;
   }
-  return SemIR::InstId::Invalid;
+  return SemIR::InstId::None;
 }
 
 auto ScopeStack::Suspend() -> SuspendedScope {

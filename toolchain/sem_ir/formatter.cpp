@@ -182,7 +182,7 @@ class FormatterImpl {
   // Determines whether the specified entity should be included in the formatted
   // output.
   auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
-    if (!entity.latest_decl_id().is_valid()) {
+    if (!entity.latest_decl_id().has_value()) {
       return true;
     }
     return should_format_entity_(entity.latest_decl_id());
@@ -903,7 +903,7 @@ class FormatterImpl {
     FormatArg(inst.callee_id);
 
     if (!inst.args_id.is_valid()) {
-      out_ << "(<invalid>)";
+      out_ << "(<none>)";
       return;
     }
 
@@ -915,7 +915,7 @@ class FormatterImpl {
       return;
     }
     bool has_return_slot = return_info.has_return_slot();
-    InstId return_slot_arg_id = InstId::Invalid;
+    InstId return_slot_arg_id = InstId::None;
     if (has_return_slot) {
       return_slot_arg_id = args.back();
       args = args.drop_back();
@@ -1315,10 +1315,10 @@ class FormatterImpl {
     CARBON_CHECK(id.is_valid(),
                  "GetImportIRLabel should only be called where we a valid ID.");
     const auto& import_ir = *sem_ir_->import_irs().Get(id).sem_ir;
-    CARBON_CHECK(import_ir.library_id().is_valid());
+    CARBON_CHECK(import_ir.library_id().has_value());
 
     llvm::StringRef package_name =
-        import_ir.package_id().is_valid()
+        import_ir.package_id().has_value()
             ? import_ir.identifiers().Get(import_ir.package_id())
             : "Main";
     llvm::StringRef library_name =

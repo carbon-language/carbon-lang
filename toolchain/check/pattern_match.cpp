@@ -29,7 +29,7 @@ static auto GetPrettyName(Context& context, ParamPattern param_pattern)
           param_pattern.subpattern_id)) {
     return context.entity_names().Get(binding_pattern->entity_name_id).name_id;
   }
-  return SemIR::NameId::Invalid;
+  return SemIR::NameId::None;
 }
 
 namespace {
@@ -64,7 +64,7 @@ class MatchContext {
   // match operation is part of implementing the signature of the given
   // specific.
   explicit MatchContext(MatchKind kind, SemIR::SpecificId callee_specific_id =
-                                            SemIR::SpecificId::Invalid)
+                                            SemIR::SpecificId::None)
       : next_index_(0), kind_(kind), callee_specific_id_(callee_specific_id) {}
 
   // Adds a work item to the stack.
@@ -147,8 +147,8 @@ auto MatchContext::EmitPatternMatch(Context& context,
       // to avoid accidentally consuming it twice.
       auto [bind_name_id, type_expr_region_id] = std::exchange(
           context.bind_name_map().Lookup(entry.pattern_id).value(),
-          {.bind_name_id = SemIR::InstId::Invalid,
-           .type_expr_region_id = SemIR::ExprRegionId::Invalid});
+          {.bind_name_id = SemIR::InstId::None,
+           .type_expr_region_id = SemIR::ExprRegionId::None});
       context.InsertHere(type_expr_region_id);
       auto value_id = entry.scrutinee_id;
       switch (kind_) {
@@ -183,7 +183,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
         // the caller side of the pattern, so we traverse without emitting any
         // insts.
         AddWork({.pattern_id = addr_pattern.inner_id,
-                 .scrutinee_id = SemIR::InstId::Invalid});
+                 .scrutinee_id = SemIR::InstId::None});
         break;
       }
       CARBON_CHECK(entry.scrutinee_id.is_valid());
@@ -343,7 +343,7 @@ auto CalleePatternMatch(Context& context,
     -> SemIR::InstBlockId {
   if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
       !implicit_param_patterns_id.is_valid()) {
-    return SemIR::InstBlockId::Invalid;
+    return SemIR::InstBlockId::None;
   }
 
   MatchContext match(MatchKind::Callee);
@@ -352,14 +352,14 @@ auto CalleePatternMatch(Context& context,
   // in the original order.
   if (return_slot_pattern_id.is_valid()) {
     match.AddWork({.pattern_id = return_slot_pattern_id,
-                   .scrutinee_id = SemIR::InstId::Invalid});
+                   .scrutinee_id = SemIR::InstId::None});
   }
 
   if (param_patterns_id.is_valid()) {
     for (SemIR::InstId inst_id :
          llvm::reverse(context.inst_blocks().Get(param_patterns_id))) {
       match.AddWork(
-          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
+          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::None});
     }
   }
 
@@ -367,7 +367,7 @@ auto CalleePatternMatch(Context& context,
     for (SemIR::InstId inst_id :
          llvm::reverse(context.inst_blocks().Get(implicit_param_patterns_id))) {
       match.AddWork(
-          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
+          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::None});
     }
   }
 

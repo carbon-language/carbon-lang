@@ -265,7 +265,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
       context.inst_blocks()
           .Get(context.generics().Get(generic_id_).bindings_id)
           .size(),
-      SemIR::InstId::Invalid);
+      SemIR::InstId::None);
 
   if (enclosing_specific_id.is_valid()) {
     // Copy any outer generic arguments from the specified instance and prepare
@@ -524,7 +524,7 @@ auto DeduceGenericCallArguments(
   deduction.AddAll(params_id, arg_ids, /*needs_substitution=*/true);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
-    return SemIR::SpecificId::Invalid;
+    return SemIR::SpecificId::None;
   }
 
   return deduction.MakeSpecific();
@@ -535,10 +535,9 @@ auto DeduceGenericCallArguments(
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                          const SemIR::Impl& impl, SemIR::ConstantId self_id,
                          SemIR::ConstantId constraint_id) -> SemIR::SpecificId {
-  DeductionContext deduction(
-      context, loc_id, impl.generic_id,
-      /*enclosing_specific_id=*/SemIR::SpecificId::Invalid,
-      /*diagnose=*/false);
+  DeductionContext deduction(context, loc_id, impl.generic_id,
+                             /*enclosing_specific_id=*/SemIR::SpecificId::None,
+                             /*diagnose=*/false);
 
   // Prepare to perform deduction of the type and interface.
   deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id),
@@ -548,7 +547,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                 /*needs_substitution=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
-    return SemIR::SpecificId::Invalid;
+    return SemIR::SpecificId::None;
   }
 
   return deduction.MakeSpecific();

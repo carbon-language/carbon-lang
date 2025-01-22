@@ -67,7 +67,7 @@ template <typename DiagnosticBaseT>
 static auto ForbidModifiersOnDecl(
     Context& context, const DiagnosticBaseT& diagnostic_base,
     DeclIntroducerState& introducer, KeywordModifierSet forbidden,
-    SemIR::LocId context_loc_id = SemIR::LocId::Invalid) -> void {
+    SemIR::LocId context_loc_id = SemIR::LocId::None) -> void {
   auto not_allowed = introducer.modifier_set & forbidden;
   if (not_allowed.empty()) {
     return;
@@ -80,7 +80,7 @@ static auto ForbidModifiersOnDecl(
       DiagnoseNotAllowed(context, diagnostic_base,
                          introducer.modifier_node_id(order), introducer.kind,
                          context_loc_id);
-      introducer.set_modifier_node_id(order, Parse::NodeId::Invalid);
+      introducer.set_modifier_node_id(order, Parse::NodeId::None);
     }
   }
 
@@ -189,7 +189,7 @@ auto RestrictExternModifierOnDecl(Context& context,
     ForbidModifiersOnDecl(context, ModifierExternNotAllowed, introducer,
                           KeywordModifierSet::Extern);
     // Treat as unset.
-    introducer.extern_library = SemIR::LibraryNameId::Invalid;
+    introducer.extern_library = SemIR::LibraryNameId::None;
     return;
   }
 

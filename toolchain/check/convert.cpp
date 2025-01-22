@@ -64,11 +64,11 @@ static auto FindReturnSlotArgForInitializer(SemIR::File& sem_ir,
       case CARBON_KIND(SemIR::Call call): {
         if (!SemIR::ReturnTypeInfo::ForType(sem_ir, call.type_id)
                  .has_return_slot()) {
-          return SemIR::InstId::Invalid;
+          return SemIR::InstId::None;
         }
         if (!call.args_id.is_valid()) {
           // Argument initialization failed, so we have no return slot.
-          return SemIR::InstId::Invalid;
+          return SemIR::InstId::None;
         }
         return sem_ir.inst_blocks().Get(call.args_id).back();
       }
@@ -98,7 +98,7 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
 // expression described by `init_id`, and returns the location of the
 // temporary. If `discarded` is `true`, the result is discarded, and no
 // temporary will be created if possible; if no temporary is created, the
-// return value will be `SemIR::InstId::Invalid`.
+// return value will be `SemIR::InstId::None`.
 static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                               bool discarded) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
@@ -119,7 +119,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
 
   if (discarded) {
     // Don't invent a temporary that we're going to discard.
-    return SemIR::InstId::Invalid;
+    return SemIR::InstId::None;
   }
 
   // The initializer has no return slot, but we want to produce a temporary
@@ -325,7 +325,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
   llvm::ArrayRef<SemIR::InstId> literal_elems;
-  auto literal_elems_id = SemIR::InstBlockId::Invalid;
+  auto literal_elems_id = SemIR::InstBlockId::None;
   if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
     literal_elems_id = tuple_literal->elements_id;
     literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
@@ -420,7 +420,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
   llvm::ArrayRef<SemIR::InstId> literal_elems;
-  auto literal_elems_id = SemIR::InstBlockId::Invalid;
+  auto literal_elems_id = SemIR::InstBlockId::None;
   if (auto struct_literal = value.TryAs<SemIR::StructLiteral>()) {
     literal_elems_id = struct_literal->elements_id;
     literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
@@ -827,7 +827,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           loc_id, {.type_id = foundation_type_id, .source_id = value_id});
 
       auto foundation_init_id = target.init_id;
-      if (foundation_init_id != SemIR::InstId::Invalid) {
+      if (foundation_init_id != SemIR::InstId::None) {
         foundation_init_id = target.init_block->AddInst<SemIR::AsCompatible>(
             loc_id,
             {.type_id = foundation_type_id, .source_id = target.init_id});
@@ -1270,7 +1270,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   // Find self parameter pattern.
   // TODO: Do this during initial traversal of implicit params.
-  auto self_param_id = SemIR::InstId::Invalid;
+  auto self_param_id = SemIR::InstId::None;
   for (auto implicit_param_id : implicit_param_patterns) {
     if (SemIR::Function::GetNameFromPatternId(
             context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {

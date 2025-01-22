@@ -115,7 +115,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
   }
 
-  builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
+  builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
   if (di_subprogram_) {
     builder_.SetCurrentDebugLocation(llvm::DebugLoc());
   }

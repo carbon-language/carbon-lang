@@ -31,7 +31,7 @@ constexpr int MaxTypeParams = 2;
 struct ValidateState {
   // The type values of type parameters in the builtin signature. Invalid if
   // either no value has been deduced yet or the parameter is not used.
-  TypeId type_params[MaxTypeParams] = {TypeId::Invalid, TypeId::Invalid};
+  TypeId type_params[MaxTypeParams] = {TypeId::None, TypeId::None};
 };
 
 // Constraint that a type is generic type parameter `I` of the builtin,

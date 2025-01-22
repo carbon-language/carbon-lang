@@ -14,7 +14,7 @@ namespace Carbon::SemIR {
 static auto GetFoundationType(const File& file, SpecificId specific_id,
                               InstId inst_id) -> TypeId {
   if (!inst_id.is_valid()) {
-    return TypeId::Invalid;
+    return TypeId::None;
   }
   if (inst_id == SemIR::ErrorInst::SingletonInstId) {
     return ErrorInst::SingletonTypeId;
@@ -37,7 +37,7 @@ auto Class::GetBaseType(const File& file, SpecificId specific_id) const
 auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
     -> TypeId {
   if (!complete_type_witness_id.is_valid()) {
-    return TypeId::Invalid;
+    return TypeId::None;
   }
   auto witness_id =
       GetConstantValueInSpecific(file, specific_id, complete_type_witness_id);

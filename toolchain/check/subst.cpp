@@ -326,7 +326,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       return true;
     }
 
-    auto entity_name_id = SemIR::EntityNameId::Invalid;
+    auto entity_name_id = SemIR::EntityNameId::None;
     if (auto bind =
             context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
       entity_name_id = bind->entity_name_id;
@@ -358,7 +358,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   // Rebuilds an instruction by building a new constant.
   auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto result_id = TryEvalInst(context_, SemIR::InstId::Invalid, new_inst);
+    auto result_id = TryEvalInst(context_, SemIR::InstId::None, new_inst);
     CARBON_CHECK(result_id.is_constant(),
                  "Substitution into constant produced non-constant");
     return context_.constant_values().GetInstId(result_id);
