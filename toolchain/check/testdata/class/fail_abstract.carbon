@@ -34,9 +34,9 @@ abstract class Abstract {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:3: error: variable pattern has abstract type `Abstract` [AbstractTypeInVarDecl]
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
   // CHECK:STDERR:   var v: Abstract;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -277,12 +277,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %Abstract = binding_pattern v
+// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
 // CHECK:STDOUT:     %.loc15: <error> = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %v: %Abstract = bind_name v, <error>
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -83,17 +83,6 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     subpattern_id = context.node_stack().PopPattern();
   }
   auto type_id = context.insts().Get(subpattern_id).type_id();
-  type_id = context.AsConcreteType(
-      type_id, node_id,
-      [&]() -> Context::DiagnosticEmitter::DiagnosticBuilder {
-        CARBON_FATAL("Incomplete type should be diagnosed elsewhere");
-      },
-      [&] {
-        CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
-                          "variable pattern has abstract type {0}",
-                          SemIR::TypeId);
-        return context.emitter().Build(node_id, AbstractTypeInVarDecl, type_id);
-      });
 
   auto pattern_id = context.AddPatternInst<SemIR::VarPattern>(
       node_id, {.type_id = type_id, .subpattern_id = subpattern_id});

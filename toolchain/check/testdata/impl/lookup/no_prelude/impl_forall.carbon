@@ -42,7 +42,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.13025a.1: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4aeca8.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %A.elem.1ceb36.1: type = unbound_element_type %A.13025a.1, %T [symbolic]
-// CHECK:STDOUT:   %require_complete.95d544.1: <witness> = require_complete_type %A.elem.1ceb36.1 [symbolic]
 // CHECK:STDOUT:   %struct_type.n.848971.1: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.84bb3d.1: <witness> = complete_type_witness %struct_type.n.848971.1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
@@ -71,7 +70,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.facet: %I.type.325e65.1 = facet_value %A.13025a.2, %impl_witness.ab3b51.1 [symbolic]
 // CHECK:STDOUT:   %require_complete.4aeca8.2: <witness> = require_complete_type %V [symbolic]
 // CHECK:STDOUT:   %A.elem.1ceb36.2: type = unbound_element_type %A.13025a.2, %V [symbolic]
-// CHECK:STDOUT:   %require_complete.95d544.2: <witness> = require_complete_type %A.elem.1ceb36.2 [symbolic]
 // CHECK:STDOUT:   %struct_type.n.848971.2: type = struct_type {.n: %V} [symbolic]
 // CHECK:STDOUT:   %complete_type.84bb3d.2: <witness> = complete_type_witness %struct_type.n.848971.2 [symbolic]
 // CHECK:STDOUT:   %require_complete.5b8aee.1: <witness> = require_complete_type %A.13025a.2 [symbolic]
@@ -82,7 +80,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %TestGeneric: %TestGeneric.type = struct_value () [template]
 // CHECK:STDOUT:   %require_complete.4aeca8.3: <witness> = require_complete_type %W [symbolic]
 // CHECK:STDOUT:   %A.elem.1ceb36.3: type = unbound_element_type %A.13025a.3, %W [symbolic]
-// CHECK:STDOUT:   %require_complete.95d544.3: <witness> = require_complete_type %A.elem.1ceb36.3 [symbolic]
 // CHECK:STDOUT:   %struct_type.n.848971.3: type = struct_type {.n: %W} [symbolic]
 // CHECK:STDOUT:   %complete_type.84bb3d.3: <witness> = complete_type_witness %struct_type.n.848971.3 [symbolic]
 // CHECK:STDOUT:   %require_complete.5b8aee.2: <witness> = require_complete_type %A.13025a.3 [symbolic]
@@ -101,7 +98,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %TestSpecific: %TestSpecific.type = struct_value () [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %A.elem.2af: type = unbound_element_type %A.235, %empty_struct_type [template]
-// CHECK:STDOUT:   %complete_type.091: <witness> = complete_type_witness %A.elem.2af [template]
 // CHECK:STDOUT:   %struct_type.n.91c: type = struct_type {.n: %empty_struct_type} [template]
 // CHECK:STDOUT:   %complete_type.0a6: <witness> = complete_type_witness %struct_type.n.91c [template]
 // CHECK:STDOUT:   %I.type.885: type = facet_type <@I, @I(%empty_struct_type)> [template]
@@ -272,10 +268,9 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc2_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc3_10: <witness> = require_complete_type @A.%T.loc2_9.2 (%T) [symbolic = %require_complete.loc3_10 (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc2_9.2 (%T) [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc2_9.2) [symbolic = %A (constants.%A.13025a.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.13025a.1), @A.%T.loc2_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1ceb36.1)]
-// CHECK:STDOUT:   %require_complete.loc3_3: <witness> = require_complete_type @A.%A.elem (%A.elem.1ceb36.1) [symbolic = %require_complete.loc3_3 (constants.%require_complete.95d544.1)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @A.%T.loc2_9.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n.848971.1)]
 // CHECK:STDOUT:   %complete_type.loc4_1.2: <witness> = complete_type_witness @A.%struct_type.n (%struct_type.n.848971.1) [symbolic = %complete_type.loc4_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:
@@ -404,10 +399,9 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%V
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc3_10 => constants.%require_complete.4aeca8.2
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.2
 // CHECK:STDOUT:   %A => constants.%A.13025a.2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.1ceb36.2
-// CHECK:STDOUT:   %require_complete.loc3_3 => constants.%require_complete.95d544.2
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.848971.2
 // CHECK:STDOUT:   %complete_type.loc4_1.2 => constants.%complete_type.84bb3d.2
 // CHECK:STDOUT: }
@@ -463,10 +457,9 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%W
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc3_10 => constants.%require_complete.4aeca8.3
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.3
 // CHECK:STDOUT:   %A => constants.%A.13025a.3
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.1ceb36.3
-// CHECK:STDOUT:   %require_complete.loc3_3 => constants.%require_complete.95d544.3
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.848971.3
 // CHECK:STDOUT:   %complete_type.loc4_1.2 => constants.%complete_type.84bb3d.3
 // CHECK:STDOUT: }
@@ -524,10 +517,9 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc3_10 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT:   %A => constants.%A.235
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2af
-// CHECK:STDOUT:   %require_complete.loc3_3 => constants.%complete_type.091
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.91c
 // CHECK:STDOUT:   %complete_type.loc4_1.2 => constants.%complete_type.0a6
 // CHECK:STDOUT: }

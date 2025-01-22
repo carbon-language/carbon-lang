@@ -52,7 +52,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Class.fe1: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem.e26: type = unbound_element_type %Class.fe1, %T [symbolic]
-// CHECK:STDOUT:   %require_complete.78c: <witness> = require_complete_type %Class.elem.e26 [symbolic]
 // CHECK:STDOUT:   %struct_type.k.b21: type = struct_type {.k: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.b9e: <witness> = complete_type_witness %struct_type.k.b21 [symbolic]
 // CHECK:STDOUT:   %InitFromStructGeneric.type: type = fn_type @InitFromStructGeneric [template]
@@ -66,7 +65,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %Class.247: type = class_type @Class, @Class(%i32) [template]
 // CHECK:STDOUT:   %Class.elem.2d8: type = unbound_element_type %Class.247, %i32 [template]
-// CHECK:STDOUT:   %complete_type.1d5: <witness> = complete_type_witness %Class.elem.2d8 [template]
 // CHECK:STDOUT:   %struct_type.k.0bf: type = struct_type {.k: %i32} [template]
 // CHECK:STDOUT:   %complete_type.954: <witness> = complete_type_witness %struct_type.k.0bf [template]
 // CHECK:STDOUT: }
@@ -135,10 +133,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc5_10: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %require_complete.loc5_10 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class.fe1), @Class.%T.loc4_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem.e26)]
-// CHECK:STDOUT:   %require_complete.loc5_3: <witness> = require_complete_type @Class.%Class.elem (%Class.elem.e26) [symbolic = %require_complete.loc5_3 (constants.%require_complete.78c)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k.b21)]
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Class.%struct_type.k (%struct_type.k.b21) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
 // CHECK:STDOUT:
@@ -229,10 +226,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc5_10 => constants.%require_complete.4ae
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e26
-// CHECK:STDOUT:   %require_complete.loc5_3 => constants.%require_complete.78c
 // CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k.b21
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.b9e
 // CHECK:STDOUT: }
@@ -251,10 +247,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc5_10 => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
-// CHECK:STDOUT:   %require_complete.loc5_3 => constants.%complete_type.1d5
 // CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k.0bf
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.954
 // CHECK:STDOUT: }

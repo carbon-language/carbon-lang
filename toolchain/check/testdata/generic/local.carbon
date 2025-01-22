@@ -55,7 +55,6 @@ class C(C:! type) {
 // CHECK:STDOUT:   %C.f06: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.cca: type = unbound_element_type %C.f06, %T [symbolic]
-// CHECK:STDOUT:   %require_complete.cf1: <witness> = require_complete_type %C.elem.cca [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.4339: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
@@ -64,7 +63,6 @@ class C(C:! type) {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %C.elem.f74: type = unbound_element_type %C.d45, %i32 [template]
-// CHECK:STDOUT:   %complete_type.b94: <witness> = complete_type_witness %C.elem.f74 [template]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
@@ -102,10 +100,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   %T.patt.loc5_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_12: <witness> = require_complete_type @C.%T.loc5_11.2 (%T) [symbolic = %require_complete.loc6_12 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%T.loc5_11.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_11.2) [symbolic = %C (constants.%C.f06)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C.f06), @C.%T.loc5_11.2 (%T) [symbolic = %C.elem (constants.%C.elem.cca)]
-// CHECK:STDOUT:   %require_complete.loc6_5: <witness> = require_complete_type @C.%C.elem (%C.elem.cca) [symbolic = %require_complete.loc6_5 (constants.%require_complete.cf1)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc5_11.2 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:
@@ -172,10 +169,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   %T.patt.loc5_11.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_12 => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %C => constants.%C.d45
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.f74
-// CHECK:STDOUT:   %require_complete.loc6_5 => constants.%complete_type.b94
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc7_3.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }

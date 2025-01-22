@@ -244,14 +244,29 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
 
     case FullPatternStack::Kind::NameBindingDecl: {
-      cast_type_id = context.AsCompleteType(cast_type_id, type_node, [&] {
+      auto incomplete_diagnoser = [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Error,
                           "binding pattern has incomplete type {0} in name "
                           "binding declaration",
                           InstIdAsType);
         return context.emitter().Build(type_node, IncompleteTypeInBindingDecl,
                                        cast_type_inst_id);
-      });
+      };
+      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+        cast_type_id = context.AsConcreteType(
+            cast_type_id, type_node, incomplete_diagnoser, [&] {
+              CARBON_DIAGNOSTIC(
+                  AbstractTypeInVarPattern, Error,
+                  "binding pattern has abstract type {0} in `var` "
+                  "pattern",
+                  SemIR::TypeId);
+              return context.emitter().Build(
+                  type_node, AbstractTypeInVarPattern, cast_type_id);
+            });
+      } else {
+        cast_type_id = context.AsCompleteType(cast_type_id, type_node,
+                                              incomplete_diagnoser);
+      }
       auto binding_pattern_id = make_binding_pattern();
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
         CARBON_CHECK(!is_generic);

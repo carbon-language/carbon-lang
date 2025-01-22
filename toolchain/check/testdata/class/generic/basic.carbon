@@ -39,7 +39,6 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
-// CHECK:STDOUT:   %require_complete.78c: <witness> = require_complete_type %Class.elem [symbolic]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [symbolic]
 // CHECK:STDOUT:   %require_complete.6e5: <witness> = require_complete_type %ptr.79f [symbolic]
@@ -88,10 +87,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetAddr: @Class.%GetAddr.type (%GetAddr.type) = struct_value () [symbolic = %GetAddr (constants.%GetAddr)]
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue, @Class(%T.loc11_13.2) [symbolic = %GetValue.type (constants.%GetValue.type)]
 // CHECK:STDOUT:   %GetValue: @Class.%GetValue.type (%GetValue.type) = struct_value () [symbolic = %GetValue (constants.%GetValue)]
-// CHECK:STDOUT:   %require_complete.loc21_10: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %require_complete.loc21_10 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.loc11_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %require_complete.loc21_3: <witness> = require_complete_type @Class.%Class.elem (%Class.elem) [symbolic = %require_complete.loc21_3 (constants.%require_complete.78c)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k)]
 // CHECK:STDOUT:   %complete_type.loc22_1.2: <witness> = complete_type_witness @Class.%struct_type.k (%struct_type.k) [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
@@ -205,10 +203,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetAddr => constants.%GetAddr
 // CHECK:STDOUT:   %GetValue.type => constants.%GetValue.type
 // CHECK:STDOUT:   %GetValue => constants.%GetValue
-// CHECK:STDOUT:   %require_complete.loc21_10 => constants.%require_complete.4ae
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
-// CHECK:STDOUT:   %require_complete.loc21_3 => constants.%require_complete.78c
 // CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k
 // CHECK:STDOUT:   %complete_type.loc22_1.2 => constants.%complete_type
 // CHECK:STDOUT: }

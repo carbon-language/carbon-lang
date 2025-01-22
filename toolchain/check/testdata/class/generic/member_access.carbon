@@ -59,7 +59,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.fe1: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem.e26: type = unbound_element_type %Class.fe1, %T [symbolic]
-// CHECK:STDOUT:   %require_complete.78c: <witness> = require_complete_type %Class.elem.e26 [symbolic]
 // CHECK:STDOUT:   %Get.type.fd9: type = fn_type @Get, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Get.cf9: %Get.type.fd9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.955: type = ptr_type %Class.fe1 [symbolic]
@@ -79,7 +78,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %Class.elem.2d8: type = unbound_element_type %Class.247, %i32 [template]
-// CHECK:STDOUT:   %complete_type.1d5: <witness> = complete_type_witness %Class.elem.2d8 [template]
 // CHECK:STDOUT:   %Get.type.59d: type = fn_type @Get, @Class(%i32) [template]
 // CHECK:STDOUT:   %Get.a40: %Get.type.59d = struct_value () [template]
 // CHECK:STDOUT:   %GetAddr.type.be7: type = fn_type @GetAddr, @Class(%i32) [template]
@@ -185,10 +183,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.patt.loc2_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc2_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc3_10: <witness> = require_complete_type @Class.%T.loc2_13.2 (%T) [symbolic = %require_complete.loc3_10 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc2_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc2_13.2) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class.fe1), @Class.%T.loc2_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem.e26)]
-// CHECK:STDOUT:   %require_complete.loc3_3: <witness> = require_complete_type @Class.%Class.elem (%Class.elem.e26) [symbolic = %require_complete.loc3_3 (constants.%require_complete.78c)]
 // CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Class(%T.loc2_13.2) [symbolic = %Get.type (constants.%Get.type.fd9)]
 // CHECK:STDOUT:   %Get: @Class.%Get.type (%Get.type.fd9) = struct_value () [symbolic = %Get (constants.%Get.cf9)]
 // CHECK:STDOUT:   %GetAddr.type: type = fn_type @GetAddr, @Class(%T.loc2_13.2) [symbolic = %GetAddr.type (constants.%GetAddr.type.402)]
@@ -334,10 +331,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc3_10 => constants.%require_complete.4ae
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e26
-// CHECK:STDOUT:   %require_complete.loc3_3 => constants.%require_complete.78c
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.fd9
 // CHECK:STDOUT:   %Get => constants.%Get.cf9
 // CHECK:STDOUT:   %GetAddr.type => constants.%GetAddr.type.402
@@ -369,10 +365,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc3_10 => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
-// CHECK:STDOUT:   %require_complete.loc3_3 => constants.%complete_type.1d5
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.59d
 // CHECK:STDOUT:   %Get => constants.%Get.a40
 // CHECK:STDOUT:   %GetAddr.type => constants.%GetAddr.type.be7

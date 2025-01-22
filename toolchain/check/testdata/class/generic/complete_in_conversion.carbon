@@ -57,7 +57,6 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %iN.builtin.c5d: type = int_type signed, %int.convert_checked [symbolic]
 // CHECK:STDOUT:   %require_complete.be5: <witness> = require_complete_type %iN.builtin.c5d [symbolic]
 // CHECK:STDOUT:   %A.elem.d60: type = unbound_element_type %A.dd3, %iN.builtin.c5d [symbolic]
-// CHECK:STDOUT:   %require_complete.bd4: <witness> = require_complete_type %A.elem.d60 [symbolic]
 // CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: %iN.builtin.c5d} [symbolic]
 // CHECK:STDOUT:   %complete_type.547: <witness> = complete_type_witness %struct_type.base.n [symbolic]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
@@ -168,9 +167,8 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn (constants.%Convert.specific_fn.18b)]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.loc6_9.2) [symbolic = %int.convert_checked (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %iN.builtin: type = int_type signed, %int.convert_checked [symbolic = %iN.builtin (constants.%iN.builtin.c5d)]
-// CHECK:STDOUT:   %require_complete.loc12_15: <witness> = require_complete_type @A.%iN.builtin (%iN.builtin.c5d) [symbolic = %require_complete.loc12_15 (constants.%require_complete.be5)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%iN.builtin (%iN.builtin.c5d) [symbolic = %require_complete (constants.%require_complete.be5)]
 // CHECK:STDOUT:   %A.elem.loc12: type = unbound_element_type @A.%A (%A.dd3), @A.%iN.builtin (%iN.builtin.c5d) [symbolic = %A.elem.loc12 (constants.%A.elem.d60)]
-// CHECK:STDOUT:   %require_complete.loc12_3: <witness> = require_complete_type @A.%A.elem.loc12 (%A.elem.d60) [symbolic = %require_complete.loc12_3 (constants.%require_complete.bd4)]
 // CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: @A.%iN.builtin (%iN.builtin.c5d)} [symbolic = %struct_type.base.n (constants.%struct_type.base.n)]
 // CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness @A.%struct_type.base.n (%struct_type.base.n) [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.547)]
 // CHECK:STDOUT:
@@ -231,9 +229,8 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %Convert.specific_fn => constants.%Convert.specific_fn.f3f
 // CHECK:STDOUT:   %int.convert_checked => constants.%int_0.5c6
 // CHECK:STDOUT:   %iN.builtin => <error>
-// CHECK:STDOUT:   %require_complete.loc12_15 => <error>
+// CHECK:STDOUT:   %require_complete => <error>
 // CHECK:STDOUT:   %A.elem.loc12 => <error>
-// CHECK:STDOUT:   %require_complete.loc12_3 => <error>
 // CHECK:STDOUT:   %struct_type.base.n => <error>
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => <error>
 // CHECK:STDOUT: }
