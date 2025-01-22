@@ -89,7 +89,7 @@ class FullPatternStack {
     bind_name_stack_.PopArray();
   }
 
-  // Records that `bind_inst_id` was introduced by the current full-pattern.
+  // Records that `name_id` was introduced by the current full-pattern.
   auto AddBindName(SemIR::NameId name_id) -> void {
     bind_name_stack_.AppendToTop(
         {.name_id = name_id, .inst_id = SemIR::InstId::InitTombstone});
