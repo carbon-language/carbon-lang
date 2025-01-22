@@ -440,8 +440,8 @@ class NodeStack {
           return Id::KindFor<SemIR::InterfaceId>();
         case Parse::NodeKind::ImplDefinitionStart:
           return Id::KindFor<SemIR::ImplId>();
-        case Parse::NodeKind::LetInitializer:
-        case Parse::NodeKind::VariableInitializer:
+        case Parse::NodeKind::LetIntroducer:
+        case Parse::NodeKind::VariableIntroducer:
           return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfValueName:
@@ -458,7 +458,7 @@ class NodeStack {
         case Parse::NodeKind::ImplicitParamListStart:
         case Parse::NodeKind::ImplIntroducer:
         case Parse::NodeKind::InterfaceIntroducer:
-        case Parse::NodeKind::LetIntroducer:
+        case Parse::NodeKind::LetInitializer:
         case Parse::NodeKind::ReturnedModifier:
         case Parse::NodeKind::ReturnStatementStart:
         case Parse::NodeKind::ReturnVarModifier:
@@ -467,7 +467,7 @@ class NodeStack {
         case Parse::NodeKind::StructTypeLiteralStart:
         case Parse::NodeKind::TupleLiteralStart:
         case Parse::NodeKind::TuplePatternStart:
-        case Parse::NodeKind::VariableIntroducer:
+        case Parse::NodeKind::VariableInitializer:
           return Id::Kind::None;
         case Parse::NodeKind::AbstractModifier:
         case Parse::NodeKind::AdaptDecl:

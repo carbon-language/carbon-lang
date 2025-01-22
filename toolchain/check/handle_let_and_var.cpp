@@ -24,7 +24,7 @@ template <Lex::TokenKind::RawEnumType Kind>
 static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   context.decl_introducer_state_stack().Push<Kind>();
   // Push a bracketing node and pattern block to establish the pattern context.
-  context.node_stack().Push(node_id);
+  context.node_stack().PushOptional(node_id, SemIR::InstId::Invalid);
   context.pattern_block_stack().Push();
   context.BeginSubpattern();
   return true;
@@ -54,30 +54,34 @@ auto HandleParseNode(Context& context, Parse::ReturnedModifierId node_id)
   return true;
 }
 
-static auto HandleInitializer(
-    Context& context, Parse::NodeId node_id,
-    SemIR::InstId inst_id = SemIR::InstId::Invalid) -> bool {
+static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
   if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
     context.global_init().Resume();
   }
-  context.node_stack().PushOptional(node_id, inst_id);
+  context.node_stack().Push(node_id);
   return true;
 }
 
-// If the top node on the node stack is a TuplePattern, pops and discards it.
-// Returns true if it did so.
-// TODO: We use this because TuplePatterns don't have the same representation on
-// the node stack as other patterns.
-static auto TryPopAndDiscardTuplePattern(Context& context) -> bool {
-  if (!context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
-    return false;
-  }
+// Pops a pattern from the top of the node stack and returns it. The returned
+// instruction will be `None` if we popped a tuple pattern.
+// TODO: Change tuple patterns to have the same representation on the node stack
+// as other patterns.
+static auto PopBindingDeclPattern(Context& context)
+    -> std::pair<Parse::NodeId, SemIR::InstId> {
+  // TODO: Update binding-pattern handling to use the pattern block even in
+  // a let/var context, and then consume it here.
+  context.pattern_block_stack().PopAndDiscard();
 
-  context.node_stack().PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
-  // TODO: Tuple patterns leave behind an entry on the subpattern stack.
-  // Popping it here seems wrong, but it's not clear how this should work.
-  context.EndSubpatternAsEmpty();
-  return true;
+  auto [node_id, block_id] =
+      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
+  if (block_id) {
+    // TODO: Tuple patterns leave behind an entry on the subpattern stack.
+    // Popping it here seems wrong, but it's not clear how this should work.
+    context.EndSubpatternAsEmpty();
+    context.node_stack().PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
+    return {node_id, SemIR::InstId::Invalid};
+  }
+  return context.node_stack().PopPatternWithNodeId();
 }
 
 // Builds an associated constant declaration for a `let`. This should be called
@@ -88,12 +92,8 @@ static auto HandleAssociatedConstantDecl(Context& context,
     -> SemIR::InstId {
   auto& interface_info = context.interfaces().Get(interface_id);
 
-  // Pop the pattern.
-  auto pattern_node_id = context.node_stack().PeekNodeId();
-  SemIR::InstId pattern_id = SemIR::InstId::Invalid;
-  if (!TryPopAndDiscardTuplePattern(context)) {
-    pattern_id = context.node_stack().PopPattern();
-  }
+  // Pop the pattern. This must be a single symbolic name binding pattern.
+  auto [pattern_node_id, pattern_id] = PopBindingDeclPattern(context);
 
   auto binding_pattern =
       pattern_id.is_valid()
@@ -164,10 +164,16 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
   auto decl_id = SemIR::InstId::Invalid;
   if (auto interface_decl = context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     decl_id = HandleAssociatedConstantDecl(context, interface_decl->interface_id);
+
+    // Store the declaration ID on the introducer node.
+    auto [intro_node_id, _] =
+        context.node_stack().PopWithNodeId<Parse::NodeKind::LetIntroducer>();
+    context.node_stack().Push(intro_node_id, decl_id);
+
     StartGenericDefinition(context);
   }
 
-  return HandleInitializer(context, node_id, decl_id);
+  return HandleInitializer(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
@@ -208,9 +214,11 @@ namespace {
 struct DeclInfo {
   // The optional initializer.
   SemIR::InstId init_id = SemIR::InstId::Invalid;
+  // The pattern, if we are not declaring an associated constant.
   SemIR::InstId pattern_id = SemIR::InstId::Invalid;
+  // The associated constant declaration, if we are declaring an associated
+  // constant.
   SemIR::InstId assoc_const_id = SemIR::InstId::Invalid;
-  std::optional<SemIR::Inst> parent_scope_inst = std::nullopt;
   DeclIntroducerState introducer = DeclIntroducerState();
 };
 }  // namespace
@@ -224,53 +232,54 @@ template <const Lex::TokenKind& IntroducerTokenKind,
 static auto HandleDecl(Context& context) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
 
-  // TODO: Update binding-pattern handling to use the pattern block even in
-  // a let/var context, and then consume it here.
-  context.pattern_block_stack().PopAndDiscard();
-
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
     decl_info.init_id = context.node_stack().PopExpr();
-    decl_info.assoc_const_id = context.node_stack().Pop<InitializerNodeKind>();
+    context.node_stack().PopAndDiscardSoloNodeId<InitializerNodeKind>();
   }
 
-  auto pattern_node_id = context.node_stack().PeekNodeId();
-
-  // Handle the pattern.
-  if (auto interface_decl = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
-      interface_decl && IntroducerTokenKind == Lex::TokenKind::Let) {
-    // This is an associated constant declaration. If it has an initializer, we
-    // already handled the pattern as part of handling the `=`.
-    if (!decl_info.assoc_const_id.is_valid()) {
+  // Next we either have a pattern and an introducer or, if we've already built
+  // a declaration, just the introducer.
+  if (auto decl_id = context.node_stack().PopIf<IntroducerNodeKind>()) {
+    // If we have a declaration already, it's an associated constant
+    // declaration.
+    decl_info.assoc_const_id = *decl_id;
+  } else {
+    // Handle the pattern.
+    if (auto interface_decl = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
+        interface_decl && IntroducerTokenKind == Lex::TokenKind::Let) {
+      // This is an associated constant declaration.
       decl_info.assoc_const_id =
           HandleAssociatedConstantDecl(context, interface_decl->interface_id);
+    } else {
+      auto [pattern_node_id, pattern_id] = PopBindingDeclPattern(context);
+      if (!pattern_id.is_valid()) {
+        context.TODO(pattern_node_id, "tuple pattern in let/var");
+        pattern_id = SemIR::ErrorInst::SingletonInstId;
+      }
+      decl_info.pattern_id = pattern_id;
     }
-  } else if (TryPopAndDiscardTuplePattern(context)) {
-    context.TODO(pattern_node_id, "tuple pattern in let/var");
-    decl_info.pattern_id = SemIR::ErrorInst::SingletonInstId;
-  } else {
-    decl_info.pattern_id = context.node_stack().PopPattern();
-  }
 
-  if constexpr (IntroducerTokenKind == Lex::TokenKind::Var) {
-    // Pop the `returned` modifier if present.
-    context.node_stack()
-        .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::ReturnedModifier>();
-  }
+    if constexpr (IntroducerTokenKind == Lex::TokenKind::Var) {
+      // Pop the `returned` modifier if present.
+      context.node_stack()
+          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::ReturnedModifier>();
+    }
 
-  context.node_stack().PopAndDiscardSoloNodeId<IntroducerNodeKind>();
+    context.node_stack().Pop<IntroducerNodeKind>();
+  }
 
   // Process declaration modifiers.
   // TODO: For a qualified `let` or `var` declaration, this should use the
   // target scope of the name introduced in the declaration. See #2590.
-  decl_info.parent_scope_inst =
+  auto parent_scope_inst =
       context.name_scopes()
           .GetInstIfValid(context.scope_stack().PeekNameScopeId())
           .second;
   decl_info.introducer =
       context.decl_introducer_state_stack().Pop<IntroducerTokenKind>();
   CheckAccessModifiersOnDecl(context, decl_info.introducer,
-                             decl_info.parent_scope_inst);
+                             parent_scope_inst);
 
   return decl_info;
 }
