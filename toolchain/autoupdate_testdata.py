@@ -8,13 +8,14 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import argparse
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 
-def main(args: list[str]) -> None:
+def main() -> None:
     bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
     configs = []
     # Use the most recently used build mode, or `fastbuild` if missing
@@ -41,9 +42,9 @@ def main(args: list[str]) -> None:
     # Parse arguments.
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--allow-check-fail", action="store_true")
-    parser.add_argument("files", nargs="+")
+    parser.add_argument("files", nargs="*")
     args = parser.parse_args()
-  
+
     if args.allow_check_fail:
         if build_mode == "opt":
             exit(
@@ -66,18 +67,18 @@ def main(args: list[str]) -> None:
     ]
     # Support specifying tests to update, such as:
     # ./autoupdate_testdata.py lex/**/*
-    if len(args) > 1:
+    if args.files:
         repo_root = Path(__file__).parents[1]
         file_tests = []
         # Filter down to just test files.
-        for f in args[1:]:
+        for f in args.files:
             if f.endswith(".carbon"):
                 path = str(Path(f).resolve().relative_to(repo_root))
                 if path.count("/testdata/"):
                     file_tests.append(path)
         if not file_tests:
             sys.exit(
-                f"Args do not seem to be test files; for example, {args[1]}"
+                f"Args do not seem to be test files; for example, {args.files[0]}"
             )
         argv.append("--file_tests=" + ",".join(file_tests))
     # Provide an empty stdin so that the driver tests that read from stdin
@@ -86,4 +87,4 @@ def main(args: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
