@@ -163,7 +163,7 @@ CheckFail(Ts&&... values) -> void {
 #define CARBON_INTERNAL_DEAD_DCHECK_IMPL_FORMAT(format_str, ...) \
   Carbon::Internal::CheckFail<"", "", 0, "", "">(__VA_ARGS__)
 
-// The ChecKFail function itself is noreturn in NDEBUG.
+// The CheckFail function itself is noreturn in NDEBUG.
 #define CARBON_INTERNAL_FATAL_NORETURN_SUFFIX() void()
 #else
 #define CARBON_INTERNAL_FATAL_NORETURN_SUFFIX() std::abort()
