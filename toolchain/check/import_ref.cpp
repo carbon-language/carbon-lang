@@ -1448,7 +1448,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
 
-  auto entity_type_const_id = GetLocalConstantId(resolver, inst.entity_type_id);
   auto interface_inst_id = GetLocalConstantId(resolver, inst.interface_type_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -1457,10 +1456,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   return ResolveAs<SemIR::AssociatedEntityType>(
       resolver,
       {.type_id = SemIR::TypeType::SingletonTypeId,
-       .interface_type_id =
-           resolver.local_context().GetTypeIdForTypeConstant(interface_inst_id),
-       .entity_type_id = resolver.local_context().GetTypeIdForTypeConstant(
-           entity_type_const_id)});
+       .interface_type_id = resolver.local_context().GetTypeIdForTypeConstant(
+           interface_inst_id)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

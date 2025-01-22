@@ -246,8 +246,9 @@ struct AssociatedEntityType {
            .constant_kind = InstConstantKind::Conditional});
 
   TypeId type_id;
+  // The interface in which the entity was declared.
+  // TODO: Consider storing an `InterfaceId` and `SpecificId` instead.
   TypeId interface_type_id;
-  TypeId entity_type_id;
 };
 
 // A base in a class, of the form `base: base_type;`. A base class is an

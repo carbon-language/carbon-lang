@@ -30,8 +30,8 @@ class A {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Make.type.068: type = fn_type @Make.1 [template]
 // CHECK:STDOUT:   %Make.606: %Make.type.068 = struct_value () [template]
-// CHECK:STDOUT:   %Make.assoc_type: type = assoc_entity_type %DefaultConstructible.type, %Make.type.068 [template]
-// CHECK:STDOUT:   %assoc0: %Make.assoc_type = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
+// CHECK:STDOUT:   %DefaultConstructible.assoc_type: type = assoc_entity_type %DefaultConstructible.type [template]
+// CHECK:STDOUT:   %assoc0: %DefaultConstructible.assoc_type = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -66,7 +66,7 @@ class A {
 // CHECK:STDOUT:     %return.param: ref @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %Make.assoc_type = assoc_entity element0, %Make.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %DefaultConstructible.assoc_type = assoc_entity element0, %Make.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

@@ -35,8 +35,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
-  auto type_id = context.GetAssociatedEntityType(
-      self_type_id, context.insts().Get(decl_id).type_id());
+  auto type_id = context.GetAssociatedEntityType(self_type_id);
   return context.AddInst<SemIR::AssociatedEntity>(
       context.insts().GetLocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});
@@ -113,10 +112,9 @@ auto GetAssociatedEntityType(Context& context, SemIRLoc loc,
   }
   // TODO: For a `FunctionDecl`, should we substitute `Self` into the type?
 
-  auto assoc_type =
-      context.types().GetAs<SemIR::AssociatedEntityType>(assoc_entity.type_id);
-  return SemIR::GetTypeInSpecific(context.sem_ir(), specific_id,
-                                  assoc_type.entity_type_id);
+  return SemIR::GetTypeInSpecific(
+      context.sem_ir(), specific_id,
+      context.insts().Get(assoc_entity.decl_id).type_id());
 }
 
 }  // namespace Carbon::Check

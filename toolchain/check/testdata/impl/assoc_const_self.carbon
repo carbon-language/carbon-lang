@@ -21,15 +21,15 @@ impl {} as I where .V = {} {}
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %require_complete.9b1: <witness> = require_complete_type %Self.as_type [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, %Self.as_type [symbolic]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, <unexpected>.inst26.loc12_15 [symbolic]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%V [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %I.facet.1f7: %I.type = facet_value %.Self.as_type, %.Self.as_wit [symbolic]
 // CHECK:STDOUT:   %require_complete.d0c: <witness> = require_complete_type %.Self.as_type [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %Self.as_type = impl_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.Self.as_type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct> [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_struct) [template]
@@ -57,11 +57,11 @@ impl {} as I where .V = {} {}
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %V.ref: %assoc_type = name_ref V, <unexpected>.inst31 [symbolic = constants.%assoc0]
+// CHECK:STDOUT:     %V.ref: %I.assoc_type = name_ref V, @V.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc15_20: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0: %Self.as_type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %impl.elem0: %.Self.as_type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc15_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_26.2: %empty_struct_type = converted %.loc15_26.1, %empty_struct [template = constants.%empty_struct]
@@ -74,11 +74,14 @@ impl {} as I where .V = {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %V: @V.%Self.as_type (%Self.as_type) = assoc_const_decl @V [template] {
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%V [template = constants.%assoc0]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .V = <unexpected>.inst31
-// CHECK:STDOUT:   witness = (<unexpected>.inst26.loc12_15)
+// CHECK:STDOUT:   .V = @V.%assoc0
+// CHECK:STDOUT:   witness = (%V)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {

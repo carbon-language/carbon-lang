@@ -474,8 +474,8 @@ class Context {
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
   // Gets the type for the name of an associated entity.
-  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id,
-                               SemIR::TypeId entity_type_id) -> SemIR::TypeId;
+  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id)
+      -> SemIR::TypeId;
 
   // Gets a singleton type. The returned type will be complete. Requires that
   // `singleton_id` is already validated to be a singleton.

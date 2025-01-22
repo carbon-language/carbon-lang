@@ -500,16 +500,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        // TODO: Try to get the name of the interface associated with
-        // `inst.interface_type_id`.
-        if (auto fn_ty =
-                sem_ir_->types().TryGetAs<FunctionType>(inst.entity_type_id)) {
-          add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
-                           ".assoc_type");
-        } else {
-          // TODO: Handle other cases.
-          add_inst_name("assoc_type");
+        auto facet_type =
+            sem_ir_->types().TryGetAs<FacetType>(inst.interface_type_id);
+        if (!facet_type) {
+          // Should never happen, but we don't want the instruction namer to
+          // crash on bad IR.
+          break;
         }
+        const auto& facet_type_info =
+            sem_ir_->facet_types().Get(facet_type->facet_type_id);
+        auto interface = facet_type_info.TryAsSingleInterface();
+        if (!interface) {
+          // Should never happen, but we don't want the instruction namer to
+          // crash on bad IR.
+          break;
+        }
+        const auto& interface_info =
+            sem_ir_->interfaces().Get(interface->interface_id);
+        add_inst_name_id(interface_info.name_id, ".assoc_type");
         continue;
       }
       case BindAlias::Kind:

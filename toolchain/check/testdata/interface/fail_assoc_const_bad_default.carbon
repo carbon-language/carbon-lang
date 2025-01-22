@@ -23,8 +23,8 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.826: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0.903: %assoc_type = assoc_entity element0, @I.%T [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0.c7e: %I.assoc_type = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,7 +48,7 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @I.%T [template = constants.%assoc0.903]
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [template = constants.%assoc0.c7e]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42]
 // CHECK:STDOUT:     %.loc18: type = converted %int_42, <error> [template = <error>]
 // CHECK:STDOUT:   }

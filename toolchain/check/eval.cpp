@@ -1567,8 +1567,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                         &SemIR::AssociatedEntity::type_id);
     case SemIR::AssociatedEntityType::Kind:
       return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id,
-          &SemIR::AssociatedEntityType::entity_type_id);
+          eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::BoundMethod::type_id,

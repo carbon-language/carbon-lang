@@ -1516,11 +1516,9 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
                                        type_blocks().AddCanonical(type_ids));
 }
 
-auto Context::GetAssociatedEntityType(SemIR::TypeId interface_type_id,
-                                      SemIR::TypeId entity_type_id)
+auto Context::GetAssociatedEntityType(SemIR::TypeId interface_type_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_type_id,
-                                                  entity_type_id);
+  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_type_id);
 }
 
 auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {

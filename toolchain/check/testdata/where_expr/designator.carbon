@@ -91,8 +91,8 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @I.%Member [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %.Self.258: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [template]
@@ -158,7 +158,7 @@ class D {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.258]
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.258]
-// CHECK:STDOUT:       %Member.ref: %assoc_type = name_ref Member, @Member.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc10_29: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -190,7 +190,7 @@ class D {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @I.%Member [template = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [template = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -248,8 +248,8 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %J.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @J.%Member [template]
+// CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type %J.type [template]
+// CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%Member [template]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %W.patt: <error> = symbolic_binding_pattern W, 0 [symbolic]
@@ -294,7 +294,7 @@ class D {
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @J.%Member [template = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%Member [template = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

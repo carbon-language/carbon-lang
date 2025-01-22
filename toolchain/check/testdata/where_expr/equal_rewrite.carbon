@@ -223,8 +223,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [template]
 // CHECK:STDOUT:   %Self: %N.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %N.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @N.%P [template]
+// CHECK:STDOUT:   %N.assoc_type: type = assoc_entity_type %N.type [template]
+// CHECK:STDOUT:   %assoc0: %N.assoc_type = assoc_entity element0, @N.%P [template]
 // CHECK:STDOUT:   %.Self: %N.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
@@ -262,7 +262,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %N.ref: type = name_ref N, file.%N.decl [template = constants.%N.type]
 // CHECK:STDOUT:       %.Self: %N.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %N.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %P.ref: %assoc_type = name_ref P, @P.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %P.ref: %N.assoc_type = name_ref P, @P.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc8_22: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -280,7 +280,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @N {
 // CHECK:STDOUT:   %Self: %N.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %P: type = assoc_const_decl @P [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @N.%P [template = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %N.assoc_type = assoc_entity element0, @N.%P [template = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -314,9 +314,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %A.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @A.%B [template]
-// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, @A.%C [template]
+// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [template]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B [template]
+// CHECK:STDOUT:   %assoc1: %A.assoc_type = assoc_entity element1, @A.%C [template]
 // CHECK:STDOUT:   %.Self.3ca: %A.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_type.adb: type = facet_access_type %.Self.3ca [symbolic]
@@ -363,7 +363,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
 // CHECK:STDOUT:       %.Self.1: %A.type = bind_symbolic_name .Self [symbolic = constants.%.Self.3ca]
 // CHECK:STDOUT:       %.Self.ref.loc9_31: %A.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.3ca]
-// CHECK:STDOUT:       %B.ref: %assoc_type = name_ref B, @B.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %B.ref: %A.assoc_type = name_ref B, @B.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type.loc9_31: type = facet_access_type %.Self.ref.loc9_31 [symbolic = constants.%.Self.as_type.adb]
 // CHECK:STDOUT:       %.loc9_31: type = converted %.Self.ref.loc9_31, %.Self.as_type.loc9_31 [symbolic = constants.%.Self.as_type.adb]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_31: <witness> = facet_access_witness %.Self.ref.loc9_31 [symbolic = constants.%.Self.as_wit.794]
@@ -376,7 +376,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %.Self.2: %A_where.type.ef9 = bind_symbolic_name .Self [symbolic = constants.%.Self.e46]
 // CHECK:STDOUT:       %.Self.ref.loc9_48: %A_where.type.ef9 = name_ref .Self, %.Self.2 [symbolic = constants.%.Self.e46]
-// CHECK:STDOUT:       %C.ref: %assoc_type = name_ref C, @C.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:       %C.ref: %A.assoc_type = name_ref C, @C.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_type.loc9_48: type = facet_access_type %.Self.ref.loc9_48 [symbolic = constants.%.Self.as_type.6f3]
 // CHECK:STDOUT:       %.loc9_48: type = converted %.Self.ref.loc9_48, %.Self.as_type.loc9_48 [symbolic = constants.%.Self.as_type.6f3]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_48: <witness> = facet_access_witness %.Self.ref.loc9_48 [symbolic = constants.%.Self.as_wit.a35]
@@ -394,10 +394,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %B: type = assoc_const_decl @B [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @A.%B [template = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %A.assoc_type = assoc_entity element0, @A.%B [template = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C: type = assoc_const_decl @C [template] {
-// CHECK:STDOUT:     %assoc1: %assoc_type = assoc_entity element1, @A.%C [template = constants.%assoc1]
+// CHECK:STDOUT:     %assoc1: %A.assoc_type = assoc_entity element1, @A.%C [template = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -440,8 +440,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %E.type: type = facet_type <@E> [template]
 // CHECK:STDOUT:   %Self: %E.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %E.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @E.%F [template]
+// CHECK:STDOUT:   %E.assoc_type: type = assoc_entity_type %E.type [template]
+// CHECK:STDOUT:   %assoc0: %E.assoc_type = assoc_entity element0, @E.%F [template]
 // CHECK:STDOUT:   %.Self: %E.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
@@ -495,7 +495,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %F.ref: %assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %F.ref: %E.assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc8_27: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -517,7 +517,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref.loc10_32: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %F.ref.loc10_32: %assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %F.ref.loc10_32: %E.assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type.loc10_32: type = facet_access_type %.Self.ref.loc10_32 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc10_32: type = converted %.Self.ref.loc10_32, %.Self.as_type.loc10_32 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit.loc10_32: <witness> = facet_access_witness %.Self.ref.loc10_32 [symbolic = constants.%.Self.as_wit]
@@ -525,7 +525,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %int_32.loc10_37: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc10_37: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.Self.ref.loc10_45: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %F.ref.loc10_45: %assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %F.ref.loc10_45: %E.assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type.loc10_45: type = facet_access_type %.Self.ref.loc10_45 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc10_45: type = converted %.Self.ref.loc10_45, %.Self.as_type.loc10_45 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit.loc10_45: <witness> = facet_access_witness %.Self.ref.loc10_45 [symbolic = constants.%.Self.as_wit]
@@ -548,7 +548,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %F.ref: %assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %F.ref: %E.assoc_type = name_ref F, @F.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc14_32: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -566,7 +566,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @E {
 // CHECK:STDOUT:   %Self: %E.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: type = assoc_const_decl @F [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @E.%F [template = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %E.assoc_type = assoc_entity element0, @E.%F [template = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -673,9 +673,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %J.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @J.%K [template]
-// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, @J.%L [template]
+// CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type %J.type [template]
+// CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%K [template]
+// CHECK:STDOUT:   %assoc1: %J.assoc_type = assoc_entity element1, @J.%L [template]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
@@ -723,7 +723,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref.loc9_29: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %K.ref: %assoc_type = name_ref K, @K.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %K.ref: %J.assoc_type = name_ref K, @K.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type.loc9_29: type = facet_access_type %.Self.ref.loc9_29 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc9_29: type = converted %.Self.ref.loc9_29, %.Self.as_type.loc9_29 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_29: <witness> = facet_access_witness %.Self.ref.loc9_29 [symbolic = constants.%.Self.as_wit]
@@ -731,7 +731,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.loc9_35.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_35.2: type = converted %.loc9_35.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.Self.ref.loc9_41: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %L.ref: %assoc_type = name_ref L, @L.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:       %L.ref: %J.assoc_type = name_ref L, @L.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_type.loc9_41: type = facet_access_type %.Self.ref.loc9_41 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc9_41: type = converted %.Self.ref.loc9_41, %.Self.as_type.loc9_41 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_41: <witness> = facet_access_witness %.Self.ref.loc9_41 [symbolic = constants.%.Self.as_wit]
@@ -755,7 +755,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref.loc11_25: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %L.ref: %assoc_type = name_ref L, @L.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:       %L.ref: %J.assoc_type = name_ref L, @L.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_type.loc11_25: type = facet_access_type %.Self.ref.loc11_25 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc11_25: type = converted %.Self.ref.loc11_25, %.Self.as_type.loc11_25 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit.loc11_25: <witness> = facet_access_witness %.Self.ref.loc11_25 [symbolic = constants.%.Self.as_wit]
@@ -764,7 +764,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.loc11_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:       %.loc11_30.2: type = converted %bool.make_type, %.loc11_30.1 [template = bool]
 // CHECK:STDOUT:       %.Self.ref.loc11_39: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %K.ref: %assoc_type = name_ref K, @K.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %K.ref: %J.assoc_type = name_ref K, @K.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type.loc11_39: type = facet_access_type %.Self.ref.loc11_39 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc11_39: type = converted %.Self.ref.loc11_39, %.Self.as_type.loc11_39 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit.loc11_39: <witness> = facet_access_witness %.Self.ref.loc11_39 [symbolic = constants.%.Self.as_wit]
@@ -783,10 +783,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %K: type = assoc_const_decl @K [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @J.%K [template = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%K [template = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %L: type = assoc_const_decl @L [template] {
-// CHECK:STDOUT:     %assoc1: %assoc_type = assoc_entity element1, @J.%L [template = constants.%assoc1]
+// CHECK:STDOUT:     %assoc1: %J.assoc_type = assoc_entity element1, @J.%L [template = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -865,8 +865,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %O.type: type = facet_type <@O> [template]
 // CHECK:STDOUT:   %Self.040: %O.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %O.type, type [template]
-// CHECK:STDOUT:   %assoc0.330: %assoc_type = assoc_entity element0, @O.%P [template]
+// CHECK:STDOUT:   %O.assoc_type: type = assoc_entity_type %O.type [template]
+// CHECK:STDOUT:   %assoc0.0e4: %O.assoc_type = assoc_entity element0, @O.%P [template]
 // CHECK:STDOUT:   %.Self: %O.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
@@ -916,7 +916,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %O.ref: type = name_ref O, file.%O.decl [template = constants.%O.type]
 // CHECK:STDOUT:       %.Self: %O.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %O.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %P.ref: %assoc_type = name_ref P, @P.%assoc0 [template = constants.%assoc0.330]
+// CHECK:STDOUT:       %P.ref: %O.assoc_type = name_ref P, @P.%assoc0 [template = constants.%assoc0.0e4]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc8_28: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -938,7 +938,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %O.ref: type = name_ref O, file.%O.decl [template = constants.%O.type]
 // CHECK:STDOUT:       %.Self: %O.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %O.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %P.ref: %assoc_type = name_ref P, @P.%assoc0 [template = constants.%assoc0.330]
+// CHECK:STDOUT:       %P.ref: %O.assoc_type = name_ref P, @P.%assoc0 [template = constants.%assoc0.0e4]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc10_25: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -957,7 +957,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @O {
 // CHECK:STDOUT:   %Self: %O.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.040]
 // CHECK:STDOUT:   %P: type = assoc_const_decl @P [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @O.%P [template = constants.%assoc0.330]
+// CHECK:STDOUT:     %assoc0: %O.assoc_type = assoc_entity element0, @O.%P [template = constants.%assoc0.0e4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1016,9 +1016,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S.type: type = facet_type <@S> [template]
 // CHECK:STDOUT:   %Self.b33: %S.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %S.type, type [template]
-// CHECK:STDOUT:   %assoc0.5f5: %assoc_type = assoc_entity element0, @S.%T [template]
-// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, @S.%U [template]
+// CHECK:STDOUT:   %S.assoc_type: type = assoc_entity_type %S.type [template]
+// CHECK:STDOUT:   %assoc0.720: %S.assoc_type = assoc_entity element0, @S.%T [template]
+// CHECK:STDOUT:   %assoc1: %S.assoc_type = assoc_entity element1, @S.%U [template]
 // CHECK:STDOUT:   %.Self: %S.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
@@ -1064,7 +1064,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %S.ref: type = name_ref S, file.%S.decl [template = constants.%S.type]
 // CHECK:STDOUT:       %.Self: %S.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %S.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %T.ref: %assoc_type = name_ref T, @T.%assoc0 [template = constants.%assoc0.5f5]
+// CHECK:STDOUT:       %T.ref: %S.assoc_type = name_ref T, @T.%assoc0 [template = constants.%assoc0.720]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc9_22: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -1086,7 +1086,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %S.ref: type = name_ref S, file.%S.decl [template = constants.%S.type]
 // CHECK:STDOUT:       %.Self: %S.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %S.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %U.ref: %assoc_type = name_ref U, @U.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:       %U.ref: %S.assoc_type = name_ref U, @U.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc11_22: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -1104,10 +1104,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @S {
 // CHECK:STDOUT:   %Self: %S.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.b33]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @S.%T [template = constants.%assoc0.5f5]
+// CHECK:STDOUT:     %assoc0: %S.assoc_type = assoc_entity element0, @S.%T [template = constants.%assoc0.720]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [template] {
-// CHECK:STDOUT:     %assoc1: %assoc_type = assoc_entity element1, @S.%U [template = constants.%assoc1]
+// CHECK:STDOUT:     %assoc1: %S.assoc_type = assoc_entity element1, @S.%U [template = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1218,11 +1218,11 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.169 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.cbd = import_ref Main//equal_constraint, inst21 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.020 = import_ref Main//equal_constraint, inst21 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.ac1 = import_ref Main//equal_constraint, P, unloaded
 // CHECK:STDOUT:   %import_ref.b61 = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.484 = import_ref Main//nested_rewrites, inst21 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.6b1 = import_ref Main//nested_rewrites, inst24 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.91a = import_ref Main//nested_rewrites, inst21 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.55d = import_ref Main//nested_rewrites, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.4a7 = import_ref Main//nested_rewrites, B, unloaded
 // CHECK:STDOUT:   %import_ref.925 = import_ref Main//nested_rewrites, C, unloaded
 // CHECK:STDOUT: }
@@ -1244,15 +1244,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @N [from "equal_constraint.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.169
-// CHECK:STDOUT:   .P = imports.%import_ref.cbd
+// CHECK:STDOUT:   .P = imports.%import_ref.020
 // CHECK:STDOUT:   witness = (imports.%import_ref.ac1)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "nested_rewrites.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.b61
-// CHECK:STDOUT:   .B = imports.%import_ref.484
-// CHECK:STDOUT:   .C = imports.%import_ref.6b1
+// CHECK:STDOUT:   .B = imports.%import_ref.91a
+// CHECK:STDOUT:   .C = imports.%import_ref.55d
 // CHECK:STDOUT:   witness = (imports.%import_ref.4a7, imports.%import_ref.925)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1297,8 +1297,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.826: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0.513: %assoc_type = assoc_entity element0, @I.%Member [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0.05b: %I.assoc_type = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
@@ -1335,7 +1335,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:       %Member.ref: %assoc_type = name_ref Member, @Member.%assoc0 [template = constants.%assoc0.513]
+// CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [template = constants.%assoc0.05b]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc16_36: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
@@ -1353,7 +1353,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @I.%Member [template = constants.%assoc0.513]
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [template = constants.%assoc0.05b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1451,9 +1451,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %E.type: type = facet_type <@E> [template]
 // CHECK:STDOUT:   %Self.19a: %E.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %E.type, type [template]
-// CHECK:STDOUT:   %assoc0.e68: %assoc_type = assoc_entity element0, @E.%F [template]
-// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, @E.%G [template]
+// CHECK:STDOUT:   %E.assoc_type: type = assoc_entity_type %E.type [template]
+// CHECK:STDOUT:   %assoc0.9c3: %E.assoc_type = assoc_entity element0, @E.%F [template]
+// CHECK:STDOUT:   %assoc1: %E.assoc_type = assoc_entity element1, @E.%G [template]
 // CHECK:STDOUT:   %.Self.da5: %E.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_type.34e: type = facet_access_type %.Self.da5 [symbolic]
@@ -1506,10 +1506,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: interface @E {
 // CHECK:STDOUT:   %Self: %E.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.19a]
 // CHECK:STDOUT:   %F: type = assoc_const_decl @F [template] {
-// CHECK:STDOUT:     %assoc0: %assoc_type = assoc_entity element0, @E.%F [template = constants.%assoc0.e68]
+// CHECK:STDOUT:     %assoc0: %E.assoc_type = assoc_entity element0, @E.%F [template = constants.%assoc0.9c3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: type = assoc_const_decl @G [template] {
-// CHECK:STDOUT:     %assoc1: %assoc_type = assoc_entity element1, @E.%G [template = constants.%assoc1]
+// CHECK:STDOUT:     %assoc1: %E.assoc_type = assoc_entity element1, @E.%G [template = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

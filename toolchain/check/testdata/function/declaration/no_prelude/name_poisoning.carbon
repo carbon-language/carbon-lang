@@ -1149,8 +1149,8 @@ fn F() {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %B.assoc_type: type = assoc_entity_type %A.type, %B.type [template]
-// CHECK:STDOUT:   %assoc0: %B.assoc_type = assoc_entity element0, @A.%B.decl [template]
+// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [template]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1159,7 +1159,7 @@ fn F() {
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %assoc0: %B.assoc_type = assoc_entity element0, %B.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %B.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

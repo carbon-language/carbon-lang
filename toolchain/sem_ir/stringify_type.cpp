@@ -199,11 +199,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        out << "<associated ";
+        out << "<associated entity in ";
         step_stack.PushString(">");
         step_stack.PushTypeId(inst.interface_type_id);
-        step_stack.PushString(" in ");
-        step_stack.PushTypeId(inst.entity_type_id);
         break;
       }
       case BindAlias::Kind:

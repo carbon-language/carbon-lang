@@ -35,8 +35,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.cf0 [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.f36: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.4c3: %F.type.f36 = struct_value () [template]
@@ -102,7 +102,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -157,7 +157,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: fn @F.3(%c.param_patt: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %F.type.cf0 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.4c3]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
