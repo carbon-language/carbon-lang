@@ -14,8 +14,9 @@ import sys
 from pathlib import Path
 
 
-def main() -> None:
+def main(args: list[str]) -> None:
     bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
+    configs = []
     # Use the most recently used build mode, or `fastbuild` if missing
     # `bazel-bin`.
     build_mode = "fastbuild"
@@ -37,11 +38,22 @@ def main() -> None:
         else:
             exit(f"Build mode not found in `bazel-bin` symlink: {link}")
 
+    # TODO: Add proper argument parsing.
+    if "--allow-check-fail" in args:
+        if build_mode == "opt":
+            exit(
+                "`--allow-check-fail` is incompatible with inferred "
+                "`-c opt` build mode"
+            )
+        configs.append("--config=non-fatal-checks")
+        args = [arg for arg in args if arg != "--allow-check-fail"]
+
     argv = [
         bazel,
         "run",
         "-c",
         build_mode,
+        *configs,
         "--experimental_convenience_symlinks=ignore",
         "--ui_event_filters=-info,-stdout,-stderr,-finish",
         "//toolchain/testing:file_test",
@@ -50,18 +62,18 @@ def main() -> None:
     ]
     # Support specifying tests to update, such as:
     # ./autoupdate_testdata.py lex/**/*
-    if len(sys.argv) > 1:
+    if len(args) > 1:
         repo_root = Path(__file__).parents[1]
         file_tests = []
         # Filter down to just test files.
-        for f in sys.argv[1:]:
+        for f in args[1:]:
             if f.endswith(".carbon"):
                 path = str(Path(f).resolve().relative_to(repo_root))
                 if path.count("/testdata/"):
                     file_tests.append(path)
         if not file_tests:
             sys.exit(
-                f"Args do not seem to be test files; for example, {sys.argv[1]}"
+                f"Args do not seem to be test files; for example, {args[1]}"
             )
         argv.append("--file_tests=" + ",".join(file_tests))
     # Provide an empty stdin so that the driver tests that read from stdin
@@ -70,4 +82,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
