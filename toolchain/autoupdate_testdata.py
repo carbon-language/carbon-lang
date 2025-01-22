@@ -38,15 +38,19 @@ def main(args: list[str]) -> None:
         else:
             exit(f"Build mode not found in `bazel-bin` symlink: {link}")
 
-    # TODO: Add proper argument parsing.
-    if "--allow-check-fail" in args:
+    # Parse arguments.
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--allow-check-fail", action="store_true")
+    parser.add_argument("files", nargs="+")
+    args = parser.parse_args()
+  
+    if args.allow_check_fail:
         if build_mode == "opt":
             exit(
                 "`--allow-check-fail` is incompatible with inferred "
                 "`-c opt` build mode"
             )
         configs.append("--config=non-fatal-checks")
-        args = [arg for arg in args if arg != "--allow-check-fail"]
 
     argv = [
         bazel,
