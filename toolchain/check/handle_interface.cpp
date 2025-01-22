@@ -163,7 +163,7 @@ auto HandleParseNode(Context& context,
       TryEvalInst(context, SemIR::InstId::None, facet_type));
 
   // We model `Self` as a symbolic binding whose type is the interface.
-  // Because there is no equivalent non-symbolic value, we use `Invalid` as
+  // Because there is no equivalent non-symbolic value, we use `None` as
   // the `value_id` on the `BindSymbolicName`.
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::SelfType,

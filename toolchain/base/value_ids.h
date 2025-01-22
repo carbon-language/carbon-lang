@@ -61,7 +61,7 @@ constexpr RealId RealId::None(RealId::NoneIndex);
 
 // Corresponds to StringRefs for identifiers.
 //
-// `NameId` relies on the values of this type other than `Invalid` all being
+// `NameId` relies on the values of this type other than `None` all being
 // non-negative.
 struct IdentifierId : public IdBase<IdentifierId> {
   static constexpr llvm::StringLiteral Label = "identifier";

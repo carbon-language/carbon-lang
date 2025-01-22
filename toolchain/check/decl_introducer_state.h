@@ -26,7 +26,7 @@ struct DeclIntroducerState {
   // The token kind of the introducer.
   Lex::TokenKind kind;
 
-  // Nodes of modifiers on this declaration, in expected order. `Invalid` if no
+  // Nodes of modifiers on this declaration, in expected order. `None` if no
   // modifier of that kind is present.
   Parse::NodeId
       ordered_modifier_node_ids[static_cast<int8_t>(ModifierOrder::Decl) + 1] =

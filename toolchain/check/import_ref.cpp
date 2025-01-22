@@ -815,7 +815,7 @@ static auto SetGenericData(ImportContext& context,
 }
 
 // Gets a local constant value corresponding to an imported generic ID. May
-// add work to the work stack and return `Invalid`.
+// add work to the work stack and return `None`.
 static auto GetLocalConstantId(ImportRefResolver& resolver,
                                SemIR::GenericId generic_id)
     -> SemIR::ConstantId {

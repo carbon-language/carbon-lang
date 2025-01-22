@@ -30,7 +30,7 @@
 namespace Carbon::Check {
 
 // Given an initializing expression, find its return slot argument. Returns
-// `Invalid` if there is no return slot, because the initialization is not
+// `None` if there is no return slot, because the initialization is not
 // performed in place.
 static auto FindReturnSlotArgForInitializer(SemIR::File& sem_ir,
                                             SemIR::InstId init_id)

@@ -88,7 +88,7 @@ struct Function : public EntityWithParamsBase,
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
-  // specified.  Returns `Invalid` if no return type was specified, in which
+  // specified.  Returns `None` if no return type was specified, in which
   // case the effective return type is an empty tuple.
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::None) const

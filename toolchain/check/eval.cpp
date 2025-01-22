@@ -60,7 +60,7 @@ class EvalContext {
   }
 
   // Gets the value of the specified compile-time binding in this context.
-  // Returns `Invalid` if the value is not fixed in this context.
+  // Returns `None` if the value is not fixed in this context.
   auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
       -> SemIR::ConstantId {
     if (!bind_index.has_value() || !specific_id_.has_value()) {

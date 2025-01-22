@@ -140,18 +140,18 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
 
 // Gets the substituted value of a potentially generic constant within a
 // specific. Note that this does not perform substitution, and will return
-// `Invalid` if the substituted constant value is not yet known.
+// `None` if the substituted constant value is not yet known.
 auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
                            ConstantId const_id) -> ConstantId;
 
 // Gets the substituted constant value of a potentially generic instruction
 // within a specific. Note that this does not perform substitution, and will
-// return `Invalid` if the substituted constant value is not yet known.
+// return `None` if the substituted constant value is not yet known.
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId;
 
 // Gets the substituted value of a potentially generic type within a specific.
-// Note that this does not perform substitution, and will return `Invalid` if
+// Note that this does not perform substitution, and will return `None` if
 // the substituted type is not yet known.
 auto GetTypeInSpecific(const File& sem_ir, SpecificId specific_id,
                        TypeId type_id) -> TypeId;
