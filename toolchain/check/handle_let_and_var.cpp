@@ -8,6 +8,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/keyword_modifier_set.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
@@ -284,6 +285,16 @@ static auto FinishAssociatedConstantDecl(Context& context,
     return;
   }
 
+  LimitModifiersOnDecl(
+      context, decl_info.introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Interface);
+
+  if (decl_info.introducer.modifier_set.HasAnyOf(
+          KeywordModifierSet::Interface)) {
+    context.TODO(decl_info.introducer.modifier_node_id(ModifierOrder::Decl),
+                 "interface modifier");
+  }
+
   auto decl = context.insts().GetAs<SemIR::AssociatedConstantDecl>(
       decl_info.assoc_const_id);
 
@@ -313,24 +324,22 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context);
 
-  RequireDefaultFinalOnlyInInterfaces(context, decl_info.introducer,
-                                      decl_info.parent_scope_inst);
-  LimitModifiersOnDecl(
-      context, decl_info.introducer,
-      KeywordModifierSet::Access | KeywordModifierSet::Interface);
-
-  if (decl_info.introducer.modifier_set.HasAnyOf(
-          KeywordModifierSet::Interface)) {
-    context.TODO(decl_info.introducer.modifier_node_id(ModifierOrder::Decl),
-                 "interface modifier");
-  }
-
   // At interface scope, we are forming an associated constant, which has
   // different rules.
   if (decl_info.assoc_const_id.is_valid()) {
     FinishAssociatedConstantDecl(context, node_id, decl_info);
     return true;
   }
+
+  LimitModifiersOnDecl(
+      context, decl_info.introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Interface);
+
+  // Diagnose interface modifiers given that we're not building an associated
+  // constant. We use this rather than `LimitModifiersOnDecl` to get a more
+  // specific error.
+  RequireDefaultFinalOnlyInInterfaces(context, decl_info.introducer,
+                                      std::nullopt);
 
   auto pattern = context.insts().GetWithLocId(decl_info.pattern_id);
 
