@@ -337,7 +337,8 @@ class FormatterImpl {
 
   // Formats an associated constant entity.
   auto FormatAssociatedConstant(AssociatedConstantId id) -> void {
-    const AssociatedConstant& assoc_const = sem_ir_->associated_constants().Get(id);
+    const AssociatedConstant& assoc_const =
+        sem_ir_->associated_constants().Get(id);
     if (!ShouldFormatEntity(assoc_const.decl_id)) {
       return;
     }

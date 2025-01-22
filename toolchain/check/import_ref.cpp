@@ -1378,8 +1378,7 @@ static auto MakeAssociatedConstant(
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AssociatedConstantDecl inst,
-                                SemIR::ConstantId const_id)
-    -> ResolveResult {
+                                SemIR::ConstantId const_id) -> ResolveResult {
   const auto& import_assoc_const =
       resolver.import_associated_constants().Get(inst.assoc_const_id);
 

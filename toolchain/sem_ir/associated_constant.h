@@ -20,8 +20,8 @@ namespace Carbon::SemIR {
 // Investigate ways of factoring out the common parts.
 struct AssociatedConstant : public Printable<AssociatedConstant> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{" << "name: " << name_id << ", parent_scope: " << parent_scope_id
-        << "}";
+    out << "{"
+        << "name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
   }
 
   // The entity's name.

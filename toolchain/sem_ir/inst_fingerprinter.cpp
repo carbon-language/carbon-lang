@@ -163,7 +163,7 @@ struct Worklist {
     }
   }
 
-  template<typename EntityT>
+  template <typename EntityT>
   auto AddEntity(const EntityT& entity) -> void {
     Add(entity.name_id);
     if (entity.parent_scope_id.is_valid()) {

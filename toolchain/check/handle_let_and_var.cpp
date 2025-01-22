@@ -163,7 +163,8 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
   auto decl_id = SemIR::InstId::Invalid;
   if (auto interface_decl = context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    decl_id = HandleAssociatedConstantDecl(context, interface_decl->interface_id);
+    decl_id =
+        HandleAssociatedConstantDecl(context, interface_decl->interface_id);
 
     // Store the declaration ID on the introducer node.
     auto [intro_node_id, _] =
@@ -278,8 +279,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
           .second;
   decl_info.introducer =
       context.decl_introducer_state_stack().Pop<IntroducerTokenKind>();
-  CheckAccessModifiersOnDecl(context, decl_info.introducer,
-                             parent_scope_inst);
+  CheckAccessModifiersOnDecl(context, decl_info.introducer, parent_scope_inst);
 
   return decl_info;
 }
@@ -401,8 +401,8 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       // somewhere so that we can use it as a default.
       context.TODO(node_id, "Field initializer");
     } else {
-      decl_info.init_id = Initialize(context, node_id, decl_info.pattern_id,
-                                      decl_info.init_id);
+      decl_info.init_id =
+          Initialize(context, node_id, decl_info.pattern_id, decl_info.init_id);
       // TODO: Consider using different instruction kinds for assignment
       // versus initialization.
       context.AddInst<SemIR::Assign>(node_id, {.lhs_id = decl_info.pattern_id,
