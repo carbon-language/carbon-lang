@@ -154,7 +154,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc14_3: %Class.elem = var_pattern %.loc14_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

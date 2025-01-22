@@ -110,17 +110,17 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc36_3: %Outer.elem.a16 = var_pattern %.loc36_9
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc36: ref %Outer.elem.a16 = var <invalid>
+// CHECK:STDOUT:   %.var.loc36: ref %Outer.elem.a16 = var <none>
 // CHECK:STDOUT:   %.loc37_9: %Outer.elem.a16 = field_decl qo, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc37_3: %Outer.elem.a16 = var_pattern %.loc37_9
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc37: ref %Outer.elem.a16 = var <invalid>
+// CHECK:STDOUT:   %.var.loc37: ref %Outer.elem.a16 = var <none>
 // CHECK:STDOUT:   %.loc38_9: %Outer.elem.fe9 = field_decl pi, element2 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc38_3: %Outer.elem.fe9 = var_pattern %.loc38_9
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc38: ref %Outer.elem.fe9 = var <invalid>
+// CHECK:STDOUT:   %.var.loc38: ref %Outer.elem.fe9 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.po.qo.pi [template = constants.%complete_type.e99]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -139,17 +139,17 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc19_5: %Inner.elem.640 = var_pattern %.loc19_11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc19: ref %Inner.elem.640 = var <invalid>
+// CHECK:STDOUT:   %.var.loc19: ref %Inner.elem.640 = var <none>
 // CHECK:STDOUT:   %.loc20_11: %Inner.elem.c30 = field_decl po, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc20_5: %Inner.elem.c30 = var_pattern %.loc20_11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc20: ref %Inner.elem.c30 = var <invalid>
+// CHECK:STDOUT:   %.var.loc20: ref %Inner.elem.c30 = var <none>
 // CHECK:STDOUT:   %.loc21_11: %Inner.elem.640 = field_decl qi, element2 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc21_5: %Inner.elem.640 = var_pattern %.loc21_11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc21: ref %Inner.elem.640 = var <invalid>
+// CHECK:STDOUT:   %.var.loc21: ref %Inner.elem.640 = var <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.pi.po.qi [template = constants.%complete_type.7ae]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

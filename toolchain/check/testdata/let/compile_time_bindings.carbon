@@ -346,9 +346,9 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %a: %empty_tuple.type = bind_name a, %.loc9_17.2
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %b.patt.loc10_8.2: %tuple.type.9fb = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %tuple.type.9fb = value_param_pattern %b.patt.loc10_8.2, runtime_param<invalid> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %tuple.type.9fb = value_param_pattern %b.patt.loc10_8.2, runtime_param<none> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %tuple.type.9fb = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.param: %tuple.type.9fb = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc10_16.1: type = splice_block %.loc10_16.4 [template = constants.%tuple.type.9fb] {
 // CHECK:STDOUT:       %.loc10_14: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc10_16.2: %tuple.type.9fb = tuple_literal (%.loc10_14)

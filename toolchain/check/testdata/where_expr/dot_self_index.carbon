@@ -87,20 +87,20 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Empty.decl: %Empty.type.d5a = interface_decl @Empty [template = constants.%Empty.generic] {
 // CHECK:STDOUT:     %W.patt.loc11_17.1: type = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_17.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: type = value_param_pattern %W.patt.loc11_17.1, runtime_param<invalid> [symbolic = %W.patt.loc11_17.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: type = value_param_pattern %W.patt.loc11_17.1, runtime_param<none> [symbolic = %W.patt.loc11_17.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %W.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %W.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %W.loc11_17.1: type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc11_17.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %T.patt.loc18_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc18_6.1, runtime_param<invalid> [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc18_6.1, runtime_param<none> [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt: @H.%Empty_where.type (%Empty_where.type.4ed) = binding_pattern U
 // CHECK:STDOUT:     %U.param_patt: @H.%Empty_where.type (%Empty_where.type.4ed) = value_param_pattern %U.patt, runtime_param0
 // CHECK:STDOUT:     %V.patt.loc18_43.1: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: type = value_param_pattern %V.patt.loc18_43.1, runtime_param<invalid> [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.param_patt: type = value_param_pattern %V.patt.loc18_43.1, runtime_param<none> [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc18_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.4ed) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc18_28.1: type = splice_block %.loc18_28.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.4ed)] {
@@ -120,7 +120,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.4ed) = bind_name U, %U.param
-// CHECK:STDOUT:     %V.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %V.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %V.loc18_43.1: type = bind_symbolic_name V, 1, %V.param [symbolic = %V.loc18_43.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {

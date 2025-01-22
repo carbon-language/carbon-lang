@@ -213,12 +213,12 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc7_3: %SomeClass.elem = var_pattern %.loc7_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc7: ref %SomeClass.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc7: ref %SomeClass.elem = var <none>
 // CHECK:STDOUT:   %.loc8_8: %SomeClass.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc8_3: %SomeClass.elem = var_pattern %.loc8_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc8: ref %SomeClass.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc8: ref %SomeClass.elem = var <none>
 // CHECK:STDOUT:   %StaticMemberFunction.decl: %StaticMemberFunction.type = fn_decl @StaticMemberFunction [template = constants.%StaticMemberFunction] {} {}
 // CHECK:STDOUT:   %AdapterMethod.decl: %AdapterMethod.type = fn_decl @AdapterMethod [template = constants.%AdapterMethod] {
 // CHECK:STDOUT:     %self.patt: %SomeClassAdapter = binding_pattern self
@@ -396,12 +396,12 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %SomeClass.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %SomeClass.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc5: ref %SomeClass.elem = var <none>
 // CHECK:STDOUT:   %.loc6_8: %SomeClass.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc6_3: %SomeClass.elem = var_pattern %.loc6_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %SomeClass.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc6: ref %SomeClass.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

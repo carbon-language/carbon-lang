@@ -205,7 +205,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     .UseForwardDeclaredF = %UseForwardDeclaredF
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %e.patt: %Empty.type = binding_pattern e
 // CHECK:STDOUT:     %e.param_patt: %Empty.type = value_param_pattern %e.patt, runtime_param0

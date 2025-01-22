@@ -254,12 +254,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %A.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc5: ref %A.elem = var <none>
 // CHECK:STDOUT:   %.loc6_8: %A.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc6_3: %A.elem = var_pattern %.loc6_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc6: ref %A.elem = var <none>
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, runtime_param0
@@ -587,12 +587,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %A.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc5: ref %A.elem = var <none>
 // CHECK:STDOUT:   %.loc6_8: %A.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc6_3: %A.elem = var_pattern %.loc6_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc6: ref %A.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -701,12 +701,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %A.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc5: ref %A.elem = var <none>
 // CHECK:STDOUT:   %.loc6_8: %A.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc6_3: %A.elem = var_pattern %.loc6_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc6: ref %A.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -988,7 +988,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %A.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %A.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.ed6 [template = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

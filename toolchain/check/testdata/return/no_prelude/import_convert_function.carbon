@@ -125,9 +125,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [template = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %T.patt.loc8_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_22.1, runtime_param<invalid> [symbolic = %T.patt.loc8_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_22.1, runtime_param<none> [symbolic = %T.patt.loc8_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc8_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_22.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
@@ -399,9 +399,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %N.patt.loc6_9.1: %i32.builtin = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_9.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: %i32.builtin = value_param_pattern %N.patt.loc6_9.1, runtime_param<invalid> [symbolic = %N.patt.loc6_9.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: %i32.builtin = value_param_pattern %N.patt.loc6_9.1, runtime_param<none> [symbolic = %N.patt.loc6_9.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: %i32.builtin = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: %i32.builtin = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.3 [template = constants.%i32.builtin] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32.builtin]
@@ -746,12 +746,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc7_11: %D.elem = var_pattern %.loc7_16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc7_11: ref %D.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc7_11: ref %D.elem = var <none>
 // CHECK:STDOUT:   %.loc7_28: %D.elem = field_decl m, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc7_23: %D.elem = var_pattern %.loc7_28
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc7_23: ref %D.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc7_23: ref %D.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.m.566 [template = constants.%complete_type.682]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

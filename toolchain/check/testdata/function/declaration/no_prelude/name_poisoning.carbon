@@ -631,7 +631,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc18_3: %D.elem = var_pattern %.loc18_9
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %D.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %D.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.C1 [template = constants.%complete_type.ec1]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1005,7 +1005,7 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc12: type = bind_alias <invalid>, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc12: type = bind_alias <none>, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -1038,7 +1038,7 @@ fn F() {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1072,8 +1072,8 @@ fn F() {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1275,7 +1275,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc9_5: %B.elem = var_pattern %.loc9_10
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.96d] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type.57e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

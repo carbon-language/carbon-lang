@@ -254,9 +254,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %N.decl: type = interface_decl @N [template = constants.%N.type] {} {}
 // CHECK:STDOUT:   %Equal.decl: %Equal.type = fn_decl @Equal [template = constants.%Equal] {
 // CHECK:STDOUT:     %T.patt.loc8_10.1: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_10.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %N_where.type = value_param_pattern %T.patt.loc8_10.1, runtime_param<invalid> [symbolic = %T.patt.loc8_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: %N_where.type = value_param_pattern %T.patt.loc8_10.1, runtime_param<none> [symbolic = %T.patt.loc8_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %N_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: %N_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_16.1: type = splice_block %.loc8_16.2 [template = constants.%N_where.type] {
 // CHECK:STDOUT:       %N.ref: type = name_ref N, file.%N.decl [template = constants.%N.type]
 // CHECK:STDOUT:       %.Self: %N.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -340,9 +340,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%A.type] {} {}
 // CHECK:STDOUT:   %NestedRewrite.decl: %NestedRewrite.type = fn_decl @NestedRewrite [template = constants.%NestedRewrite] {
 // CHECK:STDOUT:     %D.patt.loc9_18.1: %A_where.type.791 = symbolic_binding_pattern D, 0 [symbolic = %D.patt.loc9_18.2 (constants.%D.patt)]
-// CHECK:STDOUT:     %D.param_patt: %A_where.type.791 = value_param_pattern %D.patt.loc9_18.1, runtime_param<invalid> [symbolic = %D.patt.loc9_18.2 (constants.%D.patt)]
+// CHECK:STDOUT:     %D.param_patt: %A_where.type.791 = value_param_pattern %D.patt.loc9_18.1, runtime_param<none> [symbolic = %D.patt.loc9_18.2 (constants.%D.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %D.param: %A_where.type.791 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %D.param: %A_where.type.791 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc9_42.1: type = splice_block %.loc9_42.2 [template = constants.%A_where.type.791] {
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
 // CHECK:STDOUT:       %.Self.1: %A.type = bind_symbolic_name .Self [symbolic = constants.%.Self.3ca]
@@ -448,9 +448,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %E.decl: type = interface_decl @E [template = constants.%E.type] {} {}
 // CHECK:STDOUT:   %OneRewrite.decl: %OneRewrite.type = fn_decl @OneRewrite [template = constants.%OneRewrite] {
 // CHECK:STDOUT:     %G.patt.loc8_15.1: %E_where.type = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc8_15.2 (constants.%G.patt)]
-// CHECK:STDOUT:     %G.param_patt: %E_where.type = value_param_pattern %G.patt.loc8_15.1, runtime_param<invalid> [symbolic = %G.patt.loc8_15.2 (constants.%G.patt)]
+// CHECK:STDOUT:     %G.param_patt: %E_where.type = value_param_pattern %G.patt.loc8_15.1, runtime_param<none> [symbolic = %G.patt.loc8_15.2 (constants.%G.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %G.param: %E_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %G.param: %E_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.2 [template = constants.%E_where.type] {
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -468,9 +468,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RepeatedRewrite.decl: %RepeatedRewrite.type = fn_decl @RepeatedRewrite [template = constants.%RepeatedRewrite] {
 // CHECK:STDOUT:     %H.patt.loc10_20.1: %E_where.type = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc10_20.2 (constants.%H.patt)]
-// CHECK:STDOUT:     %H.param_patt: %E_where.type = value_param_pattern %H.patt.loc10_20.1, runtime_param<invalid> [symbolic = %H.patt.loc10_20.2 (constants.%H.patt)]
+// CHECK:STDOUT:     %H.param_patt: %E_where.type = value_param_pattern %H.patt.loc10_20.1, runtime_param<none> [symbolic = %H.patt.loc10_20.2 (constants.%H.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %H.param: %E_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %H.param: %E_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc10_26.1: type = splice_block %.loc10_26.2 [template = constants.%E_where.type] {
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -495,9 +495,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %OneRewriteAgain.decl: %OneRewriteAgain.type = fn_decl @OneRewriteAgain [template = constants.%OneRewriteAgain] {
 // CHECK:STDOUT:     %I.patt.loc14_20.1: %E_where.type = symbolic_binding_pattern I, 0 [symbolic = %I.patt.loc14_20.2 (constants.%I.patt)]
-// CHECK:STDOUT:     %I.param_patt: %E_where.type = value_param_pattern %I.patt.loc14_20.1, runtime_param<invalid> [symbolic = %I.patt.loc14_20.2 (constants.%I.patt)]
+// CHECK:STDOUT:     %I.param_patt: %E_where.type = value_param_pattern %I.patt.loc14_20.1, runtime_param<none> [symbolic = %I.patt.loc14_20.2 (constants.%I.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.param: %E_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %I.param: %E_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc14_26.1: type = splice_block %.loc14_26.2 [template = constants.%E_where.type] {
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -657,9 +657,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%J.type] {} {}
 // CHECK:STDOUT:   %Alphabetical.decl: %Alphabetical.type = fn_decl @Alphabetical [template = constants.%Alphabetical] {
 // CHECK:STDOUT:     %M.patt.loc9_17.1: %J_where.type = symbolic_binding_pattern M, 0 [symbolic = %M.patt.loc9_17.2 (constants.%M.patt)]
-// CHECK:STDOUT:     %M.param_patt: %J_where.type = value_param_pattern %M.patt.loc9_17.1, runtime_param<invalid> [symbolic = %M.patt.loc9_17.2 (constants.%M.patt)]
+// CHECK:STDOUT:     %M.param_patt: %J_where.type = value_param_pattern %M.patt.loc9_17.1, runtime_param<none> [symbolic = %M.patt.loc9_17.2 (constants.%M.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %M.param: %J_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %M.param: %J_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc9_23.1: type = splice_block %.loc9_23.2 [template = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -685,9 +685,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reversed.decl: %Reversed.type = fn_decl @Reversed [template = constants.%Reversed] {
 // CHECK:STDOUT:     %N.patt.loc11_13.1: %J_where.type = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_13.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: %J_where.type = value_param_pattern %N.patt.loc11_13.1, runtime_param<invalid> [symbolic = %N.patt.loc11_13.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: %J_where.type = value_param_pattern %N.patt.loc11_13.1, runtime_param<none> [symbolic = %N.patt.loc11_13.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: %J_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: %J_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_19.1: type = splice_block %.loc11_19.2 [template = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -822,9 +822,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %O.decl: type = interface_decl @O [template = constants.%O.type] {} {}
 // CHECK:STDOUT:   %WithInteger.decl: %WithInteger.type = fn_decl @WithInteger [template = constants.%WithInteger] {
 // CHECK:STDOUT:     %Q.patt.loc8_16.1: %O_where.type.9eb = symbolic_binding_pattern Q, 0 [symbolic = %Q.patt.loc8_16.2 (constants.%Q.patt)]
-// CHECK:STDOUT:     %Q.param_patt: %O_where.type.9eb = value_param_pattern %Q.patt.loc8_16.1, runtime_param<invalid> [symbolic = %Q.patt.loc8_16.2 (constants.%Q.patt)]
+// CHECK:STDOUT:     %Q.param_patt: %O_where.type.9eb = value_param_pattern %Q.patt.loc8_16.1, runtime_param<none> [symbolic = %Q.patt.loc8_16.2 (constants.%Q.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Q.param: %O_where.type.9eb = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %Q.param: %O_where.type.9eb = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_22.1: type = splice_block %.loc8_22.2 [template = constants.%O_where.type.9eb] {
 // CHECK:STDOUT:       %O.ref: type = name_ref O, file.%O.decl [template = constants.%O.type]
 // CHECK:STDOUT:       %.Self: %O.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -842,9 +842,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithBool.decl: %WithBool.type = fn_decl @WithBool [template = constants.%WithBool] {
 // CHECK:STDOUT:     %R.patt.loc10_13.1: %O_where.type.0f2 = symbolic_binding_pattern R, 0 [symbolic = %R.patt.loc10_13.2 (constants.%R.patt)]
-// CHECK:STDOUT:     %R.param_patt: %O_where.type.0f2 = value_param_pattern %R.patt.loc10_13.1, runtime_param<invalid> [symbolic = %R.patt.loc10_13.2 (constants.%R.patt)]
+// CHECK:STDOUT:     %R.param_patt: %O_where.type.0f2 = value_param_pattern %R.patt.loc10_13.1, runtime_param<none> [symbolic = %R.patt.loc10_13.2 (constants.%R.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %R.param: %O_where.type.0f2 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %R.param: %O_where.type.0f2 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc10_19.1: type = splice_block %.loc10_19.2 [template = constants.%O_where.type.0f2] {
 // CHECK:STDOUT:       %O.ref: type = name_ref O, file.%O.decl [template = constants.%O.type]
 // CHECK:STDOUT:       %.Self: %O.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -955,9 +955,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %S.decl: type = interface_decl @S [template = constants.%S.type] {} {}
 // CHECK:STDOUT:   %WithT.decl: %WithT.type = fn_decl @WithT [template = constants.%WithT] {
 // CHECK:STDOUT:     %V.patt.loc9_10.1: %S_where.type.e40 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc9_10.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %S_where.type.e40 = value_param_pattern %V.patt.loc9_10.1, runtime_param<invalid> [symbolic = %V.patt.loc9_10.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.param_patt: %S_where.type.e40 = value_param_pattern %V.patt.loc9_10.1, runtime_param<none> [symbolic = %V.patt.loc9_10.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %S_where.type.e40 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %V.param: %S_where.type.e40 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc9_16.1: type = splice_block %.loc9_16.2 [template = constants.%S_where.type.e40] {
 // CHECK:STDOUT:       %S.ref: type = name_ref S, file.%S.decl [template = constants.%S.type]
 // CHECK:STDOUT:       %.Self: %S.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -975,9 +975,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithU.decl: %WithU.type = fn_decl @WithU [template = constants.%WithU] {
 // CHECK:STDOUT:     %W.patt.loc11_10.1: %S_where.type.357 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_10.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: %S_where.type.357 = value_param_pattern %W.patt.loc11_10.1, runtime_param<invalid> [symbolic = %W.patt.loc11_10.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: %S_where.type.357 = value_param_pattern %W.patt.loc11_10.1, runtime_param<none> [symbolic = %W.patt.loc11_10.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %W.param: %S_where.type.357 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %W.param: %S_where.type.357 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_16.1: type = splice_block %.loc11_16.2 [template = constants.%S_where.type.357] {
 // CHECK:STDOUT:       %S.ref: type = name_ref S, file.%S.decl [template = constants.%S.type]
 // CHECK:STDOUT:       %.Self: %S.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
@@ -1113,7 +1113,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     .Calls = %Calls.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Calls.decl: %Calls.type = fn_decl @Calls [template = constants.%Calls] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1202,9 +1202,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %RewriteTypeMismatch.decl: %RewriteTypeMismatch.type = fn_decl @RewriteTypeMismatch [template = constants.%RewriteTypeMismatch] {
 // CHECK:STDOUT:     %X.patt.loc16_24.1: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc16_24.1, runtime_param<invalid> [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc16_24.1, runtime_param<none> [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %X.param: <error> = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %X.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc16_30.1: type = splice_block %.loc16_30.2 [template = <error>] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]

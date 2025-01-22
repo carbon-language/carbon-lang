@@ -277,7 +277,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C1 = %C1.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [template = constants.%C1]
@@ -348,7 +348,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C2.ref.loc5: type = name_ref C2, file.%C2.decl [template = constants.%C2]
@@ -433,7 +433,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C3 = %C3.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [template = constants.%C3] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C3.ref.loc5: type = name_ref C3, file.%C3.decl [template = constants.%C3]
@@ -510,7 +510,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C4 = %C4.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [template = constants.%C4] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C4.ref.loc5: type = name_ref C4, file.%C4.decl [template = constants.%C4]
@@ -603,7 +603,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C5 = %C5.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C5.decl: type = class_decl @C5 [template = constants.%C5] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C5.ref.loc18: type = name_ref C5, file.%C5.decl [template = constants.%C5]
@@ -715,7 +715,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C6 = %C6.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C6.decl: type = class_decl @C6 [template = constants.%C6] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C6.ref.loc5: type = name_ref C6, file.%C6.decl [template = constants.%C6]
@@ -791,7 +791,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C7 = %C7.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C7.decl: type = class_decl @C7 [template = constants.%C7] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C7.ref: type = name_ref C7, file.%C7.decl [template = constants.%C7]
@@ -868,7 +868,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C8 = %C8.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C8.decl: type = class_decl @C8 [template = constants.%C8] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C8.ref: type = name_ref C8, file.%C8.decl [template = constants.%C8]
@@ -942,7 +942,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C9 = %C9.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C9.decl: type = class_decl @C9 [template = constants.%C9] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C9.ref: type = name_ref C9, file.%C9.decl [template = constants.%C9]
@@ -1016,7 +1016,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .CA = %CA.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CA.decl: type = class_decl @CA [template = constants.%CA] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %CA.ref: type = name_ref CA, file.%CA.decl [template = constants.%CA]
@@ -1091,7 +1091,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .CB = %CB.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CB.decl: type = class_decl @CB [template = constants.%CB] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %CB.ref: type = name_ref CB, file.%CB.decl [template = constants.%CB]
@@ -1172,7 +1172,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .CC = %CC.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CC.decl: type = class_decl @CC [template = constants.%CC] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %CC.ref: type = name_ref CC, file.%CC.decl [template = constants.%CC]

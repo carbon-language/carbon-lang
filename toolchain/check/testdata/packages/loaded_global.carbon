@@ -87,7 +87,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .package_a = %package_a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
@@ -174,7 +174,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .package_b = %package_b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
 // CHECK:STDOUT:     %.loc6_1: %empty_tuple.type = var_pattern %b.patt

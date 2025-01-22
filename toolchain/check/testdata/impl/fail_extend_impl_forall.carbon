@@ -62,9 +62,9 @@ class C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.c92 = interface_decl @GenericInterface [template = constants.%GenericInterface.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_28.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_28.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_28.1, runtime_param<invalid> [symbolic = %T.patt.loc11_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_28.1, runtime_param<none> [symbolic = %T.patt.loc11_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc11_28.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_28.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
@@ -131,13 +131,13 @@ class C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc20_23.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_23.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc20_23.1, runtime_param<invalid> [symbolic = %T.patt.loc20_23.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc20_23.1, runtime_param<none> [symbolic = %T.patt.loc20_23.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.c92 = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface.generic]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc20_23.1 [symbolic = %T.loc20_23.2 (constants.%T)]
 // CHECK:STDOUT:     %GenericInterface.type.loc20_54.1: type = facet_type <@GenericInterface, @GenericInterface(constants.%T)> [symbolic = %GenericInterface.type.loc20_54.2 (constants.%GenericInterface.type.3fe)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc20_23.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc20_23.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(constants.%T) [symbolic = @impl.%impl_witness (constants.%impl_witness)]

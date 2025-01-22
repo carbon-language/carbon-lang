@@ -79,7 +79,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc13_3: %C.elem = var_pattern %.loc13_12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

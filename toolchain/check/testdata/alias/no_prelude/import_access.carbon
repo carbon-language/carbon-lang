@@ -102,7 +102,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inst.patt: %C = binding_pattern inst
 // CHECK:STDOUT:     %.loc4: %C = var_pattern %inst.patt
@@ -143,7 +143,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .C = imports.%Test.C
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
 // CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt

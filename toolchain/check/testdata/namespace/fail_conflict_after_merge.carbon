@@ -90,7 +90,7 @@ fn NS();
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl.loc18: %.type.b6a92a.1 = fn_decl @.1 [template = constants.%.d852be.1] {} {}
 // CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}

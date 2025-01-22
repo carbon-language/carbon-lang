@@ -100,23 +100,23 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: %Interface.type.e32 = interface_decl @Interface [template = constants.%Interface.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_21.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_21.1, runtime_param<invalid> [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_21.1, runtime_param<none> [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc4_21.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_21.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessGeneric.decl: %AccessGeneric.type = fn_decl @AccessGeneric [template = constants.%AccessGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8_18.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_18.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_18.1, runtime_param<invalid> [symbolic = %T.patt.loc8_18.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_18.1, runtime_param<none> [symbolic = %T.patt.loc8_18.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %I.patt.loc8_28.1: @AccessGeneric.%Interface.type.loc8_43.2 (%Interface.type.d32) = symbolic_binding_pattern I, 1 [symbolic = %I.patt.loc8_28.2 (constants.%I.patt.47c)]
-// CHECK:STDOUT:     %I.param_patt: @AccessGeneric.%Interface.type.loc8_43.2 (%Interface.type.d32) = value_param_pattern %I.patt.loc8_28.1, runtime_param<invalid> [symbolic = %I.patt.loc8_28.2 (constants.%I.patt.47c)]
+// CHECK:STDOUT:     %I.param_patt: @AccessGeneric.%Interface.type.loc8_43.2 (%Interface.type.d32) = value_param_pattern %I.patt.loc8_28.1, runtime_param<none> [symbolic = %I.patt.loc8_28.2 (constants.%I.patt.47c)]
 // CHECK:STDOUT:     %return.patt: @AccessGeneric.%T.loc8_18.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @AccessGeneric.%T.loc8_18.2 (%T) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_49: type = name_ref T, %T.loc8_18.1 [symbolic = %T.loc8_18.2 (constants.%T)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc8_18.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_18.2 (constants.%T)]
-// CHECK:STDOUT:     %I.param: @AccessGeneric.%Interface.type.loc8_43.2 (%Interface.type.d32) = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %I.param: @AccessGeneric.%Interface.type.loc8_43.2 (%Interface.type.d32) = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8: type = splice_block %Interface.type.loc8_43.1 [symbolic = %Interface.type.loc8_43.2 (constants.%Interface.type.d32)] {
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.e32 = name_ref Interface, file.%Interface.decl [template = constants.%Interface.generic]
 // CHECK:STDOUT:       %T.ref.loc8_42: type = name_ref T, %T.loc8_18.1 [symbolic = %T.loc8_18.2 (constants.%T)]
@@ -128,13 +128,13 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessConcrete.decl: %AccessConcrete.type = fn_decl @AccessConcrete [template = constants.%AccessConcrete] {
 // CHECK:STDOUT:     %I.patt.loc12_19.1: %Interface.type.981 = symbolic_binding_pattern I, 0 [symbolic = %I.patt.loc12_19.2 (constants.%I.patt.1f8)]
-// CHECK:STDOUT:     %I.param_patt: %Interface.type.981 = value_param_pattern %I.patt.loc12_19.1, runtime_param<invalid> [symbolic = %I.patt.loc12_19.2 (constants.%I.patt.1f8)]
+// CHECK:STDOUT:     %I.param_patt: %Interface.type.981 = value_param_pattern %I.patt.loc12_19.1, runtime_param<none> [symbolic = %I.patt.loc12_19.2 (constants.%I.patt.1f8)]
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc12_42: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12_42: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %I.param: %Interface.type.981 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %I.param: %Interface.type.981 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc12: type = splice_block %Interface.type [template = constants.%Interface.type.981] {
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.e32 = name_ref Interface, file.%Interface.decl [template = constants.%Interface.generic]
 // CHECK:STDOUT:       %int_32.loc12_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -304,23 +304,23 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: %Interface.type.e32 = interface_decl @Interface [template = constants.%Interface.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_21.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_21.1, runtime_param<invalid> [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_21.1, runtime_param<none> [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc4_21.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_21.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessMissingGeneric.decl: %AccessMissingGeneric.type = fn_decl @AccessMissingGeneric [template = constants.%AccessMissingGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8_25.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_25.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_25.1, runtime_param<invalid> [symbolic = %T.patt.loc8_25.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_25.1, runtime_param<none> [symbolic = %T.patt.loc8_25.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %I.patt.loc8_35.1: @AccessMissingGeneric.%Interface.type.loc8_50.2 (%Interface.type.d32) = symbolic_binding_pattern I, 1 [symbolic = %I.patt.loc8_35.2 (constants.%I.patt.47c)]
-// CHECK:STDOUT:     %I.param_patt: @AccessMissingGeneric.%Interface.type.loc8_50.2 (%Interface.type.d32) = value_param_pattern %I.patt.loc8_35.1, runtime_param<invalid> [symbolic = %I.patt.loc8_35.2 (constants.%I.patt.47c)]
+// CHECK:STDOUT:     %I.param_patt: @AccessMissingGeneric.%Interface.type.loc8_50.2 (%Interface.type.d32) = value_param_pattern %I.patt.loc8_35.1, runtime_param<none> [symbolic = %I.patt.loc8_35.2 (constants.%I.patt.47c)]
 // CHECK:STDOUT:     %return.patt: @AccessMissingGeneric.%T.loc8_25.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @AccessMissingGeneric.%T.loc8_25.2 (%T) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_56: type = name_ref T, %T.loc8_25.1 [symbolic = %T.loc8_25.2 (constants.%T)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc8_25.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_25.2 (constants.%T)]
-// CHECK:STDOUT:     %I.param: @AccessMissingGeneric.%Interface.type.loc8_50.2 (%Interface.type.d32) = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %I.param: @AccessMissingGeneric.%Interface.type.loc8_50.2 (%Interface.type.d32) = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8: type = splice_block %Interface.type.loc8_50.1 [symbolic = %Interface.type.loc8_50.2 (constants.%Interface.type.d32)] {
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.e32 = name_ref Interface, file.%Interface.decl [template = constants.%Interface.generic]
 // CHECK:STDOUT:       %T.ref.loc8_49: type = name_ref T, %T.loc8_25.1 [symbolic = %T.loc8_25.2 (constants.%T)]
@@ -332,13 +332,13 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessMissingConcrete.decl: %AccessMissingConcrete.type = fn_decl @AccessMissingConcrete [template = constants.%AccessMissingConcrete] {
 // CHECK:STDOUT:     %I.patt.loc16_26.1: %Interface.type.981 = symbolic_binding_pattern I, 0 [symbolic = %I.patt.loc16_26.2 (constants.%I.patt.1f8)]
-// CHECK:STDOUT:     %I.param_patt: %Interface.type.981 = value_param_pattern %I.patt.loc16_26.1, runtime_param<invalid> [symbolic = %I.patt.loc16_26.2 (constants.%I.patt.1f8)]
+// CHECK:STDOUT:     %I.param_patt: %Interface.type.981 = value_param_pattern %I.patt.loc16_26.1, runtime_param<none> [symbolic = %I.patt.loc16_26.2 (constants.%I.patt.1f8)]
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc16_49: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16_49: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %I.param: %Interface.type.981 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %I.param: %Interface.type.981 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc16: type = splice_block %Interface.type [template = constants.%Interface.type.981] {
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.e32 = name_ref Interface, file.%Interface.decl [template = constants.%Interface.generic]
 // CHECK:STDOUT:       %int_32.loc16_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]

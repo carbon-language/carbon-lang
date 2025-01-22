@@ -153,9 +153,9 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.232 = interface_decl @IndexWith [template = constants.%IndexWith.generic] {
 // CHECK:STDOUT:     %SubscriptType.patt.loc5_26.1: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
-// CHECK:STDOUT:     %SubscriptType.param_patt: type = value_param_pattern %SubscriptType.patt.loc5_26.1, runtime_param<invalid> [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
+// CHECK:STDOUT:     %SubscriptType.param_patt: type = value_param_pattern %SubscriptType.patt.loc5_26.1, runtime_param<none> [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SubscriptType.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %SubscriptType.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %SubscriptType.loc5_26.1: type = bind_symbolic_name SubscriptType, 0, %SubscriptType.param [symbolic = %SubscriptType.loc5_26.2 (constants.%SubscriptType)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {

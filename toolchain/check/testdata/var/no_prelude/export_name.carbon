@@ -80,7 +80,7 @@ var w: () = v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = export v, imports.%Main.v
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,7 +100,7 @@ var w: () = v;
 // CHECK:STDOUT:     .v = imports.%Main.v
 // CHECK:STDOUT:     .w = %w
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %empty_tuple.type = binding_pattern w
 // CHECK:STDOUT:     %.loc12_1: %empty_tuple.type = var_pattern %w.patt
