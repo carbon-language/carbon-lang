@@ -78,7 +78,8 @@ def main() -> None:
                     file_tests.append(path)
         if not file_tests:
             sys.exit(
-                f"Args do not seem to be test files; for example, {args.files[0]}"
+                "Args do not seem to be test files; for example, "
+                f"{args.files[0]}"
             )
         argv.append("--file_tests=" + ",".join(file_tests))
     # Provide an empty stdin so that the driver tests that read from stdin
