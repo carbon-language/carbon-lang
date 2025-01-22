@@ -41,7 +41,7 @@ class Worklist {
   auto back() -> WorklistItem& { return worklist_.back(); }
 
   auto Push(SemIR::InstId inst_id) -> void {
-    CARBON_CHECK(inst_id.is_valid());
+    CARBON_CHECK(inst_id.has_value());
     worklist_.push_back({.inst_id = inst_id,
                          .is_expanded = false,
                          .next_index = static_cast<int>(worklist_.size() + 1)});
@@ -69,19 +69,19 @@ static auto PushOperand(Context& context, Worklist& worklist,
   };
 
   auto push_specific = [&](SemIR::SpecificId specific_id) {
-    if (specific_id.is_valid()) {
+    if (specific_id.has_value()) {
       push_block(context.specifics().Get(specific_id).args_id);
     }
   };
 
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>:
-      if (SemIR::InstId inst_id(arg); inst_id.is_valid()) {
+      if (SemIR::InstId inst_id(arg); inst_id.has_value()) {
         worklist.Push(inst_id);
       }
       break;
     case SemIR::IdKind::For<SemIR::TypeId>:
-      if (SemIR::TypeId type_id(arg); type_id.is_valid()) {
+      if (SemIR::TypeId type_id(arg); type_id.has_value()) {
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
@@ -151,7 +151,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
   };
 
   auto pop_specific = [&](SemIR::SpecificId specific_id) {
-    if (!specific_id.is_valid()) {
+    if (!specific_id.has_value()) {
       return specific_id;
     }
     auto& specific = context.specifics().Get(specific_id);
@@ -162,14 +162,14 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>: {
       SemIR::InstId inst_id(arg);
-      if (!inst_id.is_valid()) {
+      if (!inst_id.has_value()) {
         return arg;
       }
       return worklist.Pop().index;
     }
     case SemIR::IdKind::For<SemIR::TypeId>: {
       SemIR::TypeId type_id(arg);
-      if (!type_id.is_valid()) {
+      if (!type_id.has_value()) {
         return arg;
       }
       return context.GetTypeIdForTypeInst(worklist.Pop()).index;

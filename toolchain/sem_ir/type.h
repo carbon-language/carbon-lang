@@ -26,7 +26,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns the ID of the constant used to define the specified type.
   auto GetConstantId(TypeId type_id) const -> ConstantId {
-    if (!type_id.is_valid()) {
+    if (!type_id.has_value()) {
       // TODO: Investigate replacing this with a CHECK or returning Invalid.
       return ConstantId::NotConstant;
     }

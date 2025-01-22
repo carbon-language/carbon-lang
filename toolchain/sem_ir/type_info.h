@@ -120,8 +120,9 @@ struct ReturnTypeInfo {
   // Builds return type information for a given declared return type.
   static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo {
     return {.type_id = type_id,
-            .init_repr = type_id.is_valid() ? InitRepr::ForType(file, type_id)
-                                            : InitRepr{.kind = InitRepr::None}};
+            .init_repr = type_id.has_value()
+                             ? InitRepr::ForType(file, type_id)
+                             : InitRepr{.kind = InitRepr::None}};
   }
 
   // Builds return type information for a given function.

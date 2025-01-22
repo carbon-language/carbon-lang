@@ -397,7 +397,7 @@ class InstStore {
   // of that type. Otherwise returns nullopt.
   template <typename InstT>
   auto TryGetAsIfValid(InstId inst_id) const -> std::optional<InstT> {
-    if (!inst_id.is_valid()) {
+    if (!inst_id.has_value()) {
       return std::nullopt;
     }
     return TryGetAs<InstT>(inst_id);
@@ -471,7 +471,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Returns the contents of the specified block, or an empty array if the block
   // is invalid.
   auto GetOrEmpty(InstBlockId block_id) const -> llvm::ArrayRef<InstId> {
-    return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
+    return block_id.has_value() ? Get(block_id) : llvm::ArrayRef<InstId>();
   }
 };
 

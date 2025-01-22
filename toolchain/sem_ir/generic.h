@@ -58,7 +58,7 @@ class GenericStore : public ValueStore<GenericId> {
   // Get the self specific for a generic, or an invalid specific for an invalid
   // generic ID.
   auto GetSelfSpecific(GenericId id) -> SpecificId {
-    return id.is_valid() ? Get(id).self_specific_id : SpecificId::None;
+    return id.has_value() ? Get(id).self_specific_id : SpecificId::None;
   }
 };
 

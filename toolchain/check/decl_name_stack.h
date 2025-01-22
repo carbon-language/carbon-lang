@@ -110,9 +110,9 @@ class DeclNameStack {
           .is_extern = is_extern,
           .extern_library_id = extern_library,
           .non_owning_decl_id =
-              extern_library.is_valid() ? decl_id : SemIR::InstId::None,
+              extern_library.has_value() ? decl_id : SemIR::InstId::None,
           .first_owning_decl_id =
-              extern_library.is_valid() ? SemIR::InstId::None : decl_id,
+              extern_library.has_value() ? SemIR::InstId::None : decl_id,
       };
     }
 

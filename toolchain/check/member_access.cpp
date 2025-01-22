@@ -58,7 +58,7 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
   auto [_, self_type_inst_id, is_poisoned] = context.LookupUnqualifiedName(
       loc_id.node_id(), SemIR::NameId::SelfType, /*required=*/false);
   CARBON_CHECK(!is_poisoned);
-  if (!self_type_inst_id.is_valid()) {
+  if (!self_type_inst_id.has_value()) {
     return SemIR::AccessKind::Public;
   }
 
@@ -84,14 +84,14 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
     // accessing, try checking if this class is of the parent type of `Self`.
     if (auto base_type_id = self_class_info.GetBaseType(
             context.sem_ir(), self_class_type->specific_id);
-        base_type_id.is_valid()) {
+        base_type_id.has_value()) {
       if (context.types().GetConstantId(base_type_id) == name_scope_const_id) {
         return SemIR::AccessKind::Protected;
       }
       // TODO: Also check whether this base class has a base class of its own.
     } else if (auto adapt_type_id = self_class_info.GetAdaptedType(
                    context.sem_ir(), self_class_type->specific_id);
-               adapt_type_id.is_valid()) {
+               adapt_type_id.has_value()) {
       if (context.types().GetConstantId(adapt_type_id) == name_scope_const_id) {
         // TODO: Should we be allowed to access protected fields of a type we
         // are adapting? The design doesn't allow this.
@@ -110,7 +110,7 @@ static auto ScopeNeedsImplLookup(Context& context,
     -> bool {
   SemIR::InstId inst_id =
       context.constant_values().GetInstId(name_scope_const_id);
-  CARBON_CHECK(inst_id.is_valid());
+  CARBON_CHECK(inst_id.has_value());
   SemIR::Inst inst = context.insts().Get(inst_id);
 
   if (inst.Is<SemIR::FacetType>()) {
@@ -144,7 +144,7 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
                                       SemIR::InstId member_id)
     -> SemIR::InstId {
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
-  if (!member_value_id.is_valid()) {
+  if (!member_value_id.has_value()) {
     if (member_value_id != SemIR::ErrorInst::SingletonInstId) {
       context.TODO(member_id, "non-constant associated entity");
     }
@@ -189,7 +189,7 @@ static auto PerformImplLookup(
   auto witness_id =
       LookupImplWitness(context, loc_id, type_const_id,
                         assoc_type.interface_type_id.AsConstantId());
-  if (!witness_id.is_valid()) {
+  if (!witness_id.has_value()) {
     auto interface_type_id = context.GetInterfaceType(
         interface_type->interface_id, interface_type->specific_id);
     if (missing_impl_diagnoser) {
@@ -237,7 +237,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       context.LookupQualifiedName(loc_id, name_id, lookup_scopes,
                                   /*required=*/true, access_info);
 
-  if (!result.inst_id.is_valid()) {
+  if (!result.inst_id.has_value()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -245,11 +245,11 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   auto inst = context.insts().Get(result.inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           inst.type_id());
-  CARBON_CHECK(type_id.is_valid(), "Missing type for member {0}", inst);
+  CARBON_CHECK(type_id.has_value(), "Missing type for member {0}", inst);
 
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.
-  if (result.specific_id.is_valid() &&
+  if (result.specific_id.has_value() &&
       context.constant_values().Get(result.inst_id).is_symbolic()) {
     result.inst_id = context.GetOrAddInst<SemIR::SpecificConstant>(
         loc_id, {.type_id = type_id,
@@ -308,7 +308,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         }
         // TODO: If that fails, would need to do impl lookup to see if the facet
         // value implements the interface of `*assoc_type`.
-        if (!witness_inst_id.is_valid()) {
+        if (!witness_inst_id.has_value()) {
           context.TODO(member_id,
                        "associated entity not found in facet type, need to do "
                        "impl lookup");
@@ -353,7 +353,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
       // Find the specified element, which could be either a field or a base
       // class, and build an element access expression.
       auto element_id = context.constant_values().GetConstantInstId(member_id);
-      CARBON_CHECK(element_id.is_valid(),
+      CARBON_CHECK(element_id.has_value(),
                    "Non-constant value {0} of unbound element type",
                    context.insts().Get(member_id));
       auto index = GetClassElementIndex(context, element_id);

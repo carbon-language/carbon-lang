@@ -43,7 +43,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
-  CARBON_CHECK(!existing.is_valid());
+  CARBON_CHECK(!existing.has_value());
 
   // Save the `.Self` symbolic binding on the node stack. It will become the
   // first argument to the `WhereExpr` instruction.

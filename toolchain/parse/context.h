@@ -398,7 +398,7 @@ class Context {
     return first_non_packaging_token_;
   }
   auto set_first_non_packaging_token(Lex::TokenIndex token) -> void {
-    CARBON_CHECK(!first_non_packaging_token_.is_valid());
+    CARBON_CHECK(!first_non_packaging_token_.has_value());
     first_non_packaging_token_ = token;
   }
 

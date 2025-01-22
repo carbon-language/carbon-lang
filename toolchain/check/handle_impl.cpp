@@ -73,7 +73,7 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
 // TODO: Should this be somewhere more central?
 static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<SemIR::ClassDecl> {
-  if (!scope_id.is_valid()) {
+  if (!scope_id.has_value()) {
     return std::nullopt;
   }
   auto& scope = context.name_scopes().Get(scope_id);
@@ -98,7 +98,7 @@ static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
 auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     -> bool {
   auto self_type_id = GetDefaultSelfType(context);
-  if (!self_type_id.is_valid()) {
+  if (!self_type_id.has_value()) {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
@@ -143,7 +143,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     return;
   }
 
-  if (params_node.is_valid()) {
+  if (params_node.has_value()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
                       "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
@@ -388,7 +388,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Create a new impl if this isn't a valid redeclaration.
-  if (!impl_decl.impl_id.is_valid()) {
+  if (!impl_decl.impl_id.has_value()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
     AddConstantsToImplWitnessFromConstraint(
@@ -409,7 +409,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
-    if (impl_info.generic_id.is_valid()) {
+    if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
       constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
           context.insts().GetLocId(constraint_inst_id),

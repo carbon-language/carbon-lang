@@ -22,7 +22,7 @@ auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
 }
 
 auto Tree::node_token(NodeId n) const -> Lex::TokenIndex {
-  CARBON_CHECK(n.is_valid());
+  CARBON_CHECK(n.has_value());
   return node_impls_[n.index].token();
 }
 
@@ -77,7 +77,7 @@ auto Tree::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
 
 auto Tree::PostorderIterator::MakeRange(NodeId begin, NodeId end)
     -> llvm::iterator_range<PostorderIterator> {
-  CARBON_CHECK(begin.is_valid() && end.is_valid());
+  CARBON_CHECK(begin.has_value() && end.has_value());
   return llvm::iterator_range<PostorderIterator>(
       PostorderIterator(begin), PostorderIterator(NodeId(end.index + 1)));
 }

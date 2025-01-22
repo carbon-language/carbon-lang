@@ -67,12 +67,12 @@ struct Worklist {
   }
 
   auto Add(EntityNameId entity_name_id) -> void {
-    if (!entity_name_id.is_valid()) {
+    if (!entity_name_id.has_value()) {
       AddInvalid();
       return;
     }
     const auto& entity_name = sem_ir->entity_names().Get(entity_name_id);
-    if (entity_name.bind_index.is_valid()) {
+    if (entity_name.bind_index.has_value()) {
       Add(entity_name.bind_index);
       // Don't include the name. While it is part of the canonical identity of a
       // compile-time binding, renaming it (and its uses) is a compatible change
@@ -84,7 +84,7 @@ struct Worklist {
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
-    if (!inner_id.is_valid()) {
+    if (!inner_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -98,7 +98,7 @@ struct Worklist {
   auto Add(InstId inner_id) -> void { AddInFile(sem_ir, inner_id); }
 
   auto Add(ConstantId constant_id) -> void {
-    if (!constant_id.is_valid()) {
+    if (!constant_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -106,7 +106,7 @@ struct Worklist {
   }
 
   auto Add(TypeId type_id) -> void {
-    if (!type_id.is_valid()) {
+    if (!type_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -122,7 +122,7 @@ struct Worklist {
   }
 
   auto Add(InstBlockId inst_block_id) -> void {
-    if (!inst_block_id.is_valid()) {
+    if (!inst_block_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -130,7 +130,7 @@ struct Worklist {
   }
 
   auto Add(TypeBlockId type_block_id) -> void {
-    if (!type_block_id.is_valid()) {
+    if (!type_block_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -143,7 +143,7 @@ struct Worklist {
   }
 
   auto Add(StructTypeFieldsId struct_type_fields_id) -> void {
-    if (!struct_type_fields_id.is_valid()) {
+    if (!struct_type_fields_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -151,7 +151,7 @@ struct Worklist {
   }
 
   auto Add(NameScopeId name_scope_id) -> void {
-    if (!name_scope_id.is_valid()) {
+    if (!name_scope_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -165,7 +165,7 @@ struct Worklist {
 
   auto AddEntity(const EntityWithParamsBase& entity) -> void {
     Add(entity.name_id);
-    if (entity.parent_scope_id.is_valid()) {
+    if (entity.parent_scope_id.has_value()) {
       Add(sem_ir->name_scopes().Get(entity.parent_scope_id).inst_id());
     }
   }
@@ -212,7 +212,7 @@ struct Worklist {
   }
 
   auto Add(GenericId generic_id) -> void {
-    if (!generic_id.is_valid()) {
+    if (!generic_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -220,7 +220,7 @@ struct Worklist {
   }
 
   auto Add(SpecificId specific_id) -> void {
-    if (!specific_id.is_valid()) {
+    if (!specific_id.has_value()) {
       AddInvalid();
       return;
     }
@@ -248,7 +248,7 @@ struct Worklist {
       AddString("");
     } else if (lib_name_id == LibraryNameId::Error) {
       AddString("<error>");
-    } else if (lib_name_id.is_valid()) {
+    } else if (lib_name_id.has_value()) {
       Add(lib_name_id.AsStringLiteralValueId());
     } else {
       AddInvalid();

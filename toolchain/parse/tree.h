@@ -118,13 +118,13 @@ class Tree : public Printable<Tree> {
   // Tests whether a particular node contains an error and may not match the
   // full expected structure of the grammar.
   auto node_has_error(NodeId n) const -> bool {
-    CARBON_DCHECK(n.is_valid());
+    CARBON_DCHECK(n.has_value());
     return node_impls_[n.index].has_error();
   }
 
   // Returns the kind of the given parse tree node.
   auto node_kind(NodeId n) const -> NodeKind {
-    CARBON_DCHECK(n.is_valid());
+    CARBON_DCHECK(n.has_value());
     return node_impls_[n.index].kind();
   }
 
@@ -148,7 +148,7 @@ class Tree : public Printable<Tree> {
   // the constraint on `T`.
   template <typename T>
   auto TryAs(NodeId n) const -> std::optional<T> {
-    CARBON_DCHECK(n.is_valid());
+    CARBON_DCHECK(n.has_value());
     if (ConvertTo<T>::AllowedFor(node_kind(n))) {
       return T(n);
     } else {
@@ -160,7 +160,7 @@ class Tree : public Printable<Tree> {
   // `node_kind(n)` matches the constraint on `T`.
   template <typename T>
   auto As(NodeId n) const -> T {
-    CARBON_DCHECK(n.is_valid());
+    CARBON_DCHECK(n.has_value());
     CARBON_CHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
     return T(n);
   }

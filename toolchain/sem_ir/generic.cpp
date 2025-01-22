@@ -32,7 +32,7 @@ class SpecificStore::KeyContext : public TranslatingKeyContext<KeyContext> {
 
 auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
     -> SpecificId {
-  CARBON_CHECK(generic_id.is_valid());
+  CARBON_CHECK(generic_id.has_value());
   return lookup_table_
       .Insert(
           KeyContext::Key{.generic_id = generic_id, .args_id = args_id},
@@ -59,13 +59,13 @@ auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
   }
 
   const auto& symbolic = sem_ir.constant_values().GetSymbolicConstant(const_id);
-  if (!symbolic.generic_id.is_valid()) {
+  if (!symbolic.generic_id.has_value()) {
     // Constant is an abstract symbolic constant, not associated with some
     // particular generic.
     return const_id;
   }
 
-  if (!specific_id.is_valid()) {
+  if (!specific_id.has_value()) {
     // We have a generic constant but no specific. We treat as a request for the
     // canonical value of the constant.
     return sem_ir.constant_values().Get(symbolic.inst_id);
@@ -77,7 +77,7 @@ auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
 
   auto value_block_id = specific.GetValueBlock(symbolic.index.region());
   CARBON_CHECK(
-      value_block_id.is_valid(),
+      value_block_id.has_value(),
       "Queried {0} in {1} for {2} before it was resolved.", symbolic.index,
       specific_id,
       sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id));

@@ -28,7 +28,7 @@ auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
   CARBON_CHECK(static_cast<int>(id_stack_.size()) > depth, "no such block");
   int index = id_stack_.size() - depth - 1;
   auto& slot = id_stack_[index];
-  if (!slot.is_valid()) {
+  if (!slot.has_value()) {
     slot = sem_ir_->inst_blocks().AddDefaultValue();
   }
   return slot;
@@ -41,7 +41,7 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
 
   // Finalize the block.
   if (!insts.empty() && id != SemIR::InstBlockId::Unreachable) {
-    if (id.is_valid()) {
+    if (id.has_value()) {
       sem_ir_->inst_blocks().Set(id, insts);
     } else {
       id = sem_ir_->inst_blocks().Add(insts);
@@ -51,7 +51,7 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
   insts_stack_.PopArray();
 
   CARBON_VLOG("{0} Pop {1}: {2}\n", name_, id_stack_.size(), id);
-  return id.is_valid() ? id : SemIR::InstBlockId::Empty;
+  return id.has_value() ? id : SemIR::InstBlockId::Empty;
 }
 
 auto InstBlockStack::PopAndDiscard() -> void {

@@ -42,7 +42,7 @@ struct TypeParam {
 
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (state.type_params[I].is_valid() && type_id != state.type_params[I]) {
+    if (state.type_params[I].has_value() && type_id != state.type_params[I]) {
       return false;
     }
     if (!TypeConstraint::Check(sem_ir, state, type_id)) {
@@ -112,7 +112,7 @@ struct AnyFloat {
 // Checks that the specified type matches the given type constraint.
 template <typename TypeConstraint>
 auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
-  while (type_id.is_valid()) {
+  while (type_id.has_value()) {
     // Allow a type that satisfies the constraint.
     if (TypeConstraint::Check(sem_ir, state, type_id)) {
       return true;

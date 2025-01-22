@@ -64,7 +64,7 @@ class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
     Lex::TokenIndex end_token = start_token;
     for (NodeId desc : tree.postorder(node_loc.node_id())) {
       Lex::TokenIndex desc_token = tree.tree().node_token(desc);
-      if (!desc_token.is_valid()) {
+      if (!desc_token.has_value()) {
         continue;
       }
       if (desc_token < start_token) {

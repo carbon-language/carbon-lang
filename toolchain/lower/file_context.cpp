@@ -169,7 +169,7 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
                                       SemIR::SpecificId specific_id)
     -> llvm::Function* {
   // Non-generic functions are declared eagerly.
-  if (!specific_id.is_valid()) {
+  if (!specific_id.has_value()) {
     return GetFunction(function_id);
   }
 
@@ -191,7 +191,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   // Don't lower generic functions. Note that associated functions in interfaces
   // have `Self` in scope, so are implicitly generic functions.
-  if (function.generic_id.is_valid() && !specific_id.is_valid()) {
+  if (function.generic_id.has_value() && !specific_id.has_value()) {
     return nullptr;
   }
 
@@ -214,7 +214,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
 
   auto* return_type =
-      return_info.type_id.is_valid() ? GetType(return_info.type_id) : nullptr;
+      return_info.type_id.has_value() ? GetType(return_info.type_id) : nullptr;
 
   llvm::SmallVector<llvm::Type*> param_types;
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
@@ -238,7 +238,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     auto param_pattern = SemIR::Function::GetParamPatternInfoFromPatternId(
                              sem_ir(), param_pattern_id)
                              .inst;
-    if (!param_pattern.runtime_index.is_valid()) {
+    if (!param_pattern.runtime_index.has_value()) {
       continue;
     }
     auto param_type_id =
@@ -349,10 +349,10 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // The subset of call_param_ids that is already in the order that the LLVM
   // calling convention expects.
   llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
-  if (function.return_slot_pattern_id.is_valid()) {
+  if (function.return_slot_pattern_id.has_value()) {
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
-    // whereas `function.return_slot_pattern_id.is_valid()` queries whether
+    // whereas `function.return_slot_pattern_id.has_value()` queries whether
     // there is a return slot at the SemIR level.
     if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
             .has_return_slot()) {

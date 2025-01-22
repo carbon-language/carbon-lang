@@ -87,7 +87,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     prev_class.complete_type_witness_id = new_class.complete_type_witness_id;
   }
 
-  if ((prev_import_ir_id.is_valid() && !new_is_import) ||
+  if ((prev_import_ir_id.has_value() && !new_is_import) ||
       (prev_class.is_extern && !new_class.is_extern)) {
     prev_class.first_owning_decl_id = new_class.first_owning_decl_id;
     ReplacePrevInstForMerge(
@@ -113,7 +113,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
     return;
   }
 
-  if (!prev_id.is_valid()) {
+  if (!prev_id.has_value()) {
     return;
   }
 
@@ -154,7 +154,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
       break;
   }
 
-  if (!prev_class_id.is_valid()) {
+  if (!prev_class_id.has_value()) {
     // This is a redeclaration of something other than a class.
     context.DiagnoseDuplicateName(class_decl_id, prev_id);
     return;
@@ -198,7 +198,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                                is_definition);
 
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
-  if (introducer.extern_library.is_valid()) {
+  if (introducer.extern_library.has_value()) {
     context.TODO(node_id, "extern library");
   }
   auto inheritance_kind =
@@ -230,7 +230,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                  introducer.modifier_set.GetAccessKind());
 
   // Create a new class if this isn't a valid redeclaration.
-  bool is_new_class = !class_decl.class_id.is_valid();
+  bool is_new_class = !class_decl.class_id.has_value();
   if (is_new_class) {
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
@@ -380,7 +380,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   }
 
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
-  if (class_info.adapt_id.is_valid()) {
+  if (class_info.adapt_id.has_value()) {
     DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
                                       Lex::TokenKind::Adapt);
     return true;
@@ -487,7 +487,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
   }
 
-  CARBON_CHECK(base_class_info->scope_id.is_valid(),
+  CARBON_CHECK(base_class_info->scope_id.has_value(),
                "Complete class should have a scope");
   return {.type_id = base_type_id,
           .scope_id = base_class_info->scope_id,
@@ -515,7 +515,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   }
 
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
-  if (class_info.base_id.is_valid()) {
+  if (class_info.base_id.has_value()) {
     DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
                                       Lex::TokenKind::Base);
     return true;
@@ -558,7 +558,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // Extend the class scope with the base class.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    if (base_info.scope_id.is_valid()) {
+    if (base_info.scope_id.has_value()) {
       class_scope.AddExtendedScope(base_info.inst_id);
     } else {
       class_scope.set_has_error();
@@ -574,7 +574,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
                                           SemIR::ClassId class_id)
     -> SemIR::InstId {
   const auto& class_info = context.classes().Get(class_id);
-  if (class_info.base_id.is_valid()) {
+  if (class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
     CARBON_DIAGNOSTIC(AdaptWithBaseHere, Note, "`base` declaration is here");
     context.emitter()
@@ -659,7 +659,7 @@ static auto AddStructTypeFields(
 static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
                                    SemIR::ClassId class_id) -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
-  if (class_info.adapt_id.is_valid()) {
+  if (class_info.adapt_id.has_value()) {
     return CheckCompleteAdapterClassType(context, node_id, class_id);
   }
 
@@ -667,7 +667,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   auto base_type_id =
       class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
   SemIR::Class* base_class_info = nullptr;
-  if (base_type_id.is_valid()) {
+  if (base_type_id.has_value()) {
     // TODO: If the base class is template dependent, we will need to decide
     // whether to add a vptr as part of instantiation.
     base_class_info = TryGetAsClass(context, base_type_id);
@@ -678,7 +678,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
 
   auto field_decls = context.field_decls_stack().PeekArray();
   llvm::SmallVector<SemIR::StructTypeField> struct_type_fields;
-  struct_type_fields.reserve(defining_vptr + class_info.base_id.is_valid() +
+  struct_type_fields.reserve(defining_vptr + class_info.base_id.has_value() +
                              field_decls.size());
   if (defining_vptr) {
     struct_type_fields.push_back(
@@ -686,7 +686,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
          .type_id = context.GetPointerType(
              context.GetSingletonType(SemIR::VtableType::SingletonInstId))});
   }
-  if (base_type_id.is_valid()) {
+  if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
     base_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};

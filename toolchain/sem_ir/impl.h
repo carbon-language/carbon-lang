@@ -196,7 +196,7 @@ class ImplStore {
 };
 
 constexpr inline ImplStore::ImplOrLookupBucketId
-    ImplStore::ImplOrLookupBucketId::None(InvalidIndex);
+    ImplStore::ImplOrLookupBucketId::None(NoneIndex);
 
 }  // namespace Carbon::SemIR
 

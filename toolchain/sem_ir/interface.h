@@ -38,7 +38,7 @@ struct Interface : public EntityWithParamsBase,
 
   // Determines whether this interface has been fully defined. This is false
   // until we reach the `}` of the interface definition.
-  auto is_defined() const -> bool { return associated_entities_id.is_valid(); }
+  auto is_defined() const -> bool { return associated_entities_id.has_value(); }
 
   // Determines whether we're currently defining the interface. This is true
   // between the braces of the interface.

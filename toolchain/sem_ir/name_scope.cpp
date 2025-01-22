@@ -77,11 +77,11 @@ auto NameScope::LookupOrPoison(NameId name_id) -> std::optional<EntryId> {
 
 auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const
     -> std::pair<InstId, std::optional<Inst>> {
-  if (!scope_id.is_valid()) {
+  if (!scope_id.has_value()) {
     return {InstId::None, std::nullopt};
   }
   auto inst_id = Get(scope_id).inst_id();
-  if (!inst_id.is_valid()) {
+  if (!inst_id.has_value()) {
     return {InstId::None, std::nullopt};
   }
   return {inst_id, file_->insts().Get(inst_id)};

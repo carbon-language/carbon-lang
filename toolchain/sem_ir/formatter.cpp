@@ -62,7 +62,7 @@ class FormatterImpl {
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.
-    if (auto block_id = sem_ir_->top_inst_block_id(); block_id.is_valid()) {
+    if (auto block_id = sem_ir_->top_inst_block_id(); block_id.has_value()) {
       llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
       FormatCodeBlock(block_id);
     }
@@ -272,7 +272,7 @@ class FormatterImpl {
 
     llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    if (class_info.scope_id.is_valid()) {
+    if (class_info.scope_id.has_value()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(class_info.body_block_id);
@@ -302,7 +302,7 @@ class FormatterImpl {
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    if (interface_info.scope_id.is_valid()) {
+    if (interface_info.scope_id.has_value()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(interface_info.body_block_id);
@@ -352,7 +352,7 @@ class FormatterImpl {
       // always list the witness in this section.
       IndentLabel();
       out_ << "!members:\n";
-      if (impl_info.scope_id.is_valid()) {
+      if (impl_info.scope_id.has_value()) {
         FormatNameScope(impl_info.scope_id);
       }
 
@@ -402,7 +402,7 @@ class FormatterImpl {
     FormatParamList(fn.implicit_param_patterns_id, /*is_implicit=*/true);
     FormatParamList(fn.param_patterns_id, /*is_implicit=*/false);
 
-    if (fn.return_slot_pattern_id.is_valid()) {
+    if (fn.return_slot_pattern_id.has_value()) {
       out_ << " -> ";
       auto return_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
       if (!fn.body_block_ids.empty() && return_info.is_valid() &&
@@ -445,7 +445,7 @@ class FormatterImpl {
   auto FormatSpecificRegion(const Generic& generic, const Specific& specific,
                             GenericInstIndex::Region region,
                             llvm::StringRef region_name) -> void {
-    if (!specific.GetValueBlock(region).is_valid()) {
+    if (!specific.GetValueBlock(region).has_value()) {
       return;
     }
 
@@ -518,7 +518,7 @@ class FormatterImpl {
     out_ << " ";
     OpenBrace();
     FormatCodeBlock(generic.decl_block_id);
-    if (generic.definition_block_id.is_valid()) {
+    if (generic.definition_block_id.has_value()) {
       IndentLabel();
       out_ << "!definition:\n";
       FormatCodeBlock(generic.definition_block_id);
@@ -532,7 +532,7 @@ class FormatterImpl {
       -> void {
     // If this entity was imported from a different IR, annotate the name of
     // that IR in the output before the `{` or `;`.
-    if (entity.first_owning_decl_id.is_valid()) {
+    if (entity.first_owning_decl_id.has_value()) {
       auto loc_id = sem_ir_->insts().GetLocId(entity.first_owning_decl_id);
       if (loc_id.is_import_ir_inst_id()) {
         auto import_ir_id =
@@ -544,7 +544,7 @@ class FormatterImpl {
     }
 
     auto generic_id = entity.generic_id;
-    if (generic_id.is_valid()) {
+    if (generic_id.has_value()) {
       FormatGenericStart(entity_kind, generic_id);
     }
 
@@ -554,7 +554,7 @@ class FormatterImpl {
 
     // If there's a generic, it will have attached the name. Otherwise, add the
     // name here.
-    if (!generic_id.is_valid()) {
+    if (!generic_id.has_value()) {
       out_ << " ";
       FormatName(entity_id);
     }
@@ -562,7 +562,7 @@ class FormatterImpl {
 
   // Provides common formatting for entities, paired with FormatEntityStart.
   auto FormatEntityEnd(GenericId generic_id) -> void {
-    if (generic_id.is_valid()) {
+    if (generic_id.has_value()) {
       CloseBrace();
       out_ << '\n';
     }
@@ -573,7 +573,7 @@ class FormatterImpl {
   // parameters.
   auto FormatParamList(InstBlockId param_patterns_id, bool is_implicit)
       -> void {
-    if (!param_patterns_id.is_valid()) {
+    if (!param_patterns_id.has_value()) {
       return;
     }
 
@@ -582,7 +582,7 @@ class FormatterImpl {
     llvm::ListSeparator sep;
     for (InstId param_id : sem_ir_->inst_blocks().Get(param_patterns_id)) {
       out_ << sep;
-      if (!param_id.is_valid()) {
+      if (!param_id.has_value()) {
         out_ << "invalid";
         continue;
       }
@@ -687,7 +687,7 @@ class FormatterImpl {
 
   // Prints a single instruction.
   auto FormatInst(InstId inst_id) -> void {
-    if (!inst_id.is_valid()) {
+    if (!inst_id.has_value()) {
       Indent();
       out_ << "invalid\n";
       return;
@@ -762,7 +762,7 @@ class FormatterImpl {
       out_ << ' ';
     }
     out_ << '[';
-    if (pending_constant_value_.is_valid()) {
+    if (pending_constant_value_.has_value()) {
       out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
       if (!pending_constant_value_is_self_) {
         out_ << " = ";
@@ -828,7 +828,7 @@ class FormatterImpl {
       // specific, that is, when we're not in a generic context.
       if constexpr (std::is_same_v<typename Info::template ArgType<1>,
                                    SemIR::SpecificId>) {
-        if (!Info::template Get<1>(inst).is_valid()) {
+        if (!Info::template Get<1>(inst).has_value()) {
           FormatArgs(Info::template Get<0>(inst));
           return;
         }
@@ -844,7 +844,7 @@ class FormatterImpl {
   auto FormatInstRHS(BindSymbolicName inst) -> void {
     // A BindSymbolicName with no value is a purely symbolic binding, such as
     // the `Self` in an interface. Don't print out `invalid` for the value.
-    if (inst.value_id.is_valid()) {
+    if (inst.value_id.has_value()) {
       FormatArgs(inst.entity_name_id, inst.value_id);
     } else {
       FormatArgs(inst.entity_name_id);
@@ -857,7 +857,7 @@ class FormatterImpl {
   }
 
   auto FormatInstRHS(Namespace inst) -> void {
-    if (inst.import_id.is_valid()) {
+    if (inst.import_id.has_value()) {
       FormatArgs(inst.import_id, inst.name_scope_id);
     } else {
       FormatArgs(inst.name_scope_id);
@@ -902,7 +902,7 @@ class FormatterImpl {
     out_ << " ";
     FormatArg(inst.callee_id);
 
-    if (!inst.args_id.is_valid()) {
+    if (!inst.args_id.has_value()) {
       out_ << "(<none>)";
       return;
     }
@@ -958,7 +958,7 @@ class FormatterImpl {
 
   auto FormatInstRHS(ReturnExpr ret) -> void {
     FormatArgs(ret.expr_id);
-    if (ret.dest_id.is_valid()) {
+    if (ret.dest_id.has_value()) {
       FormatReturnSlotArg(ret.dest_id);
     }
   }
@@ -1037,7 +1037,7 @@ class FormatterImpl {
     auto import_ir_inst = sem_ir_->import_ir_insts().Get(import_ir_inst_id);
     FormatArg(import_ir_inst.ir_id);
     out_ << ", ";
-    if (entity_name_id.is_valid()) {
+    if (entity_name_id.has_value()) {
       // Prefer to show the entity name when possible.
       FormatArg(entity_name_id);
     } else {
@@ -1045,7 +1045,7 @@ class FormatterImpl {
       // instruction as a last resort.
       const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id);
       auto loc_id = import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id);
-      if (!loc_id.is_valid()) {
+      if (!loc_id.has_value()) {
         out_ << import_ir_inst.inst_id << " [no loc]";
       } else if (loc_id.is_import_ir_inst_id()) {
         // TODO: Probably don't want to format each indirection, but maybe reuse
@@ -1120,7 +1120,7 @@ class FormatterImpl {
   auto FormatArg(EntityNameId id) -> void {
     const auto& info = sem_ir_->entity_names().Get(id);
     FormatName(info.name_id);
-    if (info.bind_index.is_valid()) {
+    if (info.bind_index.has_value()) {
       out_ << ", " << info.bind_index.index;
     }
   }
@@ -1138,7 +1138,7 @@ class FormatterImpl {
       for (auto interface : info.impls_constraints) {
         out_ << sep;
         FormatName(interface.interface_id);
-        if (interface.specific_id.is_valid()) {
+        if (interface.specific_id.has_value()) {
           out_ << ", ";
           FormatName(interface.specific_id);
         }
@@ -1167,7 +1167,7 @@ class FormatterImpl {
   auto FormatArg(FloatKind k) -> void { k.Print(out_); }
 
   auto FormatArg(ImportIRId id) -> void {
-    if (id.is_valid()) {
+    if (id.has_value()) {
       out_ << GetImportIRLabel(id);
     } else {
       out_ << id;
@@ -1190,7 +1190,7 @@ class FormatterImpl {
   }
 
   auto FormatArg(InstBlockId id) -> void {
-    if (!id.is_valid()) {
+    if (!id.has_value()) {
       out_ << "invalid";
       return;
     }
@@ -1252,7 +1252,7 @@ class FormatterImpl {
   }
 
   auto FormatName(InstId id) -> void {
-    if (id.is_valid()) {
+    if (id.has_value()) {
       IncludeChunkInOutput(tentative_inst_chunks_[id.index]);
     }
     out_ << inst_namer_->GetNameFor(scope_, id);
@@ -1273,7 +1273,7 @@ class FormatterImpl {
   }
 
   auto FormatConstant(ConstantId id) -> void {
-    if (!id.is_valid()) {
+    if (!id.has_value()) {
       out_ << "<not constant>";
       return;
     }
@@ -1283,7 +1283,7 @@ class FormatterImpl {
     if (id.is_symbolic()) {
       const auto& symbolic_constant =
           sem_ir_->constant_values().GetSymbolicConstant(id);
-      if (symbolic_constant.generic_id.is_valid()) {
+      if (symbolic_constant.generic_id.has_value()) {
         const auto& generic =
             sem_ir_->generics().Get(symbolic_constant.generic_id);
         FormatName(sem_ir_->inst_blocks().Get(generic.GetEvalBlock(
@@ -1300,7 +1300,7 @@ class FormatterImpl {
   }
 
   auto FormatType(TypeId id) -> void {
-    if (!id.is_valid()) {
+    if (!id.has_value()) {
       out_ << "invalid";
     } else {
       // Types are formatted in the `constants` scope because they only refer to
@@ -1312,7 +1312,7 @@ class FormatterImpl {
 
   // Returns the label for the indicated IR.
   auto GetImportIRLabel(ImportIRId id) -> std::string {
-    CARBON_CHECK(id.is_valid(),
+    CARBON_CHECK(id.has_value(),
                  "GetImportIRLabel should only be called where we a valid ID.");
     const auto& import_ir = *sem_ir_->import_irs().Get(id).sem_ir;
     CARBON_CHECK(import_ir.library_id().has_value());

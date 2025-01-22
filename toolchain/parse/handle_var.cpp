@@ -21,7 +21,7 @@ static auto HandleVar(Context& context, State finish_state,
   state.token = *(context.position() - 1);
   context.PushState(state, State::VarAfterPattern);
 
-  if (returned_token.is_valid()) {
+  if (returned_token.has_value()) {
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 

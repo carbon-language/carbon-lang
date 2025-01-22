@@ -66,8 +66,9 @@ inline auto MakeSpecificIfGeneric(Context& context, SemIRLoc loc,
                                   SemIR::GenericId generic_id,
                                   SemIR::InstBlockId args_id)
     -> SemIR::SpecificId {
-  return generic_id.is_valid() ? MakeSpecific(context, loc, generic_id, args_id)
-                               : SemIR::SpecificId::None;
+  return generic_id.has_value()
+             ? MakeSpecific(context, loc, generic_id, args_id)
+             : SemIR::SpecificId::None;
 }
 
 // Builds the specific that describes how the generic should refer to itself.

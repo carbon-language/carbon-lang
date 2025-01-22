@@ -39,7 +39,7 @@ static auto DiagnoseNotAllowed(
     SemIR::LocId context_loc_id) -> void {
   auto diag = StartDiagnoseNotAllowed(context, diagnostic_base, modifier_node,
                                       decl_kind);
-  if (context_loc_id.is_valid()) {
+  if (context_loc_id.has_value()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note, "containing definition here");
     diag.Note(context_loc_id, ModifierNotInContext);
   }
@@ -204,7 +204,7 @@ auto RestrictExternModifierOnDecl(Context& context,
     // Right now this can produce both this and the below diagnostic.
   }
 
-  if (is_definition && introducer.extern_library.is_valid()) {
+  if (is_definition && introducer.extern_library.has_value()) {
     CARBON_DIAGNOSTIC(ExternLibraryOnDefinition, Error,
                       "a library cannot be provided for an `extern` modifier "
                       "on a definition");

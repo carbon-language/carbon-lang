@@ -30,7 +30,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
 
   // Identify the function we're calling.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
-  if (!val_id.is_valid()) {
+  if (!val_id.has_value()) {
     return result;
   }
   auto val_inst = sem_ir.insts().Get(val_id);
@@ -104,7 +104,7 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  if (!return_slot_pattern_id.is_valid()) {
+  if (!return_slot_pattern_id.has_value()) {
     return TypeId::None;
   }
   return GetTypeInSpecific(file, specific_id,

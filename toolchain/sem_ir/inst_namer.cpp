@@ -128,7 +128,7 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
 }
 
 auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
-  if (!inst_id.is_valid()) {
+  if (!inst_id.has_value()) {
     return "";
   }
   const auto& inst_name = insts_[inst_id.index].second;
@@ -137,7 +137,7 @@ auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
 
 auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     -> std::string {
-  if (!inst_id.is_valid()) {
+  if (!inst_id.has_value()) {
     return "invalid";
   }
 
@@ -173,7 +173,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
 
 auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
     -> llvm::StringRef {
-  if (!block_id.is_valid()) {
+  if (!block_id.has_value()) {
     return "";
   }
   const auto& label_name = labels_[block_id.index].second;
@@ -183,7 +183,7 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
 // Returns the IR name to use for a label, when referenced from a given scope.
 auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     -> std::string {
-  if (!block_id.is_valid()) {
+  if (!block_id.has_value()) {
     return "!invalid";
   }
 
@@ -288,11 +288,11 @@ auto InstNamer::Namespace::AllocateName(
 
 auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                               std::string name, SemIR::LocId loc_id) -> void {
-  if (!block_id.is_valid() || labels_[block_id.index].second) {
+  if (!block_id.has_value() || labels_[block_id.index].second) {
     return;
   }
 
-  if (!loc_id.is_valid()) {
+  if (!loc_id.has_value()) {
     if (const auto& block = sem_ir_->inst_blocks().Get(block_id);
         !block.empty()) {
       loc_id = sem_ir_->insts().GetLocId(block.front());
@@ -380,7 +380,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
 
 auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
     -> void {
-  if (block_id.is_valid()) {
+  if (block_id.has_value()) {
     CollectNamesInBlock(scope_id, sem_ir_->inst_blocks().Get(block_id));
   }
 }
@@ -397,13 +397,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   auto queue_block_insts = [&](ScopeId scope_id,
                                llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.is_valid()) {
+      if (inst_id.has_value()) {
         insts.push_back(std::make_pair(scope_id, inst_id));
       }
     }
   };
   auto queue_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
-    if (block_id.is_valid()) {
+    if (block_id.has_value()) {
       queue_block_insts(scope_id, sem_ir_->inst_blocks().Get(block_id));
     }
   };
@@ -536,7 +536,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case CARBON_KIND(Call inst): {
         auto callee_function =
             SemIR::GetCalleeFunction(*sem_ir_, inst.callee_id);
-        if (!callee_function.function_id.is_valid()) {
+        if (!callee_function.function_id.has_value()) {
           break;
         }
         const auto& function =
@@ -582,7 +582,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(FacetAccessType inst): {
         auto name_id = facet_access_name_id(inst.facet_value_inst_id);
-        if (name_id.is_valid()) {
+        if (name_id.has_value()) {
           add_inst_name_id(name_id, ".as_type");
         } else {
           add_inst_name("as_type");
@@ -591,7 +591,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(FacetAccessWitness inst): {
         auto name_id = facet_access_name_id(inst.facet_value_inst_id);
-        if (name_id.is_valid()) {
+        if (name_id.has_value()) {
           add_inst_name_id(name_id, ".as_wit");
         } else {
           add_inst_name("as_wit");
@@ -682,7 +682,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(ImportDecl inst): {
-        if (inst.package_id.is_valid()) {
+        if (inst.package_id.has_value()) {
           add_inst_name_id(inst.package_id, ".import");
         } else {
           add_inst_name("default.import");
@@ -707,7 +707,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         out << ".";
 
         // Add entity name if available.
-        if (inst.entity_name_id.is_valid()) {
+        if (inst.entity_name_id.has_value()) {
           auto name_id =
               sem_ir_->entity_names().Get(inst.entity_name_id).name_id;
           out << sem_ir_->names().GetIRBaseName(name_id);
@@ -721,7 +721,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         // a block. Constants that refer to them need to be separately
         // named.
         auto const_id = sem_ir_->constant_values().Get(inst_id);
-        if (const_id.is_valid() && const_id.is_template()) {
+        if (const_id.has_value() && const_id.is_template()) {
           auto const_inst_id = sem_ir_->constant_values().GetInstId(const_id);
           if (!insts_[const_inst_id.index].second) {
             queue_block_insts(ScopeId::ImportRefs,
@@ -911,7 +911,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
 
 auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
     -> void {
-  if (!generic_id.is_valid()) {
+  if (!generic_id.has_value()) {
     return;
   }
   generic_scopes_[generic_id.index] = scope_id;

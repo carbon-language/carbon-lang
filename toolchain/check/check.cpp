@@ -31,11 +31,11 @@ static auto GetImportKey(UnitAndImports& unit_info,
                          Parse::Tree::PackagingNames names) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
   llvm::StringRef package_name =
-      names.package_id.is_valid()  ? stores->identifiers().Get(names.package_id)
-      : file_package_id.is_valid() ? stores->identifiers().Get(file_package_id)
-                                   : "";
+      names.package_id.has_value() ? stores->identifiers().Get(names.package_id)
+      : file_package_id.has_value() ? stores->identifiers().Get(file_package_id)
+                                    : "";
   llvm::StringRef library_name =
-      names.library_id.is_valid()
+      names.library_id.has_value()
           ? stores->string_literal_values().Get(names.library_id)
           : "";
   return {package_name, library_name};
@@ -112,12 +112,12 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     // True if the file's package is implicitly `Main` (by omitting an explicit
     // package name).
     bool is_file_implicit_main =
-        !packaging || !packaging->names.package_id.is_valid();
+        !packaging || !packaging->names.package_id.has_value();
     // True if the import is using implicit "current package" syntax (by
     // omitting an explicit package name).
-    bool is_import_implicit_current_package = !import.package_id.is_valid();
+    bool is_import_implicit_current_package = !import.package_id.has_value();
     // True if the import is using `default` library syntax.
-    bool is_import_default_library = !import.library_id.is_valid();
+    bool is_import_default_library = !import.library_id.has_value();
     // True if the import and file point at the same package, even by
     // incorrectly specifying the current package name to `import`.
     bool is_same_package = is_import_implicit_current_package ||

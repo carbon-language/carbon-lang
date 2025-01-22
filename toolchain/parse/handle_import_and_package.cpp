@@ -71,7 +71,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
   }
 
   // Parse the optional library keyword.
-  bool accept_default = !names.package_id.is_valid();
+  bool accept_default = !names.package_id.has_value();
   if (declaration == NodeKind::LibraryDecl) {
     auto library_id = context.ParseLibraryName(accept_default);
     if (!library_id) {

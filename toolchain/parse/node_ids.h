@@ -27,7 +27,7 @@ struct NodeId : public IdBase<NodeId> {
 
   using IdBase::IdBase;
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeId(NoneNodeId /*none*/) : IdBase(NodeId::NoneIndex) {}
+  constexpr NodeId(NoneNodeId /*none*/) : IdBase(NoneIndex) {}
 };
 
 // For looking up the type associated with a given id type.
@@ -42,7 +42,7 @@ struct NodeIdForKind : public NodeId {
   static const NodeKind& Kind;
   constexpr explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdForKind(NoneNodeId /*none*/) : NodeId(NodeId::NoneIndex) {}
+  constexpr NodeIdForKind(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 template <const NodeKind& K>
 const NodeKind& NodeIdForKind<K>::Kind = K;
@@ -64,7 +64,7 @@ struct NodeIdInCategory : public NodeId {
 
   constexpr explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdInCategory(NoneNodeId /*none*/) : NodeId(NodeId::NoneIndex) {}
+  constexpr NodeIdInCategory(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
@@ -93,7 +93,7 @@ struct NodeIdOneOf : public NodeId {
     static_assert(((T::Kind == Kind) || ...));
   }
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NodeId::NoneIndex) {}
+  constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 
 using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
@@ -111,7 +111,7 @@ template <typename T>
 struct NodeIdNot : public NodeId {
   constexpr explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdNot(NoneNodeId /*none*/) : NodeId(NodeId::NoneIndex) {}
+  constexpr NodeIdNot(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 
 // Note that the support for extracting these types using the `Tree::Extract*`

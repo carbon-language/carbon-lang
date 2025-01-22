@@ -54,7 +54,7 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
-    if (return_slot_pattern_id.is_valid()) {
+    if (return_slot_pattern_id.has_value()) {
       out << ", return_slot_pattern: " << return_slot_pattern_id;
     }
     if (!body_block_ids.empty()) {

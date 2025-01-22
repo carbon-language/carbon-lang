@@ -78,7 +78,7 @@ struct Class : public EntityWithParamsBase,
   // Determines whether this class has been fully defined. This is false until
   // we reach the `}` of the class definition.
   auto is_defined() const -> bool {
-    return complete_type_witness_id.is_valid();
+    return complete_type_witness_id.has_value();
   }
 
   // Gets the type that this class type adapts. Returns Invalid if there is no

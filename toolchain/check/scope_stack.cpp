@@ -31,7 +31,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
   // If this scope doesn't have a specific of its own, it lives in the enclosing
   // scope's specific, if any.
   auto enclosing_specific_id = specific_id;
-  if (!specific_id.is_valid() && !scope_stack_.empty()) {
+  if (!specific_id.has_value() && !scope_stack_.empty()) {
     enclosing_specific_id = PeekSpecificId();
   }
 
@@ -45,7 +45,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
-  if (scope_id.is_valid()) {
+  if (scope_id.has_value()) {
     non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
                                         .name_scope_id = scope_id,
                                         .specific_id = enclosing_specific_id});
@@ -53,7 +53,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated specific, so if we start adding lexical scopes associated with
     // specifics, we'll need to somehow track them in lookup.
-    CARBON_CHECK(!specific_id.is_valid(),
+    CARBON_CHECK(!specific_id.has_value(),
                  "Lexical scope should not have an associated specific.");
   }
 
@@ -75,14 +75,14 @@ auto ScopeStack::Pop() -> void {
     lexical_results.pop_back();
   });
 
-  if (scope.scope_id.is_valid()) {
+  if (scope.scope_id.has_value()) {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
     non_lexical_scope_stack_.pop_back();
   }
 
   if (scope.has_returned_var) {
     CARBON_CHECK(!return_scope_stack_.empty());
-    CARBON_CHECK(return_scope_stack_.back().returned_var.is_valid());
+    CARBON_CHECK(return_scope_stack_.back().returned_var.has_value());
     return_scope_stack_.back().returned_var = SemIR::InstId::None;
   }
 
@@ -150,7 +150,7 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
   // function, so it should be relatively rare, but it's still not necesasry to
   // recompute this.
   int scope_depth = scope_stack_.size() - 1;
-  if (scope_index.is_valid()) {
+  if (scope_index.has_value()) {
     scope_depth =
         std::lower_bound(scope_stack_.begin(), scope_stack_.end(), scope_index,
                          [](const ScopeStackEntry& entry, ScopeIndex index) {
@@ -185,14 +185,14 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
     -> SemIR::InstId {
   CARBON_CHECK(!return_scope_stack_.empty(), "`returned var` in no function");
   auto& returned_var = return_scope_stack_.back().returned_var;
-  if (returned_var.is_valid()) {
+  if (returned_var.has_value()) {
     return returned_var;
   }
 
   returned_var = inst_id;
   CARBON_CHECK(!scope_stack_.back().has_returned_var,
                "Scope has returned var but none is set");
-  if (inst_id.is_valid()) {
+  if (inst_id.has_value()) {
     scope_stack_.back().has_returned_var = true;
   }
   return SemIR::InstId::None;
@@ -202,7 +202,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   CARBON_CHECK(!scope_stack_.empty(), "No scope to suspend");
   SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
                            .suspended_items = {}};
-  if (result.entry.scope_id.is_valid()) {
+  if (result.entry.scope_id.has_value()) {
     non_lexical_scope_stack_.pop_back();
   }
 
@@ -246,7 +246,7 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
 
   VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 
-  if (scope.entry.scope_id.is_valid()) {
+  if (scope.entry.scope_id.has_value()) {
     non_lexical_scope_stack_.push_back(
         {.scope_index = scope.entry.index,
          .name_scope_id = scope.entry.scope_id,

@@ -101,7 +101,7 @@ class ScopeStack {
   template <typename InstT>
   auto GetCurrentScopeAs(const SemIR::File& sem_ir) -> std::optional<InstT> {
     auto inst_id = PeekInstId();
-    if (!inst_id.is_valid()) {
+    if (!inst_id.has_value()) {
       return std::nullopt;
     }
     return sem_ir.insts().TryGetAs<InstT>(inst_id);

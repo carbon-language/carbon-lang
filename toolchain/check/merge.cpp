@@ -95,7 +95,7 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
                              SemIR::NameId name_id, RedeclInfo new_decl,
                              RedeclInfo prev_decl,
                              SemIR::ImportIRId import_ir_id) -> void {
-  if (!import_ir_id.is_valid()) {
+  if (!import_ir_id.has_value()) {
     // Check for disallowed redeclarations in the same file.
     if (!new_decl.is_definition) {
       DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
@@ -146,8 +146,8 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
                            prev_decl.loc);
     return;
   }
-  if (!prev_decl.extern_library_id.is_valid()) {
-    if (new_decl.extern_library_id.is_valid()) {
+  if (!prev_decl.extern_library_id.has_value()) {
+    if (new_decl.extern_library_id.has_value()) {
       DiagnoseExternLibraryInImporter(context, decl_kind, name_id, new_decl.loc,
                                       prev_decl.loc);
     } else {
@@ -179,7 +179,7 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
     -> bool {
   for (auto param_patterns_id :
        {info.implicit_param_patterns_id, info.param_patterns_id}) {
-    if (param_patterns_id.is_valid() &&
+    if (param_patterns_id.has_value() &&
         param_patterns_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_patterns_id)) {
         if (context.insts().Get(param_id).type_id() ==
@@ -293,7 +293,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   }
 
   // If exactly one of the parameter lists was present, they differ.
-  if (new_param_patterns_id.is_valid() != prev_param_patterns_id.is_valid()) {
+  if (new_param_patterns_id.has_value() != prev_param_patterns_id.has_value()) {
     if (!diagnose) {
       return false;
     }
@@ -307,15 +307,15 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                       BoolAsSelect, BoolAsSelect);
     context.emitter()
         .Build(new_decl_loc, RedeclParamListDiffers, is_implicit_param,
-               new_param_patterns_id.is_valid())
+               new_param_patterns_id.has_value())
         .Note(prev_decl_loc, RedeclParamListPrevious, is_implicit_param,
-              prev_param_patterns_id.is_valid())
+              prev_param_patterns_id.has_value())
         .Emit();
     return false;
   }
 
-  CARBON_CHECK(new_param_patterns_id.is_valid() &&
-               prev_param_patterns_id.is_valid());
+  CARBON_CHECK(new_param_patterns_id.has_value() &&
+               prev_param_patterns_id.has_value());
   const auto new_param_pattern_ids =
       context.inst_blocks().Get(new_param_patterns_id);
   const auto prev_param_pattern_ids =
@@ -382,16 +382,16 @@ static auto CheckRedeclParamSyntax(Context& context,
   // TODO: Support cross-file syntax checks. Right now imports provide invalid
   // nodes, and we'll need to follow the declaration to its original file to
   // get the parse tree.
-  if (!new_first_param_node_id.is_valid() ||
-      !prev_first_param_node_id.is_valid()) {
+  if (!new_first_param_node_id.has_value() ||
+      !prev_first_param_node_id.has_value()) {
     return true;
   }
-  CARBON_CHECK(new_last_param_node_id.is_valid(),
-               "new_last_param_node_id.is_valid should match "
-               "new_first_param_node_id.is_valid");
-  CARBON_CHECK(prev_last_param_node_id.is_valid(),
-               "prev_last_param_node_id.is_valid should match "
-               "prev_first_param_node_id.is_valid");
+  CARBON_CHECK(new_last_param_node_id.has_value(),
+               "new_last_param_node_id.has_value should match "
+               "new_first_param_node_id.has_value");
+  CARBON_CHECK(prev_last_param_node_id.has_value(),
+               "prev_last_param_node_id.has_value should match "
+               "prev_first_param_node_id.has_value");
   Parse::Tree::PostorderIterator new_iter(new_first_param_node_id);
   Parse::Tree::PostorderIterator new_end(new_last_param_node_id);
   Parse::Tree::PostorderIterator prev_iter(prev_first_param_node_id);

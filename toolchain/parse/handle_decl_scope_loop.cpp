@@ -142,7 +142,7 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
       // Misplaced packaging keywords may lead to this being re-triggered.
       if (context.packaging_state() !=
           Context::PackagingState::AfterNonPackagingDecl) {
-        if (!context.first_non_packaging_token().is_valid()) {
+        if (!context.first_non_packaging_token().has_value()) {
           context.set_first_non_packaging_token(*context.position());
         }
         context.set_packaging_state(

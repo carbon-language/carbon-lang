@@ -118,7 +118,7 @@ auto TreeAndSubtrees::postorder(NodeId n) const
 
 auto TreeAndSubtrees::children(NodeId n) const
     -> llvm::iterator_range<SiblingIterator> {
-  CARBON_CHECK(n.is_valid());
+  CARBON_CHECK(n.has_value());
   int end_index = n.index - subtree_sizes_[n.index];
   return llvm::iterator_range<SiblingIterator>(
       SiblingIterator(*this, NodeId(n.index - 1)),

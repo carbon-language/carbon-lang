@@ -124,7 +124,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Add import instructions for everything directly imported. Implicit imports
   // are handled separately.
   for (auto& package_imports : unit_and_imports_->package_imports) {
-    CARBON_CHECK(!package_imports.import_decl_id.is_valid());
+    CARBON_CHECK(!package_imports.import_decl_id.has_value());
     package_imports.import_decl_id = context_.AddInst<SemIR::ImportDecl>(
         package_imports.node_id, {.package_id = SemIR::NameId::ForIdentifier(
                                       package_imports.package_id)});
@@ -267,7 +267,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
     for (auto [api_imports_index, api_imports] :
          llvm::enumerate(unit_and_imports_->api_for_impl->package_imports)) {
       // Skip the current package.
-      if (!api_imports.package_id.is_valid()) {
+      if (!api_imports.package_id.has_value()) {
         continue;
       }
       // Translate the package ID from the API file to the implementation file.
@@ -295,7 +295,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
     PackageImports* local_imports = nullptr;
     if (i < unit_and_imports_->package_imports.size()) {
       local_imports = &unit_and_imports_->package_imports[i];
-      if (!local_imports->package_id.is_valid()) {
+      if (!local_imports->package_id.has_value()) {
         // Skip the current package.
         continue;
       }

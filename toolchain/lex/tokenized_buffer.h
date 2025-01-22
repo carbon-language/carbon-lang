@@ -43,7 +43,7 @@ struct LineIndex : public IndexBase<LineIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr LineIndex LineIndex::None(InvalidIndex);
+constexpr LineIndex LineIndex::None(NoneIndex);
 
 // Indices for comments within the buffer.
 struct CommentIndex : public IndexBase<CommentIndex> {
@@ -52,7 +52,7 @@ struct CommentIndex : public IndexBase<CommentIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr CommentIndex CommentIndex::None(InvalidIndex);
+constexpr CommentIndex CommentIndex::None(NoneIndex);
 
 // Random-access iterator over comments within the buffer.
 using CommentIterator = IndexIterator<CommentIndex>;

@@ -35,7 +35,7 @@ class CopyOnWriteBlock {
   // with `size` elements.
   explicit CopyOnWriteBlock(SemIR::File& file, UninitializedBlock uninit)
       : file_(file),
-        source_id_(BlockIdType::Invalid),
+        source_id_(BlockIdType::None),
         id_((file_.*ValueStore)().AddUninitialized(uninit.size)) {}
 
   // Gets a block ID containing the resulting elements. Note that further

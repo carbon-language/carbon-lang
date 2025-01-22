@@ -161,7 +161,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
         case MatchKind::Callee: {
           if (context.insts()
                   .GetAs<SemIR::AnyParam>(value_id)
-                  .runtime_index.is_valid()) {
+                  .runtime_index.has_value()) {
             results_.push_back(value_id);
           }
           break;
@@ -170,7 +170,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           CARBON_FATAL("Found binding pattern during caller pattern match");
       }
       auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
-      CARBON_CHECK(!bind_name.value_id.is_valid());
+      CARBON_CHECK(!bind_name.value_id.has_value());
       bind_name.value_id = value_id;
       context.ReplaceInstBeforeConstantUse(bind_name_id, bind_name);
       context.inst_block_stack().AddInstId(bind_name_id);
@@ -186,7 +186,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
                  .scrutinee_id = SemIR::InstId::None});
         break;
       }
-      CARBON_CHECK(entry.scrutinee_id.is_valid());
+      CARBON_CHECK(entry.scrutinee_id.has_value());
       auto scrutinee_ref_id =
           ConvertToValueOrRefExpr(context, entry.scrutinee_id);
       switch (SemIR::GetExprCategory(context.sem_ir(), scrutinee_ref_id)) {
@@ -220,7 +220,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
                    results_.size(), param_pattern.runtime_index.index);
       switch (kind_) {
         case MatchKind::Caller: {
-          CARBON_CHECK(entry.scrutinee_id.is_valid());
+          CARBON_CHECK(entry.scrutinee_id.has_value());
           if (entry.scrutinee_id == SemIR::ErrorInst::SingletonInstId) {
             results_.push_back(SemIR::ErrorInst::SingletonInstId);
           } else {
@@ -259,7 +259,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
     case CARBON_KIND(SemIR::OutParamPattern param_pattern): {
       switch (kind_) {
         case MatchKind::Caller: {
-          CARBON_CHECK(entry.scrutinee_id.is_valid());
+          CARBON_CHECK(entry.scrutinee_id.has_value());
           CARBON_CHECK(context.insts().Get(entry.scrutinee_id).type_id() ==
                        SemIR::GetTypeInSpecific(context.sem_ir(),
                                                 callee_specific_id_,
@@ -302,7 +302,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
       bool already_in_lookup =
           context.scope_stack()
               .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
-              .is_valid();
+              .has_value();
       CARBON_CHECK(!already_in_lookup);
       results_.push_back(entry.scrutinee_id);
       break;
@@ -315,7 +315,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
       if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
         context.global_init().Resume();
       }
-      if (entry.scrutinee_id.is_valid()) {
+      if (entry.scrutinee_id.has_value()) {
         auto init_id =
             Initialize(context, pattern.loc_id, var_id, entry.scrutinee_id);
         // TODO: Consider using different instruction kinds for assignment
@@ -341,8 +341,8 @@ auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_slot_pattern_id)
     -> SemIR::InstBlockId {
-  if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
-      !implicit_param_patterns_id.is_valid()) {
+  if (!return_slot_pattern_id.has_value() && !param_patterns_id.has_value() &&
+      !implicit_param_patterns_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
 
@@ -350,12 +350,12 @@ auto CalleePatternMatch(Context& context,
 
   // We add work to the stack in reverse so that the results will be produced
   // in the original order.
-  if (return_slot_pattern_id.is_valid()) {
+  if (return_slot_pattern_id.has_value()) {
     match.AddWork({.pattern_id = return_slot_pattern_id,
                    .scrutinee_id = SemIR::InstId::None});
   }
 
-  if (param_patterns_id.is_valid()) {
+  if (param_patterns_id.has_value()) {
     for (SemIR::InstId inst_id :
          llvm::reverse(context.inst_blocks().Get(param_patterns_id))) {
       match.AddWork(
@@ -363,7 +363,7 @@ auto CalleePatternMatch(Context& context,
     }
   }
 
-  if (implicit_param_patterns_id.is_valid()) {
+  if (implicit_param_patterns_id.has_value()) {
     for (SemIR::InstId inst_id :
          llvm::reverse(context.inst_blocks().Get(implicit_param_patterns_id))) {
       match.AddWork(
@@ -385,8 +385,8 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   MatchContext match(MatchKind::Caller, specific_id);
 
   // Track the return storage, if present.
-  if (return_slot_arg_id.is_valid()) {
-    CARBON_CHECK(return_slot_pattern_id.is_valid());
+  if (return_slot_arg_id.has_value()) {
+    CARBON_CHECK(return_slot_pattern_id.has_value());
     match.AddWork({.pattern_id = return_slot_pattern_id,
                    .scrutinee_id = return_slot_arg_id});
   }
@@ -397,7 +397,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
     auto runtime_index = SemIR::Function::GetParamPatternInfoFromPatternId(
                              context.sem_ir(), param_pattern_id)
                              .inst.runtime_index;
-    if (!runtime_index.is_valid()) {
+    if (!runtime_index.has_value()) {
       // Not a runtime parameter: we don't pass an argument.
       continue;
     }
@@ -405,7 +405,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
     match.AddWork({.pattern_id = param_pattern_id, .scrutinee_id = arg_id});
   }
 
-  if (self_pattern_id.is_valid()) {
+  if (self_pattern_id.has_value()) {
     match.AddWork({.pattern_id = self_pattern_id, .scrutinee_id = self_arg_id});
   }
 

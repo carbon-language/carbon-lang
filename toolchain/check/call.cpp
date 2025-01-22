@@ -68,12 +68,12 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
 
   // Perform argument deduction.
   auto specific_id = SemIR::SpecificId::None;
-  if (entity.generic_id.is_valid()) {
+  if (entity.generic_id.has_value()) {
     specific_id = DeduceGenericCallArguments(
         context, loc_id, entity.generic_id, enclosing_specific_id,
         entity.implicit_param_patterns_id, entity.param_patterns_id, self_id,
         arg_ids);
-    if (!specific_id.is_valid()) {
+    if (!specific_id.has_value()) {
       return std::nullopt;
     }
   }
@@ -123,7 +123,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                  llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Identify the function we're calling.
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
-  if (!callee_function.function_id.is_valid()) {
+  if (!callee_function.function_id.has_value()) {
     auto type_inst =
         context.types().GetAsInst(context.insts().Get(callee_id).type_id());
     CARBON_KIND_SWITCH(type_inst) {
@@ -157,7 +157,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
-  if (callee_specific_id->is_valid()) {
+  if (callee_specific_id->has_value()) {
     callee_id = context.GetOrAddInst(
         context.insts().GetLocId(callee_id),
         SemIR::SpecificFunction{
@@ -192,7 +192,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     case SemIR::InitRepr::None:
       // For functions with an implicit return type, the return type is the
       // empty tuple type.
-      if (!return_info.type_id.is_valid()) {
+      if (!return_info.type_id.has_value()) {
         return_info.type_id = context.GetTupleType({});
       }
       break;

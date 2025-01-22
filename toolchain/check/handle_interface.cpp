@@ -64,7 +64,7 @@ static auto BuildInterfaceDecl(Context& context,
   if (is_poisoned) {
     // This is a declaration of a poisoned name.
     context.DiagnosePoisonedName(interface_decl_id);
-  } else if (existing_id.is_valid()) {
+  } else if (existing_id.has_value()) {
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
       auto existing_interface =
@@ -103,7 +103,7 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Create a new interface if this isn't a valid redeclaration.
-  if (!interface_decl.interface_id.is_valid()) {
+  if (!interface_decl.interface_id.has_value()) {
     // TODO: If this is an invalid redeclaration of a non-interface entity or
     // there was an error in the qualifier, we will have lost track of the
     // interface name here. We should keep track of it even if the name is
@@ -205,7 +205,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
 
   // The interface type is now fully defined.
   auto& interface_info = context.interfaces().Get(interface_id);
-  if (!interface_info.associated_entities_id.is_valid()) {
+  if (!interface_info.associated_entities_id.has_value()) {
     interface_info.associated_entities_id = associated_entities_id;
   }
 

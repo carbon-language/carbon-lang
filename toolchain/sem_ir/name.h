@@ -34,7 +34,7 @@ class NameStoreWrapper {
   auto GetAsStringIfIdentifier(NameId name_id) const
       -> std::optional<llvm::StringRef> {
     if (auto identifier_id = name_id.AsIdentifierId();
-        identifier_id.is_valid()) {
+        identifier_id.has_value()) {
       return identifiers_->Get(identifier_id);
     }
     return std::nullopt;

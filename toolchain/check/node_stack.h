@@ -92,7 +92,7 @@ class NodeStack {
     auto kind = parse_tree_->node_kind(node_id);
     CARBON_CHECK(NodeKindToIdKind(kind) == Id::KindFor<IdT>(),
                  "Parse kind expected a different IdT: {0} -> {1}\n", kind, id);
-    CARBON_CHECK(id.is_valid(), "Push called with invalid id: {0}",
+    CARBON_CHECK(id.has_value(), "Push called with invalid id: {0}",
                  parse_tree_->node_kind(node_id));
     CARBON_VLOG("Node Push {0}: {1} -> {2}\n", stack_.size(), kind, id);
     CARBON_CHECK(stack_.size() < (1 << 20),

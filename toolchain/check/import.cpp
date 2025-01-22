@@ -78,7 +78,7 @@ static auto CopyNameFromImportIR(Context& context,
                                  const SemIR::File& import_sem_ir,
                                  SemIR::NameId import_name_id) {
   if (auto import_identifier_id = import_name_id.AsIdentifierId();
-      import_identifier_id.is_valid()) {
+      import_identifier_id.has_value()) {
     auto name = import_sem_ir.identifiers().Get(import_identifier_id);
     return SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
   }
@@ -116,7 +116,7 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
               context.insts().TryGetAs<SemIR::Namespace>(prev_inst_id)) {
         if (diagnose_duplicate_namespace) {
           auto import_id = make_import_id();
-          CARBON_CHECK(import_id.is_valid());
+          CARBON_CHECK(import_id.has_value());
           context.DiagnoseDuplicateName(import_id, prev_inst_id);
         }
         return {namespace_inst->name_scope_id, prev_inst_id, true};
@@ -125,7 +125,7 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
   }
 
   auto import_id = make_import_id();
-  CARBON_CHECK(import_id.is_valid());
+  CARBON_CHECK(import_id.has_value());
   auto import_loc_id = context.insts().GetLocId(import_id);
 
   auto namespace_inst =
@@ -484,7 +484,7 @@ static auto LookupNameInImport(const SemIR::File& import_ir,
   SemIR::NameId import_name_id = name_id;
   if (!identifier.empty()) {
     auto import_identifier_id = import_ir.identifiers().Lookup(identifier);
-    if (!import_identifier_id.is_valid()) {
+    if (!import_identifier_id.has_value()) {
       // Name doesn't exist in the import IR.
       return nullptr;
     }
@@ -538,7 +538,8 @@ auto ImportNameFromOtherPackage(
   // If the name is an identifier, get the string first so that it can be shared
   // when there are multiple IRs.
   llvm::StringRef identifier;
-  if (auto identifier_id = name_id.AsIdentifierId(); identifier_id.is_valid()) {
+  if (auto identifier_id = name_id.AsIdentifierId();
+      identifier_id.has_value()) {
     identifier = context.identifiers().Get(identifier_id);
     CARBON_CHECK(!identifier.empty());
   }
@@ -576,7 +577,7 @@ auto ImportNameFromOtherPackage(
     }
 
     // Add the first result found.
-    if (!result_id.is_valid()) {
+    if (!result_id.has_value()) {
       // If the imported instruction is a namespace, we add it directly instead
       // of as an ImportRef.
       if (auto import_ns = import_inst.TryAs<SemIR::Namespace>()) {

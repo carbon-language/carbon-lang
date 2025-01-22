@@ -72,7 +72,7 @@ class InstNamer {
   // Returns the IR name to use for a function, class, or interface.
   template <typename IdT>
   auto GetNameFor(IdT id) const -> std::string {
-    if (!id.is_valid()) {
+    if (!id.has_value()) {
       return "invalid";
     }
     return GetScopeName(GetScopeFor(id));

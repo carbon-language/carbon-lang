@@ -39,7 +39,7 @@ auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
 static auto TryGetIntTypeInfo(const File& file, TypeId type_id)
     -> std::optional<TypeStore::IntTypeInfo> {
   auto object_repr_id = file.types().GetObjectRepr(type_id);
-  if (!object_repr_id.is_valid()) {
+  if (!object_repr_id.has_value()) {
     return std::nullopt;
   }
   auto inst_id = file.types().GetInstId(object_repr_id);

@@ -122,7 +122,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
                     for (int i : llvm::seq(start, insts_.size())) {
                       auto id = InstId(i);
                       auto value = constant_values_.Get(id);
-                      if (!value.is_valid() || value.is_constant()) {
+                      if (!value.has_value() || value.is_constant()) {
                         map.Add(PrintToString(id), Yaml::OutputScalar(value));
                       }
                     }
@@ -303,7 +303,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         // TODO: Don't rely on value_id for expression category, since it may
         // not be valid yet. This workaround only works because we don't support
         // `var` in function signatures yet.
-        if (!inst.value_id.is_valid()) {
+        if (!inst.value_id.has_value()) {
           return value_category;
         }
         inst_id = inst.value_id;

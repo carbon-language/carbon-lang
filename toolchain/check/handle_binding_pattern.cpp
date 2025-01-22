@@ -36,8 +36,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
   if (is_generic) {
     auto inst_id = context.scope_stack().PeekInstId();
-    is_associated_constant =
-        inst_id.is_valid() && context.insts().Is<SemIR::InterfaceDecl>(inst_id);
+    is_associated_constant = inst_id.has_value() &&
+                             context.insts().Is<SemIR::InterfaceDecl>(inst_id);
   }
 
   bool needs_compile_time_binding = is_generic && !is_associated_constant;
@@ -325,7 +325,7 @@ auto HandleParseNode(Context& context,
     // can represent a block scope, but is also used for other kinds of scopes
     // that aren't necessarily part of an interface or function decl.
     auto scope_inst_id = context.scope_stack().PeekInstId();
-    if (scope_inst_id.is_valid()) {
+    if (scope_inst_id.has_value()) {
       auto scope_inst = context.insts().Get(scope_inst_id);
       if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
           !scope_inst.Is<SemIR::FunctionDecl>()) {
