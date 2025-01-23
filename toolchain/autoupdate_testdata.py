@@ -41,14 +41,14 @@ def main() -> None:
 
     # Parse arguments.
     parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--allow-check-fail", action="store_true")
+    parser.add_argument("--non-fatal-checks", action="store_true")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()
 
     if args.allow_check_fail:
         if build_mode == "opt":
             exit(
-                "`--allow-check-fail` is incompatible with inferred "
+                "`--non-fatal-checks` is incompatible with inferred "
                 "`-c opt` build mode"
             )
         configs.append("--config=non-fatal-checks")
