@@ -213,45 +213,15 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
-
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
-  auto end_node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
-  CARBON_CHECK(end_node_kind == Parse::NodeKind::ImplDefinitionStart ||
-               end_node_kind == Parse::NodeKind::ImplDecl);
-  Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
-  --last_param_iter;
-
-  // Following proposal #3763, exclude a final `where` clause, if present. See:
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
-
-  // Caches the NodeKind for the current value of *last_param_iter so
-  if (context.parse_tree().node_kind(*last_param_iter) ==
-      Parse::NodeKind::WhereExpr) {
-    int where_operands_to_skip = 1;
-    --last_param_iter;
-    CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                 last_param_iter);
-    do {
-      auto node_kind = context.parse_tree().node_kind(*last_param_iter);
-      if (node_kind == Parse::NodeKind::WhereExpr) {
-        // If we have a nested `where`, we need to see another `WhereOperand`
-        // before we find the one that matches our original `WhereExpr` node.
-        ++where_operands_to_skip;
-      } else if (node_kind == Parse::NodeKind::WhereOperand) {
-        --where_operands_to_skip;
-      }
-      --last_param_iter;
-      CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                   last_param_iter);
-    } while (where_operands_to_skip > 0);
-  }
+  Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
       .name_id = SemIR::NameId::Invalid,
       .first_param_node_id = first_param_node_id,
-      .last_param_node_id = *last_param_iter,
+      .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
