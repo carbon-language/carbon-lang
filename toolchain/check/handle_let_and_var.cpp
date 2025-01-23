@@ -22,7 +22,7 @@
 
 namespace Carbon::Check {
 
-// Handles the start of the declaration portion of an associated constant.
+// Handles the start of a declaration of an associated constant.
 static auto StartAssociatedConstant(Context& context) -> void {
   // An associated constant is always generic.
   StartGenericDecl(context);
@@ -31,7 +31,8 @@ static auto StartAssociatedConstant(Context& context) -> void {
   context.inst_block_stack().Push();
 }
 
-// Handles the end of the declaration region of an associated constant.
+// Handles the end of the declaration region of an associated constant. This is
+// called at the `=` or the `;` of the declaration, whichever comes first.
 static auto EndAssociatedConstantDeclRegion(Context& context,
                                             SemIR::InterfaceId interface_id)
     -> void {
