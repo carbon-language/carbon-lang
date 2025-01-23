@@ -229,10 +229,10 @@ base class Base(T:! type) {
 
 class Derived {
   extend base: Base(T1);
-  // CHECK:STDERR: impl_generic_base.carbon:[[@LINE+7]]:13: error: type `T1` of parameter 1 in redeclaration differs from previous parameter type `T` [RedeclParamDiffersType]
+  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE+7]]:13: error: type `T1` of parameter 1 in redeclaration differs from previous parameter type `T` [RedeclParamDiffersType]
   // CHECK:STDERR:   impl fn F(t: T1);
   // CHECK:STDERR:             ^~~~~
-  // CHECK:STDERR: impl_generic_base.carbon:[[@LINE-8]]:16: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE-8]]:16: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F(t: T);
   // CHECK:STDERR:                ^~~~
   // CHECK:STDERR:
@@ -1341,7 +1341,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F.2() -> %T2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_generic_base.carbon
+// CHECK:STDOUT: --- fail_todo_impl_generic_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T1: type = class_type @T1 [template]
@@ -1446,7 +1446,7 @@ class Derived {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
 // CHECK:STDOUT:     %t: %T1 = bind_name t, %t.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: <vtable> = vtable (%F.decl) [template = constants.%.88d]
+// CHECK:STDOUT:   %.loc21: <vtable> = vtable (%F.decl) [template = constants.%.88d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
