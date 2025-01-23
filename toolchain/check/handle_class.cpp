@@ -717,14 +717,11 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
               context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
           const auto& override_fn =
               context.functions().Get(override_fn_decl.function_id);
-          // TODO: Validate that the overriding function's signature matches
-          // that of the overridden function.
           if (override_fn.virtual_modifier ==
                   SemIR::FunctionFields::VirtualModifier::Impl &&
               override_fn.name_id == fn.name_id) {
-            // TODO: This should be a semantic check rather than a syntactic
-            // one. The functions should be allowed to have different signatures
-            // as long as we can synthesize a suitable thunk.
+            // TODO: Support generic base classes, rather than passing
+            // `SpecificId::Invalid`.
             CheckFunctionTypeMatches(context, override_fn, fn,
                                      SemIR::SpecificId::Invalid,
                                      /*check_syntax=*/false);
