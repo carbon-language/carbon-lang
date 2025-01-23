@@ -197,8 +197,9 @@ class TreeAndSubtrees::SiblingIterator
  public:
   explicit SiblingIterator() = delete;
 
-  auto operator==(const SiblingIterator& rhs) const -> bool {
-    return node_ == rhs.node_;
+  friend auto operator==(const SiblingIterator& lhs, const SiblingIterator& rhs)
+      -> bool {
+    return lhs.node_ == rhs.node_;
   }
 
   auto operator*() const -> NodeId { return node_; }

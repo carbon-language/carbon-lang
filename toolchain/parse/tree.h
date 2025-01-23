@@ -289,21 +289,25 @@ class Tree::PostorderIterator
 
   PostorderIterator() = delete;
 
-  auto operator==(const PostorderIterator& rhs) const -> bool {
-    return node_ == rhs.node_;
+  friend auto operator==(const PostorderIterator& lhs,
+                         const PostorderIterator& rhs) -> bool {
+    return lhs.node_ == rhs.node_;
   }
   // While we don't want users to directly leverage the index of `NodeId` for
   // ordering, when we're explicitly walking in postorder, that becomes
   // reasonable so add the ordering here and reach down for the index
   // explicitly.
-  auto operator<=>(const PostorderIterator& rhs) const -> std::strong_ordering {
-    return node_.index <=> rhs.node_.index;
+  friend auto operator<=>(const PostorderIterator& lhs,
+                          const PostorderIterator& rhs)
+      -> std::strong_ordering {
+    return lhs.node_.index <=> rhs.node_.index;
   }
 
   auto operator*() const -> NodeId { return node_; }
 
-  auto operator-(const PostorderIterator& rhs) const -> int {
-    return node_.index - rhs.node_.index;
+  friend auto operator-(const PostorderIterator& lhs,
+                        const PostorderIterator& rhs) -> int {
+    return lhs.node_.index - rhs.node_.index;
   }
 
   auto operator+=(int offset) -> PostorderIterator& {

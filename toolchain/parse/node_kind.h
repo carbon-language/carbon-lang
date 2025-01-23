@@ -54,8 +54,9 @@ class NodeCategory : public Printable<NodeCategory> {
   // Returns the set inverse.
   constexpr auto operator~() -> NodeCategory { return ~value_; }
 
-  auto operator==(const NodeCategory& other) const -> bool {
-    return value_ == other.value_;
+  friend auto operator==(const NodeCategory& lhs, const NodeCategory& rhs)
+      -> bool {
+    return lhs.value_ == rhs.value_;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
