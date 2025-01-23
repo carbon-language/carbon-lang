@@ -73,12 +73,12 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.d44: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -96,7 +96,7 @@ fn Test() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%X)> [template = constants.%ImplicitAs.type.ac8]
 // CHECK:STDOUT:   }
@@ -104,7 +104,7 @@ fn Test() {
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%i32)> [template = constants.%ImplicitAs.type.205]
@@ -189,13 +189,17 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc12: %X.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %X.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %X.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %X.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .n = %.loc12
+// CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %i32]() -> %return.param_patt: %X {
@@ -212,7 +216,7 @@ fn Test() {
 // CHECK:STDOUT: fn @Convert.3[%self.param_patt: %X]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12 [template = @X.%.loc12]
+// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12_8 [template = @X.%.loc12_8]
 // CHECK:STDOUT:   %.loc20_45.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc20_45.2: %i32 = bind_value %.loc20_45.1
 // CHECK:STDOUT:   return %.loc20_45.2

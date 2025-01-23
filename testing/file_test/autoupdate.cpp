@@ -9,6 +9,7 @@
 #include "absl/strings/string_view.h"
 #include "common/check.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -363,11 +364,11 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   }
 
   // Generate the autoupdated file.
-  std::string new_content;
-  llvm::raw_string_ostream new_content_stream(new_content);
+  RawStringOstream new_content_stream;
   for (const auto& line : new_lines_) {
     new_content_stream << *line << '\n';
   }
+  std::string new_content = new_content_stream.TakeStr();
 
   // Update the file on disk if needed.
   if (new_content == input_content_) {

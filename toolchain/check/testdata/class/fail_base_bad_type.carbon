@@ -171,9 +171,10 @@ fn AccessMemberWithInvalidBaseFinal_WithMember(p: DeriveFromFinal*) -> i32 {
 }
 
 fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:10: error: member name `b` not found in `DeriveFromFinal` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:10: error: member name `b` not found in `DeriveFromFinal` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return (*p).b;
   // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR:
   return (*p).b;
 }
 
@@ -190,7 +191,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -256,8 +257,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -330,7 +331,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -434,8 +435,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -544,8 +545,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -648,8 +649,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -756,7 +757,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -828,13 +829,17 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Final {
-// CHECK:STDOUT:   %.loc5: %Final.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %Final.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc5_3: %Final.elem = var_pattern %.loc5_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Final.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Final
-// CHECK:STDOUT:   .a = %.loc5
+// CHECK:STDOUT:   .a = %.loc5_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
@@ -863,7 +868,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.160 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_11: ref %DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %a.ref: %Final.elem = name_ref a, @Final.%.loc5 [template = @Final.%.loc5]
+// CHECK:STDOUT:   %a.ref: %Final.elem = name_ref a, @Final.%.loc5_8 [template = @Final.%.loc5_8]
 // CHECK:STDOUT:   %.loc22_14.1: ref %Final = class_element_access %.loc22_11, element0
 // CHECK:STDOUT:   %.loc22_14.2: ref %Final = converted %.loc22_11, %.loc22_14.1
 // CHECK:STDOUT:   %.loc22_14.3: ref %i32 = class_element_access %.loc22_14.2, element0
@@ -874,7 +879,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_NoMember(%p.param_patt: %ptr.160) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.160 = name_ref p, %p
-// CHECK:STDOUT:   %.loc29: ref %DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %.loc30: ref %DeriveFromFinal = deref %p.ref
 // CHECK:STDOUT:   %b.ref: <error> = name_ref b, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

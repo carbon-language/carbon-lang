@@ -28,12 +28,13 @@ library "[[@TEST_NAME]]";
 
 interface J;
 class C {}
-// CHECK:STDERR: fail_class.carbon:[[@LINE+6]]:1: error: implementation of undefined interface J [ImplOfUndefinedInterface]
+// CHECK:STDERR: fail_class.carbon:[[@LINE+7]]:1: error: implementation of undefined interface J [ImplOfUndefinedInterface]
 // CHECK:STDERR: impl C as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_class.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface J;
 // CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as J {}
 
 // CHECK:STDOUT: --- fail_empty_struct.carbon

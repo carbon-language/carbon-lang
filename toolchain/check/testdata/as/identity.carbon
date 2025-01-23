@@ -76,9 +76,9 @@ fn Initializing() {
 // CHECK:STDOUT:     %p.param_patt: %ptr.d17 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.d17 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc21: type = splice_block %ptr [template = constants.%ptr.d17] {
+// CHECK:STDOUT:     %.loc21: type = splice_block %ptr.loc21 [template = constants.%ptr.d17] {
 // CHECK:STDOUT:       %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:       %ptr: type = ptr_type %X [template = constants.%ptr.d17]
+// CHECK:STDOUT:       %ptr.loc21: type = ptr_type %X [template = constants.%ptr.d17]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.d17 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -103,18 +103,29 @@ fn Initializing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Value(%n.param_patt: %X) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %m.patt: %X = binding_pattern m
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
-// CHECK:STDOUT:   %X.ref.loc18: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc18_19: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc18_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %m: %X = bind_name m, %n.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Reference(%p.param_patt: %ptr.d17) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %q.patt: %ptr.d17 = binding_pattern q
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %ptr.d17 = name_ref p, %p
-// CHECK:STDOUT:   %.loc22: ref %X = deref %p.ref
-// CHECK:STDOUT:   %X.ref.loc22: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc22
+// CHECK:STDOUT:   %.loc22_17: ref %X = deref %p.ref
+// CHECK:STDOUT:   %X.ref.loc22_23: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc22_17
+// CHECK:STDOUT:   %.loc22_11: type = splice_block %ptr.loc22 [template = constants.%ptr.d17] {
+// CHECK:STDOUT:     %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:     %ptr.loc22: type = ptr_type %X [template = constants.%ptr.d17]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q: %ptr.d17 = bind_name q, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -123,13 +134,18 @@ fn Initializing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Initializing() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %X = binding_pattern x
+// CHECK:STDOUT:     %.loc28_3.1: %X = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var x
-// CHECK:STDOUT:   %x: ref %X = bind_name x, %x.var
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
-// CHECK:STDOUT:   %.loc28: ref %X = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %X = call %Make.ref() to %.loc28
-// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %.loc28_3.2: ref %X = splice_block %x.var {}
+// CHECK:STDOUT:   %Make.call: init %X = call %Make.ref() to %.loc28_3.2
+// CHECK:STDOUT:   %X.ref.loc28_25: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   assign %x.var, %Make.call
+// CHECK:STDOUT:   %X.ref.loc28_10: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %x: ref %X = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

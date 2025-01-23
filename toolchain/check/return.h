@@ -10,15 +10,19 @@
 
 namespace Carbon::Check {
 
-// Checks a `returned var` binding and returns the location of the return
-// value storage that the name should bind to.
-auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
-                      Parse::NodeId name_node, SemIR::NameId name_id,
-                      Parse::NodeId type_node, SemIR::TypeId type_id)
-    -> SemIR::InstId;
+// Gets the function that a `return` statement in the current context would
+// return from.
+auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function&;
 
-// Registers the given binding as the current `returned var` in this scope.
-auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void;
+// Gets the return slot of the function that lexically encloses the current
+// location.
+auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId;
+
+// Checks a `returned var` binding and registers it as the current `returned
+// var` in this scope.
+auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
+                         Parse::NodeId type_node, SemIR::TypeId type_id,
+                         SemIR::InstId bind_id) -> void;
 
 // Checks and builds SemIR for a `return;` statement.
 auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)

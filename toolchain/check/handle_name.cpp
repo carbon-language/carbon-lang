@@ -143,6 +143,7 @@ auto HandleParseNode(Context& context,
                      Parse::IdentifierNameBeforeParamsId node_id) -> bool {
   // Push a pattern block stack entry to handle the parameter pattern.
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern();
   return HandleIdentifierName(context, node_id);
 }
 

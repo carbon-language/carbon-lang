@@ -13,12 +13,13 @@ namespace Foo;
 fn Foo.Baz() {
 }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: error: redefinition of `fn Baz` [RedeclRedef]
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+7]]:1: error: redefinition of `fn Baz` [RedeclRedef]
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Foo.Baz() {
 }
 

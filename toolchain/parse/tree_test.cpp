@@ -9,7 +9,7 @@
 
 #include <forward_list>
 
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -23,7 +23,6 @@
 namespace Carbon::Parse {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::ElementsAre;
 using ::testing::Pair;
 
@@ -90,7 +89,7 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
   auto [tokens, tree_and_subtrees] =
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());
-  TestRawOstream print_stream;
+  RawStringOstream print_stream;
   tree_and_subtrees.tree().Print(print_stream);
 
   auto file = Yaml::Sequence(ElementsAre(
@@ -119,7 +118,7 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
   auto [tokens, tree_and_subtrees] =
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());
-  TestRawOstream print_stream;
+  RawStringOstream print_stream;
   tree_and_subtrees.PrintPreorder(print_stream);
 
   auto param_list = Yaml::Sequence(ElementsAre(Yaml::Mapping(

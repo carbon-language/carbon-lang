@@ -50,9 +50,11 @@ class MyFileTest : public FileTestBase {
   // Called as part of individual test executions.
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            const llvm::SmallVector<TestFile>& test_files,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
+           FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
+           llvm::raw_pwrite_stream& error_stream)
       -> ErrorOr<RunResult> override {
-    return MyFunctionality(test_args, stdout, stderr);
+    return MyFunctionality(test_args, input_stream, output_stream,
+                           error_stream);
   }
 
   // Provides arguments which are used in tests that don't provide ARGS.
@@ -108,21 +110,22 @@ Supported comment markers are:
     // NOAUTOUPDATE
     ```
 
-    Controls whether the checks in the file will be autoupdated if --autoupdate
-    is passed. Exactly one of these markers must be present. If the file uses
-    splits, the marker must currently be before any splits.
+    Controls whether the checks in the file will be autoupdated if
+    `--autoupdate` is passed. Exactly one of these markers must be present. If
+    the file uses splits, the marker must currently be before any splits.
 
-    When autoupdating, CHECKs will be inserted starting below AUTOUPDATE. When a
-    CHECK has line information, autoupdate will try to insert the CHECK
-    immediately next to the line it's associated with, with stderr CHECKs
-    preceding the line and stdout CHECKs following the line. When that happens,
-    any subsequent CHECK lines without line information, or that refer to lines
-    appearing earlier, will immediately follow. As an exception, if no STDOUT
-    check line refers to any line in the test, all STDOUT check lines are placed
-    at the end of the file instead of immediately after AUTOUPDATE.
+    When autoupdating, `CHECK`s will be inserted starting below `AUTOUPDATE`.
+    When a `CHECK` has line information, autoupdate will try to insert the
+    `CHECK` immediately next to the line it's associated with, with stderr
+    `CHECK`s preceding the line and stdout `CHECK`s following the line. When
+    that happens, any subsequent `CHECK` lines without line information, or that
+    refer to lines appearing earlier, will immediately follow. As an exception,
+    if no `STDOUT` check line refers to any line in the test, all `STDOUT` check
+    lines are placed at the end of the file instead of immediately after
+    `AUTOUPDATE`.
 
     When using split files, if the last split file is named
-    `// --- AUTOUPDATE-SPLIT`, all CHECKs will be added there; no line
+    `// --- AUTOUPDATE-SPLIT`, all `CHECK`s will be added there; no line
     associations occur.
 
 -   ```
@@ -149,8 +152,8 @@ Supported comment markers are:
         Replaces some implementation-specific identifier with a value. (Mappings
         provided by way of an optional `MyFileTest::GetArgReplacements`)
 
-    ARGS can be specified at most once. If not provided, the FileTestBase child
-    is responsible for providing default arguments.
+    `ARGS` can be specified at most once. If not provided, the `FileTestBase`
+    child is responsible for providing default arguments.
 
 -   ```
     // EXTRA-ARGS: <arguments>
@@ -173,28 +176,33 @@ Supported comment markers are:
     This should be avoided because we are partly ensuring that streams are an
     API, but is helpful when wrapping Clang, where stderr is used directly.
 
-    SET-CAPTURE-CONSOLE-OUTPUT can be specified at most once.
+    `SET-CAPTURE-CONSOLE-OUTPUT` can be specified at most once.
 
 -   ```
     // SET-CHECK-SUBSET
     ```
 
-    By default, all lines of output must have a CHECK match. Adding this as a
+    By default, all lines of output must have a `CHECK` match. Adding this as a
     option sets it so that non-matching lines are ignored. All provided
-    CHECK:STDOUT: and CHECK:STDERR: lines must still have a match in output.
+    `CHECK:STDOUT:` and `CHECK:STDERR:` lines must still have a match in output.
 
-    SET-CHECK-SUBSET can be specified at most once.
+    `SET-CHECK-SUBSET`can be specified at most once.
 
 -   ```
     // --- <filename>
     ```
 
     By default, all file content is provided to the test as a single file in
-    test_files. Using this marker allows the file to be split into multiple
-    files which will all be passed to test_files.
+    `test_files`. Using this marker allows the file to be split into multiple
+    files which will all be passed to `test_files`.
 
-    Files are not created on disk; it's expected the child will create an
-    InMemoryFilesystem if needed.
+    Files are not created on disk; instead, content is passed in through the
+    `fs` passed to `Run`.
+
+    If the filename is `STDIN`, it will be provided as `input_stream` instead of
+    in `test_files`. Currently, autoupdate can place `CHECK` lines in the
+    `STDIN` split; use `AUTOUPDATE-SPLIT` to avoid that (see `AUTOUPDATE` for
+    information).
 
 -   ```
     // CHECK:STDOUT: <output line>

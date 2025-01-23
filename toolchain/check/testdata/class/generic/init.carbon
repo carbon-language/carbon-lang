@@ -71,7 +71,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -140,13 +140,17 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Class.%struct_type.k (%struct_type.k.b21) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5: @Class.%Class.elem (%Class.elem.e26) = field_decl k, element0 [template]
+// CHECK:STDOUT:     %.loc5_8: @Class.%Class.elem (%Class.elem.e26) = field_decl k, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc5_3: @Class.%Class.elem (%Class.elem.e26) = var_pattern %.loc5_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.e26) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.k.b21 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.fe1
-// CHECK:STDOUT:     .k = %.loc5
+// CHECK:STDOUT:     .k = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -156,24 +160,33 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type @InitFromStructGeneric.%T.loc8_26.2 (%T) [symbolic = %require_complete.loc8 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc8_26.2) [symbolic = %Class (constants.%Class.fe1)]
-// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @InitFromStructGeneric.%Class (%Class.fe1) [symbolic = %require_complete.loc9 (constants.%require_complete.4f8)]
+// CHECK:STDOUT:   %Class.loc9_17.2: type = class_type @Class, @Class(%T.loc8_26.2) [symbolic = %Class.loc9_17.2 (constants.%Class.fe1)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) [symbolic = %require_complete.loc9 (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @InitFromStructGeneric.%T.loc8_26.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k.b21)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @InitFromStructGeneric.%Class (%Class.fe1), @InitFromStructGeneric.%T.loc8_26.2 (%T) [symbolic = %Class.elem (constants.%Class.elem.e26)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1), @InitFromStructGeneric.%T.loc8_26.2 (%T) [symbolic = %Class.elem (constants.%Class.elem.e26)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T)) -> @InitFromStructGeneric.%T.loc8_26.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class (%Class.fe1) = var v
-// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class (%Class.fe1) = bind_name v, %v.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = binding_pattern v
+// CHECK:STDOUT:       %.loc9_3.1: @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = var_pattern %v.patt
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = var v
 // CHECK:STDOUT:     %x.ref: @InitFromStructGeneric.%T.loc8_26.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc9_28.1: @InitFromStructGeneric.%struct_type.k (%struct_type.k.b21) = struct_literal (%x.ref)
 // CHECK:STDOUT:     %.loc9_28.2: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = class_element_access %v.var, element0
 // CHECK:STDOUT:     %.loc9_28.3: init @InitFromStructGeneric.%T.loc8_26.2 (%T) = initialize_from %x.ref to %.loc9_28.2
-// CHECK:STDOUT:     %.loc9_28.4: init @InitFromStructGeneric.%Class (%Class.fe1) = class_init (%.loc9_28.3), %v.var
-// CHECK:STDOUT:     %.loc9_29: init @InitFromStructGeneric.%Class (%Class.fe1) = converted %.loc9_28.1, %.loc9_28.4
-// CHECK:STDOUT:     assign %v.var, %.loc9_29
-// CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class (%Class.fe1) = name_ref v, %v
-// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%Class.elem (%Class.elem.e26) = name_ref k, @Class.%.loc5 [template = @Class.%.loc5]
+// CHECK:STDOUT:     %.loc9_28.4: init @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = class_init (%.loc9_28.3), %v.var
+// CHECK:STDOUT:     %.loc9_3.2: init @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = converted %.loc9_28.1, %.loc9_28.4
+// CHECK:STDOUT:     assign %v.var, %.loc9_3.2
+// CHECK:STDOUT:     %.loc9_17: type = splice_block %Class.loc9_17.1 [symbolic = %Class.loc9_17.2 (constants.%Class.fe1)] {
+// CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.generic]
+// CHECK:STDOUT:       %T.ref.loc9: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
+// CHECK:STDOUT:       %Class.loc9_17.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc9_17.2 (constants.%Class.fe1)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = bind_name v, %v.var
+// CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = name_ref v, %v
+// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%Class.elem (%Class.elem.e26) = name_ref k, @Class.%.loc5_8 [template = @Class.%.loc5_8]
 // CHECK:STDOUT:     %.loc10_11.1: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = class_element_access %v.ref, element0
 // CHECK:STDOUT:     %.loc10_11.2: @InitFromStructGeneric.%T.loc8_26.2 (%T) = bind_value %.loc10_11.1
 // CHECK:STDOUT:     return %.loc10_11.2
@@ -182,17 +195,27 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStructSpecific(%x.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %Class.247 = binding_pattern v
+// CHECK:STDOUT:     %.loc14_3.1: %Class.247 = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Class.247 = var v
-// CHECK:STDOUT:   %v: ref %Class.247 = bind_name v, %v.var
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %.loc14_30.1: %struct_type.k.0bf = struct_literal (%x.ref)
 // CHECK:STDOUT:   %.loc14_30.2: ref %i32 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc14_30.3: init %i32 = initialize_from %x.ref to %.loc14_30.2
 // CHECK:STDOUT:   %.loc14_30.4: init %Class.247 = class_init (%.loc14_30.3), %v.var
-// CHECK:STDOUT:   %.loc14_31: init %Class.247 = converted %.loc14_30.1, %.loc14_30.4
-// CHECK:STDOUT:   assign %v.var, %.loc14_31
+// CHECK:STDOUT:   %.loc14_3.2: init %Class.247 = converted %.loc14_30.1, %.loc14_30.4
+// CHECK:STDOUT:   assign %v.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_19: type = splice_block %Class [template = constants.%Class.247] {
+// CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.generic]
+// CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.247]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: ref %Class.247 = bind_name v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %Class.247 = name_ref v, %v
-// CHECK:STDOUT:   %k.ref: %Class.elem.2d8 = name_ref k, @Class.%.loc5 [template = @Class.%.loc5]
+// CHECK:STDOUT:   %k.ref: %Class.elem.2d8 = name_ref k, @Class.%.loc5_8 [template = @Class.%.loc5_8]
 // CHECK:STDOUT:   %.loc15_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc15_11.2: %i32 = bind_value %.loc15_11.1
 // CHECK:STDOUT:   return %.loc15_11.2
@@ -256,7 +279,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

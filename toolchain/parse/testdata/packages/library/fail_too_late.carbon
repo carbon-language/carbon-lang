@@ -10,12 +10,13 @@
 
 import Geometry;
 
-// CHECK:STDERR: fail_too_late.carbon:[[@LINE+6]]:1: error: the `library` declaration must be the first non-comment line [PackageTooLate]
+// CHECK:STDERR: fail_too_late.carbon:[[@LINE+7]]:1: error: the `library` declaration must be the first non-comment line [PackageTooLate]
 // CHECK:STDERR: library "too_late";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_too_late.carbon:[[@LINE-5]]:1: note: first non-comment line is here [FirstNonCommentLine]
 // CHECK:STDERR: import Geometry;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: fail_too_late.carbon

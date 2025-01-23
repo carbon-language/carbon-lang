@@ -19,9 +19,10 @@ fn CallStatic(T:! Interface) {
 }
 
 fn CallFacet(T:! Interface, x: T) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: error: type `T` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: type `T` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   x.F();
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   x.F();
 }
 

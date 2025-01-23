@@ -46,9 +46,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: error: member name `v` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:14: error: member name `v` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var v2: () = Test.v;
 // CHECK:STDERR:              ^~~~~~
+// CHECK:STDERR:
 var v2: () = Test.v;
 
 // CHECK:STDOUT: --- def.carbon
@@ -62,7 +63,15 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v [private] = %v
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %empty_tuple.type = binding_pattern v
+// CHECK:STDOUT:     %.loc4_9: %empty_tuple.type = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
+// CHECK:STDOUT:   %.loc4_17.1: type = splice_block %.loc4_17.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_17.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_17.3: type = converted %.loc4_17.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -70,8 +79,8 @@ var v2: () = Test.v;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_22.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_22.2: init %empty_tuple.type = tuple_init () to file.%v.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_23: init %empty_tuple.type = converted %.loc4_22.1, %.loc4_22.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%v.var, %.loc4_23
+// CHECK:STDOUT:   %.loc4_9: init %empty_tuple.type = converted %.loc4_22.1, %.loc4_22.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%v.var, %.loc4_9
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,26 +92,34 @@ var v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Test//def, v, loaded
+// CHECK:STDOUT:   %Test.v: ref %empty_tuple.type = import_ref Test//def, v, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .v [private] = imports.%import_ref
+// CHECK:STDOUT:     .v [private] = imports.%Test.v
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
+// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %v2.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
+// CHECK:STDOUT:   %.loc4_10.1: type = splice_block %.loc4_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = bind_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%import_ref
+// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%Test.v
 // CHECK:STDOUT:   %.loc4_14: init %empty_tuple.type = tuple_init () to file.%v2.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_15: init %empty_tuple.type = converted %v.ref, %.loc4_14 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%v2.var, %.loc4_15
+// CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %v.ref, %.loc4_14 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%v2.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,7 +134,15 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %v2.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
+// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = bind_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,7 +171,15 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %v2.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
+// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = bind_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

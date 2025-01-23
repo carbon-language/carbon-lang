@@ -63,9 +63,10 @@ fn AccessMissingDerived[T:! type](x: Derived(T)) -> T {
 }
 
 fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+3]]:10: error: member name `nonesuch` not found in `Derived(i32)` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Derived(i32)` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return x.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR:
   return x.nonesuch;
 }
 
@@ -113,7 +114,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -218,13 +219,17 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Base.%struct_type.b (%struct_type.b.f69) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [template]
+// CHECK:STDOUT:     %.loc5_8: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc5_3: @Base.%Base.elem (%Base.elem.9af) = var_pattern %.loc5_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Base.%Base.elem (%Base.elem.9af) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.b.f69 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
-// CHECK:STDOUT:     .b = %.loc5
+// CHECK:STDOUT:     .b = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,14 +252,18 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_15.1 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:     %Base.loc9_22.1: type = class_type @Base, @Base(constants.%T) [symbolic = %Base.loc9_22.2 (constants.%Base.370)]
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [template]
-// CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [template]
+// CHECK:STDOUT:     %.loc10_8: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc10_3: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = var_pattern %.loc10_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc11_1.1: <witness> = complete_type_witness %struct_type.base.d.37c [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.8ad)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived.85c
 // CHECK:STDOUT:     .base = %.loc9
-// CHECK:STDOUT:     .d = %.loc10
+// CHECK:STDOUT:     .d = %.loc10_8
 // CHECK:STDOUT:     extend %Base.loc9_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -272,7 +281,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @AccessDerived.%Derived.loc13_40.2 (%Derived.85c)) -> @AccessDerived.%T.loc13_18.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessDerived.%Derived.loc13_40.2 (%Derived.85c) = name_ref x, %x
-// CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.6d2) = name_ref d, @Derived.%.loc10 [template = @Derived.%.loc10]
+// CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.6d2) = name_ref d, @Derived.%.loc10_8 [template = @Derived.%.loc10_8]
 // CHECK:STDOUT:     %.loc14_11.1: ref @AccessDerived.%T.loc13_18.2 (%T) = class_element_access %x.ref, element1
 // CHECK:STDOUT:     %.loc14_11.2: @AccessDerived.%T.loc13_18.2 (%T) = bind_value %.loc14_11.1
 // CHECK:STDOUT:     return %.loc14_11.2
@@ -294,7 +303,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @AccessBase.%Derived.loc17_37.2 (%Derived.85c)) -> @AccessBase.%T.loc17_15.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessBase.%Derived.loc17_37.2 (%Derived.85c) = name_ref x, %x
-// CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.9af) = name_ref b, @Base.%.loc5 [template = @Base.%.loc5]
+// CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.9af) = name_ref b, @Base.%.loc5_8 [template = @Base.%.loc5_8]
 // CHECK:STDOUT:     %.loc18_11.1: ref @AccessBase.%Base (%Base.370) = class_element_access %x.ref, element0
 // CHECK:STDOUT:     %.loc18_11.2: ref @AccessBase.%Base (%Base.370) = converted %x.ref, %.loc18_11.1
 // CHECK:STDOUT:     %.loc18_11.3: ref @AccessBase.%T.loc17_15.2 (%T) = class_element_access %.loc18_11.2, element0
@@ -306,7 +315,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT: fn @AccessConcrete(%x.param_patt: %Derived.115) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %Derived.115 = name_ref x, %x
-// CHECK:STDOUT:   %b.ref: %Base.elem.a98 = name_ref b, @Base.%.loc5 [template = @Base.%.loc5]
+// CHECK:STDOUT:   %b.ref: %Base.elem.a98 = name_ref b, @Base.%.loc5_8 [template = @Base.%.loc5_8]
 // CHECK:STDOUT:   %.loc22_11.1: ref %Base.10a = class_element_access %x.ref, element0
 // CHECK:STDOUT:   %.loc22_11.2: ref %Base.10a = converted %x.ref, %.loc22_11.1
 // CHECK:STDOUT:   %.loc22_11.3: ref %i32 = class_element_access %.loc22_11.2, element0
@@ -436,7 +445,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -541,13 +550,17 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Base.%struct_type.b (%struct_type.b.f69) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [template]
+// CHECK:STDOUT:     %.loc5_8: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc5_3: @Base.%Base.elem (%Base.elem.9af) = var_pattern %.loc5_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Base.%Base.elem (%Base.elem.9af) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.b.f69 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
-// CHECK:STDOUT:     .b = %.loc5
+// CHECK:STDOUT:     .b = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -570,14 +583,18 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_15.1 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:     %Base.loc9_22.1: type = class_type @Base, @Base(constants.%T) [symbolic = %Base.loc9_22.2 (constants.%Base.370)]
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [template]
-// CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [template]
+// CHECK:STDOUT:     %.loc10_8: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc10_3: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = var_pattern %.loc10_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc11_1.1: <witness> = complete_type_witness %struct_type.base.d.37c [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.8ad)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived.85c
 // CHECK:STDOUT:     .base = %.loc9
-// CHECK:STDOUT:     .d = %.loc10
+// CHECK:STDOUT:     .d = %.loc10_8
 // CHECK:STDOUT:     extend %Base.loc9_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

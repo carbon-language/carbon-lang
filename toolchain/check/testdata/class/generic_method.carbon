@@ -86,7 +86,11 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.a (%struct_type.a) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [template]
+// CHECK:STDOUT:     %.loc12_8: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc12_3: @Class.%Class.elem (%Class.elem) = var_pattern %.loc12_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <invalid>
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
@@ -108,7 +112,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
-// CHECK:STDOUT:     .a = %.loc12
+// CHECK:STDOUT:     .a = %.loc12_8
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

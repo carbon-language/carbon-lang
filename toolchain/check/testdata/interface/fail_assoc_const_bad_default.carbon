@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let T:! type = 42;
 }
 
@@ -30,7 +31,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -50,7 +51,7 @@ interface I {
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [template = constants.%assoc0.c7e]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42]
-// CHECK:STDOUT:     %.loc18: type = converted %int_42, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc19: type = converted %int_42, <error> [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

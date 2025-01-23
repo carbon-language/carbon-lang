@@ -17,12 +17,13 @@ class B {
 }
 
 fn AccessBInA(a: A) -> i32 {
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `A` to `B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `A` to `B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return a.(B.b);
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+3]]:10: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+4]]:10: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return a.(B.b);
   // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR:
   return a.(B.b);
 }
 
@@ -45,8 +46,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -79,32 +80,40 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc12: %A.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %A.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %A.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %A.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .a = %.loc12
+// CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc16: %B.elem = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc16_8: %B.elem = field_decl b, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc16_3: %B.elem = var_pattern %.loc16_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %B.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [template = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .b = %.loc16
+// CHECK:STDOUT:   .b = %.loc16_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBInA(%a.param_patt: %A) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16 [template = @B.%.loc16]
-// CHECK:STDOUT:   %.loc26_11.1: %B = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc26_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
+// CHECK:STDOUT:   %.loc27_11.1: %B = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc27_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

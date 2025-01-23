@@ -45,6 +45,7 @@ class KeywordModifierSet {
     Final = 1 << 8,
     Impl = 1 << 9,
     Virtual = 1 << 10,
+    Returned = 1 << 11,
 
     // Sets of modifiers:
     Access = Private | Protected,
@@ -52,10 +53,10 @@ class KeywordModifierSet {
     Method = Abstract | Impl | Virtual,
     ImplDecl = Extend | Final,
     Interface = Default | Final,
-    Decl = Class | Method | ImplDecl | Interface | Export,
+    Decl = Class | Method | ImplDecl | Interface | Export | Returned,
     None = 0,
 
-    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Virtual)
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Returned)
   };
 
   // Default construct to empty.

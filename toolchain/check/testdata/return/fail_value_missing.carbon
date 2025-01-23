@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_value_missing.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+6]]:3: error: missing return value [ReturnStatementMissingExpr]
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+7]]:3: error: missing return value [ReturnStatementMissingExpr]
   // CHECK:STDERR:   return;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:11: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR: fn Main() -> i32 {
   // CHECK:STDERR:           ^~~~~~
+  // CHECK:STDERR:
   return;
 }
 
@@ -29,7 +30,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

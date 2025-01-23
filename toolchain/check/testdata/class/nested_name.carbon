@@ -42,7 +42,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -95,19 +95,23 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc13: %Inner.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc13_10: %Inner.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc13_5: %Inner.elem = var_pattern %.loc13_10
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Inner.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .n = %.loc13
+// CHECK:STDOUT:   .n = %.loc13_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%oi.param_patt: %Inner) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
-// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13 [template = @Inner.%.loc13]
+// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13_10 [template = @Inner.%.loc13_10]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %oi.ref, element0
 // CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
 // CHECK:STDOUT:   return %.loc18_12.2
@@ -115,7 +119,15 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%o.param_patt: %Outer) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %i.patt: %Inner = binding_pattern i
+// CHECK:STDOUT:     %.loc22_3: %Inner = var_pattern %i.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
+// CHECK:STDOUT:   %.loc22_11: type = splice_block %Inner.ref [template = constants.%Inner] {
+// CHECK:STDOUT:     %o.ref: %Outer = name_ref o, %o
+// CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

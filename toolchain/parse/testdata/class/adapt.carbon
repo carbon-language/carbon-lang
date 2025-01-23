@@ -60,9 +60,10 @@ class C {
 }
 
 class D {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+3]]:9: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:9: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   adapt class;
   // CHECK:STDERR:         ^~~~~
+  // CHECK:STDERR:
   adapt class;
 }
 

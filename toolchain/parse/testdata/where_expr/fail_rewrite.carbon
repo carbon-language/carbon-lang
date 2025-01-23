@@ -61,9 +61,10 @@ fn BinaryOpAfterDesignator(Y:! N where .O + .P = {});
 
 // --- fail_after_and.carbon
 
-// CHECK:STDERR: fail_after_and.carbon:[[@LINE+3]]:43: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+// CHECK:STDERR: fail_after_and.carbon:[[@LINE+4]]:43: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
 // CHECK:STDERR: fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDERR:                                           ^
+// CHECK:STDERR:
 fn AfterAnd(Z:! Q where .R impls S and () = .A);
 
 // CHECK:STDOUT: - filename: fail_not_designator.carbon

@@ -32,7 +32,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
@@ -46,9 +46,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -93,8 +93,11 @@ fn F(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%cond.param_patt: bool) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %struct_type.a.b.501 = binding_pattern a
+// CHECK:STDOUT:     %.loc14_3.1: %struct_type.a.b.501 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.a.b.501 = var a
-// CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = bind_name a, %a.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc14_46.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
@@ -113,8 +116,16 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc14_46.6: ref %i32 = struct_access %a.var, element1
 // CHECK:STDOUT:   %.loc14_46.7: init %i32 = initialize_from %.loc14_46.5 to %.loc14_46.6 [template = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc14_46.8: init %struct_type.a.b.501 = struct_init (%.loc14_46.4, %.loc14_46.7) to %a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc14_47: init %struct_type.a.b.501 = converted %.loc14_46.1, %.loc14_46.8 [template = constants.%struct]
-// CHECK:STDOUT:   assign %a.var, %.loc14_47
+// CHECK:STDOUT:   %.loc14_3.2: init %struct_type.a.b.501 = converted %.loc14_46.1, %.loc14_46.8 [template = constants.%struct]
+// CHECK:STDOUT:   assign %a.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_27: type = splice_block %struct_type.a.b [template = constants.%struct_type.a.b.501] {
+// CHECK:STDOUT:     %int_32.loc14_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.501]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = bind_name a, %a.var
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else

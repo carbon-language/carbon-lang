@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_non_member_access.carbon
 
 var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:14: error: type `{.a: i32}` does not have a member `b` [QualifiedExprNameNotFound]
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+4]]:14: error: type `{.a: i32}` does not have a member `b` [QualifiedExprNameNotFound]
 // CHECK:STDERR: var y: i32 = x.b;
 // CHECK:STDERR:              ^~~
+// CHECK:STDERR:
 var y: i32 = x.b;
 
 // CHECK:STDOUT: --- fail_non_member_access.carbon
@@ -23,7 +24,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_4.0c1, %Convert.956 [template]
@@ -34,8 +35,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -48,9 +49,26 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.a.ba9 = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %struct_type.a.ba9 = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.ba9 = var x
+// CHECK:STDOUT:   %.loc11_16: type = splice_block %struct_type.a [template = constants.%struct_type.a.ba9] {
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a.ba9]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
+// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
+// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32.loc16 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,8 +82,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_4) [template = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc11_27.2: init %i32 = converted %int_4, %int.convert_checked [template = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc11_27.3: init %struct_type.a.ba9 = struct_init (%.loc11_27.2) to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_28: init %struct_type.a.ba9 = converted %.loc11_27.1, %.loc11_27.3 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc11_28
+// CHECK:STDOUT:   %.loc11_1: init %struct_type.a.ba9 = converted %.loc11_27.1, %.loc11_27.3 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc11_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.ba9 = name_ref x, file.%x
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return

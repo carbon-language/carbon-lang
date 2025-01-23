@@ -64,7 +64,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref
+// CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -143,13 +143,69 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %return.param: ref %C.2ba = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C.2ba = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %C.a14 = binding_pattern a
+// CHECK:STDOUT:     %.loc11_1: %C.a14 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.a14 = var a
+// CHECK:STDOUT:   %.loc11_24.1: type = splice_block %C.loc11 [template = constants.%C.a14] {
+// CHECK:STDOUT:     %C.ref.loc11: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %Eq.ref.loc11: %Eq.type = name_ref Eq, %Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:     %true.loc11_13: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %true.loc11_19: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %bool.eq.loc11: init bool = call %Eq.ref.loc11(%true.loc11_13, %true.loc11_19) [template = constants.%true]
+// CHECK:STDOUT:     %.loc11_24.2: bool = value_of_initializer %bool.eq.loc11 [template = constants.%true]
+// CHECK:STDOUT:     %.loc11_24.3: bool = converted %bool.eq.loc11, %.loc11_24.2 [template = constants.%true]
+// CHECK:STDOUT:     %C.loc11: type = class_type @C, @C(constants.%true) [template = constants.%C.a14]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %C.a14 = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %C.2ba = binding_pattern b
+// CHECK:STDOUT:     %.loc12_1: %C.2ba = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %C.2ba = var b
+// CHECK:STDOUT:   %.loc12_25.1: type = splice_block %C.loc12 [template = constants.%C.2ba] {
+// CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %Eq.ref.loc12: %Eq.type = name_ref Eq, %Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:     %true.loc12: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %false.loc12: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %bool.eq.loc12: init bool = call %Eq.ref.loc12(%true.loc12, %false.loc12) [template = constants.%false]
+// CHECK:STDOUT:     %.loc12_25.2: bool = value_of_initializer %bool.eq.loc12 [template = constants.%false]
+// CHECK:STDOUT:     %.loc12_25.3: bool = converted %bool.eq.loc12, %.loc12_25.2 [template = constants.%false]
+// CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%false) [template = constants.%C.2ba]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %C.2ba = bind_name b, %b.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C.2ba = binding_pattern c
+// CHECK:STDOUT:     %.loc13_1: %C.2ba = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.2ba = var c
+// CHECK:STDOUT:   %.loc13_25.1: type = splice_block %C.loc13 [template = constants.%C.2ba] {
+// CHECK:STDOUT:     %C.ref.loc13: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %Eq.ref.loc13: %Eq.type = name_ref Eq, %Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:     %false.loc13: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %true.loc13: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %bool.eq.loc13: init bool = call %Eq.ref.loc13(%false.loc13, %true.loc13) [template = constants.%false]
+// CHECK:STDOUT:     %.loc13_25.2: bool = value_of_initializer %bool.eq.loc13 [template = constants.%false]
+// CHECK:STDOUT:     %.loc13_25.3: bool = converted %bool.eq.loc13, %.loc13_25.2 [template = constants.%false]
+// CHECK:STDOUT:     %C.loc13: type = class_type @C, @C(constants.%false) [template = constants.%C.2ba]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C.2ba = bind_name c, %c.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %C.a14 = binding_pattern d
+// CHECK:STDOUT:     %.loc14_1: %C.a14 = var_pattern %d.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %C.a14 = var d
+// CHECK:STDOUT:   %.loc14_26.1: type = splice_block %C.loc14 [template = constants.%C.a14] {
+// CHECK:STDOUT:     %C.ref.loc14: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %Eq.ref.loc14: %Eq.type = name_ref Eq, %Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:     %false.loc14_13: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %false.loc14_20: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %bool.eq.loc14: init bool = call %Eq.ref.loc14(%false.loc14_13, %false.loc14_20) [template = constants.%true]
+// CHECK:STDOUT:     %.loc14_26.2: bool = value_of_initializer %bool.eq.loc14 [template = constants.%true]
+// CHECK:STDOUT:     %.loc14_26.3: bool = converted %bool.eq.loc14, %.loc14_26.2 [template = constants.%true]
+// CHECK:STDOUT:     %C.loc14: type = class_type @C, @C(constants.%true) [template = constants.%C.a14]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %C.a14 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,12 +290,18 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %C.2ba: type = class_type @C, @C(%false) [template]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.998, imports.%Core.import_ref.fb6) [template]
+// CHECK:STDOUT:   %Equal.type.79c: type = fn_type @Equal.1 [template]
+// CHECK:STDOUT:   %Equal.type.aa3: type = fn_type @Equal.2 [template]
+// CHECK:STDOUT:   %Equal.6e2: %Equal.type.aa3 = struct_value () [template]
+// CHECK:STDOUT:   %Equal.bound.fe0: <bound method> = bound_method %true, %Equal.6e2 [template]
+// CHECK:STDOUT:   %Equal.bound.d3c: <bound method> = bound_method %false, %Equal.6e2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .Eq = %import_ref.822
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Eq = %Core.Eq
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -289,13 +351,73 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %return.param: ref %C.2ba = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C.2ba = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %C.a14 = binding_pattern a
+// CHECK:STDOUT:     %.loc9_1: %C.a14 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.a14 = var a
+// CHECK:STDOUT:   %.loc9_22.1: type = splice_block %C.loc9 [template = constants.%C.a14] {
+// CHECK:STDOUT:     %C.ref.loc9: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %true.loc9_10: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %true.loc9_18: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %impl.elem0.loc9: %Equal.type.79c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.6e2]
+// CHECK:STDOUT:     %Equal.bound.loc9: <bound method> = bound_method %true.loc9_10, %impl.elem0.loc9 [template = constants.%Equal.bound.fe0]
+// CHECK:STDOUT:     %bool.eq.loc9: init bool = call %Equal.bound.loc9(%true.loc9_10, %true.loc9_18) [template = constants.%true]
+// CHECK:STDOUT:     %.loc9_22.2: bool = value_of_initializer %bool.eq.loc9 [template = constants.%true]
+// CHECK:STDOUT:     %.loc9_22.3: bool = converted %bool.eq.loc9, %.loc9_22.2 [template = constants.%true]
+// CHECK:STDOUT:     %C.loc9: type = class_type @C, @C(constants.%true) [template = constants.%C.a14]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %C.a14 = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %C.2ba = binding_pattern b
+// CHECK:STDOUT:     %.loc10_1: %C.2ba = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %C.2ba = var b
+// CHECK:STDOUT:   %.loc10_23.1: type = splice_block %C.loc10 [template = constants.%C.2ba] {
+// CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %true.loc10: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %false.loc10: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %impl.elem0.loc10: %Equal.type.79c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.6e2]
+// CHECK:STDOUT:     %Equal.bound.loc10: <bound method> = bound_method %true.loc10, %impl.elem0.loc10 [template = constants.%Equal.bound.fe0]
+// CHECK:STDOUT:     %bool.eq.loc10: init bool = call %Equal.bound.loc10(%true.loc10, %false.loc10) [template = constants.%false]
+// CHECK:STDOUT:     %.loc10_23.2: bool = value_of_initializer %bool.eq.loc10 [template = constants.%false]
+// CHECK:STDOUT:     %.loc10_23.3: bool = converted %bool.eq.loc10, %.loc10_23.2 [template = constants.%false]
+// CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%false) [template = constants.%C.2ba]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %C.2ba = bind_name b, %b.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C.2ba = binding_pattern c
+// CHECK:STDOUT:     %.loc11_1: %C.2ba = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.2ba = var c
+// CHECK:STDOUT:   %.loc11_23.1: type = splice_block %C.loc11 [template = constants.%C.2ba] {
+// CHECK:STDOUT:     %C.ref.loc11: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %false.loc11: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %true.loc11: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %impl.elem0.loc11: %Equal.type.79c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.6e2]
+// CHECK:STDOUT:     %Equal.bound.loc11: <bound method> = bound_method %false.loc11, %impl.elem0.loc11 [template = constants.%Equal.bound.d3c]
+// CHECK:STDOUT:     %bool.eq.loc11: init bool = call %Equal.bound.loc11(%false.loc11, %true.loc11) [template = constants.%false]
+// CHECK:STDOUT:     %.loc11_23.2: bool = value_of_initializer %bool.eq.loc11 [template = constants.%false]
+// CHECK:STDOUT:     %.loc11_23.3: bool = converted %bool.eq.loc11, %.loc11_23.2 [template = constants.%false]
+// CHECK:STDOUT:     %C.loc11: type = class_type @C, @C(constants.%false) [template = constants.%C.2ba]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C.2ba = bind_name c, %c.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %C.a14 = binding_pattern d
+// CHECK:STDOUT:     %.loc12_1: %C.a14 = var_pattern %d.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %C.a14 = var d
+// CHECK:STDOUT:   %.loc12_24.1: type = splice_block %C.loc12 [template = constants.%C.a14] {
+// CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %false.loc12_10: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %false.loc12_19: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:     %impl.elem0.loc12: %Equal.type.79c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.6e2]
+// CHECK:STDOUT:     %Equal.bound.loc12: <bound method> = bound_method %false.loc12_10, %impl.elem0.loc12 [template = constants.%Equal.bound.d3c]
+// CHECK:STDOUT:     %bool.eq.loc12: init bool = call %Equal.bound.loc12(%false.loc12_10, %false.loc12_19) [template = constants.%true]
+// CHECK:STDOUT:     %.loc12_24.2: bool = value_of_initializer %bool.eq.loc12 [template = constants.%true]
+// CHECK:STDOUT:     %.loc12_24.3: bool = converted %bool.eq.loc12, %.loc12_24.2 [template = constants.%true]
+// CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%true) [template = constants.%C.a14]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %C.a14 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

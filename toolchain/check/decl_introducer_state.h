@@ -15,7 +15,7 @@ namespace Carbon::Check {
 // declaration and the keyword modifiers that apply to that declaration
 // introducer.
 struct DeclIntroducerState {
-  auto modifier_node_id(ModifierOrder order) -> Parse::NodeId {
+  auto modifier_node_id(ModifierOrder order) const -> Parse::NodeId {
     return ordered_modifier_node_ids[static_cast<int8_t>(order)];
   }
   auto set_modifier_node_id(ModifierOrder order, Parse::NodeId node_id)

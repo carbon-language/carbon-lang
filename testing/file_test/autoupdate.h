@@ -39,7 +39,7 @@ class FileTestAutoupdater {
       const llvm::SmallVector<llvm::StringRef>& filenames,
       int autoupdate_line_number, bool autoupdate_split,
       const llvm::SmallVector<FileTestLine>& non_check_lines,
-      llvm::StringRef stdout, llvm::StringRef stderr,
+      llvm::StringRef actual_stdout, llvm::StringRef actual_stderr,
       const std::optional<RE2>& default_file_re,
       const llvm::SmallVector<LineNumberReplacement>& line_number_replacements,
       std::function<void(std::string&)> do_extra_check_replacements)
@@ -56,8 +56,8 @@ class FileTestAutoupdater {
         do_extra_check_replacements_(std::move(do_extra_check_replacements)),
         // BuildCheckLines should only be called after other member
         // initialization.
-        stdout_(BuildCheckLines(stdout, "STDOUT")),
-        stderr_(BuildCheckLines(stderr, "STDERR")),
+        stdout_(BuildCheckLines(actual_stdout, "STDOUT")),
+        stderr_(BuildCheckLines(actual_stderr, "STDERR")),
         any_attached_stdout_lines_(llvm::any_of(
             stdout_.lines,
             [&](const CheckLine& line) { return line.line_number() != -1; })),

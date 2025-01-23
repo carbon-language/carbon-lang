@@ -22,9 +22,10 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+3]]:8: error: member name `missing` not found [MemberNameNotFound]
+// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: member name `missing` not found [MemberNameNotFound]
 // CHECK:STDERR: let U: (type where .Self impls type).missing = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let U: (type where .Self impls type).missing = {};
 
 // CHECK:STDOUT: --- fail_lookup_in_type.carbon
@@ -35,33 +36,49 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .T = @__global_init.%T
+// CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %T.patt: <error> = binding_pattern T
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %T: <error> = bind_name T, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %T: <error> = bind_name T, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_lookup_type_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .U = @__global_init.%U
+// CHECK:STDOUT:     .U = %U
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %U.patt: <error> = binding_pattern U
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:       requirement_impls %.Self.ref, type
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %U: <error> = bind_name U, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %U: <error> = bind_name U, <error>
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

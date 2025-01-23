@@ -46,7 +46,9 @@ enum class MatchKind : uint8_t {
   // against the portion of the pattern below the ParamPattern insts.
   Callee,
 
-  // TODO: Add enumerator for non-function-call pattern match.
+  // Local pattern matching is pattern matching outside of a function call,
+  // such as in a let/var declaration.
+  Local,
 };
 
 // The collected state of a pattern-matching operation.
@@ -140,7 +142,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
   CARBON_KIND_SWITCH(pattern.inst) {
     case SemIR::BindingPattern::Kind:
     case SemIR::SymbolicBindingPattern::Kind: {
-      CARBON_CHECK(kind_ == MatchKind::Callee);
+      auto binding_pattern = pattern.inst.As<SemIR::AnyBindingPattern>();
       // We're logically consuming this map entry, so we invalidate it in order
       // to avoid accidentally consuming it twice.
       auto [bind_name_id, type_expr_region_id] = std::exchange(
@@ -148,19 +150,34 @@ auto MatchContext::EmitPatternMatch(Context& context,
           {.bind_name_id = SemIR::InstId::Invalid,
            .type_expr_region_id = SemIR::ExprRegionId::Invalid});
       context.InsertHere(type_expr_region_id);
+      auto value_id = entry.scrutinee_id;
+      switch (kind_) {
+        case MatchKind::Local: {
+          value_id = ConvertToValueOrRefOfType(
+              context, context.insts().GetLocId(entry.scrutinee_id),
+              entry.scrutinee_id, binding_pattern.type_id);
+          break;
+        }
+        case MatchKind::Callee: {
+          if (context.insts()
+                  .GetAs<SemIR::AnyParam>(value_id)
+                  .runtime_index.is_valid()) {
+            results_.push_back(value_id);
+          }
+          break;
+        }
+        case MatchKind::Caller:
+          CARBON_FATAL("Found binding pattern during caller pattern match");
+      }
       auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
       CARBON_CHECK(!bind_name.value_id.is_valid());
-      bind_name.value_id = entry.scrutinee_id;
+      bind_name.value_id = value_id;
       context.ReplaceInstBeforeConstantUse(bind_name_id, bind_name);
       context.inst_block_stack().AddInstId(bind_name_id);
-      if (context.insts()
-              .GetAs<SemIR::AnyParam>(entry.scrutinee_id)
-              .runtime_index.is_valid()) {
-        results_.push_back(entry.scrutinee_id);
-      }
       break;
     }
     case CARBON_KIND(SemIR::AddrPattern addr_pattern): {
+      CARBON_CHECK(kind_ != MatchKind::Local);
       if (kind_ == MatchKind::Callee) {
         // We're emitting pattern-match IR for the callee, but we're still on
         // the caller side of the pattern, so we traverse without emitting any
@@ -233,6 +250,9 @@ auto MatchContext::EmitPatternMatch(Context& context,
                     .pretty_name_id = GetPrettyName(context, param_pattern)})});
           break;
         }
+        case MatchKind::Local: {
+          CARBON_FATAL("Found ValueParamPattern during local pattern match");
+        }
       }
       break;
     }
@@ -267,6 +287,9 @@ auto MatchContext::EmitPatternMatch(Context& context,
                     .pretty_name_id = GetPrettyName(context, param_pattern)})});
           break;
         }
+        case MatchKind::Local: {
+          CARBON_FATAL("Found OutParamPattern during local pattern match");
+        }
       }
       break;
     }
@@ -282,6 +305,29 @@ auto MatchContext::EmitPatternMatch(Context& context,
               .is_valid();
       CARBON_CHECK(!already_in_lookup);
       results_.push_back(entry.scrutinee_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::VarPattern var_pattern): {
+      auto var_id = context.var_storage_map().Lookup(entry.pattern_id).value();
+      // TODO: Find a more efficient way to put these insts in the global_init
+      // block (or drop the distinction between the global_init block and the
+      // file scope?)
+      if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+        context.global_init().Resume();
+      }
+      if (entry.scrutinee_id.is_valid()) {
+        auto init_id =
+            Initialize(context, pattern.loc_id, var_id, entry.scrutinee_id);
+        // TODO: Consider using different instruction kinds for assignment
+        // versus initialization.
+        context.AddInst<SemIR::Assign>(pattern.loc_id,
+                                       {.lhs_id = var_id, .rhs_id = init_id});
+      }
+      AddWork(
+          {.pattern_id = var_pattern.subpattern_id, .scrutinee_id = var_id});
+      if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+        context.global_init().Suspend();
+      }
       break;
     }
     default: {
@@ -364,6 +410,13 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   }
 
   return match.DoWork(context);
+}
+
+auto LocalPatternMatch(Context& context, SemIR::InstId pattern_id,
+                       SemIR::InstId scrutinee_id) -> void {
+  MatchContext match(MatchKind::Local);
+  match.AddWork({.pattern_id = pattern_id, .scrutinee_id = scrutinee_id});
+  match.DoWork(context);
 }
 
 }  // namespace Carbon::Check

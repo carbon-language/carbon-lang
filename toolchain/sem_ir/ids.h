@@ -41,12 +41,17 @@ struct InstId : public IdBase<InstId> {
   // An explicitly invalid ID.
   static const InstId Invalid;
 
+  // Represents the result of a name lookup that is temporarily disallowed
+  // because the name is currently being initialized.
+  static const InstId InitTombstone;
+
   using IdBase::IdBase;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
+constexpr InstId InstId::InitTombstone = InstId(InvalidIndex - 2);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction

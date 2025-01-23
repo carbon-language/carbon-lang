@@ -25,12 +25,13 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   // TODO: Decide on what behavior we want here. We don't reject the corresponding case outside of a function.
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+6]]:3: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+7]]:3: error: duplicate name being declared in the same scope [NameDeclDuplicate]
   // CHECK:STDERR:   class C(C:! type) {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+3]]:11: note: name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+4]]:11: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:   class C(C:! type) {
   // CHECK:STDERR:           ^
+  // CHECK:STDERR:
   class C(C:! type) {
   }
 }
@@ -67,7 +68,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.x.c96: type = struct_type {.x: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
@@ -78,8 +79,8 @@ class C(C:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -106,13 +107,17 @@ class C(C:! type) {
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6: @C.%C.elem (%C.elem.cca) = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc6_10: @C.%C.elem (%C.elem.cca) = field_decl x, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc6_5: @C.%C.elem (%C.elem.cca) = var_pattern %.loc6_10
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem.cca) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness %struct_type.x.2ac [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f06
-// CHECK:STDOUT:     .x = %.loc6
+// CHECK:STDOUT:     .x = %.loc6_10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,8 +130,11 @@ class C(C:! type) {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc5_11.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc5_11.2 (constants.%T)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %C.d45 = binding_pattern v
+// CHECK:STDOUT:     %.loc8_3.1: %C.d45 = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %C.d45 = var v
-// CHECK:STDOUT:   %v: ref %C.d45 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc8_26.1: %struct_type.x.c96 = struct_literal (%int_1)
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
@@ -137,8 +145,15 @@ class C(C:! type) {
 // CHECK:STDOUT:   %.loc8_26.3: ref %i32 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc8_26.4: init %i32 = initialize_from %.loc8_26.2 to %.loc8_26.3 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.5: init %C.d45 = class_init (%.loc8_26.4), %v.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_27: init %C.d45 = converted %.loc8_26.1, %.loc8_26.5 [template = constants.%C.val]
-// CHECK:STDOUT:   assign %v.var, %.loc8_27
+// CHECK:STDOUT:   %.loc8_3.2: init %C.d45 = converted %.loc8_26.1, %.loc8_26.5 [template = constants.%C.val]
+// CHECK:STDOUT:   assign %v.var, %.loc8_3.2
+// CHECK:STDOUT:   %.loc8_15: type = splice_block %C [template = constants.%C.d45] {
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.d45]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: ref %C.d45 = bind_name v, %v.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -191,9 +206,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%C.loc12_11.1: type) {
-// CHECK:STDOUT:   %C.loc12_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc12_11.2 (constants.%C)]
-// CHECK:STDOUT:   %C.patt.loc12_11.2: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc12_11.2 (constants.%C.patt)]
+// CHECK:STDOUT: generic class @.1(%C.loc13_11.1: type) {
+// CHECK:STDOUT:   %C.loc13_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C)]
+// CHECK:STDOUT:   %C.patt.loc13_11.2: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -209,18 +224,18 @@ class C(C:! type) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
-// CHECK:STDOUT:     %C.patt.loc12_11.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc12_11.2 (constants.%C.patt)]
-// CHECK:STDOUT:     %C.param_patt: type = value_param_pattern %C.patt.loc12_11.1, runtime_param<invalid> [symbolic = %C.patt.loc12_11.2 (constants.%C.patt)]
+// CHECK:STDOUT:     %C.patt.loc13_11.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
+// CHECK:STDOUT:     %C.param_patt: type = value_param_pattern %C.patt.loc13_11.1, runtime_param<invalid> [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %C.loc12_11.1: type = bind_symbolic_name C, 0, %C.param [symbolic = %C.loc12_11.2 (constants.%C)]
+// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0, %C.param [symbolic = %C.loc13_11.2 (constants.%C)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%C) {
-// CHECK:STDOUT:   %C.loc12_11.2 => constants.%C
-// CHECK:STDOUT:   %C.patt.loc12_11.2 => constants.%C
+// CHECK:STDOUT:   %C.loc13_11.2 => constants.%C
+// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon

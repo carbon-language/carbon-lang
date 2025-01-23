@@ -18,9 +18,10 @@ impl library "[[@TEST_NAME]]";
 // --- fail_b.carbon
 library "[[@TEST_NAME]]";
 interface B {}
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as B;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as B;
 
 // --- b.impl.carbon
@@ -44,12 +45,12 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//a, A, unloaded
+// CHECK:STDOUT:   %Main.A = import_ref Main//a, A, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref
+// CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc1_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc1_6.2 = import <invalid>
@@ -70,8 +71,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = interface_decl @B [template = constants.%B.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc7_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_7.2: type = converted %.loc7_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
@@ -85,7 +86,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc6_7.2 as %B.ref;
+// CHECK:STDOUT: impl @impl: %.loc7_7.2 as %B.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.impl.carbon
 // CHECK:STDOUT:
@@ -95,15 +96,15 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.8b9 = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %import_ref.420 = import_ref Main//b, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.e5c: type = import_ref Main//b, loc6_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.171: type = import_ref Main//b, loc6_12, loaded [template = constants.%B.type]
+// CHECK:STDOUT:   %Main.B = import_ref Main//b, B, unloaded
+// CHECK:STDOUT:   %Main.import_ref.420 = import_ref Main//b, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc7_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %Main.import_ref.171: type = import_ref Main//b, loc7_12, loaded [template = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B = imports.%import_ref.8b9
+// CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc1_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc1_6.2 = import <invalid>
@@ -111,9 +112,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.420
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.420
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.e5c as imports.%import_ref.171 [from "fail_b.carbon"];
+// CHECK:STDOUT: impl @impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.171 [from "fail_b.carbon"];
 // CHECK:STDOUT:

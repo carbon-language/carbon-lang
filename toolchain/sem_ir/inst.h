@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "common/hashing.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/int.h"
@@ -88,15 +89,14 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
   }
   // A name that can be streamed to an llvm::raw_ostream.
   static auto DebugName() -> std::string {
-    std::string str;
-    llvm::raw_string_ostream out(str);
+    RawStringOstream out;
     out << "{";
     llvm::ListSeparator sep;
     for (auto kind : InstCat::Kinds) {
       out << sep << kind;
     }
     out << "}";
-    return out.str();
+    return out.TakeStr();
   }
 };
 

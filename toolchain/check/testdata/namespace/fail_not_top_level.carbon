@@ -27,9 +27,10 @@ class C {
 }
 
 interface I {
-  // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE+3]]:3: error: `namespace` declaration not at top level [NamespaceDeclNotAtTopLevel]
+  // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE+4]]:3: error: `namespace` declaration not at top level [NamespaceDeclNotAtTopLevel]
   // CHECK:STDERR:   namespace N;
   // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
   namespace N;
   fn N.I() {}
 }

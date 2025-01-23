@@ -15,12 +15,14 @@ auto HandleBindingPattern(Context& context) -> void {
   // for the full BindingPattern.
   if (auto token = context.ConsumeIf(Lex::TokenKind::Template)) {
     context.PushState({.state = State::BindingPatternTemplate,
+                       .in_var_pattern = state.in_var_pattern,
                        .token = *token,
                        .subtree_start = state.subtree_start});
   }
 
   if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
     context.PushState({.state = State::BindingPatternAddr,
+                       .in_var_pattern = state.in_var_pattern,
                        .token = *token,
                        .subtree_start = state.subtree_start});
   }
@@ -74,10 +76,27 @@ auto HandleBindingPattern(Context& context) -> void {
 }
 
 // Handles BindingPatternFinishAs(Generic|Regular).
-static auto HandleBindingPatternFinish(Context& context, NodeKind node_kind)
+static auto HandleBindingPatternFinish(Context& context, bool is_compile_time)
     -> void {
   auto state = context.PopState();
 
+  auto node_kind = NodeKind::InvalidParse;
+  if (state.in_var_pattern) {
+    node_kind = NodeKind::VarBindingPattern;
+    if (is_compile_time) {
+      CARBON_DIAGNOSTIC(
+          CompileTimeBindingInVarDecl, Error,
+          "`var` declaration cannot declare a compile-time binding");
+      context.emitter().Emit(*context.position(), CompileTimeBindingInVarDecl);
+      state.has_error = true;
+    }
+  } else {
+    if (is_compile_time) {
+      node_kind = NodeKind::CompileTimeBindingPattern;
+    } else {
+      node_kind = NodeKind::LetBindingPattern;
+    }
+  }
   context.AddNode(node_kind, state.token, state.has_error);
 
   // Propagate errors to the parent state so that they can take different
@@ -88,11 +107,11 @@ static auto HandleBindingPatternFinish(Context& context, NodeKind node_kind)
 }
 
 auto HandleBindingPatternFinishAsGeneric(Context& context) -> void {
-  HandleBindingPatternFinish(context, NodeKind::CompileTimeBindingPattern);
+  HandleBindingPatternFinish(context, /*is_compile_time=*/true);
 }
 
 auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
-  HandleBindingPatternFinish(context, NodeKind::BindingPattern);
+  HandleBindingPatternFinish(context, /*is_compile_time=*/false);
 }
 
 auto HandleBindingPatternAddr(Context& context) -> void {

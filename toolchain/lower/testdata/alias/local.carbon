@@ -21,9 +21,9 @@ fn F() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %a.var), !dbg !7
-// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4, !dbg !9
-// CHECK:STDOUT:   ret i32 %.loc14, !dbg !10
+// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !7
+// CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4, !dbg !8
+// CHECK:STDOUT:   ret i32 %.loc14, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -41,7 +41,6 @@ fn F() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 10, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !4)

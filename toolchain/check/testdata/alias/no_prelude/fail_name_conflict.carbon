@@ -21,12 +21,13 @@ alias a = C;
 var a: C = {};
 
 var b: C = {};
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: alias b = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: var b: C = {};
 // CHECK:STDERR:     ^
+// CHECK:STDERR:
 alias b = C;
 
 // CHECK:STDOUT: --- fail_name_conflict.carbon
@@ -47,12 +48,22 @@ alias b = C;
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.loc13: type = bind_alias a, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc21: %C = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var a
+// CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.loc21: ref %C = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
+// CHECK:STDOUT:     %.loc23: %C = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %C = var b
+// CHECK:STDOUT:   %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %b: ref %C = bind_name b, %b.var
-// CHECK:STDOUT:   %C.ref.loc30: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc30: type = bind_alias <invalid>, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc31: type = bind_alias <invalid>, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -67,12 +78,12 @@ alias b = C;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc21_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc21_13.2: init %C = class_init (), file.%a.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc21_14: init %C = converted %.loc21_13.1, %.loc21_13.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%a.var, %.loc21_14
+// CHECK:STDOUT:   %.loc21_1: init %C = converted %.loc21_13.1, %.loc21_13.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%a.var, %.loc21_1
 // CHECK:STDOUT:   %.loc23_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc23_13.2: init %C = class_init (), file.%b.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc23_14: init %C = converted %.loc23_13.1, %.loc23_13.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%b.var, %.loc23_14
+// CHECK:STDOUT:   %.loc23_1: init %C = converted %.loc23_13.1, %.loc23_13.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%b.var, %.loc23_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

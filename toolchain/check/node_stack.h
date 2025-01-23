@@ -89,16 +89,8 @@ class NodeStack {
   // Pushes a parse tree node onto the stack with an ID.
   template <typename IdT>
   auto Push(Parse::NodeId node_id, IdT id) -> void {
-    CARBON_CHECK(id.is_valid(), "Push called with invalid id: {0}",
-                 parse_tree_->node_kind(node_id));
-    PushOptional<IdT>(node_id, id);
-  }
-
-  // Pushes a parse tree node onto the stack with an ID that is allowed to be
-  // invalid.
-  template <typename IdT>
-  auto PushOptional(Parse::NodeId node_id, IdT id) -> void {
     auto kind = parse_tree_->node_kind(node_id);
+    CARBON_CHECK(id.is_valid(), "Push called with invalid id: {0}", kind);
     CARBON_CHECK(NodeKindToIdKind(kind) == Id::KindFor<IdT>(),
                  "Parse kind expected a different IdT: {0} -> {1}\n", kind, id);
     CARBON_VLOG("Node Push {0}: {1} -> {2}\n", stack_.size(), kind, id);
@@ -413,14 +405,16 @@ class NodeStack {
       }
       switch (node_kind) {
         case Parse::NodeKind::Addr:
-        case Parse::NodeKind::BindingPattern:
         case Parse::NodeKind::CallExprStart:
         case Parse::NodeKind::CompileTimeBindingPattern:
         case Parse::NodeKind::IfExprThen:
+        case Parse::NodeKind::LetBindingPattern:
         case Parse::NodeKind::ReturnType:
         case Parse::NodeKind::ShortCircuitOperandAnd:
         case Parse::NodeKind::ShortCircuitOperandOr:
         case Parse::NodeKind::StructLiteralField:
+        case Parse::NodeKind::VarBindingPattern:
+        case Parse::NodeKind::VariablePattern:
         case Parse::NodeKind::WhereOperand:
           return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::IfCondition:
@@ -440,9 +434,6 @@ class NodeStack {
           return Id::KindFor<SemIR::InterfaceId>();
         case Parse::NodeKind::ImplDefinitionStart:
           return Id::KindFor<SemIR::ImplId>();
-        case Parse::NodeKind::LetIntroducer:
-        case Parse::NodeKind::VariableIntroducer:
-          return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
@@ -459,6 +450,7 @@ class NodeStack {
         case Parse::NodeKind::ImplIntroducer:
         case Parse::NodeKind::InterfaceIntroducer:
         case Parse::NodeKind::LetInitializer:
+        case Parse::NodeKind::LetIntroducer:
         case Parse::NodeKind::ReturnedModifier:
         case Parse::NodeKind::ReturnStatementStart:
         case Parse::NodeKind::ReturnVarModifier:
@@ -468,6 +460,7 @@ class NodeStack {
         case Parse::NodeKind::TupleLiteralStart:
         case Parse::NodeKind::TuplePatternStart:
         case Parse::NodeKind::VariableInitializer:
+        case Parse::NodeKind::VariableIntroducer:
           return Id::Kind::None;
         case Parse::NodeKind::AbstractModifier:
         case Parse::NodeKind::AdaptDecl:

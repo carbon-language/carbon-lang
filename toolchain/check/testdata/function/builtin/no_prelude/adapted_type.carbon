@@ -40,9 +40,10 @@ class MyIntLiteral {
   adapt {};
 }
 
-// CHECK:STDERR: fail_bad_adapt.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "int.make_type_signed" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_bad_adapt.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.make_type_signed" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 
 // CHECK:STDOUT: --- adapt.carbon
@@ -130,7 +131,12 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %return.param: ref %MyInt32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %MyInt32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %MyInt32 = binding_pattern v
+// CHECK:STDOUT:     %.loc22: %MyInt32 = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %MyInt32 = var v
+// CHECK:STDOUT:   %MyInt32.ref: type = name_ref MyInt32, %MyInt32.decl [template = constants.%MyInt32]
 // CHECK:STDOUT:   %v: ref %MyInt32 = bind_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

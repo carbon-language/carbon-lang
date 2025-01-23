@@ -33,7 +33,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -82,7 +82,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> %i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
+// CHECK:STDOUT:     %.loc16: %Class = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Class = var c
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]

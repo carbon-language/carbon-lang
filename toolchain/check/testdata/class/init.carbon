@@ -41,7 +41,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -107,15 +107,23 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: %Class.elem.c91 = field_decl n, element0 [template]
-// CHECK:STDOUT:   %.loc13: %Class.elem.0c0 = field_decl next, element1 [template]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem.c91 = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Class.elem.c91 = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem.c91 = var <invalid>
+// CHECK:STDOUT:   %.loc13_11: %Class.elem.0c0 = field_decl next, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc13_3: %Class.elem.0c0 = var_pattern %.loc13_11
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem.0c0 = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type.78f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc12
-// CHECK:STDOUT:   .next = %.loc13
+// CHECK:STDOUT:   .n = %.loc12_8
+// CHECK:STDOUT:   .next = %.loc13_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %ptr.e71) -> %return.param_patt: %Class {

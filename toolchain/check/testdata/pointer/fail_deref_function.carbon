@@ -14,9 +14,10 @@ fn A() {
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   A->foo;
   // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   A->foo;
 }
 
@@ -47,8 +48,8 @@ fn A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc16: %A.type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc16: ref <error> = deref <error>
-// CHECK:STDOUT:   %A.ref.loc20: %A.type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc20: ref <error> = deref <error>
+// CHECK:STDOUT:   %A.ref.loc21: %A.type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %.loc21: ref <error> = deref <error>
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

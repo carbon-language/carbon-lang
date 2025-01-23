@@ -6,30 +6,31 @@
 
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Transport.h"
+#include "common/raw_string_ostream.h"
 #include "toolchain/language_server/context.h"
 #include "toolchain/language_server/incoming_messages.h"
 #include "toolchain/language_server/outgoing_messages.h"
 
 namespace Carbon::LanguageServer {
 
-auto Run(std::FILE* input_stream, llvm::raw_ostream& output_stream)
-    -> ErrorOr<Success> {
+auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
+         llvm::raw_ostream& /*error_stream*/) -> ErrorOr<Success> {
   // Set up the connection.
   std::unique_ptr<clang::clangd::Transport> transport(
       clang::clangd::newJSONTransport(input_stream, output_stream,
                                       /*InMirror=*/nullptr,
                                       /*Pretty=*/true));
   Context context;
+  // TODO: Use error_stream in IncomingMessages to report dropped errors.
   IncomingMessages incoming(transport.get(), &context);
   OutgoingMessages outgoing(transport.get());
 
   // Run the server loop.
   llvm::Error err = transport->loop(incoming);
   if (err) {
-    std::string str;
-    llvm::raw_string_ostream out(str);
+    RawStringOstream out;
     out << err;
-    return Error(str);
+    return Error(out.TakeStr());
   } else {
     return Success();
   }

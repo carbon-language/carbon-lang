@@ -26,9 +26,10 @@ impl package Foo library "[[@TEST_NAME]]";
 
 // --- fail_no_api_main_lib.impl.carbon
 
-// CHECK:STDERR: fail_no_api_main_lib.impl.carbon:[[@LINE+3]]:6: error: corresponding API for 'Main//no_api_main_lib' not found [LibraryApiNotFound]
+// CHECK:STDERR: fail_no_api_main_lib.impl.carbon:[[@LINE+4]]:6: error: corresponding API for 'Main//no_api_main_lib' not found [LibraryApiNotFound]
 // CHECK:STDERR: impl library "no_api_main_lib";
 // CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:
 impl library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- fail_no_api.impl.carbon

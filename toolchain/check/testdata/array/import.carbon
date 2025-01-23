@@ -35,7 +35,7 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -76,9 +76,9 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.b37: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -86,7 +86,7 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref.b37
+// CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
@@ -113,7 +113,7 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%n.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.b37 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [template = constants.%F]
 // CHECK:STDOUT:   %.loc5_12.1: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %F.call: init %array_type = call %F.ref() to %.loc5_12.1
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n

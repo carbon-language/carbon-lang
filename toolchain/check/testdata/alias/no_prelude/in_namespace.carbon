@@ -37,7 +37,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .NS = %NS
-// CHECK:STDOUT:     .b = @__global_init.%b
+// CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
@@ -46,6 +46,21 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16_10: type = splice_block %a.ref [template = constants.%C] {
+// CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
+// CHECK:STDOUT:     %a.ref: type = name_ref a, %a [template = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16_23.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc16_23.2: ref %empty_tuple.type = class_element_access %.loc16_23.1, element0
+// CHECK:STDOUT:   %.loc16_22: init %empty_tuple.type = tuple_init () to %.loc16_23.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_23.3: init %empty_tuple.type = converted @__global_init.%.loc16_22, %.loc16_22 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_23.4: init %C = class_init (%.loc16_23.3), %.loc16_23.1 [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc16_23.5: ref %C = temporary %.loc16_23.1, %.loc16_23.4
+// CHECK:STDOUT:   %.loc16_23.6: ref %C = converted @__global_init.%.loc16_23, %.loc16_23.5
+// CHECK:STDOUT:   %b: ref %C = bind_name b, %.loc16_23.6
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
@@ -58,13 +73,17 @@ fn F() -> NS.a {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11: %C.elem = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc11_16: %C.elem = field_decl v, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc11_11: %C.elem = var_pattern %.loc11_16
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .v = %.loc11
+// CHECK:STDOUT:   .v = %.loc11_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return.param_patt: %C {
@@ -81,17 +100,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_22.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_23.1: %struct_type.v = struct_literal (%.loc16_22.1)
-// CHECK:STDOUT:   %.loc16_23.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc16_23.3: ref %empty_tuple.type = class_element_access %.loc16_23.2, element0
-// CHECK:STDOUT:   %.loc16_22.2: init %empty_tuple.type = tuple_init () to %.loc16_23.3 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_23.4: init %empty_tuple.type = converted %.loc16_22.1, %.loc16_22.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_23.5: init %C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc16_23.6: ref %C = temporary %.loc16_23.2, %.loc16_23.5
-// CHECK:STDOUT:   %.loc16_24.1: ref %C = converted %.loc16_23.1, %.loc16_23.6
-// CHECK:STDOUT:   %.loc16_24.2: %C = bind_value %.loc16_24.1
-// CHECK:STDOUT:   %b: %C = bind_name b, %.loc16_24.2
+// CHECK:STDOUT:   %.loc16_22: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_23: %struct_type.v = struct_literal (%.loc16_22)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

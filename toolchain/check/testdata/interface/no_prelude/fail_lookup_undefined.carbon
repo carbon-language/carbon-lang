@@ -43,9 +43,10 @@ interface BeingDefined {
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   fn H() -> BeingDefined.T;
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+3]]:6: error: name `BeingDefined` not found [NameNotFound]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:6: error: name `BeingDefined` not found [NameNotFound]
   // CHECK:STDERR:   fn BeingDefined.I();
   // CHECK:STDERR:      ^~~~~~~~~~~~
+  // CHECK:STDERR:
   fn BeingDefined.I();
 }
 

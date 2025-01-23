@@ -20,7 +20,7 @@ fn F(b: bool) -> bool {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
 // CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},

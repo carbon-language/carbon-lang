@@ -202,9 +202,9 @@ struct AsCompatible {
 // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
 // `InitializeFrom`.
 struct Assign {
-  static constexpr auto Kind = InstKind::Assign.Define<
-      Parse::NodeIdOneOf<Parse::InfixOperatorEqualId, Parse::VariableDeclId>>(
-      {.ir_name = "assign"});
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind =
+      InstKind::Assign.Define<Parse::NodeId>({.ir_name = "assign"});
 
   // Assignments are statements, and so have no type.
   InstId lhs_id;
@@ -214,8 +214,9 @@ struct Assign {
 // An associated constant declaration in an interface, such as `let T:! type;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
-      InstKind::AssociatedConstantDecl.Define<Parse::LetDeclId>(
-          {.ir_name = "assoc_const_decl", .is_lowered = false});
+      InstKind::AssociatedConstantDecl
+          .Define<Parse::CompileTimeBindingPatternId>(
+              {.ir_name = "assoc_const_decl", .is_lowered = false});
 
   TypeId type_id;
   AssociatedConstantId assoc_const_id;
@@ -673,7 +674,7 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::BindingPatternId>(
+      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
           {.ir_name = "field_decl", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
@@ -934,6 +935,16 @@ struct IntType {
   // TODO: Consider adding a more compact way of representing either a small
   // unsigned integer bit width or an inst_id.
   InstId bit_width_id;
+};
+
+// A name-binding declaration, i.e. a declaration introduced with `let` or
+// `var`.
+struct NameBindingDecl {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::NameBindingDecl.Define<Parse::NodeId>(
+      {.ir_name = "name_binding_decl"});
+
+  InstBlockId pattern_block_id;
 };
 
 // A name reference, with the value of the name. This only handles name
@@ -1428,7 +1439,7 @@ struct UnaryOperatorNot {
 // expression, such as `instance.(Class.field)`.
 struct UnboundElementType {
   static constexpr auto Kind = InstKind::UnboundElementType.Define<
-      Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::BindingPatternId>>(
+      Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::VarBindingPatternId>>(
       {.ir_name = "unbound_element_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional});
@@ -1465,14 +1476,27 @@ struct ValueOfInitializer {
   InstId init_id;
 };
 
-// Tracks storage for a `var` declaration.
+// A `var` pattern.
+struct VarPattern {
+  static constexpr auto Kind =
+      InstKind::VarPattern.Define<Parse::VariablePatternId>(
+          {.ir_name = "var_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+};
+
+// Tracks storage for a `var` pattern.
 struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::VarStorage.Define<Parse::NodeId>({.ir_name = "var"});
 
   TypeId type_id;
-  NameId name_id;
+
+  // A name to associate with this var in pretty-printed IR. This is not
+  // necessarily unique, or even valid, and has no semantic significance.
+  NameId pretty_name_id;
 };
 
 // The type of virtual function tables.
@@ -1494,6 +1518,16 @@ struct VtablePtr {
   static constexpr auto Kind =
       InstKind::VtablePtr.Define<Parse::NodeId>({.ir_name = "vtable_ptr"});
   TypeId type_id;
+};
+
+// Definition of ABI-neutral vtable information for a dynamic class.
+struct Vtable {
+  static constexpr auto Kind = InstKind::Vtable.Define<Parse::NodeId>(
+      {.ir_name = "vtable",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  TypeId type_id;
+  InstBlockId virtual_functions_id;
 };
 
 // An `expr where requirements` expression.

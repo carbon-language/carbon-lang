@@ -131,9 +131,10 @@ class IntAdapter {
 
 fn F(a: IntAdapter) -> i32 {
   // Builtin types have no member names.
-  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+3]]:10: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+4]]:10: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return a.foo;
   // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
   return a.foo;
 }
 
@@ -160,7 +161,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -208,8 +209,16 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %.loc7: %SomeClass.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc8: %SomeClass.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc7_8: %SomeClass.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc7_3: %SomeClass.elem = var_pattern %.loc7_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc7: ref %SomeClass.elem = var <invalid>
+// CHECK:STDOUT:   %.loc8_8: %SomeClass.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc8_3: %SomeClass.elem = var_pattern %.loc8_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc8: ref %SomeClass.elem = var <invalid>
 // CHECK:STDOUT:   %StaticMemberFunction.decl: %StaticMemberFunction.type = fn_decl @StaticMemberFunction [template = constants.%StaticMemberFunction] {} {}
 // CHECK:STDOUT:   %AdapterMethod.decl: %AdapterMethod.type = fn_decl @AdapterMethod [template = constants.%AdapterMethod] {
 // CHECK:STDOUT:     %self.patt: %SomeClassAdapter = binding_pattern self
@@ -224,8 +233,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
-// CHECK:STDOUT:   .a = %.loc7
-// CHECK:STDOUT:   .b = %.loc8
+// CHECK:STDOUT:   .a = %.loc7_8
+// CHECK:STDOUT:   .b = %.loc8_8
 // CHECK:STDOUT:   .StaticMemberFunction = %StaticMemberFunction.decl
 // CHECK:STDOUT:   .AdapterMethod = %AdapterMethod.decl
 // CHECK:STDOUT: }
@@ -267,7 +276,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -349,8 +358,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -383,15 +392,23 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %.loc5: %SomeClass.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc5_8: %SomeClass.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc5_3: %SomeClass.elem = var_pattern %.loc5_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc5: ref %SomeClass.elem = var <invalid>
+// CHECK:STDOUT:   %.loc6_8: %SomeClass.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc6_3: %SomeClass.elem = var_pattern %.loc6_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc6: ref %SomeClass.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
-// CHECK:STDOUT:   .a = %.loc5
-// CHECK:STDOUT:   .b = %.loc6
+// CHECK:STDOUT:   .a = %.loc5_8
+// CHECK:STDOUT:   .b = %.loc6_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
@@ -408,7 +425,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: fn @F(%a.param_patt: %SomeClassAdapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %SomeClass.elem = name_ref b, @SomeClass.%.loc6 [template = @SomeClass.%.loc6]
+// CHECK:STDOUT:   %b.ref: %SomeClass.elem = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
 // CHECK:STDOUT:   %.loc21_11.1: %SomeClass = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc21_11.2: %i32 = class_element_access <error>, element1 [template = <error>]
 // CHECK:STDOUT:   return <error>
@@ -428,7 +445,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -496,7 +513,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -567,12 +584,12 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .IntLiteral = %import_ref.72f
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .IntLiteral = %Core.IntLiteral
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.72f: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -592,7 +609,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param0
 // CHECK:STDOUT:     %.loc4_31.1: type = splice_block %.loc4_31.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.72f [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_31.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_31.3: type = converted %int_literal.make_type, %.loc4_31.2 [template = Core.IntLiteral]

@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/stringify_type.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -147,8 +148,7 @@ class StepStack {
 
 auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     -> std::string {
-  std::string str;
-  llvm::raw_string_ostream out(str);
+  RawStringOstream out;
 
   // Note: Since this is a stack, work is resolved in the reverse order from the
   // order pushed.
@@ -185,6 +185,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case SemIR::StringType::Kind:
       case SemIR::TypeType::Kind:
       case SemIR::VtableType::Kind:
+      case SemIR::Vtable::Kind:
       case SemIR::WitnessType::Kind: {
         // Singleton instructions use their IR name as a label.
         out << untyped_inst.kind().ir_name();
@@ -567,6 +568,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
+      case NameBindingDecl::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
       case RequireCompleteType::Kind:
@@ -594,6 +596,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ValueOfInitializer::Kind:
       case ValueParam::Kind:
       case ValueParamPattern::Kind:
+      case VarPattern::Kind:
       case VarStorage::Kind:
       case WhereExpr::Kind:
         // We don't know how to print this instruction, but it might have a
@@ -614,7 +617,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     }
   }
 
-  return str;
+  return out.TakeStr();
 }
 
 }  // namespace Carbon::SemIR

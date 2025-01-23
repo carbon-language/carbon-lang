@@ -20,13 +20,14 @@ package Example;
 
 import library "namespace";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 fn NS();
 
 fn NS.Foo();
@@ -59,8 +60,8 @@ fn NS.Foo();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Example//namespace, NS, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:   %Example.NS: <namespace> = import_ref Example//namespace, NS, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %Example.NS, [template] {
 // CHECK:STDOUT:     .Foo = file.%Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {

@@ -27,7 +27,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
@@ -38,9 +38,9 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -90,8 +90,11 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool, %n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %array_type = binding_pattern x
+// CHECK:STDOUT:     %.loc12_3.1: %array_type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %array_type = var x
-// CHECK:STDOUT:   %x: ref %array_type = bind_name x, %x.var
 // CHECK:STDOUT:   %int_0.loc12_22: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc12_24.1: %tuple.type = tuple_literal (%int_0.loc12_22)
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
@@ -103,8 +106,15 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc12_24.3: ref %i32 = array_index %x.var, %int_0.loc12_24
 // CHECK:STDOUT:   %.loc12_24.4: init %i32 = initialize_from %.loc12_24.2 to %.loc12_24.3 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc12_24.5: init %array_type = array_init (%.loc12_24.4) to %x.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc12_25: init %array_type = converted %.loc12_24.1, %.loc12_24.5 [template = constants.%array]
-// CHECK:STDOUT:   assign %x.var, %.loc12_25
+// CHECK:STDOUT:   %.loc12_3.2: init %array_type = converted %.loc12_24.1, %.loc12_24.5 [template = constants.%array]
+// CHECK:STDOUT:   assign %x.var, %.loc12_3.2
+// CHECK:STDOUT:   %.loc12_17: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: ref %array_type = bind_name x, %x.var
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:

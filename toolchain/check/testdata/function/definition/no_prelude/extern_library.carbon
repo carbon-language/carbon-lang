@@ -102,9 +102,10 @@ impl library "[[@TEST_NAME]]";
 
 import library "in_impl_extern";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+4]]:1: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn F() {}
 
 // CHECK:STDOUT: --- one_file_extern.carbon
@@ -273,12 +274,12 @@ extern fn F() {}
 // CHECK:STDOUT: --- indirect_two_file.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//indirect_two_file_extern, F, unloaded
+// CHECK:STDOUT:   %Main.F = import_ref Main//indirect_two_file_extern, F, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref
+// CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }

@@ -28,9 +28,10 @@ fn While() {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+3]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
+  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+4]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
   // CHECK:STDERR:   break;
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
   break;
 }
 

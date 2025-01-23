@@ -10,12 +10,13 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+6]]:12: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+7]]:12: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl () as I {}
 // CHECK:STDERR:            ^
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:15: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:19: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR: interface I { let T:! type; }
-// CHECK:STDERR:               ^~~~~~~~~~~~~
+// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR:
 impl () as I {}
 
 // CHECK:STDOUT: --- fail_impl_bad_assoc_const.carbon
@@ -35,8 +36,8 @@ impl () as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc19_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_7.2: type = converted %.loc19_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc20_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc20_7.2: type = converted %.loc20_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
@@ -58,7 +59,7 @@ impl () as I {}
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc19_7.2 as %I.ref {
+// CHECK:STDOUT: impl @impl: %.loc20_7.2 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }

@@ -83,8 +83,8 @@ cc_test(
     deps = [
         ":value_ids",
         ":value_store",
+        "//common:raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
     ],
@@ -113,8 +113,8 @@ cc_test(
     srcs = ["int_test.cpp"],
     deps = [
         ":int",
+        "//common:raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
     ],
@@ -138,8 +138,8 @@ cc_test(
     srcs = ["shared_value_stores_test.cpp"],
     deps = [
         ":shared_value_stores",
+        "//common:raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
     ],

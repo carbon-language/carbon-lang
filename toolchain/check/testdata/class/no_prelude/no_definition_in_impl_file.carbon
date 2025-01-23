@@ -66,9 +66,10 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: class D;
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 class D;
 
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.carbon
@@ -124,12 +125,12 @@ class D;
 // CHECK:STDOUT: --- use_decl_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//decl_in_api_definition_in_impl, A, unloaded
+// CHECK:STDOUT:   %Main.A = import_ref Main//decl_in_api_definition_in_impl, A, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref
+// CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
@@ -153,12 +154,12 @@ class D;
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//decl_only_in_api, B, unloaded
+// CHECK:STDOUT:   %Main.B = import_ref Main//decl_only_in_api, B, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B = imports.%import_ref
+// CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>

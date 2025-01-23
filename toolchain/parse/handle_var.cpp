@@ -16,13 +16,16 @@ static auto HandleVar(Context& context, State finish_state,
   // The finished variable declaration will start at the `var` or `returned`.
   context.PushState(state, finish_state);
 
+  // TODO: is there a cleaner way to give VarAfterPattern access to the `var`
+  // token?
+  state.token = *(context.position() - 1);
   context.PushState(state, State::VarAfterPattern);
 
   if (returned_token.is_valid()) {
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
-  context.PushState(State::Pattern);
+  context.PushStateForPattern(State::Pattern, /*in_var_pattern=*/true);
 }
 
 auto HandleVarAsDecl(Context& context) -> void {
@@ -66,6 +69,8 @@ auto HandleVarAfterPattern(Context& context) -> void {
     }
   }
 
+  context.AddNode(NodeKind::VariablePattern, state.token, state.has_error);
+
   if (context.PositionIs(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::VariableInitializer,
                         context.ConsumeChecked(Lex::TokenKind::Equal));
@@ -90,6 +95,8 @@ auto HandleVarFinishAsDecl(Context& context) -> void {
 
 auto HandleVarFinishAsFor(Context& context) -> void {
   auto state = context.PopState();
+
+  context.AddNode(NodeKind::VariablePattern, state.token, state.has_error);
 
   auto end_token = state.token;
   if (context.PositionIs(Lex::TokenKind::In)) {

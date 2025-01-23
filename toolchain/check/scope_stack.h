@@ -8,6 +8,7 @@
 #include "common/array_stack.h"
 #include "common/set.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/file.h"
@@ -20,7 +21,7 @@ namespace Carbon::Check {
 class ScopeStack {
  public:
   explicit ScopeStack(const CanonicalValueStore<IdentifierId>& identifiers)
-      : lexical_lookup_(identifiers) {}
+      : lexical_lookup_(identifiers), full_pattern_stack_(&lexical_lookup_) {}
 
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
@@ -166,6 +167,8 @@ class ScopeStack {
     return compile_time_binding_stack_;
   }
 
+  auto full_pattern_stack() -> FullPatternStack& { return full_pattern_stack_; }
+
  private:
   // An entry in scope_stack_.
   struct ScopeStackEntry {
@@ -244,6 +247,9 @@ class ScopeStack {
 
   // Tracks lexical lookup results.
   LexicalLookup lexical_lookup_;
+
+  // Stack of full-patterns currently being checked.
+  FullPatternStack full_pattern_stack_;
 };
 
 struct ScopeStack::SuspendedScope {

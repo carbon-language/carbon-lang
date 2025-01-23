@@ -14,9 +14,10 @@ class C {
   extend base: B;
 }
 
-// CHECK:STDERR: fail_base_unbound.carbon:[[@LINE+3]]:12: error: expression cannot be used as a value [UseOfNonExprAsValue]
+// CHECK:STDERR: fail_base_unbound.carbon:[[@LINE+4]]:12: error: expression cannot be used as a value [UseOfNonExprAsValue]
 // CHECK:STDERR: let b: B = C.base;
 // CHECK:STDERR:            ^~~~~~
+// CHECK:STDERR:
 let b: B = C.base;
 
 // CHECK:STDOUT: --- fail_base_unbound.carbon
@@ -43,11 +44,16 @@ let b: B = C.base;
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .b = @__global_init.%b
+// CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %B = binding_pattern b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:   %b: %B = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -74,7 +80,6 @@ let b: B = C.base;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %base.ref: %C.elem = name_ref base, @C.%.loc14 [template = @C.%.loc14]
-// CHECK:STDOUT:   %b: %B = bind_name b, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

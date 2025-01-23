@@ -138,7 +138,8 @@ package FailOverflow;
 fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 let a: i32 = Add(0x7FFFFFFF, 0);
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: error: integer overflow in calculation `2147483647 + 1` [CompileTimeIntegerOverflow]
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation `2147483647 + 1` [CompileTimeIntegerOverflow]
 // CHECK:STDERR: let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let b: i32 = Add(0x7FFFFFFF, 1);

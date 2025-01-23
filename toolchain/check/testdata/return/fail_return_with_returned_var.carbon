@@ -23,12 +23,13 @@ fn F() -> i32 {
 class C { var a: i32; var b: i32; }
 fn G() -> C {
   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:3: error: can only `return var;` in the scope of a `returned var` [ReturnExprWithReturnedVar]
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: error: can only `return var;` in the scope of a `returned var` [ReturnExprWithReturnedVar]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note: `returned var` was declared here [ReturnedVarHere]
   // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
   // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   return c;
 }
 
@@ -41,7 +42,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.d04: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
@@ -67,8 +68,8 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -86,8 +87,8 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -96,7 +97,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -104,7 +105,15 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc23_16: %C.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc23_11: %C.elem = var_pattern %.loc23_16
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc23_11: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %.loc23_28: %C.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc23_23: %C.elem = var_pattern %.loc23_28
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc23_23: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.501 [template = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -116,22 +125,33 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %i32 = binding_pattern v
+// CHECK:STDOUT:     %.loc12_12.1: %i32 = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
-// CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc12: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   assign %v.var, %.loc12
+// CHECK:STDOUT:   %.loc12_12.2: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   assign %v.var, %.loc12_12.2
+// CHECK:STDOUT:   %.loc12_19: type = splice_block %i32.loc12 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %return
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc25_12.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc25_38.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
@@ -150,8 +170,10 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc25_38.6: ref %i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc25_38.7: init %i32 = initialize_from %.loc25_38.5 to %.loc25_38.6 [template = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc25_38.8: init %C = class_init (%.loc25_38.4, %.loc25_38.7), %return [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc25_39: init %C = converted %.loc25_38.1, %.loc25_38.8 [template = constants.%C.val]
-// CHECK:STDOUT:   assign %return, %.loc25_39
+// CHECK:STDOUT:   %.loc25_12.2: init %C = converted %.loc25_38.1, %.loc25_38.8 [template = constants.%C.val]
+// CHECK:STDOUT:   assign %return, %.loc25_12.2
+// CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %return
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

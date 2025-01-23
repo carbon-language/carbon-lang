@@ -47,9 +47,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:11: error: member name `A` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:11: error: member name `A` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var inst: Test.A = {};
 // CHECK:STDERR:           ^~~~~~
+// CHECK:STDERR:
 var inst: Test.A = {};
 
 // CHECK:STDOUT: --- def.carbon
@@ -88,37 +89,42 @@ var inst: Test.A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Test//def, C, unloaded
-// CHECK:STDOUT:   %import_ref.323: type = import_ref Test//def, A, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Test//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Test.C = import_ref Test//def, C, unloaded
+// CHECK:STDOUT:   %Test.A: type = import_ref Test//def, A, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Test.import_ref.2c4 = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
-// CHECK:STDOUT:     .A [private] = imports.%import_ref.323
+// CHECK:STDOUT:     .C = imports.%Test.C
+// CHECK:STDOUT:     .A [private] = imports.%Test.A
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: %C = binding_pattern inst
+// CHECK:STDOUT:     %.loc4: %C = var_pattern %inst.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
+// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [template = constants.%C]
 // CHECK:STDOUT:   %inst: ref %C = bind_name inst, %inst.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "def.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Test.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%inst.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc4_17: init %C = converted %.loc4_16.1, %.loc4_16.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%inst.var, %.loc4_17
+// CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_16.1, %.loc4_16.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%inst.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,17 +135,22 @@ var inst: Test.A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Test//def, C, unloaded
+// CHECK:STDOUT:   %Test.C = import_ref Test//def, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref
+// CHECK:STDOUT:     .C = imports.%Test.C
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
+// CHECK:STDOUT:   %inst: <error> = bind_name inst, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -167,13 +178,21 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
+// CHECK:STDOUT:     %A.ref: <error> = name_ref A, <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst: <error> = bind_name inst, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

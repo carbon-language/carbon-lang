@@ -132,9 +132,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:
 fn F(i: Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon
@@ -205,13 +206,13 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.5e5: type = import_ref Test//def, Def, loaded [template = constants.%Def.type]
-// CHECK:STDOUT:   %import_ref.cd6 = import_ref Test//def, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [template = constants.%Def.type]
+// CHECK:STDOUT:   %Test.import_ref = import_ref Test//def, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def [private] = imports.%import_ref.5e5
+// CHECK:STDOUT:     .Def [private] = imports.%Test.Def
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -221,14 +222,14 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: %Def.type = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %Def.type = value_param runtime_param0
-// CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%import_ref.5e5 [template = constants.%Def.type]
+// CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%Test.Def [template = constants.%Def.type]
 // CHECK:STDOUT:     %i: %Def.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.cd6
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,13 +311,13 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.247: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %import_ref.aa5 = import_ref Test//forward_with_def, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef.type]
+// CHECK:STDOUT:   %Test.import_ref = import_ref Test//forward_with_def, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.247
+// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%Test.ForwardWithDef
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -326,14 +327,14 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: %ForwardWithDef.type = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %ForwardWithDef.type = value_param runtime_param0
-// CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%import_ref.247 [template = constants.%ForwardWithDef.type]
+// CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [template = constants.%ForwardWithDef.type]
 // CHECK:STDOUT:     %i: %ForwardWithDef.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.aa5
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -502,7 +503,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:     %.loc9: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:     %.loc10: type = splice_block %ptr [template = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     }

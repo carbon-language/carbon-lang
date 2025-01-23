@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_template.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_template.carbon:[[@LINE+3]]:7: error: semantics TODO: `HandleTemplate` [SemanticsTodo]
+  // CHECK:STDERR: fail_assoc_const_template.carbon:[[@LINE+4]]:7: error: semantics TODO: `HandleTemplate` [SemanticsTodo]
   // CHECK:STDERR:   let template T:! type;
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let template T:! type;
 }
 
@@ -27,4 +28,6 @@ interface I {
 // CHECK:STDOUT:   .Self = <unexpected>.inst15
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: assoc_const @T T:! type;
 // CHECK:STDOUT:

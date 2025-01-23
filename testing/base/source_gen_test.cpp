@@ -147,7 +147,11 @@ auto TestCompile(llvm::StringRef source) -> bool {
       new llvm::vfs::InMemoryFileSystem;
   InstallPaths installation(
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
-  Driver driver(fs, &installation, llvm::outs(), llvm::errs());
+  Driver driver({.fs = fs,
+                 .installation = &installation,
+                 .input_stream = nullptr,
+                 .output_stream = &llvm::outs(),
+                 .error_stream = &llvm::errs()});
 
   AddPreludeFilesToVfs(installation, fs);
 

@@ -19,11 +19,16 @@ LanguageServerSubcommand::LanguageServerSubcommand()
     : DriverSubcommand(SubcommandInfo) {}
 
 auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  // TODO: Consider a way to override stdin, but it's a `FILE*` so less
-  // convenient to work with.
-  auto err = LanguageServer::Run(stdin, driver_env.output_stream);
+  if (!driver_env.input_stream) {
+    *driver_env.error_stream
+        << "error: language-server requires input_stream\n";
+  }
+
+  auto err =
+      LanguageServer::Run(driver_env.input_stream, *driver_env.output_stream,
+                          *driver_env.error_stream);
   if (!err.ok()) {
-    driver_env.error_stream << "error: " << err.error() << "\n";
+    *driver_env.error_stream << "error: " << err.error() << "\n";
   }
   return {.success = err.ok()};
 }

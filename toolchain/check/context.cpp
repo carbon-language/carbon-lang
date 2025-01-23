@@ -54,6 +54,7 @@ Context::Context(DiagnosticEmitter* emitter,
       args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
+      vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       global_init_(this) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
@@ -201,15 +202,6 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   sem_ir().insts().Set(inst_id, inst);
   CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
   FinishInst(inst_id, inst);
-}
-
-auto Context::ReplaceLocIdAndInstPreservingConstantValue(
-    SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  auto old_const_id = sem_ir().constant_values().Get(inst_id);
-  sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
-  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, loc_id_and_inst.inst);
-  auto new_const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
-  CARBON_CHECK(old_const_id == new_const_id);
 }
 
 auto Context::ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
@@ -401,6 +393,14 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
         non_lexical_result.inst_id.is_valid()) {
       return non_lexical_result;
     }
+  }
+
+  if (lexical_result == SemIR::InstId::InitTombstone) {
+    CARBON_DIAGNOSTIC(UsedBeforeInitialization, Error,
+                      "`{0}` used before initialization", SemIR::NameId);
+    emitter_->Emit(node_id, UsedBeforeInitialization, name_id);
+    return {.specific_id = SemIR::SpecificId::Invalid,
+            .inst_id = SemIR::ErrorInst::SingletonInstId};
   }
 
   if (lexical_result.is_valid()) {
@@ -784,6 +784,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
+      CARBON_CHECK(node_id.is_valid());
       AddInst<SemIR::Branch>(node_id, {.target_id = new_block_id});
     }
     inst_block_stack().Pop();

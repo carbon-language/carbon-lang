@@ -4,6 +4,7 @@
 
 #include "toolchain/lower/mangler.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
@@ -131,8 +132,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.is_valid(), "entry point should not be generic");
     return "main";
   }
-  std::string result;
-  llvm::raw_string_ostream os(result);
+  RawStringOstream os;
   os << "_C";
 
   os << names().GetAsStringIfIdentifier(function.name_id);
@@ -151,7 +151,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
         llvm::HexPrintStyle::Lower, 16);
   }
 
-  return os.str();
+  return os.TakeStr();
 }
 
 }  // namespace Carbon::Lower

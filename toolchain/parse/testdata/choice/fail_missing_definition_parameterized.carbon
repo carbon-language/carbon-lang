@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_missing_definition_parameterized.carbon
 
-// CHECK:STDERR: fail_missing_definition_parameterized.carbon:[[@LINE+3]]:35: error: choice definition expected [ExpectedChoiceDefinition]
+// CHECK:STDERR: fail_missing_definition_parameterized.carbon:[[@LINE+4]]:35: error: choice definition expected [ExpectedChoiceDefinition]
 // CHECK:STDERR: choice MissingDefinition(T:! type);
 // CHECK:STDERR:                                   ^
+// CHECK:STDERR:
 choice MissingDefinition(T:! type);
 
 // CHECK:STDOUT: - filename: fail_missing_definition_parameterized.carbon

@@ -14,9 +14,10 @@ fn Main() {
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   undeclared = 42;
-  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+3]]:4: error: name `also_undeclared` not found [NameNotFound]
+  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+4]]:4: error: name `also_undeclared` not found [NameNotFound]
   // CHECK:STDERR:   *also_undeclared = 42;
   // CHECK:STDERR:    ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   *also_undeclared = 42;
 }
 
@@ -50,9 +51,9 @@ fn Main() {
 // CHECK:STDOUT:   %int_42.loc16: Core.IntLiteral = int_value 42 [template = constants.%int_42]
 // CHECK:STDOUT:   assign %undeclared.ref, <error>
 // CHECK:STDOUT:   %also_undeclared.ref: <error> = name_ref also_undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc20: ref <error> = deref <error>
-// CHECK:STDOUT:   %int_42.loc20: Core.IntLiteral = int_value 42 [template = constants.%int_42]
-// CHECK:STDOUT:   assign %.loc20, <error>
+// CHECK:STDOUT:   %.loc21: ref <error> = deref <error>
+// CHECK:STDOUT:   %int_42.loc21: Core.IntLiteral = int_value 42 [template = constants.%int_42]
+// CHECK:STDOUT:   assign %.loc21, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

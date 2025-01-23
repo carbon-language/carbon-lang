@@ -96,9 +96,10 @@ impl;
 
 impl
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+88]]:21: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+89]]:21: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_impl.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -136,7 +137,7 @@ impl
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'invalid'},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ']', has_error: yes},
-// CHECK:STDOUT:           {kind: 'BindingPattern', text: 'invalid', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: 'invalid', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImplForall', text: 'forall', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'IntTypeLiteral', text: 'i8'},

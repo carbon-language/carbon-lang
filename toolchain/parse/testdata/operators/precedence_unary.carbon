@@ -26,7 +26,7 @@ fn F(p: i32*) {
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'p'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 9},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'p'},

@@ -50,7 +50,12 @@ var a: A = {};
 // CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %A = binding_pattern a
+// CHECK:STDOUT:     %.loc16: %A = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var a
+// CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,8 +79,8 @@ var a: A = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc16_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc16_13.2: init %A = class_init (), file.%a.var [template = constants.%A.val]
-// CHECK:STDOUT:   %.loc16_14: init %A = converted %.loc16_13.1, %.loc16_13.2 [template = constants.%A.val]
-// CHECK:STDOUT:   assign file.%a.var, %.loc16_14
+// CHECK:STDOUT:   %.loc16_1: init %A = converted %.loc16_13.1, %.loc16_13.2 [template = constants.%A.val]
+// CHECK:STDOUT:   assign file.%a.var, %.loc16_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -84,11 +84,23 @@ def label_subdir(
     readme = subdir / "README.md"
     readme_content = readme.read_text()
 
+    def include_child(md_file: Path) -> bool:
+        """Returns whether md_file is a child of this label."""
+        # The top-level README.md isn't a child.
+        if md_file == readme:
+            return False
+        # Skip directories that aren't part of the repository.
+        if "/node_modules/" in str(md_file):
+            return False
+        if "/dist/" in str(md_file):
+            return False
+        return True
+
     readme_title = get_title(readme, readme_content)
     readme_titles = [readme_title]
     if parent_title:
         readme_titles.insert(0, parent_title)
-    children = [x for x in subdir.glob("**/*.md") if x != readme]
+    children = [x for x in subdir.glob("**/*.md") if include_child(x)]
     add_frontmatter(
         readme, readme_content, readme_titles, top_nav_order, bool(children)
     )
@@ -146,12 +158,6 @@ def main() -> None:
     # Ensure this runs from the repo root.
     os.chdir(Path(__file__).parents[1])
 
-    # bazel-execroot interferes with jekyll because it's a broken symlink.
-    Path("bazel-execroot").unlink()
-    # This is a symlink to website/favicon.png, which is moved below.
-    # TODO: Consider moving the icon to a location which won't break.
-    Path("utils/vscode/images/icon.png").unlink()
-
     # The external symlink is created by scripts/create_compdb.py, and can
     # interfere with local execution.
     external = Path("external")
@@ -160,7 +166,7 @@ def main() -> None:
 
     # Move files to the repo root.
     for f in Path("website").iterdir():
-        if f.name == "README.md":
+        if f.name in ["README.md", ".jekyll-cache", "_site"]:
             continue
         f.rename(f.name)
 

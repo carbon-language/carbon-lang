@@ -49,12 +49,13 @@ fn D() {}
 fn D();
 
 fn E() {}
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: error: redefinition of `fn E` [RedeclRedef]
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redefinition of `fn E` [RedeclRedef]
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 fn E() {}
 
 // CHECK:STDOUT: --- fail_redecl.carbon
@@ -124,7 +125,7 @@ fn E() {}
 // CHECK:STDOUT:   %D.decl.loc41: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %D.decl.loc49: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
-// CHECK:STDOUT:   %.decl.loc58: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
+// CHECK:STDOUT:   %.decl.loc59: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

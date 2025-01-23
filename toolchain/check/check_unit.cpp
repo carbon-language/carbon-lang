@@ -340,26 +340,17 @@ auto CheckUnit::ImportCppPackages() -> void {
     return;
   }
 
-  if (imports.size() >= 2) {
-    context_.TODO(imports[1].node_id,
-                  "multiple Cpp imports are not yet supported");
-    return;
+  llvm::SmallVector<std::pair<llvm::StringRef, SemIRLoc>> import_pairs;
+  import_pairs.reserve(imports.size());
+  for (const auto& import : imports) {
+    import_pairs.push_back(
+        {unit_and_imports_->unit->value_stores->string_literal_values().Get(
+             import.library_id),
+         import.node_id});
   }
 
-  const auto& import = imports.front();
-  llvm::StringRef filename =
-      unit_and_imports_->unit->value_stores->string_literal_values().Get(
-          import.library_id);
-
-  // TODO: Pass the import location so that diagnostics would point to it.
-  auto source_buffer = SourceBuffer::MakeFromFile(
-      *fs_, filename, unit_and_imports_->err_tracker);
-  if (!source_buffer) {
-    return;
-  }
-
-  ImportCppFile(context_, import.node_id, fs_, source_buffer->filename(),
-                source_buffer->text());
+  ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
+                 import_pairs, fs_);
 }
 
 // Loops over all nodes in the tree. On some errors, this may return early,

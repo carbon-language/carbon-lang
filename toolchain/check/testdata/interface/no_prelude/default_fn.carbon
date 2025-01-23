@@ -89,12 +89,17 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:       %.loc16_7.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref %C = var c
-// CHECK:STDOUT:     %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:     %.loc16_19.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc16_19.2: init %C = class_init (), %c.var [template = constants.%C.val]
-// CHECK:STDOUT:     %.loc16_20: init %C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%C.val]
-// CHECK:STDOUT:     assign %c.var, %.loc16_20
+// CHECK:STDOUT:     %.loc16_7.2: init %C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%C.val]
+// CHECK:STDOUT:     assign %c.var, %.loc16_7.2
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]

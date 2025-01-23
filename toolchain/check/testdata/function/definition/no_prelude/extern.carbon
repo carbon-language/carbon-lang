@@ -105,9 +105,10 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+4]]:1: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn F() {}
 
 // CHECK:STDOUT: --- extern_def.carbon

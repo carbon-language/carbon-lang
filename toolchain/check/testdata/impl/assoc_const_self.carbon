@@ -51,9 +51,10 @@ impl () as Core.ImplicitAs(C) {
   fn Convert[self: ()]() -> C { return {}; }
 }
 
-// CHECK:STDERR: fail_assoc_const_not_constant_after_conversion.carbon:[[@LINE+3]]:11: error: associated constant V given value that is not constant after conversion to `C` [AssociatedConstantNotConstantAfterConversion]
+// CHECK:STDERR: fail_assoc_const_not_constant_after_conversion.carbon:[[@LINE+4]]:11: error: associated constant V given value that is not constant after conversion to `C` [AssociatedConstantNotConstantAfterConversion]
 // CHECK:STDERR: impl C as I where .V = () {}
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as I where .V = () {}
 
 // CHECK:STDOUT: --- assoc_const_self.carbon
@@ -86,7 +87,7 @@ impl C as I where .V = () {}
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
@@ -96,8 +97,8 @@ impl C as I where .V = () {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -233,7 +234,7 @@ impl C as I where .V = () {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -345,11 +346,11 @@ impl C as I where .V = () {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.d44: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -365,7 +366,7 @@ impl C as I where .V = () {}
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%C)> [template = constants.%ImplicitAs.type.15e]
 // CHECK:STDOUT:   }
@@ -377,24 +378,24 @@ impl C as I where .V = () {}
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %V.ref: %I.assoc_type = name_ref V, @V.%assoc0 [template = constants.%assoc0.a1d]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc17_19: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc18_19: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: %.Self.as_type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %.loc17_25.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc18_25.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc17_25.2: %empty_tuple.type = converted %.loc17_25.1, %empty_tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc17_13: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc17_25.2
+// CHECK:STDOUT:     %.loc18_25.2: %empty_tuple.type = converted %.loc18_25.1, %empty_tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc18_13: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc18_25.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85b]
+// CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85b]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.56d = impl_witness_access constants.%impl_witness.3db, element0 [template = constants.%Convert.155]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method constants.%empty_tuple, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %.loc17_13.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %Convert.call: init %C = call %Convert.bound(constants.%empty_tuple) to %.loc17_13.1
-// CHECK:STDOUT:   %.loc17_13.2: init %C = converted constants.%empty_tuple, %Convert.call
-// CHECK:STDOUT:   %.loc17_13.3: ref %C = temporary %.loc17_13.1, %.loc17_13.2
-// CHECK:STDOUT:   %.loc17_13.4: %C = bind_value %.loc17_13.3
+// CHECK:STDOUT:   %.loc18_13.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %Convert.call: init %C = call %Convert.bound(constants.%empty_tuple) to %.loc18_13.1
+// CHECK:STDOUT:   %.loc18_13.2: init %C = converted constants.%empty_tuple, %Convert.call
+// CHECK:STDOUT:   %.loc18_13.3: ref %C = temporary %.loc18_13.1, %.loc18_13.2
+// CHECK:STDOUT:   %.loc18_13.4: %C = bind_value %.loc18_13.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -440,9 +441,9 @@ impl C as I where .V = () {}
 // CHECK:STDOUT:   witness = file.%impl_witness.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C.ref as %.loc17_13 {
+// CHECK:STDOUT: impl @impl.2: %C.ref as %.loc18_13 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness.loc17
+// CHECK:STDOUT:   witness = file.%impl_witness.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -69,12 +69,13 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let N:! i32;
-  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+6]]:32: error: cannot implicitly convert from `<associated entity in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `<associated entity in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self]() -> [bool; N];
   // CHECK:STDERR:                                ^
-  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+3]]:32: note: type `<associated entity in I>` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+4]]:32: note: type `<associated entity in I>` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self]() -> [bool; N];
   // CHECK:STDERR:                                ^
+  // CHECK:STDERR:
   fn F[self: Self]() -> [bool; N];
 }
 
@@ -116,7 +117,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -343,7 +344,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .As = %import_ref.16b
+// CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -468,7 +469,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   %impl.elem0: %i32 = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.ecc, %Convert.956 [template]
@@ -490,9 +491,9 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -506,25 +507,25 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl.44 [template] {} {
-// CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_7.2: type = converted %.loc15_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %N.ref: %I.assoc_type = name_ref N, @N.%assoc0 [template = constants.%assoc0.73c]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc14_20: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc15_20: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc14_20: %i32 = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %impl.elem0.loc15_20: %i32 = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
-// CHECK:STDOUT:     %impl.elem0.loc14_25: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0.loc14_25 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %impl.elem0.loc15_25: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0.loc15_25 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.ef8]
-// CHECK:STDOUT:     %.loc14_25.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_2.ef8]
-// CHECK:STDOUT:     %.loc14_25.2: %i32 = converted %int_2, %.loc14_25.1 [template = constants.%int_2.ef8]
-// CHECK:STDOUT:     %.loc14_14: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc14_20, %.loc14_25.2
+// CHECK:STDOUT:     %.loc15_25.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_2.ef8]
+// CHECK:STDOUT:     %.loc15_25.2: %i32 = converted %int_2, %.loc15_25.1 [template = constants.%int_2.ef8]
+// CHECK:STDOUT:     %.loc15_14: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc15_20, %.loc15_25.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%int_2.ef8, <error>) [template = constants.%impl_witness.2c9]
@@ -536,24 +537,24 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%N [template = constants.%assoc0.73c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [template = constants.%F.bc6] {
-// CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc11_14.1 (%Self.as_type.b70) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc11_14.1 (%Self.as_type.b70) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %N.ref: %I.assoc_type = name_ref N, @N.%assoc0 [template = constants.%assoc0.73c]
-// CHECK:STDOUT:     %.loc11_26.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc11_26.2: type = converted %bool.make_type, %.loc11_26.1 [template = bool]
-// CHECK:STDOUT:     %.loc11_32: Core.IntLiteral = converted %N.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc12_26.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc12_26.2: type = converted %bool.make_type, %.loc12_26.1 [template = bool]
+// CHECK:STDOUT:     %.loc12_32: Core.IntLiteral = converted %N.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %array_type: type = array_type <error>, bool [template = <error>]
-// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc11_14.1 (%Self.as_type.b70) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc11_14.1: type = splice_block %.loc11_14.2 [symbolic = %Self.as_type.loc11_14.1 (constants.%Self.as_type.b70)] {
+// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.826)]
-// CHECK:STDOUT:       %Self.as_type.loc11_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc11_14.1 (constants.%Self.as_type.b70)]
-// CHECK:STDOUT:       %.loc11_14.2: type = converted %Self.ref, %Self.as_type.loc11_14.2 [symbolic = %Self.as_type.loc11_14.1 (constants.%Self.as_type.b70)]
+// CHECK:STDOUT:       %Self.as_type.loc12_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)]
+// CHECK:STDOUT:       %.loc12_14.2: type = converted %Self.ref, %Self.as_type.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc11_14.1 (%Self.as_type.b70) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -570,7 +571,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   assoc_const N:! %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.44: %.loc14_7.2 as %.loc14_14 {
+// CHECK:STDOUT: impl @impl.44: %.loc15_7.2 as %.loc15_14 {
 // CHECK:STDOUT:   %F.decl: %F.type.9f6 = fn_decl @F.2 [template = constants.%F.572] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
@@ -579,11 +580,11 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
-// CHECK:STDOUT:     %.loc15_26.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc15_26.2: type = converted %bool.make_type, %.loc15_26.1 [template = bool]
+// CHECK:STDOUT:     %.loc16_26.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc16_26.2: type = converted %bool.make_type, %.loc16_26.1 [template = bool]
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, bool [template = constants.%array_type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.44.%.loc14_7.2 [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.44.%.loc15_7.2 [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %array_type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %array_type = return_slot %return.param
@@ -596,38 +597,38 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.826)]
-// CHECK:STDOUT:   %Self.as_type.loc11_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc11_14.1 (constants.%Self.as_type.b70)]
+// CHECK:STDOUT:   %Self.as_type.loc12_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc11_14.1 (%Self.as_type.b70)]() -> <error>;
+// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70)]() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[%self.param_patt: %empty_tuple.type]() -> %return.param_patt: %array_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
 // CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
-// CHECK:STDOUT:   %.loc15_56.1: %tuple.type = tuple_literal (%true, %false)
+// CHECK:STDOUT:   %.loc16_56.1: %tuple.type = tuple_literal (%true, %false)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc15_56.2: ref bool = array_index %return, %int_0
-// CHECK:STDOUT:   %.loc15_56.3: init bool = initialize_from %true to %.loc15_56.2 [template = constants.%true]
+// CHECK:STDOUT:   %.loc16_56.2: ref bool = array_index %return, %int_0
+// CHECK:STDOUT:   %.loc16_56.3: init bool = initialize_from %true to %.loc16_56.2 [template = constants.%true]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %.loc15_56.4: ref bool = array_index %return, %int_1
-// CHECK:STDOUT:   %.loc15_56.5: init bool = initialize_from %false to %.loc15_56.4 [template = constants.%false]
-// CHECK:STDOUT:   %.loc15_56.6: init %array_type = array_init (%.loc15_56.3, %.loc15_56.5) to %return [template = constants.%array]
-// CHECK:STDOUT:   %.loc15_57: init %array_type = converted %.loc15_56.1, %.loc15_56.6 [template = constants.%array]
-// CHECK:STDOUT:   return %.loc15_57 to %return
+// CHECK:STDOUT:   %.loc16_56.4: ref bool = array_index %return, %int_1
+// CHECK:STDOUT:   %.loc16_56.5: init bool = initialize_from %false to %.loc16_56.4 [template = constants.%false]
+// CHECK:STDOUT:   %.loc16_56.6: init %array_type = array_init (%.loc16_56.3, %.loc16_56.5) to %return [template = constants.%array]
+// CHECK:STDOUT:   %.loc16_57: init %array_type = converted %.loc16_56.1, %.loc16_56.6 [template = constants.%array]
+// CHECK:STDOUT:   return %.loc16_57 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%Self.826) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.826) {
 // CHECK:STDOUT:   %Self => constants.%Self.826
-// CHECK:STDOUT:   %Self.as_type.loc11_14.1 => constants.%Self.as_type.b70
+// CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type.b70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%I.facet.1f7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet.7b2) {
 // CHECK:STDOUT:   %Self => constants.%I.facet.7b2
-// CHECK:STDOUT:   %Self.as_type.loc11_14.1 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%empty_tuple.type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

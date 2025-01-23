@@ -50,7 +50,7 @@ auto NameScope::AddRequired(Entry name_entry) -> void {
   }
 }
 
-auto NameScope::LookupOrAdd(SemIR::NameId name_id, InstId inst_id,
+auto NameScope::LookupOrAdd(NameId name_id, InstId inst_id,
                             AccessKind access_kind)
     -> std::pair<bool, EntryId> {
   auto insert_result = name_map_.Insert(name_id, EntryId(names_.size()));

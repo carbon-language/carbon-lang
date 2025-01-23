@@ -10,9 +10,10 @@
 
 fn f() -> i32 {
   match (3) {
-    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+3]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
+    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
     // CHECK:STDERR:     case => { return 2; }
     // CHECK:STDERR:          ^~
+    // CHECK:STDERR:
     case => { return 2; }
   }
   return 0;
@@ -36,7 +37,7 @@ fn f() -> i32 {
 // CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: '=>', has_error: yes},
 // CHECK:STDOUT:               {kind: 'InvalidParse', text: '=>', has_error: yes},
-// CHECK:STDOUT:             {kind: 'BindingPattern', text: '=>', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: '=>', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'MatchCaseStart', text: '=>', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'MatchCase', text: '=>', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 12},

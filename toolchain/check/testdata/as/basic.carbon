@@ -21,7 +21,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%import_ref.78a), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.5, @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.197 [template]
@@ -31,8 +31,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .As = %import_ref.16b
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "absl/flags/flag.h"
+#include "common/raw_string_ostream.h"
 #include "explorer/main.h"
 #include "re2/re2.h"
-#include "testing/base/test_raw_ostream.h"
 #include "testing/file_test/file_test_base.h"
 
 ABSL_FLAG(bool, trace, false,
@@ -29,7 +29,8 @@ class ExplorerFileTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
+           FILE* /*input_stream*/, llvm::raw_pwrite_stream& output_stream,
+           llvm::raw_pwrite_stream& error_stream)
       -> ErrorOr<RunResult> override {
     // Add the prelude.
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
@@ -52,9 +53,10 @@ class ExplorerFileTest : public FileTestBase {
       args.push_back(arg.data());
     }
 
-    int exit_code = ExplorerMain(
-        args.size(), args.data(), /*install_path=*/"", PreludePath, stdout,
-        stderr, check_trace_output() ? stdout : trace_stream_, *fs);
+    int exit_code =
+        ExplorerMain(args.size(), args.data(), /*install_path=*/"", PreludePath,
+                     output_stream, error_stream,
+                     check_trace_output() ? output_stream : trace_stream_, *fs);
 
     return {{.success = exit_code == EXIT_SUCCESS}};
   }
@@ -103,7 +105,7 @@ class ExplorerFileTest : public FileTestBase {
     return test_name().find("/trace/") != std::string::npos;
   }
 
-  TestRawOstream trace_stream_;
+  RawStringOstream trace_stream_;
   RE2 prelude_line_re_;
   RE2 timing_re_;
 };

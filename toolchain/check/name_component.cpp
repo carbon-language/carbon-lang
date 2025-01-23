@@ -50,6 +50,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            *param_patterns_id, return_slot_pattern_id);
     pattern_block_id = context.pattern_block_stack().Pop();
+    context.full_pattern_stack().PopFullPattern();
   }
 
   auto [name_loc_id, name_id] =

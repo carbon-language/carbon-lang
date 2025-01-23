@@ -90,9 +90,10 @@ abstract class AbstractWithDefinition {
   abstract fn F() {}
   abstract fn G();
 }
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
 // CHECK:STDERR: fn AbstractWithDefinition.G() {
 // CHECK:STDERR:                               ^
+// CHECK:STDERR:
 fn AbstractWithDefinition.G() {
 }
 
@@ -115,6 +116,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.9a5: <vtable> = vtable (%F, %G) [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [template]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT: }
@@ -195,6 +197,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: class @AbstractWithDefinition {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
+// CHECK:STDOUT:   %.loc92: <vtable> = vtable (%F.decl, %G.decl) [template = constants.%.9a5]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

@@ -59,13 +59,14 @@ fn FailStar() {
 
 var x: i32 = .
 
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+93]]:21: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+95]]:21: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+89]]:21: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+91]]:21: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: designator.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -144,12 +145,13 @@ var x: i32 = .
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '', has_error: yes},
 // CHECK:STDOUT:       {kind: 'DesignatorExpr', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: '.', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: '.', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

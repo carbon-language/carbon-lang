@@ -6,10 +6,10 @@
 #include <string>
 
 #include "common/exe_path.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
-#include "testing/base/test_raw_ostream.h"
 #include "testing/fuzzing/libfuzzer.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/install/install_paths.h"
@@ -80,15 +80,17 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
 
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
-  TestRawOstream error_stream;
-  llvm::raw_null_ostream dest;
-  Driver d(fs, install_paths, dest, error_stream);
-  d.SetFuzzing();
-  if (!d.RunCommand(args).success) {
+  RawStringOstream error_stream;
+  llvm::raw_null_ostream null_ostream;
+  Driver driver({.fs = fs,
+                 .installation = install_paths,
+                 .input_stream = nullptr,
+                 .output_stream = &null_ostream,
+                 .error_stream = &error_stream,
+                 .fuzzing = true});
+  if (!driver.RunCommand(args).success) {
     auto str = error_stream.TakeStr();
-    // TODO: Fix command_line to use `error`, switch back to `find`.
-    if (llvm::StringRef(str).find_insensitive("error:") ==
-        llvm::StringRef::npos) {
+    if (llvm::StringRef(str).find("error:") == llvm::StringRef::npos) {
       llvm::errs() << "No error message on a failure!\n";
       return 1;
     }

@@ -30,13 +30,14 @@ extern library fn G();
 
 // --- fail_identifier.carbon
 
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+7]]:16: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+8]]:16: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
 // CHECK:STDERR: extern library foo fn G();
 // CHECK:STDERR:                ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+3]]:16: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:16: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR: extern library foo fn G();
 // CHECK:STDERR:                ^~~
+// CHECK:STDERR:
 extern library foo fn G();
 
 // CHECK:STDOUT: - filename: extern.carbon

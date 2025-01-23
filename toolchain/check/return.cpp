@@ -10,7 +10,7 @@
 namespace Carbon::Check {
 
 // Gets the function that lexically encloses the current location.
-static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
+auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function& {
   CARBON_CHECK(!context.return_scope_stack().empty(),
                "Handling return but not in a function");
   auto function_id = context.insts()
@@ -20,9 +20,7 @@ static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
   return context.functions().Get(function_id);
 }
 
-// Gets the return slot of the function that lexically encloses the current
-// location.
-static auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId {
+auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId {
   // TODO: this does some unnecessary work to compute non-lexical scopes,
   // so a separate API on ScopeStack could be more efficient.
   auto return_slot_id = context.scope_stack()
@@ -70,18 +68,15 @@ static auto NoteReturnedVar(Context::DiagnosticBuilder& diag,
   diag.Note(returned_var_id, ReturnedVarHere);
 }
 
-auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
-                      Parse::NodeId name_node, SemIR::NameId name_id,
-                      Parse::NodeId type_node, SemIR::TypeId type_id)
-    -> SemIR::InstId {
-  auto& function = GetCurrentFunction(context);
+auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
+                         Parse::NodeId type_node, SemIR::TypeId type_id,
+                         SemIR::InstId bind_id) -> void {
+  auto& function = GetCurrentFunctionForReturn(context);
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
   if (!return_info.is_valid()) {
-    // We already diagnosed this when we started defining the function. Create a
-    // placeholder for error recovery.
-    return context.AddInst<SemIR::VarStorage>(
-        name_node, {.type_id = type_id, .name_id = name_id});
+    // We already diagnosed this when we started defining the function.
+    return;
   }
 
   // A `returned var` requires an explicit return type.
@@ -92,7 +87,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
         context.emitter().Build(returned_node, ReturnedVarWithNoReturnType);
     NoteNoReturnTypeProvided(diag, function);
     diag.Emit();
-    return SemIR::ErrorInst::SingletonInstId;
+    return;
   }
 
   // The declared type of the var must match the return type of the function.
@@ -105,19 +100,8 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
         context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
     NoteReturnType(context, diag, function);
     diag.Emit();
-    return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // The variable aliases the return slot if there is one. If not, it has its
-  // own storage.
-  if (return_info.has_return_slot()) {
-    return GetCurrentReturnSlot(context);
-  }
-  return context.AddInst<SemIR::VarStorage>(
-      name_node, {.type_id = type_id, .name_id = name_id});
-}
-
-auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
   auto existing_id = context.scope_stack().SetReturnedVarOrGetExisting(bind_id);
   if (existing_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
@@ -131,7 +115,7 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
 
 auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
     -> void {
-  const auto& function = GetCurrentFunction(context);
+  const auto& function = GetCurrentFunctionForReturn(context);
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   if (return_type_id.is_valid()) {
@@ -147,7 +131,7 @@ auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
 
 auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
                          SemIR::InstId expr_id) -> void {
-  const auto& function = GetCurrentFunction(context);
+  const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
   auto return_slot_id = SemIR::InstId::Invalid;
   auto return_info =
@@ -189,7 +173,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     -> void {
-  const auto& function = GetCurrentFunction(context);
+  const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
 
   if (!returned_var_id.is_valid()) {

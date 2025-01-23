@@ -14,9 +14,10 @@ class Class {
 
 fn G(c: Class) -> i32 {
   // TODO: Mention the scope in which we looked for the name.
-  // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE+3]]:10: error: member name `something` not found in `Class` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE+4]]:10: error: member name `something` not found in `Class` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return c.something;
   // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR:
   return c.something;
 }
 
@@ -35,7 +36,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -66,13 +67,17 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: %Class.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc12
+// CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param_patt: %Class) -> %i32 {

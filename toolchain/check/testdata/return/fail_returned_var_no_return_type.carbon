@@ -29,13 +29,18 @@ fn Procedure() {
 library "[[@TEST_NAME]]";
 
 fn ForgotReturnType() {
-  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+6]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+7]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
   // CHECK:STDERR:   returned var v: () = ();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR: fn ForgotReturnType() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   returned var v: () = ();
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+4]]:3: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
+  // CHECK:STDERR:   return var;
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   return var;
 }
 
@@ -45,6 +50,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Procedure: %Procedure.type = struct_value () [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,9 +71,20 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v: %empty_tuple.type = bind_name v, <error>
-// CHECK:STDOUT:   %.loc12: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   assign <error>, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %empty_tuple.type = binding_pattern v
+// CHECK:STDOUT:     %.loc12_12.1: %empty_tuple.type = var_pattern %v.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
+// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_25.2: init %empty_tuple.type = tuple_init () to %v.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_12.2: init %empty_tuple.type = converted %.loc12_25.1, %.loc12_25.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %v.var, %.loc12_12.2
+// CHECK:STDOUT:   %.loc12_20.1: type = splice_block %.loc12_20.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,11 +115,20 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForgotReturnType() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v: %empty_tuple.type = bind_name v, <error>
-// CHECK:STDOUT:   %.loc11_25: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   assign <error>, <error>
-// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_16: %empty_tuple.type = converted %v, %tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc11_16
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %empty_tuple.type = binding_pattern v
+// CHECK:STDOUT:     %.loc12_12.1: %empty_tuple.type = var_pattern %v.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
+// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_25.2: init %empty_tuple.type = tuple_init () to %v.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_12.2: init %empty_tuple.type = converted %.loc12_25.1, %.loc12_25.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %v.var, %.loc12_12.2
+// CHECK:STDOUT:   %.loc12_20.1: type = splice_block %.loc12_20.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

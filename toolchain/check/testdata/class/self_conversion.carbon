@@ -53,7 +53,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base.b1e [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
@@ -66,8 +66,8 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -129,13 +129,17 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc12: %Base.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %Base.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Base.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Base.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc12
+// CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -181,7 +185,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: fn @SelfBase[%self.param_patt: %Base]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc22
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12 [template = @Base.%.loc12]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
 // CHECK:STDOUT:   %.loc23_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc23_14.2: %i32 = bind_value %.loc23_14.1
 // CHECK:STDOUT:   return %.loc23_14.2
@@ -191,7 +195,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self.loc26
 // CHECK:STDOUT:   %.loc27_4: ref %Base = deref %self.ref
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12 [template = @Base.%.loc12]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
 // CHECK:STDOUT:   %.loc27_10: ref %i32 = class_element_access %.loc27_4, element0
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]

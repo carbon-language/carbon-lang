@@ -10,9 +10,10 @@
 
 // --- fail_implicit.impl.carbon
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:6: error: corresponding API for 'Implicit' not found [LibraryApiNotFound]
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:6: error: corresponding API for 'Implicit' not found [LibraryApiNotFound]
 // CHECK:STDERR: impl package Implicit;
 // CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:
 impl package Implicit;
 
 var a: () = A();
@@ -38,7 +39,15 @@ var a: () = A();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
+// CHECK:STDOUT:     %.loc8_1: %empty_tuple.type = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

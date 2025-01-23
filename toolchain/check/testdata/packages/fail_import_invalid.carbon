@@ -89,9 +89,10 @@ import Implicit library "implicit_lib";
 // --- fail_not_found.carbon
 package NotFound;
 
-// CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:1: error: imported API 'ImportNotFound' not found [ImportNotFound]
+// CHECK:STDERR: fail_not_found.carbon:[[@LINE+4]]:1: error: imported API 'ImportNotFound' not found [ImportNotFound]
 // CHECK:STDERR: import ImportNotFound;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import ImportNotFound;
 
 // CHECK:STDOUT: --- fail_main.carbon

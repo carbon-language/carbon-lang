@@ -45,9 +45,10 @@
 // As we have specialized code to scan short indented comment blocks, make sure
 // the behavior is preserved even for (absurdly) large indents.
 
-                                                                                // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+3]]:83: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
+                                                                                // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+4]]:83: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
                                                                                 // CHECK:STDERR:                                                                                 //very indented block
                                                                                 // CHECK:STDERR:                                                                                   ^
+                                                                                // CHECK:STDERR:
                                                                                 //very indented block
                                                                                 //very indented block
                                                                                 //very indented block

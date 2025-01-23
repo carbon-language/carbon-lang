@@ -7,7 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon::Testing {
@@ -31,7 +31,7 @@ auto MatchSharedValues(testing::Matcher<Yaml::MappingValue> ints,
 
 TEST(SharedValueStores, PrintEmpty) {
   SharedValueStores value_stores;
-  TestRawOstream out;
+  RawStringOstream out;
   value_stores.Print(out);
   EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
               MatchSharedValues(IsEmpty(), IsEmpty(), IsEmpty(), IsEmpty()));
@@ -46,7 +46,7 @@ TEST(SharedValueStores, PrintVals) {
       Real{.mantissa = apint, .exponent = apint, .is_decimal = true});
   value_stores.identifiers().Add("a");
   value_stores.string_literal_values().Add("foo'\"baz");
-  TestRawOstream out;
+  RawStringOstream out;
   value_stores.Print(out);
 
   EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),

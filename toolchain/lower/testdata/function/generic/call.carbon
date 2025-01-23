@@ -30,8 +30,8 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc18_16 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @D.val.loc19_16 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc18_3.2 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @D.val.loc19_3.2 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -39,17 +39,17 @@ fn G() {
 // CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !7
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_16, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_3.2, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %d.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @D.val.loc19_16, i64 0, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @D.val.loc19_3.2, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_CF.Main.15b1f98bd9cc0c5b(ptr %c.var), !dbg !11
-// CHECK:STDOUT:   call void @_CF.Main.2cc450fc05045897(ptr %d.var), !dbg !12
-// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc24), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main.15b1f98bd9cc0c5b(ptr %c.var), !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main.2cc450fc05045897(ptr %d.var), !dbg !11
+// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !12
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc24), !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -83,13 +83,12 @@ fn G() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 23, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 24, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 24, column: 3, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 25, column: 3, scope: !4)
-// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 5, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 24, column: 3, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 25, column: 3, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 1, scope: !4)

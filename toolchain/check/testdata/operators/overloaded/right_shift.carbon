@@ -58,13 +58,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .RightShift = %import_ref.fe3
-// CHECK:STDOUT:     .RightShiftAssign = %import_ref.9f1
+// CHECK:STDOUT:     .RightShift = %Core.RightShift
+// CHECK:STDOUT:     .RightShiftAssign = %Core.RightShiftAssign
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.fe3: type = import_ref Core//prelude/operators/bitwise, RightShift, loaded [template = constants.%RightShift.type]
-// CHECK:STDOUT:   %import_ref.9f1: type = import_ref Core//prelude/operators/bitwise, RightShiftAssign, loaded [template = constants.%RightShiftAssign.type]
+// CHECK:STDOUT:   %Core.RightShift: type = import_ref Core//prelude/operators/bitwise, RightShift, loaded [template = constants.%RightShift.type]
+// CHECK:STDOUT:   %Core.RightShiftAssign: type = import_ref Core//prelude/operators/bitwise, RightShiftAssign, loaded [template = constants.%RightShiftAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,13 +79,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %RightShift.ref: type = name_ref RightShift, imports.%import_ref.fe3 [template = constants.%RightShift.type]
+// CHECK:STDOUT:     %RightShift.ref: type = name_ref RightShift, imports.%Core.RightShift [template = constants.%RightShift.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness.404]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %RightShiftAssign.ref: type = name_ref RightShiftAssign, imports.%import_ref.9f1 [template = constants.%RightShiftAssign.type]
+// CHECK:STDOUT:     %RightShiftAssign.ref: type = name_ref RightShiftAssign, imports.%Core.RightShiftAssign [template = constants.%RightShiftAssign.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.2.%Op.decl) [template = constants.%impl_witness.686]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {

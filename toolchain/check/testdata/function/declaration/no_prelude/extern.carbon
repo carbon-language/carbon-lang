@@ -71,13 +71,14 @@ library "[[@TEST_NAME]]";
 
 import library "basic";
 
-// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE+7]]:1: error: cannot declare imported `fn F` as `extern library` [ExternLibraryInImporter]
+// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE+8]]:1: error: cannot declare imported `fn F` as `extern library` [ExternLibraryInImporter]
 // CHECK:STDERR: extern library "basic" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: basic.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern library "basic" fn F();
 
 // CHECK:STDOUT: --- basic.carbon
@@ -105,16 +106,24 @@ extern library "basic" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//basic, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//basic, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref
+// CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,7 +131,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return

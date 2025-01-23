@@ -10,9 +10,11 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -299,6 +301,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);
   context.field_decls_stack().PushArray();
+  context.vtable_stack().Push();
 
   // TODO: Handle the case where there's control flow in the class body. For
   // example:
@@ -663,11 +666,12 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   bool defining_vptr = class_info.is_dynamic;
   auto base_type_id =
       class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::Invalid);
+  SemIR::Class* base_class_info = nullptr;
   if (base_type_id.is_valid()) {
     // TODO: If the base class is template dependent, we will need to decide
     // whether to add a vptr as part of instantiation.
-    if (auto* base_class_info = TryGetAsClass(context, base_type_id);
-        base_class_info && base_class_info->is_dynamic) {
+    base_class_info = TryGetAsClass(context, base_type_id);
+    if (base_class_info && base_class_info->is_dynamic) {
       defining_vptr = false;
     }
   }
@@ -691,6 +695,52 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
         {.name_id = SemIR::NameId::Base, .type_id = base_type_id});
   }
 
+  if (class_info.is_dynamic) {
+    llvm::SmallVector<SemIR::InstId> vtable;
+    if (!defining_vptr) {
+      LoadImportRef(context, base_class_info->vtable_id);
+      auto base_vtable_id = context.constant_values().GetConstantInstId(
+          base_class_info->vtable_id);
+      auto base_vtable_inst_block =
+          context.inst_blocks().Get(context.insts()
+                                        .GetAs<SemIR::Vtable>(base_vtable_id)
+                                        .virtual_functions_id);
+      // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
+      // elements of the top of `vtable_stack`.
+      for (auto fn_decl_id : base_vtable_inst_block) {
+        auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
+        const auto& fn = context.functions().Get(fn_decl.function_id);
+        for (auto override_fn_decl_id :
+             context.vtable_stack().PeekCurrentBlockContents()) {
+          auto override_fn_decl =
+              context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
+          const auto& override_fn =
+              context.functions().Get(override_fn_decl.function_id);
+          // TODO: Validate that the overriding function's signature matches
+          // that of the overridden function.
+          if (override_fn.virtual_modifier ==
+                  SemIR::FunctionFields::VirtualModifier::Impl &&
+              override_fn.name_id == fn.name_id) {
+            fn_decl_id = override_fn_decl_id;
+          }
+        }
+        vtable.push_back(fn_decl_id);
+      }
+    }
+
+    for (auto inst_id : context.vtable_stack().PeekCurrentBlockContents()) {
+      auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
+      const auto& fn = context.functions().Get(fn_decl.function_id);
+      if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
+        vtable.push_back(inst_id);
+      }
+    }
+    class_info.vtable_id = context.AddInst<SemIR::Vtable>(
+        node_id, {.type_id = context.GetSingletonType(
+                      SemIR::VtableType::SingletonInstId),
+                  .virtual_functions_id = context.inst_blocks().Add(vtable)});
+  }
+
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
       {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
@@ -711,6 +761,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
 
   context.inst_block_stack().Pop();
   context.field_decls_stack().PopArray();
+  context.vtable_stack().Pop();
 
   FinishGenericDefinition(context, class_info.generic_id);
 

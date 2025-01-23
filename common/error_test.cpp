@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "common/error_test_helpers.h"
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 
 namespace Carbon {
 namespace {
@@ -108,7 +108,7 @@ TEST(ErrorTest, ErrorBuilderOperatorImplicitCast) {
 
 TEST(ErrorTest, StreamError) {
   Error result = ErrorBuilder("TestFunc") << "msg";
-  Testing::TestRawOstream result_stream;
+  RawStringOstream result_stream;
   result_stream << result;
   EXPECT_EQ(result_stream.TakeStr(), "TestFunc: msg");
 }

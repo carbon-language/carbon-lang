@@ -8,9 +8,9 @@
 // TIP:   bazel test //testing/file_test:file_test_base_test --test_arg=--file_tests=testing/file_test/testdata/capture_console_output.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //testing/file_test:file_test_base_test -- --dump_output --file_tests=testing/file_test/testdata/capture_console_output.carbon
-// CHECK:STDERR: params.stderr
+// CHECK:STDERR: params.error_stream
 // CHECK:STDERR: llvm::errs
 
 // CHECK:STDOUT: 2 args: `default_args`, `capture_console_output.carbon`
-// CHECK:STDOUT: params.stdout
+// CHECK:STDOUT: params.output_stream
 // CHECK:STDOUT: llvm::outs

@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/type_info.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
@@ -121,10 +122,9 @@ auto NumericTypeLiteralInfo::PrintLiteral(const File& file,
 
 auto NumericTypeLiteralInfo::GetLiteralAsString(const File& file) const
     -> std::string {
-  std::string result;
-  llvm::raw_string_ostream out(result);
+  RawStringOstream out;
   PrintLiteral(file, out);
-  return result;
+  return out.TakeStr();
 }
 
 }  // namespace Carbon::SemIR

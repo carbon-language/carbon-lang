@@ -153,7 +153,9 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
   // poisoned optimistically by name lookup before checking for imports, so we
   // may be overwriting a poisoned entry here.
   auto& entry = parent_scope->GetEntry(entry_id);
-  if (!inserted && !entry.is_poisoned) {
+  if (entry.is_poisoned) {
+    entry.is_poisoned = false;
+  } else if (!inserted) {
     context.DiagnoseDuplicateName(namespace_id, entry.inst_id);
     entry.access_kind = SemIR::AccessKind::Public;
   }

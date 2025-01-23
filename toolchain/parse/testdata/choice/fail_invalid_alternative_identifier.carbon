@@ -14,9 +14,10 @@ choice InvalidAlternativeIdentifier {
     // CHECK:STDERR:     ^
     // CHECK:STDERR:
     ,Some,
-    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+3]]:5: error: expected choice alternative name [ExpectedChoiceAlternativeName]
+    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+4]]:5: error: expected choice alternative name [ExpectedChoiceAlternativeName]
     // CHECK:STDERR:     42,
     // CHECK:STDERR:     ^~
+    // CHECK:STDERR:
     42,
     Other
 }

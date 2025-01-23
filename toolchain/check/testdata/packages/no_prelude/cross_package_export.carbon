@@ -186,9 +186,10 @@ library "[[@TEST_NAME]]";
 import Other library "export_name";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+3]]:11: note: in name lookup for `C` [InNameLookup]
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+4]]:11: note: in name lookup for `C` [InNameLookup]
 // CHECK:STDERR: alias C = Other.C;
 // CHECK:STDERR:           ^~~~~~~
+// CHECK:STDERR:
 alias C = Other.C;
 
 // CHECK:STDOUT: --- base.carbon
@@ -209,13 +210,17 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc5
+// CHECK:STDOUT:   .x = %.loc5_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conflict.carbon
@@ -240,12 +245,12 @@ alias C = Other.C;
 // CHECK:STDOUT: --- export_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Other//base, C, unloaded
+// CHECK:STDOUT:   %Other.C = import_ref Other//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref
+// CHECK:STDOUT:     .C = imports.%Other.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -253,12 +258,12 @@ alias C = Other.C;
 // CHECK:STDOUT: --- export_import_copy.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Other//base, C, unloaded
+// CHECK:STDOUT:   %Other.C = import_ref Other//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref
+// CHECK:STDOUT:     .C = imports.%Other.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -266,12 +271,12 @@ alias C = Other.C;
 // CHECK:STDOUT: --- export_import_indirect.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Other//base, C, unloaded
+// CHECK:STDOUT:   %Other.C = import_ref Other//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref
+// CHECK:STDOUT:     .C = imports.%Other.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -286,10 +291,10 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Other//base, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.276 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -297,15 +302,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .x = imports.%import_ref.276
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.2c4
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.276
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_copy.carbon
@@ -318,10 +323,10 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Other//base, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.276 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -329,15 +334,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .x = imports.%import_ref.276
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.2c4
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.276
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_indirect.carbon
@@ -350,10 +355,10 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.06e: type = import_ref Other//export_name, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -361,15 +366,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.06e [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .x = imports.%import_ref.f67
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.6a9
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.f67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_import.carbon
@@ -385,13 +390,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.3b0
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_import
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.276 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -400,16 +406,24 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .x = imports.%import_ref.276
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.2c4
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.276
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -420,8 +434,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -438,14 +452,15 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.3b0
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_import
 // CHECK:STDOUT:     import Other//export_import_copy
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.276 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -454,16 +469,24 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc7_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc7_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .x = imports.%import_ref.276
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.2c4
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.276
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -474,8 +497,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type = tuple_init () to %.loc7_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc7_27: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc7_27
+// CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -492,14 +515,15 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.3b0
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_import_indirect
 // CHECK:STDOUT:     import Other//export_import
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.276 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -508,16 +532,24 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .x = imports.%import_ref.276
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.2c4
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.276
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -528,8 +560,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -546,12 +578,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.06e
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -560,16 +593,24 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .x = imports.%import_ref.f67
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.6a9
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.f67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -580,8 +621,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -598,13 +639,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.06e
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//export_name_copy
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -613,16 +655,24 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc7_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc7_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .x = imports.%import_ref.f67
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.6a9
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.f67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -633,8 +683,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type = tuple_init () to %.loc7_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc7_27: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc7_27
+// CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -651,12 +701,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.f43
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.328: <witness> = import_ref Other//export_name_indirect, inst20 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.db8 = import_ref Other//export_name_indirect, inst21 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.3ef = import_ref Other//export_name_indirect, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name_indirect, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.328: <witness> = import_ref Other//export_name_indirect, inst20 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.db8 = import_ref Other//export_name_indirect, inst21 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.3ef = import_ref Other//export_name_indirect, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -665,16 +716,24 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name_indirect.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.328
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.328
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.db8
-// CHECK:STDOUT:   .x = imports.%import_ref.3ef
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.db8
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.3ef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -685,8 +744,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -703,7 +762,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.06e
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_import
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//export_import_copy
@@ -712,9 +771,10 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -723,16 +783,24 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc11_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc11_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .x = imports.%import_ref.f67
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.6a9
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.f67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -743,8 +811,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type = tuple_init () to %.loc11_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.3: init %empty_tuple.type = converted %.loc11_25.1, %.loc11_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.4: init %C = class_init (%.loc11_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc11_27: init %C = converted %.loc11_26.1, %.loc11_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc11_27
+// CHECK:STDOUT:   %.loc11_1: init %C = converted %.loc11_26.1, %.loc11_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc11_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -790,12 +858,12 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.991
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_import
 // CHECK:STDOUT:     import Other//conflict
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.991: %C.type = import_ref Other//conflict, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.C: %C.type = import_ref Other//conflict, C, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -805,8 +873,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.991 [template = constants.%C]
-// CHECK:STDOUT:   %C: %C.type = bind_alias C, imports.%import_ref.991 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   %C: %C.type = bind_alias C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() [from "conflict.carbon"];
@@ -822,14 +890,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.06e
+// CHECK:STDOUT:     .C = %Other.C
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.06e: type = import_ref Other//export_name, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst21 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -839,15 +907,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.06e [template = constants.%C]
-// CHECK:STDOUT:   %C: type = bind_alias C, imports.%import_ref.06e [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Other.C [template = constants.%C]
+// CHECK:STDOUT:   %C: type = bind_alias C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .x = imports.%import_ref.f67
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.6a9
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.f67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

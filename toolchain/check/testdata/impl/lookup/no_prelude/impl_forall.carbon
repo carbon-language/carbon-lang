@@ -275,13 +275,17 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %complete_type.loc4_1.2: <witness> = complete_type_witness @A.%struct_type.n (%struct_type.n.848971.1) [symbolic = %complete_type.loc4_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc3: @A.%A.elem (%A.elem.1ceb36.1) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc3_8: @A.%A.elem (%A.elem.1ceb36.1) = field_decl n, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc3_3: @A.%A.elem (%A.elem.1ceb36.1) = var_pattern %.loc3_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @A.%A.elem (%A.elem.1ceb36.1) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc4_1.1: <witness> = complete_type_witness %struct_type.n.848971.1 [symbolic = %complete_type.loc4_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc4_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.13025a.1
-// CHECK:STDOUT:     .n = %.loc3
+// CHECK:STDOUT:     .n = %.loc3_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -306,7 +310,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%A (%A.13025a.2)]() -> @F.2.%V (%V) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @F.2.%A (%A.13025a.2) = name_ref self, %self
-// CHECK:STDOUT:     %n.ref: @F.2.%A.elem (%A.elem.1ceb36.2) = name_ref n, @A.%.loc3 [template = @A.%.loc3]
+// CHECK:STDOUT:     %n.ref: @F.2.%A.elem (%A.elem.1ceb36.2) = name_ref n, @A.%.loc3_8 [template = @A.%.loc3_8]
 // CHECK:STDOUT:     %.loc12_16.1: ref @F.2.%V (%V) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc12_16.2: @F.2.%V (%V) = bind_value %.loc12_16.1
 // CHECK:STDOUT:     return %.loc12_16.2

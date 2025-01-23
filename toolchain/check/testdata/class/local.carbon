@@ -42,7 +42,7 @@ class A {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.n.44a: type = struct_type {.n: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
@@ -53,8 +53,8 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -92,18 +92,22 @@ class A {
 // CHECK:STDOUT:     %return.patt: %B = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
+// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: %B.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc19_12: %B.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc19_7: %B.elem = var_pattern %.loc19_12
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %B.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.033 [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   .n = %.loc19
+// CHECK:STDOUT:   .n = %.loc19_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
@@ -114,7 +118,7 @@ class A {
 // CHECK:STDOUT:   %.loc22_19.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %Make.call: init %B = call %Make.ref() to %.loc22_19.1
 // CHECK:STDOUT:   %.loc22_19.2: ref %B = temporary %.loc22_19.1, %Make.call
-// CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc19 [template = @B.%.loc19]
+// CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc19_12 [template = @B.%.loc19_12]
 // CHECK:STDOUT:   %.loc22_20.1: ref %i32 = class_element_access %.loc22_19.2, element0
 // CHECK:STDOUT:   %.loc22_20.2: %i32 = bind_value %.loc22_20.1
 // CHECK:STDOUT:   return %.loc22_20.2
@@ -122,7 +126,10 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %B {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b: ref %B = bind_name b, %return
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %B = binding_pattern b
+// CHECK:STDOUT:     %.loc15_18.1: %B = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc15_39.1: %struct_type.n.44a = struct_literal (%int_1)
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
@@ -133,8 +140,10 @@ class A {
 // CHECK:STDOUT:   %.loc15_39.3: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc15_39.4: init %i32 = initialize_from %.loc15_39.2 to %.loc15_39.3 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc15_39.5: init %B = class_init (%.loc15_39.4), %return [template = constants.%B.val]
-// CHECK:STDOUT:   %.loc15_40: init %B = converted %.loc15_39.1, %.loc15_39.5 [template = constants.%B.val]
-// CHECK:STDOUT:   assign %return, %.loc15_40
+// CHECK:STDOUT:   %.loc15_18.2: init %B = converted %.loc15_39.1, %.loc15_39.5 [template = constants.%B.val]
+// CHECK:STDOUT:   assign %return, %.loc15_18.2
+// CHECK:STDOUT:   %Self.ref.loc15: type = name_ref Self, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %b: ref %B = bind_name b, %return
 // CHECK:STDOUT:   return %b to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

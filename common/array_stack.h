@@ -47,6 +47,11 @@ class ArrayStack {
     return llvm::ArrayRef(values_).slice(array_offsets_.back());
   }
 
+  auto PeekArray() -> llvm::MutableArrayRef<ValueT> {
+    CARBON_CHECK(!array_offsets_.empty());
+    return llvm::MutableArrayRef(values_).slice(array_offsets_.back());
+  }
+
   // Returns the array at a specific index.
   auto PeekArrayAt(int index) const -> llvm::ArrayRef<ValueT> {
     auto ref = llvm::ArrayRef(values_).slice(array_offsets_[index]);

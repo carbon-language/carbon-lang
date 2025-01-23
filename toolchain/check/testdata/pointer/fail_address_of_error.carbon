@@ -14,13 +14,14 @@ fn Test() {
   // CHECK:STDERR:    ^~~~~~~~~~
   // CHECK:STDERR:
   &undeclared;
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+7]]:6: error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+8]]:6: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:      ^~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   &(&undeclared);
 }
 
@@ -51,9 +52,9 @@ fn Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc16: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %addr.loc16: <error> = addr_of %undeclared.ref.loc16 [template = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc24: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %addr.loc24_5: <error> = addr_of %undeclared.ref.loc24 [template = <error>]
-// CHECK:STDOUT:   %addr.loc24_3: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc25: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %addr.loc25_5: <error> = addr_of %undeclared.ref.loc25 [template = <error>]
+// CHECK:STDOUT:   %addr.loc25_3: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

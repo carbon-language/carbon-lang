@@ -20,9 +20,10 @@ class Class {
 }
 
 fn G() -> i32 {
-  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:10: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+4]]:10: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   return Class.field;
   // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR:
   return Class.field;
 }
 
@@ -43,7 +44,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -69,7 +70,11 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: %Class.elem = field_decl field, element0 [template]
+// CHECK:STDOUT:   %.loc12_12: %Class.elem = field_decl field, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_12
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -84,20 +89,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .field = %.loc12
+// CHECK:STDOUT:   .field = %.loc12_12
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %field.ref: %Class.elem = name_ref field, @Class.%.loc12 [template = @Class.%.loc12]
+// CHECK:STDOUT:   %field.ref: %Class.elem = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %field.ref: %Class.elem = name_ref field, @Class.%.loc12 [template = @Class.%.loc12]
+// CHECK:STDOUT:   %field.ref: %Class.elem = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

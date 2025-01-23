@@ -10,6 +10,13 @@ theme: just-the-docs
 
 favicon_ico: '/favicon.png'
 
+exclude:
+  - '.*'
+  - '**/node_modules'
+  - '**/dist'
+  - 'bazel-*'
+  - 'utils/vscode/images/icon.png'
+
 aux_links:
   Discord: https://discord.gg/ZjVdShJDAs
   GitHub: https://github.com/carbon-language/carbon-lang

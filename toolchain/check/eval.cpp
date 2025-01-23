@@ -1663,6 +1663,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
 
+    case SemIR::Vtable::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::Vtable::virtual_functions_id);
     case SemIR::AutoType::Kind:
     case SemIR::BoolType::Kind:
     case SemIR::BoundMethodType::Kind:
@@ -2072,6 +2075,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
     case SemIR::ImportDecl::Kind:
+    case SemIR::NameBindingDecl::Kind:
     case SemIR::OutParam::Kind:
     case SemIR::OutParamPattern::Kind:
     case SemIR::RequirementEquivalent::Kind:
@@ -2083,6 +2087,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::StructLiteral::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::ValueParam::Kind:
+    case SemIR::VarPattern::Kind:
     case SemIR::VarStorage::Kind:
       break;
 

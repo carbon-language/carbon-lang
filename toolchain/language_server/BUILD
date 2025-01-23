@@ -16,6 +16,7 @@ cc_library(
         ":outgoing_messages",
         "//common:error",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )

@@ -19,13 +19,14 @@ class C {
 }
 
 fn F() -> i32 {
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+7]]:10: error: accessing member from impl before the end of its definition [ImplAccessMemberBeforeComplete]
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+8]]:10: error: accessing member from impl before the end of its definition [ImplAccessMemberBeforeComplete]
   // CHECK:STDERR:   return C.F();
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE-8]]:3: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return C.F();
 }
 
@@ -60,7 +61,7 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

@@ -72,9 +72,10 @@ fn F() {
 
 alias a = b
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+56]]:21: error: `alias` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+57]]:21: error: `alias` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_syntax.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

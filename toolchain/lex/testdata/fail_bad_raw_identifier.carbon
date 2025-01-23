@@ -91,9 +91,10 @@ r#"hello"#
 // CHECK:STDOUT:   tokens:
 
 // Ensure that we correctly handle a `#` as the first token in the file.
-// CHECK:STDERR: fail_hash_at_start_of_file.carbon:[[@LINE+3]]:1: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
+// CHECK:STDERR: fail_hash_at_start_of_file.carbon:[[@LINE+4]]:1: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: #foo
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 #foo
 // CHECK:STDOUT:   - { index: 1, kind:      'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '#', has_leading_space: true }
 // CHECK:STDOUT:   - { index: 2, kind: 'Identifier', line: {{ *}}[[@LINE-2]], column:   2, indent: 1, spelling: 'foo', identifier: 0 }

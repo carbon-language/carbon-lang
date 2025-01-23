@@ -24,14 +24,15 @@ var Foo: i32;
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
 // CHECK:STDERR: var.carbon:4:5: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: var Foo: i32;
 // CHECK:STDERR:     ^~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
 // CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn Foo();
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 import library "fn";
 import library "var";
 
@@ -69,7 +70,7 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -81,14 +82,22 @@ import library "var";
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %Foo.patt: %i32 = binding_pattern Foo
+// CHECK:STDOUT:     %.loc4_1: %i32 = var_pattern %Foo.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.var: ref %i32 = var Foo
+// CHECK:STDOUT:   %.loc4_10: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo: ref %i32 = bind_name Foo, %Foo.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.a7d = import_ref Example//fn, Foo, unloaded
+// CHECK:STDOUT:   %Example.Foo = import_ref Example//fn, Foo, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -97,7 +106,7 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = imports.%import_ref.a7d
+// CHECK:STDOUT:     .Foo = imports.%Example.Foo
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

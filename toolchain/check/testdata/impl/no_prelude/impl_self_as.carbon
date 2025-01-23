@@ -172,9 +172,10 @@ class C4(A:! type) {
   impl forall [B5:! type] as J5(B5);
   impl forall [B5:! type] C4(A) as J5(B5) {}
 
-  // CHECK:STDERR: fail_no_match.carbon:[[@LINE+3]]:3: error: impl declared but not defined [ImplMissingDefinition]
+  // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:   impl forall [B6:! type] Self as J6(B6);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   impl forall [B6:! type] Self as J6(B6);
   impl forall [B6:! type] C4(A) as J6(B6) {}
 }

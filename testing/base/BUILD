@@ -53,6 +53,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:map",
+        "//common:raw_string_ostream",
         "//common:set",
         "//toolchain/lex:token_kind",
         "@abseil-cpp//absl/random",
@@ -87,28 +88,6 @@ cc_binary(
         "//common:init_llvm",
         "//common:ostream",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "test_raw_ostream",
-    testonly = 1,
-    hdrs = ["test_raw_ostream.h"],
-    deps = [
-        "//common:ostream",
-        "@googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "test_raw_ostream_test",
-    size = "small",
-    srcs = ["test_raw_ostream_test.cpp"],
-    deps = [
-        ":test_raw_ostream",
-        "//testing/base:gtest_main",
-        "@googletest//:gtest",
     ],
 )
 

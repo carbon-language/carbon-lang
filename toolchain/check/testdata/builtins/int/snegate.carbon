@@ -128,7 +128,8 @@ fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 let a: i32 = Negate(Negate(0x7FFF_FFFF));
 
 // -INT_MIN is too large for i32.
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: error: integer overflow in negation of -2147483648 [CompileTimeIntegerNegateOverflow]
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in negation of -2147483648 [CompileTimeIntegerNegateOverflow]
 // CHECK:STDERR: let b: i32 = Negate(-0x8000_0000);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let b: i32 = Negate(-0x8000_0000);

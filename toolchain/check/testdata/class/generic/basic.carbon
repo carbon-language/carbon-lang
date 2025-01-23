@@ -129,7 +129,11 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %return.param: ref @GetValue.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @GetValue.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc21: @Class.%Class.elem (%Class.elem) = field_decl k, element0 [template]
+// CHECK:STDOUT:     %.loc21_8: @Class.%Class.elem (%Class.elem) = field_decl k, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc21_3: @Class.%Class.elem (%Class.elem) = var_pattern %.loc21_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc22_1.1: <witness> = complete_type_witness %struct_type.k [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc22_1.1
 // CHECK:STDOUT:
@@ -137,7 +141,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .GetAddr = %GetAddr.decl
 // CHECK:STDOUT:     .GetValue = %GetValue.decl
-// CHECK:STDOUT:     .k = %.loc21
+// CHECK:STDOUT:     .k = %.loc21_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,7 +168,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%ptr.loc12_29.1 (%ptr.955) = name_ref self, %self
 // CHECK:STDOUT:     %.loc13_17.1: ref @GetAddr.%Class (%Class) = deref %self.ref
-// CHECK:STDOUT:     %k.ref: @GetAddr.%Class.elem (%Class.elem) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:     %k.ref: @GetAddr.%Class.elem (%Class.elem) = name_ref k, @Class.%.loc21_8 [template = @Class.%.loc21_8]
 // CHECK:STDOUT:     %.loc13_17.2: ref @GetAddr.%T (%T) = class_element_access %.loc13_17.1, element0
 // CHECK:STDOUT:     %addr: @GetAddr.%ptr.loc12_38.1 (%ptr.79f) = addr_of %.loc13_17.2
 // CHECK:STDOUT:     return %addr
@@ -183,7 +187,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   fn[%self.param_patt: @GetValue.%Class (%Class)]() -> @GetValue.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetValue.%Class (%Class) = name_ref self, %self
-// CHECK:STDOUT:     %k.ref: @GetValue.%Class.elem (%Class.elem) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:     %k.ref: @GetValue.%Class.elem (%Class.elem) = name_ref k, @Class.%.loc21_8 [template = @Class.%.loc21_8]
 // CHECK:STDOUT:     %.loc18_16.1: ref @GetValue.%T (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc18_16.2: @GetValue.%T (%T) = bind_value %.loc18_16.1
 // CHECK:STDOUT:     return %.loc18_16.2

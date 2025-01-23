@@ -70,9 +70,10 @@ fn F(T:! type) {
   var v: T;
 }
 
-// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+3]]:10: note: in `F(B)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+4]]:10: note: in `F(B)` used here [ResolvingSpecificHere]
 // CHECK:STDERR: fn G() { F(B); }
 // CHECK:STDERR:          ^
+// CHECK:STDERR:
 fn G() { F(B); }
 
 // CHECK:STDOUT: --- fail_incomplete_in_class.carbon
@@ -156,13 +157,17 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.ff1) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc13: @A.%A.elem (%A.elem.1ce) = field_decl v, element0 [template]
+// CHECK:STDOUT:     %.loc13_8: @A.%A.elem (%A.elem.1ce) = field_decl v, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc13_3: @A.%A.elem (%A.elem.1ce) = var_pattern %.loc13_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @A.%A.elem (%A.elem.1ce) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.ff1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.130
-// CHECK:STDOUT:     .v = %.loc13
+// CHECK:STDOUT:     .v = %.loc13_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -251,7 +256,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %v.patt: @F.%T.loc6_6.2 (%T) = binding_pattern v
+// CHECK:STDOUT:       %.loc7: @F.%T.loc6_6.2 (%T) = var_pattern %v.patt
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var v
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %v: ref @F.%T.loc6_6.2 (%T) = bind_name v, %v.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -331,7 +341,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %v.patt: @F.%T.loc6_6.2 (%T) = binding_pattern v
+// CHECK:STDOUT:       %.loc13: @F.%T.loc6_6.2 (%T) = var_pattern %v.patt
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var v
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %v: ref @F.%T.loc6_6.2 (%T) = bind_name v, %v.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

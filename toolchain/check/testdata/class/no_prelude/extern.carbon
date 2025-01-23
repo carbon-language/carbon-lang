@@ -272,13 +272,14 @@ library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE+7]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE+8]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 extern class C;
 
 // CHECK:STDOUT: --- decl.carbon
@@ -495,12 +496,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_extern_decl_then_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -508,12 +509,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_decl_then_extern_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//decl, C, unloaded
+// CHECK:STDOUT:   %Main.C = import_ref Main//decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -521,12 +522,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_extern_decl_then_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -534,12 +535,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_ownership_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -547,12 +548,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -604,8 +605,8 @@ extern class C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -617,10 +618,10 @@ extern class C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_decl_after_import_def.carbon
@@ -632,8 +633,8 @@ extern class C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -645,9 +646,9 @@ extern class C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

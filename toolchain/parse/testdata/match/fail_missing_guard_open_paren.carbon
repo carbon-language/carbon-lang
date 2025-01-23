@@ -10,13 +10,14 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+7]]:21: error: TODO: improve match parsing [MatchParseTODO]
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+8]]:21: error: TODO: improve match parsing [MatchParseTODO]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                     ^~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+3]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                          ^
+    // CHECK:STDERR:
     case x: bool if false) => { return 1; }
   }
   return 0;
@@ -40,7 +41,7 @@ fn f() -> i32 {
 // CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'MatchCaseGuardIntroducer', text: 'if'},
 // CHECK:STDOUT:               {kind: 'MatchCaseGuardStart', text: 'false', has_error: yes},
 // CHECK:STDOUT:               {kind: 'InvalidParse', text: 'false', has_error: yes},

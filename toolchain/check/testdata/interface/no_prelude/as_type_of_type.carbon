@@ -56,13 +56,22 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %T.patt.loc13_6.2: %Empty.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.loc13_6.2 [symbolic = %T.as_type (constants.%T.as_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.as_type (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %T.as_type.loc14_10.2: type = facet_access_type %T.loc13_6.2 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.as_type.loc14_10.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Empty.type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.var: ref @F.%T.as_type (%T.as_type) = var x
-// CHECK:STDOUT:     %x: ref @F.%T.as_type (%T.as_type) = bind_name x, %x.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %x.patt: @F.%T.as_type.loc14_10.2 (%T.as_type) = binding_pattern x
+// CHECK:STDOUT:       %.loc14_3: @F.%T.as_type.loc14_10.2 (%T.as_type) = var_pattern %x.patt
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc14_10.2 (%T.as_type) = var x
+// CHECK:STDOUT:     %.loc14_10.1: type = splice_block %.loc14_10.2 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)] {
+// CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:       %T.as_type.loc14_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc14_10.2: type = converted %T.ref, %T.as_type.loc14_10.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: ref @F.%T.as_type.loc14_10.2 (%T.as_type) = bind_name x, %x.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -80,9 +80,10 @@ class C {
 library "[[@TEST_NAME]]";
 
 class D {
-  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:13: error: name `.Self` not found [NameNotFound]
+  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+4]]:13: error: name `.Self` not found [NameNotFound]
   // CHECK:STDERR:   fn G() -> .Self { return Self; }
   // CHECK:STDERR:             ^~~~~
+  // CHECK:STDERR:
   fn G() -> .Self { return Self; }
 }
 
@@ -353,7 +354,15 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc5_3: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %.loc5_11.1: type = splice_block %.loc5_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_11.3: type = converted %.loc5_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]

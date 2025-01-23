@@ -329,9 +329,10 @@ fn F() {
   class B {
     var v: A;
 
-    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+3]]:5: note: declared here [NameUseBeforeDeclNote]
+    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+4]]:5: note: declared here [NameUseBeforeDeclNote]
     // CHECK:STDERR:     class A {}
     // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR:
     class A {}
   }
 }
@@ -626,7 +627,11 @@ fn F() {
 // CHECK:STDOUT:     %x: %C1 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
-// CHECK:STDOUT:   %.loc18: %D.elem = field_decl C1, element0 [template]
+// CHECK:STDOUT:   %.loc18_9: %D.elem = field_decl C1, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc18_3: %D.elem = var_pattern %.loc18_9
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %D.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.C1 [template = constants.%complete_type.ec1]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1019,17 +1024,17 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//poison, C, unloaded
-// CHECK:STDOUT:   %import_ref.a98: <namespace> = import_ref Main//poison, N, loaded
-// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.a98, [template] {
-// CHECK:STDOUT:     .F1 = %import_ref.cd4
+// CHECK:STDOUT:   %Main.C = import_ref Main//poison, C, unloaded
+// CHECK:STDOUT:   %Main.N: <namespace> = import_ref Main//poison, N, loaded
+// CHECK:STDOUT:   %N: <namespace> = namespace %Main.N, [template] {
+// CHECK:STDOUT:     .F1 = %Main.F1
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -1053,17 +1058,17 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//poison, C, unloaded
-// CHECK:STDOUT:   %import_ref.a98: <namespace> = import_ref Main//poison, N, loaded
-// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.a98, [template] {
-// CHECK:STDOUT:     .F1 = %import_ref.cd4
+// CHECK:STDOUT:   %Main.C = import_ref Main//poison, C, unloaded
+// CHECK:STDOUT:   %Main.N: <namespace> = import_ref Main//poison, N, loaded
+// CHECK:STDOUT:   %N: <namespace> = namespace %Main.N, [template] {
+// CHECK:STDOUT:     .F1 = %Main.F1
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
@@ -1264,14 +1269,18 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc9: %B.elem = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc9_10: %B.elem = field_decl v, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc9_5: %B.elem = var_pattern %.loc9_10
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %B.elem = var <invalid>
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.96d] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type.57e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .v = %.loc9
+// CHECK:STDOUT:   .v = %.loc9_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {

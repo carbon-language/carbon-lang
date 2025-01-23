@@ -1122,6 +1122,10 @@ class FormatterImpl {
     FormatImportRefRHS(inst.import_ir_inst_id, inst.entity_name_id, "unloaded");
   }
 
+  auto FormatInstRHS(NameBindingDecl inst) -> void {
+    FormatTrailingBlock(inst.pattern_block_id);
+  }
+
   auto FormatInstRHS(SpliceBlock inst) -> void {
     FormatArgs(inst.result_id);
     FormatTrailingBlock(inst.block_id);

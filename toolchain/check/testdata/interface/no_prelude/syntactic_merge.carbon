@@ -173,16 +173,17 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface Foo(a:! const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:19: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:19: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: interface Foo(a:! const (const C)) {}
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:25: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:25: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: interface Foo(a:! const (const C)) {}
 // CHECK:STDERR:                         ^
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:25: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: interface Foo(a:! const C);
 // CHECK:STDERR:                         ^
+// CHECK:STDERR:
 interface Foo(a:! const (const C)) {}
 
 // CHECK:STDOUT: --- basic.carbon
@@ -624,20 +625,20 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//two_file, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.05a: type = import_ref Main//two_file, D, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.c61: %Foo.type = import_ref Main//two_file, Foo, loaded [template = constants.%Foo.generic]
-// CHECK:STDOUT:   %import_ref.feb: %Bar.type = import_ref Main//two_file, Bar, loaded [template = constants.%Bar.generic]
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.C: type = import_ref Main//two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Main.D: type = import_ref Main//two_file, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Main.Foo: %Foo.type = import_ref Main//two_file, Foo, loaded [template = constants.%Foo.generic]
+// CHECK:STDOUT:   %Main.Bar: %Bar.type = import_ref Main//two_file, Bar, loaded [template = constants.%Bar.generic]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.3b0
-// CHECK:STDOUT:     .D = imports.%import_ref.05a
-// CHECK:STDOUT:     .Foo = imports.%import_ref.c61
-// CHECK:STDOUT:     .Bar = imports.%import_ref.feb
+// CHECK:STDOUT:     .C = imports.%Main.C
+// CHECK:STDOUT:     .D = imports.%Main.D
+// CHECK:STDOUT:     .Foo = imports.%Main.Foo
+// CHECK:STDOUT:     .Bar = imports.%Main.Bar
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
@@ -646,7 +647,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc12_15.1, runtime_param<invalid> [symbolic = %a.patt.loc12_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:     %a.loc12_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc12_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc21: %.type.abf52e.2 = interface_decl @.2 [template = constants.%.generic.0a9e18.2] {
@@ -654,7 +655,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc21_15.1, runtime_param<invalid> [symbolic = %a.patt.loc21_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.05a [template = constants.%C]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc21_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc21_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -708,10 +709,10 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "two_file.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
@@ -1066,22 +1067,22 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//alias_two_file, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.c61: %Foo.type = import_ref Main//alias_two_file, Foo, loaded [template = constants.%Foo.generic]
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.C: type = import_ref Main//alias_two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Main.Foo: %Foo.type = import_ref Main//alias_two_file, Foo, loaded [template = constants.%Foo.generic]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.3b0
-// CHECK:STDOUT:     .Foo = imports.%import_ref.c61
+// CHECK:STDOUT:     .C = imports.%Main.C
+// CHECK:STDOUT:     .Foo = imports.%Main.Foo
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.3b0 [template = constants.%C]
-// CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [template = constants.%C]
+// CHECK:STDOUT:   %D: type = bind_alias D, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   %.decl: %.type.abf = interface_decl @.1 [template = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc17_15.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc17_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc17_15.1, runtime_param<invalid> [symbolic = %a.patt.loc17_15.2 (constants.%a.patt)]
@@ -1117,10 +1118,10 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "alias_two_file.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
@@ -1170,16 +1171,16 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %a.loc6_15.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type.abf = interface_decl @.1 [template = constants.%.generic] {
-// CHECK:STDOUT:     %a.patt.loc17_15.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc17_15.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc17_15.1, runtime_param<invalid> [symbolic = %a.patt.loc17_15.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc18_15.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_15.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc18_15.1, runtime_param<invalid> [symbolic = %a.patt.loc18_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc17: type = splice_block %const.loc17_19 [template = constants.%const] {
+// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_19 [template = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %const.loc17_26: type = const_type %C [template = constants.%const]
-// CHECK:STDOUT:       %const.loc17_19: type = const_type %const [template = constants.%const]
+// CHECK:STDOUT:       %const.loc18_26: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:       %const.loc18_19: type = const_type %const [template = constants.%const]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc17_15.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc17_15.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc18_15.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc18_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1190,12 +1191,12 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%a.loc17_15.1: %const) {
-// CHECK:STDOUT:   %a.loc17_15.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc17_15.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc17_15.2: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc17_15.2 (constants.%a.patt)]
+// CHECK:STDOUT: generic interface @.1(%a.loc18_15.1: %const) {
+// CHECK:STDOUT:   %a.loc18_15.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc18_15.2 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.loc18_15.2: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = facet_type <@.1, @.1(%a.loc17_15.2)> [symbolic = %.type (constants.%.type.963)]
+// CHECK:STDOUT:   %.type: type = facet_type <@.1, @.1(%a.loc18_15.2)> [symbolic = %.type (constants.%.type.963)]
 // CHECK:STDOUT:   %Self.2: %.type.963 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -1221,9 +1222,9 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.loc17_15.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc17_15.2 => constants.%a
+// CHECK:STDOUT:   %a.loc18_15.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc18_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(%a.loc17_15.2) {}
+// CHECK:STDOUT: specific @.1(%a.loc18_15.2) {}
 // CHECK:STDOUT:

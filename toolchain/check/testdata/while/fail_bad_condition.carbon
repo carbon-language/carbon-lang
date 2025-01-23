@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/fail_bad_condition.carbon
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `String` to `bool` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: error: cannot implicitly convert from `String` to `bool` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: note: type `String` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+4]]:9: note: type `String` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
+  // CHECK:STDERR:
   while ("Hello") {}
 }
 
@@ -28,7 +29,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -49,7 +50,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %str: String = string_literal "Hello" [template = constants.%str]
-// CHECK:STDOUT:   %.loc18: bool = converted %str, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: bool = converted %str, <error> [template = <error>]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

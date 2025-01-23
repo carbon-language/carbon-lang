@@ -119,4 +119,9 @@ auto HandleParseNode(Context& context, Parse::ExternModifierId node_id)
   return HandleModifier(context, node_id, KeywordModifierSet::Extern);
 }
 
+auto HandleParseNode(Context& context, Parse::ReturnedModifierId node_id)
+    -> bool {
+  return HandleModifier(context, node_id, KeywordModifierSet::Returned);
+}
+
 }  // namespace Carbon::Check

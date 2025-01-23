@@ -41,9 +41,10 @@ fn AccessMissingGeneric[T:! type](I:! Interface(T)) -> T {
 }
 
 fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+3]]:10: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return I.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR:
   return I.nonesuch;
 }
 
@@ -87,7 +88,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -315,7 +316,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

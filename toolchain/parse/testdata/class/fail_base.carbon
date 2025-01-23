@@ -23,13 +23,14 @@ class A {
 
   base: { }
   // We should resume parsing here after the previous error.
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+7]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+8]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+3]]:7: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:       ^
+  // CHECK:STDERR:
   var n: i32;
 }
 

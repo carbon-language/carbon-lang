@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/return/fail_returned_no_var.carbon
 
 fn F() -> String {
-  // CHECK:STDERR: fail_returned_no_var.carbon:[[@LINE+3]]:12: error: expected `var` after `returned` [ExpectedVarAfterReturned]
+  // CHECK:STDERR: fail_returned_no_var.carbon:[[@LINE+4]]:12: error: expected `var` after `returned` [ExpectedVarAfterReturned]
   // CHECK:STDERR:   returned fn G() -> i32;
   // CHECK:STDERR:            ^~
+  // CHECK:STDERR:
   returned fn G() -> i32;
 }
 

@@ -14,9 +14,10 @@ class D {}
 alias c = C;
 var d: D = {};
 
-// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+3]]:1: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+4]]:16: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: let c_var: c = d;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                ^
+// CHECK:STDERR:
 let c_var: c = d;
 
 // CHECK:STDOUT: --- fail_aliased_name_in_diag.carbon
@@ -35,14 +36,25 @@ let c_var: c = d;
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
-// CHECK:STDOUT:     .c_var = @__global_init.%c_var
+// CHECK:STDOUT:     .c_var = %c_var
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %D = binding_pattern d
+// CHECK:STDOUT:     %.loc15: %D = var_pattern %d.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %D = var d
+// CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c_var.patt: %C = binding_pattern c_var
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
+// CHECK:STDOUT:   %.loc21: %C = converted @__global_init.%d.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -65,11 +77,9 @@ let c_var: c = d;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_13.2: init %D = class_init (), file.%d.var [template = constants.%D.val]
-// CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%D.val]
-// CHECK:STDOUT:   assign file.%d.var, %.loc15_14
+// CHECK:STDOUT:   %.loc15_1: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%D.val]
+// CHECK:STDOUT:   assign file.%d.var, %.loc15_1
 // CHECK:STDOUT:   %d.ref: ref %D = name_ref d, file.%d
-// CHECK:STDOUT:   %.loc20: %C = converted %d.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

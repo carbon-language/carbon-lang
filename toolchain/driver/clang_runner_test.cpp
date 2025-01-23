@@ -13,18 +13,17 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Program.h"
 #include "llvm/TargetParser/Host.h"
 #include "testing/base/global_exe_path.h"
-#include "testing/base/test_raw_ostream.h"
 
 namespace Carbon {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
@@ -54,7 +53,7 @@ static auto RunWithCapturedOutput(std::string& out, std::string& err,
 }
 
 TEST(ClangRunnerTest, Version) {
-  TestRawOstream test_os;
+  RawStringOstream test_os;
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   std::string target = llvm::sys::getDefaultTargetTriple();
@@ -127,11 +126,10 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
-  std::string verbose_out;
-  llvm::raw_string_ostream verbose_os(verbose_out);
+  RawStringOstream verbose_out;
   std::string target = llvm::sys::getDefaultTargetTriple();
   auto vfs = llvm::vfs::getRealFileSystem();
-  ClangRunner runner(&install_paths, target, vfs, &verbose_os);
+  ClangRunner runner(&install_paths, target, vfs, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(RunWithCapturedOutput(out, err,
@@ -141,7 +139,8 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
                                                          bar_file.string()});
                                     }))
       << "Verbose output from runner:\n"
-      << verbose_out << "\n";
+      << verbose_out.TakeStr() << "\n";
+  verbose_out.clear();
 
   // Because we use `-###' above, we should just see the command that the Clang
   // driver would have run in a subprocess. This will be very architecture
@@ -161,11 +160,10 @@ TEST(ClangRunnerTest, DashC) {
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
-  std::string verbose_out;
-  llvm::raw_string_ostream verbose_os(verbose_out);
+  RawStringOstream verbose_out;
   std::string target = llvm::sys::getDefaultTargetTriple();
   auto vfs = llvm::vfs::getRealFileSystem();
-  ClangRunner runner(&install_paths, target, vfs, &verbose_os);
+  ClangRunner runner(&install_paths, target, vfs, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(RunWithCapturedOutput(out, err,
@@ -175,7 +173,8 @@ TEST(ClangRunnerTest, DashC) {
                                            test_output.string()});
                                     }))
       << "Verbose output from runner:\n"
-      << verbose_out << "\n";
+      << verbose_out.TakeStr() << "\n";
+  verbose_out.clear();
 
   // No output should be produced.
   EXPECT_THAT(out, StrEq(""));

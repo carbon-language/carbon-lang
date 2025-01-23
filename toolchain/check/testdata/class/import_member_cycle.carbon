@@ -53,13 +53,17 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %.loc5: %Cycle.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %Cycle.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc5_3: %Cycle.elem = var_pattern %.loc5_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Cycle.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
-// CHECK:STDOUT:   .a = %.loc5
+// CHECK:STDOUT:   .a = %.loc5_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -74,19 +78,19 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.c07: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
+// CHECK:STDOUT:   %Main.Cycle: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.72d: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3a6 = import_ref Main//a, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.72d: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cycle = imports.%import_ref.c07
+// CHECK:STDOUT:     .Cycle = imports.%Main.Cycle
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
@@ -96,16 +100,24 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle [from "a.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.72d
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.72d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3a6
-// CHECK:STDOUT:   .a = imports.%import_ref.4e0
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3a6
+// CHECK:STDOUT:   .a = imports.%Main.import_ref.4e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a
+// CHECK:STDOUT:     %.loc7_3: %ptr = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
+// CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [template = constants.%Cycle]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_omit_library_keyword.carbon
 
-// CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+3]]:17: error: missing `library` keyword [MissingLibraryKeyword]
+// CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+4]]:17: error: missing `library` keyword [MissingLibraryKeyword]
 // CHECK:STDERR: import Geometry "Shapes";
 // CHECK:STDERR:                 ^~~~~~~~
+// CHECK:STDERR:
 import Geometry "Shapes";
 
 // CHECK:STDOUT: - filename: fail_omit_library_keyword.carbon

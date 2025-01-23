@@ -169,12 +169,13 @@ base class Base {
   fn F[addr self: Self*]();
 }
 
-// CHECK:STDERR: fail_self_type.carbon:[[@LINE+6]]:22: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_type.carbon:[[@LINE+7]]:22: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Base.F[addr self: Base*]() {
 // CHECK:STDERR:                      ^~~~
 // CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:19: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn F[addr self: Self*]();
 // CHECK:STDERR:                   ^~~~
+// CHECK:STDERR:
 fn Base.F[addr self: Base*]() {
   (*self).a = ();
 }
@@ -587,16 +588,16 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//two_file, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.05a: type = import_ref Main//two_file, D, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.C: type = import_ref Main//two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Main.D: type = import_ref Main//two_file, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.3b0
-// CHECK:STDOUT:     .D = imports.%import_ref.05a
+// CHECK:STDOUT:     .C = imports.%Main.C
+// CHECK:STDOUT:     .D = imports.%Main.D
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:   }
@@ -607,7 +608,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc4, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:     %a.loc4: %C = bind_symbolic_name a, 0, %a.param [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [template = constants.%Bar.generic] {
@@ -615,16 +616,16 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc5, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.05a [template = constants.%C]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc5: %C = bind_symbolic_name a, 0, %a.param [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "two_file.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
@@ -977,21 +978,21 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//alias_two_file, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.C: type = import_ref Main//alias_two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.3b0
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.3b0 [template = constants.%C]
-// CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [template = constants.%C]
+// CHECK:STDOUT:   %D: type = bind_alias D, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc6, runtime_param<invalid> [symbolic = constants.%a.patt]
@@ -1003,10 +1004,10 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "alias_two_file.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
@@ -1140,10 +1141,10 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.ad0] {
 // CHECK:STDOUT:     %self.patt: %ptr.11f = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.11f = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc16_11: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc17_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.11f = value_param runtime_param0
-// CHECK:STDOUT:     %.loc16_26: type = splice_block %ptr [template = constants.%ptr.11f] {
+// CHECK:STDOUT:     %.loc17_26: type = splice_block %ptr [template = constants.%ptr.11f] {
 // CHECK:STDOUT:       %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Base [template = constants.%ptr.11f]
 // CHECK:STDOUT:     }
@@ -1152,7 +1153,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc5: %Base.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc5_3: %Base.elem = var_pattern %.loc5_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Base.elem = var <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %ptr.11f = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.11f = value_param_pattern %self.patt, runtime_param0
@@ -1170,7 +1175,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc5
+// CHECK:STDOUT:   .a = %.loc5_8
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1179,13 +1184,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: fn @.1[addr %self.param_patt: %ptr.11f]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self
-// CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5 [template = @Base.%.loc5]
-// CHECK:STDOUT:   %.loc17_10: ref %empty_tuple.type = class_element_access %.loc17_4, element0
-// CHECK:STDOUT:   %.loc17_16.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = tuple_init () to %.loc17_10 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_13: init %empty_tuple.type = converted %.loc17_16.1, %.loc17_16.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %.loc17_10, %.loc17_13
+// CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5_8 [template = @Base.%.loc5_8]
+// CHECK:STDOUT:   %.loc18_10: ref %empty_tuple.type = class_element_access %.loc18_4, element0
+// CHECK:STDOUT:   %.loc18_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_16.2: init %empty_tuple.type = tuple_init () to %.loc18_10 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_13: init %empty_tuple.type = converted %.loc18_16.1, %.loc18_16.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %.loc18_10, %.loc18_13
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

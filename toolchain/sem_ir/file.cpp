@@ -189,6 +189,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case NameBindingDecl::Kind:
       case Namespace::Kind:
       case OutParamPattern::Kind:
       case RequirementEquivalent::Kind:
@@ -196,7 +197,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnSlotPattern::Kind:
+      case Vtable::Kind:
       case ReturnExpr::Kind:
+      case VarPattern::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:

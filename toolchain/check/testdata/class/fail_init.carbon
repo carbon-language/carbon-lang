@@ -24,9 +24,10 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {.a = 1, .c = 2} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+3]]:3: error: cannot initialize class with 2 fields from struct with 3 fields [StructInitElementCountMismatch]
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: cannot initialize class with 2 fields from struct with 3 fields [StructInitElementCountMismatch]
   // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   {.a = 1, .b = 2, .c = 3} as Class;
 }
 
@@ -46,7 +47,7 @@ fn F() {
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.a.c: type = struct_type {.a: Core.IntLiteral, .c: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
@@ -58,8 +59,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -77,15 +78,23 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: %Class.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc13: %Class.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.loc13_8: %Class.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc13_3: %Class.elem = var_pattern %.loc13_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .a = %.loc12
-// CHECK:STDOUT:   .b = %.loc13
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -110,14 +119,14 @@ fn F() {
 // CHECK:STDOUT:   %.loc26_18.5: init %i32 = initialize_from %.loc26_18.2 to %.loc26_18.4 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc26_18.6: ref %Class = temporary %.loc26_18.3, <error>
 // CHECK:STDOUT:   %.loc26_20: ref %Class = converted %.loc26_18.1, %.loc26_18.6
-// CHECK:STDOUT:   %int_1.loc30: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_2.loc30: Core.IntLiteral = int_value 2 [template = constants.%int_2]
+// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_2.loc31: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:   %.loc30_26.1: %struct_type.a.b.c = struct_literal (%int_1.loc30, %int_2.loc30, %int_3)
-// CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc30_26.2: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc30_26.3: ref %Class = temporary %.loc30_26.2, <error>
-// CHECK:STDOUT:   %.loc30_28: ref %Class = converted %.loc30_26.1, %.loc30_26.3
+// CHECK:STDOUT:   %.loc31_26.1: %struct_type.a.b.c = struct_literal (%int_1.loc31, %int_2.loc31, %int_3)
+// CHECK:STDOUT:   %Class.ref.loc31: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %.loc31_26.2: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc31_26.3: ref %Class = temporary %.loc31_26.2, <error>
+// CHECK:STDOUT:   %.loc31_28: ref %Class = converted %.loc31_26.1, %.loc31_26.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

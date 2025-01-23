@@ -81,7 +81,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.x.c96: type = struct_type {.x: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.ecc, %Convert.956 [template]
@@ -94,8 +94,8 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -176,13 +176,17 @@ class X(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
-// CHECK:STDOUT:   %.loc9: %Param.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc9_8: %Param.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc9_3: %Param.elem = var_pattern %.loc9_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Param.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.ed6 [template = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
-// CHECK:STDOUT:   .x = %.loc9
+// CHECK:STDOUT:   .x = %.loc9_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -225,6 +229,9 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc21_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [template = constants.%assoc0.a6b]
 // CHECK:STDOUT:   %F.ref.loc21: %HasF.assoc_type.dc4 = name_ref F, %.loc21_17 [template = constants.%assoc0.a6b]
@@ -232,12 +239,18 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc21_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc21: init %Param = call %impl.elem0.loc21() to %.loc21_20.1
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
-// CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9 [template = @Param.%.loc9]
-// CHECK:STDOUT:   %.loc21_21.1: ref %i32 = class_element_access %.loc21_20.2, element0
-// CHECK:STDOUT:   %.loc21_21.2: %i32 = bind_value %.loc21_21.1
-// CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc21_21.2
+// CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9_8 [template = @Param.%.loc9_8]
+// CHECK:STDOUT:   %.loc21_21: ref %i32 = class_element_access %.loc21_20.2, element0
+// CHECK:STDOUT:   %.loc21_10: type = splice_block %i32.loc21 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %.loc21_21
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc22_3: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
-// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc22_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [template = constants.%assoc0.a6b]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type.dc4 = name_ref F, %.loc22_17 [template = constants.%assoc0.a6b]
@@ -245,10 +258,15 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc22_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc22: init %Param = call %impl.elem0.loc22() to %.loc22_20.1
 // CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %F.call.loc22
-// CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9 [template = @Param.%.loc9]
+// CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9_8 [template = @Param.%.loc9_8]
 // CHECK:STDOUT:   %.loc22_21.1: ref %i32 = class_element_access %.loc22_20.2, element0
 // CHECK:STDOUT:   %.loc22_21.2: %i32 = bind_value %.loc22_21.1
 // CHECK:STDOUT:   assign %b.var, %.loc22_21.2
+// CHECK:STDOUT:   %.loc22_10: type = splice_block %i32.loc22 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -20,16 +20,8 @@ namespace Carbon {
 // with the language.
 class Driver {
  public:
-  // Constructs a driver with any error or informational output directed to a
-  // specified stream.
-  Driver(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-         const InstallPaths* installation,
-         llvm::raw_pwrite_stream& output_stream,
-         llvm::raw_pwrite_stream& error_stream)
-      : driver_env_{.fs = fs,
-                    .installation = installation,
-                    .output_stream = output_stream,
-                    .error_stream = error_stream} {}
+  // Constructs a driver with the provided environment.
+  explicit Driver(DriverEnv env) : driver_env_(std::move(env)) {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -38,10 +30,6 @@ class Driver {
   // false and any information about the failure is printed to the registered
   // error stream (stderr by default).
   auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult;
-
-  // Configure the driver for fuzzing. This allows specific commands to error
-  // rather than perform operations that aren't well behaved during fuzzing.
-  auto SetFuzzing() -> void;
 
  private:
   DriverEnv driver_env_;

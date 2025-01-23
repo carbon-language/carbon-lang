@@ -61,12 +61,13 @@ interface Function;
 
 class Class;
 
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Class { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
 interface Class { }
 
 // CHECK:STDOUT: --- fail_redefine_without_dependents.carbon

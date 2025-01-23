@@ -48,12 +48,13 @@ class C {
 
 fn F() {
   // This reaches decl parsing because `impl` is a valid modifier or introducer.
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+6]]:3: error: the `package` declaration must be the first non-comment line [PackageTooLate]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `package` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl package P;
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-41]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR:
   impl package P;
 }
 

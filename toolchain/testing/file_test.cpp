@@ -35,7 +35,8 @@ class ToolchainFileTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
+           FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
+           llvm::raw_pwrite_stream& error_stream)
       -> ErrorOr<RunResult> override {
     CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
     if (!is_no_prelude()) {
@@ -44,8 +45,19 @@ class ToolchainFileTest : public FileTestBase {
       }
     }
 
-    Driver driver(fs, &installation_, stdout, stderr);
+    Driver driver({.fs = fs,
+                   .installation = &installation_,
+                   .input_stream = input_stream,
+                   .output_stream = &output_stream,
+                   .error_stream = &error_stream});
     auto driver_result = driver.RunCommand(test_args);
+    // If any diagnostics have been produced, add a trailing newline to make the
+    // last diagnostic match intermediate diagnostics (that have a newline
+    // separator between them). This reduces churn when adding new diagnostics
+    // to test cases.
+    if (error_stream.tell() > 0) {
+      error_stream << '\n';
+    }
 
     RunResult result{
         .success = driver_result.success,

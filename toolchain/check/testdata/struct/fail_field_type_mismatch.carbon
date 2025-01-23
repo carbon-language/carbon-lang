@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_type_mismatch.carbon
 
-// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:20: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
+// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+4]]:20: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDERR:                    ^~~~~~~~~~
+// CHECK:STDERR:
 var x: {.a: i32} = {.b = 1.0};
 
 // CHECK:STDOUT: --- fail_field_type_mismatch.carbon
@@ -25,7 +26,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -37,14 +38,23 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.a = binding_pattern x
+// CHECK:STDOUT:     %.loc15_1: %struct_type.a = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
+// CHECK:STDOUT:   %.loc15_16: type = splice_block %struct_type.a [template = constants.%struct_type.a] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: f64 = float_literal 1 [template = constants.%float]
-// CHECK:STDOUT:   %.loc14: %struct_type.b = struct_literal (%float)
+// CHECK:STDOUT:   %.loc15: %struct_type.b = struct_literal (%float)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

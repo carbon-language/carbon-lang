@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_type_mismatch.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `f64` to `i32` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `f64` to `i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:3: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   return 1.0;
 }
 
@@ -30,8 +31,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -57,7 +58,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: f64 = float_literal 1 [template = constants.%float]
-// CHECK:STDOUT:   %.loc18: %i32 = converted %float, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

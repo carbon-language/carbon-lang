@@ -13,9 +13,10 @@
 class C {}
 interface I {}
 
-// CHECK:STDERR: fail_fuzz_crash.carbon:[[@LINE+3]]:14: error: parameters of generic types must be constant [GenericParamMustBeConstant]
+// CHECK:STDERR: fail_fuzz_crash.carbon:[[@LINE+4]]:14: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR: impl forall [T: type] C as I { }
 // CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:
 impl forall [T: type] C as I { }
 
 // CHECK:STDOUT: --- fail_fuzz_crash.carbon

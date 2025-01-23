@@ -8,12 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_no_conversion.carbon
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:21: error: cannot convert from `Core.IntLiteral` to `(i32, i32)` with `as` [ExplicitAsConversionFailure]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:21: error: cannot convert from `Core.IntLiteral` to `(i32, i32)` with `as` [ExplicitAsConversionFailure]
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: note: type `Core.IntLiteral` does not implement interface `Core.As((i32, i32))` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:21: note: type `Core.IntLiteral` does not implement interface `Core.As((i32, i32))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let n: (i32, i32) = 1 as (i32, i32);
 
 // CHECK:STDOUT: --- fail_no_conversion.carbon
@@ -28,8 +29,8 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .As = %import_ref.16b
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -38,23 +39,34 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .n = @__global_init.%n
+// CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %tuple.type.d07 = binding_pattern n
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18_17.1: type = splice_block %.loc18_17.3 [template = constants.%tuple.type.d07] {
+// CHECK:STDOUT:     %int_32.loc18_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc18_17.2: %tuple.type.24b = tuple_literal (%i32.loc18_9, %i32.loc18_14)
+// CHECK:STDOUT:     %.loc18_17.3: type = converted %.loc18_17.2, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %tuple.elem0: %i32 = tuple_access @__global_init.%.loc18_23, element0 [template = <error>]
+// CHECK:STDOUT:   %n: %tuple.type.d07 = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %int_32.loc17_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc17_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_35.1: %tuple.type.24b = tuple_literal (%i32.loc17_27, %i32.loc17_32)
-// CHECK:STDOUT:   %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
-// CHECK:STDOUT:   %.loc17_23: %tuple.type.d07 = converted %int_1, <error> [template = <error>]
-// CHECK:STDOUT:   %tuple.elem0: %i32 = tuple_access %.loc17_23, element0 [template = <error>]
-// CHECK:STDOUT:   %n: %tuple.type.d07 = bind_name n, <error>
+// CHECK:STDOUT:   %int_32.loc18_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc18_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc18_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc18_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_35.1: %tuple.type.24b = tuple_literal (%i32.loc18_27, %i32.loc18_32)
+// CHECK:STDOUT:   %.loc18_35.2: type = converted %.loc18_35.1, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
+// CHECK:STDOUT:   %.loc18_23: %tuple.type.d07 = converted %int_1, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

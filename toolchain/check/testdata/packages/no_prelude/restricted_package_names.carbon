@@ -82,9 +82,10 @@ package r#Cpp;
 
 // --- fail_cpp_lib.carbon
 
-// CHECK:STDERR: fail_cpp_lib.carbon:[[@LINE+3]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
+// CHECK:STDERR: fail_cpp_lib.carbon:[[@LINE+4]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
 // CHECK:STDERR: package Cpp library "cpp_lib";
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 package Cpp library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- lowercase_main.carbon

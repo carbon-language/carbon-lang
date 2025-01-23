@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_array_non_int_indexing.carbon
 
 var a: [i32; 1] = (12,);
-// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+6]]:16: error: cannot implicitly convert from `f64` to `i32` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+7]]:16: error: cannot implicitly convert from `f64` to `i32` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                ^~~
-// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+3]]:16: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+4]]:16: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                ^~~
+// CHECK:STDERR:
 var b: i32 = a[2.6];
 
 // CHECK:STDOUT: --- fail_array_non_int_indexing.carbon
@@ -28,7 +29,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_12.6a3, %Convert.956 [template]
@@ -40,8 +41,8 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -54,9 +55,27 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
+// CHECK:STDOUT:     %.loc11_1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
+// CHECK:STDOUT:   %.loc11_15: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc19_1: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
+// CHECK:STDOUT:   %.loc19_8: type = splice_block %i32.loc19 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,16 +92,16 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc11_23.3: ref %i32 = array_index file.%a.var, %int_0
 // CHECK:STDOUT:   %.loc11_23.4: init %i32 = initialize_from %.loc11_23.2 to %.loc11_23.3 [template = constants.%int_12.1e1]
 // CHECK:STDOUT:   %.loc11_23.5: init %array_type = array_init (%.loc11_23.4) to file.%a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc11_24: init %array_type = converted %.loc11_23.1, %.loc11_23.5 [template = constants.%array]
-// CHECK:STDOUT:   assign file.%a.var, %.loc11_24
+// CHECK:STDOUT:   %.loc11_1: init %array_type = converted %.loc11_23.1, %.loc11_23.5 [template = constants.%array]
+// CHECK:STDOUT:   assign file.%a.var, %.loc11_1
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, file.%a
 // CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [template = constants.%float]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_16: %i32 = converted %float, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_19.1: ref %i32 = array_index %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_19.2: %i32 = bind_value %.loc18_19.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc18_19.2
+// CHECK:STDOUT:   %.loc19_16: %i32 = converted %float, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_19.1: ref %i32 = array_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_19.2: %i32 = bind_value %.loc19_19.1
+// CHECK:STDOUT:   assign file.%b.var, %.loc19_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

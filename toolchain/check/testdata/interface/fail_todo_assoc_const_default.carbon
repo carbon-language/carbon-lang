@@ -14,9 +14,10 @@ interface I {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default let T:! type = (i32, i32);
-  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   default let N:! i32 = 42;
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default let N:! i32 = 42;
 }
 
@@ -34,7 +35,7 @@ interface I {
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42.20e, %Convert.956 [template]
@@ -44,8 +45,8 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -78,8 +79,8 @@ interface I {
 // CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_42) [template = constants.%int_42.c68]
-// CHECK:STDOUT:     %.loc20_27.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
-// CHECK:STDOUT:     %.loc20_27.2: %i32 = converted %int_42, %.loc20_27.1 [template = constants.%int_42.c68]
+// CHECK:STDOUT:     %.loc21_27.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
+// CHECK:STDOUT:     %.loc21_27.2: %i32 = converted %int_42, %.loc21_27.1 [template = constants.%int_42.c68]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -98,7 +99,7 @@ interface I {
 // CHECK:STDOUT: generic assoc_const @N(@I.%Self: %I.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   assoc_const N:! %i32 = %.loc20_27.2;
+// CHECK:STDOUT:   assoc_const N:! %i32 = %.loc21_27.2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self.826) {}
