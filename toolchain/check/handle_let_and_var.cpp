@@ -331,7 +331,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
 
   // At interface scope, we are forming an associated constant, which has
   // different rules.
-  if (auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+  if (auto interface_scope =
+          context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     FinishAssociatedConstant(context, node_id, interface_scope->interface_id,
                              decl_info);
     return true;
