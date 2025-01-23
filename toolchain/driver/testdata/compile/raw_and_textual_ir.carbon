@@ -20,12 +20,12 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: filename:        raw_and_textual_ir.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {decl_id: inst<invalid>, is_export: false}
+// CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst32}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst32}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
+// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: comp_time_bind<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_slot_pattern: inst27, body: [inst_block10]}
 // CHECK:STDOUT:   classes:         {}
@@ -47,7 +47,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       0:               type(inst13)
 // CHECK:STDOUT:       1:               type(inst13)
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst12:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst12:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst13:          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
 // CHECK:STDOUT:     inst14:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst13)}
 // CHECK:STDOUT:     inst15:          {kind: Converted, arg0: inst14, arg1: inst13, type: type(TypeType)}
@@ -68,7 +68,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst30:          {kind: OutParam, arg0: runtime_param1, arg1: name(ReturnSlot), type: type(inst21)}
 // CHECK:STDOUT:     inst31:          {kind: ReturnSlot, arg0: inst22, arg1: inst30, type: type(inst21)}
 // CHECK:STDOUT:     inst32:          {kind: FunctionDecl, arg0: function0, arg1: inst_block9, type: type(inst33)}
-// CHECK:STDOUT:     inst33:          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst33:          {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst34:          {kind: StructValue, arg0: inst_block_empty, type: type(inst33)}
 // CHECK:STDOUT:     inst35:          {kind: PointerType, arg0: type(inst21), type: type(TypeType)}
 // CHECK:STDOUT:     inst36:          {kind: NameRef, arg0: name1, arg1: inst16, type: type(inst13)}

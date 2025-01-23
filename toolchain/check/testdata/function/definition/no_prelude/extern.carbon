@@ -180,8 +180,8 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,8 +288,8 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

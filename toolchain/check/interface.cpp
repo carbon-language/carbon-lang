@@ -52,7 +52,7 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
   arg_ids.reserve(bindings.size());
 
   // Start with the enclosing arguments.
-  if (enclosing_specific_id.is_valid()) {
+  if (enclosing_specific_id.has_value()) {
     auto enclosing_specific_args_id =
         context.specifics().Get(enclosing_specific_id).args_id;
     auto enclosing_specific_args =
@@ -73,7 +73,7 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
   // already has a facet value.
   auto type_inst_id = context.types().GetInstId(self_type_id);
   auto facet_value_const_id =
-      TryEvalInst(context, SemIR::InstId::Invalid,
+      TryEvalInst(context, SemIR::InstId::None,
                   SemIR::FacetValue{.type_id = self_binding.type_id,
                                     .type_inst_id = type_inst_id,
                                     .witness_inst_id = witness_inst_id});

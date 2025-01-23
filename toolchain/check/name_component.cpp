@@ -11,8 +11,8 @@ namespace Carbon::Check {
 
 auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     -> NameComponent {
-  Parse::NodeId first_param_node_id = Parse::InvalidNodeId();
-  Parse::NodeId last_param_node_id = Parse::InvalidNodeId();
+  Parse::NodeId first_param_node_id = Parse::NoneNodeId();
+  Parse::NodeId last_param_node_id = Parse::NoneNodeId();
 
   // Explicit params.
   auto [params_loc_id, param_patterns_id] =
@@ -23,7 +23,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
             .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
     last_param_node_id = params_loc_id;
   } else {
-    param_patterns_id = SemIR::InstBlockId::Invalid;
+    param_patterns_id = SemIR::InstBlockId::None;
   }
 
   // Implicit params.
@@ -36,16 +36,17 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Only use the end of implicit params if there weren't explicit params.
-    if (last_param_node_id.is_valid()) {
+    if (last_param_node_id.has_value()) {
       last_param_node_id = params_loc_id;
     }
   } else {
-    implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
+    implicit_param_patterns_id = SemIR::InstBlockId::None;
   }
 
-  auto call_params_id = SemIR::InstBlockId::Invalid;
-  auto pattern_block_id = SemIR::InstBlockId::Invalid;
-  if (param_patterns_id->is_valid() || implicit_param_patterns_id->is_valid()) {
+  auto call_params_id = SemIR::InstBlockId::None;
+  auto pattern_block_id = SemIR::InstBlockId::None;
+  if (param_patterns_id->has_value() ||
+      implicit_param_patterns_id->has_value()) {
     call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            *param_patterns_id, return_slot_pattern_id);
@@ -77,17 +78,17 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
 auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
     -> NameComponent {
   NameComponent name = PopNameComponent(context);
-  if (name.call_params_id.is_valid()) {
+  if (name.call_params_id.has_value()) {
     CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
                       "`{0}` declaration cannot have parameters",
                       Lex::TokenKind);
     // Point to the lexically first parameter list in the diagnostic.
-    context.emitter().Emit(name.implicit_param_patterns_id.is_valid()
+    context.emitter().Emit(name.implicit_param_patterns_id.has_value()
                                ? name.implicit_params_loc_id
                                : name.params_loc_id,
                            UnexpectedDeclNameParams, introducer);
 
-    name.call_params_id = SemIR::InstBlockId::Invalid;
+    name.call_params_id = SemIR::InstBlockId::None;
   }
   return name;
 }

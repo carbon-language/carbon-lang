@@ -111,12 +111,12 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: %Class.elem.c91 = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc12: ref %Class.elem.c91 = var <invalid>
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem.c91 = var <none>
 // CHECK:STDOUT:   %.loc13_11: %Class.elem.0c0 = field_decl next, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc13_3: %Class.elem.0c0 = var_pattern %.loc13_11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc13: ref %Class.elem.0c0 = var <invalid>
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem.0c0 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type.78f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

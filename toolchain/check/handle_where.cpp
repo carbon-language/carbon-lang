@@ -33,17 +33,17 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
        // Invalid because this is not the parameter of a generic.
-       .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+       .bind_index = SemIR::CompileTimeBindIndex::None});
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
            .entity_name_id = entity_name_id,
            // Invalid because there is no equivalent non-symbolic value.
-           .value_id = SemIR::InstId::Invalid}));
+           .value_id = SemIR::InstId::None}));
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
-  CARBON_CHECK(!existing.is_valid());
+  CARBON_CHECK(!existing.has_value());
 
   // Save the `.Self` symbolic binding on the node stack. It will become the
   // first argument to the `WhereExpr` instruction.

@@ -38,7 +38,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
 
   auto namespace_inst = SemIR::Namespace{
       context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
-      SemIR::NameScopeId::Invalid, SemIR::InstId::Invalid};
+      SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
 
@@ -47,7 +47,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
                                                 SemIR::AccessKind::Public);
   if (is_poisoned) {
     context.DiagnosePoisonedName(namespace_id);
-  } else if (existing_inst_id.is_valid()) {
+  } else if (existing_inst_id.has_value()) {
     if (auto existing =
             context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
       // If there's a name conflict with a namespace, "merge" by using the
@@ -67,8 +67,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
         context.name_scopes()
             .Get(existing->name_scope_id)
             .set_is_closed_import(false);
-      } else if (existing->import_id.is_valid() &&
-                 !context.insts().GetLocId(existing_inst_id).is_valid()) {
+      } else if (existing->import_id.has_value() &&
+                 !context.insts().GetLocId(existing_inst_id).has_value()) {
         // When the name conflict is an imported namespace, fill the location ID
         // so that future diagnostics point at this declaration.
         context.SetNamespaceNodeId(existing_inst_id, node_id);
@@ -81,7 +81,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   // If we weren't able to merge namespaces, add a new name scope. Note this
   // occurs even for duplicates where we discard the namespace, because we want
   // to produce a valid constant.
-  if (!namespace_inst.name_scope_id.is_valid()) {
+  if (!namespace_inst.name_scope_id.has_value()) {
     namespace_inst.name_scope_id = context.name_scopes().Add(
         namespace_id, name_context.name_id_for_new_inst(),
         name_context.parent_scope_id);

@@ -123,7 +123,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

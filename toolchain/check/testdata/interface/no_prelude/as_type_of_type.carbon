@@ -35,9 +35,9 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc13_6.1: %Empty.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %Empty.type = value_param_pattern %T.patt.loc13_6.1, runtime_param<invalid> [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: %Empty.type = value_param_pattern %T.patt.loc13_6.1, runtime_param<none> [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %Empty.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: %Empty.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%Empty.type]
 // CHECK:STDOUT:     %T.loc13_6.1: %Empty.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:   }

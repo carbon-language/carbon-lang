@@ -35,14 +35,14 @@ namespace Carbon::Check {
 struct LookupScope {
   // The name scope in which names are searched.
   SemIR::NameScopeId name_scope_id;
-  // The specific for the name scope, or `Invalid` if the name scope is not
+  // The specific for the name scope, or `None` if the name scope is not
   // defined by a generic or we should perform lookup into the generic itself.
   SemIR::SpecificId specific_id;
 };
 
 // A result produced by name lookup.
 struct LookupResult {
-  // The specific in which the lookup result was found. `Invalid` if the result
+  // The specific in which the lookup result was found. `None` if the result
   // was not found in a specific.
   SemIR::SpecificId specific_id;
   // The declaration that was found by name lookup.
@@ -75,7 +75,7 @@ class Context {
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
 
   struct LookupNameInExactScopeResult {
-    // The matching entity if found, or invalid if poisoned or not found.
+    // The matching entity if found, or `None` if poisoned or not found.
     SemIR::InstId inst_id;
 
     // The access level required to use inst_id, if it's valid.
@@ -225,12 +225,12 @@ class Context {
   // specified, `scope_index` specifies which lexical scope the name is inserted
   // into, otherwise the name is inserted into the current scope.
   auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::Invalid) -> void;
+                       ScopeIndex scope_index = ScopeIndex::None) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
-  // declaration. If scope_id is invalid, performs lookup into the lexical scope
+  // declaration. If scope_id is `None`, performs lookup into the lexical scope
   // specified by scope_index instead. If found, returns the referenced
-  // instruction and false. If poisoned, returns an invalid instruction and
+  // instruction and false. If poisoned, returns an `None` instruction and
   // true.
   // TODO: For poisoned names, return the poisoning instruction.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
@@ -242,7 +242,7 @@ class Context {
                              bool required = true) -> LookupResult;
 
   // Performs a name lookup in a specified scope, returning the referenced
-  // instruction. Does not look into extended scopes. Returns an invalid
+  // instruction. Does not look into extended scopes. Returns a `None`
   // instruction if the name is not found.
   //
   // If `is_being_declared` is false, then this is a regular name lookup, and
@@ -521,7 +521,7 @@ class Context {
 
   auto Finalize() -> void;
 
-  // Returns the imported IR ID for an IR, or invalid if not imported.
+  // Returns the imported IR ID for an IR, or `None` if not imported.
   auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
     return check_ir_map_[sem_ir.check_ir_id().index];
   }

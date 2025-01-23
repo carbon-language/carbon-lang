@@ -36,8 +36,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
   if (is_generic) {
     auto inst_id = context.scope_stack().PeekInstId();
-    is_associated_constant =
-        inst_id.is_valid() && context.insts().Is<SemIR::InterfaceDecl>(inst_id);
+    is_associated_constant = inst_id.has_value() &&
+                             context.insts().Is<SemIR::InterfaceDecl>(inst_id);
   }
 
   bool needs_compile_time_binding = is_generic && !is_associated_constant;
@@ -46,8 +46,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto make_binding_pattern = [&]() -> SemIR::InstId {
-    auto bind_id = SemIR::InstId::Invalid;
-    auto binding_pattern_id = SemIR::InstId::Invalid;
+    auto bind_id = SemIR::InstId::None;
+    auto binding_pattern_id = SemIR::InstId::None;
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto entity_name_id = context.entity_names().Add(
@@ -57,14 +57,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
          // constant declaration.
          .bind_index = needs_compile_time_binding
                            ? context.scope_stack().AddCompileTimeBinding()
-                           : SemIR::CompileTimeBindIndex::Invalid});
+                           : SemIR::CompileTimeBindIndex::None});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
-          name_node,
-          SemIR::BindSymbolicName{.type_id = cast_type_id,
-                                  .entity_name_id = entity_name_id,
-                                  .value_id = SemIR::InstId::Invalid}));
+          name_node, SemIR::BindSymbolicName{.type_id = cast_type_id,
+                                             .entity_name_id = entity_name_id,
+                                             .value_id = SemIR::InstId::None}));
       binding_pattern_id =
           context.AddPatternInst<SemIR::SymbolicBindingPattern>(
               name_node,
@@ -73,7 +72,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
           name_node, SemIR::BindName{.type_id = cast_type_id,
                                      .entity_name_id = entity_name_id,
-                                     .value_id = SemIR::InstId::Invalid}));
+                                     .value_id = SemIR::InstId::None}));
       binding_pattern_id = context.AddPatternInst<SemIR::BindingPattern>(
           name_node,
           {.type_id = cast_type_id, .entity_name_id = entity_name_id});
@@ -133,7 +132,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         });
     auto binding_id =
         is_generic
-            ? Parse::NodeId::Invalid
+            ? Parse::NodeId::None
             : context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
     auto field_type_id =
@@ -141,7 +140,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     auto field_id = context.AddInst<SemIR::FieldDecl>(
         binding_id, {.type_id = field_type_id,
                      .name_id = name_id,
-                     .index = SemIR::ElementIndex::Invalid});
+                     .index = SemIR::ElementIndex::None});
     context.field_decls_stack().AppendToTop(field_id);
 
     context.node_stack().Push(node_id, field_id);
@@ -167,17 +166,17 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
     SemIR::AssociatedConstantDecl assoc_const_decl = {
         .type_id = cast_type_id,
-        .assoc_const_id = SemIR::AssociatedConstantId::Invalid,
-        .decl_block_id = SemIR::InstBlockId::Invalid};
+        .assoc_const_id = SemIR::AssociatedConstantId::None,
+        .decl_block_id = SemIR::InstBlockId::None};
     auto decl_id = context.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
         context.parse_tree().As<Parse::CompileTimeBindingPatternId>(node_id),
         assoc_const_decl));
     assoc_const_decl.assoc_const_id = context.associated_constants().Add(
         {.name_id = name_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-         .generic_id = SemIR::GenericId::Invalid,
+         .generic_id = SemIR::GenericId::None,
          .decl_id = decl_id,
-         .default_value_id = SemIR::InstId::Invalid});
+         .default_value_id = SemIR::InstId::None});
     context.ReplaceInstBeforeConstantUse(decl_id, assoc_const_decl);
 
     context.node_stack().Push(node_id, decl_id);
@@ -228,7 +227,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_pattern_id = SemIR::InstId::Invalid;
+      auto param_pattern_id = SemIR::InstId::None;
       bool had_error = false;
       switch (introducer.kind) {
         case Lex::TokenKind::Fn: {
@@ -273,7 +272,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             {
                 .type_id = context.insts().Get(pattern_inst_id).type_id(),
                 .subpattern_id = pattern_inst_id,
-                .runtime_index = is_generic ? SemIR::RuntimeParamIndex::Invalid
+                .runtime_index = is_generic ? SemIR::RuntimeParamIndex::None
                                             : SemIR::RuntimeParamIndex::Unknown,
             });
       }
@@ -326,7 +325,7 @@ auto HandleParseNode(Context& context,
     // can represent a block scope, but is also used for other kinds of scopes
     // that aren't necessarily part of an interface or function decl.
     auto scope_inst_id = context.scope_stack().PeekInstId();
-    if (scope_inst_id.is_valid()) {
+    if (scope_inst_id.has_value()) {
       auto scope_inst = context.insts().Get(scope_inst_id);
       if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
           !scope_inst.Is<SemIR::FunctionDecl>()) {

@@ -37,7 +37,7 @@ class ScopeStack {
 
     // The value corresponding to the current `returned var`, if any. Will be
     // set and unset as `returned var`s are declared and go out of scope.
-    SemIR::InstId returned_var = SemIR::InstId::Invalid;
+    SemIR::InstId returned_var = SemIR::InstId::None;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -55,13 +55,13 @@ class ScopeStack {
   // Information about a scope that has been temporarily removed from the stack.
   struct SuspendedScope;
 
-  // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
+  // Pushes a scope onto scope_stack_. NameScopeId::None is used for new
   // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
   // given namespace may contain a mix of both successful and failed name
   // imports.
-  auto Push(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-            SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
-            SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
+  auto Push(SemIR::InstId scope_inst_id = SemIR::InstId::None,
+            SemIR::NameScopeId scope_id = SemIR::NameScopeId::None,
+            SemIR::SpecificId specific_id = SemIR::SpecificId::None,
             bool lexical_lookup_has_load_error = false) -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from
@@ -101,7 +101,7 @@ class ScopeStack {
   template <typename InstT>
   auto GetCurrentScopeAs(const SemIR::File& sem_ir) -> std::optional<InstT> {
     auto inst_id = PeekInstId();
-    if (!inst_id.is_valid()) {
+    if (!inst_id.has_value()) {
       return std::nullopt;
     }
     return sem_ir.insts().TryGetAs<InstT>(inst_id);
@@ -129,7 +129,7 @@ class ScopeStack {
   // in that scope or any unfinished scope within it, and otherwise adds the
   // name with the value `target_id` and returns Invalid.
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::Invalid)
+                       ScopeIndex scope_index = ScopeIndex::None)
       -> SemIR::InstId;
 
   // Prepares to add a compile-time binding in the current scope, and returns

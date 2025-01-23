@@ -47,9 +47,9 @@ struct IntStoreTestPeer;
 // to the 32-bit signed integer minimum, supporting approximately 1.998 billion
 // unique larger integers.
 //
-// Note that the invalid ID can't be used with a token. This is OK as we
-// expect invalid tokens to be *error* tokens and not need to represent an
-// invalid integer.
+// Note the `None` ID can't be used with a token. This is OK as we expect
+// invalid tokens to be *error* tokens and not need to represent an invalid
+// integer.
 class IntId : public Printable<IntId> {
  public:
   static constexpr llvm::StringLiteral Label = "int";
@@ -65,7 +65,7 @@ class IntId : public Printable<IntId> {
   // tokens or computed after lexing outside of this range.
   static constexpr int TokenIdBits = 23;
 
-  static const IntId Invalid;
+  static const IntId None;
 
   static auto MakeFromTokenPayload(uint32_t payload) -> IntId {
     // Token-associated IDs are signed `TokenIdBits` integers, so force sign
@@ -79,33 +79,34 @@ class IntId : public Printable<IntId> {
     return IntId(raw_id);
   }
 
-  // Tests whether the ID is a value ID.
+  // Tests whether the ID is an embedded value ID.
   //
-  // Only *valid* IDs can have an embedded value, so when true this also implies
-  // the ID is valid.
-  constexpr auto is_value() const -> bool { return id_ > ZeroIndexId; }
+  // Note `None` is not an embedded value, so this implies `has_value()` is
+  // true.
+  constexpr auto is_embedded_value() const -> bool { return id_ > ZeroIndexId; }
 
   // Tests whether the ID is an index ID.
   //
-  // Note that an invalid ID is represented as an index ID, so this is *not*
-  // sufficient to test whether an ID is valid.
+  // Note `None` is represented as an index ID, so this is *not* sufficient to
+  // test `has_value()`.
   constexpr auto is_index() const -> bool { return id_ <= ZeroIndexId; }
 
-  // Test whether an ID is valid.
+  // Test whether a value is present.
   //
-  // This does not distinguish between value and index IDs, only whether valid.
-  constexpr auto is_valid() const -> bool { return id_ != InvalidId; }
+  // This does not distinguish between embedded values and index IDs, only
+  // whether some value is present.
+  constexpr auto has_value() const -> bool { return id_ != NoneId; }
 
-  // Converts an ID to the embedded value. Requires that `is_value()` is true.
+  // Converts an ID to the embedded value. Requires that `is_embedded_value()`
+  // is true.
   constexpr auto AsValue() const -> int {
-    CARBON_DCHECK(is_value());
+    CARBON_DCHECK(is_embedded_value());
     return id_;
   }
 
   // Converts an ID to an index. Requires that `is_index()` is true.
   //
-  // Note that this does *not* require that the ID is valid. An invalid ID will
-  // turn into an invalid index.
+  // Note `None` is represented as an index ID, and can be converted here.
   constexpr auto AsIndex() const -> int {
     CARBON_DCHECK(is_index());
     return ZeroIndexId - id_;
@@ -123,13 +124,13 @@ class IntId : public Printable<IntId> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << Label << "(";
-    if (is_value()) {
+    if (is_embedded_value()) {
       out << "value: " << AsValue();
     } else if (is_index()) {
       out << "index: " << AsIndex();
     } else {
-      CARBON_CHECK(!is_valid());
-      out << "<invalid>";
+      CARBON_CHECK(!has_value());
+      out << "<none>";
     }
     out << ")";
   }
@@ -173,17 +174,17 @@ class IntId : public Printable<IntId> {
   // The minimum embedded value in an ID.
   static constexpr int32_t MinValue = ZeroIndexId + 1;
 
-  // The invalid ID, which needs to be placed after the largest index, which
+  // The `None` ID, which needs to be placed after the largest index, which
   // count downwards as IDs so below the smallest index ID, in order to optimize
   // the code sequence needed to distinguish between integer and value IDs and
   // to convert index IDs into actual indices small.
-  static constexpr int32_t InvalidId = std::numeric_limits<int32_t>::min();
+  static constexpr int32_t NoneId = std::numeric_limits<int32_t>::min();
 
-  // The invalid index. This is the result of converting an invalid ID into an
+  // The `None` index. This is the result of converting a `None` ID into an
   // index. We ensure that conversion can be done so that we can simplify the
   // code that first tries to use an embedded value, then converts to an index
-  // and checks that the index is valid.
-  static const int32_t InvalidIndex;
+  // and checks that the index is still `None`.
+  static const int32_t NoneIndex;
 
   // Document the specific values of some of these constants to help visualize
   // how the bit patterns map from the above computations.
@@ -197,7 +198,7 @@ class IntId : public Printable<IntId> {
   static_assert(MaxValue    == 0b0000'0000'0011'1111'1111'1111'1111'1111);
   static_assert(ZeroIndexId == 0b1111'1111'1110'0000'0000'0000'0000'0000);
   static_assert(MinValue    == 0b1111'1111'1110'0000'0000'0000'0000'0001);
-  static_assert(InvalidId   == 0b1000'0000'0000'0000'0000'0000'0000'0000);
+  static_assert(NoneId      == 0b1000'0000'0000'0000'0000'0000'0000'0000);
   // clang-format on
 
   constexpr explicit IntId(int32_t id) : id_(id) {}
@@ -205,12 +206,12 @@ class IntId : public Printable<IntId> {
   int32_t id_;
 };
 
-constexpr IntId IntId::Invalid(IntId::InvalidId);
+constexpr IntId IntId::None(IntId::NoneId);
 
-// Note that we initialize the invalid index in a constexpr context which
+// Note that we initialize the `None` index in a constexpr context which
 // ensures there is no UB in forming it. This helps ensure all the ID -> index
-// conversions are correct because the invalid ID is at the limit of that range.
-constexpr int32_t IntId::InvalidIndex = Invalid.AsIndex();
+// conversions are correct because the `None` ID is at the limit of that range.
+constexpr int32_t IntId::NoneIndex = None.AsIndex();
 
 // A canonicalizing value store with deep optimizations for integers.
 //
@@ -246,7 +247,7 @@ class IntStore {
   // necessary to represent it.
   auto Add(int64_t value) -> IntId {
     // First try directly making this into an ID.
-    if (IntId id = TryMakeValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeValue(value); id.has_value()) [[likely]] {
       return id;
     }
 
@@ -258,7 +259,7 @@ class IntStore {
   // `APInt` if necessary to represent it.
   auto AddSigned(llvm::APInt value) -> IntId {
     // First try directly making this into an ID.
-    if (IntId id = TryMakeSignedValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeSignedValue(value); id.has_value()) [[likely]] {
       return id;
     }
 
@@ -271,7 +272,7 @@ class IntStore {
   // represent it.
   auto AddUnsigned(llvm::APInt value) -> IntId {
     // First try directly making this into an ID.
-    if (IntId id = TryMakeUnsignedValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeUnsignedValue(value); id.has_value()) [[likely]] {
       return id;
     }
 
@@ -284,7 +285,7 @@ class IntStore {
   // This will always be a signed `APInt` with a canonical bit width for the
   // specific integer value in question.
   auto Get(IntId id) const -> llvm::APInt {
-    if (id.is_value()) [[likely]] {
+    if (id.is_embedded_value()) [[likely]] {
       return llvm::APInt(MinAPWidth, id.AsValue(), /*isSigned=*/true);
     }
     return values_.Get(APIntId(id.AsIndex()));
@@ -319,9 +320,9 @@ class IntStore {
 
   // Accepts a signed `int64_t` and uses the mathematical signed integer value
   // of it as the integer value to lookup. Returns the canonical ID for that
-  // value or returns invalid if not in the store.
+  // value or returns `None` if not in the store.
   auto Lookup(int64_t value) const -> IntId {
-    if (IntId id = TryMakeValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeValue(value); id.has_value()) [[likely]] {
       return id;
     }
 
@@ -329,10 +330,10 @@ class IntStore {
     return LookupLarge(value);
   }
 
-  // Looks up the canonical ID for this signed integer value, or returns invalid
+  // Looks up the canonical ID for this signed integer value, or returns `None`
   // if not in the store.
   auto LookupSigned(llvm::APInt value) const -> IntId {
-    if (IntId id = TryMakeSignedValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeSignedValue(value); id.has_value()) [[likely]] {
       return id;
     }
 
@@ -361,45 +362,45 @@ class IntStore {
   struct APIntId : IdBase<APIntId> {
     static constexpr llvm::StringLiteral Label = "ap_int";
     using ValueType = llvm::APInt;
-    static const APIntId Invalid;
+    static const APIntId None;
     using IdBase::IdBase;
   };
 
   static constexpr int MinAPWidth = 64;
 
-  static auto MakeIndexOrInvalid(int index) -> IntId {
-    CARBON_DCHECK(index >= 0 && index <= IntId::InvalidIndex);
+  static auto MakeIndexOrNone(int index) -> IntId {
+    CARBON_DCHECK(index >= 0 && index <= IntId::NoneIndex);
     return IntId(IntId::ZeroIndexId - index);
   }
 
   // Tries to make a signed 64-bit integer into an embedded value in the ID, and
-  // if unable to do that returns the `Invalid` ID.
+  // if unable to do that returns the `None` ID.
   static auto TryMakeValue(int64_t value) -> IntId {
     if (IntId::MinValue <= value && value <= IntId::MaxValue) {
       return IntId(value);
     }
 
-    return IntId::Invalid;
+    return IntId::None;
   }
 
   // Tries to make a signed APInt into an embedded value in the ID, and if
-  // unable to do that returns the `Invalid` ID.
+  // unable to do that returns the `None` ID.
   static auto TryMakeSignedValue(llvm::APInt value) -> IntId {
     if (value.sge(IntId::MinValue) && value.sle(IntId::MaxValue)) {
       return IntId(value.getSExtValue());
     }
 
-    return IntId::Invalid;
+    return IntId::None;
   }
 
   // Tries to make an unsigned APInt into an embedded value in the ID, and if
-  // unable to do that returns the `Invalid` ID.
+  // unable to do that returns the `None` ID.
   static auto TryMakeUnsignedValue(llvm::APInt value) -> IntId {
     if (value.ule(IntId::MaxValue)) {
       return IntId(value.getZExtValue());
     }
 
-    return IntId::Invalid;
+    return IntId::None;
   }
 
   // Canonicalize an incoming signed APInt to the correct bit width.
@@ -423,8 +424,7 @@ class IntStore {
   CanonicalValueStore<APIntId> values_;
 };
 
-constexpr IntStore::APIntId IntStore::APIntId::Invalid(
-    IntId::Invalid.AsIndex());
+constexpr IntStore::APIntId IntStore::APIntId::None(IntId::None.AsIndex());
 
 }  // namespace Carbon
 

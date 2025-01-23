@@ -54,15 +54,15 @@ struct EntityWithParamsBase {
   // Determines whether the definition of this entity has begun. This is false
   // until we reach the `{` of the definition.
   auto has_definition_started() const -> bool {
-    return definition_id.is_valid();
+    return definition_id.has_value();
   }
 
   // Returns the instruction for the first declaration.
   auto first_decl_id() const -> SemIR::InstId {
-    if (non_owning_decl_id.is_valid()) {
+    if (non_owning_decl_id.has_value()) {
       return non_owning_decl_id;
     }
-    CARBON_CHECK(first_owning_decl_id.is_valid());
+    CARBON_CHECK(first_owning_decl_id.has_value());
     return first_owning_decl_id;
   }
 
@@ -71,7 +71,7 @@ struct EntityWithParamsBase {
     if (has_definition_started()) {
       return definition_id;
     }
-    if (first_owning_decl_id.is_valid()) {
+    if (first_owning_decl_id.has_value()) {
       return first_owning_decl_id;
     }
     return non_owning_decl_id;
@@ -79,8 +79,8 @@ struct EntityWithParamsBase {
 
   // Determines whether this entity has any parameter lists.
   auto has_parameters() const -> bool {
-    return implicit_param_patterns_id.is_valid() ||
-           param_patterns_id.is_valid();
+    return implicit_param_patterns_id.has_value() ||
+           param_patterns_id.has_value();
   }
 
   // The following members always have values, and do not change throughout the
@@ -146,7 +146,7 @@ struct EntityWithParamsBase {
   // The following members are set at the `{` of the definition.
 
   // The definition of the entity. This will be a <entity>Decl.
-  InstId definition_id = InstId::Invalid;
+  InstId definition_id = InstId::None;
 };
 
 }  // namespace Carbon::SemIR

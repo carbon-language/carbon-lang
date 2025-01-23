@@ -36,7 +36,7 @@ class NodeExtractor {
 
   auto at_end() const -> bool { return it_ == end_; }
   auto kind() const -> NodeKind { return tree_->tree().node_kind(*it_); }
-  auto has_token() const -> bool { return node_id_.is_valid(); }
+  auto has_token() const -> bool { return node_id_.has_value(); }
   auto token() const -> Lex::TokenIndex {
     return tree_->tree().node_token(node_id_);
   }
@@ -295,7 +295,7 @@ struct Extractable<std::optional<T>> {
 
 auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
     -> bool {
-  if (!node_id_.is_valid()) {
+  if (!node_id_.has_value()) {
     MaybeTrace("Token {0} expected but processing root node\n", expected_kind);
     return false;
   }
@@ -407,7 +407,7 @@ CARBON_PARSE_NODE_KIND(File)
 #include "toolchain/parse/node_kind.def"
 
 auto TreeAndSubtrees::ExtractFile() const -> File {
-  return ExtractNodeFromChildren<File>(NodeId::Invalid, roots());
+  return ExtractNodeFromChildren<File>(NodeId::None, roots());
 }
 
 }  // namespace Carbon::Parse

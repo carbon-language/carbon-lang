@@ -36,7 +36,7 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   }
 
   auto inst_id = name_context.prev_inst_id();
-  if (!inst_id.is_valid()) {
+  if (!inst_id.has_value()) {
     context.DiagnoseNameNotFound(node_id, name_context.name_id_for_new_inst());
     return true;
   }

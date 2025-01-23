@@ -503,7 +503,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_decl_then_extern_decl.carbon
@@ -516,7 +516,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_extern_decl_then_def.carbon
@@ -529,7 +529,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_ownership_conflict.carbon
@@ -542,7 +542,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon
@@ -555,7 +555,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_decl_after_import_extern_decl.carbon
@@ -571,7 +571,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -590,7 +590,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -613,7 +613,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -641,7 +641,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

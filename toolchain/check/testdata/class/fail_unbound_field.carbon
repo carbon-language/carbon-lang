@@ -74,7 +74,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0

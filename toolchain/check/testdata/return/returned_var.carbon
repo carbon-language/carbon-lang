@@ -98,12 +98,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: %C.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc12: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc12: ref %C.elem = var <none>
 // CHECK:STDOUT:   %.loc13_8: %C.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc13_3: %C.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc13: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc13: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.501 [template = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

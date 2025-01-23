@@ -110,7 +110,7 @@ var a: Incomplete;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.a95] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a

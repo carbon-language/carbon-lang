@@ -421,7 +421,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   auto callee_function =
       SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
-  CARBON_CHECK(callee_function.function_id.is_valid());
+  CARBON_CHECK(callee_function.function_id.has_value());
 
   if (auto builtin_kind = context.sem_ir()
                               .functions()

@@ -88,17 +88,17 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: %Base.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc12: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc12: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %.loc13_8: %Base.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc13_3: %Base.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc13: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc13: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %.loc14_8: %Base.elem = field_decl c, element2 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc14_3: %Base.elem = var_pattern %.loc14_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc14: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc14: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%complete_type.ebc]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -116,12 +116,12 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc20_3: %Derived.elem.344 = var_pattern %.loc20_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc20: ref %Derived.elem.344 = var <invalid>
+// CHECK:STDOUT:   %.var.loc20: ref %Derived.elem.344 = var <none>
 // CHECK:STDOUT:   %.loc21_8: %Derived.elem.344 = field_decl e, element2 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc21_3: %Derived.elem.344 = var_pattern %.loc21_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc21: ref %Derived.elem.344 = var <invalid>
+// CHECK:STDOUT:   %.var.loc21: ref %Derived.elem.344 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.e.6a7 [template = constants.%complete_type.401]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

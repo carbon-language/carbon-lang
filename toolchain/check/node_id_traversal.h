@@ -46,8 +46,8 @@ class NodeIdTraversal {
    private:
     const Parse::Tree* tree_;
     Parse::DeferredDefinitionIndex index_ =
-        Parse::DeferredDefinitionIndex::Invalid;
-    Parse::NodeId start_id_ = Parse::NodeId::Invalid;
+        Parse::DeferredDefinitionIndex::None;
+    Parse::NodeId start_id_ = Parse::NodeId::None;
   };
 
   // A chunk of the parse tree that we need to type-check.

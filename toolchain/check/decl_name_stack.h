@@ -100,7 +100,7 @@ class DeclNameStack {
       return {
           .name_id = name_id_for_new_inst(),
           .parent_scope_id = parent_scope_id,
-          .generic_id = SemIR::GenericId::Invalid,
+          .generic_id = SemIR::GenericId::None,
           .first_param_node_id = name.first_param_node_id,
           .last_param_node_id = name.last_param_node_id,
           .pattern_block_id = name.pattern_block_id,
@@ -110,9 +110,9 @@ class DeclNameStack {
           .is_extern = is_extern,
           .extern_library_id = extern_library,
           .non_owning_decl_id =
-              extern_library.is_valid() ? decl_id : SemIR::InstId::Invalid,
+              extern_library.has_value() ? decl_id : SemIR::InstId::None,
           .first_owning_decl_id =
-              extern_library.is_valid() ? SemIR::InstId::Invalid : decl_id,
+              extern_library.has_value() ? SemIR::InstId::None : decl_id,
       };
     }
 
@@ -123,7 +123,7 @@ class DeclNameStack {
     // resolved.
     auto name_id_for_new_inst() -> SemIR::NameId {
       return state == State::Unresolved ? unresolved_name_id
-                                        : SemIR::NameId::Invalid;
+                                        : SemIR::NameId::None;
     }
 
     // The current scope when this name began. This is the scope that we will
@@ -141,7 +141,7 @@ class DeclNameStack {
     SemIR::NameScopeId parent_scope_id;
 
     // The last location ID used.
-    SemIR::LocId loc_id = SemIR::LocId::Invalid;
+    SemIR::LocId loc_id = SemIR::LocId::None;
 
     union {
       // The ID of a resolved qualifier, including both identifiers and
@@ -149,7 +149,7 @@ class DeclNameStack {
       SemIR::InstId resolved_inst_id;
 
       // The ID of an unresolved identifier.
-      SemIR::NameId unresolved_name_id = SemIR::NameId::Invalid;
+      SemIR::NameId unresolved_name_id = SemIR::NameId::None;
     };
   };
 

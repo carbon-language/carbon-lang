@@ -35,7 +35,7 @@ class TreeTest : public ::testing::Test {
 
 TEST_F(TreeTest, IsValid) {
   Tree& tree = compile_helper_.GetTree("");
-  EXPECT_TRUE((*tree.postorder().begin()).is_valid());
+  EXPECT_TRUE((*tree.postorder().begin()).has_value());
 }
 
 TEST_F(TreeTest, AsAndTryAs) {

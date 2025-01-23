@@ -43,7 +43,7 @@ TEST(IntStore, Basic) {
 
   for (IntId id :
        {id_0, id_1, id_2, id_42, id_n1, id_n42, id_nines, id_max64, id_min64}) {
-    ASSERT_TRUE(id.is_valid());
+    ASSERT_TRUE(id.has_value());
   }
 
   // Small values should be embedded.
@@ -55,11 +55,11 @@ TEST(IntStore, Basic) {
   EXPECT_THAT(id_n42.AsValue(), Eq(-42));
 
   // Rest should be indices as they don't fit as embedded values.
-  EXPECT_TRUE(!id_nines.is_value());
+  EXPECT_TRUE(!id_nines.is_embedded_value());
   EXPECT_TRUE(id_nines.is_index());
-  EXPECT_TRUE(!id_max64.is_value());
+  EXPECT_TRUE(!id_max64.is_embedded_value());
   EXPECT_TRUE(id_max64.is_index());
-  EXPECT_TRUE(!id_min64.is_value());
+  EXPECT_TRUE(!id_min64.is_embedded_value());
   EXPECT_TRUE(id_min64.is_index());
 
   // And round tripping all the way through the store should work.
@@ -77,7 +77,7 @@ TEST(IntStore, Basic) {
 // Helper struct to hold test values and the resulting IDs.
 struct APAndId {
   llvm::APInt ap;
-  IntId id = IntId::Invalid;
+  IntId id = IntId::None;
 };
 
 TEST(IntStore, APSigned) {
@@ -107,7 +107,7 @@ TEST(IntStore, APSigned) {
   };
   for (auto& [ap, id] : ap_and_ids) {
     id = ints.AddSigned(ap);
-    ASSERT_TRUE(id.is_valid()) << ap;
+    ASSERT_TRUE(id.has_value()) << ap;
   }
 
   for (const auto& [ap, id] : ap_and_ids) {
@@ -139,7 +139,7 @@ TEST(IntStore, APUnsigned) {
   };
   for (auto& [ap, id] : ap_and_ids) {
     id = ints.AddUnsigned(ap);
-    ASSERT_TRUE(id.is_valid()) << ap;
+    ASSERT_TRUE(id.has_value()) << ap;
   }
 
   for (const auto& [ap, id] : ap_and_ids) {

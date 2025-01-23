@@ -67,7 +67,7 @@ auto NameScope::LookupOrPoison(NameId name_id) -> std::optional<EntryId> {
   auto insert_result = name_map_.Insert(name_id, EntryId(names_.size()));
   if (insert_result.is_inserted()) {
     names_.push_back({.name_id = name_id,
-                      .inst_id = InstId::Invalid,
+                      .inst_id = InstId::None,
                       .access_kind = AccessKind::Public,
                       .is_poisoned = true});
     return std::nullopt;
@@ -77,12 +77,12 @@ auto NameScope::LookupOrPoison(NameId name_id) -> std::optional<EntryId> {
 
 auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const
     -> std::pair<InstId, std::optional<Inst>> {
-  if (!scope_id.is_valid()) {
-    return {InstId::Invalid, std::nullopt};
+  if (!scope_id.has_value()) {
+    return {InstId::None, std::nullopt};
   }
   auto inst_id = Get(scope_id).inst_id();
-  if (!inst_id.is_valid()) {
-    return {InstId::Invalid, std::nullopt};
+  if (!inst_id.has_value()) {
+    return {InstId::None, std::nullopt};
   }
   return {inst_id, file_->insts().Get(inst_id)};
 }

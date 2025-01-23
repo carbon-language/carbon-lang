@@ -131,7 +131,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     .Add = imports.%Main.Add
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]

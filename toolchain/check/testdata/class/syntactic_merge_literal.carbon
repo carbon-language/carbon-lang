@@ -77,9 +77,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %a.patt.loc4_9.1: %i32 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt.loc4_9.1, runtime_param<invalid> [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt.loc4_9.1, runtime_param<none> [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
@@ -88,9 +88,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc5: %D.type = class_decl @D [template = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %C.262 = symbolic_binding_pattern b, 0 [symbolic = constants.%b.patt]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc6, runtime_param<invalid> [symbolic = constants.%b.patt]
+// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc6, runtime_param<none> [symbolic = constants.%b.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param.loc5: %C.262 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.param.loc5: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc5_20.1: type = splice_block %C.loc5 [template = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref.loc5: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc5: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.ff9]
@@ -106,9 +106,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc6: %D.type = class_decl @D [template = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %C.262 = symbolic_binding_pattern b, 0 [symbolic = constants.%b.patt]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc6, runtime_param<invalid> [symbolic = constants.%b.patt]
+// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc6, runtime_param<none> [symbolic = constants.%b.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param.loc6: %C.262 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.param.loc6: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6_20.1: type = splice_block %C.loc6 [template = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref.loc6: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc6: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.ff9]
@@ -217,9 +217,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %a.patt.loc4_9.1: %i32 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt.loc4_9.1, runtime_param<invalid> [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt.loc4_9.1, runtime_param<none> [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
@@ -228,9 +228,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [template = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc5_9.1: %C.262 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc5_9.1, runtime_param<invalid> [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc5_9.1, runtime_param<none> [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %C.262 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.param: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %C [template = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.ff9]
@@ -246,9 +246,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
 // CHECK:STDOUT:     %b.patt.loc13_9.1: %C.262 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc13_9.2 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc13_9.1, runtime_param<invalid> [symbolic = %b.patt.loc13_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc13_9.1, runtime_param<none> [symbolic = %b.patt.loc13_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %C.262 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.param: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc13_20.1: type = splice_block %C [template = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.ff9]

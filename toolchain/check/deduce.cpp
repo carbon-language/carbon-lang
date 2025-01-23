@@ -50,7 +50,7 @@ class DeductionWorklist {
   // Adds a single (param, arg) deduction of a specific.
   auto Add(SemIR::SpecificId param, SemIR::SpecificId arg,
            bool needs_substitution) -> void {
-    if (!param.is_valid() || !arg.is_valid()) {
+    if (!param.has_value() || !arg.has_value()) {
       return;
     }
     auto& param_specific = context_.specifics().Get(param);
@@ -257,7 +257,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
       diagnose_(diagnose),
       worklist_(context),
       first_deduced_index_(0) {
-  CARBON_CHECK(generic_id.is_valid(),
+  CARBON_CHECK(generic_id.has_value(),
                "Performing deduction for non-generic entity");
 
   // Initialize the deduced arguments to Invalid.
@@ -265,9 +265,9 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
       context.inst_blocks()
           .Get(context.generics().Get(generic_id_).bindings_id)
           .size(),
-      SemIR::InstId::Invalid);
+      SemIR::InstId::None);
 
-  if (enclosing_specific_id.is_valid()) {
+  if (enclosing_specific_id.has_value()) {
     // Copy any outer generic arguments from the specified instance and prepare
     // to substitute them into the function declaration.
     auto args = context.inst_blocks().Get(
@@ -343,7 +343,7 @@ auto DeductionContext::Deduce() -> bool {
       case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index;
-        if (!index.is_valid()) {
+        if (!index.has_value()) {
           break;
         }
         CARBON_CHECK(
@@ -352,12 +352,12 @@ auto DeductionContext::Deduce() -> bool {
             "Unexpected index {0} for symbolic binding pattern; "
             "expected to be in range [{1}, {2})",
             index.index, first_deduced_index_.index, result_arg_ids_.size());
-        CARBON_CHECK(!result_arg_ids_[index.index].is_valid(),
+        CARBON_CHECK(!result_arg_ids_[index.index].has_value(),
                      "Deduced a value for parameter prior to its declaration");
 
         auto arg_const_inst_id =
             context().constant_values().GetConstantInstId(arg_id);
-        if (!arg_const_inst_id.is_valid()) {
+        if (!arg_const_inst_id.has_value()) {
           if (diagnose_) {
             CARBON_DIAGNOSTIC(CompTimeArgumentNotConstant, Error,
                               "argument for generic parameter is not a "
@@ -382,7 +382,7 @@ auto DeductionContext::Deduce() -> bool {
       case CARBON_KIND(SemIR::BindSymbolicName bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index;
-        if (!index.is_valid() || index < first_deduced_index_ ||
+        if (!index.has_value() || index < first_deduced_index_ ||
             non_deduced_indexes_[index.index - first_deduced_index_.index]) {
           break;
         }
@@ -393,8 +393,8 @@ auto DeductionContext::Deduce() -> bool {
                      index, result_arg_ids_.size());
         auto arg_const_inst_id =
             context().constant_values().GetConstantInstId(arg_id);
-        if (arg_const_inst_id.is_valid()) {
-          if (result_arg_ids_[index.index].is_valid() &&
+        if (arg_const_inst_id.has_value()) {
+          if (result_arg_ids_[index.index].has_value() &&
               result_arg_ids_[index.index] != arg_const_inst_id) {
             if (diagnose_) {
               // TODO: Include the two different deduced values.
@@ -446,7 +446,7 @@ auto DeductionContext::Deduce() -> bool {
     // We didn't manage to deduce against the syntactic form of the parameter.
     // Convert it to a canonical constant value and try deducing against that.
     auto param_const_id = context().constant_values().Get(param_id);
-    if (!param_const_id.is_valid() || !param_const_id.is_symbolic()) {
+    if (!param_const_id.has_value() || !param_const_id.is_symbolic()) {
       // It's not a symbolic constant. There's nothing here to deduce.
       continue;
     }
@@ -460,7 +460,7 @@ auto DeductionContext::Deduce() -> bool {
     // If we've not yet substituted into the parameter, do so now and try again.
     if (needs_substitution) {
       param_const_id = SubstConstant(context(), param_const_id, substitutions_);
-      if (!param_const_id.is_valid() || !param_const_id.is_symbolic()) {
+      if (!param_const_id.has_value() || !param_const_id.is_symbolic()) {
         continue;
       }
       Add(context().constant_values().GetInstId(param_const_id), arg_id,
@@ -476,7 +476,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
   for (auto [i, deduced_arg_id] :
        llvm::enumerate(llvm::ArrayRef(result_arg_ids_)
                            .drop_front(first_deduced_index_.index))) {
-    if (!deduced_arg_id.is_valid()) {
+    if (!deduced_arg_id.has_value()) {
       if (diagnose_) {
         auto binding_index = first_deduced_index_.index + i;
         auto binding_id = context().inst_blocks().Get(
@@ -524,21 +524,20 @@ auto DeduceGenericCallArguments(
   deduction.AddAll(params_id, arg_ids, /*needs_substitution=*/true);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
-    return SemIR::SpecificId::Invalid;
+    return SemIR::SpecificId::None;
   }
 
   return deduction.MakeSpecific();
 }
 
 // Deduces the impl arguments to use in a use of a parameterized impl. Returns
-// `Invalid` if deduction fails.
+// `None` if deduction fails.
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                          const SemIR::Impl& impl, SemIR::ConstantId self_id,
                          SemIR::ConstantId constraint_id) -> SemIR::SpecificId {
-  DeductionContext deduction(
-      context, loc_id, impl.generic_id,
-      /*enclosing_specific_id=*/SemIR::SpecificId::Invalid,
-      /*diagnose=*/false);
+  DeductionContext deduction(context, loc_id, impl.generic_id,
+                             /*enclosing_specific_id=*/SemIR::SpecificId::None,
+                             /*diagnose=*/false);
 
   // Prepare to perform deduction of the type and interface.
   deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id),
@@ -548,7 +547,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                 /*needs_substitution=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
-    return SemIR::SpecificId::Invalid;
+    return SemIR::SpecificId::None;
   }
 
   return deduction.MakeSpecific();

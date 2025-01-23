@@ -37,7 +37,7 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
   InstId decl_id;
 
   // The default value of the constant.
-  InstId default_value_id = InstId::Invalid;
+  InstId default_value_id = InstId::None;
 };
 
 }  // namespace Carbon::SemIR

@@ -30,7 +30,7 @@
 namespace Carbon::Check {
 
 // Given an initializing expression, find its return slot argument. Returns
-// `Invalid` if there is no return slot, because the initialization is not
+// `None` if there is no return slot, because the initialization is not
 // performed in place.
 static auto FindReturnSlotArgForInitializer(SemIR::File& sem_ir,
                                             SemIR::InstId init_id)
@@ -64,11 +64,11 @@ static auto FindReturnSlotArgForInitializer(SemIR::File& sem_ir,
       case CARBON_KIND(SemIR::Call call): {
         if (!SemIR::ReturnTypeInfo::ForType(sem_ir, call.type_id)
                  .has_return_slot()) {
-          return SemIR::InstId::Invalid;
+          return SemIR::InstId::None;
         }
-        if (!call.args_id.is_valid()) {
+        if (!call.args_id.has_value()) {
           // Argument initialization failed, so we have no return slot.
-          return SemIR::InstId::Invalid;
+          return SemIR::InstId::None;
         }
         return sem_ir.inst_blocks().Get(call.args_id).back();
       }
@@ -83,7 +83,7 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
                                SemIR::InstId target_id,
                                PendingBlock& target_block) -> void {
   auto return_slot_arg_id = FindReturnSlotArgForInitializer(sem_ir, init_id);
-  if (return_slot_arg_id.is_valid()) {
+  if (return_slot_arg_id.has_value()) {
     // Replace the temporary in the return slot with a reference to our target.
     CARBON_CHECK(sem_ir.insts().Get(return_slot_arg_id).kind() ==
                      SemIR::TemporaryStorage::Kind,
@@ -98,12 +98,12 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
 // expression described by `init_id`, and returns the location of the
 // temporary. If `discarded` is `true`, the result is discarded, and no
 // temporary will be created if possible; if no temporary is created, the
-// return value will be `SemIR::InstId::Invalid`.
+// return value will be `SemIR::InstId::None`.
 static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                               bool discarded) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto return_slot_arg_id = FindReturnSlotArgForInitializer(sem_ir, init_id);
-  if (return_slot_arg_id.is_valid()) {
+  if (return_slot_arg_id.has_value()) {
     // The return slot should already have a materialized temporary in it.
     CARBON_CHECK(sem_ir.insts().Get(return_slot_arg_id).kind() ==
                      SemIR::TemporaryStorage::Kind,
@@ -119,7 +119,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
 
   if (discarded) {
     // Don't invent a temporary that we're going to discard.
-    return SemIR::InstId::Invalid;
+    return SemIR::InstId::None;
   }
 
   // The initializer has no return slot, but we want to produce a temporary
@@ -273,7 +273,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // Arrays are always initialized in-place. Allocate a temporary as the
   // destination for the array initialization if we weren't given one.
   SemIR::InstId return_slot_arg_id = target.init_id;
-  if (!target.init_id.is_valid()) {
+  if (!target.init_id.has_value()) {
     return_slot_arg_id = target_block->AddInst<SemIR::TemporaryStorage>(
         value_loc_id, {.type_id = target.type_id});
   }
@@ -325,7 +325,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
   llvm::ArrayRef<SemIR::InstId> literal_elems;
-  auto literal_elems_id = SemIR::InstBlockId::Invalid;
+  auto literal_elems_id = SemIR::InstBlockId::None;
   if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
     literal_elems_id = tuple_literal->elements_id;
     literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
@@ -360,7 +360,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
-      literal_elems_id.is_valid()
+      literal_elems_id.has_value()
           ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
                 sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
@@ -420,7 +420,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
   llvm::ArrayRef<SemIR::InstId> literal_elems;
-  auto literal_elems_id = SemIR::InstBlockId::Invalid;
+  auto literal_elems_id = SemIR::InstBlockId::None;
   if (auto struct_literal = value.TryAs<SemIR::StructLiteral>()) {
     literal_elems_id = struct_literal->elements_id;
     literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
@@ -468,7 +468,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
-      literal_elems_id.is_valid() && !dest_has_vptr
+      literal_elems_id.has_value() && !dest_has_vptr
           ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
                 sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
@@ -496,7 +496,7 @@ static auto ConvertStructToStructOrClass(Context& context,
       if (auto lookup = src_field_indexes.Lookup(dest_field.name_id)) {
         src_field_index = lookup.value();
       } else {
-        if (literal_elems_id.is_valid()) {
+        if (literal_elems_id.has_value()) {
           CARBON_DIAGNOSTIC(
               StructInitMissingFieldInLiteral, Error,
               "missing value for field `{0}` in struct initialization",
@@ -634,7 +634,7 @@ static auto ComputeInheritancePath(Context& context, SemIRLoc loc,
     auto& derived_class = context.classes().Get(derived_class_type->class_id);
     auto base_type_id = derived_class.GetBaseType(
         context.sem_ir(), derived_class_type->specific_id);
-    if (!base_type_id.is_valid()) {
+    if (!base_type_id.has_value()) {
       result = std::nullopt;
       break;
     }
@@ -741,7 +741,7 @@ static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
     auto& class_info = context.classes().Get(class_type->class_id);
     auto adapted_type_id =
         class_info.GetAdaptedType(context.sem_ir(), class_type->specific_id);
-    if (!adapted_type_id.is_valid()) {
+    if (!adapted_type_id.has_value()) {
       break;
     }
     type_id = adapted_type_id;
@@ -827,7 +827,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           loc_id, {.type_id = foundation_type_id, .source_id = value_id});
 
       auto foundation_init_id = target.init_id;
-      if (foundation_init_id != SemIR::InstId::Invalid) {
+      if (foundation_init_id != SemIR::InstId::None) {
         foundation_init_id = target.init_block->AddInst<SemIR::AsCompatible>(
             loc_id,
             {.type_id = foundation_type_id, .source_id = target.init_id});
@@ -923,7 +923,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
             sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       if (!context.classes()
                .Get(target_class_type->class_id)
-               .adapt_id.is_valid()) {
+               .adapt_id.has_value()) {
         return ConvertStructToClass(context, *src_struct_type,
                                     *target_class_type, value_id, target);
       }
@@ -1270,16 +1270,16 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   // Find self parameter pattern.
   // TODO: Do this during initial traversal of implicit params.
-  auto self_param_id = SemIR::InstId::Invalid;
+  auto self_param_id = SemIR::InstId::None;
   for (auto implicit_param_id : implicit_param_patterns) {
     if (SemIR::Function::GetNameFromPatternId(
             context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
-      CARBON_CHECK(!self_param_id.is_valid());
+      CARBON_CHECK(!self_param_id.has_value());
       self_param_id = implicit_param_id;
     }
   }
 
-  if (self_param_id.is_valid() && !self_id.is_valid()) {
+  if (self_param_id.has_value() && !self_id.has_value()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
                       "missing object argument in method call");
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");

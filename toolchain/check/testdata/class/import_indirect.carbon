@@ -161,7 +161,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .b_ptr = %b_ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
@@ -231,7 +231,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .c_ptr = %c_ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   %E: type = bind_alias E, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
@@ -306,7 +306,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %C = binding_pattern val
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %val.patt
@@ -379,7 +379,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %C = binding_pattern val
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %val.patt
@@ -456,7 +456,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %C = binding_pattern val
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %val.patt
@@ -533,7 +533,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %C = binding_pattern val
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %val.patt

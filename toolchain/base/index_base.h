@@ -20,12 +20,12 @@ class DataIterator;
 
 // Non-templated portions of `IdBase`.
 struct AnyIdBase {
-  static constexpr int32_t InvalidIndex = -1;
+  static constexpr int32_t NoneIndex = -1;
 
   AnyIdBase() = delete;
   constexpr explicit AnyIdBase(int index) : index(index) {}
 
-  constexpr auto is_valid() const -> bool { return index != InvalidIndex; }
+  constexpr auto has_value() const -> bool { return index != NoneIndex; }
 
   int32_t index;
 };
@@ -50,10 +50,10 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << IdT::Label;
-    if (is_valid()) {
+    if (has_value()) {
       out << index;
     } else {
-      out << "<invalid>";
+      out << "<none>";
     }
   }
 

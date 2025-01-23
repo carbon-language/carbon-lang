@@ -100,7 +100,7 @@ class A {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc19_7: %B.elem = var_pattern %.loc19_12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.033 [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

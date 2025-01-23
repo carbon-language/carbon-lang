@@ -125,7 +125,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .GetFloat = %GetFloat.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: f64 = binding_pattern f
 // CHECK:STDOUT:     %.loc6_1: f64 = var_pattern %f.patt
@@ -220,7 +220,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .dyn = %dyn
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %invalid_float.patt: <error> = binding_pattern invalid_float
 // CHECK:STDOUT:     %.loc10_1: <error> = var_pattern %invalid_float.patt

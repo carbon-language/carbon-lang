@@ -73,11 +73,11 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
 // TODO: Should this be somewhere more central?
 static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<SemIR::ClassDecl> {
-  if (!scope_id.is_valid()) {
+  if (!scope_id.has_value()) {
     return std::nullopt;
   }
   auto& scope = context.name_scopes().Get(scope_id);
-  if (!scope.inst_id().is_valid()) {
+  if (!scope.inst_id().has_value()) {
     return std::nullopt;
   }
   return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
@@ -92,13 +92,13 @@ static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
 
   // TODO: This is also valid in a mixin.
 
-  return SemIR::TypeId::Invalid;
+  return SemIR::TypeId::None;
 }
 
 auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     -> bool {
   auto self_type_id = GetDefaultSelfType(context);
-  if (!self_type_id.is_valid()) {
+  if (!self_type_id.has_value()) {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
@@ -143,7 +143,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     return;
   }
 
-  if (params_node.is_valid()) {
+  if (params_node.has_value()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
                       "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
@@ -202,7 +202,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     // because `impl`s are never actually called at runtime.
     auto call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
-                           SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
+                           SemIR::InstBlockId::None, SemIR::InstId::None);
     CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
                  llvm::all_of(context.inst_blocks().Get(call_params_id),
                               [](SemIR::InstId inst_id) {
@@ -248,17 +248,17 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   }
 
   return {
-      .name_loc_id = Parse::NodeId::Invalid,
-      .name_id = SemIR::NameId::Invalid,
+      .name_loc_id = Parse::NodeId::None,
+      .name_id = SemIR::NameId::None,
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = *last_param_iter,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
-          implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
-      .params_loc_id = Parse::NodeId::Invalid,
-      .param_patterns_id = SemIR::InstBlockId::Invalid,
-      .call_params_id = SemIR::InstBlockId::Invalid,
-      .return_slot_pattern_id = SemIR::InstId::Invalid,
+          implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
+      .params_loc_id = Parse::NodeId::None,
+      .param_patterns_id = SemIR::InstBlockId::None,
+      .call_params_id = SemIR::InstBlockId::None,
+      .return_slot_pattern_id = SemIR::InstId::None,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
@@ -270,7 +270,7 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
-                              DeclParams(prev_impl), SemIR::SpecificId::Invalid,
+                              DeclParams(prev_impl), SemIR::SpecificId::None,
                               /*check_syntax=*/true, /*diagnose=*/false)) {
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
@@ -360,7 +360,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check for an orphan `impl`.
 
   // Add the impl declaration.
-  SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::Invalid,
+  SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
   auto impl_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, impl_decl));
@@ -368,7 +368,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   SemIR::Impl impl_info = {
       name_context.MakeEntityWithParamsBase(name, impl_decl_id,
                                             /*is_extern=*/false,
-                                            SemIR::LibraryNameId::Invalid),
+                                            SemIR::LibraryNameId::None),
       {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
 
   // Add the impl declaration.
@@ -388,7 +388,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Create a new impl if this isn't a valid redeclaration.
-  if (!impl_decl.impl_id.is_valid()) {
+  if (!impl_decl.impl_id.has_value()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
     AddConstantsToImplWitnessFromConstraint(
@@ -409,7 +409,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
-    if (impl_info.generic_id.is_valid()) {
+    if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
       constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
           context.insts().GetLocId(constraint_inst_id),
@@ -447,7 +447,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   CARBON_CHECK(!impl_info.has_definition_started());
   impl_info.definition_id = impl_decl_id;
   impl_info.scope_id =
-      context.name_scopes().Add(impl_decl_id, SemIR::NameId::Invalid,
+      context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());
 
   context.scope_stack().Push(

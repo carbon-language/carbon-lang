@@ -137,7 +137,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc18_3: %Class.elem = var_pattern %.loc18_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [template = constants.%complete_type.954]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

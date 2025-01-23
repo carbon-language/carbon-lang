@@ -67,9 +67,9 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc8_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<invalid> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<none> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: <error> = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_14.1: type = splice_block %.loc8_14.2 [template = <error>] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
@@ -120,9 +120,9 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %U.patt.loc8_6.1: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<invalid> [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<none> [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: <error> = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %U.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_23.1: type = splice_block %.loc8_23.2 [template = <error>] {
 // CHECK:STDOUT:       %NOT_DECLARED.ref: <error> = name_ref NOT_DECLARED, <error> [template = <error>]
 // CHECK:STDOUT:       %.Self: <error> = bind_symbolic_name .Self [template = <error>]

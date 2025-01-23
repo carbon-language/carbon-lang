@@ -12,7 +12,7 @@
 namespace Carbon::Parse {
 
 // Represents an invalid node id of any type
-struct InvalidNodeId {};
+struct NoneNodeId {};
 
 // A lightweight handle representing a node in the tree.
 //
@@ -23,11 +23,11 @@ struct NodeId : public IdBase<NodeId> {
   static constexpr llvm::StringLiteral Label = "node";
 
   // An explicitly invalid node ID.
-  static constexpr InvalidNodeId Invalid;
+  static constexpr NoneNodeId None;
 
   using IdBase::IdBase;
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeId(InvalidNodeId /*invalid*/) : IdBase(NodeId::InvalidIndex) {}
+  constexpr NodeId(NoneNodeId /*none*/) : IdBase(NoneIndex) {}
 };
 
 // For looking up the type associated with a given id type.
@@ -42,8 +42,7 @@ struct NodeIdForKind : public NodeId {
   static const NodeKind& Kind;
   constexpr explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdForKind(InvalidNodeId /*invalid*/)
-      : NodeId(NodeId::InvalidIndex) {}
+  constexpr NodeIdForKind(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 template <const NodeKind& K>
 const NodeKind& NodeIdForKind<K>::Kind = K;
@@ -65,8 +64,7 @@ struct NodeIdInCategory : public NodeId {
 
   constexpr explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdInCategory(InvalidNodeId /*invalid*/)
-      : NodeId(NodeId::InvalidIndex) {}
+  constexpr NodeIdInCategory(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
@@ -95,8 +93,7 @@ struct NodeIdOneOf : public NodeId {
     static_assert(((T::Kind == Kind) || ...));
   }
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdOneOf(InvalidNodeId /*invalid*/)
-      : NodeId(NodeId::InvalidIndex) {}
+  constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 
 using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
@@ -114,8 +111,7 @@ template <typename T>
 struct NodeIdNot : public NodeId {
   constexpr explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdNot(InvalidNodeId /*invalid*/)
-      : NodeId(NodeId::InvalidIndex) {}
+  constexpr NodeIdNot(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 
 // Note that the support for extracting these types using the `Tree::Extract*`

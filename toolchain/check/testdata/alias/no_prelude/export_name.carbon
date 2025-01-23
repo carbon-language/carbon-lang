@@ -115,7 +115,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %D: type = export D, imports.%Main.D [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,7 +146,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .D = imports.%Main.D
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -177,7 +177,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     .D = imports.%Main.D
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %C = binding_pattern d
 // CHECK:STDOUT:     %.loc6: %C = var_pattern %d.patt
@@ -218,7 +218,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     .D = imports.%Main.D
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
 // CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
@@ -259,7 +259,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %c.patt

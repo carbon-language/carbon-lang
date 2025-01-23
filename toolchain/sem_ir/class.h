@@ -36,33 +36,33 @@ struct ClassFields {
   // The following members are set at the `{` of the class definition.
 
   // The class scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
+  NameScopeId scope_id = NameScopeId::None;
   // The first block of the class body.
   // TODO: Handle control flow in the class body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
+  InstBlockId body_block_id = InstBlockId::None;
 
   // The following members are accumulated throughout the class definition.
 
-  // The adapted type declaration, if any. Invalid if the class is not an
+  // The adapted type declaration, if any. `None` if the class is not an
   // adapter. This is an AdaptDecl instruction.
   // TODO: Consider sharing the storage for `adapt_id` and `base_id`. A class
   // can't have both.
-  InstId adapt_id = InstId::Invalid;
-  // The base class declaration. Invalid if the class has no base class. This is
+  InstId adapt_id = InstId::None;
+  // The base class declaration. `None` if the class has no base class. This is
   // a BaseDecl instruction.
-  InstId base_id = InstId::Invalid;
+  InstId base_id = InstId::None;
 
   // The following members are set at the `}` of the class definition.
 
   // A `CompleteTypeWitness` instruction witnessing that this class type is
-  // complete, and tracking its object representation. This is valid once the
+  // complete, and tracking its object representation. This has a value once the
   // class is defined. For an adapter, the object representation is the
   // non-adapter type that this class directly or transitively adapts.
-  InstId complete_type_witness_id = InstId::Invalid;
+  InstId complete_type_witness_id = InstId::None;
 
-  // The virtual function table. Invalid if the class has no (direct or
+  // The virtual function table. `None` if the class has no (direct or
   // inherited) virtual functions.
-  InstId vtable_id = InstId::Invalid;
+  InstId vtable_id = InstId::None;
 };
 
 // A class. See EntityWithParamsBase regarding the inheritance here.
@@ -78,18 +78,18 @@ struct Class : public EntityWithParamsBase,
   // Determines whether this class has been fully defined. This is false until
   // we reach the `}` of the class definition.
   auto is_defined() const -> bool {
-    return complete_type_witness_id.is_valid();
+    return complete_type_witness_id.has_value();
   }
 
-  // Gets the type that this class type adapts. Returns Invalid if there is no
+  // Gets the type that this class type adapts. Returns `None` if there is no
   // such type, or if the class is not yet defined.
   auto GetAdaptedType(const File& file, SpecificId specific_id) const -> TypeId;
 
-  // Gets the base class for this class type. Returns Invalid if there is no
+  // Gets the base class for this class type. Returns `None` if there is no
   // such type, or if the class is not yet defined.
   auto GetBaseType(const File& file, SpecificId specific_id) const -> TypeId;
 
-  // Gets the object representation for this class. Returns Invalid if the class
+  // Gets the object representation for this class. Returns `None` if the class
   // is not yet defined.
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 };

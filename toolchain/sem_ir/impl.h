@@ -24,14 +24,14 @@ struct ImplFields {
   // The following members are set at the `{` of the impl definition.
 
   // The impl scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
+  NameScopeId scope_id = NameScopeId::None;
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
+  InstBlockId body_block_id = InstBlockId::None;
   // The witness for the impl. This can be `BuiltinErrorInst` or an import
   // reference. Note that the entries in the witness are updated at the end of
   // the impl definition.
-  InstId witness_id = InstId::Invalid;
+  InstId witness_id = InstId::None;
 
   // The following members are set at the `}` of the impl definition.
   bool defined = false;
@@ -65,25 +65,25 @@ class ImplStore {
    public:
     static constexpr llvm::StringLiteral Label = "impl_or_lookup_bucket";
 
-    // An explicitly invalid ID, corresponding to to ImplId::Invalid.
-    static const ImplOrLookupBucketId Invalid;
+    // An explicitly invalid ID, corresponding to to ImplId::None.
+    static const ImplOrLookupBucketId None;
 
     static auto ForImplId(ImplId impl_id) -> ImplOrLookupBucketId {
       return ImplOrLookupBucketId(impl_id.index);
     }
 
     static auto ForBucket(int bucket) -> ImplOrLookupBucketId {
-      return ImplOrLookupBucketId(ImplId::InvalidIndex - bucket - 1);
+      return ImplOrLookupBucketId(ImplId::NoneIndex - bucket - 1);
     }
 
     // Returns whether this ID represents a bucket index, rather than an ImplId.
     // An invalid ID is not a bucket index.
-    auto is_bucket() const { return index < ImplId::InvalidIndex; }
+    auto is_bucket() const { return index < ImplId::NoneIndex; }
 
     // Returns the bucket index represented by this ID. Requires is_bucket().
     auto bucket() const -> int {
       CARBON_CHECK(is_bucket());
-      return ImplId::InvalidIndex - index - 1;
+      return ImplId::NoneIndex - index - 1;
     }
 
     // Returns the ImplId index represented by this ID. Requires !is_bucket().
@@ -111,7 +111,7 @@ class ImplStore {
   class LookupBucketRef {
    public:
     LookupBucketRef(ImplStore& store, ImplOrLookupBucketId& id)
-        : store_(&store), id_(&id), single_id_storage_(ImplId::Invalid) {
+        : store_(&store), id_(&id), single_id_storage_(ImplId::None) {
       if (!id.is_bucket()) {
         single_id_storage_ = id.impl_id();
       }
@@ -128,14 +128,14 @@ class ImplStore {
       if (id_->is_bucket()) {
         return store_->lookup_buckets_[id_->bucket()].end();
       }
-      return &single_id_storage_ + (id_->is_valid() ? 1 : 0);
+      return &single_id_storage_ + (id_->has_value() ? 1 : 0);
     }
 
     // Adds an impl to this lookup bucket. Only impls from the current file and
     // its API file should be added in this way. Impls from other files do not
     // need to be found by impl redeclaration lookup so should not be added.
     auto push_back(ImplId impl_id) -> void {
-      if (!id_->is_valid()) {
+      if (!id_->has_value()) {
         *id_ = ImplOrLookupBucketId::ForImplId(impl_id);
         single_id_storage_ = impl_id;
       } else if (!id_->is_bucket()) {
@@ -196,7 +196,7 @@ class ImplStore {
 };
 
 constexpr inline ImplStore::ImplOrLookupBucketId
-    ImplStore::ImplOrLookupBucketId::Invalid(InvalidIndex);
+    ImplStore::ImplOrLookupBucketId::None(NoneIndex);
 
 }  // namespace Carbon::SemIR
 

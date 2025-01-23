@@ -50,7 +50,7 @@ namespace Carbon::SemIR {
 
 // Used for the type of patterns that do not match a fixed type.
 struct AutoType {
-  static constexpr auto Kind = InstKind::AutoType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::AutoType.Define<Parse::NoneNodeId>(
       {.ir_name = "auto",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
@@ -63,7 +63,7 @@ struct AutoType {
 
 // The type of bool literals and branch conditions, bool.
 struct BoolType {
-  static constexpr auto Kind = InstKind::BoolType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::BoolType.Define<Parse::NoneNodeId>(
       {.ir_name = "bool",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
@@ -241,7 +241,7 @@ struct AssociatedEntity {
 // `InterfaceName.Function`.
 struct AssociatedEntityType {
   static constexpr auto Kind =
-      InstKind::AssociatedEntityType.Define<Parse::InvalidNodeId>(
+      InstKind::AssociatedEntityType.Define<Parse::NoneNodeId>(
           {.ir_name = "assoc_entity_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Conditional});
@@ -407,7 +407,7 @@ struct BoundMethod {
 // The type of bound method values.
 struct BoundMethodType {
   static constexpr auto Kind =
-      InstKind::BoundMethodType.Define<Parse::InvalidNodeId>(
+      InstKind::BoundMethodType.Define<Parse::NoneNodeId>(
           {.ir_name = "<bound method>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -589,7 +589,7 @@ struct Deref {
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
 struct ErrorInst {
-  static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::NoneNodeId>(
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
@@ -695,7 +695,7 @@ struct FloatLiteral {
 
 // A floating point type.
 struct FloatType {
-  static constexpr auto Kind = InstKind::FloatType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::FloatType.Define<Parse::NoneNodeId>(
       {.ir_name = "float_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -712,7 +712,7 @@ struct FloatType {
 // integers, likely replacing this with a `FloatLiteralType`.
 struct LegacyFloatType {
   static constexpr auto Kind =
-      InstKind::LegacyFloatType.Define<Parse::InvalidNodeId>(
+      InstKind::LegacyFloatType.Define<Parse::NoneNodeId>(
           {.ir_name = "f64",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -754,7 +754,7 @@ struct FunctionType {
 struct GenericClassType {
   // This is only ever created as a constant, so doesn't have a location.
   static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::InvalidNodeId>(
+      InstKind::GenericClassType.Define<Parse::NoneNodeId>(
           {.ir_name = "generic_class_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Conditional});
@@ -769,7 +769,7 @@ struct GenericClassType {
 struct GenericInterfaceType {
   // This is only ever created as a constant, so doesn't have a location.
   static constexpr auto Kind =
-      InstKind::GenericInterfaceType.Define<Parse::InvalidNodeId>(
+      InstKind::GenericInterfaceType.Define<Parse::NoneNodeId>(
           {.ir_name = "generic_interface_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Conditional});
@@ -909,7 +909,7 @@ struct IntValue {
 // runtime.
 struct IntLiteralType {
   static constexpr auto Kind =
-      InstKind::IntLiteralType.Define<Parse::InvalidNodeId>(
+      InstKind::IntLiteralType.Define<Parse::NoneNodeId>(
           {.ir_name = "Core.IntLiteral",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -924,7 +924,7 @@ struct IntLiteralType {
 // the toolchain. The `Core.Int` and `Core.UInt` classes are defined as adapters
 // for this type.
 struct IntType {
-  static constexpr auto Kind = InstKind::IntType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::IntType.Define<Parse::NoneNodeId>(
       {.ir_name = "int_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -978,7 +978,7 @@ struct Namespace {
 // The type of namespace and imported package names.
 struct NamespaceType {
   static constexpr auto Kind =
-      InstKind::NamespaceType.Define<Parse::InvalidNodeId>(
+      InstKind::NamespaceType.Define<Parse::NoneNodeId>(
           {.ir_name = "<namespace>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -1229,7 +1229,7 @@ struct SpecificFunction {
 // The type of specific functions.
 struct SpecificFunctionType {
   static constexpr auto Kind =
-      InstKind::SpecificFunctionType.Define<Parse::InvalidNodeId>(
+      InstKind::SpecificFunctionType.Define<Parse::NoneNodeId>(
           {.ir_name = "<specific function>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -1266,11 +1266,10 @@ struct StringLiteral {
 
 // The type of string values and String literals.
 struct StringType {
-  static constexpr auto Kind =
-      InstKind::StringType.Define<Parse::InvalidNodeId>(
-          {.ir_name = "String",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::StringType.Define<Parse::NoneNodeId>(
+      {.ir_name = "String",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
@@ -1389,7 +1388,7 @@ struct TupleLiteral {
 
 // The type of a tuple.
 struct TupleType {
-  static constexpr auto Kind = InstKind::TupleType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::TupleType.Define<Parse::NoneNodeId>(
       {.ir_name = "tuple_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -1413,7 +1412,7 @@ struct TupleValue {
 // Tracks expressions which are valid as types. This has a deliberately
 // self-referential type.
 struct TypeType {
-  static constexpr auto Kind = InstKind::TypeType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::TypeType.Define<Parse::NoneNodeId>(
       {.ir_name = "type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
@@ -1501,11 +1500,10 @@ struct VarStorage {
 
 // The type of virtual function tables.
 struct VtableType {
-  static constexpr auto Kind =
-      InstKind::VtableType.Define<Parse::InvalidNodeId>(
-          {.ir_name = "<vtable>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::VtableType.Define<Parse::NoneNodeId>(
+      {.ir_name = "<vtable>",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
@@ -1546,11 +1544,10 @@ struct WhereExpr {
 
 // The type of witnesses.
 struct WitnessType {
-  static constexpr auto Kind =
-      InstKind::WitnessType.Define<Parse::InvalidNodeId>(
-          {.ir_name = "<witness>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
+      {.ir_name = "<witness>",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
@@ -1563,8 +1560,8 @@ namespace Internal {
 
 // HasNodeId is true if T has an associated parse node.
 template <typename T>
-concept HasNodeId = !std::same_as<typename decltype(T::Kind)::TypedNodeId,
-                                  Parse::InvalidNodeId>;
+concept HasNodeId =
+    !std::same_as<typename decltype(T::Kind)::TypedNodeId, Parse::NoneNodeId>;
 
 // HasUntypedNodeId is true if T has an associated parse node which can be any
 // kind of node.

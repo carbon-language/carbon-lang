@@ -113,9 +113,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt.loc2_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc2_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc2_13.1, runtime_param<invalid> [symbolic = %T.patt.loc2_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc2_13.1, runtime_param<none> [symbolic = %T.patt.loc2_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc2_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc2_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DirectFieldAccess.decl: %DirectFieldAccess.type = fn_decl @DirectFieldAccess [template = constants.%DirectFieldAccess] {
@@ -198,7 +198,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %.loc3_3: @Class.%Class.elem (%Class.elem.e26) = var_pattern %.loc3_8
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.e26) = var <invalid>
+// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.e26) = var <none>
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.fd9) = fn_decl @Get [symbolic = @Class.%Get (constants.%Get.cf9)] {
 // CHECK:STDOUT:       %self.patt: @Get.%Class (%Class.fe1) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @Get.%Class (%Class.fe1) = value_param_pattern %self.patt, runtime_param0
@@ -437,21 +437,21 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_13.1, runtime_param<invalid> [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_13.1, runtime_param<none> [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %StaticMemberFunctionCall.decl: %StaticMemberFunctionCall.type = fn_decl @StaticMemberFunctionCall [template = constants.%StaticMemberFunctionCall] {
 // CHECK:STDOUT:     %T.patt.loc8_29.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_29.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_29.1, runtime_param<invalid> [symbolic = %T.patt.loc8_29.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_29.1, runtime_param<none> [symbolic = %T.patt.loc8_29.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %return.patt: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc8: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.generic]
 // CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, %T.loc8_29.1 [symbolic = %T.loc8_29.2 (constants.%T)]
 // CHECK:STDOUT:     %Class.loc8_49.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc8_49.2 (constants.%Class)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc8_29.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_29.2 (constants.%T)]
 // CHECK:STDOUT:     %return.param: ref @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = return_slot %return.param

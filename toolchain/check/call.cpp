@@ -35,7 +35,7 @@ enum class EntityKind : uint8_t {
 // `self_id` and `arg_ids` are the self argument and explicit arguments in the
 // call.
 //
-// Returns a `SpecificId` for the specific callee, `SpecificId::Invalid` if the
+// Returns a `SpecificId` for the specific callee, `SpecificId::None` if the
 // callee is not generic, or `nullopt` if an error has been diagnosed.
 static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 const SemIR::EntityWithParamsBase& entity,
@@ -67,13 +67,13 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   }
 
   // Perform argument deduction.
-  auto specific_id = SemIR::SpecificId::Invalid;
-  if (entity.generic_id.is_valid()) {
+  auto specific_id = SemIR::SpecificId::None;
+  if (entity.generic_id.has_value()) {
     specific_id = DeduceGenericCallArguments(
         context, loc_id, entity.generic_id, enclosing_specific_id,
         entity.implicit_param_patterns_id, entity.param_patterns_id, self_id,
         arg_ids);
-    if (!specific_id.is_valid()) {
+    if (!specific_id.has_value()) {
       return std::nullopt;
     }
   }
@@ -91,7 +91,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, generic_class,
                           EntityKind::GenericClass, enclosing_specific_id,
-                          /*self_id=*/SemIR::InstId::Invalid, arg_ids);
+                          /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
@@ -111,7 +111,7 @@ static auto PerformCallToGenericInterface(
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, interface,
                           EntityKind::GenericInterface, enclosing_specific_id,
-                          /*self_id=*/SemIR::InstId::Invalid, arg_ids);
+                          /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
@@ -123,7 +123,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                  llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Identify the function we're calling.
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
-  if (!callee_function.function_id.is_valid()) {
+  if (!callee_function.function_id.has_value()) {
     auto type_inst =
         context.types().GetAsInst(context.insts().Get(callee_id).type_id());
     CARBON_KIND_SWITCH(type_inst) {
@@ -157,7 +157,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
-  if (callee_specific_id->is_valid()) {
+  if (callee_specific_id->has_value()) {
     callee_id = context.GetOrAddInst(
         context.insts().GetLocId(callee_id),
         SemIR::SpecificFunction{
@@ -169,7 +169,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   }
 
   // If there is a return slot, build storage for the result.
-  SemIR::InstId return_slot_arg_id = SemIR::InstId::Invalid;
+  SemIR::InstId return_slot_arg_id = SemIR::InstId::None;
   SemIR::ReturnTypeInfo return_info = [&] {
     auto& function = context.functions().Get(callee_function.function_id);
     DiagnosticAnnotationScope annotate_diagnostics(
@@ -192,7 +192,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     case SemIR::InitRepr::None:
       // For functions with an implicit return type, the return type is the
       // empty tuple type.
-      if (!return_info.type_id.is_valid()) {
+      if (!return_info.type_id.has_value()) {
         return_info.type_id = context.GetTupleType({});
       }
       break;

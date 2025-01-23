@@ -106,11 +106,11 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
   auto value = context.insts().Get(result.inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           value.type_id());
-  CARBON_CHECK(type_id.is_valid(), "Missing type for {0}", value);
+  CARBON_CHECK(type_id.has_value(), "Missing type for {0}", value);
 
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.
-  if (result.specific_id.is_valid() &&
+  if (result.specific_id.has_value() &&
       context.constant_values().Get(result.inst_id).is_symbolic()) {
     result.inst_id = context.AddInst<SemIR::SpecificConstant>(
         node_id, {.type_id = type_id,
@@ -210,7 +210,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
   } else {
     // Otherwise this is `.Member`, so look up `.Self` and then `Member` in
     // `.Self`.
-    SemIR::InstId period_self_id = SemIR::InstId::Invalid;
+    SemIR::InstId period_self_id = SemIR::InstId::None;
     {
       // TODO: Instead of annotating the diagnostic, should change
       // `HandleNameAsExpr` to optionally allow us to produce the diagnostic
@@ -222,7 +222,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
             CARBON_DIAGNOSTIC(
                 NoPeriodSelfForDesignator, Note,
                 "designator may only be used when `.Self` is in scope");
-            builder.Note(SemIR::LocId::Invalid, NoPeriodSelfForDesignator);
+            builder.Note(SemIR::LocId::None, NoPeriodSelfForDesignator);
           });
       period_self_id =
           HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);

@@ -241,7 +241,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
@@ -284,7 +284,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
 // CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
@@ -371,7 +371,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
@@ -414,7 +414,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
 // CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
@@ -501,7 +501,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
@@ -548,7 +548,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
 // CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt

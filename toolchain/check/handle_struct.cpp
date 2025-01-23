@@ -108,7 +108,7 @@ static auto PopFieldNameNodes(Context& context, size_t field_count)
   while (true) {
     auto [name_node, _] =
         context.node_stack().PopWithNodeIdIf<Parse::NodeCategory::MemberName>();
-    if (name_node.is_valid()) {
+    if (name_node.has_value()) {
       nodes.push_back(name_node);
     } else {
       break;

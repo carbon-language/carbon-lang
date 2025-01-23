@@ -80,9 +80,9 @@ fn G() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [template = constants.%Wrap.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_12.1, runtime_param<invalid> [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_12.1, runtime_param<none> [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
@@ -120,7 +120,7 @@ fn G() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc15_11: %C.elem = var_pattern %.loc15_18
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr.5f2 [template = constants.%complete_type.22a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

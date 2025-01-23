@@ -64,16 +64,16 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_13.1, runtime_param<invalid> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_13.1, runtime_param<none> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Declaration.decl: %Declaration.type = class_decl @Declaration [template = constants.%Declaration.generic] {
 // CHECK:STDOUT:     %T.patt.loc24_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_19.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc24_19.1, runtime_param<invalid> [symbolic = %T.patt.loc24_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc24_19.1, runtime_param<none> [symbolic = %T.patt.loc24_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc24_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc24_19.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -133,7 +133,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %.loc21_3: @Class.%Class.elem (%Class.elem) = var_pattern %.loc21_8
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <invalid>
+// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <none>
 // CHECK:STDOUT:     %complete_type.loc22_1.1: <witness> = complete_type_witness %struct_type.k [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc22_1.1
 // CHECK:STDOUT:

@@ -110,7 +110,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
       context.insts().Get(pattern.inst.As<SemIR::VarPattern>().subpattern_id);
 
   // Try to populate name_id on a best-effort basis.
-  auto name_id = SemIR::NameId::Invalid;
+  auto name_id = SemIR::NameId::None;
   if (auto binding_pattern = subpattern.TryAs<SemIR::BindingPattern>()) {
     name_id =
         context.entity_names().Get(binding_pattern->entity_name_id).name_id;
@@ -122,7 +122,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
-  auto subpattern_id = SemIR::InstId::Invalid;
+  auto subpattern_id = SemIR::InstId::None;
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
     context.node_stack().PopAndIgnore();
     CARBON_CHECK(
@@ -200,10 +200,10 @@ namespace {
 // State from HandleDecl, returned for type-specific handling.
 struct DeclInfo {
   // The optional initializer.
-  SemIR::InstId init_id = SemIR::InstId::Invalid;
+  SemIR::InstId init_id = SemIR::InstId::None;
   // The pattern. For an associated constant, this is the associated constant
   // declaration.
-  SemIR::InstId pattern_id = SemIR::InstId::Invalid;
+  SemIR::InstId pattern_id = SemIR::InstId::None;
   DeclIntroducerState introducer = DeclIntroducerState();
 };
 }  // namespace
@@ -300,7 +300,7 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   }
 
   // If there was an initializer, convert it and store it on the constant.
-  if (decl_info.init_id.is_valid()) {
+  if (decl_info.init_id.has_value()) {
     // TODO: Diagnose if the `default` modifier was not used.
     auto default_value_id = ConvertToValueOfType(
         context, node_id, decl_info.init_id, decl->type_id);
@@ -343,7 +343,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   RequireDefaultFinalOnlyInInterfaces(context, decl_info.introducer,
                                       std::nullopt);
 
-  if (decl_info.init_id.is_valid()) {
+  if (decl_info.init_id.has_value()) {
     LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   } else {
     CARBON_DIAGNOSTIC(
@@ -364,7 +364,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
 
   if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
-    if (decl_info.init_id.is_valid()) {
+    if (decl_info.init_id.has_value()) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
       context.TODO(node_id, "Field initializer");

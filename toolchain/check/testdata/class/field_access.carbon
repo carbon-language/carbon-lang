@@ -71,12 +71,12 @@ fn Run() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc12: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %.loc13_8: %Class.elem = field_decl k, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc13_3: %Class.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc13: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

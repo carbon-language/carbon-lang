@@ -63,7 +63,7 @@ alias b = C;
 // CHECK:STDOUT:   %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %b: ref %C = bind_name b, %b.var
 // CHECK:STDOUT:   %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc31: type = bind_alias <invalid>, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc31: type = bind_alias <none>, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

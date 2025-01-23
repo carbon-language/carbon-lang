@@ -24,7 +24,7 @@ auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
   }
   const auto& class_info = file_->classes().Get(class_type->class_id);
   if (!class_info.is_defined()) {
-    return TypeId::Invalid;
+    return TypeId::None;
   }
   return class_info.GetObjectRepr(*file_, class_type->specific_id);
 }
@@ -39,14 +39,13 @@ auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
 static auto TryGetIntTypeInfo(const File& file, TypeId type_id)
     -> std::optional<TypeStore::IntTypeInfo> {
   auto object_repr_id = file.types().GetObjectRepr(type_id);
-  if (!object_repr_id.is_valid()) {
+  if (!object_repr_id.has_value()) {
     return std::nullopt;
   }
   auto inst_id = file.types().GetInstId(object_repr_id);
   if (inst_id == IntLiteralType::SingletonInstId) {
     // `Core.IntLiteral` has an unknown bit-width.
-    return TypeStore::IntTypeInfo{.is_signed = true,
-                                  .bit_width = IntId::Invalid};
+    return TypeStore::IntTypeInfo{.is_signed = true, .bit_width = IntId::None};
   }
   auto int_type = file.insts().TryGetAs<IntType>(inst_id);
   if (!int_type) {
@@ -55,7 +54,7 @@ static auto TryGetIntTypeInfo(const File& file, TypeId type_id)
   auto bit_width_inst = file.insts().TryGetAs<IntValue>(int_type->bit_width_id);
   return TypeStore::IntTypeInfo{
       .is_signed = int_type->int_kind.is_signed(),
-      .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
+      .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::None};
 }
 
 auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {

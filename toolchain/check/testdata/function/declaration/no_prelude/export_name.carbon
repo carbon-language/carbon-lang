@@ -69,7 +69,7 @@ var f: () = F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F: %F.type = export F, imports.%Main.F [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,7 +92,7 @@ var f: () = F();
 // CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
 // CHECK:STDOUT:     %.loc6_1: %empty_tuple.type = var_pattern %f.patt

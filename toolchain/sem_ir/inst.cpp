@@ -26,7 +26,7 @@ auto Inst::Print(llvm::raw_ostream& out) const -> void {
     break;
 #include "toolchain/sem_ir/inst_kind.def"
   }
-  if (type_id_.is_valid()) {
+  if (type_id_.has_value()) {
     out << ", type: " << type_id_;
   }
   out << "}";

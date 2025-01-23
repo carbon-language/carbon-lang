@@ -33,7 +33,7 @@ class EvalContext {
  public:
   explicit EvalContext(
       Context& context, SemIRLoc fallback_loc,
-      SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
       : context_(context),
         fallback_loc_(fallback_loc),
@@ -51,7 +51,8 @@ class EvalContext {
   // is one, and otherwise the fallback location.
   auto GetDiagnosticLoc(llvm::ArrayRef<SemIR::InstId> inst_ids) -> SemIRLoc {
     for (auto inst_id : inst_ids) {
-      if (inst_id.is_valid() && context_.insts().GetLocId(inst_id).is_valid()) {
+      if (inst_id.has_value() &&
+          context_.insts().GetLocId(inst_id).has_value()) {
         return inst_id;
       }
     }
@@ -59,11 +60,11 @@ class EvalContext {
   }
 
   // Gets the value of the specified compile-time binding in this context.
-  // Returns `Invalid` if the value is not fixed in this context.
+  // Returns `None` if the value is not fixed in this context.
   auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
       -> SemIR::ConstantId {
-    if (!bind_index.is_valid() || !specific_id_.is_valid()) {
-      return SemIR::ConstantId::Invalid;
+    if (!bind_index.has_value() || !specific_id_.has_value()) {
+      return SemIR::ConstantId::None;
     }
 
     const auto& specific = specifics().Get(specific_id_);
@@ -72,7 +73,7 @@ class EvalContext {
     // Bindings past the ones with known arguments can appear as local
     // bindings of entities declared within this generic.
     if (static_cast<size_t>(bind_index.index) >= args.size()) {
-      return SemIR::ConstantId::Invalid;
+      return SemIR::ConstantId::None;
     }
     return constant_values().Get(args[bind_index.index]);
   }
@@ -93,12 +94,12 @@ class EvalContext {
     if (specific_eval_info_) {
       const auto& symbolic_info =
           constant_values().GetSymbolicConstant(const_id);
-      if (symbolic_info.index.is_valid() &&
+      if (symbolic_info.index.has_value() &&
           symbolic_info.generic_id ==
               specifics().Get(specific_id_).generic_id &&
           symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-        CARBON_CHECK(inst_id.is_valid(),
+        CARBON_CHECK(inst_id.has_value(),
                      "Forward reference in eval block: index {0} referenced "
                      "before evaluation",
                      symbolic_info.index.index());
@@ -338,15 +339,15 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::InstBlockId inst_block_id, Phase* phase)
     -> SemIR::InstBlockId {
-  if (!inst_block_id.is_valid()) {
-    return SemIR::InstBlockId::Invalid;
+  if (!inst_block_id.has_value()) {
+    return SemIR::InstBlockId::None;
   }
   auto insts = eval_context.inst_blocks().Get(inst_block_id);
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
     auto const_inst_id = GetConstantValue(eval_context, inst_id, phase);
-    if (!const_inst_id.is_valid()) {
-      return SemIR::InstBlockId::Invalid;
+    if (!const_inst_id.has_value()) {
+      return SemIR::InstBlockId::None;
     }
 
     // Once we leave the small buffer, we know the first few elements are all
@@ -368,15 +369,15 @@ static auto GetConstantValue(EvalContext& eval_context,
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::StructTypeFieldsId fields_id, Phase* phase)
     -> SemIR::StructTypeFieldsId {
-  if (!fields_id.is_valid()) {
-    return SemIR::StructTypeFieldsId::Invalid;
+  if (!fields_id.has_value()) {
+    return SemIR::StructTypeFieldsId::None;
   }
   auto fields = eval_context.context().struct_type_fields().Get(fields_id);
   llvm::SmallVector<SemIR::StructTypeField> new_fields;
   for (auto field : fields) {
     auto new_type_id = GetConstantValue(eval_context, field.type_id, phase);
-    if (!new_type_id.is_valid()) {
-      return SemIR::StructTypeFieldsId::Invalid;
+    if (!new_type_id.has_value()) {
+      return SemIR::StructTypeFieldsId::None;
     }
 
     // Once we leave the small buffer, we know the first few elements are all
@@ -398,15 +399,15 @@ static auto GetConstantValue(EvalContext& eval_context,
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::TypeBlockId type_block_id, Phase* phase)
     -> SemIR::TypeBlockId {
-  if (!type_block_id.is_valid()) {
-    return SemIR::TypeBlockId::Invalid;
+  if (!type_block_id.has_value()) {
+    return SemIR::TypeBlockId::None;
   }
   auto types = eval_context.type_blocks().Get(type_block_id);
   llvm::SmallVector<SemIR::TypeId> new_types;
   for (auto type_id : types) {
     auto new_type_id = GetConstantValue(eval_context, type_id, phase);
-    if (!new_type_id.is_valid()) {
-      return SemIR::TypeBlockId::Invalid;
+    if (!new_type_id.has_value()) {
+      return SemIR::TypeBlockId::None;
     }
 
     // Once we leave the small buffer, we know the first few elements are all
@@ -428,14 +429,14 @@ static auto GetConstantValue(EvalContext& eval_context,
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::SpecificId specific_id, Phase* phase)
     -> SemIR::SpecificId {
-  if (!specific_id.is_valid()) {
-    return SemIR::SpecificId::Invalid;
+  if (!specific_id.has_value()) {
+    return SemIR::SpecificId::None;
   }
 
   const auto& specific = eval_context.specifics().Get(specific_id);
   auto args_id = GetConstantValue(eval_context, specific.args_id, phase);
-  if (!args_id.is_valid()) {
-    return SemIR::SpecificId::Invalid;
+  if (!args_id.has_value()) {
+    return SemIR::SpecificId::None;
   }
 
   if (args_id == specific.args_id) {
@@ -474,7 +475,7 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
                                           InstT* inst, FieldIdT InstT::*field,
                                           Phase* phase) -> bool {
   auto unwrapped = GetConstantValue(eval_context, inst->*field, phase);
-  if (!unwrapped.is_valid() && (inst->*field).is_valid()) {
+  if (!unwrapped.has_value() && (inst->*field).has_value()) {
     return false;
   }
   inst->*field = unwrapped;
@@ -596,7 +597,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   Phase phase = Phase::Template;
   auto index_id = GetConstantValue(eval_context, inst.index_id, &phase);
 
-  if (!index_id.is_valid()) {
+  if (!index_id.has_value()) {
     return MakeNonConstantResult(phase);
   }
   auto index = eval_context.insts().TryGetAs<SemIR::IntValue>(index_id);
@@ -633,7 +634,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   }
 
   auto aggregate_id = GetConstantValue(eval_context, inst.array_id, &phase);
-  if (!aggregate_id.is_valid()) {
+  if (!aggregate_id.has_value()) {
     return MakeNonConstantResult(phase);
   }
   auto aggregate =
@@ -729,7 +730,7 @@ static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
       context.ints().Get(context.insts().GetAs<SemIR::IntValue>(arg_id).int_id);
   auto [dest_is_signed, bit_width_id] =
       context.sem_ir().types().GetIntTypeInfo(dest_type_id);
-  if (bit_width_id.is_valid()) {
+  if (bit_width_id.has_value()) {
     // TODO: If the value fits in the destination type, reuse the existing
     // int_id rather than recomputing it. This is probably the most common case.
     bool src_is_signed = context.sem_ir().types().IsSignedInt(
@@ -752,7 +753,7 @@ static auto PerformCheckedIntConvert(Context& context, SemIRLoc loc,
 
   auto [is_signed, bit_width_id] =
       context.sem_ir().types().GetIntTypeInfo(dest_type_id);
-  auto width = bit_width_id.is_valid()
+  auto width = bit_width_id.has_value()
                    ? context.ints().Get(bit_width_id).getZExtValue()
                    : arg_val.getBitWidth();
 
@@ -791,7 +792,7 @@ static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
 // or the canonical width from the value store if not.
 static auto GetIntAtSuitableWidth(Context& context, IntId int_id,
                                   IntId bit_width_id) -> llvm::APInt {
-  return bit_width_id.is_valid()
+  return bit_width_id.has_value()
              ? context.ints().GetAtWidth(int_id, bit_width_id)
              : context.ints().Get(int_id);
 }
@@ -809,7 +810,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::IntSNegate:
       if (op_val.isMinSignedValue()) {
-        if (bit_width_id.is_valid()) {
+        if (bit_width_id.has_value()) {
           CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                             "integer overflow in negation of {0}", TypedInt);
           context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
@@ -823,7 +824,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
       op_val.negate();
       break;
     case SemIR::BuiltinFunctionKind::IntUNegate:
-      CARBON_CHECK(bit_width_id.is_valid(), "Unsigned negate on unsized int");
+      CARBON_CHECK(bit_width_id.has_value(), "Unsigned negate on unsized int");
       op_val.negate();
       break;
     case SemIR::BuiltinFunctionKind::IntComplement:
@@ -856,7 +857,7 @@ struct APIntBinaryOperands {
 static auto GetIntsAtSuitableWidth(Context& context, IntId lhs_id, IntId rhs_id,
                                    IntId bit_width_id) -> APIntBinaryOperands {
   // Unsized operands: take the wider of the bit widths.
-  if (!bit_width_id.is_valid()) {
+  if (!bit_width_id.has_value()) {
     APIntBinaryOperands result = {.lhs = context.ints().Get(lhs_id),
                                   .rhs = context.ints().Get(rhs_id)};
     if (result.lhs.getBitWidth() != result.rhs.getBitWidth()) {
@@ -977,7 +978,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIRLoc loc,
   llvm::APInt lhs_val =
       GetIntAtSuitableWidth(context, lhs.int_id, lhs_bit_width_id);
   const auto& rhs_orig_val = context.ints().Get(rhs.int_id);
-  if (lhs_bit_width_id.is_valid() && rhs_orig_val.uge(lhs_val.getBitWidth())) {
+  if (lhs_bit_width_id.has_value() && rhs_orig_val.uge(lhs_val.getBitWidth())) {
     CARBON_DIAGNOSTIC(
         CompileTimeShiftOutOfRange, Error,
         "shift distance >= type width of {0} in `{1} {2:<<|>>} {3}`", unsigned,
@@ -1006,7 +1007,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIRLoc loc,
 
   llvm::APInt result_val;
   if (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift) {
-    if (!lhs_bit_width_id.is_valid() && !lhs_val.isZero()) {
+    if (!lhs_bit_width_id.has_value() && !lhs_val.isZero()) {
       // Ensure we don't generate a ridiculously large integer through a bit
       // shift.
       auto width = rhs_orig_val.trySExtValue();
@@ -1032,7 +1033,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIRLoc loc,
     result_val =
         lhs_val.ashr(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
   } else {
-    CARBON_CHECK(lhs_bit_width_id.is_valid(), "Logical shift on unsized int");
+    CARBON_CHECK(lhs_bit_width_id.has_value(), "Logical shift on unsized int");
     result_val =
         lhs_val.lshr(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
   }
@@ -1074,7 +1075,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
   BinaryIntOpResult result =
       ComputeBinaryIntOpResult(builtin_kind, lhs_val, rhs_val);
 
-  if (result.overflow && !bit_width_id.is_valid()) {
+  if (result.overflow && !bit_width_id.has_value()) {
     // Retry with a larger bit width. Most operations can only overflow by one
     // bit, but signed n-bit multiplication can overflow to 2n-1 bits. We don't
     // need to handle unsigned multiplication here because it's not permitted
@@ -1430,7 +1431,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   // call.
   //
   // TODO: Use a better representation for this.
-  if (call.args_id == SemIR::InstBlockId::Invalid) {
+  if (call.args_id == SemIR::InstBlockId::None) {
     return SemIR::ErrorInst::SingletonConstantId;
   }
 
@@ -1441,7 +1442,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   auto callee_function =
       SemIR::GetCalleeFunction(eval_context.sem_ir(), call.callee_id);
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  if (callee_function.function_id.is_valid()) {
+  if (callee_function.function_id.has_value()) {
     // Calls to builtins might be constant.
     builtin_kind = eval_context.functions()
                        .Get(callee_function.function_id)
@@ -1709,7 +1710,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context.context(),
           SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                            .class_id = class_decl.class_id,
-                           .specific_id = SemIR::SpecificId::Invalid},
+                           .specific_id = SemIR::SpecificId::None},
           Phase::Template);
     }
 
@@ -1741,7 +1742,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return MakeConstantResult(
           eval_context.context(),
           eval_context.context().FacetTypeFromInterface(
-              interface_decl.interface_id, SemIR::SpecificId::Invalid),
+              interface_decl.interface_id, SemIR::SpecificId::None),
           Phase::Template);
     }
 
@@ -1798,7 +1799,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           // contains a symbolic context.
 
           auto element = elements[index];
-          if (!element.is_valid()) {
+          if (!element.has_value()) {
             // TODO: Perhaps this should be a `{}` value with incomplete type?
             CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
                               "accessing member from impl before the end of "
@@ -1852,7 +1853,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // argument value.
       if (auto value =
               eval_context.GetCompileTimeBindValue(bind_name.bind_index);
-          value.is_valid()) {
+          value.has_value()) {
         return value;
       }
 
@@ -1875,7 +1876,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         // argument value.
         if (auto value =
                 eval_context.GetCompileTimeBindValue(bind_name.bind_index);
-            value.is_valid()) {
+            value.has_value()) {
           return value;
         }
         phase = Phase::Symbolic;
@@ -1884,7 +1885,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // original, with no equivalent value.
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-      bind.value_id = SemIR::InstId::Invalid;
+      bind.value_id = SemIR::InstId::None;
       if (!ReplaceFieldWithConstantValue(
               eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase)) {
         return MakeNonConstantResult(phase);
@@ -1970,7 +1971,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                      "Unexpected type_id: {0}, inst: {1}", base_facet_type_id,
                      base_facet_inst);
       }
-      if (typed_inst.requirements_id.is_valid()) {
+      if (typed_inst.requirements_id.has_value()) {
         auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
         for (auto inst_id : insts) {
           if (auto rewrite =
@@ -2113,7 +2114,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
   auto eval_block = context.inst_blocks().Get(eval_block_id);
 
   llvm::SmallVector<SemIR::InstId> result;
-  result.resize(eval_block.size(), SemIR::InstId::Invalid);
+  result.resize(eval_block.size(), SemIR::InstId::None);
 
   EvalContext eval_context(context, loc, specific_id,
                            SpecificEvalInfo{
@@ -2125,7 +2126,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
                           InstIdAsType);
-        if (loc.is_inst_id && !loc.inst_id.is_valid()) {
+        if (loc.is_inst_id && !loc.inst_id.has_value()) {
           return;
         }
         builder.Note(loc, ResolvingSpecificHere,
@@ -2136,7 +2137,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
-    CARBON_CHECK(result[i].is_valid());
+    CARBON_CHECK(result[i].has_value());
   }
 
   return context.inst_blocks().Add(result);

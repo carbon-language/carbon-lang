@@ -60,23 +60,23 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
     DiagnoseRepeated(context, current_modifier_node_id, node_id);
     return false;
   }
-  if (current_modifier_node_id.is_valid()) {
+  if (current_modifier_node_id.has_value()) {
     DiagnoseNotAllowedWith(context, current_modifier_node_id, node_id);
     return false;
   }
   if (auto later_modifier_set = s.modifier_set & later_modifiers;
       !later_modifier_set.empty()) {
     // At least one later modifier is present. Diagnose using the closest.
-    Parse::NodeId closest_later_modifier = Parse::NodeId::Invalid;
+    Parse::NodeId closest_later_modifier = Parse::NodeId::None;
     for (auto later_order = static_cast<int8_t>(order) + 1;
          later_order <= static_cast<int8_t>(ModifierOrder::Last);
          ++later_order) {
-      if (s.ordered_modifier_node_ids[later_order].is_valid()) {
+      if (s.ordered_modifier_node_ids[later_order].has_value()) {
         closest_later_modifier = s.ordered_modifier_node_ids[later_order];
         break;
       }
     }
-    CARBON_CHECK(closest_later_modifier.is_valid());
+    CARBON_CHECK(closest_later_modifier.has_value());
 
     CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
                       "`{0}` must appear before `{1}`", Lex::TokenKind,

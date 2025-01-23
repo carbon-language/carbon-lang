@@ -47,9 +47,9 @@ struct Generic : public Printable<Generic> {
   // generic.
 
   // The eval block for the declaration region of the generic.
-  InstBlockId decl_block_id = InstBlockId::Invalid;
+  InstBlockId decl_block_id = InstBlockId::None;
   // The eval block for the definition region of the generic.
-  InstBlockId definition_block_id = InstBlockId::Invalid;
+  InstBlockId definition_block_id = InstBlockId::None;
 };
 
 // Provides storage for generics.
@@ -58,7 +58,7 @@ class GenericStore : public ValueStore<GenericId> {
   // Get the self specific for a generic, or an invalid specific for an invalid
   // generic ID.
   auto GetSelfSpecific(GenericId id) -> SpecificId {
-    return id.is_valid() ? Get(id).self_specific_id : SpecificId::Invalid;
+    return id.has_value() ? Get(id).self_specific_id : SpecificId::None;
   }
 };
 
@@ -91,9 +91,9 @@ struct Specific : Printable<Specific> {
   // is resolved.
 
   // The value block for the declaration region of the specific.
-  InstBlockId decl_block_id = InstBlockId::Invalid;
+  InstBlockId decl_block_id = InstBlockId::None;
   // The value block for the definition region of the specific.
-  InstBlockId definition_block_id = InstBlockId::Invalid;
+  InstBlockId definition_block_id = InstBlockId::None;
 };
 
 // Provides storage for deduplicated specifics, which represent generics plus
@@ -140,18 +140,18 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
 
 // Gets the substituted value of a potentially generic constant within a
 // specific. Note that this does not perform substitution, and will return
-// `Invalid` if the substituted constant value is not yet known.
+// `None` if the substituted constant value is not yet known.
 auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
                            ConstantId const_id) -> ConstantId;
 
 // Gets the substituted constant value of a potentially generic instruction
 // within a specific. Note that this does not perform substitution, and will
-// return `Invalid` if the substituted constant value is not yet known.
+// return `None` if the substituted constant value is not yet known.
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId;
 
 // Gets the substituted value of a potentially generic type within a specific.
-// Note that this does not perform substitution, and will return `Invalid` if
+// Note that this does not perform substitution, and will return `None` if
 // the substituted type is not yet known.
 auto GetTypeInSpecific(const File& sem_ir, SpecificId specific_id,
                        TypeId type_id) -> TypeId;

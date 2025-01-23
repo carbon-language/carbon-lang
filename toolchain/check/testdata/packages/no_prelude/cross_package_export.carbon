@@ -214,7 +214,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -252,7 +252,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Other.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import_copy.carbon
@@ -265,7 +265,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Other.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import_indirect.carbon
@@ -278,7 +278,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Other.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name.carbon
@@ -301,7 +301,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,7 +333,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,7 +365,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Other.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

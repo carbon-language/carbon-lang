@@ -499,7 +499,7 @@ class C {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: <error> = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <invalid>
+// CHECK:STDOUT:   %.var: ref <error> = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

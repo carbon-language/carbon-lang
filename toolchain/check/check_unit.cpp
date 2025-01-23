@@ -96,13 +96,13 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // reference.
   auto package_scope_id = context_.name_scopes().Add(
       SemIR::Namespace::PackageInstId, SemIR::NameId::PackageNamespace,
-      SemIR::NameScopeId::Invalid);
+      SemIR::NameScopeId::None);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst_id = context_.AddInst<SemIR::Namespace>(
-      Parse::NodeId::Invalid, {.type_id = namespace_type_id,
-                               .name_scope_id = SemIR::NameScopeId::Package,
-                               .import_id = SemIR::InstId::Invalid});
+      Parse::NodeId::None, {.type_id = namespace_type_id,
+                            .name_scope_id = SemIR::NameScopeId::Package,
+                            .import_id = SemIR::InstId::None});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // If there is an implicit `api` import, set it first so that it uses the
@@ -118,13 +118,13 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
                     .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
   } else {
     SetApiImportIR(context_,
-                   {.decl_id = SemIR::InstId::Invalid, .sem_ir = nullptr});
+                   {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
   }
 
   // Add import instructions for everything directly imported. Implicit imports
   // are handled separately.
   for (auto& package_imports : unit_and_imports_->package_imports) {
-    CARBON_CHECK(!package_imports.import_decl_id.is_valid());
+    CARBON_CHECK(!package_imports.import_decl_id.has_value());
     package_imports.import_decl_id = context_.AddInst<SemIR::ImportDecl>(
         package_imports.node_id, {.package_id = SemIR::NameId::ForIdentifier(
                                       package_imports.package_id)});
@@ -221,7 +221,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
                                      SemIR::TypeId namespace_type_id) -> void {
   // Add imports from the current package.
   auto import_map_lookup =
-      unit_and_imports_->package_imports_map.Lookup(IdentifierId::Invalid);
+      unit_and_imports_->package_imports_map.Lookup(IdentifierId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
     context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
@@ -240,7 +240,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
                                /*api_imports=*/nullptr));
 
   context_.scope_stack().Push(
-      package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::Invalid,
+      package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
       context_.name_scopes().Get(SemIR::NameScopeId::Package).has_error());
 }
 
@@ -255,7 +255,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   // {Invalid, -1} state remains.
   llvm::SmallVector<std::pair<IdentifierId, int32_t>> api_imports_list;
   api_imports_list.resize(unit_and_imports_->package_imports.size(),
-                          {IdentifierId::Invalid, -1});
+                          {IdentifierId::None, -1});
 
   // When there's an API file, add the mapping to api_imports_list.
   if (unit_and_imports_->api_for_impl) {
@@ -267,7 +267,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
     for (auto [api_imports_index, api_imports] :
          llvm::enumerate(unit_and_imports_->api_for_impl->package_imports)) {
       // Skip the current package.
-      if (!api_imports.package_id.is_valid()) {
+      if (!api_imports.package_id.has_value()) {
         continue;
       }
       // Translate the package ID from the API file to the implementation file.
@@ -287,15 +287,15 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 
   for (auto [i, api_imports_entry] : llvm::enumerate(api_imports_list)) {
     // These variables are updated after figuring out which imports are present.
-    auto import_decl_id = SemIR::InstId::Invalid;
-    IdentifierId package_id = IdentifierId::Invalid;
+    auto import_decl_id = SemIR::InstId::None;
+    IdentifierId package_id = IdentifierId::None;
     bool has_load_error = false;
 
     // Identify the local package imports if present.
     PackageImports* local_imports = nullptr;
     if (i < unit_and_imports_->package_imports.size()) {
       local_imports = &unit_and_imports_->package_imports[i];
-      if (!local_imports->package_id.is_valid()) {
+      if (!local_imports->package_id.has_value()) {
         // Skip the current package.
         continue;
       }
@@ -359,7 +359,7 @@ auto CheckUnit::ImportCppPackages() -> void {
 auto CheckUnit::ProcessNodeIds() -> bool {
   NodeIdTraversal traversal(context_, vlog_stream_);
 
-  Parse::NodeId node_id = Parse::NodeId::Invalid;
+  Parse::NodeId node_id = Parse::NodeId::None;
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
@@ -421,7 +421,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
       case CARBON_KIND(SemIR::FunctionDecl function_decl): {
         if (context_.functions().Get(function_decl.function_id).definition_id ==
-            SemIR::InstId::Invalid) {
+            SemIR::InstId::None) {
           emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
         }
         break;

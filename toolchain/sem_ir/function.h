@@ -54,7 +54,7 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
-    if (return_slot_pattern_id.is_valid()) {
+    if (return_slot_pattern_id.has_value()) {
       out << ", return_slot_pattern: " << return_slot_pattern_id;
     }
     if (!body_block_ids.empty()) {
@@ -88,10 +88,10 @@ struct Function : public EntityWithParamsBase,
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
-  // specified.  Returns `Invalid` if no return type was specified, in which
+  // specified.  Returns `None` if no return type was specified, in which
   // case the effective return type is an empty tuple.
   auto GetDeclaredReturnType(const File& file,
-                             SpecificId specific_id = SpecificId::Invalid) const
+                             SpecificId specific_id = SpecificId::None) const
       -> TypeId;
 };
 

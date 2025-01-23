@@ -219,7 +219,7 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %Def = binding_pattern c
 // CHECK:STDOUT:     %.loc4: %Def = var_pattern %c.patt
@@ -255,7 +255,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
 // CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
@@ -330,7 +330,7 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %ForwardWithDef = binding_pattern c
 // CHECK:STDOUT:     %.loc4: %ForwardWithDef = var_pattern %c.patt
@@ -366,7 +366,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
 // CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
@@ -441,7 +441,7 @@ private class Redecl {}
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %ptr = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %ptr = value_param_pattern %c.patt, runtime_param0
@@ -480,7 +480,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0

@@ -37,13 +37,13 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc11_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_6.1, runtime_param<invalid> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_6.1, runtime_param<none> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc11_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc11_16.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc11_16.1, runtime_param<invalid> [symbolic = %U.patt.loc11_16.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc11_16.1, runtime_param<none> [symbolic = %U.patt.loc11_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %U.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %U.loc11_16.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc11_16.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

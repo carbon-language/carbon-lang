@@ -46,13 +46,13 @@ auto CheckFunctionTypeMatches(Context& context,
         FunctionRedeclReturnTypeDiffersNoReturn, Error,
         "function redeclaration differs because no return type is provided");
     auto diag =
-        new_return_type_id.is_valid()
+        new_return_type_id.has_value()
             ? context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffers,
                                       new_return_type_id)
             : context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffersNoReturn);
-    if (prev_return_type_id.is_valid()) {
+    if (prev_return_type_id.has_value()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
                         "previously declared with return type {0}",
                         SemIR::TypeId);

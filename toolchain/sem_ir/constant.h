@@ -17,12 +17,12 @@ namespace Carbon::SemIR {
 struct SymbolicConstant : Printable<SymbolicConstant> {
   // The constant instruction that defines the value of this symbolic constant.
   InstId inst_id;
-  // The enclosing generic. If this is invalid, then this is an abstract
+  // The enclosing generic. If this is `None`, then this is an abstract
   // symbolic constant, such as a constant instruction in the constants block,
   // rather than one associated with a particular generic.
   GenericId generic_id;
   // The index of this symbolic constant within the generic's list of symbolic
-  // constants, or invalid if `generic_id` is invalid.
+  // constants, or `None` if `generic_id` is `None`.
   GenericInstIndex index;
   // True if this is constant is symbolic just because it uses `.Self`.
   bool period_self_only;
@@ -61,7 +61,8 @@ class ConstantValueStore {
   }
 
   // Gets the instruction ID that defines the value of the given constant.
-  // Returns Invalid if the constant ID is non-constant. Requires is_valid.
+  // Returns `None` if the constant ID is non-constant. Requires
+  // `const_id.has_value()`.
   auto GetInstId(ConstantId const_id) const -> InstId {
     if (const_id.is_template()) {
       return const_id.template_inst_id();
@@ -69,17 +70,17 @@ class ConstantValueStore {
     if (const_id.is_symbolic()) {
       return GetSymbolicConstant(const_id).inst_id;
     }
-    return InstId::Invalid;
+    return InstId::None;
   }
 
   // Gets the instruction ID that defines the value of the given constant.
-  // Returns Invalid if the constant ID is non-constant or invalid.
+  // Returns `None` if the constant ID is non-constant or `None`.
   auto GetInstIdIfValid(ConstantId const_id) const -> InstId {
-    return const_id.is_valid() ? GetInstId(const_id) : InstId::Invalid;
+    return const_id.has_value() ? GetInstId(const_id) : InstId::None;
   }
 
   // Given an instruction, returns the unique constant instruction that is
-  // equivalent to it. Returns Invalid for a non-constant instruction.
+  // equivalent to it. Returns `None` for a non-constant instruction.
   auto GetConstantInstId(InstId inst_id) const -> InstId {
     return GetInstId(Get(inst_id));
   }
@@ -121,7 +122,7 @@ class ConstantValueStore {
   }
 
   // Returns the constant values mapping as an ArrayRef whose keys are
-  // instruction indexes. Some of the elements in this mapping may be Invalid or
+  // instruction indexes. Some of the elements in this mapping may be `None` or
   // NotConstant.
   auto array_ref() const -> llvm::ArrayRef<ConstantId> { return values_; }
 

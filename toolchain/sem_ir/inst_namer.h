@@ -75,7 +75,7 @@ class InstNamer {
   // Returns the IR name to use for a function, class, or interface.
   template <typename IdT>
   auto GetNameFor(IdT id) const -> std::string {
-    if (!id.is_valid()) {
+    if (!id.has_value()) {
       return "invalid";
     }
     return GetScopeName(GetScopeFor(id));
@@ -156,7 +156,7 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                      std::string name = "",
-                     SemIR::LocId loc_id = SemIR::LocId::Invalid) -> void;
+                     SemIR::LocId loc_id = SemIR::LocId::None) -> void;
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.

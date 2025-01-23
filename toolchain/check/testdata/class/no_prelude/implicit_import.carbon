@@ -111,8 +111,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,8 +164,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,8 +218,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.a95] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,8 +275,8 @@ class B {}
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.a95] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

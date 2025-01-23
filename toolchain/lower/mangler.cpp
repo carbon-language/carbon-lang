@@ -32,7 +32,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       os << prefix;
     }
     if (name_scope_id == SemIR::NameScopeId::Package) {
-      if (auto package_id = sem_ir().package_id(); package_id.is_valid()) {
+      if (auto package_id = sem_ir().package_id(); package_id.has_value()) {
         os << sem_ir().identifiers().Get(package_id);
       } else {
         os << "Main";
@@ -129,7 +129,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
                      SemIR::SpecificId specific_id) -> std::string {
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
-    CARBON_CHECK(!specific_id.is_valid(), "entry point should not be generic");
+    CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
   RawStringOstream os;
@@ -142,7 +142,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   // TODO: Add proper support for mangling generic entities. For now we use a
   // fingerprint of the specific arguments, which should be stable across files,
   // but isn't necessarily stable across toolchain changes.
-  if (specific_id.is_valid()) {
+  if (specific_id.has_value()) {
     os << ".";
     llvm::write_hex(
         os,

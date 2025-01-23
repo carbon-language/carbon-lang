@@ -26,7 +26,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns the ID of the constant used to define the specified type.
   auto GetConstantId(TypeId type_id) const -> ConstantId {
-    if (!type_id.is_valid()) {
+    if (!type_id.has_value()) {
       // TODO: Investigate replacing this with a CHECK or returning Invalid.
       return ConstantId::NotConstant;
     }
@@ -109,7 +109,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Returns integer type information from a type ID that is known to represent
   // an integer type. Abstracts away the difference between an `IntType`
   // instruction defined type, a singleton instruction defined type, and a class
-  // adapting such a type. Uses IntId::Invalid for types that have a
+  // adapting such a type. Uses IntId::None for types that have a
   // non-constant width and for IntLiteral.
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;
 

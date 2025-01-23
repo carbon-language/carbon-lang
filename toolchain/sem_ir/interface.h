@@ -15,15 +15,15 @@ struct InterfaceFields {
   // The following members are set at the `{` of the interface definition.
 
   // The interface scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
+  NameScopeId scope_id = NameScopeId::None;
   // The first block of the interface body.
   // TODO: Handle control flow in the interface body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
+  InstBlockId body_block_id = InstBlockId::None;
   // The implicit `Self` parameter. This is a BindSymbolicName instruction.
-  InstId self_param_id = InstId::Invalid;
+  InstId self_param_id = InstId::None;
 
   // The following members are set at the `}` of the interface definition.
-  InstBlockId associated_entities_id = InstBlockId::Invalid;
+  InstBlockId associated_entities_id = InstBlockId::None;
 };
 
 // An interface. See EntityWithParamsBase regarding the inheritance here.
@@ -38,7 +38,7 @@ struct Interface : public EntityWithParamsBase,
 
   // Determines whether this interface has been fully defined. This is false
   // until we reach the `}` of the interface definition.
-  auto is_defined() const -> bool { return associated_entities_id.is_valid(); }
+  auto is_defined() const -> bool { return associated_entities_id.has_value(); }
 
   // Determines whether we're currently defining the interface. This is true
   // between the braces of the interface.

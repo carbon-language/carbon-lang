@@ -205,7 +205,7 @@ class NameScopeStore {
 
   // Returns whether the provided scope ID is for a package scope.
   auto IsPackage(NameScopeId scope_id) const -> bool {
-    if (!scope_id.is_valid()) {
+    if (!scope_id.has_value()) {
       return false;
     }
     // A package is either the current package or an imported package.

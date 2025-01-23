@@ -42,9 +42,9 @@ var v: C(0);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %x.patt.loc15_22.1: <error> = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc15_22.2 (constants.%x.patt)]
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc15_22.1, runtime_param<invalid> [symbolic = %x.patt.loc15_22.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc15_22.1, runtime_param<none> [symbolic = %x.patt.loc15_22.2 (constants.%x.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: <error> = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %x.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %self.ref: <error> = name_ref self, <error> [template = <error>]
 // CHECK:STDOUT:     %x: <error> = bind_symbolic_name x, 0, %x.param [template = <error>]
 // CHECK:STDOUT:   }

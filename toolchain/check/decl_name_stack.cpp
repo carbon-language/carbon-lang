@@ -20,7 +20,7 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
   switch (state) {
     case NameContext::State::Error:
       // The name is invalid and a diagnostic has already been emitted.
-      return SemIR::InstId::Invalid;
+      return SemIR::InstId::None;
 
     case NameContext::State::Empty:
       CARBON_FATAL(
@@ -31,7 +31,7 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
       return resolved_inst_id;
 
     case NameContext::State::Unresolved:
-      return SemIR::InstId::Invalid;
+      return SemIR::InstId::None;
 
     case NameContext::State::Poisoned:
       CARBON_FATAL("Poisoned state should not call prev_inst_id()");
@@ -117,7 +117,7 @@ auto DeclNameStack::Restore(SuspendedName sus) -> void {
   for (auto& suspended_scope : llvm::reverse(sus.scopes)) {
     // Reattempt to resolve the definition of the specific. The generic might
     // have been defined after we suspended this scope.
-    if (suspended_scope.entry.specific_id.is_valid()) {
+    if (suspended_scope.entry.specific_id.has_value()) {
       ResolveSpecificDefinition(*context_, sus.name_context.loc_id,
                                 suspended_scope.entry.specific_id);
     }
@@ -133,7 +133,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
       return;
 
     case NameContext::State::Unresolved:
-      if (!name_context.parent_scope_id.is_valid()) {
+      if (!name_context.parent_scope_id.has_value()) {
         context_->AddNameToLookup(name_context.unresolved_name_id, target_id,
                                   name_context.initial_scope_index);
       } else {
@@ -176,7 +176,7 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
                                       SemIR::AccessKind access_kind) -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
     context_->DiagnosePoisonedName(target_id);
-  } else if (auto id = name_context.prev_inst_id(); id.is_valid()) {
+  } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
     context_->DiagnoseDuplicateName(target_id, id);
   } else {
     AddName(name_context, target_id, access_kind);
@@ -188,13 +188,13 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                     SemIR::AccessKind access_kind)
     -> std::pair<SemIR::InstId, bool> {
   if (name_context.state == NameContext::State::Poisoned) {
-    return {SemIR::InstId::Invalid, true};
+    return {SemIR::InstId::None, true};
   }
-  if (auto id = name_context.prev_inst_id(); id.is_valid()) {
+  if (auto id = name_context.prev_inst_id(); id.has_value()) {
     return {id, false};
   }
   AddName(name_context, target_id, access_kind);
-  return {SemIR::InstId::Invalid, false};
+  return {SemIR::InstId::None, false};
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
@@ -211,7 +211,7 @@ static auto PushNameQualifierScope(Context& context, SemIRLoc loc,
   context.scope_stack().PopIfEmpty();
 
   // When declaring a member of a generic, resolve the self specific.
-  if (specific_id.is_valid()) {
+  if (specific_id.has_value()) {
     ResolveSpecificDefinition(context, loc, specific_id);
   }
 
@@ -237,7 +237,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
 
   // Resolve the qualifier as a scope and enter the new scope.
   auto [scope_id, specific_id] = ResolveAsScope(name_context, name);
-  if (scope_id.is_valid()) {
+  if (scope_id.has_value()) {
     PushNameQualifierScope(*context_, name_context.loc_id,
                            name_context.resolved_inst_id, scope_id, specific_id,
                            context_->name_scopes().Get(scope_id).has_error());
@@ -268,7 +268,7 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
   if (is_poisoned) {
     name_context.unresolved_name_id = name_id;
     name_context.state = NameContext::State::Poisoned;
-  } else if (!resolved_inst_id.is_valid()) {
+  } else if (!resolved_inst_id.has_value()) {
     // Invalid indicates an unresolved name. Store it and return.
     name_context.unresolved_name_id = name_id;
     name_context.state = NameContext::State::Unresolved;
@@ -374,7 +374,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                    const NameComponent& name) const
     -> std::pair<SemIR::NameScopeId, SemIR::SpecificId> {
   constexpr std::pair<SemIR::NameScopeId, SemIR::SpecificId> InvalidResult = {
-      SemIR::NameScopeId::Invalid, SemIR::SpecificId::Invalid};
+      SemIR::NameScopeId::None, SemIR::SpecificId::None};
 
   if (!CheckQualifierIsResolved(*context_, name_context)) {
     return InvalidResult;
@@ -429,9 +429,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       // This is specifically for qualified name handling.
       if (!CheckRedeclParamsMatch(
               *context_, new_params,
-              DeclParams(name_context.resolved_inst_id, Parse::NodeId::Invalid,
-                         Parse::NodeId::Invalid, SemIR::InstBlockId::Invalid,
-                         SemIR::InstBlockId::Invalid))) {
+              DeclParams(name_context.resolved_inst_id, Parse::NodeId::None,
+                         Parse::NodeId::None, SemIR::InstBlockId::None,
+                         SemIR::InstBlockId::None))) {
         return InvalidResult;
       }
       if (scope.is_closed_import()) {
@@ -441,7 +441,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
         // be used as a name qualifier.
         scope.set_is_closed_import(false);
       }
-      return {scope_id, SemIR::SpecificId::Invalid};
+      return {scope_id, SemIR::SpecificId::None};
     }
     default: {
       DiagnoseQualifiedDeclInNonScope(*context_, name_context.loc_id,

@@ -26,7 +26,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     llvm::ListSeparator sep;
     for (ImplsConstraint req : impls_constraints) {
       out << sep << req.interface_id;
-      if (req.specific_id.is_valid()) {
+      if (req.specific_id.has_value()) {
         out << "(" << req.specific_id << ")";
       }
     }

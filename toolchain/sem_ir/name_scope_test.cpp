@@ -202,7 +202,7 @@ TEST(NameScope, Poison) {
   EXPECT_THAT(name_scope.entries(),
               ElementsAre(NameScopeEntryEquals(
                   NameScope::Entry({.name_id = poison1,
-                                    .inst_id = InstId::Invalid,
+                                    .inst_id = InstId::None,
                                     .access_kind = AccessKind::Public,
                                     .is_poisoned = true}))));
 
@@ -211,12 +211,12 @@ TEST(NameScope, Poison) {
   EXPECT_THAT(name_scope.entries(),
               ElementsAre(NameScopeEntryEquals(NameScope::Entry(
                               {.name_id = poison1,
-                               .inst_id = InstId::Invalid,
+                               .inst_id = InstId::None,
                                .access_kind = AccessKind::Public,
                                .is_poisoned = true})),
                           NameScopeEntryEquals(NameScope::Entry(
                               {.name_id = poison2,
-                               .inst_id = InstId::Invalid,
+                               .inst_id = InstId::None,
                                .access_kind = AccessKind::Public,
                                .is_poisoned = true}))));
 
@@ -225,7 +225,7 @@ TEST(NameScope, Poison) {
   EXPECT_THAT(
       name_scope.GetEntry(*lookup),
       NameScopeEntryEquals(NameScope::Entry({.name_id = poison1,
-                                             .inst_id = InstId::Invalid,
+                                             .inst_id = InstId::None,
                                              .access_kind = AccessKind::Public,
                                              .is_poisoned = true})));
 }
@@ -245,7 +245,7 @@ TEST(NameScope, AddRequiredAfterPoison) {
   EXPECT_THAT(name_scope.entries(),
               ElementsAre(NameScopeEntryEquals(
                   NameScope::Entry({.name_id = name_id,
-                                    .inst_id = InstId::Invalid,
+                                    .inst_id = InstId::None,
                                     .access_kind = AccessKind::Public,
                                     .is_poisoned = true}))));
 

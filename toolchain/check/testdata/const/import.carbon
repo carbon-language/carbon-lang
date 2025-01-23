@@ -131,7 +131,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     .a_ptr = %a_ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a

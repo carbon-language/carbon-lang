@@ -316,7 +316,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C1 = imports.%Main.C1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_current_package.impl.carbon
@@ -346,8 +346,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:     .c2 = %c2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c1.patt: %C1 = binding_pattern c1
 // CHECK:STDOUT:     %.loc6: %C1 = var_pattern %c1.patt
@@ -401,7 +401,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C1 = imports.%Main.C1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_c1.impl.carbon
@@ -424,8 +424,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .C1 = imports.%Main.C1
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c1.patt: %C1 = binding_pattern c1
 // CHECK:STDOUT:     %.loc6: %C1 = var_pattern %c1.patt
@@ -464,7 +464,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_ns.impl.carbon
@@ -491,8 +491,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc4_1: %C = var_pattern %c.patt
@@ -568,8 +568,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .o1 = %o1
 // CHECK:STDOUT:     .o2 = %o2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o1.patt: %O1 = binding_pattern o1
@@ -659,8 +659,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:     .o1 = %o1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o1.patt: %O1 = binding_pattern o1
@@ -717,8 +717,8 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc11_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc11_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc11_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc11_6.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -732,7 +732,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = imports.%Main.Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_conflict_reverse.impl.carbon
@@ -747,8 +747,8 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

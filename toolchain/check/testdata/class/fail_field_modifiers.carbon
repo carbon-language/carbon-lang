@@ -81,12 +81,12 @@ class Class {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc17_11: %Class.elem = var_pattern %.loc17_16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc17: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc17: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %.loc23_14: %Class.elem = field_decl k, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc23_9: %Class.elem = var_pattern %.loc23_14
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc23: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc23: ref %Class.elem = var <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %i32 = binding_pattern l
 // CHECK:STDOUT:   }

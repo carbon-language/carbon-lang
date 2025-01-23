@@ -99,7 +99,7 @@ class FileContext {
   // by the caller.
   auto BuildFunctionDecl(SemIR::FunctionId function_id,
                          SemIR::SpecificId specific_id =
-                             SemIR::SpecificId::Invalid) -> llvm::Function*;
+                             SemIR::SpecificId::None) -> llvm::Function*;
 
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing.
