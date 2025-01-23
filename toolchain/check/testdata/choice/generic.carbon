@@ -43,9 +43,9 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Always.decl: %Always.type = class_decl @Always [template = constants.%Always.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_15.1, runtime_param<invalid> [symbolic = %T.patt.loc11_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_15.1, runtime_param<none> [symbolic = %T.patt.loc11_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc11_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -75,6 +75,9 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     %.loc13_1.11: @Always.%Always (%Always) = bind_value %.loc13_1.10
 // CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = bind_name Sunny, %.loc13_1.11
 // CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Sunny = %Sunny
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

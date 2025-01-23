@@ -100,7 +100,7 @@ choice C(T:! type) {
 // CHECK:STDOUT:   %complete_type.df6: <witness> = complete_type_witness %struct_type.discriminant [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.5a2: type = fn_type @Convert.1, @ImplicitAs(%u1) [template]
-// CHECK:STDOUT:   %impl_witness.514: <witness> = impl_witness (imports.%import_ref.c3d), @impl.1(%int_1.5b8) [template]
+// CHECK:STDOUT:   %impl_witness.514: <witness> = impl_witness (imports.%Core.import_ref.c3d), @impl.1(%int_1.5b8) [template]
 // CHECK:STDOUT:   %Convert.type.f9b: type = fn_type @Convert.2, @impl.1(%int_1.5b8) [template]
 // CHECK:STDOUT:   %Convert.84e: %Convert.type.f9b = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.db0: <bound method> = bound_method %int_0.5c6, %Convert.84e [template]
@@ -115,9 +115,9 @@ choice C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .UInt = %import_ref.bcd
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .UInt = %Core.UInt
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -181,6 +181,12 @@ choice C(T:! type) {
 // CHECK:STDOUT:   %.loc10_7.10: %C = bind_value %.loc10_7.9
 // CHECK:STDOUT:   %Alt3: %C = bind_name Alt3, %.loc10_7.10
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .a = %a
+// CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   .Alt1 = %Alt1
+// CHECK:STDOUT:   .Alt3 = %Alt3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_generic_params.carbon
@@ -210,9 +216,9 @@ choice C(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc3_10.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_10.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc3_10.1, runtime_param<invalid> [symbolic = %T.patt.loc3_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc3_10.1, runtime_param<none> [symbolic = %T.patt.loc3_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc3_10.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc3_10.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -229,6 +235,9 @@ choice C(T:! type) {
 // CHECK:STDOUT:     %a: @C.%T.loc3_10.2 (%T) = bind_name a, %a.param
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

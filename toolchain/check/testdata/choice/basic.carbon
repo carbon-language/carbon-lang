@@ -118,6 +118,9 @@ fn H() {
 // CHECK:STDOUT:   %.loc5_1.11: %Always = bind_value %.loc5_1.10
 // CHECK:STDOUT:   %Sunny: %Always = bind_name Sunny, %.loc5_1.11
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Sunny = %Sunny
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -142,7 +145,7 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.de2: <witness> = complete_type_witness %struct_type.discriminant [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.f0e: type = fn_type @Convert.1, @ImplicitAs(%u2) [template]
-// CHECK:STDOUT:   %impl_witness.f5e: <witness> = impl_witness (imports.%import_ref.c3d), @impl.1(%int_2.ecc) [template]
+// CHECK:STDOUT:   %impl_witness.f5e: <witness> = impl_witness (imports.%Core.import_ref.c3d), @impl.1(%int_2.ecc) [template]
 // CHECK:STDOUT:   %Convert.type.70b: type = fn_type @Convert.2, @impl.1(%int_2.ecc) [template]
 // CHECK:STDOUT:   %Convert.474: %Convert.type.70b = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.5bb: <bound method> = bound_method %int_0.5c6, %Convert.474 [template]
@@ -169,8 +172,8 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .UInt = %import_ref.bcd
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .UInt = %Core.UInt
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -256,6 +259,12 @@ fn H() {
 // CHECK:STDOUT:   %.loc8_1.10: %Ordering = bind_value %.loc8_1.9
 // CHECK:STDOUT:   %Incomparable: %Ordering = bind_name Incomparable, %.loc8_1.10
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Less = %Less
+// CHECK:STDOUT:   .Equivalent = %Equivalent
+// CHECK:STDOUT:   .Greater = %Greater
+// CHECK:STDOUT:   .Incomparable = %Incomparable
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
