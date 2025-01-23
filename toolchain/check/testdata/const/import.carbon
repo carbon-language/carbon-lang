@@ -39,7 +39,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -111,11 +111,11 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.bde = import_ref Implicit//default, F, unloaded
-// CHECK:STDOUT:   %import_ref.ae7: ref %const = import_ref Implicit//default, a_ref, loaded
-// CHECK:STDOUT:   %import_ref.1ef: ref %ptr = import_ref Implicit//default, a_ptr_ref, loaded
+// CHECK:STDOUT:   %Implicit.F = import_ref Implicit//default, F, unloaded
+// CHECK:STDOUT:   %Implicit.a_ref: ref %const = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %Implicit.a_ptr_ref: ref %ptr = import_ref Implicit//default, a_ptr_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -123,9 +123,9 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref.bde
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.ae7
-// CHECK:STDOUT:     .a_ptr_ref = imports.%import_ref.1ef
+// CHECK:STDOUT:     .F = imports.%Implicit.F
+// CHECK:STDOUT:     .a_ref = imports.%Implicit.a_ref
+// CHECK:STDOUT:     .a_ptr_ref = imports.%Implicit.a_ptr_ref
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_ptr = %a_ptr
@@ -161,10 +161,10 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, imports.%import_ref.ae7
+// CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, imports.%Implicit.a_ref
 // CHECK:STDOUT:   %addr: %ptr = addr_of %a_ref.ref
 // CHECK:STDOUT:   assign file.%a.var, %addr
-// CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr = name_ref a_ptr_ref, imports.%import_ref.1ef
+// CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr = name_ref a_ptr_ref, imports.%Implicit.a_ptr_ref
 // CHECK:STDOUT:   %.loc7: %ptr = bind_value %a_ptr_ref.ref
 // CHECK:STDOUT:   assign file.%a_ptr.var, %.loc7
 // CHECK:STDOUT:   return

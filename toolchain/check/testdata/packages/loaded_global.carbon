@@ -72,7 +72,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Implicit//default, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %Implicit.A: %A.type = import_ref Implicit//default, A, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -81,7 +81,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref
+// CHECK:STDOUT:     .A = imports.%Implicit.A
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .package_a = %package_a
@@ -115,11 +115,11 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc4: %A.type = name_ref A, imports.%import_ref [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc4: %A.type = name_ref A, imports.%Implicit.A [template = constants.%A]
 // CHECK:STDOUT:   %A.call.loc4: init %empty_tuple.type = call %A.ref.loc4()
 // CHECK:STDOUT:   assign file.%a.var, %A.call.loc4
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %A.ref.loc6: %A.type = name_ref A, imports.%import_ref [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc6: %A.type = name_ref A, imports.%Implicit.A [template = constants.%A]
 // CHECK:STDOUT:   %A.call.loc6: init %empty_tuple.type = call %A.ref.loc6()
 // CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc6
 // CHECK:STDOUT:   return
@@ -159,7 +159,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %B.type = import_ref SamePackage//default, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %SamePackage.B: %B.type = import_ref SamePackage//default, B, loaded [template = constants.%B]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -168,7 +168,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B = imports.%import_ref
+// CHECK:STDOUT:     .B = imports.%SamePackage.B
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .package_b = %package_b
@@ -201,11 +201,11 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %B.ref.loc6: %B.type = name_ref B, imports.%import_ref [template = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc6: %B.type = name_ref B, imports.%SamePackage.B [template = constants.%B]
 // CHECK:STDOUT:   %B.call.loc6: init %empty_tuple.type = call %B.ref.loc6()
 // CHECK:STDOUT:   assign file.%b.var, %B.call.loc6
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %B.ref.loc8: %B.type = name_ref B, imports.%import_ref [template = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc8: %B.type = name_ref B, imports.%SamePackage.B [template = constants.%B]
 // CHECK:STDOUT:   %B.call.loc8: init %empty_tuple.type = call %B.ref.loc8()
 // CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc8
 // CHECK:STDOUT:   return

@@ -1421,8 +1421,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                              inst_id);
 }
 
-static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Vtable inst,
-                                SemIR::InstId /*import_inst_id*/)
+static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Vtable inst)
     -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   auto virtual_functions =
@@ -2743,7 +2742,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::Vtable inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst);
     }
     default: {
       // This instruction might have a constant value of a different kind.

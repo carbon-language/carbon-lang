@@ -57,7 +57,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -147,7 +147,7 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.x.unused.c45: type = struct_type {.x: Core.IntLiteral, .unused: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %struct_type.base.6c7: type = struct_type {.base: %struct_type.x.unused.c45} [template]
 // CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.b97: <witness> = impl_witness (imports.%import_ref.a86), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.b97: <witness> = impl_witness (imports.%Core.import_ref.a86), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.9aa: <bound method> = bound_method %int_0.5c6, %Convert.16d [template]
@@ -168,29 +168,29 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1eb = import_ref Main//a, Base, unloaded
-// CHECK:STDOUT:   %import_ref.794: type = import_ref Main//a, Child, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %Main.Base = import_ref Main//a, Base, unloaded
+// CHECK:STDOUT:   %Main.Child: type = import_ref Main//a, Child, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.239: <witness> = import_ref Main//a, loc10_1, loaded [template = constants.%complete_type.90f]
-// CHECK:STDOUT:   %import_ref.1f3 = import_ref Main//a, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.e8f: %F.type = import_ref Main//a, loc5_21, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.8bf = import_ref Main//a, loc6_26, unloaded
-// CHECK:STDOUT:   %import_ref.e67: %Base.elem = import_ref Main//a, loc8_8, loaded [template = %.720]
-// CHECK:STDOUT:   %import_ref.2e4 = import_ref Main//a, loc9_13, unloaded
-// CHECK:STDOUT:   %import_ref.c5f: <witness> = import_ref Main//a, loc14_1, loaded [template = constants.%complete_type.15c]
-// CHECK:STDOUT:   %import_ref.9a9 = import_ref Main//a, inst76 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.7e5 = import_ref Main//a, loc13_20, unloaded
-// CHECK:STDOUT:   %import_ref.a21640.2: type = import_ref Main//a, loc13_16, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %Main.import_ref.239: <witness> = import_ref Main//a, loc10_1, loaded [template = constants.%complete_type.90f]
+// CHECK:STDOUT:   %Main.import_ref.1f3 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e8f: %F.type = import_ref Main//a, loc5_21, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Main.import_ref.8bf = import_ref Main//a, loc6_26, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e67: %Base.elem = import_ref Main//a, loc8_8, loaded [template = %.720]
+// CHECK:STDOUT:   %Main.import_ref.2e4 = import_ref Main//a, loc9_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c5f: <witness> = import_ref Main//a, loc14_1, loaded [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   %Main.import_ref.9a9 = import_ref Main//a, inst76 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.7e5 = import_ref Main//a, loc13_20, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a21640.2: type = import_ref Main//a, loc13_16, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Base = imports.%import_ref.1eb
-// CHECK:STDOUT:     .Child = imports.%import_ref.794
+// CHECK:STDOUT:     .Base = imports.%Main.Base
+// CHECK:STDOUT:     .Child = imports.%Main.Child
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
@@ -200,23 +200,23 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child [from "a.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.c5f
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.c5f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.9a9
-// CHECK:STDOUT:   .base = imports.%import_ref.7e5
-// CHECK:STDOUT:   extend imports.%import_ref.a21640.2
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.9a9
+// CHECK:STDOUT:   .base = imports.%Main.import_ref.7e5
+// CHECK:STDOUT:   extend imports.%Main.import_ref.a21640.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "a.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.239
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.239
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.1f3
-// CHECK:STDOUT:   .F = imports.%import_ref.e8f
-// CHECK:STDOUT:   .Unused = imports.%import_ref.8bf
-// CHECK:STDOUT:   .x = imports.%import_ref.e67
-// CHECK:STDOUT:   .unused = imports.%import_ref.2e4
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.1f3
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.e8f
+// CHECK:STDOUT:   .Unused = imports.%Main.import_ref.8bf
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.e67
+// CHECK:STDOUT:   .unused = imports.%Main.import_ref.2e4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -250,10 +250,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_48.4: init %Child = class_init (%.loc7_48.3), %a.var [template = constants.%Child.val]
 // CHECK:STDOUT:   %.loc7_3.2: init %Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%Child.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3.2
-// CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%import_ref.794 [template = constants.%Child]
+// CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%Main.Child [template = constants.%Child]
 // CHECK:STDOUT:   %a: ref %Child = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%import_ref.e67 [template = imports.%.720]
+// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.e67 [template = imports.%.720]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
 // CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
 // CHECK:STDOUT:   %.loc8_4.3: ref %i32 = class_element_access %.loc8_4.2, element0
@@ -265,7 +265,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc8_7: init %i32 = converted %int_2, %int.convert_checked.loc8 [template = constants.%int_2.d0d]
 // CHECK:STDOUT:   assign %.loc8_4.3, %.loc8_7
 // CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.e8f [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.import_ref.e8f [template = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref.loc9, %F.ref
 // CHECK:STDOUT:   %.loc9_3.1: ref %Base = class_element_access %a.ref.loc9, element0
 // CHECK:STDOUT:   %.loc9_3.2: ref %Base = converted %a.ref.loc9, %.loc9_3.1

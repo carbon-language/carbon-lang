@@ -32,13 +32,13 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ReadChar = %import_ref.ecd
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ReadChar = %Core.ReadChar
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//io
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.ecd: %ReadChar.type.9f3 = import_ref Core//io, ReadChar, loaded [template = constants.%ReadChar.01f]
+// CHECK:STDOUT:   %Core.ReadChar: %ReadChar.type.9f3 = import_ref Core//io, ReadChar, loaded [template = constants.%ReadChar.01f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -80,7 +80,7 @@ fn Main() {
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.9f3 = name_ref ReadChar, imports.%import_ref.ecd [template = constants.%ReadChar.01f]
+// CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [template = constants.%ReadChar.01f]
 // CHECK:STDOUT:   %read.char.loc17: init %i32 = call %ReadChar.ref.loc17()
 // CHECK:STDOUT:   %.loc17_10: type = splice_block %i32.loc17 [template = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [template = constants.%int_32]

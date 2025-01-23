@@ -73,7 +73,7 @@ var w: () = v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Main//base, v, loaded
+// CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//base, v, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,7 +81,7 @@ var w: () = v;
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %v: ref %empty_tuple.type = export v, imports.%import_ref
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = export v, imports.%Main.v
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_export.carbon
@@ -92,12 +92,12 @@ var w: () = v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Main//export, v, loaded [template = <error>]
+// CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//export, v, loaded [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .v = imports.%import_ref
+// CHECK:STDOUT:     .v = imports.%Main.v
 // CHECK:STDOUT:     .w = %w
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -115,7 +115,7 @@ var w: () = v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%import_ref [template = <error>]
+// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%Main.v [template = <error>]
 // CHECK:STDOUT:   %.loc12_13: init %empty_tuple.type = tuple_init () to file.%w.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_1: init %empty_tuple.type = converted %v.ref, %.loc12_13 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%w.var, %.loc12_1

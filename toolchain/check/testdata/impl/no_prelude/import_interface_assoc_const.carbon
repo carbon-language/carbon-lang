@@ -254,7 +254,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [template]
@@ -262,29 +262,29 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.3b7: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C1 = %C1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [template = constants.%C1]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal ()
@@ -298,9 +298,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.3b7)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C1.ref as %.loc5_14 {
@@ -325,7 +325,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [template]
@@ -333,29 +333,29 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.3b7: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C2.ref.loc5: type = name_ref C2, file.%C2.decl [template = constants.%C2]
-// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc5: %I.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc5: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc5: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc5: <witness> = facet_access_witness %.Self.ref.loc5 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc5: type = impl_witness_access %.Self.as_wit.loc5, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal ()
@@ -367,10 +367,10 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C2.ref.loc6: type = name_ref C2, file.%C2.decl [template = constants.%C2]
-// CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc6: %I.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc6: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc6: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc6: <witness> = facet_access_witness %.Self.ref.loc6 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc6: type = impl_witness_access %.Self.as_wit.loc6, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc6_26.1: %empty_struct_type = struct_literal ()
@@ -383,9 +383,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.3b7)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C2.ref.loc5 as %.loc5_14 {
@@ -411,41 +411,41 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_struct_type) [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.3b7: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C3 = %C3.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [template = constants.%C3] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C3.ref.loc5: type = name_ref C3, file.%C3.decl [template = constants.%C3]
-// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C3.ref.loc6: type = name_ref C3, file.%C3.decl [template = constants.%C3]
-// CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc6_26.1: %empty_struct_type = struct_literal ()
@@ -458,9 +458,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.3b7)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C3.ref.loc5 as %I.ref.loc5 {
@@ -486,7 +486,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I_where.type.f5a: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [template]
@@ -495,29 +495,29 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.3b7: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C4 = %C4.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [template = constants.%C4] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C4.ref.loc5: type = name_ref C4, file.%C4.decl [template = constants.%C4]
-// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc5: %I.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc5: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc5: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc5: <witness> = facet_access_witness %.Self.ref.loc5 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc5: type = impl_witness_access %.Self.as_wit.loc5, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal ()
@@ -529,10 +529,10 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C4.ref.loc13: type = name_ref C4, file.%C4.decl [template = constants.%C4]
-// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc13: %I.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc13: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc13: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc13: <witness> = facet_access_witness %.Self.ref.loc13 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc13: type = impl_witness_access %.Self.as_wit.loc13, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc13_26.1: %empty_tuple.type = tuple_literal ()
@@ -545,9 +545,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.3b7)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C4.ref.loc5 as %.loc5_14 {
@@ -572,57 +572,57 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %I3.type: type = facet_type <@I3> [template]
 // CHECK:STDOUT:   %.Self: %I3.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I3.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.95f [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.95f [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
-// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, imports.%import_ref.f70 [template]
+// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, imports.%Main.import_ref.f70 [template]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %.Self.as_wit, element1 [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_struct_type} [template]
-// CHECK:STDOUT:   %assoc2: %assoc_type = assoc_entity element2, imports.%import_ref.469 [template]
+// CHECK:STDOUT:   %assoc2: %assoc_type = assoc_entity element2, imports.%Main.import_ref.469 [template]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %.Self.as_wit, element2 [symbolic]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %empty_struct_type} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.541 = import_ref Main//interface, I, unloaded
-// CHECK:STDOUT:   %import_ref.f40: type = import_ref Main//interface, I3, loaded [template = constants.%I3.type]
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.148 = import_ref Main//interface, inst23 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4d5: %assoc_type = import_ref Main//interface, loc6_9, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.2f7: %assoc_type = import_ref Main//interface, loc7_9, loaded [template = constants.%assoc1]
-// CHECK:STDOUT:   %import_ref.fc4: %assoc_type = import_ref Main//interface, loc8_9, loaded [template = constants.%assoc2]
-// CHECK:STDOUT:   %import_ref.cdd = import_ref Main//interface, T1, unloaded
-// CHECK:STDOUT:   %import_ref.bad = import_ref Main//interface, T2, unloaded
-// CHECK:STDOUT:   %import_ref.742 = import_ref Main//interface, T3, unloaded
+// CHECK:STDOUT:   %Main.I = import_ref Main//interface, I, unloaded
+// CHECK:STDOUT:   %Main.I3: type = import_ref Main//interface, I3, loaded [template = constants.%I3.type]
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.148 = import_ref Main//interface, inst23 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4d5: %assoc_type = import_ref Main//interface, loc6_9, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.2f7: %assoc_type = import_ref Main//interface, loc7_9, loaded [template = constants.%assoc1]
+// CHECK:STDOUT:   %Main.import_ref.fc4: %assoc_type = import_ref Main//interface, loc8_9, loaded [template = constants.%assoc2]
+// CHECK:STDOUT:   %Main.T1 = import_ref Main//interface, T1, unloaded
+// CHECK:STDOUT:   %Main.T2 = import_ref Main//interface, T2, unloaded
+// CHECK:STDOUT:   %Main.T3 = import_ref Main//interface, T3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.541
-// CHECK:STDOUT:     .I3 = imports.%import_ref.f40
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C5 = %C5.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C5.decl: type = class_decl @C5 [template = constants.%C5] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C5.ref.loc18: type = name_ref C5, file.%C5.decl [template = constants.%C5]
-// CHECK:STDOUT:     %I3.ref.loc18: type = name_ref I3, imports.%import_ref.f40 [template = constants.%I3.type]
+// CHECK:STDOUT:     %I3.ref.loc18: type = name_ref I3, imports.%Main.I3 [template = constants.%I3.type]
 // CHECK:STDOUT:     %.Self.1: %I3.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc18_21: %I3.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T1.ref.loc18: %assoc_type = name_ref T1, imports.%import_ref.4d5 [template = constants.%assoc0]
+// CHECK:STDOUT:     %T1.ref.loc18: %assoc_type = name_ref T1, imports.%Main.import_ref.4d5 [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc18_21: <witness> = facet_access_witness %.Self.ref.loc18_21 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc18: type = impl_witness_access %.Self.as_wit.loc18_21, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %BAD1.ref: <error> = name_ref BAD1, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self.ref.loc18_36: %I3.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T2.ref.loc18: %assoc_type = name_ref T2, imports.%import_ref.2f7 [template = constants.%assoc1]
+// CHECK:STDOUT:     %T2.ref.loc18: %assoc_type = name_ref T2, imports.%Main.import_ref.2f7 [template = constants.%assoc1]
 // CHECK:STDOUT:     %.Self.as_wit.loc18_36: <witness> = facet_access_witness %.Self.ref.loc18_36 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem1.loc18: type = impl_witness_access %.Self.as_wit.loc18_36, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:     %.loc18_48.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc18_48.2: type = converted %.loc18_48.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_struct_type} [template = constants.%struct_type.a]
 // CHECK:STDOUT:     %.Self.ref.loc18_55: %I3.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T3.ref.loc18: %assoc_type = name_ref T3, imports.%import_ref.fc4 [template = constants.%assoc2]
+// CHECK:STDOUT:     %T3.ref.loc18: %assoc_type = name_ref T3, imports.%Main.import_ref.fc4 [template = constants.%assoc2]
 // CHECK:STDOUT:     %.Self.as_wit.loc18_55: <witness> = facet_access_witness %.Self.ref.loc18_55 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem2.loc18: type = impl_witness_access %.Self.as_wit.loc18_55, element2 [symbolic = constants.%impl.elem2]
 // CHECK:STDOUT:     %BAD2.ref: <error> = name_ref BAD2, <error> [template = <error>]
@@ -634,22 +634,22 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C5.ref.loc28: type = name_ref C5, file.%C5.decl [template = constants.%C5]
-// CHECK:STDOUT:     %I3.ref.loc28: type = name_ref I3, imports.%import_ref.f40 [template = constants.%I3.type]
+// CHECK:STDOUT:     %I3.ref.loc28: type = name_ref I3, imports.%Main.I3 [template = constants.%I3.type]
 // CHECK:STDOUT:     %.Self.2: %I3.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc28_21: %I3.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T1.ref.loc28: %assoc_type = name_ref T1, imports.%import_ref.4d5 [template = constants.%assoc0]
+// CHECK:STDOUT:     %T1.ref.loc28: %assoc_type = name_ref T1, imports.%Main.import_ref.4d5 [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc28_21: <witness> = facet_access_witness %.Self.ref.loc28_21 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc28: type = impl_witness_access %.Self.as_wit.loc28_21, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc28_33.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc28_33.2: type = converted %.loc28_33.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %empty_struct_type} [template = constants.%struct_type.b]
 // CHECK:STDOUT:     %.Self.ref.loc28_40: %I3.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T2.ref.loc28: %assoc_type = name_ref T2, imports.%import_ref.2f7 [template = constants.%assoc1]
+// CHECK:STDOUT:     %T2.ref.loc28: %assoc_type = name_ref T2, imports.%Main.import_ref.2f7 [template = constants.%assoc1]
 // CHECK:STDOUT:     %.Self.as_wit.loc28_40: <witness> = facet_access_witness %.Self.ref.loc28_40 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem1.loc28: type = impl_witness_access %.Self.as_wit.loc28_40, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:     %BAD3.ref: <error> = name_ref BAD3, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self.ref.loc28_55: %I3.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T3.ref.loc28: %assoc_type = name_ref T3, imports.%import_ref.fc4 [template = constants.%assoc2]
+// CHECK:STDOUT:     %T3.ref.loc28: %assoc_type = name_ref T3, imports.%Main.import_ref.fc4 [template = constants.%assoc2]
 // CHECK:STDOUT:     %.Self.as_wit.loc28_55: <witness> = facet_access_witness %.Self.ref.loc28_55 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem2.loc28: type = impl_witness_access %.Self.as_wit.loc28_55, element2 [symbolic = constants.%impl.elem2]
 // CHECK:STDOUT:     %BAD4.ref: <error> = name_ref BAD4, <error> [template = <error>]
@@ -663,11 +663,11 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I3 [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.148
-// CHECK:STDOUT:   .T1 = imports.%import_ref.4d5
-// CHECK:STDOUT:   .T2 = imports.%import_ref.2f7
-// CHECK:STDOUT:   .T3 = imports.%import_ref.fc4
-// CHECK:STDOUT:   witness = (imports.%import_ref.cdd, imports.%import_ref.bad, imports.%import_ref.742)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.148
+// CHECK:STDOUT:   .T1 = imports.%Main.import_ref.4d5
+// CHECK:STDOUT:   .T2 = imports.%Main.import_ref.2f7
+// CHECK:STDOUT:   .T3 = imports.%Main.import_ref.fc4
+// CHECK:STDOUT:   witness = (imports.%Main.T1, imports.%Main.T2, imports.%Main.T3)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C5.ref.loc18 as %.loc18_15 {
@@ -692,7 +692,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [template]
@@ -700,29 +700,29 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.3b7: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C6 = %C6.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C6.decl: type = class_decl @C6 [template = constants.%C6] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C6.ref.loc5: type = name_ref C6, file.%C6.decl [template = constants.%C6]
-// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal ()
@@ -734,15 +734,15 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C6.ref.loc13: type = name_ref C6, file.%C6.decl [template = constants.%C6]
-// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.3b7)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C6.ref.loc5 as %.loc5_14 {
@@ -768,7 +768,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type and %impl.elem0 = %empty_tuple.type> [template]
@@ -776,35 +776,35 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.3b7: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C7 = %C7.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C7.decl: type = class_decl @C7 [template = constants.%C7] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C7.ref: type = name_ref C7, file.%C7.decl [template = constants.%C7]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc10_20: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc10_20: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc10_20: <witness> = facet_access_witness %.Self.ref.loc10_20 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_20: type = impl_witness_access %.Self.as_wit.loc10_20, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.Self.ref.loc10_32: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc10_32: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc10_32: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc10_32: <witness> = facet_access_witness %.Self.ref.loc10_32 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_32: type = impl_witness_access %.Self.as_wit.loc10_32, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_38.1: %empty_tuple.type = tuple_literal ()
@@ -819,9 +819,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.3b7)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C7.ref as %.loc10_14 {
@@ -847,40 +847,40 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.08d = import_ref Main//interface, T, unloaded
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C8 = %C8.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C8.decl: type = class_decl @C8 [template = constants.%C8] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C8.ref: type = name_ref C8, file.%C8.decl [template = constants.%C8]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc10_20: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc10_20: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc10_20: <witness> = facet_access_witness %.Self.ref.loc10_20 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_20: type = impl_witness_access %.Self.as_wit.loc10_20, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %BAD5.ref: <error> = name_ref BAD5, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self.ref.loc10_34: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc10_34: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc10_34: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc10_34: <witness> = facet_access_witness %.Self.ref.loc10_34 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_34: type = impl_witness_access %.Self.as_wit.loc10_34, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_40.1: %empty_tuple.type = tuple_literal ()
@@ -894,9 +894,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.08d)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C8.ref as %.loc10_14 {
@@ -921,41 +921,41 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.08d = import_ref Main//interface, T, unloaded
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C9 = %C9.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C9.decl: type = class_decl @C9 [template = constants.%C9] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C9.ref: type = name_ref C9, file.%C9.decl [template = constants.%C9]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc10_20: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc10_20: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc10_20: <witness> = facet_access_witness %.Self.ref.loc10_20 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_20: type = impl_witness_access %.Self.as_wit.loc10_20, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.Self.ref.loc10_32: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc10_32: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc10_32: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc10_32: <witness> = facet_access_witness %.Self.ref.loc10_32 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_32: type = impl_witness_access %.Self.as_wit.loc10_32, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %BAD6.ref: <error> = name_ref BAD6, <error> [template = <error>]
@@ -968,9 +968,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.08d)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C9.ref as %.loc10_14 {
@@ -995,40 +995,40 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.08d = import_ref Main//interface, T, unloaded
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .CA = %CA.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %CA.decl: type = class_decl @CA [template = constants.%CA] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %CA.ref: type = name_ref CA, file.%CA.decl [template = constants.%CA]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc14_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc14_20: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc14_20: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc14_20: <witness> = facet_access_witness %.Self.ref.loc14_20 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc14_20: type = impl_witness_access %.Self.as_wit.loc14_20, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %BAD7.ref: <error> = name_ref BAD7, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self.ref.loc14_34: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc14_34: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc14_34: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc14_34: <witness> = facet_access_witness %.Self.ref.loc14_34 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc14_34: type = impl_witness_access %.Self.as_wit.loc14_34, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %BAD8.ref: <error> = name_ref BAD8, <error> [template = <error>]
@@ -1041,9 +1041,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.08d)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %CA.ref as %.loc14 {
@@ -1068,7 +1068,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.ef4 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.ef4 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [template]
@@ -1076,35 +1076,35 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.dfc = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.3b7: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.15c: %assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.df2
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.dfc
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .CB = %CB.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %CB.decl: type = class_decl @CB [template = constants.%CB] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %CB.ref: type = name_ref CB, file.%CB.decl [template = constants.%CB]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc6_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc6_20: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc6_20: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc6_20: <witness> = facet_access_witness %.Self.ref.loc6_20 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc6_20: type = impl_witness_access %.Self.as_wit.loc6_20, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc6_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc6_26.2: type = converted %.loc6_26.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.Self.ref.loc6_32: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc6_32: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
+// CHECK:STDOUT:     %T.ref.loc6_32: %assoc_type = name_ref T, imports.%Main.import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc6_32: <witness> = facet_access_witness %.Self.ref.loc6_32 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc6_32: type = impl_witness_access %.Self.as_wit.loc6_32, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc6_38.1: %empty_struct_type = struct_literal ()
@@ -1119,9 +1119,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
-// CHECK:STDOUT:   .T = imports.%import_ref.15c
-// CHECK:STDOUT:   witness = (imports.%import_ref.3b7)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.15c
+// CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %CB.ref as %.loc6_14 {
@@ -1147,7 +1147,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %.Self: %NonType.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [template]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %NonType.type, %struct_type.a.225 [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%import_ref.f27 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, imports.%Main.import_ref.f27 [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %struct_type.a.225 = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
@@ -1157,29 +1157,29 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.541 = import_ref Main//interface, I, unloaded
-// CHECK:STDOUT:   %import_ref.43d = import_ref Main//interface, I3, unloaded
-// CHECK:STDOUT:   %import_ref.22d: type = import_ref Main//interface, NonType, loaded [template = constants.%NonType.type]
-// CHECK:STDOUT:   %import_ref.8b7 = import_ref Main//interface, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.abe: %assoc_type = import_ref Main//interface, loc12_8, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.d24: %struct_type.a.225 = import_ref Main//interface, Y, loaded [template = %Y]
+// CHECK:STDOUT:   %Main.I = import_ref Main//interface, I, unloaded
+// CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
+// CHECK:STDOUT:   %Main.NonType: type = import_ref Main//interface, NonType, loaded [template = constants.%NonType.type]
+// CHECK:STDOUT:   %Main.import_ref.8b7 = import_ref Main//interface, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.abe: %assoc_type = import_ref Main//interface, loc12_8, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.Y: %struct_type.a.225 = import_ref Main//interface, Y, loaded [template = %Y]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.541
-// CHECK:STDOUT:     .I3 = imports.%import_ref.43d
-// CHECK:STDOUT:     .NonType = imports.%import_ref.22d
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I3 = imports.%Main.I3
+// CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .CC = %CC.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %CC.decl: type = class_decl @CC [template = constants.%CC] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %CC.ref: type = name_ref CC, file.%CC.decl [template = constants.%CC]
-// CHECK:STDOUT:     %NonType.ref: type = name_ref NonType, imports.%import_ref.22d [template = constants.%NonType.type]
+// CHECK:STDOUT:     %NonType.ref: type = name_ref NonType, imports.%Main.NonType [template = constants.%NonType.type]
 // CHECK:STDOUT:     %.Self: %NonType.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %NonType.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %Y.ref: %assoc_type = name_ref Y, imports.%import_ref.abe [template = constants.%assoc0]
+// CHECK:STDOUT:     %Y.ref: %assoc_type = name_ref Y, imports.%Main.import_ref.abe [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: %struct_type.a.225 = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc6_38: %empty_struct_type = struct_literal ()
@@ -1197,9 +1197,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonType [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8b7
-// CHECK:STDOUT:   .Y = imports.%import_ref.abe
-// CHECK:STDOUT:   witness = (imports.%import_ref.d24)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.8b7
+// CHECK:STDOUT:   .Y = imports.%Main.import_ref.abe
+// CHECK:STDOUT:   witness = (imports.%Main.Y)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %CC.ref as %.loc6_20 {

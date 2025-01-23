@@ -132,14 +132,14 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.b37: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.ad0: %G.type = import_ref Main//library, G, loaded [template = constants.%G]
+// CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Main.G: %G.type = import_ref Main//library, G, loaded [template = constants.%G]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref.b37
-// CHECK:STDOUT:     .G = imports.%import_ref.ad0
+// CHECK:STDOUT:     .F = imports.%Main.F
+// CHECK:STDOUT:     .G = imports.%Main.G
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
@@ -158,11 +158,11 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.b37 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [template = constants.%F]
 // CHECK:STDOUT:   %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn.04a]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
-// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%import_ref.ad0 [template = constants.%G]
+// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%Main.G [template = constants.%G]
 // CHECK:STDOUT:   %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%C) [template = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()

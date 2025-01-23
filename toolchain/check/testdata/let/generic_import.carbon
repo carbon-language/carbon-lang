@@ -42,7 +42,7 @@ var b: T = *a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -70,7 +70,7 @@ var b: T = *a;
 // CHECK:STDOUT: --- fail_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Implicit//default, T, loaded
+// CHECK:STDOUT:   %Implicit.T: type = import_ref Implicit//default, T, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -79,7 +79,7 @@ var b: T = *a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .T = imports.%import_ref
+// CHECK:STDOUT:     .T = imports.%Implicit.T
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
@@ -93,7 +93,7 @@ var b: T = *a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [template = <error>] {
-// CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%import_ref
+// CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
@@ -102,7 +102,7 @@ var b: T = *a;
 // CHECK:STDOUT:     %.loc13: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%import_ref
+// CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

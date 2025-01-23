@@ -274,12 +274,12 @@ extern fn F() {}
 // CHECK:STDOUT: --- indirect_two_file.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//indirect_two_file_extern, F, unloaded
+// CHECK:STDOUT:   %Main.F = import_ref Main//indirect_two_file_extern, F, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref
+// CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }

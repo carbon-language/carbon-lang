@@ -108,12 +108,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type.fbc: type = fn_type @F.1, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F.be3: %F.type.fbc = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.assoc_type.f26: type = assoc_entity_type %AddWith.type.bc7, %F.type.fbc [symbolic]
-// CHECK:STDOUT:   %assoc0.1ff: %F.assoc_type.f26 = assoc_entity element0, imports.%import_ref.0c5 [symbolic]
+// CHECK:STDOUT:   %assoc0.1ff: %F.assoc_type.f26 = assoc_entity element0, imports.%Main.import_ref.0c5 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.e8e: type = facet_type <@AddWith, @AddWith(%C)> [template]
 // CHECK:STDOUT:   %F.type.cd2: type = fn_type @F.1, @AddWith(%C) [template]
 // CHECK:STDOUT:   %F.b58: %F.type.cd2 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.c97: type = assoc_entity_type %AddWith.type.e8e, %F.type.cd2 [template]
-// CHECK:STDOUT:   %assoc0.dc2: %F.assoc_type.c97 = assoc_entity element0, imports.%import_ref.0c5 [template]
+// CHECK:STDOUT:   %assoc0.dc2: %F.assoc_type.c97 = assoc_entity element0, imports.%Main.import_ref.0c5 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [template]
@@ -121,23 +121,23 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.cf6: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
-// CHECK:STDOUT:   %import_ref.476 = import_ref Main//a, inst26 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.ce5 = import_ref Main//a, loc5_9, unloaded
-// CHECK:STDOUT:   %import_ref.b80: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be3)]
-// CHECK:STDOUT:   %import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
+// CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
+// CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ce5 = import_ref Main//a, loc5_9, unloaded
+// CHECK:STDOUT:   %Main.F: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be3)]
+// CHECK:STDOUT:   %Main.import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .AddWith = imports.%import_ref.cf6
+// CHECK:STDOUT:     .AddWith = imports.%Main.AddWith
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.b35 = name_ref AddWith, imports.%import_ref.cf6 [template = constants.%AddWith.generic]
+// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.b35 = name_ref AddWith, imports.%Main.AddWith [template = constants.%AddWith.generic]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [template = constants.%AddWith.type.e8e]
 // CHECK:STDOUT:   }
@@ -154,13 +154,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.fbc)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.fbc) = struct_value () [symbolic = %F (constants.%F.be3)]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.bc7), @AddWith.%F.type (%F.type.fbc) [symbolic = %F.assoc_type (constants.%F.assoc_type.f26)]
-// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.f26) = assoc_entity element0, imports.%import_ref.0c5 [symbolic = %assoc0 (constants.%assoc0.1ff)]
+// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.f26) = assoc_entity element0, imports.%Main.import_ref.0c5 [symbolic = %assoc0 (constants.%assoc0.1ff)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.476
-// CHECK:STDOUT:     .F = imports.%import_ref.ce5
-// CHECK:STDOUT:     witness = (imports.%import_ref.b80)
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.476
+// CHECK:STDOUT:     .F = imports.%Main.import_ref.ce5
+// CHECK:STDOUT:     witness = (imports.%Main.F)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

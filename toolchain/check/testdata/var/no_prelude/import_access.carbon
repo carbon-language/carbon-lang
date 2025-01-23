@@ -92,12 +92,12 @@ var v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Test//def, v, loaded
+// CHECK:STDOUT:   %Test.v: ref %empty_tuple.type = import_ref Test//def, v, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .v [private] = imports.%import_ref
+// CHECK:STDOUT:     .v [private] = imports.%Test.v
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -116,7 +116,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%import_ref
+// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%Test.v
 // CHECK:STDOUT:   %.loc4_14: init %empty_tuple.type = tuple_init () to file.%v2.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %v.ref, %.loc4_14 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%v2.var, %.loc4_1

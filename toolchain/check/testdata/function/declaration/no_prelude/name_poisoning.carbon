@@ -1025,17 +1025,17 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//poison, C, unloaded
-// CHECK:STDOUT:   %import_ref.a98: <namespace> = import_ref Main//poison, N, loaded
-// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.a98, [template] {
-// CHECK:STDOUT:     .F1 = %import_ref.cd4
+// CHECK:STDOUT:   %Main.C = import_ref Main//poison, C, unloaded
+// CHECK:STDOUT:   %Main.N: <namespace> = import_ref Main//poison, N, loaded
+// CHECK:STDOUT:   %N: <namespace> = namespace %Main.N, [template] {
+// CHECK:STDOUT:     .F1 = %Main.F1
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -1059,17 +1059,17 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//poison, C, unloaded
-// CHECK:STDOUT:   %import_ref.a98: <namespace> = import_ref Main//poison, N, loaded
-// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.a98, [template] {
-// CHECK:STDOUT:     .F1 = %import_ref.cd4
+// CHECK:STDOUT:   %Main.C = import_ref Main//poison, C, unloaded
+// CHECK:STDOUT:   %Main.N: <namespace> = import_ref Main//poison, N, loaded
+// CHECK:STDOUT:   %N: <namespace> = namespace %Main.N, [template] {
+// CHECK:STDOUT:     .F1 = %Main.F1
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>

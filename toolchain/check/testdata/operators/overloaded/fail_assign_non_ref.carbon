@@ -67,13 +67,13 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Inc = %import_ref.04f
-// CHECK:STDOUT:     .AddAssign = %import_ref.e1b
+// CHECK:STDOUT:     .Inc = %Core.Inc
+// CHECK:STDOUT:     .AddAssign = %Core.AddAssign
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.04f: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [template = constants.%Inc.type]
-// CHECK:STDOUT:   %import_ref.e1b: type = import_ref Core//prelude/operators/arithmetic, AddAssign, loaded [template = constants.%AddAssign.type]
+// CHECK:STDOUT:   %Core.Inc: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [template = constants.%Inc.type]
+// CHECK:STDOUT:   %Core.AddAssign: type = import_ref Core//prelude/operators/arithmetic, AddAssign, loaded [template = constants.%AddAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -88,13 +88,13 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%import_ref.04f [template = constants.%Inc.type]
+// CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%Core.Inc [template = constants.%Inc.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness.ec3]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.e1b [template = constants.%AddAssign.type]
+// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%Core.AddAssign [template = constants.%AddAssign.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (@impl.2.%Op.decl) [template = constants.%impl_witness.95d]
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [template = constants.%TestIncNonRef] {

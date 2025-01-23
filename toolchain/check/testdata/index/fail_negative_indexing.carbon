@@ -27,7 +27,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.132: <bound method> = bound_method %int_42.20e, %Convert.956 [template]
@@ -37,7 +37,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_42.c68, %int_42.c68) [template]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template]
 // CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.13 [template]
-// CHECK:STDOUT:   %impl_witness.0f6: <witness> = impl_witness (imports.%import_ref.c15) [template]
+// CHECK:STDOUT:   %impl_witness.0f6: <witness> = impl_witness (imports.%Core.import_ref.c15) [template]
 // CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.14 [template]
 // CHECK:STDOUT:   %Op.bba: %Op.type.1be = struct_value () [template]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %Op.bba [template]
@@ -49,9 +49,9 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
-// CHECK:STDOUT:     .Negate = %import_ref.6e9
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Negate = %Core.Negate
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

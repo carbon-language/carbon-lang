@@ -14,6 +14,12 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& prev_function,
                               SemIR::SpecificId prev_specific_id,
                               bool check_syntax) -> bool {
+  // TODO: When check_syntax is false, the functions should be allowed to have
+  // different signatures as long as we can synthesize a suitable thunk. i.e.,
+  // when there's an implicit conversion from the original parameter types to
+  // the overriding parameter types, and from the overriding return type to the
+  // original return type.
+  // Also, build that thunk.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
                               DeclParams(prev_function), prev_specific_id,
                               check_syntax)) {

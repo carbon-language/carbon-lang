@@ -227,7 +227,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Def.type = import_ref Test//def, Def, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %Test.Def: %Def.type = import_ref Test//def, Def, loaded [template = constants.%Def]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -236,7 +236,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def [private] = imports.%import_ref
+// CHECK:STDOUT:     .Def [private] = imports.%Test.Def
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
@@ -259,7 +259,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Def.ref: %Def.type = name_ref Def, imports.%import_ref [template = constants.%Def]
+// CHECK:STDOUT:   %Def.ref: %Def.type = name_ref Def, imports.%Test.Def [template = constants.%Def]
 // CHECK:STDOUT:   %Def.call: init %empty_tuple.type = call %Def.ref()
 // CHECK:STDOUT:   assign file.%f.var, %Def.call
 // CHECK:STDOUT:   return
@@ -357,7 +357,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %ForwardWithDef.type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %Test.ForwardWithDef: %ForwardWithDef.type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -366,7 +366,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref
+// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%Test.ForwardWithDef
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
@@ -389,7 +389,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ForwardWithDef.ref: %ForwardWithDef.type = name_ref ForwardWithDef, imports.%import_ref [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %ForwardWithDef.ref: %ForwardWithDef.type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %ForwardWithDef.call: init %empty_tuple.type = call %ForwardWithDef.ref()
 // CHECK:STDOUT:   assign file.%f.var, %ForwardWithDef.call
 // CHECK:STDOUT:   return
@@ -487,7 +487,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Forward.type = import_ref Test//forward, Forward, loaded [template = constants.%Forward]
+// CHECK:STDOUT:   %Test.Forward: %Forward.type = import_ref Test//forward, Forward, loaded [template = constants.%Forward]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -523,7 +523,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Forward.ref: %Forward.type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
+// CHECK:STDOUT:   %Forward.ref: %Forward.type = name_ref Forward, imports.%Test.Forward [template = constants.%Forward]
 // CHECK:STDOUT:   %Forward.call: init %empty_tuple.type = call %Forward.ref()
 // CHECK:STDOUT:   assign file.%f.var, %Forward.call
 // CHECK:STDOUT:   return

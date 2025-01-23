@@ -129,11 +129,6 @@ static auto CheckAssociatedFunctionImplementation(
               .generic_id,
           self_type_id, witness_inst_id);
 
-  // TODO: The functions should be allowed to have different signatures as long
-  // as we can synthesize a suitable thunk. i.e., when there's an implicit
-  // conversion from the original parameter types to the overriding parameter
-  // types, and from the overriding return type to the original return type.
-  // Also, build that thunk.
   if (!CheckFunctionTypeMatches(
           context, context.functions().Get(impl_function_decl->function_id),
           context.functions().Get(interface_function_type.function_id),

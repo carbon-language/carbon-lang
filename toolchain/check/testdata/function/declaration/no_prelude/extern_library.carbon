@@ -271,12 +271,12 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT: --- fail_extern_library_collision.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.bde = import_ref Main//extern_library, F, unloaded
+// CHECK:STDOUT:   %Main.F = import_ref Main//extern_library, F, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref.bde
+// CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }

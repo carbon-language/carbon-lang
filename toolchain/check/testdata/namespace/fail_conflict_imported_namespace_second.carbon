@@ -75,7 +75,7 @@ fn NS.Foo();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %NS.type = import_ref Example//fn, NS, loaded [template = constants.%NS]
+// CHECK:STDOUT:   %Example.NS: %NS.type = import_ref Example//fn, NS, loaded [template = constants.%NS]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -84,7 +84,7 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = imports.%import_ref
+// CHECK:STDOUT:     .NS = imports.%Example.NS
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

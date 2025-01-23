@@ -60,12 +60,12 @@ var a: () = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %Implicit.a_ref: ref %empty_tuple.type = import_ref Implicit//default, a_ref, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_ref = imports.%import_ref
+// CHECK:STDOUT:     .a_ref = imports.%Implicit.a_ref
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
@@ -84,7 +84,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %empty_tuple.type = name_ref a_ref, imports.%import_ref
+// CHECK:STDOUT:   %a_ref.ref: ref %empty_tuple.type = name_ref a_ref, imports.%Implicit.a_ref
 // CHECK:STDOUT:   %.loc4_13: init %empty_tuple.type = tuple_init () to file.%a.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %a_ref.ref, %.loc4_13 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_1
