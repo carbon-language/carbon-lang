@@ -279,7 +279,10 @@ static auto HandleDecl(Context& context) -> DeclInfo {
 }
 
 // Finishes an associated constant declaration. This is called at the `;` to
-// perform any final steps. We already built the declaration instruction.
+// perform any final steps. The `AssociatedConstantDecl` instruction and the
+// corresponding `AssociatedConstant` entity are built as part of handling the
+// binding pattern, but we still need to finish building the `Generic` object
+// and attach the default value, if any is specified.
 static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
                                      SemIR::InterfaceId interface_id,
                                      DeclInfo& decl_info) -> void {
