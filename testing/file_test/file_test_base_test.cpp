@@ -185,6 +185,19 @@ static auto TestNoLineNumber(TestParams& params)
   return {{.success = true}};
 }
 
+// Prints and returns expected results for escaping.carbon.
+static auto TestEscaping(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  params.error_stream << "carriage return\r\n"
+                         "{one brace}\n"
+                         "{{two braces}}\n"
+                         "[one bracket]\n"
+                         "[[two brackets]]\n"
+                         "end of line whitespace   \n"
+                         "\ttabs\t\n";
+  return {{.success = true}};
+}
+
 // Prints and returns expected results for stdin.carbon.
 static auto TestStdin(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
@@ -268,6 +281,7 @@ auto FileTestBaseTest::Run(
           filename.string())
           .Case("alternating_files.carbon", &TestAlternatingFiles)
           .Case("capture_console_output.carbon", &TestCaptureConsoleOutput)
+          .Case("escaping.carbon", &TestEscaping)
           .Case("example.carbon", &TestExample)
           .Case("fail_example.carbon", &TestFailExample)
           .Case("file_only_re_one_file.carbon", &TestFileOnlyREOneFile)
