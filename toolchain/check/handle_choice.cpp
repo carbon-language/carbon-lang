@@ -50,7 +50,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // methods and some builtin impls.
   auto class_decl =
       SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::Invalid,
+                       .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
   auto class_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, class_decl));
@@ -65,9 +65,9 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   SemIR::Class class_info = {
       name_context.MakeEntityWithParamsBase(name, class_decl_id,
                                             /*is_extern=*/false,
-                                            SemIR::LibraryNameId::Invalid),
+                                            SemIR::LibraryNameId::None),
       {// `.self_type_id` depends on the ClassType, so is set below.
-       .self_type_id = SemIR::TypeId::Invalid,
+       .self_type_id = SemIR::TypeId::None,
        .inheritance_kind = SemIR::ClassFields::Final,
        // TODO: Handle the case where there's control flow in the alternatives.
        // For example:
@@ -88,7 +88,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   class_info.definition_id = class_decl_id;
   class_info.scope_id = context.name_scopes().Add(
-      class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
+      class_decl_id, SemIR::NameId::None, class_info.parent_scope_id);
   class_decl.class_id = context.classes().Add(class_info);
   if (class_info.has_parameters()) {
     class_decl.type_id = context.GetGenericClassType(
@@ -104,7 +104,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   SemIR::Class& mut_class = context.classes().Get(class_decl.class_id);
   // Build the `Self` type using the resulting type constant.
   mut_class.self_type_id = context.GetTypeIdForTypeConstant(
-      TryEvalInst(context, SemIR::InstId::Invalid,
+      TryEvalInst(context, SemIR::InstId::None,
                   SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                                    .class_id = class_decl.class_id,
                                    .specific_id = self_specific_id}));
@@ -151,7 +151,7 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
         .Emit();
     return;
   }
-  if (name_component.param_patterns_id.is_valid()) {
+  if (name_component.param_patterns_id.has_value()) {
     context.TODO(name_component.params_loc_id,
                  "choice alternatives with parameters are not yet supported");
     return;
@@ -207,7 +207,7 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
   auto entity_name_id = context.entity_names().Add(
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_name_scope_id,
-       .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+       .bind_index = SemIR::CompileTimeBindIndex::None});
   auto bind_name_id = context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
       binding.node_id, SemIR::BindName{
                            .type_id = self_type_id,
