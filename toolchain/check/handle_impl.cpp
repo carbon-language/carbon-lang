@@ -284,9 +284,6 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 
   // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
-  // TODO: Merge information from the new declaration into the old one as
-  // needed.
-
   return true;
 }
 
