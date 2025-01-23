@@ -10,9 +10,9 @@
 // TIP:   bazel run //testing/file_test:file_test_base_test -- --dump_output --file_tests=testing/file_test/testdata/escaping.carbon
 // CHECK:STDERR: carriage return{{\r}}
 // CHECK:STDERR: {one brace}
-// CHECK:STDERR: {{\\{\\{}}two braces}}
+// CHECK:STDERR: {{\{\{}}two braces}}
 // CHECK:STDERR: [one bracket]
-// CHECK:STDERR: {{\\[\\[}}two brackets]]
+// CHECK:STDERR: {{\[\[}}two brackets]]
 // CHECK:STDERR: end of line whitespace   {{}}
 // CHECK:STDERR: {{\t}}tabs{{\t}}
 

@@ -181,8 +181,8 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     // {{ and [[ are autoupdate syntax which we need to escape.
     check_line = absl::StrReplaceAll(check_line, {{"\r", R"({{\r}})"},
                                                   {"\t", R"({{\t}})"},
-                                                  {"{{", R"({{\\{\\{}})"},
-                                                  {"[[", R"({{\\[\\[}})"}});
+                                                  {"{{", R"({{\{\{}})"},
+                                                  {"[[", R"({{\[\[}})"}});
     // Add an empty regex to call out end-of-line whitespace.
     if (check_line.ends_with(' ')) {
       check_line.append("{{}}");
