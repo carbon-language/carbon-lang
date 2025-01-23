@@ -219,8 +219,8 @@ static auto PerformImplLookup(
 }
 
 // Performs a member name lookup into the specified scope, including performing
-// impl lookup if necessary. If the scope is invalid, assume an error has
-// already been diagnosed, and return BuiltinErrorInst.
+// impl lookup if necessary. If the scope result is `None`, assume an error has
+// already been diagnosed, and return `ErrorInst`.
 static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::InstId base_id,
                                     SemIR::NameId name_id,

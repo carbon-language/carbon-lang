@@ -55,8 +55,8 @@ class IntId : public Printable<IntId> {
   static constexpr llvm::StringLiteral Label = "int";
   using ValueType = llvm::APInt;
 
-  // The encoding of integer IDs ensures that valid IDs associated with tokens
-  // during lexing can fit into a compressed storage space. We arrange for
+  // The encoding of integer IDs ensures that IDs associated with tokens during
+  // lexing can fit into a compressed storage space. We arrange for
   // `TokenIdBits` to be the minimum number of bits of storage for token
   // associated IDs. The constant is public so the lexer can ensure it reserves
   // adequate space.

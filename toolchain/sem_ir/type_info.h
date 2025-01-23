@@ -142,7 +142,7 @@ struct ReturnTypeInfo {
     return init_repr.kind == InitRepr::InPlace;
   }
 
-  // The declared return type. Invalid if no return type was specified.
+  // The declared return type. `None` if no return type was specified.
   TypeId type_id;
   // The initializing representation for the return type.
   InitRepr init_repr;

@@ -31,7 +31,7 @@ struct RedeclInfo {
   bool is_definition;
   // True if an `extern` declaration.
   bool is_extern;
-  // The library name in `extern library`, or invalid if not present.
+  // The library name in `extern library`, or `None` if not present.
   SemIR::LibraryNameId extern_library_id;
 };
 
@@ -85,10 +85,10 @@ struct DeclParams {
   Parse::NodeId first_param_node_id;
   Parse::NodeId last_param_node_id;
 
-  // The implicit parameters of the entity. Can be Invalid if there is no
+  // The implicit parameters of the entity. Can be `None` if there is no
   // implicit parameter list.
   SemIR::InstBlockId implicit_param_patterns_id;
-  // The explicit parameters of the entity. Can be Invalid if there is no
+  // The explicit parameters of the entity. Can be `None` if there is no
   // explicit parameter list.
   SemIR::InstBlockId param_patterns_id;
 };

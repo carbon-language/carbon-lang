@@ -60,8 +60,8 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId;
 
-// Builds a new specific if the given generic is valid. Otherwise returns an
-// invalid specific.
+// Builds a new specific if the given generic is it has a value. Otherwise
+// returns `None`.
 inline auto MakeSpecificIfGeneric(Context& context, SemIRLoc loc,
                                   SemIR::GenericId generic_id,
                                   SemIR::InstBlockId args_id)
@@ -72,8 +72,8 @@ inline auto MakeSpecificIfGeneric(Context& context, SemIRLoc loc,
 }
 
 // Builds the specific that describes how the generic should refer to itself.
-// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. For an
-// invalid `generic_id`, returns an invalid specific ID.
+// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If
+// `generic_id` is `None`, returns `None`.
 auto MakeSelfSpecific(Context& context, SemIRLoc loc,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
 

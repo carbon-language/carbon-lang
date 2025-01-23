@@ -84,7 +84,7 @@ class ScopeStack {
   // Returns the name scope associated with the current lexical scope, if any.
   auto PeekNameScopeId() const -> SemIR::NameScopeId { return Peek().scope_id; }
 
-  // Returns the instruction associated with the current scope, or Invalid if
+  // Returns the instruction associated with the current scope, or `None` if
   // there is no such instruction, such as for a block scope.
   auto PeekInstId() const -> SemIR::InstId { return Peek().scope_inst_id; }
 
@@ -108,7 +108,7 @@ class ScopeStack {
   }
 
   // If there is no `returned var` in scope, sets the given instruction to be
-  // the current `returned var` and returns an invalid instruction ID. If there
+  // the current `returned var` and returns an `None`. If there
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
@@ -127,7 +127,7 @@ class ScopeStack {
   // Looks up the name `name_id` in the current scope, or in `scope_index` if
   // specified. Returns the existing instruction if the name is already declared
   // in that scope or any unfinished scope within it, and otherwise adds the
-  // name with the value `target_id` and returns Invalid.
+  // name with the value `target_id` and returns `None`.
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
                        ScopeIndex scope_index = ScopeIndex::None)
       -> SemIR::InstId;

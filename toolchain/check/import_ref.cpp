@@ -547,12 +547,12 @@ class ImportRefResolver : public ImportContext {
 
   // The constant found by FindResolvedConstId.
   struct ResolvedConstId {
-    // The constant for the instruction. Invalid if not yet resolved.
+    // The constant for the instruction. `None` if not yet resolved.
     SemIR::ConstantId const_id = SemIR::ConstantId::None;
 
     // Instructions which are indirect but equivalent to the current instruction
     // being resolved, and should have their constant set to the same. Empty
-    // when const_id is valid.
+    // when `const_id` has a value.
     llvm::SmallVector<SemIR::ImportIRInst> indirect_insts = {};
   };
 
@@ -1087,9 +1087,8 @@ static auto GetLocalNameScopeId(ImportRefResolver& resolver,
   auto [inst_id, inst] =
       resolver.import_name_scopes().GetInstIfValid(name_scope_id);
   if (!inst) {
-    // Map scopes that aren't associated with an instruction to invalid
-    // scopes. For now, such scopes aren't used, and we don't have a good way
-    // to remap them.
+    // Map scopes that aren't associated with an instruction to `None`. For now,
+    // such scopes aren't used, and we don't have a good way to remap them.
     return SemIR::NameScopeId::None;
   }
 
@@ -2593,7 +2592,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 // Tries to resolve the InstId, returning a canonical constant when ready, or
-// Invalid if more has been added to the stack. This is the same as
+// `None` if more has been added to the stack. This is the same as
 // TryResolveInst, except that it may resolve symbolic constants as canonical
 // constants instead of as constants associated with a particular generic.
 //
@@ -2763,11 +2762,11 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
   }
 }
 
-// Tries to resolve the InstId, returning a constant when ready, or Invalid if
+// Tries to resolve the InstId, returning a constant when ready, or `None` if
 // more has been added to the stack. A similar API is followed for all
 // following TryResolveTypedInst helper functions.
 //
-// `const_id` is Invalid unless we've tried to resolve this instruction
+// `const_id` is `None` unless we've tried to resolve this instruction
 // before, in which case it's the previous result.
 //
 // TODO: Error is returned when support is missing, but that should go away.

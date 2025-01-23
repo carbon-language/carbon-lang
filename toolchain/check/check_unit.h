@@ -36,7 +36,7 @@ struct PackageImports {
   // identifier (even if the import failed). Used for associating diagnostics
   // not specific to a single import.
   Parse::ImportDeclId node_id;
-  // The associated `import` instruction. Only valid once a file is checked.
+  // The associated `import` instruction. Has a value after a file is checked.
   SemIR::InstId import_decl_id = SemIR::InstId::None;
   // Whether there's an import that failed to load.
   bool has_load_error = false;

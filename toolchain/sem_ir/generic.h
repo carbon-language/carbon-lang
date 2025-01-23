@@ -55,8 +55,7 @@ struct Generic : public Printable<Generic> {
 // Provides storage for generics.
 class GenericStore : public ValueStore<GenericId> {
  public:
-  // Get the self specific for a generic, or an invalid specific for an invalid
-  // generic ID.
+  // Get the self specific for a generic, or `None` if the `id` is `None`.
   auto GetSelfSpecific(GenericId id) -> SpecificId {
     return id.has_value() ? Get(id).self_specific_id : SpecificId::None;
   }

@@ -149,7 +149,7 @@ class NameScope : public Printable<NameScope> {
   // The instruction which owns the scope.
   InstId inst_id_;
 
-  // When the scope is a namespace, the name. Otherwise, invalid.
+  // When the scope is a namespace, the name. Otherwise, `None`.
   NameId name_id_;
 
   // The parent scope.
@@ -198,8 +198,8 @@ class NameScopeStore {
     return values_.Get(scope_id);
   }
 
-  // Returns the instruction owning the requested name scope, or Invalid with
-  // nullopt if the scope is either invalid or has no associated instruction.
+  // Returns the instruction owning the requested name scope, or `None` with
+  // nullopt if the scope is either `None` or has no associated instruction.
   auto GetInstIfValid(NameScopeId scope_id) const
       -> std::pair<InstId, std::optional<Inst>>;
 

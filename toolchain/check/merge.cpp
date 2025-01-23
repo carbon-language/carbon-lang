@@ -379,9 +379,9 @@ static auto CheckRedeclParamSyntax(Context& context,
                                    Parse::NodeId prev_last_param_node_id,
                                    bool diagnose) -> bool {
   // Parse nodes may not always be available to compare.
-  // TODO: Support cross-file syntax checks. Right now imports provide invalid
-  // nodes, and we'll need to follow the declaration to its original file to
-  // get the parse tree.
+  // TODO: Support cross-file syntax checks. Right now imports provide
+  // `NodeId::None`, and we'll need to follow the declaration to its original
+  // file to get the parse tree.
   if (!new_first_param_node_id.has_value() ||
       !prev_first_param_node_id.has_value()) {
     return true;

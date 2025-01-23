@@ -262,8 +262,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       }
       if (had_error) {
         context.AddNameToLookup(name_id, SemIR::ErrorInst::SingletonInstId);
-        // Replace the parameter with an invalid instruction so that we don't
-        // try constructing a generic based on it.
+        // Replace the parameter with `ErrorInst` so that we don't try
+        // constructing a generic based on it.
         param_pattern_id = SemIR::ErrorInst::SingletonInstId;
       } else {
         auto pattern_inst_id = make_binding_pattern();
@@ -321,7 +321,7 @@ auto HandleParseNode(Context& context,
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
     // Disallow `let` outside of function and interface definitions.
-    // TODO: Find a less brittle way of doing this. An invalid scope_inst_id
+    // TODO: Find a less brittle way of doing this. A `scope_inst_id` of `None`
     // can represent a block scope, but is also used for other kinds of scopes
     // that aren't necessarily part of an interface or function decl.
     auto scope_inst_id = context.scope_stack().PeekInstId();

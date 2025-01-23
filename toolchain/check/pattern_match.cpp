@@ -56,12 +56,12 @@ class MatchContext {
  public:
   struct WorkItem {
     SemIR::InstId pattern_id;
-    // Invalid when processing the callee side.
+    // `None` when processing the callee side.
     SemIR::InstId scrutinee_id;
   };
 
-  // Constructs a MatchContext. If `callee_specific_id` is valid, this pattern
-  // match operation is part of implementing the signature of the given
+  // Constructs a MatchContext. If `callee_specific_id` is not `None`, this
+  // pattern match operation is part of implementing the signature of the given
   // specific.
   explicit MatchContext(MatchKind kind, SemIR::SpecificId callee_specific_id =
                                             SemIR::SpecificId::None)

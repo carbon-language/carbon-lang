@@ -19,7 +19,7 @@ namespace Carbon::Check {
 // A non-discriminated union of ID types.
 class IdUnion {
  public:
-  // The default constructor forms an invalid ID.
+  // The default constructor forms a `None` ID.
   explicit constexpr IdUnion() : index(AnyIdBase::NoneIndex) {}
 
   template <typename IdT>

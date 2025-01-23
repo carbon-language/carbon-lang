@@ -999,7 +999,8 @@ struct AnyParam {
   RuntimeParamIndex runtime_index;
 
   // A name to associate with this Param in pretty-printed IR. This is not
-  // necessarily unique, or even valid, and has no semantic significance.
+  // necessarily unique, and can even be `None`; it has no semantic
+  // significance.
   NameId pretty_name_id;
 };
 
@@ -1111,7 +1112,7 @@ struct ReturnExpr {
 
   // This is a statement, so has no type.
   InstId expr_id;
-  // The return slot, if any. Invalid if we're not returning through memory.
+  // The return slot, if any. `None` if we're not returning through memory.
   InstId dest_id;
 };
 
@@ -1492,7 +1493,8 @@ struct VarStorage {
   TypeId type_id;
 
   // A name to associate with this var in pretty-printed IR. This is not
-  // necessarily unique, or even valid, and has no semantic significance.
+  // necessarily unique, and can even be `None`; it has no semantic
+  // significance.
   NameId pretty_name_id;
 };
 

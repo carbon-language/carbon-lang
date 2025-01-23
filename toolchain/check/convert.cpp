@@ -124,9 +124,8 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
 
   // The initializer has no return slot, but we want to produce a temporary
   // object. Materialize one now.
-  // TODO: Consider using an invalid ID to mean that we immediately
-  // materialize and initialize a temporary, rather than two separate
-  // instructions.
+  // TODO: Consider using `None` to mean that we immediately materialize and
+  // initialize a temporary, rather than two separate instructions.
   auto init = sem_ir.insts().Get(init_id);
   auto loc_id = sem_ir.insts().GetLocId(init_id);
   auto temporary_id = context.AddInst<SemIR::TemporaryStorage>(
@@ -1022,8 +1021,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
 
-  // Start by making sure both sides are valid. If any part is invalid, the
-  // result is invalid and we shouldn't error.
+  // Start by making sure both sides are non-errors. If any part is an error,
+  // the result is an error and we shouldn't diagnose.
   if (sem_ir.insts().Get(expr_id).type_id() ==
           SemIR::ErrorInst::SingletonTypeId ||
       target.type_id == SemIR::ErrorInst::SingletonTypeId) {

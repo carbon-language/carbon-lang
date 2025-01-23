@@ -46,8 +46,8 @@ class NameStoreWrapper {
 
   // Returns a best-effort name to use as the basis for SemIR and LLVM IR names.
   // This is always identifier-shaped, but may be ambiguous, for example if
-  // there is both a `self` and an `r#self` in the same scope. Returns "" for an
-  // invalid name.
+  // there is both a `self` and an `r#self` in the same scope. Returns "" if
+  // `name_id` is `None`.
   auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
 
  private:

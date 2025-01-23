@@ -260,7 +260,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(generic_id.has_value(),
                "Performing deduction for non-generic entity");
 
-  // Initialize the deduced arguments to Invalid.
+  // Initialize the deduced arguments to `None`.
   result_arg_ids_.resize(
       context.inst_blocks()
           .Get(context.generics().Get(generic_id_).bindings_id)

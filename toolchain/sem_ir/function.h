@@ -81,7 +81,7 @@ struct Function : public EntityWithParamsBase,
                                                InstId param_pattern_id)
       -> ParamPatternInfo;
 
-  // Gets the name from the name binding instruction, or invalid if this pattern
+  // Gets the name from the name binding instruction, or `None` if this pattern
   // has been replaced with BuiltinErrorInst.
   static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
       -> SemIR::NameId;
@@ -98,13 +98,13 @@ struct Function : public EntityWithParamsBase,
 class File;
 
 struct CalleeFunction {
-  // The function. Invalid if not a function.
+  // The function. `None` if not a function.
   SemIR::FunctionId function_id;
   // The specific that contains the function.
   SemIR::SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SemIR::SpecificId resolved_specific_id;
-  // The bound `self` parameter. Invalid if not a method.
+  // The bound `self` parameter. `None` if not a method.
   SemIR::InstId self_id;
   // True if an error instruction was found.
   bool is_error;

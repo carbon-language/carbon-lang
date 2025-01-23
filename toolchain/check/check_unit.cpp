@@ -252,7 +252,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   //
   // For packages imported by the API file, the IdentifierId is the package name
   // and the index is into the API's import list. Otherwise, the initial
-  // {Invalid, -1} state remains.
+  // {None, -1} state remains.
   llvm::SmallVector<std::pair<IdentifierId, int32_t>> api_imports_list;
   api_imports_list.resize(unit_and_imports_->package_imports.size(),
                           {IdentifierId::None, -1});

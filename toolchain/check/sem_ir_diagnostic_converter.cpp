@@ -45,7 +45,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
     auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
     const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id);
     CARBON_CHECK(import_ir.decl_id.has_value(),
-                 "If we get invalid locations here, we may need to more "
+                 "If we get `None` locations here, we may need to more "
                  "thoroughly track ImportDecls.");
 
     ConvertedDiagnosticLoc in_import_loc;
@@ -115,7 +115,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
         continue;
       }
 
-      // If the parse node is valid, use it for the location.
+      // If the parse node has a value, use it for the location.
       if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
           loc_id.has_value()) {
         if (auto diag_loc = handle_loc(loc_id)) {
@@ -134,7 +134,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
       }
     }
 
-    // Invalid parse node but not an import; just nothing to point at.
+    // `None` parse node but not an import; just nothing to point at.
     return ConvertLocInFile(cursor_ir, Parse::NodeId::None, loc.token_only,
                             context_fn);
   }

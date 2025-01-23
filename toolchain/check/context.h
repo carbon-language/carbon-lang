@@ -45,8 +45,7 @@ struct LookupResult {
   // The specific in which the lookup result was found. `None` if the result
   // was not found in a specific.
   SemIR::SpecificId specific_id;
-  // The declaration that was found by name lookup.
-  // Invalid for poisoned items.
+  // The declaration that was found by name lookup. `None` for poisoned items.
   // TODO: Make this point to the poisoning declaration.
   SemIR::InstId inst_id;
   // Whether the lookup found a poisoned name.
@@ -78,7 +77,7 @@ class Context {
     // The matching entity if found, or `None` if poisoned or not found.
     SemIR::InstId inst_id;
 
-    // The access level required to use inst_id, if it's valid.
+    // The access level required to use inst_id when it's not `None`.
     SemIR::AccessKind access_kind;
 
     // Whether a poisoned entry was found.
@@ -190,15 +189,15 @@ class Context {
     node_stack_.Push(node_id, AddInst(node_id, inst));
   }
 
-  // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
-  // is required to not have been used in any constant evaluation, either
-  // because it's newly created and entirely unused, or because it's only used
-  // in a position that constant evaluation ignores, such as a return slot.
+  // Replaces the instruction at `inst_id` with `loc_id_and_inst`. The
+  // instruction is required to not have been used in any constant evaluation,
+  // either because it's newly created and entirely unused, or because it's only
+  // used in a position that constant evaluation ignores, such as a return slot.
   auto ReplaceLocIdAndInstBeforeConstantUse(SemIR::InstId inst_id,
                                             SemIR::LocIdAndInst loc_id_and_inst)
       -> void;
 
-  // Replaces the instruction `inst_id` with `inst`, not affecting location.
+  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
   // The instruction is required to not have been used in any constant
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
@@ -206,7 +205,7 @@ class Context {
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
 
-  // Replaces the instruction `inst_id` with `inst`, not affecting location.
+  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
   // The instruction is required to not change its constant value.
   auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
                                           SemIR::Inst inst) -> void;
@@ -230,20 +229,19 @@ class Context {
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration. If scope_id is `None`, performs lookup into the lexical scope
   // specified by scope_index instead. If found, returns the referenced
-  // instruction and false. If poisoned, returns an `None` instruction and
-  // true.
-  // TODO: For poisoned names, return the poisoning instruction.
+  // `InstId` and false. If poisoned, returns `InstId::None` and true.
+  // TODO: For poisoned names, return the poisoning `InstId`.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id, ScopeIndex scope_index)
       -> std::pair<SemIR::InstId, bool>;
 
-  // Performs an unqualified name lookup, returning the referenced instruction.
+  // Performs an unqualified name lookup, returning the referenced `InstId`.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                              bool required = true) -> LookupResult;
 
   // Performs a name lookup in a specified scope, returning the referenced
-  // instruction. Does not look into extended scopes. Returns a `None`
-  // instruction if the name is not found.
+  // `InstId`. Does not look into extended scopes. Returns `InstId::None` if the
+  // name is not found.
   //
   // If `is_being_declared` is false, then this is a regular name lookup, and
   // the name will be poisoned if not found so that later lookups will fail; a
@@ -265,14 +263,14 @@ class Context {
       -> bool;
 
   // Performs a qualified name lookup in a specified scopes and in scopes that
-  // they extend, returning the referenced instruction.
+  // they extend, returning the referenced `InstId`.
   auto LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
                            llvm::ArrayRef<LookupScope> lookup_scopes,
                            bool required = true,
                            std::optional<AccessInfo> access_info = std::nullopt)
       -> LookupResult;
 
-  // Returns the instruction corresponding to a name in the core package, or
+  // Returns the `InstId` corresponding to a name in the core package, or
   // BuiltinErrorInst if not found.
   auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
 

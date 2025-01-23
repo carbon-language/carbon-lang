@@ -689,7 +689,7 @@ class FormatterImpl {
   auto FormatInst(InstId inst_id) -> void {
     if (!inst_id.has_value()) {
       Indent();
-      out_ << "invalid\n";
+      out_ << "none\n";
       return;
     }
 
@@ -843,7 +843,7 @@ class FormatterImpl {
 
   auto FormatInstRHS(BindSymbolicName inst) -> void {
     // A BindSymbolicName with no value is a purely symbolic binding, such as
-    // the `Self` in an interface. Don't print out `invalid` for the value.
+    // the `Self` in an interface. Don't print out `none` for the value.
     if (inst.value_id.has_value()) {
       FormatArgs(inst.entity_name_id, inst.value_id);
     } else {
@@ -1313,7 +1313,7 @@ class FormatterImpl {
   // Returns the label for the indicated IR.
   auto GetImportIRLabel(ImportIRId id) -> std::string {
     CARBON_CHECK(id.has_value(),
-                 "GetImportIRLabel should only be called where we a valid ID.");
+                 "Callers are responsible for checking `id.has_value`");
     const auto& import_ir = *sem_ir_->import_irs().Get(id).sem_ir;
     CARBON_CHECK(import_ir.library_id().has_value());
 

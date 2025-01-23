@@ -111,7 +111,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
 auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
   switch (scope) {
     case ScopeId::None:
-      return "<invalid scope>";
+      return "<no scope>";
 
     // These are treated as SemIR keywords.
     case ScopeId::File:

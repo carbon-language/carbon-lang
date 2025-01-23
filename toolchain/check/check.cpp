@@ -25,7 +25,7 @@ using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 
 // Returns a key form of the package object. file_package_id is only used for
 // imports, not the main package declaration; as a consequence, it will be
-// invalid for the main package declaration.
+// `None` for the main package declaration.
 static auto GetImportKey(UnitAndImports& unit_info,
                          IdentifierId file_package_id,
                          Parse::Tree::PackagingNames names) -> ImportKey {
@@ -277,7 +277,7 @@ static auto BuildApiMapAndDiagnosePackaging(
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
                             "`Main//default` previously provided by `{0}`",
                             std::string);
-          // Use the invalid node because there's no node to associate with.
+          // Use `NodeId::None` because there's no node to associate with.
           unit_info.emitter.Emit(Parse::NodeId::None, DuplicateMainApi,
                                  prev_filename.str());
         }

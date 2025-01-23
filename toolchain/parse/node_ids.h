@@ -22,7 +22,7 @@ struct NoneNodeId {};
 struct NodeId : public IdBase<NodeId> {
   static constexpr llvm::StringLiteral Label = "node";
 
-  // An explicitly invalid node ID.
+  // A node ID with no value.
   static constexpr NoneNodeId None;
 
   using IdBase::IdBase;

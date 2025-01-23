@@ -788,8 +788,8 @@ static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   context.emitter().Emit(loc, CompileTimeDivisionByZero);
 }
 
-// Get an integer at a suitable bit-width: either `bit_width_id` if it is valid,
-// or the canonical width from the value store if not.
+// Get an integer at a suitable bit-width: either `bit_width_id` if it has a
+// value, or the canonical width from the value store if not.
 static auto GetIntAtSuitableWidth(Context& context, IntId int_id,
                                   IntId bit_width_id) -> llvm::APInt {
   return bit_width_id.has_value()

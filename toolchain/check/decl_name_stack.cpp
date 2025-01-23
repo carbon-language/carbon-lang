@@ -19,7 +19,7 @@ namespace Carbon::Check {
 auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
   switch (state) {
     case NameContext::State::Error:
-      // The name is invalid and a diagnostic has already been emitted.
+      // The name is malformed and a diagnostic has already been emitted.
       return SemIR::InstId::None;
 
     case NameContext::State::Empty:

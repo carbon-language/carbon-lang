@@ -32,13 +32,13 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       // Invalid because this is not the parameter of a generic.
+       // `None` because this is not the parameter of a generic.
        .bind_index = SemIR::CompileTimeBindIndex::None});
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
            .entity_name_id = entity_name_id,
-           // Invalid because there is no equivalent non-symbolic value.
+           // `None` because there is no equivalent non-symbolic value.
            .value_id = SemIR::InstId::None}));
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);

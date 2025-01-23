@@ -27,7 +27,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Returns the ID of the constant used to define the specified type.
   auto GetConstantId(TypeId type_id) const -> ConstantId {
     if (!type_id.has_value()) {
-      // TODO: Investigate replacing this with a CHECK or returning Invalid.
+      // TODO: Investigate replacing this with a CHECK or returning `None`.
       return ConstantId::NotConstant;
     }
     return type_id.AsConstantId();
@@ -88,8 +88,8 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   }
 
   // Get the object representation associated with a type. For a non-class type,
-  // this is the type itself. An invalid TypeId is returned if the object
-  // representation cannot be determined because the type is not complete.
+  // this is the type itself. `None` is returned if the object representation
+  // cannot be determined because the type is not complete.
   auto GetObjectRepr(TypeId type_id) const -> TypeId;
 
   // Determines whether the given type is known to be complete. This does not

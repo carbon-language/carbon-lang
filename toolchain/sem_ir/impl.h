@@ -65,7 +65,7 @@ class ImplStore {
    public:
     static constexpr llvm::StringLiteral Label = "impl_or_lookup_bucket";
 
-    // An explicitly invalid ID, corresponding to to ImplId::None.
+    // An ID with no value, corresponding to to ImplId::None.
     static const ImplOrLookupBucketId None;
 
     static auto ForImplId(ImplId impl_id) -> ImplOrLookupBucketId {
@@ -77,7 +77,7 @@ class ImplStore {
     }
 
     // Returns whether this ID represents a bucket index, rather than an ImplId.
-    // An invalid ID is not a bucket index.
+    // `None` is not a bucket index.
     auto is_bucket() const { return index < ImplId::NoneIndex; }
 
     // Returns the bucket index represented by this ID. Requires is_bucket().
@@ -103,8 +103,8 @@ class ImplStore {
   // The bucket is held indirectly as an `ImplOrLookupBucketId`, in one of three
   // states:
   //
-  //   - An invalid `ImplId` represents an empty bucket.
-  //   - A valid `ImplId` represents a bucket with exactly one impl. This is
+  //   - `ImplId::None` represents an empty bucket.
+  //   - An `ImplId` value represents a bucket with exactly one impl. This is
   //     expected to be by far the most common case.
   //   - A lookup bucket index represents an index within the `ImplStore`'s
   //     array of variable-sized lookup buckets.

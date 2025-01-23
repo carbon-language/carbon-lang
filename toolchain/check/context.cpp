@@ -685,7 +685,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
   return result;
 }
 
-// Returns the scope of the Core package, or Invalid if it's not found.
+// Returns the scope of the Core package, or `None` if it's not found.
 //
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.

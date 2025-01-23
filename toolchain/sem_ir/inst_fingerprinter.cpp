@@ -35,7 +35,7 @@ struct Worklist {
   auto Finish() -> uint64_t { return llvm::stable_hash_combine(contents); }
 
   // Add an invalid marker to the contents. This is used when the entity
-  // contains an invalid ID. This uses an arbitrary fixed value that is assumed
+  // contains a `None` ID. This uses an arbitrary fixed value that is assumed
   // to be unlikely to collide with a valid value.
   auto AddInvalid() -> void { contents.push_back(-1); }
 
@@ -395,8 +395,8 @@ struct Worklist {
 };
 }  // namespace
 
-auto InstFingerprinter::GetOrCompute(const File* file, InstId inst_id)
-    -> uint64_t {
+auto InstFingerprinter::GetOrCompute(const File* file,
+                                     InstId inst_id) -> uint64_t {
   Worklist worklist = {.todo = {{file, inst_id}},
                        .fingerprints = &fingerprints_};
   return worklist.Run();

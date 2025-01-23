@@ -31,7 +31,7 @@ namespace Carbon::Check {
 
 static auto DumpNoNewline(const Context& context, SemIR::LocId loc_id) -> void {
   if (!loc_id.has_value()) {
-    llvm::errs() << "LocId(invalid)";
+    llvm::errs() << "LocId(<none>)";
     return;
   }
 
