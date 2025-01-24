@@ -84,6 +84,7 @@ auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
                                SemIR::SpecificId specific_id) -> bool;
 
 // Returns an instruction describing the entity named by the given specific.
+// This is used to name the entity in diagnostics.
 auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
     -> SemIR::InstId;
 
