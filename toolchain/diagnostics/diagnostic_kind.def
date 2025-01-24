@@ -30,6 +30,8 @@ CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
 CARBON_DIAGNOSTIC_KIND(LanguageServerMissingInputStream)
 CARBON_DIAGNOSTIC_KIND(LanguageServerTransportError)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnexpectedReply)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
 
 // ============================================================================
 // SourceBuffer diagnostics
