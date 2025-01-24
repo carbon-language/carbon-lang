@@ -11,4 +11,4 @@
 // CHECK:STDOUT:   tokens:
 
 123
-// CHECK:STDOUT:   - { index: 1, kind: 'IntLiteral', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '123', value: `123`, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "IntLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "123", value: "123", has_leading_space: true }

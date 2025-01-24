@@ -29,9 +29,8 @@ class FileTestBase : public testing::Test {
     friend void PrintTo(const TestFile& f, std::ostream* os) {
       // Print content escaped.
       llvm::raw_os_ostream os_wrap(*os);
-      os_wrap << "TestFile(" << f.filename << ", \"";
-      os_wrap.write_escaped(f.content);
-      os_wrap << "\")";
+      os_wrap << "TestFile(" << f.filename << ", \"" << FormatEscaped(f.content)
+              << "\")";
     }
 
     std::string filename;

@@ -414,10 +414,10 @@ class FormatterImpl {
     }
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
-      out_ << " = \"";
-      out_.write_escaped(fn.builtin_function_kind.name(),
-                         /*UseHexEscapes=*/true);
-      out_ << "\"";
+      out_ << " = \""
+           << FormatEscaped(fn.builtin_function_kind.name(),
+                            /*use_hex_escapes=*/true)
+           << "\"";
     }
 
     if (!fn.body_block_ids.empty()) {
@@ -740,9 +740,7 @@ class FormatterImpl {
     if (space_where == AddSpace::Before) {
       out_ << ' ';
     }
-    out_ << "[from \"";
-    out_.write_escaped(pending_imported_from_);
-    out_ << "\"]";
+    out_ << "[from \"" << FormatEscaped(pending_imported_from_) << "\"]";
     if (space_where == AddSpace::After) {
       out_ << ' ';
     }
@@ -1216,10 +1214,10 @@ class FormatterImpl {
   }
 
   auto FormatArg(StringLiteralValueId id) -> void {
-    out_ << '"';
-    out_.write_escaped(sem_ir_->string_literal_values().Get(id),
-                       /*UseHexEscapes=*/true);
-    out_ << '"';
+    out_ << '"'
+         << FormatEscaped(sem_ir_->string_literal_values().Get(id),
+                          /*use_hex_escapes=*/true)
+         << '"';
   }
 
   auto FormatArg(TypeId id) -> void { FormatType(id); }

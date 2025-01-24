@@ -40,9 +40,8 @@ static auto DumpNoNewline(const Context& context, SemIR::LocId loc_id) -> void {
     auto line = context.tokens().GetLineNumber(token);
     auto col = context.tokens().GetColumnNumber(token);
     const char* implicit = loc_id.is_implicit() ? " implicit" : "";
-    llvm::errs() << "LocId(";
-    llvm::errs().write_escaped(context.sem_ir().filename());
-    llvm::errs() << ":" << line << ":" << col << implicit << ")";
+    llvm::errs() << "LocId(" << FormatEscaped(context.sem_ir().filename())
+                 << ":" << line << ":" << col << implicit << ")";
   } else {
     CARBON_CHECK(loc_id.is_import_ir_inst_id());
 
@@ -52,9 +51,8 @@ static auto DumpNoNewline(const Context& context, SemIR::LocId loc_id) -> void {
                             .ir_id;
     const auto* import_file =
         context.sem_ir().import_irs().Get(import_ir_id).sem_ir;
-    llvm::errs() << "LocId(import from \"";
-    llvm::errs().write_escaped(import_file->filename());
-    llvm::errs() << "\")";
+    llvm::errs() << "LocId(import from \""
+                 << FormatEscaped(import_file->filename()) << "\")";
   }
 }
 
