@@ -20,7 +20,7 @@ namespace Carbon::Testing {
 namespace {
 
 // Provides common test support for the driver. This is used by file tests in
-// phase subdirectories.
+// component subdirectories.
 class ToolchainFileTest : public FileTestBase {
  public:
   explicit ToolchainFileTest(llvm::StringRef exe_path, std::mutex* output_mutex,
@@ -50,6 +50,12 @@ class ToolchainFileTest : public FileTestBase {
   // Generally uses the parent implementation, with special handling for lex and
   // driver.
   auto DoExtraCheckReplacements(std::string& check_line) -> void override;
+
+  // Most tests can be run in parallel, but clangd has a global for its logging
+  // system so we need language-server tests to be run in serial.
+  auto AllowParallelRun() const -> bool override {
+    return component_ != "language_server";
+  }
 
  private:
   // Adds a file to the fs.
@@ -98,6 +104,10 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) -> ErrorOr<RunResult> {
+  if (component_ == "language_server" && !input_stream) {
+    return Error("language_server tests must provide STDIN");
+  }
+
   CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
   if (!is_no_prelude()) {
     for (const auto& file : prelude) {
@@ -130,12 +140,20 @@ auto ToolchainFileTest::Run(
                           entry.first.starts_with("not_file") ||
                           llvm::is_contained(prelude, entry.first);
                  });
+
+  if (component_ == "language_server") {
+    // The language server doesn't always add a suffix newline, so add one for
+    // tests to be happy.
+    output_stream << "\n";
+  }
   return result;
 }
 
 auto ToolchainFileTest::GetDefaultArgs() -> llvm::SmallVector<std::string> {
   if (component_ == "format") {
     return {"format", "%s"};
+  } else if (component_ == "language_server") {
+    return {"language-server"};
   }
 
   llvm::SmallVector<std::string> args = {"compile", "--include-diagnostic-kind",

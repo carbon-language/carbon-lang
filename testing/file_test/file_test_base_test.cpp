@@ -198,21 +198,6 @@ static auto TestEscaping(TestParams& params)
   return {{.success = true}};
 }
 
-// Prints and returns expected results for stdin.carbon.
-static auto TestStdin(TestParams& params)
-    -> ErrorOr<FileTestBaseTest::RunResult> {
-  CARBON_CHECK(params.input_stream);
-  constexpr int ReadSize = 256;
-  char buf[ReadSize];
-  while (feof(params.input_stream) == 0) {
-    auto read = fread(&buf, sizeof(char), ReadSize, params.input_stream);
-    if (read > 0) {
-      params.error_stream.write(buf, read);
-    }
-  }
-  return {{.success = true}};
-}
-
 // Prints and returns expected results for unattached_multi_file.carbon.
 static auto TestUnattachedMultiFile(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
@@ -258,6 +243,17 @@ static auto EchoFileContent(TestParams& params)
       buffer = remainder;
     }
   }
+  if (params.input_stream) {
+    params.error_stream << "--- STDIN:\n";
+    constexpr int ReadSize = 1024;
+    char buf[ReadSize];
+    while (feof(params.input_stream) == 0) {
+      auto read = fread(&buf, sizeof(char), ReadSize, params.input_stream);
+      if (read > 0) {
+        params.error_stream.write(buf, read);
+      }
+    }
+  }
   return {{.success = true}};
 }
 
@@ -287,8 +283,6 @@ auto FileTestBaseTest::Run(
           .Case("file_only_re_one_file.carbon", &TestFileOnlyREOneFile)
           .Case("file_only_re_multi_file.carbon", &TestFileOnlyREMultiFile)
           .Case("no_line_number.carbon", &TestNoLineNumber)
-          .Case("stdin.carbon", &TestStdin)
-          .Case("stdin_and_autoupdate_split.carbon", &TestStdin)
           .Case("unattached_multi_file.carbon", &TestUnattachedMultiFile)
           .Case("fail_multi_success_overall_fail.carbon",
                 [&](TestParams&) {

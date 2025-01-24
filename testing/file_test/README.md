@@ -87,6 +87,12 @@ they have an associated error. An exception is that the main test file may omit
 Some keywords can be inserted for content:
 
 -   ```
+    [[@LSP:<method>:<extra content>]]
+    ```
+
+    Produces JSON for an LSP method call, complete with `Content-Length` header.
+
+-   ```
     [[@TEST_NAME]]
     ```
 
