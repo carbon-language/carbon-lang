@@ -19,9 +19,9 @@ cc_library(
         ":context",
         ":incoming_messages",
         ":outgoing_messages",
-        "//common:error",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//toolchain/diagnostics:filename_diagnostics",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )

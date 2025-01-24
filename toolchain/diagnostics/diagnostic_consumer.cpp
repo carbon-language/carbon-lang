@@ -20,18 +20,18 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
     message.loc.FormatLocation(*stream_);
     switch (message.level) {
       case DiagnosticLevel::Error:
-        *stream_ << ": error";
+        *stream_ << "error: ";
         break;
       case DiagnosticLevel::Warning:
-        *stream_ << ": warning";
+        *stream_ << "warning: ";
         break;
       case DiagnosticLevel::Note:
-        *stream_ << ": note";
+        *stream_ << "note: ";
         break;
       case DiagnosticLevel::LocationInfo:
         break;
     }
-    *stream_ << ": " << message.format_fn(message);
+    *stream_ << message.format_fn(message);
     if (include_diagnostic_kind_) {
       *stream_ << " [" << message.kind << "]";
     }
@@ -46,8 +46,7 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
 }
 
 auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
-  static auto* consumer = new StreamDiagnosticConsumer(
-      llvm::errs(), /*include_diagnostic_kind=*/false);
+  static auto* consumer = new StreamDiagnosticConsumer(&llvm::errs());
   return *consumer;
 }
 

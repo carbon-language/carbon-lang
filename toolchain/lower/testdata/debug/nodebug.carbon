@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --no-debug-info --phase=lower --dump-llvm-ir --output=- --exclude-dump-file-prefix=%{core_package_dir} %s
+// ARGS: --include-diagnostic-kind compile --no-debug-info --phase=lower --dump-llvm-ir --output=- --exclude-dump-file-prefix=%{core_package_dir} %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

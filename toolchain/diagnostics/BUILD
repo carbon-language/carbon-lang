@@ -82,6 +82,15 @@ cc_test(
 )
 
 cc_library(
+    name = "filename_diagnostics",
+    hdrs = ["filename_diagnostics.h"],
+    deps = [
+        ":diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "format_providers",
     srcs = ["format_providers.cpp"],
     hdrs = ["format_providers.h"],

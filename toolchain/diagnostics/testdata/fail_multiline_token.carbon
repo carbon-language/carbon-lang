@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=parse %s
+// ARGS: --include-diagnostic-kind compile --phase=parse %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/diagnostics/testdata/fail_multiline_token.carbon
 
-// CHECK:STDERR: fail_multiline_token.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer
+// CHECK:STDERR: fail_multiline_token.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR: '''
 // CHECK:STDERR: ^~~
 // CHECK:STDERR:

@@ -24,8 +24,10 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::TestDiagnostic,
     DiagnosticKind::TestDiagnosticNote,
 
-    // Driver specific.
-    DiagnosticKind::CppInteropFuzzing,
+    // Diagnosing erroneous install conditions, but test environments are
+    // typically correct.
+    DiagnosticKind::CompilePreludeManifestError,
+    DiagnosticKind::DriverInstallInvalid,
 
     // These diagnose filesystem issues that are hard to unit test.
     DiagnosticKind::ErrorReadingFile,
@@ -40,6 +42,10 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     DiagnosticKind::TooManyDigits,
+
+    // TODO: Test these once the language server framework is approved (#4841).
+    DiagnosticKind::LanguageServerMissingInputStream,
+    DiagnosticKind::LanguageServerTransportError,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

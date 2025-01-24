@@ -17,6 +17,21 @@
 #endif
 
 // ============================================================================
+// Driver and subcommand diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(DriverInstallInvalid)
+CARBON_DIAGNOSTIC_KIND(DriverCommandLineParseFailed)
+CARBON_DIAGNOSTIC_KIND(ClangFuzzingDisallowed)
+CARBON_DIAGNOSTIC_KIND(CompilePhaseFlagConflict)
+CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
+CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
+CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
+CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
+CARBON_DIAGNOSTIC_KIND(LanguageServerMissingInputStream)
+CARBON_DIAGNOSTIC_KIND(LanguageServerTransportError)
+
+// ============================================================================
 // SourceBuffer diagnostics
 // ============================================================================
 

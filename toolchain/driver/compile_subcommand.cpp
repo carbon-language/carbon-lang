@@ -11,6 +11,7 @@
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
+#include "toolchain/diagnostics/filename_diagnostics.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
@@ -21,28 +22,6 @@
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
-
-auto operator<<(llvm::raw_ostream& out, CompileOptions::Phase phase)
-    -> llvm::raw_ostream& {
-  switch (phase) {
-    case CompileOptions::Phase::Lex:
-      out << "lex";
-      break;
-    case CompileOptions::Phase::Parse:
-      out << "parse";
-      break;
-    case CompileOptions::Phase::Check:
-      out << "check";
-      break;
-    case CompileOptions::Phase::Lower:
-      out << "lower";
-      break;
-    case CompileOptions::Phase::CodeGen:
-      out << "codegen";
-      break;
-  }
-  return out;
-}
 
 auto CompileOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
@@ -128,15 +107,6 @@ of a binary object file instead. Ignored for other `--output` values.
       },
       [&](auto& arg_b) { arg_b.Set(&force_obj_output); });
 
-  b.AddFlag(
-      {
-          .name = "include-diagnostic-kind",
-          .help = R"""(
-When printing diagnostics, include the diagnostic kind as part of output. This
-applies to each message that forms a diagnostic, not just the primary message.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
   b.AddFlag(
       {
           .name = "stream-errors",
@@ -296,30 +266,49 @@ can be written to standard output as these phases progress.
 
 CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
-// Returns an error for trying to dump a non-executed phase's output.
-static auto DumpPhaseError(llvm::StringLiteral requested_dump,
-                           CompileOptions::Phase phase) -> Error {
-  return Error(llvm::formatv(
-      "requested dumping {0} but compile phase is limited to `{1}`",
-      requested_dump, phase));
+// Returns a string for printing the phase in a diagnostic.
+static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
+  switch (phase) {
+    case CompileOptions::Phase::Lex:
+      return "lex";
+    case CompileOptions::Phase::Parse:
+      return "parse";
+    case CompileOptions::Phase::Check:
+      return "check";
+    case CompileOptions::Phase::Lower:
+      return "lower";
+    case CompileOptions::Phase::CodeGen:
+      return "codegen";
+  }
 }
 
-auto CompileSubcommand::ValidateOptions() const -> ErrorOr<Success> {
+auto CompileSubcommand::ValidateOptions(
+    FilenameDiagnosticEmitter& emitter) const -> bool {
+  CARBON_DIAGNOSTIC(
+      CompilePhaseFlagConflict, Error,
+      "requested dumping {0} but compile phase is limited to `{1}`",
+      std::string, std::string);
   using Phase = CompileOptions::Phase;
   switch (options_.phase) {
     case Phase::Lex:
       if (options_.dump_parse_tree) {
-        return DumpPhaseError("parse tree", options_.phase);
+        emitter.Emit("", CompilePhaseFlagConflict, "parse tree",
+                     PhaseToString(options_.phase));
+        return false;
       }
       [[fallthrough]];
     case Phase::Parse:
       if (options_.dump_sem_ir) {
-        return DumpPhaseError("SemIR", options_.phase);
+        emitter.Emit("", CompilePhaseFlagConflict, "SemIR",
+                     PhaseToString(options_.phase));
+        return false;
       }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
-        return DumpPhaseError("LLVM IR", options_.phase);
+        emitter.Emit("", CompilePhaseFlagConflict, "LLVM IR",
+                     PhaseToString(options_.phase));
+        return false;
       }
       [[fallthrough]];
     case Phase::Lower:
@@ -327,7 +316,7 @@ auto CompileSubcommand::ValidateOptions() const -> ErrorOr<Success> {
       // Everything can be dumped in these phases.
       break;
   }
-  return Success();
+  return true;
 }
 
 namespace {
@@ -673,9 +662,12 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     if (output_filename.empty()) {
       if (!source_->is_regular_file()) {
         // Don't invent file names like `-.o` or `/dev/stdin.o`.
-        *driver_env_->error_stream
-            << "error: output file name must be specified for input `"
-            << input_filename_ << "` that is not a regular file\n";
+        CARBON_DIAGNOSTIC(CompileInputNotRegularFile, Error,
+                          "output file name must be specified for input `{0}` "
+                          "that is not a regular file",
+                          std::string);
+        driver_env_->filename_emitter.Emit("", CompileInputNotRegularFile,
+                                           input_filename_);
         return false;
       }
       output_filename = input_filename_;
@@ -694,9 +686,12 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     llvm::raw_fd_ostream output_file(output_filename, ec,
                                      llvm::sys::fs::OF_None);
     if (ec) {
-      *driver_env_->error_stream << "error: could not open output file '"
-                                 << output_filename << "': " << ec.message()
-                                 << "\n";
+      CARBON_DIAGNOSTIC(CompileOutputFileOpenError, Error,
+                        "could not open output file `{0}`: {1}", std::string,
+                        std::string);
+      driver_env_->filename_emitter.Emit("", CompileOutputFileOpenError,
+                                         output_filename.str().str(),
+                                         ec.message());
       return false;
     }
     if (options_.asm_output) {
@@ -745,8 +740,7 @@ auto CompilationUnit::IncludeInDumps(llvm::StringRef filename) const -> bool {
 }  // namespace
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  if (auto validate = ValidateOptions(); !validate.ok()) {
-    *driver_env.error_stream << "error: " << validate.error() << "\n";
+  if (!ValidateOptions(driver_env.filename_emitter)) {
     return {.success = false};
   }
 
@@ -759,27 +753,27 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
-      *driver_env.error_stream << "error: " << find.error() << "\n";
+      CARBON_DIAGNOSTIC(CompilePreludeManifestError, Error, "{0}", std::string);
+      driver_env.filename_emitter.Emit("", CompilePreludeManifestError,
+                                       PrintToString(find.error()));
       return {.success = false};
     }
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
-  StreamDiagnosticConsumer stream_consumer(*driver_env.error_stream,
-                                           options_.include_diagnostic_kind);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   units.reserve(prelude.size() + options_.input_filenames.size());
 
   // Add the prelude files.
   for (const auto& input_filename : prelude) {
     units.push_back(std::make_unique<CompilationUnit>(
-        driver_env, options_, &stream_consumer, input_filename));
+        driver_env, options_, &driver_env.consumer, input_filename));
   }
 
   // Add the input source files.
   for (const auto& input_filename : options_.input_filenames) {
     units.push_back(std::make_unique<CompilationUnit>(
-        driver_env, options_, &stream_consumer, input_filename));
+        driver_env, options_, &driver_env.consumer, input_filename));
   }
 
   auto on_exit = llvm::make_scope_exit([&]() {
@@ -789,7 +783,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       unit->PostCompile();
     }
 
-    stream_consumer.Flush();
+    driver_env.consumer.Flush();
   });
 
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
@@ -801,14 +795,14 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       out << "Flushing diagnostics\n";
     } else {
       out << "Pending diagnostics:\n";
-      stream_consumer.set_stream(&out);
+      driver_env.consumer.set_stream(&out);
     }
 
     for (auto& unit : units) {
       unit->FlushForStackTrace();
     }
-    stream_consumer.Flush();
-    stream_consumer.set_stream(driver_env.error_stream);
+    driver_env.consumer.Flush();
+    driver_env.consumer.set_stream(driver_env.error_stream);
   });
 
   // Returns a DriverResult object. Called whenever Compile returns.

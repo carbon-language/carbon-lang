@@ -59,8 +59,8 @@ class ToolchainFileTest : public FileTestBase {
 
  private:
   // Adds a file to the fs.
-  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
-      -> ErrorOr<Success>;
+  auto AddFile(llvm::vfs::InMemoryFileSystem& fs,
+               llvm::StringRef path) -> ErrorOr<Success>;
 
   // Controls whether `Run()` includes the prelude.
   auto is_no_prelude() const -> bool {
@@ -148,12 +148,12 @@ auto ToolchainFileTest::Run(
 
 auto ToolchainFileTest::GetDefaultArgs() -> llvm::SmallVector<std::string> {
   if (component_ == "format") {
-    return {"format", "%s"};
+    return {"--include-diagnostic-kind", "format", "%s"};
   } else if (component_ == "language_server") {
-    return {"language-server"};
+    return {"--include-diagnostic-kind", "language-server"};
   }
 
-  llvm::SmallVector<std::string> args = {"compile", "--include-diagnostic-kind",
+  llvm::SmallVector<std::string> args = {"--include-diagnostic-kind", "compile",
                                          "--phase=" + component_.str()};
 
   if (component_ == "lex") {

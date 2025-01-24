@@ -366,7 +366,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     auto converted = unit_and_imports_->unit->node_converter->ConvertLoc(
         node_id, [](DiagnosticLoc, const DiagnosticBase<>&) {});
     converted.loc.FormatLocation(output);
-    output << ": checking " << context_.parse_tree().node_kind(node_id) << "\n";
+    output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
     converted.loc.FormatSnippet(output, /*indent=*/10);
   });
