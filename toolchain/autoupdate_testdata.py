@@ -45,7 +45,7 @@ def main() -> None:
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()
 
-    if args.allow_check_fail:
+    if args.non_fatal_checks:
         if build_mode == "opt":
             exit(
                 "`--non-fatal-checks` is incompatible with inferred "
