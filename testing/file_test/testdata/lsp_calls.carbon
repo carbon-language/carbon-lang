@@ -20,20 +20,24 @@ line
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: --- STDIN:
-// CHECK:STDERR: Content-Length: 47
+// CHECK:STDERR: Content-Length: 48
 // CHECK:STDERR:
 // CHECK:STDERR: {"jsonrpc": "2.0", "id": "1", "method": "foo"}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 56
+// CHECK:STDERR: Content-Length: 57
 // CHECK:STDERR:
 // CHECK:STDERR: {"jsonrpc": "2.0", "id": "2", "method": "bar", content}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 60
+// CHECK:STDERR: Content-Length: 61
 // CHECK:STDERR:
 // CHECK:STDERR: {"jsonrpc": "2.0", "id": "3", "method": "baz",
 // CHECK:STDERR: multi
 // CHECK:STDERR: line
 // CHECK:STDERR: }
+// CHECK:STDERR:
+// CHECK:STDERR: Content-Length: 38
+// CHECK:STDERR:
+// CHECK:STDERR: {"jsonrpc": "2.0", "method": "exit"}
 // CHECK:STDERR:
 // CHECK:STDERR:
 // CHECK:STDOUT: 1 args: `default_args`
