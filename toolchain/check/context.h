@@ -469,7 +469,10 @@ class Context {
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
-  // Gets the type for the name of an associated entity.
+  // Gets the type to use for an unbound associated entity declared in this
+  // interface.  The name of the interface is used for diagnostics.
+  // TODO: Should we use a different type for each such entity, or the same type
+  // for all associated entities?
   auto GetAssociatedEntityType(SemIR::TypeId interface_type_id)
       -> SemIR::TypeId;
 

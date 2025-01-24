@@ -7,7 +7,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
-#include "toolchain/check/import_ref.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -92,14 +91,14 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
   return MakeSpecific(context, loc, generic_id, args_id);
 }
 
-auto GetAssociatedEntityType(Context& context, SemIRLoc loc,
-                             SemIR::SpecificId interface_specific_id,
-                             SemIR::AssociatedEntity assoc_entity,
-                             SemIR::TypeId self_type_id,
-                             SemIR::InstId self_witness_id) -> SemIR::TypeId {
-  LoadImportRef(context, assoc_entity.decl_id);
-  auto decl = context.insts().Get(
-      context.constant_values().GetConstantInstId(assoc_entity.decl_id));
+auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
+                                        SemIR::SpecificId interface_specific_id,
+                                        SemIR::InstId decl_id,
+                                        SemIR::TypeId self_type_id,
+                                        SemIR::InstId self_witness_id)
+    -> SemIR::TypeId {
+  auto decl =
+      context.insts().Get(context.constant_values().GetConstantInstId(decl_id));
 
   auto specific_id = interface_specific_id;
   if (auto assoc_const = decl.TryAs<SemIR::AssociatedConstantDecl>()) {
@@ -112,9 +111,8 @@ auto GetAssociatedEntityType(Context& context, SemIRLoc loc,
   }
   // TODO: For a `FunctionDecl`, should we substitute `Self` into the type?
 
-  return SemIR::GetTypeInSpecific(
-      context.sem_ir(), specific_id,
-      context.insts().Get(assoc_entity.decl_id).type_id());
+  return SemIR::GetTypeInSpecific(context.sem_ir(), specific_id,
+                                  context.insts().Get(decl_id).type_id());
 }
 
 }  // namespace Carbon::Check

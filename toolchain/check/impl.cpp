@@ -245,14 +245,11 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
       // value to that type now we know the value of `Self`.
       SemIR::TypeId assoc_const_type_id = decl->type_id;
       if (context.types().GetConstantId(assoc_const_type_id).is_symbolic()) {
-        // Form a specific for the associated constant's generic.
-        SemIR::SpecificId assoc_const_specific_id =
-            GetSelfSpecificForInterfaceMemberWithSelfType(
-                context, impl.constraint_id, interface_type->specific_id,
-                assoc_const.generic_id,
-                context.GetTypeIdForTypeInst(impl.self_id), witness_id);
-        assoc_const_type_id = SemIR::GetTypeInSpecific(
-            context.sem_ir(), assoc_const_specific_id, assoc_const_type_id);
+        // Get the type of the associated constant in this interface with this
+        // value for `Self`.
+        assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
+            context, impl.constraint_id, interface_type->specific_id, decl_id,
+            context.GetTypeIdForTypeInst(impl.self_id), witness_id);
 
         // Perform the conversion of the value to the type. We skipped this when
         // forming the facet type because the type of the associated constant

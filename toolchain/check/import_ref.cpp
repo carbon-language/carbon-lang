@@ -1358,9 +1358,9 @@ static auto MakeAssociatedConstant(
   assoc_const_decl.assoc_const_id = context.local_associated_constants().Add({
       .name_id = GetLocalNameId(context, import_assoc_const.name_id),
       .parent_scope_id = SemIR::NameScopeId::None,
+      .decl_id = assoc_const_decl_id,
       .generic_id = MakeIncompleteGeneric(context, import_assoc_const.decl_id,
                                           import_assoc_const.generic_id),
-      .decl_id = assoc_const_decl_id,
       .default_value_id =
           import_assoc_const.default_value_id.has_value()
               ? AddImportRef(context, import_assoc_const.default_value_id)

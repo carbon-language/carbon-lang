@@ -11,6 +11,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -161,9 +162,10 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
 
   // Substitute the interface specific and `Self` type into the type of the
   // associated entity to find the type of the member access.
-  auto assoc_type_id =
-      GetAssociatedEntityType(context, loc_id, interface_specific_id,
-                              *assoc_entity, self_type_id, witness_id);
+  LoadImportRef(context, assoc_entity->decl_id);
+  auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
+      context, loc_id, interface_specific_id, assoc_entity->decl_id,
+      self_type_id, witness_id);
 
   return context.GetOrAddInst<SemIR::ImplWitnessAccess>(
       loc_id, {.type_id = assoc_type_id,

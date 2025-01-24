@@ -26,11 +26,12 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
 
 // Gets the type of the specified associated entity, given the specific for the
 // interface and the type of `Self`.
-auto GetAssociatedEntityType(Context& context, SemIRLoc loc,
-                             SemIR::SpecificId interface_specific_id,
-                             SemIR::AssociatedEntity assoc_entity,
-                             SemIR::TypeId self_type_id,
-                             SemIR::InstId self_witness_id) -> SemIR::TypeId;
+auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
+                                        SemIR::SpecificId interface_specific_id,
+                                        SemIR::InstId decl_id,
+                                        SemIR::TypeId self_type_id,
+                                        SemIR::InstId self_witness_id)
+    -> SemIR::TypeId;
 
 }  // namespace Carbon::Check
 

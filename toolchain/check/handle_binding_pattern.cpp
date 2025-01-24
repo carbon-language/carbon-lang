@@ -174,8 +174,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     assoc_const_decl.assoc_const_id = context.associated_constants().Add(
         {.name_id = name_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-         .generic_id = SemIR::GenericId::None,
          .decl_id = decl_id,
+         .generic_id = SemIR::GenericId::None,
          .default_value_id = SemIR::InstId::None});
     context.ReplaceInstBeforeConstantUse(decl_id, assoc_const_decl);
 

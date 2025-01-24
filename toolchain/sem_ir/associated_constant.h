@@ -24,17 +24,25 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
         << "name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
   }
 
+  // The following fields are set at the `:!` binding, when the
+  // `AssociatedConstant` is created.
+
   // The entity's name.
   NameId name_id;
 
   // The parent scope.
   NameScopeId parent_scope_id;
 
-  // If this is a generic entity, information about the generic.
-  GenericId generic_id;
-
   // The declaration of this associated constant.
   InstId decl_id;
+
+  // The following fields are set at the `=` or `;`.
+
+  // Information about the generic. An associated constant is always
+  // parameterized by `Self`, so this is always present.
+  GenericId generic_id;
+
+  // The following fields are set at the `;`.
 
   // The default value of the constant.
   InstId default_value_id = InstId::None;
