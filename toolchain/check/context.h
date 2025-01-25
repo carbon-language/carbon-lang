@@ -470,7 +470,9 @@ class Context {
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
   // Gets the type to use for an unbound associated entity declared in this
-  // interface.  The name of the interface is used for diagnostics.
+  // interface. For example, this is the type of `I.T` after
+  // `interface I { let T:! type; }`.
+  // The name of the interface is used for diagnostics.
   // TODO: Should we use a different type for each such entity, or the same type
   // for all associated entities?
   auto GetAssociatedEntityType(SemIR::TypeId interface_type_id)
