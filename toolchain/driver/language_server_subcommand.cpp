@@ -22,6 +22,7 @@ auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!driver_env.input_stream) {
     *driver_env.error_stream
         << "error: language-server requires input_stream\n";
+    return {.success = false};
   }
 
   auto err =
