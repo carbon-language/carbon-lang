@@ -506,7 +506,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (!facet_type) {
           // Should never happen, but we don't want the instruction namer to
           // crash on bad IR.
-          break;
+          add_inst_name("<invalid interface>");
+          continue;
         }
         const auto& facet_type_info =
             sem_ir_->facet_types().Get(facet_type->facet_type_id);
@@ -514,7 +515,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (!interface) {
           // Should never happen, but we don't want the instruction namer to
           // crash on bad IR.
-          break;
+          add_inst_name("<invalid interface>");
+          continue;
         }
         const auto& interface_info =
             sem_ir_->interfaces().Get(interface->interface_id);
