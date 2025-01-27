@@ -416,12 +416,13 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
           CARBON_FATAL("Unexpected type: {0}", type_inst);
         }
         auto& fn = context.functions().Get(fn_type->function_id);
-        auto [impl_decl_id, _, is_poisoned] = context.LookupNameInExactScope(
+        auto lookup_result = context.LookupNameInExactScope(
             decl_id, fn.name_id, impl.scope_id, impl_scope);
-        if (impl_decl_id.has_value()) {
-          used_decl_ids.push_back(impl_decl_id);
+        if (lookup_result.is_found()) {
+          used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_block[index] = CheckAssociatedFunctionImplementation(
-              context, *fn_type, impl_decl_id, self_type_id, impl.witness_id);
+              context, *fn_type, lookup_result.target_inst_id(), self_type_id,
+              impl.witness_id);
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,

@@ -103,7 +103,8 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> SemIR::InstId {
   auto result = context.LookupUnqualifiedName(node_id, name_id);
-  auto value = context.insts().Get(result.inst_id);
+  SemIR::InstId inst_id = result.scope_result.target_inst_id();
+  auto value = context.insts().Get(inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           value.type_id());
   CARBON_CHECK(type_id.has_value(), "Missing type for {0}", value);
@@ -111,16 +112,15 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.
   if (result.specific_id.has_value() &&
-      context.constant_values().Get(result.inst_id).is_symbolic()) {
-    result.inst_id = context.AddInst<SemIR::SpecificConstant>(
+      context.constant_values().Get(inst_id).is_symbolic()) {
+    inst_id = context.AddInst<SemIR::SpecificConstant>(
         node_id, {.type_id = type_id,
-                  .inst_id = result.inst_id,
+                  .inst_id = inst_id,
                   .specific_id = result.specific_id});
   }
 
   return context.AddInst<SemIR::NameRef>(
-      node_id,
-      {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
+      node_id, {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
 }
 
 static auto HandleIdentifierName(Context& context,

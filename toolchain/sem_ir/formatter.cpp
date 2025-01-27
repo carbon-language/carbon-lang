@@ -672,15 +672,15 @@ class FormatterImpl {
       out_ << label;
     }
 
-    for (auto [name_id, inst_id, access_kind, is_poisoned] : scope.entries()) {
-      if (is_poisoned) {
+    for (auto [name_id, result] : scope.entries()) {
+      if (result.is_poisoned()) {
         // TODO: Add poisoned names.
         continue;
       }
       Indent();
       out_ << ".";
       FormatName(name_id);
-      switch (access_kind) {
+      switch (result.access_kind()) {
         case SemIR::AccessKind::Public:
           break;
         case SemIR::AccessKind::Protected:
@@ -691,7 +691,7 @@ class FormatterImpl {
           break;
       }
       out_ << " = ";
-      FormatName(inst_id);
+      FormatName(result.is_found() ? result.target_inst_id() : InstId::Invalid);
       out_ << "\n";
     }
 

@@ -169,7 +169,9 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
   auto& scope = context.name_scopes().Get(scope_id);
   auto entry_id = scope.Lookup(name_id);
   if (entry_id) {
-    scope.GetEntry(*entry_id).inst_id = new_inst_id;
+    auto& result = scope.GetEntry(*entry_id).result;
+    result = SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+        new_inst_id, result.access_kind());
   }
 }
 

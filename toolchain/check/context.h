@@ -45,11 +45,9 @@ struct LookupResult {
   // The specific in which the lookup result was found. `None` if the result
   // was not found in a specific.
   SemIR::SpecificId specific_id;
-  // The declaration that was found by name lookup. `None` for poisoned items.
-  // TODO: Make this point to the poisoning declaration.
-  SemIR::InstId inst_id;
-  // Whether the lookup found a poisoned name.
-  bool is_poisoned = false;
+
+  // The result from the lookup in the scope.
+  SemIR::ScopeLookupResult scope_result;
 };
 
 // Information about an access.
@@ -72,17 +70,6 @@ class Context {
   // add contextual notes as appropriate.
   using BuildDiagnosticFn =
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
-
-  struct LookupNameInExactScopeResult {
-    // The matching entity if found, or `None` if poisoned or not found.
-    SemIR::InstId inst_id;
-
-    // The access level required to use inst_id when it's not `None`.
-    SemIR::AccessKind access_kind;
-
-    // Whether a poisoned entry was found.
-    bool is_poisoned = false;
-  };
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
@@ -233,7 +220,7 @@ class Context {
   // TODO: For poisoned names, return the poisoning `InstId`.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id, ScopeIndex scope_index)
-      -> std::pair<SemIR::InstId, bool>;
+      -> SemIR::ScopeLookupResult;
 
   // Performs an unqualified name lookup, returning the referenced `InstId`.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
@@ -252,7 +239,7 @@ class Context {
                               SemIR::NameScopeId scope_id,
                               SemIR::NameScope& scope,
                               bool is_being_declared = false)
-      -> LookupNameInExactScopeResult;
+      -> SemIR::ScopeLookupResult;
 
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
   // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but

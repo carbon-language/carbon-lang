@@ -1211,13 +1211,14 @@ static auto AddNameScopeImportRefs(ImportContext& context,
                                    const SemIR::NameScope& import_scope,
                                    SemIR::NameScope& new_scope) -> void {
   for (auto entry : import_scope.entries()) {
-    if (entry.is_poisoned) {
+    SemIR::ScopeLookupResult result = entry.result;
+    if (result.is_poisoned()) {
       continue;
     }
-    auto ref_id = AddImportRef(context, entry.inst_id);
+    auto ref_id = AddImportRef(context, result.target_inst_id());
     new_scope.AddRequired({.name_id = GetLocalNameId(context, entry.name_id),
-                           .inst_id = ref_id,
-                           .access_kind = entry.access_kind});
+                           .result = SemIR::ScopeLookupResult::MakeFound(
+                               ref_id, result.access_kind())});
   }
   for (auto scope_inst_id : import_scope.extended_scopes()) {
     new_scope.AddExtendedScope(AddImportRef(context, scope_inst_id));

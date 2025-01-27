@@ -22,10 +22,10 @@ auto NameScope::Print(llvm::raw_ostream& out) const -> void {
   out << ", names: {";
   llvm::ListSeparator sep;
   for (auto entry : names_) {
-    if (entry.is_poisoned) {
+    if (entry.result.is_poisoned()) {
       continue;
     }
-    out << sep << entry.name_id << ": " << entry.inst_id;
+    out << sep << entry.name_id << ": " << entry.result.target_inst_id();
   }
   out << "}";
 
@@ -33,8 +33,8 @@ auto NameScope::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto NameScope::AddRequired(Entry name_entry) -> void {
-  CARBON_CHECK(!name_entry.is_poisoned, "Cannot add a poisoned name: {0}.",
-               name_entry.name_id);
+  CARBON_CHECK(!name_entry.result.is_poisoned(),
+               "Cannot add a poisoned name: {0}.", name_entry.name_id);
   auto add_name = [&] {
     EntryId index(names_.size());
     names_.push_back(name_entry);
@@ -44,7 +44,7 @@ auto NameScope::AddRequired(Entry name_entry) -> void {
   if (!result.is_inserted()) {
     // A required name can overwrite poison.
     auto& name = names_[result.value().index];
-    CARBON_CHECK(name.is_poisoned, "Failed to add required name: {0}",
+    CARBON_CHECK(name.result.is_poisoned(), "Failed to add required name: {0}",
                  name_entry.name_id);
     name = name_entry;
   }
@@ -58,18 +58,17 @@ auto NameScope::LookupOrAdd(NameId name_id, InstId inst_id,
     return {false, EntryId(insert_result.value())};
   }
 
-  names_.push_back(
-      {.name_id = name_id, .inst_id = inst_id, .access_kind = access_kind});
+  names_.push_back({.name_id = name_id,
+                    .result = ScopeLookupResult::MakeWrappedLookupResult(
+                        inst_id, access_kind)});
   return {true, EntryId(names_.size() - 1)};
 }
 
 auto NameScope::LookupOrPoison(NameId name_id) -> std::optional<EntryId> {
   auto insert_result = name_map_.Insert(name_id, EntryId(names_.size()));
   if (insert_result.is_inserted()) {
-    names_.push_back({.name_id = name_id,
-                      .inst_id = InstId::None,
-                      .access_kind = AccessKind::Public,
-                      .is_poisoned = true});
+    names_.push_back(
+        {.name_id = name_id, .result = ScopeLookupResult::MakePoisoned()});
     return std::nullopt;
   }
   return insert_result.value();
