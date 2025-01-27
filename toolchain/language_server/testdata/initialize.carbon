@@ -9,8 +9,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/initialize.carbon
 
 // --- STDIN
-[[@LSP:initialize:]]
-[[@LSP:exit:]]
+[[@LSP:initialize]]
+[[@LSP:exit]]
 
 // --- AUTOUPDATE-SPLIT
 

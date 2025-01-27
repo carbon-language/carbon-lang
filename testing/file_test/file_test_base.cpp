@@ -542,22 +542,24 @@ static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
   static constexpr llvm::StringLiteral Lsp = "[[@LSP:";
   if (keyword.starts_with(Lsp)) {
     auto method_start = keyword_pos + Lsp.size();
-    auto method_end = content->find(":", method_start);
-    if (method_end == std::string::npos) {
-      return ErrorBuilder()
-             << "Missing `:` after method name for `" << Lsp << "`";
-    }
-    auto method = content->substr(method_start, method_end - method_start);
 
     static constexpr llvm::StringLiteral LspEnd = "]]";
-    auto keyword_end = content->find("]]", method_end + 1);
+    auto keyword_end = content->find("]]", method_start);
     if (keyword_end == std::string::npos) {
       return ErrorBuilder()
              << "Missing `" << LspEnd << "` after `" << Lsp << "`";
     }
 
+    auto method_end = content->find(":", method_start);
+    auto extra_content_start = method_end + 1;
+    if (method_end == std::string::npos || method_end > keyword_end) {
+      method_end = keyword_end;
+      extra_content_start = keyword_end;
+    }
+    auto method = content->substr(method_start, method_end - method_start);
+
     auto extra_content =
-        content->substr(method_end + 1, keyword_end - (method_end + 1));
+        content->substr(extra_content_start, keyword_end - extra_content_start);
     std::string extra_content_sep;
     if (!extra_content.empty()) {
       extra_content_sep = ",";

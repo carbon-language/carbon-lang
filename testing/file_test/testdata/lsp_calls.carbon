@@ -10,12 +10,13 @@
 
 // --- STDIN
 [[@LSP:foo:]]
+[[@LSP:foo]]
 [[@LSP:bar:content]]
 [[@LSP:baz:
 multi
 line
 ]]
-[[@LSP:exit:]]
+[[@LSP:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
@@ -24,13 +25,17 @@ line
 // CHECK:STDERR:
 // CHECK:STDERR: {"jsonrpc": "2.0", "id": "1", "method": "foo"}
 // CHECK:STDERR:
+// CHECK:STDERR: Content-Length: 48
+// CHECK:STDERR:
+// CHECK:STDERR: {"jsonrpc": "2.0", "id": "2", "method": "foo"}
+// CHECK:STDERR:
 // CHECK:STDERR: Content-Length: 57
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "id": "2", "method": "bar", content}
+// CHECK:STDERR: {"jsonrpc": "2.0", "id": "3", "method": "bar", content}
 // CHECK:STDERR:
 // CHECK:STDERR: Content-Length: 61
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "id": "3", "method": "baz",
+// CHECK:STDERR: {"jsonrpc": "2.0", "id": "4", "method": "baz",
 // CHECK:STDERR: multi
 // CHECK:STDERR: line
 // CHECK:STDERR: }
