@@ -256,9 +256,7 @@ CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
 
 // Impl checking.
-CARBON_DIAGNOSTIC_KIND(AssociatedConstantDifferentInRedecl)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
-CARBON_DIAGNOSTIC_KIND(AssociatedConstantMissingInRedecl)
 CARBON_DIAGNOSTIC_KIND(AssociatedFunctionHere)
 CARBON_DIAGNOSTIC_KIND(ExtendImplForall)
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
@@ -272,7 +270,6 @@ CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
 CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
-CARBON_DIAGNOSTIC_KIND(ImplPreviousDeclHere)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
 

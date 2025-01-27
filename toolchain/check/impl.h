@@ -16,9 +16,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
 
 auto AddConstantsToImplWitnessFromConstraint(Context& context,
                                              const SemIR::Impl& impl,
-                                             SemIR::InstId witness_id,
-                                             SemIR::ImplId prev_decl_id)
-    -> void;
+                                             SemIR::InstId witness_id) -> void;
 
 // Update `impl`'s witness at the start of a definition.
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
