@@ -115,11 +115,8 @@ auto ToolchainFileTest::Run(
     }
   }
 
-  Driver driver({.fs = fs,
-                 .installation = &installation_,
-                 .input_stream = input_stream,
-                 .output_stream = &output_stream,
-                 .error_stream = &error_stream});
+  Driver driver(fs, &installation_, input_stream, &output_stream,
+                &error_stream);
   auto driver_result = driver.RunCommand(test_args);
   // If any diagnostics have been produced, add a trailing newline to make the
   // last diagnostic match intermediate diagnostics (that have a newline

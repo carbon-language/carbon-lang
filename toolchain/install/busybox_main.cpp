@@ -45,11 +45,7 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   }
   args.append(argv + 1, argv + argc);
 
-  Driver driver({.fs = fs,
-                 .installation = &install_paths,
-                 .input_stream = stdin,
-                 .output_stream = &llvm::outs(),
-                 .error_stream = &llvm::errs()});
+  Driver driver(fs, &install_paths, stdin, &llvm::outs(), &llvm::errs());
   bool success = driver.RunCommand(args).success;
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
