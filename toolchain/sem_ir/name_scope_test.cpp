@@ -13,7 +13,7 @@ namespace {
 using ::testing::ElementsAre;
 using ::testing::Pair;
 
-TEST(ScopeLookupResult, MakeWrappedLookupResultUsingValidInstId) {
+TEST(ScopeLookupResult, MakeWrappedLookupResultUsingExistingInstId) {
   InstId inst_id(1);
   auto result = ScopeLookupResult::MakeWrappedLookupResult(
       inst_id, AccessKind::Protected);
@@ -24,9 +24,9 @@ TEST(ScopeLookupResult, MakeWrappedLookupResultUsingValidInstId) {
   EXPECT_EQ(result.access_kind(), AccessKind::Protected);
 }
 
-TEST(ScopeLookupResult, MakeWrappedLookupResultUsingInvalidInstId) {
+TEST(ScopeLookupResult, MakeWrappedLookupResultUsingNoneInstId) {
   auto result = ScopeLookupResult::MakeWrappedLookupResult(
-      InstId::Invalid, AccessKind::Protected);
+      InstId::None, AccessKind::Protected);
 
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_FALSE(result.is_found());
@@ -44,7 +44,7 @@ TEST(ScopeLookupResult, MakeWrappedLookupResultUsingErrorInst) {
   EXPECT_EQ(result.access_kind(), AccessKind::Private);
 }
 
-TEST(ScopeLookupResult, MakeFoundValid) {
+TEST(ScopeLookupResult, MakeFoundExisting) {
   InstId inst_id(1);
   auto result = ScopeLookupResult::MakeFound(inst_id, AccessKind::Protected);
 
@@ -54,10 +54,10 @@ TEST(ScopeLookupResult, MakeFoundValid) {
   EXPECT_EQ(result.access_kind(), AccessKind::Protected);
 }
 
-TEST(ScopeLookupResult, MakeFoundInvalid) {
+TEST(ScopeLookupResult, MakeFoundNone) {
   EXPECT_DEATH(
-      ScopeLookupResult::MakeFound(InstId::Invalid, AccessKind::Protected),
-      "is_valid");
+      ScopeLookupResult::MakeFound(InstId::None, AccessKind::Protected),
+      "has_value");
 }
 
 TEST(ScopeLookupResult, MakeNotFound) {

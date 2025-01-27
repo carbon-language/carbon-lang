@@ -691,7 +691,7 @@ class FormatterImpl {
           break;
       }
       out_ << " = ";
-      FormatName(result.is_found() ? result.target_inst_id() : InstId::Invalid);
+      FormatName(result.is_found() ? result.target_inst_id() : InstId::None);
       out_ << "\n";
     }
 

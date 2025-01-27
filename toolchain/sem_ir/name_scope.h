@@ -22,33 +22,33 @@ enum class AccessKind : int8_t {
 //
 // Lookup results are constructed through the `Make()` factory functions. Each
 // result takes one of a few forms, depending on the function used:
-// - Found when the lookup was successful returning a valid `InstId`. Can be
-//   constructed using `MakeFound()` or `MakeWrappedLookupResult()` with a valid
-//   `inst_id`.
+// - Found when the lookup was successful returning an existing `InstId`. Can be
+//   constructed using `MakeFound()` or `MakeWrappedLookupResult()` with an
+//   existing `inst_id`.
 // - Not found when the name wasn't declared or nor poisoned. Can be constructed
-//   using `MakeNotFound()` or using `MakeWrappedLookupResult()` with an invalid
+//   using `MakeNotFound()` or using `MakeWrappedLookupResult()` with a `None`
 //   `inst_id`.
 // - Poisoned when the name wasn't declared but was poisoned and so also
 //   considered to not be found in that scope. Can be constructed using
 //   `MakePoisoned()`.
 // - Represent that an error has occurred during lookup. This is still
-//   considered found and the error `InstId` is considered valid. Can be
+//   considered found and the error `InstId` is considered existing. Can be
 //   constructed using `MakeError()` or using `MakeWrappedLookupResult()` with
 //   `ErrorInst::SingletonInstId`.
 class ScopeLookupResult {
  public:
   static auto MakeFound(InstId inst_id, AccessKind access_kind)
       -> ScopeLookupResult {
-    CARBON_CHECK(inst_id.is_valid());
+    CARBON_CHECK(inst_id.has_value());
     return MakeWrappedLookupResult(inst_id, access_kind);
   }
 
   static auto MakeNotFound() -> ScopeLookupResult {
-    return MakeWrappedLookupResult(InstId::Invalid, AccessKind::Public);
+    return MakeWrappedLookupResult(InstId::None, AccessKind::Public);
   }
 
   static auto MakePoisoned() -> ScopeLookupResult {
-    return ScopeLookupResult(InstId::Invalid, AccessKind::Public,
+    return ScopeLookupResult(InstId::None, AccessKind::Public,
                              /*is_poisoned=*/true);
   }
 
@@ -67,11 +67,11 @@ class ScopeLookupResult {
   // True when lookup was successful or resulted with an error. False for
   // poisoned or not found.
   auto is_found() const -> bool {
-    return !is_poisoned() && inst_id_.is_valid();
+    return !is_poisoned() && inst_id_.has_value();
   }
 
   // The `InstId` of the result of the lookup. Must only be called when lookup
-  // was successful e.g. `is_found()` returns true. Always returns a valid
+  // was successful e.g. `is_found()` returns true. Always returns an existing
   // `InstId`.
   auto target_inst_id() const -> InstId {
     CARBON_CHECK(is_found());
