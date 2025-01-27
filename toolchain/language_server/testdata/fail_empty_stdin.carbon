@@ -11,6 +11,6 @@
 // --- STDIN
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: error: Input/output error
+// CHECK:STDERR: error: Input/output error [LanguageServerTransportError]
 // CHECK:STDERR:
 // CHECK:STDOUT:

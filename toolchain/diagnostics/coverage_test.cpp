@@ -42,10 +42,6 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     DiagnosticKind::TooManyDigits,
-
-    // TODO: Test these once the language server framework is approved (#4841).
-    DiagnosticKind::LanguageServerMissingInputStream,
-    DiagnosticKind::LanguageServerTransportError,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

@@ -59,8 +59,8 @@ class ToolchainFileTest : public FileTestBase {
 
  private:
   // Adds a file to the fs.
-  auto AddFile(llvm::vfs::InMemoryFileSystem& fs,
-               llvm::StringRef path) -> ErrorOr<Success>;
+  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+      -> ErrorOr<Success>;
 
   // Controls whether `Run()` includes the prelude.
   auto is_no_prelude() const -> bool {
@@ -104,10 +104,6 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) -> ErrorOr<RunResult> {
-  if (component_ == "language_server" && !input_stream) {
-    return Error("language_server tests must provide STDIN");
-  }
-
   CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
   if (!is_no_prelude()) {
     for (const auto& file : prelude) {
