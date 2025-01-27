@@ -130,6 +130,7 @@ static auto CheckAssociatedFunctionImplementation(
 }
 
 // Builds an initial empty witness.
+// TODO: Fill the witness with the rewrites from the declaration.
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
@@ -201,7 +202,7 @@ static auto WitnessAccessMatchesInterface(
   return false;
 }
 
-// TODO: Merege this function into `ImplWitnessForDeclaration`.
+// TODO: Merge this function into `ImplWitnessForDeclaration`.
 auto AddConstantsToImplWitnessFromConstraint(Context& context,
                                              const SemIR::Impl& impl,
                                              SemIR::InstId witness_id) -> void {
