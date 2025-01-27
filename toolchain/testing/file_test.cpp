@@ -143,14 +143,17 @@ auto ToolchainFileTest::Run(
 }
 
 auto ToolchainFileTest::GetDefaultArgs() -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> args = {"--include-diagnostic-kind"};
+
   if (component_ == "format") {
-    return {"--include-diagnostic-kind", "format", "%s"};
+    args.insert(args.end(), {"format", "%s"});
+    return args;
   } else if (component_ == "language_server") {
-    return {"--include-diagnostic-kind", "language-server"};
+    args.insert(args.end(), {"language-server"});
+    return args;
   }
 
-  llvm::SmallVector<std::string> args = {"--include-diagnostic-kind", "compile",
-                                         "--phase=" + component_.str()};
+  args.insert(args.end(), {"compile", "--phase=" + component_.str()});
 
   if (component_ == "lex") {
     args.insert(args.end(), {"--dump-tokens", "--omit-file-boundary-tokens"});
