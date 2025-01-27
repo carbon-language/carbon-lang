@@ -13,6 +13,7 @@
 
 namespace Carbon {
 
+// Driver environment information, encapsulated for easy passing to subcommands.
 struct DriverEnv {
   explicit DriverEnv(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                      const InstallPaths* installation, FILE* input_stream,
