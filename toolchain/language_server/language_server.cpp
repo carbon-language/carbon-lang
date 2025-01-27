@@ -15,8 +15,8 @@
 namespace Carbon::LanguageServer {
 
 auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
-         llvm::raw_ostream& error_stream,
-         FilenameDiagnosticEmitter& emitter) -> bool {
+         llvm::raw_ostream& error_stream, FilenameDiagnosticEmitter& emitter)
+    -> bool {
   // TODO: Consider implementing a custom logger that splits vlog to
   // vlog_stream when provided. For now, this disables verbose logging.
   clang::clangd::StreamLogger logger(error_stream, clang::clangd::Logger::Info);
