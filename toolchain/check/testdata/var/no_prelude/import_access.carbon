@@ -101,7 +101,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
 // CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %v2.patt
@@ -133,7 +133,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
 // CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %v2.patt

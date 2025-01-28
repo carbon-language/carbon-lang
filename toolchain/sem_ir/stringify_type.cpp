@@ -9,6 +9,7 @@
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_info.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -74,10 +75,10 @@ class StepStack {
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
   auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
     PushNameId(name_id);
-    while (name_scope_id.is_valid() && name_scope_id != NameScopeId::Package) {
+    while (name_scope_id.has_value() && name_scope_id != NameScopeId::Package) {
       const auto& name_scope = sem_ir_->name_scopes().Get(name_scope_id);
       // TODO: Decide how to print unnamed scopes.
-      if (name_scope.name_id().is_valid()) {
+      if (name_scope.name_id().has_value()) {
         PushString(".");
         // TODO: For a generic scope, pass a SpecificId to this function and
         // include the relevant arguments.
@@ -113,7 +114,7 @@ class StepStack {
   // `A.B(T)`.
   auto PushSpecificId(const EntityWithParamsBase& entity,
                       SpecificId specific_id) -> void {
-    if (!entity.param_patterns_id.is_valid()) {
+    if (!entity.param_patterns_id.has_value()) {
       return;
     }
     int num_params =
@@ -122,7 +123,7 @@ class StepStack {
       PushString("()");
       return;
     }
-    if (!specific_id.is_valid()) {
+    if (!specific_id.has_value()) {
       // The name of the generic was used within the generic itself.
       // TODO: Should we print the names of the generic parameters in this
       // case?
@@ -165,7 +166,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << sem_ir.names().GetFormatted(step.name_id);
         continue;
       case StepStack::Step::Inst:
-        if (!step.inst_id.is_valid()) {
+        if (!step.inst_id.has_value()) {
           out << "<invalid type>";
           continue;
         }
@@ -199,12 +200,17 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.element_type_id);
         break;
       }
+      case CARBON_KIND(AssociatedConstantDecl inst): {
+        const auto& assoc_const =
+            sem_ir.associated_constants().Get(inst.assoc_const_id);
+        step_stack.PushQualifiedName(assoc_const.parent_scope_id,
+                                     assoc_const.name_id);
+        break;
+      }
       case CARBON_KIND(AssociatedEntityType inst): {
-        out << "<associated ";
+        out << "<associated entity in ";
         step_stack.PushString(">");
         step_stack.PushTypeId(inst.interface_type_id);
-        step_stack.PushString(" in ");
-        step_stack.PushTypeId(inst.entity_type_id);
         break;
       }
       case BindAlias::Kind:
@@ -354,7 +360,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           if (auto associated_const =
                   sem_ir.insts().TryGetAs<AssociatedConstantDecl>(
                       entity_inst_id)) {
-            step_stack.PushNameId(associated_const->name_id);
+            step_stack.PushNameId(sem_ir.associated_constants()
+                                      .Get(associated_const->assoc_const_id)
+                                      .name_id);
           } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
                          entity_inst_id)) {
             const auto& function =
@@ -384,7 +392,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(ImportRefUnloaded inst): {
-        if (inst.entity_name_id.is_valid()) {
+        if (inst.entity_name_id.has_value()) {
           step_stack.PushEntityName(inst.entity_name_id);
         } else {
           out << "<import ref unloaded invalid entity name>";
@@ -426,7 +434,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(SpecificFunction inst): {
         auto callee = SemIR::GetCalleeFunction(sem_ir, inst.callee_id);
-        if (callee.function_id.is_valid()) {
+        if (callee.function_id.has_value()) {
           step_stack.PushEntityName(sem_ir.functions().Get(callee.function_id),
                                     inst.specific_id);
         } else {
@@ -540,7 +548,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ArrayInit::Kind:
       case AsCompatible::Kind:
       case Assign::Kind:
-      case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case BaseDecl::Kind:
       case BindName::Kind:
@@ -603,7 +610,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         // constant value that we can print.
         auto const_inst_id =
             sem_ir.constant_values().GetConstantInstId(step.inst_id);
-        if (const_inst_id.is_valid() && const_inst_id != step.inst_id) {
+        if (const_inst_id.has_value() && const_inst_id != step.inst_id) {
           step_stack.PushInstId(const_inst_id);
           break;
         }

@@ -108,12 +108,12 @@ fn G() -> C {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc23_11: %C.elem = var_pattern %.loc23_16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc23_11: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc23_11: ref %C.elem = var <none>
 // CHECK:STDOUT:   %.loc23_28: %C.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc23_23: %C.elem = var_pattern %.loc23_28
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc23_23: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc23_23: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.501 [template = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

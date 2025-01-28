@@ -45,41 +45,41 @@ struct Real : public Printable<Real> {
 struct FloatId : public IdBase<FloatId> {
   static constexpr llvm::StringLiteral Label = "float";
   using ValueType = llvm::APFloat;
-  static const FloatId Invalid;
+  static const FloatId None;
   using IdBase::IdBase;
 };
-constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
+constexpr FloatId FloatId::None(FloatId::NoneIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IdBase<RealId> {
   static constexpr llvm::StringLiteral Label = "real";
   using ValueType = Real;
-  static const RealId Invalid;
+  static const RealId None;
   using IdBase::IdBase;
 };
-constexpr RealId RealId::Invalid(RealId::InvalidIndex);
+constexpr RealId RealId::None(RealId::NoneIndex);
 
 // Corresponds to StringRefs for identifiers.
 //
-// `NameId` relies on the values of this type other than `Invalid` all being
+// `NameId` relies on the values of this type other than `None` all being
 // non-negative.
 struct IdentifierId : public IdBase<IdentifierId> {
   static constexpr llvm::StringLiteral Label = "identifier";
   using ValueType = llvm::StringRef;
-  static const IdentifierId Invalid;
+  static const IdentifierId None;
   using IdBase::IdBase;
 };
-constexpr IdentifierId IdentifierId::Invalid(IdentifierId::InvalidIndex);
+constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
 
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
   static constexpr llvm::StringLiteral Label = "string";
   using ValueType = llvm::StringRef;
-  static const StringLiteralValueId Invalid;
+  static const StringLiteralValueId None;
   using IdBase::IdBase;
 };
-constexpr StringLiteralValueId StringLiteralValueId::Invalid(
-    StringLiteralValueId::InvalidIndex);
+constexpr StringLiteralValueId StringLiteralValueId::None(
+    StringLiteralValueId::NoneIndex);
 
 }  // namespace Carbon
 

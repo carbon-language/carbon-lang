@@ -38,11 +38,8 @@ TEST(SemIRTest, YAML) {
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   RawStringOstream print_stream;
-  Driver driver({.fs = fs,
-                 .installation = &install_paths,
-                 .input_stream = nullptr,
-                 .output_stream = &print_stream,
-                 .error_stream = &llvm::errs()});
+  Driver driver(fs, &install_paths, /*input_stream=*/nullptr, &print_stream,
+                &llvm::errs());
   auto run_result =
       driver.RunCommand({"compile", "--no-prelude-import", "--phase=check",
                          "--dump-raw-sem-ir", "test.carbon"});

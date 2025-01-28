@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Numeric literals](#numeric-literals)
     -   [Numeric literal syntax](#numeric-literal-syntax)
-    -   [Defined Types](#defined-types)
+    -   [Defined types](#defined-types)
     -   [Implicit conversions](#implicit-conversions)
     -   [Examples](#examples)
     -   [Alternatives Considered](#alternatives-considered)
@@ -70,7 +70,7 @@ Numeric literal syntax is covered in the
 doc. Both Integer and Real-Number syntax is defined, with decimal, hexadecimal
 and binary integer literals, and decimal and hexadecimal real number literals.
 
-### Defined Types
+### Defined types
 
 The following types are defined in the Carbon prelude:
 

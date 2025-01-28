@@ -123,7 +123,7 @@ class CanonicalValueStore {
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType { return values_.Get(id); }
 
-  // Looks up the canonical ID for a value, or returns invalid if not in the
+  // Looks up the canonical ID for a value, or returns `None` if not in the
   // store.
   auto Lookup(ValueType value) const -> IdT;
 
@@ -183,7 +183,7 @@ auto CanonicalValueStore<IdT>::Lookup(ValueType value) const -> IdT {
   if (auto result = set_.Lookup(value, KeyContext(values_.array_ref()))) {
     return result.key();
   }
-  return IdT::Invalid;
+  return IdT::None;
 }
 
 template <typename IdT>

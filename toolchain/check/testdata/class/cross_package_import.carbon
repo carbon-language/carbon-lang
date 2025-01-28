@@ -48,7 +48,7 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_extern";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+8]]:8: error: variable has incomplete type `Other.C` [IncompleteTypeInVarDecl]
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+8]]:8: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: in import [InImport]

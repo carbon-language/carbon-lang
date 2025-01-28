@@ -64,7 +64,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc4_11: %C.elem = var_pattern %.loc4_16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -108,7 +108,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:     .b_val = %b_val
 // CHECK:STDOUT:     .a_val = %a_val
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d_val.patt: %C = binding_pattern d_val
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %d_val.patt

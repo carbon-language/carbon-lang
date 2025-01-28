@@ -248,7 +248,7 @@ auto LowerConstants(FileContext& file_context,
   // dependencies of a constant before we lower the constant itself.
   for (auto [inst_id_val, const_id] :
        llvm::enumerate(file_context.sem_ir().constant_values().array_ref())) {
-    if (!const_id.is_valid() || !const_id.is_template()) {
+    if (!const_id.has_value() || !const_id.is_template()) {
       // We are only interested in lowering template constants.
       continue;
     }
@@ -260,7 +260,7 @@ auto LowerConstants(FileContext& file_context,
     }
 
     auto inst = file_context.sem_ir().insts().Get(inst_id);
-    if (inst.type_id().is_valid() &&
+    if (inst.type_id().has_value() &&
         !file_context.sem_ir().types().IsComplete(inst.type_id())) {
       // If a constant doesn't have a complete type, that means we imported it
       // but didn't actually use it.

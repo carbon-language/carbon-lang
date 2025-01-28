@@ -80,7 +80,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:   %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
 // CHECK:STDOUT:   %x.param: %T = value_param runtime_param0
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
@@ -88,7 +88,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {} {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc40_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc40_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

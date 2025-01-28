@@ -43,11 +43,8 @@ class DriverTest : public testing::Test {
   DriverTest()
       : installation_(
             InstallPaths::MakeForBazelRunfiles(Testing::GetExePath())),
-        driver_({.fs = fs_,
-                 .installation = &installation_,
-                 .input_stream = nullptr,
-                 .output_stream = &test_output_stream_,
-                 .error_stream = &test_error_stream_}) {
+        driver_(fs_, &installation_, /*input_stream=*/nullptr,
+                &test_output_stream_, &test_error_stream_) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir_env != nullptr);
     test_tmpdir_ = tmpdir_env;
@@ -226,6 +223,11 @@ TEST_F(DriverTest, FileOutput) {
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
   EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));
+}
+
+TEST_F(DriverTest, LanguageServerNoStdin) {
+  EXPECT_FALSE(driver_.RunCommand({"language-server"}).success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("requires input_stream"));
 }
 
 }  // namespace

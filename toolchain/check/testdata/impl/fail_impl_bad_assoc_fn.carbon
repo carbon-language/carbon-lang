@@ -221,8 +221,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.826: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.ae7: type = assoc_entity_type %I.type, %F.type.cf0 [template]
-// CHECK:STDOUT:   %assoc0.fa7: %F.assoc_type.ae7 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0.a5e: %I.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %NoF: type = class_type @NoF [template]
 // CHECK:STDOUT:   %impl_witness.85bcb7.1: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -255,8 +255,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.ccd: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.c14: type = fn_type @F.5 [template]
 // CHECK:STDOUT:   %F.b71: %F.type.c14 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.a73: type = assoc_entity_type %J.type, %F.type.c14 [template]
-// CHECK:STDOUT:   %assoc0.93f: %F.assoc_type.a73 = assoc_entity element0, @J.%F.decl [template]
+// CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type %J.type [template]
+// CHECK:STDOUT:   %assoc0.ebc: %J.assoc_type = assoc_entity element0, @J.%F.decl [template]
 // CHECK:STDOUT:   %FMissingParam: type = class_type @FMissingParam [template]
 // CHECK:STDOUT:   %impl_witness.85bcb7.7: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT:   %F.type.695: type = fn_type @F.6 [template]
@@ -305,8 +305,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %array_type.873: type = array_type %int_4, %Self.as_type [symbolic]
 // CHECK:STDOUT:   %F.type.6ed: type = fn_type @F.13 [template]
 // CHECK:STDOUT:   %F.998: %F.type.6ed = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.4b1: type = assoc_entity_type %SelfNested.type, %F.type.6ed [template]
-// CHECK:STDOUT:   %assoc0.7e7: %F.assoc_type.4b1 = assoc_entity element0, @SelfNested.%F.decl [template]
+// CHECK:STDOUT:   %SelfNested.assoc_type: type = assoc_entity_type %SelfNested.type [template]
+// CHECK:STDOUT:   %assoc0.a58: %SelfNested.assoc_type = assoc_entity element0, @SelfNested.%F.decl [template]
 // CHECK:STDOUT:   %SelfNestedBadParam: type = class_type @SelfNestedBadParam [template]
 // CHECK:STDOUT:   %impl_witness.85bcb7.14: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT:   %ptr.4cd: type = ptr_type %SelfNestedBadParam [template]
@@ -386,7 +386,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
 // CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [template = constants.%F.bc6] {} {}
-// CHECK:STDOUT:   %assoc0: %F.assoc_type.ae7 = assoc_entity element0, %F.decl [template = constants.%assoc0.fa7]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.a5e]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -424,7 +424,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type.a73 = assoc_entity element0, %F.decl [template = constants.%assoc0.93f]
+// CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.ebc]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -464,7 +464,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref @F.13.%array_type.loc188_52.1 (%array_type.873) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.13.%array_type.loc188_52.1 (%array_type.873) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type.4b1 = assoc_entity element0, %F.decl [template = constants.%assoc0.7e7]
+// CHECK:STDOUT:   %assoc0: %SelfNested.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.a58]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1016,7 +1016,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1029,7 +1028,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.5(@J.%Self: %J.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: bool](%b.param_patt: bool) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1148,7 +1148,7 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
   if (LLVM_UNLIKELY(opening_token_info.kind() != kind.opening_symbol())) {
     has_mismatched_brackets_ = true;
-    buffer_.GetTokenInfo(token).set_opening_token_index(TokenIndex::Invalid);
+    buffer_.GetTokenInfo(token).set_opening_token_index(TokenIndex::None);
     return token;
   }
 

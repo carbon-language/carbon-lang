@@ -45,8 +45,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.type.86a: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.408: %F.type.86a = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.59c: type = assoc_entity_type %UseSelf.type, %F.type.86a [template]
-// CHECK:STDOUT:   %assoc0.86d: %F.assoc_type.59c = assoc_entity element0, @UseSelf.%F.decl [template]
+// CHECK:STDOUT:   %UseSelf.assoc_type: type = assoc_entity_type %UseSelf.type [template]
+// CHECK:STDOUT:   %assoc0.774: %UseSelf.assoc_type = assoc_entity element0, @UseSelf.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -70,8 +70,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type.46b: type = tuple_type (%ptr.e87, %struct_type.x.y.270) [symbolic]
 // CHECK:STDOUT:   %F.type.6ed: type = fn_type @F.4 [template]
 // CHECK:STDOUT:   %F.998: %F.type.6ed = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.4b1: type = assoc_entity_type %SelfNested.type, %F.type.6ed [template]
-// CHECK:STDOUT:   %assoc0.7e7: %F.assoc_type.4b1 = assoc_entity element0, @SelfNested.%F.decl [template]
+// CHECK:STDOUT:   %SelfNested.assoc_type: type = assoc_entity_type %SelfNested.type [template]
+// CHECK:STDOUT:   %assoc0.a58: %SelfNested.assoc_type = assoc_entity element0, @SelfNested.%F.decl [template]
 // CHECK:STDOUT:   %impl_witness.f4e: <witness> = impl_witness (@impl.3.%F.decl) [template]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [template]
 // CHECK:STDOUT:   %struct_type.x.y.2f0: type = struct_type {.x: %C, .y: %empty_tuple.type} [template]
@@ -151,7 +151,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %return.param: ref @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type.59c = assoc_entity element0, %F.decl [template = constants.%assoc0.86d]
+// CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.774]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -182,7 +182,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.4.%tuple.type (%tuple.type.46b) = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type.4b1 = assoc_entity element0, %F.decl [template = constants.%assoc0.7e7]
+// CHECK:STDOUT:   %assoc0: %SelfNested.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.a58]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

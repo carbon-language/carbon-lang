@@ -113,9 +113,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %B.patt.loc6_9.1: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
-// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc6_9.1, runtime_param<invalid> [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
+// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc6_9.1, runtime_param<none> [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc6_13.2: type = value_of_initializer %bool.make_type [template = bool]
@@ -290,8 +290,8 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %C.2ba: type = class_type @C, @C(%false) [template]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
-// CHECK:STDOUT:   %NotEqual.type.e6c: type = fn_type @NotEqual.1 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.85b, imports.%Core.import_ref.67a) [template]
+// CHECK:STDOUT:   %NotEqual.type.e6c: type = fn_type @NotEqual.1 [template]
 // CHECK:STDOUT:   %NotEqual.type.c0e: type = fn_type @NotEqual.2 [template]
 // CHECK:STDOUT:   %NotEqual.bf4: %NotEqual.type.c0e = struct_value () [template]
 // CHECK:STDOUT:   %NotEqual.bound.542: <bound method> = bound_method %true, %NotEqual.bf4 [template]
@@ -321,9 +321,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %B.patt.loc4_9.1: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
-// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc4_9.1, runtime_param<invalid> [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
+// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc4_9.1, runtime_param<none> [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc4_13.2: type = value_of_initializer %bool.make_type [template = bool]

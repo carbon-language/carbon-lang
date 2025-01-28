@@ -11,4 +11,4 @@
 // CHECK:STDOUT:   tokens:
 
 0x9
-// CHECK:STDOUT:   - { index: 1, kind: 'IntLiteral', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '0x9', value: `9`, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "IntLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "0x9", value: "9", has_leading_space: true }

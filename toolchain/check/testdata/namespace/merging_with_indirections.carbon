@@ -110,7 +110,7 @@ fn Run() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %NS1: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = imports.%Other.A
 // CHECK:STDOUT:     .B = %B.decl

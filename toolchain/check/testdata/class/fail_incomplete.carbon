@@ -34,7 +34,7 @@ fn CallClassFunction() {
   Class.Function();
 }
 
-// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:17: error: variable has incomplete type `Class` [IncompleteTypeInVarDecl]
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:17: error: binding pattern has incomplete type `Class` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var global_var: Class;
 // CHECK:STDERR:                 ^~~~~
 // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-25]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
@@ -86,7 +86,7 @@ fn Copy(p: Class*) -> Class {
 }
 
 fn Let(p: Class*) {
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:10: error: `let` binding has incomplete type `Class` [IncompleteTypeInLetDecl]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `Class` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   let c: Class = *p;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-77]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
@@ -499,7 +499,7 @@ class C {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: <error> = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <invalid>
+// CHECK:STDOUT:   %.var: ref <error> = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

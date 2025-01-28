@@ -99,7 +99,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc13_5: %Inner.elem = var_pattern %.loc13_10
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Inner.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Inner.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

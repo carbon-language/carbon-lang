@@ -6,6 +6,7 @@
 
 #include <fstream>
 
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "common/check.h"
 #include "common/ostream.h"
@@ -158,12 +159,6 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     lines.pop_back();
   }
 
-  // `{{` and `[[` are escaped as a regex matcher.
-  static RE2 double_brace_re(R"(\{\{)");
-  static RE2 double_square_bracket_re(R"(\[\[)");
-  // End-of-line whitespace is replaced with a regex matcher to make it visible.
-  static RE2 end_of_line_whitespace_re(R"((\s+)$)");
-
   // The default file number for when no specific file is found.
   int default_file_number = 0;
 
@@ -182,9 +177,16 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
       check_line.append(line);
     }
 
-    RE2::Replace(&check_line, double_brace_re, R"({{\\{\\{}})");
-    RE2::Replace(&check_line, double_square_bracket_re, R"({{\\[\\[}})");
-    RE2::Replace(&check_line, end_of_line_whitespace_re, R"({{\1}})");
+    // \r and \t are invisible characters worth marking.
+    // {{ and [[ are autoupdate syntax which we need to escape.
+    check_line = absl::StrReplaceAll(check_line, {{"\r", R"({{\r}})"},
+                                                  {"\t", R"({{\t}})"},
+                                                  {"{{", R"({{\{\{}})"},
+                                                  {"[[", R"({{\[\[}})"}});
+    // Add an empty regex to call out end-of-line whitespace.
+    if (check_line.ends_with(' ')) {
+      check_line.append("{{}}");
+    }
 
     // Ignore TEST_TMPDIR in output.
     if (auto pos = check_line.find(tmpdir); pos != std::string::npos) {

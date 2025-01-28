@@ -31,7 +31,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc11_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_6.1, runtime_param<invalid> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_6.1, runtime_param<none> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %p.patt: @F.%ptr.loc11_21.2 (%ptr.a13) = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: @F.%ptr.loc11_21.2 (%ptr.a13) = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @F.%ptr.loc11_20.2 (%ptr.79f) = return_slot_pattern
@@ -39,7 +39,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc11_27: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc11_28: type = ptr_type %T [symbolic = %ptr.loc11_20.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%ptr.loc11_21.2 (%ptr.a13) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr.loc11_21.1 [symbolic = %ptr.loc11_21.2 (constants.%ptr.a13)] {

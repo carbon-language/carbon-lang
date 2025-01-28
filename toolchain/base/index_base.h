@@ -20,12 +20,12 @@ class DataIterator;
 
 // Non-templated portions of `IdBase`.
 struct AnyIdBase {
-  static constexpr int32_t InvalidIndex = -1;
+  static constexpr int32_t NoneIndex = -1;
 
   AnyIdBase() = delete;
   constexpr explicit AnyIdBase(int index) : index(index) {}
 
-  constexpr auto is_valid() const -> bool { return index != InvalidIndex; }
+  constexpr auto has_value() const -> bool { return index != NoneIndex; }
 
   int32_t index;
 };
@@ -50,16 +50,16 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << IdT::Label;
-    if (is_valid()) {
+    if (has_value()) {
       out << index;
     } else {
-      out << "<invalid>";
+      out << "<none>";
     }
   }
 
   // Support simple equality comparison for ID types.
-  constexpr auto operator==(IdBase<IdT> rhs) const -> bool {
-    return index == rhs.index;
+  friend constexpr auto operator==(IdBase<IdT> lhs, IdBase<IdT> rhs) -> bool {
+    return lhs.index == rhs.index;
   }
 };
 
@@ -73,8 +73,9 @@ struct IndexBase : public IdBase<IdT> {
   using IdBase<IdT>::IdBase;
 
   // Support relational comparisons for index types.
-  auto operator<=>(IndexBase<IdT> rhs) const -> std::strong_ordering {
-    return this->index <=> rhs.index;
+  friend auto operator<=>(IndexBase<IdT> lhs, IndexBase<IdT> rhs)
+      -> std::strong_ordering {
+    return lhs.index <=> rhs.index;
   }
 };
 
@@ -90,11 +91,13 @@ class IndexIterator
 
   explicit IndexIterator(IndexT index) : index_(index) {}
 
-  auto operator==(const IndexIterator& rhs) const -> bool {
-    return index_ == rhs.index_;
+  friend auto operator==(const IndexIterator& lhs, const IndexIterator& rhs)
+      -> bool {
+    return lhs.index_ == rhs.index_;
   }
-  auto operator<=>(const IndexIterator& rhs) const -> std::strong_ordering {
-    return index_ <=> rhs.index_;
+  friend auto operator<=>(const IndexIterator& lhs, const IndexIterator& rhs)
+      -> std::strong_ordering {
+    return lhs.index_ <=> rhs.index_;
   }
 
   auto operator*() const -> const IndexT& { return index_; }
@@ -102,8 +105,9 @@ class IndexIterator
   using llvm::iterator_facade_base<IndexIterator,
                                    std::random_access_iterator_tag,
                                    const IndexT, int>::operator-;
-  auto operator-(const IndexIterator& rhs) const -> int {
-    return index_.index - rhs.index_.index;
+  friend auto operator-(const IndexIterator& lhs, const IndexIterator& rhs)
+      -> int {
+    return lhs.index_.index - rhs.index_.index;
   }
 
   auto operator+=(int n) -> IndexIterator& {

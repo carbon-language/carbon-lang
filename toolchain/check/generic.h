@@ -22,7 +22,7 @@ auto StartGenericDefinition(Context& context) -> void;
 auto DiscardGenericDecl(Context& context) -> void;
 
 // Finish processing a potentially generic declaration and produce a
-// corresponding generic object. Returns SemIR::GenericId::Invalid if this
+// corresponding generic object. Returns SemIR::GenericId::None if this
 // declaration is not actually generic.
 auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId;
 
@@ -60,19 +60,20 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId;
 
-// Builds a new specific if the given generic is valid. Otherwise returns an
-// invalid specific.
+// Builds a new specific if the given generic is it has a value. Otherwise
+// returns `None`.
 inline auto MakeSpecificIfGeneric(Context& context, SemIRLoc loc,
                                   SemIR::GenericId generic_id,
                                   SemIR::InstBlockId args_id)
     -> SemIR::SpecificId {
-  return generic_id.is_valid() ? MakeSpecific(context, loc, generic_id, args_id)
-                               : SemIR::SpecificId::Invalid;
+  return generic_id.has_value()
+             ? MakeSpecific(context, loc, generic_id, args_id)
+             : SemIR::SpecificId::None;
 }
 
 // Builds the specific that describes how the generic should refer to itself.
-// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. For an
-// invalid `generic_id`, returns an invalid specific ID.
+// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If
+// `generic_id` is `None`, returns `None`.
 auto MakeSelfSpecific(Context& context, SemIRLoc loc,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
 
@@ -83,6 +84,7 @@ auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
                                SemIR::SpecificId specific_id) -> bool;
 
 // Returns an instruction describing the entity named by the given specific.
+// This is used to name the entity in diagnostics.
 auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
     -> SemIR::InstId;
 

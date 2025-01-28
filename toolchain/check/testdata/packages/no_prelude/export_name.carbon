@@ -232,7 +232,7 @@ private export C;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.9be]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -246,7 +246,7 @@ private export C;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc10_3: %NSC.elem = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %NSC.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %NSC.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.9f4]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -287,7 +287,7 @@ private export C;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   %NSC: type = export NSC, imports.%Main.NSC [template = constants.%NSC]
 // CHECK:STDOUT: }
@@ -323,7 +323,7 @@ private export C;
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_export.carbon
@@ -358,7 +358,7 @@ private export C;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT:   %NSC: type = export NSC, imports.%Main.NSC [template = constants.%NSC]
 // CHECK:STDOUT: }
@@ -422,7 +422,7 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc6: %C = var_pattern %c.patt
@@ -516,8 +516,8 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc4: %C = var_pattern %c.patt
@@ -611,7 +611,7 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc6: %C = var_pattern %c.patt
@@ -683,7 +683,7 @@ private export C;
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_decl.carbon
@@ -734,7 +734,7 @@ private export C;
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -782,7 +782,7 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %c.patt
@@ -876,7 +876,7 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc7: %C = var_pattern %c.patt
@@ -940,7 +940,7 @@ private export C;
 // CHECK:STDOUT:     .Local = %Local
 // CHECK:STDOUT:     .NSLocal = %NSLocal
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %Local: <error> = bind_alias Local, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <error> = name_ref NS, <error> [template = <error>]
@@ -973,7 +973,7 @@ private export C;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1008,7 +1008,7 @@ private export C;
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc6: %C = var_pattern %c.patt
@@ -1064,7 +1064,7 @@ private export C;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C: type = export C, imports.%Main.C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -77,7 +77,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc11_11: %C.elem = var_pattern %.loc11_16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

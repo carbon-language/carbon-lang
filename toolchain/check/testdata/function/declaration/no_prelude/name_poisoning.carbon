@@ -631,7 +631,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc18_3: %D.elem = var_pattern %.loc18_9
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %D.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %D.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.C1 [template = constants.%complete_type.ec1]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -975,7 +975,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@D2.%Self: %D2.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param_patt: %C);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1005,7 +1004,7 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc12: type = bind_alias <invalid>, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc12: type = bind_alias <none>, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -1038,7 +1037,7 @@ fn F() {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1072,8 +1071,8 @@ fn F() {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1155,8 +1154,8 @@ fn F() {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %B.assoc_type: type = assoc_entity_type %A.type, %B.type [template]
-// CHECK:STDOUT:   %assoc0: %B.assoc_type = assoc_entity element0, @A.%B.decl [template]
+// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [template]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1165,7 +1164,7 @@ fn F() {
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %assoc0: %B.assoc_type = assoc_entity element0, %B.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %B.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1184,7 +1183,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @B(@A.%Self: %A.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1275,7 +1273,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc9_5: %B.elem = var_pattern %.loc9_10
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.96d] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type.57e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

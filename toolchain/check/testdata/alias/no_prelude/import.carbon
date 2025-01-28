@@ -130,7 +130,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .c_alias_alias = %c_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, imports.%Main.c_alias [template = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%Main.c_alias [template = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
@@ -174,7 +174,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = imports.%Main.b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %ptr = binding_pattern c
 // CHECK:STDOUT:     %.loc6_1: %ptr = var_pattern %c.patt
@@ -248,7 +248,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .a_alias_alias = %a_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%Main.a_alias
 // CHECK:STDOUT:   %a_alias_alias: ref %empty_tuple.type = bind_alias a_alias_alias, imports.%Main.a_alias
 // CHECK:STDOUT:   name_binding_decl {
@@ -290,7 +290,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = imports.%Main.b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %empty_tuple.type = binding_pattern c
 // CHECK:STDOUT:     %.loc11_1: %empty_tuple.type = var_pattern %c.patt

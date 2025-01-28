@@ -11,8 +11,8 @@
 namespace Carbon::Lex {
 
 auto DumpNoNewline(const TokenizedBuffer& tokens, TokenIndex token) -> void {
-  if (!token.is_valid()) {
-    llvm::errs() << "TokenIndex(invalid)";
+  if (!token.has_value()) {
+    llvm::errs() << "TokenIndex(<none>)";
     return;
   }
 

@@ -27,9 +27,7 @@ static auto GenerateCppIncludesHeaderCode(
   std::string code;
   llvm::raw_string_ostream code_stream(code);
   for (const auto& [path, _] : imports) {
-    code_stream << "#include \"";
-    code_stream.write_escaped(path);
-    code_stream << "\"\n";
+    code_stream << "#include \"" << FormatEscaped(path) << "\"\n";
   }
   return code;
 }

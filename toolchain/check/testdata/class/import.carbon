@@ -107,7 +107,7 @@ fn Run() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc8_3: %Field.elem = var_pattern %.loc8_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Field.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Field.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -228,7 +228,7 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

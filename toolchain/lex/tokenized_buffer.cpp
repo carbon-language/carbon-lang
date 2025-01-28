@@ -254,36 +254,38 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   // and get the quotes included.
   output_stream << llvm::formatv(
       "  - { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
-      "spelling: '{5}'",
+      "spelling: \"{5}\"",
       llvm::format_decimal(token_index, widths.index),
       llvm::right_justify(
-          llvm::formatv("'{0}'", token_info.kind().name()).str(),
+          llvm::formatv("\"{0}\"", token_info.kind().name()).str(),
           widths.kind + 2),
       llvm::format_decimal(GetLineNumber(token), widths.line),
       llvm::format_decimal(GetColumnNumber(token), widths.column),
       llvm::format_decimal(GetIndentColumnNumber(line_index), widths.indent),
-      token_text);
+      FormatEscaped(token_text, /*use_hex_escapes=*/true));
 
   switch (token_info.kind()) {
     case TokenKind::Identifier:
       output_stream << ", identifier: " << GetIdentifier(token).index;
       break;
     case TokenKind::IntLiteral:
-      output_stream << ", value: `";
+      output_stream << ", value: \"";
       value_stores_->ints()
           .Get(GetIntLiteral(token))
           .print(output_stream, /*isSigned=*/false);
-      output_stream << "`";
+      output_stream << "\"";
       break;
     case TokenKind::RealLiteral:
-      output_stream << ", value: `"
-                    << value_stores_->reals().Get(GetRealLiteral(token)) << "`";
+      output_stream << ", value: \""
+                    << value_stores_->reals().Get(GetRealLiteral(token))
+                    << "\"";
       break;
     case TokenKind::StringLiteral:
-      output_stream << ", value: `"
-                    << value_stores_->string_literal_values().Get(
-                           GetStringLiteralValue(token))
-                    << "`";
+      output_stream << ", value: \""
+                    << FormatEscaped(value_stores_->string_literal_values().Get(
+                                         GetStringLiteralValue(token)),
+                                     /*use_hex_escapes=*/true)
+                    << "\"";
       break;
     default:
       if (token_info.kind().is_opening_symbol()) {

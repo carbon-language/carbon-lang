@@ -54,7 +54,7 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
-    if (return_slot_pattern_id.is_valid()) {
+    if (return_slot_pattern_id.has_value()) {
       out << ", return_slot_pattern: " << return_slot_pattern_id;
     }
     if (!body_block_ids.empty()) {
@@ -81,30 +81,30 @@ struct Function : public EntityWithParamsBase,
                                                InstId param_pattern_id)
       -> ParamPatternInfo;
 
-  // Gets the name from the name binding instruction, or invalid if this pattern
+  // Gets the name from the name binding instruction, or `None` if this pattern
   // has been replaced with BuiltinErrorInst.
   static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
       -> SemIR::NameId;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
-  // specified.  Returns `Invalid` if no return type was specified, in which
+  // specified.  Returns `None` if no return type was specified, in which
   // case the effective return type is an empty tuple.
   auto GetDeclaredReturnType(const File& file,
-                             SpecificId specific_id = SpecificId::Invalid) const
+                             SpecificId specific_id = SpecificId::None) const
       -> TypeId;
 };
 
 class File;
 
 struct CalleeFunction {
-  // The function. Invalid if not a function.
+  // The function. `None` if not a function.
   SemIR::FunctionId function_id;
   // The specific that contains the function.
   SemIR::SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SemIR::SpecificId resolved_specific_id;
-  // The bound `self` parameter. Invalid if not a method.
+  // The bound `self` parameter. `None` if not a method.
   SemIR::InstId self_id;
   // True if an error instruction was found.
   bool is_error;

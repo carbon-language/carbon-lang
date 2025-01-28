@@ -27,8 +27,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

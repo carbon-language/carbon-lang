@@ -136,7 +136,7 @@ class Derived {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc4_3: %Base.elem = var_pattern %.loc4_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.0a3 [template = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -152,7 +152,7 @@ class Derived {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.344 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.f8f [template = constants.%complete_type.da6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -260,7 +260,7 @@ class Derived {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc7_3: %Derived.elem = var_pattern %.loc7_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Derived.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Derived.elem = var <none>
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d [template = constants.%complete_type.860]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

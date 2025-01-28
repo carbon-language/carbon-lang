@@ -95,12 +95,12 @@ fn Run() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc8_3: %Base.elem = var_pattern %.loc8_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc8: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc8: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %.loc9_13: %Base.elem = field_decl unused, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc9_3: %Base.elem = var_pattern %.loc9_13
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc9: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc9: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.20c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -195,7 +195,7 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

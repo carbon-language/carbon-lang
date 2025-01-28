@@ -16,6 +16,7 @@ filegroup(
         "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
         "//toolchain/format:testdata",
+        "//toolchain/language_server:testdata",
         "//toolchain/lex:testdata",
         "//toolchain/lower:testdata",
         "//toolchain/parse:testdata",

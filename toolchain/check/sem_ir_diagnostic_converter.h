@@ -58,7 +58,7 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
   const SemIR::File* sem_ir_;
 
   // The last token encountered during processing.
-  Lex::TokenIndex last_token_ = Lex::TokenIndex::Invalid;
+  Lex::TokenIndex last_token_ = Lex::TokenIndex::None;
 };
 
 }  // namespace Carbon::Check

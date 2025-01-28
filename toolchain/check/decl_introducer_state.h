@@ -26,18 +26,17 @@ struct DeclIntroducerState {
   // The token kind of the introducer.
   Lex::TokenKind kind;
 
-  // Nodes of modifiers on this declaration, in expected order. `Invalid` if no
+  // Nodes of modifiers on this declaration, in expected order. `None` if no
   // modifier of that kind is present.
   Parse::NodeId
       ordered_modifier_node_ids[static_cast<int8_t>(ModifierOrder::Decl) + 1] =
-          {Parse::NodeId::Invalid, Parse::NodeId::Invalid,
-           Parse::NodeId::Invalid};
+          {Parse::NodeId::None, Parse::NodeId::None, Parse::NodeId::None};
 
   // Invariant: contains just the modifiers represented by `saw_*_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet();
 
   // If there's an `extern library` in use, the library name.
-  SemIR::LibraryNameId extern_library = SemIR::LibraryNameId::Invalid;
+  SemIR::LibraryNameId extern_library = SemIR::LibraryNameId::None;
 };
 
 // Stack of `DeclIntroducerState` values, representing all the declaration

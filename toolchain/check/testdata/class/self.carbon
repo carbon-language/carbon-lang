@@ -144,7 +144,7 @@ class Class {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc8_3: %Class.elem = var_pattern %.loc8_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

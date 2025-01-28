@@ -153,7 +153,7 @@ class FunctionContext {
     const SemIR::InstNamer* inst_namer_;
 
     // The current instruction ID.
-    SemIR::InstId inst_id_ = SemIR::InstId::Invalid;
+    SemIR::InstId inst_id_ = SemIR::InstId::None;
   };
 
   // Emits a value copy for type `type_id` from `source_id` to `dest_id`.

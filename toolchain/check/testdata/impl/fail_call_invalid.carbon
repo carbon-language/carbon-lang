@@ -32,8 +32,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Self.as_type.716: type = facet_access_type %Self.3c9 [symbolic]
 // CHECK:STDOUT:   %G.type.b60: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.cb0: %G.type.b60 = struct_value () [template]
-// CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Simple.type, %G.type.b60 [template]
-// CHECK:STDOUT:   %assoc0.f1b: %G.assoc_type = assoc_entity element0, @Simple.%G.decl [template]
+// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type %Simple.type [template]
+// CHECK:STDOUT:   %assoc0.45f: %Simple.assoc_type = assoc_entity element0, @Simple.%G.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (<error>) [template]
@@ -93,7 +93,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type.716) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0.f1b]
+// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0.45f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -129,7 +129,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0.f1b]
+// CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0.45f]
 // CHECK:STDOUT:   %impl.elem0: %G.type.b60 = impl_witness_access constants.%impl_witness.85b, element0 [template = <error>]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   return

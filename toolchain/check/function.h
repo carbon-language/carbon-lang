@@ -32,7 +32,7 @@ struct SuspendedFunction {
 auto CheckFunctionTypeMatches(
     Context& context, const SemIR::Function& new_function,
     const SemIR::Function& prev_function,
-    SemIR::SpecificId prev_specific_id = SemIR::SpecificId::Invalid,
+    SemIR::SpecificId prev_specific_id = SemIR::SpecificId::None,
     bool check_syntax = true) -> bool;
 
 // Checks that the return type of the specified function is complete, issuing an

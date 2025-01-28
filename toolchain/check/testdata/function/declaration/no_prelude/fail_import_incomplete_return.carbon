@@ -220,7 +220,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     .Call = imports.%Main.Call
 // CHECK:STDOUT:     .CallFAndGIncomplete = %CallFAndGIncomplete.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CallFAndGIncomplete.decl: %CallFAndGIncomplete.type = fn_decl @CallFAndGIncomplete [template = constants.%CallFAndGIncomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

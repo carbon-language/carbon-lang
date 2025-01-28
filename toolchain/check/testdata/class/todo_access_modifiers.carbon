@@ -58,12 +58,12 @@ class Access {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc17_11: %Access.elem = var_pattern %.loc17_16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc17: ref %Access.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc17: ref %Access.elem = var <none>
 // CHECK:STDOUT:   %.loc19_18: %Access.elem = field_decl l, element1 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc19_13: %Access.elem = var_pattern %.loc19_18
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc19: ref %Access.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc19: ref %Access.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [template = constants.%complete_type.48a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

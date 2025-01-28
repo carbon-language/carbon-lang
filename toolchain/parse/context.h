@@ -398,7 +398,7 @@ class Context {
     return first_non_packaging_token_;
   }
   auto set_first_non_packaging_token(Lex::TokenIndex token) -> void {
-    CARBON_CHECK(!first_non_packaging_token_.is_valid());
+    CARBON_CHECK(!first_non_packaging_token_.has_value());
     first_non_packaging_token_ = token;
   }
 
@@ -454,7 +454,7 @@ class Context {
   PackagingState packaging_state_ = PackagingState::FileStart;
   // The first non-packaging token, starting as invalid. Used for packaging
   // state warnings.
-  Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
+  Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::None;
 };
 
 }  // namespace Carbon::Parse

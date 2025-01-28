@@ -6,6 +6,11 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
+
 cc_library(
     name = "language_server",
     srcs = ["language_server.cpp"],

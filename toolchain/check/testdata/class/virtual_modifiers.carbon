@@ -701,12 +701,12 @@ class Derived {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %Base.elem = var_pattern %.loc5_9
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc5: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %.loc6_9: %Base.elem = field_decl m2, element2 [template]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc6_3: %Base.elem = var_pattern %.loc6_9
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %Base.elem = var <invalid>
+// CHECK:STDOUT:   %.var.loc6: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [template = constants.%F.d17] {} {}
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (%F.decl) [template = constants.%.5ee]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template = constants.%complete_type.cf7]

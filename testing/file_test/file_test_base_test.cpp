@@ -185,18 +185,16 @@ static auto TestNoLineNumber(TestParams& params)
   return {{.success = true}};
 }
 
-// Prints and returns expected results for stdin.carbon.
-static auto TestStdin(TestParams& params)
+// Prints and returns expected results for escaping.carbon.
+static auto TestEscaping(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
-  CARBON_CHECK(params.input_stream);
-  constexpr int ReadSize = 256;
-  char buf[ReadSize];
-  while (feof(params.input_stream) == 0) {
-    auto read = fread(&buf, sizeof(char), ReadSize, params.input_stream);
-    if (read > 0) {
-      params.error_stream.write(buf, read);
-    }
-  }
+  params.error_stream << "carriage return\r\n"
+                         "{one brace}\n"
+                         "{{two braces}}\n"
+                         "[one bracket]\n"
+                         "[[two brackets]]\n"
+                         "end of line whitespace   \n"
+                         "\ttabs\t\n";
   return {{.success = true}};
 }
 
@@ -245,6 +243,17 @@ static auto EchoFileContent(TestParams& params)
       buffer = remainder;
     }
   }
+  if (params.input_stream) {
+    params.error_stream << "--- STDIN:\n";
+    constexpr int ReadSize = 1024;
+    char buf[ReadSize];
+    while (feof(params.input_stream) == 0) {
+      auto read = fread(&buf, sizeof(char), ReadSize, params.input_stream);
+      if (read > 0) {
+        params.error_stream.write(buf, read);
+      }
+    }
+  }
   return {{.success = true}};
 }
 
@@ -268,13 +277,12 @@ auto FileTestBaseTest::Run(
           filename.string())
           .Case("alternating_files.carbon", &TestAlternatingFiles)
           .Case("capture_console_output.carbon", &TestCaptureConsoleOutput)
+          .Case("escaping.carbon", &TestEscaping)
           .Case("example.carbon", &TestExample)
           .Case("fail_example.carbon", &TestFailExample)
           .Case("file_only_re_one_file.carbon", &TestFileOnlyREOneFile)
           .Case("file_only_re_multi_file.carbon", &TestFileOnlyREMultiFile)
           .Case("no_line_number.carbon", &TestNoLineNumber)
-          .Case("stdin.carbon", &TestStdin)
-          .Case("stdin_and_autoupdate_split.carbon", &TestStdin)
           .Case("unattached_multi_file.carbon", &TestUnattachedMultiFile)
           .Case("fail_multi_success_overall_fail.carbon",
                 [&](TestParams&) {

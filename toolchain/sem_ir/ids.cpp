@@ -19,7 +19,7 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
 
 auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
     -> void {
-  if (!is_valid()) {
+  if (!has_value()) {
     IdBase::Print(out);
     return;
   }
@@ -49,10 +49,10 @@ auto RuntimeParamIndex::Print(llvm::raw_ostream& out) const -> void {
 
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
   out << "generic_inst";
-  if (is_valid()) {
+  if (has_value()) {
     out << (region() == Declaration ? "_in_decl" : "_in_def") << index();
   } else {
-    out << "<invalid>";
+    out << "<none>";
   }
 }
 
@@ -79,15 +79,15 @@ auto IntKind::Print(llvm::raw_ostream& out) const -> void {
 auto NameId::ForIdentifier(IdentifierId id) -> NameId {
   if (id.index >= 0) {
     return NameId(id.index);
-  } else if (!id.is_valid()) {
-    return NameId::Invalid;
+  } else if (!id.has_value()) {
+    return NameId::None;
   } else {
     CARBON_FATAL("Unexpected identifier ID {0}", id);
   }
 }
 
 auto NameId::Print(llvm::raw_ostream& out) const -> void {
-  if (!is_valid() || index >= 0) {
+  if (!has_value() || index >= 0) {
     IdBase::Print(out);
     return;
   }
@@ -143,9 +143,9 @@ auto TypeId::Print(llvm::raw_ostream& out) const -> void {
 
 auto LibraryNameId::ForStringLiteralValueId(StringLiteralValueId id)
     -> LibraryNameId {
-  CARBON_CHECK(id.index >= InvalidIndex, "Unexpected library name ID {0}", id);
-  if (id == StringLiteralValueId::Invalid) {
-    // Prior to SemIR, we use invalid to indicate `default`.
+  CARBON_CHECK(id.index >= NoneIndex, "Unexpected library name ID {0}", id);
+  if (id == StringLiteralValueId::None) {
+    // Prior to SemIR, we use `None` to indicate `default`.
     return LibraryNameId::Default;
   } else {
     return LibraryNameId(id.index);
@@ -164,7 +164,7 @@ auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
 
 auto LocId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "_";
-  if (is_node_id() || !is_valid()) {
+  if (is_node_id() || !has_value()) {
     out << node_id();
   } else {
     out << import_ir_inst_id();

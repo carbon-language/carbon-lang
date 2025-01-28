@@ -103,24 +103,24 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> SemIR::InstId {
   auto result = context.LookupUnqualifiedName(node_id, name_id);
-  auto value = context.insts().Get(result.inst_id);
+  SemIR::InstId inst_id = result.scope_result.target_inst_id();
+  auto value = context.insts().Get(inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           value.type_id());
-  CARBON_CHECK(type_id.is_valid(), "Missing type for {0}", value);
+  CARBON_CHECK(type_id.has_value(), "Missing type for {0}", value);
 
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.
-  if (result.specific_id.is_valid() &&
-      context.constant_values().Get(result.inst_id).is_symbolic()) {
-    result.inst_id = context.AddInst<SemIR::SpecificConstant>(
+  if (result.specific_id.has_value() &&
+      context.constant_values().Get(inst_id).is_symbolic()) {
+    inst_id = context.AddInst<SemIR::SpecificConstant>(
         node_id, {.type_id = type_id,
-                  .inst_id = result.inst_id,
+                  .inst_id = inst_id,
                   .specific_id = result.specific_id});
   }
 
   return context.AddInst<SemIR::NameRef>(
-      node_id,
-      {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
+      node_id, {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
 }
 
 static auto HandleIdentifierName(Context& context,
@@ -143,7 +143,8 @@ auto HandleParseNode(Context& context,
                      Parse::IdentifierNameBeforeParamsId node_id) -> bool {
   // Push a pattern block stack entry to handle the parameter pattern.
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
   return HandleIdentifierName(context, node_id);
 }
 
@@ -210,7 +211,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
   } else {
     // Otherwise this is `.Member`, so look up `.Self` and then `Member` in
     // `.Self`.
-    SemIR::InstId period_self_id = SemIR::InstId::Invalid;
+    SemIR::InstId period_self_id = SemIR::InstId::None;
     {
       // TODO: Instead of annotating the diagnostic, should change
       // `HandleNameAsExpr` to optionally allow us to produce the diagnostic
@@ -222,7 +223,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
             CARBON_DIAGNOSTIC(
                 NoPeriodSelfForDesignator, Note,
                 "designator may only be used when `.Self` is in scope");
-            builder.Note(SemIR::LocId::Invalid, NoPeriodSelfForDesignator);
+            builder.Note(SemIR::LocId::None, NoPeriodSelfForDesignator);
           });
       period_self_id =
           HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);

@@ -344,13 +344,16 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   llvm::PrettyStackTraceProgram stack_trace_entry(
       test_argv_for_stack_trace.size() - 1, test_argv_for_stack_trace.data());
 
+  // Execution must be serialized for either serial tests or console output.
+  std::unique_lock<std::mutex> output_lock;
+  if (output_mutex_ &&
+      (context.capture_console_output || !AllowParallelRun())) {
+    output_lock = std::unique_lock<std::mutex>(*output_mutex_);
+  }
+
   // Conditionally capture console output. We use a scope exit to ensure the
   // captures terminate even on run failures.
-  std::unique_lock<std::mutex> output_lock;
   if (context.capture_console_output) {
-    if (output_mutex_) {
-      output_lock = std::unique_lock<std::mutex>(*output_mutex_);
-    }
     CaptureStderr();
     CaptureStdout();
   }
@@ -514,6 +517,84 @@ struct SplitState {
   int file_index = 0;
 };
 
+// Replaces the keyword at the given position. Returns the position to start a
+// find for the next keyword.
+static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
+                                    llvm::StringRef test_name, int* lsp_id)
+    -> ErrorOr<size_t> {
+  auto keyword = llvm::StringRef(*content).substr(keyword_pos);
+
+  // Line replacements aren't handled here.
+  static constexpr llvm::StringLiteral Line = "[[@LINE";
+  if (keyword.starts_with(Line)) {
+    // Just move past the prefix to find the next one.
+    return keyword_pos + Line.size();
+  }
+
+  // Replaced with the actual test name.
+  static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
+  if (keyword.starts_with(TestName)) {
+    content->replace(keyword_pos, TestName.size(), test_name);
+    return keyword_pos + test_name.size();
+  }
+
+  // Reformatted as an LSP call with headers.
+  static constexpr llvm::StringLiteral Lsp = "[[@LSP:";
+  if (keyword.starts_with(Lsp)) {
+    auto method_start = keyword_pos + Lsp.size();
+
+    static constexpr llvm::StringLiteral LspEnd = "]]";
+    auto keyword_end = content->find("]]", method_start);
+    if (keyword_end == std::string::npos) {
+      return ErrorBuilder()
+             << "Missing `" << LspEnd << "` after `" << Lsp << "`";
+    }
+
+    auto method_end = content->find(":", method_start);
+    auto extra_content_start = method_end + 1;
+    if (method_end == std::string::npos || method_end > keyword_end) {
+      method_end = keyword_end;
+      extra_content_start = keyword_end;
+    }
+    auto method = content->substr(method_start, method_end - method_start);
+
+    auto extra_content =
+        content->substr(extra_content_start, keyword_end - extra_content_start);
+    std::string extra_content_sep;
+    if (!extra_content.empty()) {
+      extra_content_sep = ",";
+      if (!extra_content.starts_with("\n")) {
+        extra_content_sep += " ";
+      }
+    }
+
+    // Form the JSON.
+    std::string json;
+    if (method == "exit") {
+      if (!extra_content.empty()) {
+        return Error("`[[@LSP:exit:` cannot include extra content");
+      }
+      json = R"({"jsonrpc": "2.0", "method": "exit"})";
+    } else {
+      json = llvm::formatv(
+                 R"({{"jsonrpc": "2.0", "id": "{0}", "method": "{1}"{2}{3}})",
+                 ++(*lsp_id), method, extra_content_sep, extra_content)
+                 .str();
+    }
+    // Add the Content-Length header. The `2` accounts for extra newlines.
+    auto json_with_header =
+        llvm::formatv("Content-Length: {0}\n\n{1}\n", json.size() + 2, json)
+            .str();
+    // Insert the content.
+    content->replace(keyword_pos, keyword_end + 2 - keyword_pos,
+                     json_with_header);
+    return keyword_pos + json_with_header.size();
+  }
+
+  return ErrorBuilder() << "Unexpected use of `[[@` at `"
+                        << keyword.substr(0, 5) << "`";
+}
+
 // Replaces the content keywords.
 //
 // TEST_NAME is the only content keyword at present, but we do validate that
@@ -543,20 +624,13 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
   test_name.consume_front("fail_");
   test_name.consume_front("todo_");
 
+  // A counter for LSP calls.
+  int lsp_id = 0;
   while (keyword_pos != std::string::npos) {
-    static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
-    auto keyword = llvm::StringRef(*content).substr(keyword_pos);
-    if (keyword.starts_with(TestName)) {
-      content->replace(keyword_pos, TestName.size(), test_name);
-      keyword_pos += test_name.size();
-    } else if (keyword.starts_with("[[@LINE")) {
-      // Just move past the prefix to find the next one.
-      keyword_pos += Prefix.size();
-    } else {
-      return ErrorBuilder()
-             << "Unexpected use of `[[@` at `" << keyword.substr(0, 5) << "`";
-    }
-    keyword_pos = content->find(Prefix, keyword_pos);
+    CARBON_ASSIGN_OR_RETURN(
+        auto keyword_end,
+        ReplaceContentKeywordAt(content, keyword_pos, test_name, &lsp_id));
+    keyword_pos = content->find(Prefix, keyword_end);
   }
   return Success();
 }

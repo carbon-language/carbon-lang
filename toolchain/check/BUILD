@@ -29,6 +29,7 @@ cc_library(
         "import_cpp.cpp",
         "import_ref.cpp",
         "inst_block_stack.cpp",
+        "interface.cpp",
         "literal.cpp",
         "member_access.cpp",
         "merge.cpp",
@@ -56,6 +57,7 @@ cc_library(
         "import_cpp.h",
         "import_ref.h",
         "inst_block_stack.h",
+        "interface.h",
         "keyword_modifier_set.h",
         "literal.h",
         "member_access.h",
@@ -137,7 +139,6 @@ cc_library(
         ":context",
         ":dump",
         ":impl",
-        ":interface",
         ":pointer_dereference",
         ":sem_ir_diagnostic_converter",
         "//common:check",
@@ -204,19 +205,6 @@ cc_library(
         "//common:check",
         "//toolchain/base:kind_switch",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:typed_insts",
-    ],
-)
-
-cc_library(
-    name = "interface",
-    srcs = ["interface.cpp"],
-    hdrs = ["interface.h"],
-    deps = [
-        ":context",
-        "//common:check",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",

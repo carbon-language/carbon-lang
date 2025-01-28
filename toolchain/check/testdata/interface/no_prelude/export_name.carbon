@@ -75,7 +75,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %I: type = export I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,7 +103,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .UseEmpty = %UseEmpty.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %i.patt: %I.type = binding_pattern i
 // CHECK:STDOUT:     %i.param_patt: %I.type = value_param_pattern %i.patt, runtime_param0

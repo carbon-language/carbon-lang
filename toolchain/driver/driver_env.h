@@ -13,7 +13,19 @@
 
 namespace Carbon {
 
+// Driver environment information, encapsulated for easy passing to subcommands.
 struct DriverEnv {
+  explicit DriverEnv(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                     const InstallPaths* installation, FILE* input_stream,
+                     llvm::raw_pwrite_stream* output_stream,
+                     llvm::raw_pwrite_stream* error_stream, bool fuzzing)
+      : fs(std::move(fs)),
+        installation(installation),
+        input_stream(input_stream),
+        output_stream(output_stream),
+        error_stream(error_stream),
+        fuzzing(fuzzing) {}
+
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
 
@@ -33,7 +45,7 @@ struct DriverEnv {
   // Tracks when the driver is being fuzzed. This allows specific commands to
   // error rather than perform operations that aren't well behaved during
   // fuzzing.
-  bool fuzzing = false;
+  bool fuzzing;
 };
 
 }  // namespace Carbon

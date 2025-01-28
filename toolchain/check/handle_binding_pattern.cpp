@@ -36,8 +36,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
   if (is_generic) {
     auto inst_id = context.scope_stack().PeekInstId();
-    is_associated_constant =
-        inst_id.is_valid() && context.insts().Is<SemIR::InterfaceDecl>(inst_id);
+    is_associated_constant = inst_id.has_value() &&
+                             context.insts().Is<SemIR::InterfaceDecl>(inst_id);
   }
 
   bool needs_compile_time_binding = is_generic && !is_associated_constant;
@@ -46,8 +46,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto make_binding_pattern = [&]() -> SemIR::InstId {
-    auto bind_id = SemIR::InstId::Invalid;
-    auto binding_pattern_id = SemIR::InstId::Invalid;
+    auto bind_id = SemIR::InstId::None;
+    auto binding_pattern_id = SemIR::InstId::None;
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto entity_name_id = context.entity_names().Add(
@@ -57,14 +57,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
          // constant declaration.
          .bind_index = needs_compile_time_binding
                            ? context.scope_stack().AddCompileTimeBinding()
-                           : SemIR::CompileTimeBindIndex::Invalid});
+                           : SemIR::CompileTimeBindIndex::None});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
-          name_node,
-          SemIR::BindSymbolicName{.type_id = cast_type_id,
-                                  .entity_name_id = entity_name_id,
-                                  .value_id = SemIR::InstId::Invalid}));
+          name_node, SemIR::BindSymbolicName{.type_id = cast_type_id,
+                                             .entity_name_id = entity_name_id,
+                                             .value_id = SemIR::InstId::None}));
       binding_pattern_id =
           context.AddPatternInst<SemIR::SymbolicBindingPattern>(
               name_node,
@@ -73,7 +72,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
           name_node, SemIR::BindName{.type_id = cast_type_id,
                                      .entity_name_id = entity_name_id,
-                                     .value_id = SemIR::InstId::Invalid}));
+                                     .value_id = SemIR::InstId::None}));
       binding_pattern_id = context.AddPatternInst<SemIR::BindingPattern>(
           name_node,
           {.type_id = cast_type_id, .entity_name_id = entity_name_id});
@@ -108,15 +107,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
   }
 
-  // TODO: The node stack is a fragile way of getting context information.
-  // Get this information from somewhere else.
-  auto context_node_kind = context.node_stack().PeekNodeKind();
-
   // A `var` binding in a class scope declares a field, not a true binding,
   // so we handle it separately.
   if (auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       parent_class_decl.has_value() &&
-      context_node_kind == Parse::NodeKind::VariableIntroducer) {
+      node_kind == Parse::NodeKind::VarBindingPattern) {
     cast_type_id = context.AsConcreteType(
         cast_type_id, type_node,
         [&] {
@@ -133,7 +128,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         });
     auto binding_id =
         is_generic
-            ? Parse::NodeId::Invalid
+            ? Parse::NodeId::None
             : context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
     auto field_type_id =
@@ -141,7 +136,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     auto field_id = context.AddInst<SemIR::FieldDecl>(
         binding_id, {.type_id = field_type_id,
                      .name_id = name_id,
-                     .index = SemIR::ElementIndex::Invalid});
+                     .index = SemIR::ElementIndex::None});
     context.field_decls_stack().AppendToTop(field_id);
 
     context.node_stack().Push(node_id, field_id);
@@ -164,75 +159,41 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       return context.emitter().Build(type_node, IncompleteTypeInAssociatedDecl,
                                      cast_type_id);
     });
-    context.entity_names().Add(
+
+    SemIR::AssociatedConstantDecl assoc_const_decl = {
+        .type_id = cast_type_id,
+        .assoc_const_id = SemIR::AssociatedConstantId::None,
+        .decl_block_id = SemIR::InstBlockId::None};
+    auto decl_id = context.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
+        context.parse_tree().As<Parse::CompileTimeBindingPatternId>(node_id),
+        assoc_const_decl));
+    assoc_const_decl.assoc_const_id = context.associated_constants().Add(
         {.name_id = name_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-         .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+         .decl_id = decl_id,
+         .generic_id = SemIR::GenericId::None,
+         .default_value_id = SemIR::InstId::None});
+    context.ReplaceInstBeforeConstantUse(decl_id, assoc_const_decl);
 
-    SemIR::InstId decl_id = context.AddInst<SemIR::AssociatedConstantDecl>(
-        context.parse_tree().As<Parse::CompileTimeBindingPatternId>(node_id),
-        {cast_type_id, name_id});
     context.node_stack().Push(node_id, decl_id);
-
-    // Add an associated entity name to the interface scope.
-    auto assoc_id = BuildAssociatedEntity(
-        context, parent_interface_decl->interface_id, decl_id);
-    auto name_context =
-        context.decl_name_stack().MakeUnqualifiedName(node_id, name_id);
-    context.decl_name_stack().AddNameOrDiagnose(
-        name_context, assoc_id, introducer.modifier_set.GetAccessKind());
     return true;
   }
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
-  switch (context_node_kind) {
-    case Parse::NodeKind::VariableIntroducer: {
-      CARBON_CHECK(!is_generic);
-
-      cast_type_id = context.AsConcreteType(
-          cast_type_id, type_node,
-          [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                              "variable has incomplete type {0}",
-                              SemIR::TypeId);
-            return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
-                                           cast_type_id);
-          },
-          [&] {
-            CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
-                              "variable has abstract type {0}", SemIR::TypeId);
-            return context.emitter().Build(type_node, AbstractTypeInVarDecl,
-                                           cast_type_id);
-          });
-
-      auto binding_pattern_id = make_binding_pattern();
-      if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
-        // TODO: Should we check this for the `var` as a whole, rather than for
-        // the name binding?
-        auto bind_id = context.bind_name_map()
-                           .Lookup(binding_pattern_id)
-                           .value()
-                           .bind_name_id;
-        RegisterReturnedVar(context,
-                            introducer.modifier_node_id(ModifierOrder::Decl),
-                            type_node, cast_type_id, bind_id);
-      }
-      context.node_stack().Push(node_id, binding_pattern_id);
-      break;
-    }
-
-    case Parse::NodeKind::ImplicitParamListStart:
-    case Parse::NodeKind::TuplePatternStart: {
+  switch (context.full_pattern_stack().CurrentKind()) {
+    case FullPatternStack::Kind::ImplicitParamList:
+    case FullPatternStack::Kind::ExplicitParamList: {
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_pattern_id = SemIR::InstId::Invalid;
+      auto param_pattern_id = SemIR::InstId::None;
       bool had_error = false;
       switch (introducer.kind) {
         case Lex::TokenKind::Fn: {
-          if (context_node_kind == Parse::NodeKind::ImplicitParamListStart &&
+          if (context.full_pattern_stack().CurrentKind() ==
+                  FullPatternStack::Kind::ImplicitParamList &&
               !(is_generic || name_id == SemIR::NameId::SelfValue)) {
             CARBON_DIAGNOSTIC(
                 ImplictParamMustBeConstant, Error,
@@ -263,8 +224,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       }
       if (had_error) {
         context.AddNameToLookup(name_id, SemIR::ErrorInst::SingletonInstId);
-        // Replace the parameter with an invalid instruction so that we don't
-        // try constructing a generic based on it.
+        // Replace the parameter with `ErrorInst` so that we don't try
+        // constructing a generic based on it.
         param_pattern_id = SemIR::ErrorInst::SingletonInstId;
       } else {
         auto pattern_inst_id = make_binding_pattern();
@@ -273,33 +234,57 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             {
                 .type_id = context.insts().Get(pattern_inst_id).type_id(),
                 .subpattern_id = pattern_inst_id,
-                .runtime_index = is_generic ? SemIR::RuntimeParamIndex::Invalid
+                .runtime_index = is_generic ? SemIR::RuntimeParamIndex::None
                                             : SemIR::RuntimeParamIndex::Unknown,
             });
       }
       context.node_stack().Push(node_id, param_pattern_id);
-
-      // TODO: Use the pattern insts to generate the pattern-match insts
-      // at the end of the full pattern, instead of eagerly generating them
-      // here.
       break;
     }
 
-    case Parse::NodeKind::LetIntroducer: {
-      cast_type_id = context.AsCompleteType(cast_type_id, type_node, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                          "`let` binding has incomplete type {0}",
+    case FullPatternStack::Kind::NameBindingDecl: {
+      auto incomplete_diagnoser = [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Error,
+                          "binding pattern has incomplete type {0} in name "
+                          "binding declaration",
                           InstIdAsType);
-        return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
+        return context.emitter().Build(type_node, IncompleteTypeInBindingDecl,
                                        cast_type_inst_id);
-      });
-      context.node_stack().Push(node_id, make_binding_pattern());
+      };
+      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+        cast_type_id = context.AsConcreteType(
+            cast_type_id, type_node, incomplete_diagnoser, [&] {
+              CARBON_DIAGNOSTIC(
+                  AbstractTypeInVarPattern, Error,
+                  "binding pattern has abstract type {0} in `var` "
+                  "pattern",
+                  SemIR::TypeId);
+              return context.emitter().Build(
+                  type_node, AbstractTypeInVarPattern, cast_type_id);
+            });
+      } else {
+        cast_type_id = context.AsCompleteType(cast_type_id, type_node,
+                                              incomplete_diagnoser);
+      }
+      auto binding_pattern_id = make_binding_pattern();
+      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+        CARBON_CHECK(!is_generic);
+
+        if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
+          // TODO: Should we check this for the `var` as a whole, rather than
+          // for the name binding?
+          auto bind_id = context.bind_name_map()
+                             .Lookup(binding_pattern_id)
+                             .value()
+                             .bind_name_id;
+          RegisterReturnedVar(context,
+                              introducer.modifier_node_id(ModifierOrder::Decl),
+                              type_node, cast_type_id, bind_id);
+        }
+      }
+      context.node_stack().Push(node_id, binding_pattern_id);
       break;
     }
-
-    default:
-      CARBON_FATAL("Found a pattern binding in unexpected context {0}",
-                   context_node_kind);
   }
   return true;
 }
@@ -322,11 +307,11 @@ auto HandleParseNode(Context& context,
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
     // Disallow `let` outside of function and interface definitions.
-    // TODO: Find a less brittle way of doing this. An invalid scope_inst_id
+    // TODO: Find a less brittle way of doing this. A `scope_inst_id` of `None`
     // can represent a block scope, but is also used for other kinds of scopes
     // that aren't necessarily part of an interface or function decl.
     auto scope_inst_id = context.scope_stack().PeekInstId();
-    if (scope_inst_id.is_valid()) {
+    if (scope_inst_id.has_value()) {
       auto scope_inst = context.insts().Get(scope_inst_id);
       if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
           !scope_inst.Is<SemIR::FunctionDecl>()) {

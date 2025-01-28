@@ -206,7 +206,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc12_3: %A.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %A.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.ba9 [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -222,7 +222,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc17_3: %B.elem.5c3 = var_pattern %.loc17_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem.5c3 = var <invalid>
+// CHECK:STDOUT:   %.var: ref %B.elem.5c3 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.b44 [template = constants.%complete_type.725]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -240,7 +240,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc22_3: %C.elem.646 = var_pattern %.loc22_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem.646 = var <invalid>
+// CHECK:STDOUT:   %.var: ref %C.elem.646 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c.8e2 [template = constants.%complete_type.58a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

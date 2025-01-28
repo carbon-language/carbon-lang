@@ -34,7 +34,7 @@ abstract class Abstract {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: variable has abstract type `Abstract` [AbstractTypeInVarDecl]
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
@@ -229,7 +229,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc15_3: <error> = var_pattern %.loc15_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <invalid>
+// CHECK:STDOUT:   %.var: ref <error> = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -514,7 +514,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.344 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c44 [template = constants.%complete_type.32a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -599,7 +599,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.344 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [template = constants.%complete_type.32a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -673,7 +673,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %Abstract.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Abstract.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Abstract.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -689,7 +689,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc11_3: %Derived.elem.344 = var_pattern %.loc11_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c44 [template = constants.%complete_type.32a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

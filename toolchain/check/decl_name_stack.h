@@ -100,7 +100,7 @@ class DeclNameStack {
       return {
           .name_id = name_id_for_new_inst(),
           .parent_scope_id = parent_scope_id,
-          .generic_id = SemIR::GenericId::Invalid,
+          .generic_id = SemIR::GenericId::None,
           .first_param_node_id = name.first_param_node_id,
           .last_param_node_id = name.last_param_node_id,
           .pattern_block_id = name.pattern_block_id,
@@ -110,20 +110,20 @@ class DeclNameStack {
           .is_extern = is_extern,
           .extern_library_id = extern_library,
           .non_owning_decl_id =
-              extern_library.is_valid() ? decl_id : SemIR::InstId::Invalid,
+              extern_library.has_value() ? decl_id : SemIR::InstId::None,
           .first_owning_decl_id =
-              extern_library.is_valid() ? SemIR::InstId::Invalid : decl_id,
+              extern_library.has_value() ? SemIR::InstId::None : decl_id,
       };
     }
 
-    // Returns any name collision found, or Invalid.
+    // Returns any name collision found, or `None`.
     auto prev_inst_id() -> SemIR::InstId;
 
-    // Returns the name_id for a new instruction. This is invalid when the name
+    // Returns the name_id for a new instruction. This is `None` when the name
     // resolved.
     auto name_id_for_new_inst() -> SemIR::NameId {
       return state == State::Unresolved ? unresolved_name_id
-                                        : SemIR::NameId::Invalid;
+                                        : SemIR::NameId::None;
     }
 
     // The current scope when this name began. This is the scope that we will
@@ -136,20 +136,20 @@ class DeclNameStack {
     bool has_qualifiers = false;
 
     // The scope which qualified names are added to. For unqualified names in
-    // an unnamed scope, this will be Invalid to indicate the current scope
+    // an unnamed scope, this will be `None` to indicate the current scope
     // should be used.
     SemIR::NameScopeId parent_scope_id;
 
     // The last location ID used.
-    SemIR::LocId loc_id = SemIR::LocId::Invalid;
+    SemIR::LocId loc_id = SemIR::LocId::None;
 
     union {
       // The ID of a resolved qualifier, including both identifiers and
-      // expressions. Invalid indicates resolution failed.
+      // expressions. `None` indicates resolution failed.
       SemIR::InstId resolved_inst_id;
 
       // The ID of an unresolved identifier.
-      SemIR::NameId unresolved_name_id = SemIR::NameId::Invalid;
+      SemIR::NameId unresolved_name_id = SemIR::NameId::None;
     };
   };
 
@@ -238,8 +238,8 @@ class DeclNameStack {
                          SemIR::AccessKind access_kind) -> void;
 
   // Adds a name to name lookup if neither already declared nor poisoned in this
-  // scope. If declared, returns the existing instruction and false. If
-  // poisoned, returns an invalid instruction and true.
+  // scope. If declared, returns the existing `InstId` and false. If poisoned,
+  // returns `None` and true.
   // TODO: Return the poisoning instruction if poisoned.
   auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id,
                        SemIR::AccessKind access_kind)
@@ -255,7 +255,7 @@ class DeclNameStack {
                           SemIR::NameId name_id) -> void;
 
   // Attempts to resolve the given name context as a scope, and returns the
-  // corresponding scope. Issues a suitable diagnostic and returns Invalid if
+  // corresponding scope. Issues a suitable diagnostic and returns `None` if
   // the name doesn't resolve to a scope.
   auto ResolveAsScope(const NameContext& name_context,
                       const NameComponent& name) const

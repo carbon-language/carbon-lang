@@ -113,9 +113,9 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %B.patt.loc6_9.1: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
-// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc6_9.1, runtime_param<invalid> [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
+// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc6_9.1, runtime_param<none> [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc6_13.2: type = value_of_initializer %bool.make_type [template = bool]
@@ -290,8 +290,8 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %C.2ba: type = class_type @C, @C(%false) [template]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
-// CHECK:STDOUT:   %Equal.type.79c: type = fn_type @Equal.1 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.998, imports.%Core.import_ref.fb6) [template]
+// CHECK:STDOUT:   %Equal.type.79c: type = fn_type @Equal.1 [template]
 // CHECK:STDOUT:   %Equal.type.aa3: type = fn_type @Equal.2 [template]
 // CHECK:STDOUT:   %Equal.6e2: %Equal.type.aa3 = struct_value () [template]
 // CHECK:STDOUT:   %Equal.bound.fe0: <bound method> = bound_method %true, %Equal.6e2 [template]
@@ -321,9 +321,9 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %B.patt.loc4_9.1: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
-// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc4_9.1, runtime_param<invalid> [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
+// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc4_9.1, runtime_param<none> [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc4_13.2: type = value_of_initializer %bool.make_type [template = bool]

@@ -202,7 +202,7 @@ class A {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_11: %Circle.elem = var_pattern %.loc5_21
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Circle.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Circle.elem = var <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_INTERNAL_CONSTANT.patt: %i32 = binding_pattern SOME_INTERNAL_CONSTANT
 // CHECK:STDOUT:   }
@@ -344,7 +344,7 @@ class A {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_13: %A.elem = var_pattern %.loc5_18
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %A.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -416,7 +416,7 @@ class A {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_11: %Circle.elem = var_pattern %.loc5_21
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Circle.elem = var <invalid>
+// CHECK:STDOUT:   %.var: ref %Circle.elem = var <none>
 // CHECK:STDOUT:   %GetRadius.decl: %GetRadius.type = fn_decl @GetRadius [template = constants.%GetRadius] {
 // CHECK:STDOUT:     %self.patt: %Circle = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Circle = value_param_pattern %self.patt, runtime_param0
