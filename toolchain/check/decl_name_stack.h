@@ -238,12 +238,10 @@ class DeclNameStack {
                          SemIR::AccessKind access_kind) -> void;
 
   // Adds a name to name lookup if neither already declared nor poisoned in this
-  // scope. If declared, returns the existing `InstId` and false. If poisoned,
-  // returns `None` and true.
-  // TODO: Return the poisoning instruction if poisoned.
+  // scope.
   auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id,
                        SemIR::AccessKind access_kind)
-      -> std::pair<SemIR::InstId, bool>;
+      -> SemIR::ScopeLookupResult;
 
  private:
   // Returns a name context corresponding to an empty name.

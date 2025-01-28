@@ -105,17 +105,20 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
                            SemIR::AccessKind access_kind) -> void {
-  auto [prev_id, is_poisoned] = context.decl_name_stack().LookupOrAddName(
-      name_context, class_decl_id, access_kind);
-  if (is_poisoned) {
+  SemIR::ScopeLookupResult lookup_result =
+      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id,
+                                                access_kind);
+  if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
     context.DiagnosePoisonedName(class_decl_id);
     return;
   }
 
-  if (!prev_id.has_value()) {
+  if (!lookup_result.is_found()) {
     return;
   }
+
+  SemIR::InstId prev_id = lookup_result.target_inst_id();
 
   auto prev_class_id = SemIR::ClassId::None;
   auto prev_import_ir_id = SemIR::ImportIRId::None;

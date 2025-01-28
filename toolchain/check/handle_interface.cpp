@@ -59,12 +59,15 @@ static auto BuildInterfaceDecl(Context& context,
       SemIR::LibraryNameId::None)};
 
   // Check whether this is a redeclaration.
-  auto [existing_id, is_poisoned] = context.decl_name_stack().LookupOrAddName(
-      name_context, interface_decl_id, introducer.modifier_set.GetAccessKind());
-  if (is_poisoned) {
+  SemIR::ScopeLookupResult lookup_result =
+      context.decl_name_stack().LookupOrAddName(
+          name_context, interface_decl_id,
+          introducer.modifier_set.GetAccessKind());
+  if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
     context.DiagnosePoisonedName(interface_decl_id);
-  } else if (existing_id.has_value()) {
+  } else if (lookup_result.is_found()) {
+    SemIR::InstId existing_id = lookup_result.target_inst_id();
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
       auto existing_interface =

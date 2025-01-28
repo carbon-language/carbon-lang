@@ -42,12 +42,13 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
 
-  auto [existing_inst_id, is_poisoned] =
+  SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
                                                 SemIR::AccessKind::Public);
-  if (is_poisoned) {
+  if (lookup_result.is_poisoned()) {
     context.DiagnosePoisonedName(namespace_id);
-  } else if (existing_inst_id.has_value()) {
+  } else if (lookup_result.is_found()) {
+    SemIR::InstId existing_inst_id = lookup_result.target_inst_id();
     if (auto existing =
             context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
       // If there's a name conflict with a namespace, "merge" by using the

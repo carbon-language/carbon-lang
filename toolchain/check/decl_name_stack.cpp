@@ -186,15 +186,15 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
 auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                     SemIR::InstId target_id,
                                     SemIR::AccessKind access_kind)
-    -> std::pair<SemIR::InstId, bool> {
+    -> SemIR::ScopeLookupResult {
   if (name_context.state == NameContext::State::Poisoned) {
-    return {SemIR::InstId::None, true};
+    return SemIR::ScopeLookupResult::MakePoisoned();
   }
   if (auto id = name_context.prev_inst_id(); id.has_value()) {
-    return {id, false};
+    return SemIR::ScopeLookupResult::MakeFound(id, access_kind);
   }
   AddName(name_context, target_id, access_kind);
-  return {SemIR::InstId::None, false};
+  return SemIR::ScopeLookupResult::MakeNotFound();
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
