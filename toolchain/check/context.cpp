@@ -691,8 +691,8 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
 //
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
-static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
-    -> SemIR::NameScopeId {
+static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
+                           llvm::StringRef name) -> SemIR::NameScopeId {
   auto core_ident_id = context.identifiers().Add("Core");
   auto packaging = context.parse_tree().packaging_decl();
   if (packaging && packaging->names.package_id == core_ident_id) {
@@ -702,7 +702,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
 
   // Look up `package.Core`.
   auto core_scope_result = context.LookupNameInExactScope(
-      loc, core_name_id, SemIR::NameScopeId::Package,
+      loc_id, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (core_scope_result.is_found()) {
     // We expect it to be a namespace.
@@ -717,26 +717,26 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
       CoreNotFound, Error,
       "`Core.{0}` implicitly referenced here, but package `Core` not found",
       std::string);
-  context.emitter().Emit(loc, CoreNotFound, name.str());
+  context.emitter().Emit(loc_id, CoreNotFound, name.str());
   return SemIR::NameScopeId::None;
 }
 
-auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
+auto Context::LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
     -> SemIR::InstId {
-  auto core_package_id = GetCorePackage(*this, loc, name);
+  auto core_package_id = GetCorePackage(*this, loc_id, name);
   if (!core_package_id.has_value()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
   auto scope_result = LookupNameInExactScope(
-      loc, name_id, core_package_id, name_scopes().Get(core_package_id));
+      loc_id, name_id, core_package_id, name_scopes().Get(core_package_id));
   if (!scope_result.is_found()) {
     CARBON_DIAGNOSTIC(
         CoreNameNotFound, Error,
         "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
-    emitter_->Emit(loc, CoreNameNotFound, name_id);
+    emitter_->Emit(loc_id, CoreNameNotFound, name_id);
     return SemIR::ErrorInst::SingletonInstId;
   }
 

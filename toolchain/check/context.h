@@ -259,7 +259,8 @@ class Context {
 
   // Returns the `InstId` corresponding to a name in the core package, or
   // BuiltinErrorInst if not found.
-  auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
+  auto LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
+      -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
