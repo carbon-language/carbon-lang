@@ -11,9 +11,7 @@
 namespace Carbon::Check {
 
 // Returns the initial witness value for a new impl declaration.
-auto ImplWitnessForDeclaration(
-    Context& context, const SemIR::Impl& impl,
-    const SemIR::ResolvedFacetType::RequiredInterface& required_interface)
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId;
 
 auto AddConstantsToImplWitnessFromConstraint(

@@ -399,6 +399,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   const SemIR::ResolvedFacetType::RequiredInterface* required_interface =
       ResolveFacetTypeToInterface(context, impl_info);
+  if (required_interface) {
+    impl_info.interface_id = required_interface->interface_id;
+    impl_info.specific_id = required_interface->specific_id;
+  }
   // TODO: Skip work below if facet type resolution fails, so we don't have a
   // valid/non-error `interface_id` at all.
 
@@ -422,8 +426,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     if (required_interface) {
-      impl_info.witness_id =
-          ImplWitnessForDeclaration(context, impl_info, *required_interface);
+      impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
       AddConstantsToImplWitnessFromConstraint(
           context, impl_info, *required_interface, impl_info.witness_id,
           impl_decl.impl_id);
@@ -434,7 +437,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
-    const auto& first_impl = context.impls().Get(impl_decl.impl_id);
+    auto& first_impl = context.impls().GetMutable(impl_decl.impl_id);
     if (required_interface) {
       AddConstantsToImplWitnessFromConstraint(
           context, impl_info, *required_interface, first_impl.witness_id,

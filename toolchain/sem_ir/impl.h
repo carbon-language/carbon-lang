@@ -13,13 +13,16 @@
 namespace Carbon::SemIR {
 
 struct ImplFields {
-  // The following members always have values, and do not change throughout the
-  // lifetime of the interface.
+  // This following members always have values and do not change.
 
   // The type for which the impl is implementing a constraint.
   InstId self_id;
   // The constraint that the impl implements.
   InstId constraint_id;
+
+  // The single interface & specific found from resolving `constraint_id`.
+  InterfaceId interface_id;
+  SpecificId specific_id;
 
   // The following members are set at the `{` of the impl definition.
 

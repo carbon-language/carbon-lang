@@ -143,14 +143,11 @@ static auto CheckAssociatedFunctionImplementation(
 }
 
 // Builds an initial empty witness.
-auto ImplWitnessForDeclaration(
-    Context& context, const SemIR::Impl& impl,
-    const SemIR::ResolvedFacetType::RequiredInterface& required_interface)
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
 
-  const auto& interface =
-      context.interfaces().Get(required_interface.interface_id);
+  const auto& interface = context.interfaces().Get(impl.interface_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   for (auto decl_id : assoc_entities) {
