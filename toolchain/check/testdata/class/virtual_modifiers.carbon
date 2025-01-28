@@ -24,7 +24,7 @@ abstract class Abstract {
 
 // --- override_import.carbon
 
-package OverrideImport;
+library "[[@TEST_NAME]]";
 
 import Modifiers;
 
@@ -35,7 +35,7 @@ class Derived {
 
 // --- todo_fail_later_base.carbon
 
-package FailLaterBase;
+library "[[@TEST_NAME]]";
 
 import Modifiers;
 
@@ -46,7 +46,7 @@ base class Derived {
 
 // --- init.carbon
 
-package Init;
+library "[[@TEST_NAME]]";
 
 import Modifiers;
 
@@ -56,7 +56,7 @@ fn F() {
 
 // --- impl_abstract.carbon
 
-package ImplAbstract;
+library "[[@TEST_NAME]]";
 
 abstract class A1 {
   virtual fn F();
@@ -69,7 +69,7 @@ abstract class A2 {
 
 // --- impl_base.carbon
 
-package ImplBase;
+library "[[@TEST_NAME]]";
 
 base class B1 {
   virtual fn F();
@@ -87,7 +87,7 @@ class C {
 
 // --- fail_modifiers.carbon
 
-package FailModifiers;
+library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
@@ -99,7 +99,7 @@ class C {
 
 // --- init_members.carbon
 
-package InitMembers;
+library "[[@TEST_NAME]]";
 
 base class Base {
   var m1: i32;
@@ -120,7 +120,7 @@ fn F() {
 
 // --- todo_fail_impl_without_base_declaration.carbon
 
-package ImplWithoutBaseDeclaration;
+library "[[@TEST_NAME]]";
 
 base class Base {
 }
@@ -132,7 +132,7 @@ class Derived {
 
 // --- abstract_impl.carbon
 
-package AbstractImpl;
+library "[[@TEST_NAME]]";
 
 abstract class AbstractBase {
   abstract fn F();
@@ -149,7 +149,7 @@ class Derived {
 
 // --- virtual_impl.carbon
 
-package VirtualImpl;
+library "[[@TEST_NAME]]";
 
 base class VirtualBase {
   virtual fn F();
@@ -166,7 +166,7 @@ class Derived {
 
 // --- fail_impl_mismatch.carbon
 
-package FailImplMismatch;
+library "[[@TEST_NAME]]";
 
 base class Base {
   virtual fn F();
@@ -186,7 +186,7 @@ class Derived {
 
 // --- fail_todo_impl_conversion.carbon
 
-package FailTodoImplConversion;
+library "[[@TEST_NAME]]";
 
 class T1 {
 }
@@ -218,7 +218,7 @@ class Derived {
 
 // --- fail_todo_impl_generic_base.carbon
 
-package FailTodoImplGenericBase;
+library "[[@TEST_NAME]]";
 
 class T1 {
 }
