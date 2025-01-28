@@ -82,7 +82,7 @@ instruction, and `SemIR::PointerType` represents a pointer type instruction.
 Each instruction class has up to four public data members describing the
 instruction, as described in
 [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) (also see
-[adding features for Check](adding_features.md#check)):
+[adding features for Check](/toolchain/docs/adding_features.md#check)):
 
 -   An `InstKind kind;` member if the instruction has a `Kinds` constant making
     it a shorthand for multiple individual instructions.
