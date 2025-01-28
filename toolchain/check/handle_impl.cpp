@@ -215,13 +215,14 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
-  Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
+  Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
+  --last_param_iter;
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
       .name_id = SemIR::NameId::Invalid,
       .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
+      .last_param_node_id = *last_param_iter,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
