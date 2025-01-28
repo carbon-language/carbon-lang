@@ -431,9 +431,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
     auto lookup_result = scope.GetEntry(*entry_id).result;
     if (!lookup_result.is_poisoned()) {
       LoadImportRef(*this, lookup_result.target_inst_id());
-      return lookup_result;
     }
-    return SemIR::ScopeLookupResult::MakePoisoned();
+    return lookup_result;
   }
 
   if (!scope.import_ir_scopes().empty()) {
