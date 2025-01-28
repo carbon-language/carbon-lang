@@ -124,6 +124,7 @@ static auto MergeFunctionRedecl(Context& context,
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
     prev_function.return_slot_pattern_id = new_function.return_slot_pattern_id;
+    prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,
@@ -264,6 +265,17 @@ static auto BuildFunctionDecl(Context& context,
                           name, decl_id, is_extern, introducer.extern_library)},
                       {.return_slot_pattern_id = name.return_slot_pattern_id,
                        .virtual_modifier = virtual_modifier}};
+  // Find self parameter pattern.
+  // TODO: Do this during initial traversal of implicit params.
+  for (auto implicit_param_id : context.inst_blocks().GetOrEmpty(
+           function_info.implicit_param_patterns_id)) {
+    if (SemIR::Function::GetNameFromPatternId(
+            context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
+      CARBON_CHECK(!function_info.self_param_id.has_value());
+      function_info.self_param_id = implicit_param_id;
+    }
+  }
+
   if (is_definition) {
     function_info.definition_id = decl_id;
   }

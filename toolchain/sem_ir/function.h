@@ -31,6 +31,8 @@ struct FunctionFields {
   // this function.
   VirtualModifier virtual_modifier;
 
+  InstId self_param_id = SemIR::InstId::None;
+
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
 

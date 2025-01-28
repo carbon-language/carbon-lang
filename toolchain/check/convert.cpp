@@ -1319,8 +1319,6 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // The callee reference can be invalidated by conversions, so ensure all reads
   // from it are done before conversion calls.
   auto callee_decl_id = callee.latest_decl_id();
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_slot_pattern_id = callee.return_slot_pattern_id;
@@ -1328,18 +1326,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
 
-  // Find self parameter pattern.
-  // TODO: Do this during initial traversal of implicit params.
-  auto self_param_id = SemIR::InstId::None;
-  for (auto implicit_param_id : implicit_param_patterns) {
-    if (SemIR::Function::GetNameFromPatternId(
-            context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
-      CARBON_CHECK(!self_param_id.has_value());
-      self_param_id = implicit_param_id;
-    }
-  }
-
-  if (self_param_id.has_value() && !self_id.has_value()) {
+  if (callee.self_param_id.has_value() && !self_id.has_value()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
                       "missing object argument in method call");
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
@@ -1350,7 +1337,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     self_id = SemIR::ErrorInst::SingletonInstId;
   }
 
-  return CallerPatternMatch(context, callee_specific_id, self_param_id,
+  return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_slot_pattern_id,
                             self_id, arg_refs, return_slot_arg_id);
 }

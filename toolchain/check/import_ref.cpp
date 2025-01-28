@@ -978,6 +978,9 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
 // LoadLocalPatternConstantIds(param_patterns_id) has completed without adding
 // any new work to work_stack_.
 //
+// `self_param_id` is an optional out parameter, populated with the InstId in
+// the resulting parameter patterns that represents the Self parameter.
+//
 // TODO: This is inconsistent with the rest of this class, which expects
 // the relevant constants to be explicitly passed in. That makes it
 // easier to statically detect when an input isn't loaded, but makes it
@@ -986,8 +989,10 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
 // could the same function be used to load the constants and use them, with
 // a parameter to select between the two?
 static auto GetLocalParamPatternsId(ImportContext& context,
-                                    SemIR::InstBlockId param_patterns_id)
+                                    SemIR::InstBlockId param_patterns_id,
+                                    SemIR::InstId* self_param_id = nullptr)
     -> SemIR::InstBlockId {
+  CARBON_CHECK(!self_param_id || !self_param_id->has_value());
   if (!param_patterns_id.has_value() ||
       param_patterns_id == SemIR::InstBlockId::Empty) {
     return param_patterns_id;
@@ -1064,6 +1069,11 @@ static auto GetLocalParamPatternsId(ImportContext& context,
           context.local_context().MakeImportedLocAndInst<SemIR::AddrPattern>(
               AddImportIRInst(context, addr_pattern_id),
               {.type_id = type_id, .inner_id = new_param_id}));
+    }
+    if (self_param_id &&
+        context.import_entity_names().Get(binding.entity_name_id).name_id ==
+            SemIR::NameId::SelfValue) {
+      *self_param_id = new_param_id;
     }
     new_patterns.push_back(new_param_id);
   }
@@ -1935,8 +1945,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   // Add the function declaration.
   new_function.parent_scope_id = parent_scope_id;
+  SemIR::InstId self_param_id = SemIR::InstId::None;
   new_function.implicit_param_patterns_id = GetLocalParamPatternsId(
-      resolver, import_function.implicit_param_patterns_id);
+      resolver, import_function.implicit_param_patterns_id, &self_param_id);
+  new_function.self_param_id = self_param_id;
   new_function.param_patterns_id =
       GetLocalParamPatternsId(resolver, import_function.param_patterns_id);
   new_function.return_slot_pattern_id = GetLocalReturnSlotPatternId(
