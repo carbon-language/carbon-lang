@@ -273,7 +273,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
     }
   }
 
-  // For each non-function associated constant, set witness entry.
+  // For each non-function associated constant, set the witness entry.
   for (auto index : llvm::seq(assoc_entities.size())) {
     auto decl_id = assoc_entities[index];
     decl_id =

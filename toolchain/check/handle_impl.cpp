@@ -341,7 +341,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
-  // TODO: detect two impl declarations with the same self type and interface,
+  // TODO: Detect two impl declarations with the same self type and interface,
   // and issue an error if they don't match.
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {

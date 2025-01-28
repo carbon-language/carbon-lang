@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/impl_where_redecl.carbon
 
-// `impl` declarations only match when they are the same syntactically
+// `impl` declarations only match when they are the same syntactically.
 
 // --- fail_match_with_associated_type.carbon
 library "[[@TEST_NAME]]";
