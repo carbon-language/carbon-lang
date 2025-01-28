@@ -227,6 +227,44 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
       auto rewrite_value = rewrite_values[index];
+
+      // If the associated constant has a symbolic type, convert the rewrite
+      // value to that type now we know the value of `Self`.
+      SemIR::TypeId assoc_const_type_id = decl->type_id;
+      if (context.types().GetConstantId(assoc_const_type_id).is_symbolic()) {
+        // Get the type of the associated constant in this interface with this
+        // value for `Self`.
+        assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
+            context, impl.constraint_id, interface_type->specific_id, decl_id,
+            context.GetTypeIdForTypeInst(impl.self_id), witness_id);
+
+        // Perform the conversion of the value to the type. We skipped this when
+        // forming the facet type because the type of the associated constant
+        // was symbolic.
+        auto converted_inst_id = ConvertToValueOfType(
+            context, context.insts().GetLocId(impl.constraint_id),
+            context.constant_values().GetInstId(rewrite_value),
+            assoc_const_type_id);
+        rewrite_value = context.constant_values().Get(converted_inst_id);
+
+        // The result of conversion can be non-constant even if the original
+        // value was constant.
+        if (!rewrite_value.is_constant() &&
+            rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+          const auto& assoc_const =
+              context.associated_constants().Get(decl->assoc_const_id);
+          CARBON_DIAGNOSTIC(
+              AssociatedConstantNotConstantAfterConversion, Error,
+              "associated constant {0} given value that is not constant "
+              "after conversion to {1}",
+              SemIR::NameId, SemIR::TypeId);
+          context.emitter().Emit(impl.constraint_id,
+                                 AssociatedConstantNotConstantAfterConversion,
+                                 assoc_const.name_id, assoc_const_type_id);
+          rewrite_value = SemIR::ErrorInst::SingletonConstantId;
+        }
+      }
+
       if (rewrite_value.has_value()) {
         witness_block[index] =
             context.constant_values().GetInstId(rewrite_value);
