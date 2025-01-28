@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/exit.carbon
 
 // --- STDIN
-[[@LSP:exit]]
+[[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 

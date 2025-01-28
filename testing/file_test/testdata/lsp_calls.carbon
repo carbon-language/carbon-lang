@@ -16,7 +16,9 @@
 multi
 line
 ]]
-[[@LSP:exit]]
+[[@LSP-REPLY:7]]
+[[@LSP-REPLY:8:bar]]
+[[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
@@ -39,6 +41,14 @@ line
 // CHECK:STDERR: multi
 // CHECK:STDERR: line
 // CHECK:STDERR: }
+// CHECK:STDERR:
+// CHECK:STDERR: Content-Length: 31
+// CHECK:STDERR:
+// CHECK:STDERR: {"jsonrpc": "2.0", "id": "7"}
+// CHECK:STDERR:
+// CHECK:STDERR: Content-Length: 36
+// CHECK:STDERR:
+// CHECK:STDERR: {"jsonrpc": "2.0", "id": "8", bar}
 // CHECK:STDERR:
 // CHECK:STDERR: Content-Length: 38
 // CHECK:STDERR:
