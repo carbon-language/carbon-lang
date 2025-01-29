@@ -223,7 +223,7 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
       .Emit();
 }
 
-auto Context::DiagnosePoisonedName(SemIRLoc loc) -> void {
+auto Context::DiagnosePoisonedName(SemIR::InstId loc) -> void {
   // TODO: Improve the diagnostic to replace NodeId::None with the location
   // where the name was poisoned. See discussion in
   // https://github.com/carbon-language/carbon-lang/pull/4654#discussion_r1876607172

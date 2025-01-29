@@ -29,7 +29,7 @@ struct DriverEnv {
         error_stream(error_stream),
         fuzzing(fuzzing),
         consumer(error_stream),
-        file_emitter(&consumer) {}
+        emitter(&consumer) {}
 
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
@@ -52,8 +52,8 @@ struct DriverEnv {
   // A diagnostic consumer, to be able to connect output.
   StreamDiagnosticConsumer consumer;
 
-  // A diagnostic emitter that uses the `StringRef` location as the filename.
-  FileDiagnosticEmitter file_emitter;
+  // A diagnostic emitter that has no locations.
+  NoLocDiagnosticEmitter emitter;
 
   // For CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream = nullptr;

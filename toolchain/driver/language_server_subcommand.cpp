@@ -23,13 +23,13 @@ auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!driver_env.input_stream) {
     CARBON_DIAGNOSTIC(LanguageServerMissingInputStream, Error,
                       "language-server requires input_stream");
-    driver_env.file_emitter.EmitWithoutFile(LanguageServerMissingInputStream);
+    driver_env.emitter.Emit(LanguageServerMissingInputStream);
     return {.success = false};
   }
 
   bool success =
       LanguageServer::Run(driver_env.input_stream, *driver_env.output_stream,
-                          *driver_env.error_stream, driver_env.file_emitter);
+                          *driver_env.error_stream, driver_env.consumer);
   return {.success = success};
 }
 

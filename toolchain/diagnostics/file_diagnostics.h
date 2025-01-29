@@ -20,13 +20,6 @@ class FileDiagnosticEmitter : public DiagnosticEmitter<llvm::StringRef> {
   explicit FileDiagnosticEmitter(DiagnosticConsumer* consumer)
       : DiagnosticEmitter<llvm::StringRef>(converter_, *consumer) {}
 
-  // Emits an error without a file association.
-  template <typename... Args>
-  auto EmitWithoutFile(const DiagnosticBase<Args...>& diagnostic_base,
-                       Internal::NoTypeDeduction<Args>... args) -> void {
-    Emit("", diagnostic_base, args...);
-  }
-
  private:
   // Converts a filename directly to the diagnostic location.
   struct FileDiagnosticConverter : DiagnosticConverter<llvm::StringRef> {

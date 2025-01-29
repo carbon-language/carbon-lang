@@ -175,7 +175,23 @@ class DiagnosticEmitter {
   // emitter.
   explicit DiagnosticEmitter(DiagnosticConverter<LocT>& converter,
                              DiagnosticConsumer& consumer)
+    requires(!std::is_same_v<LocT, void*>)
       : converter_(&converter), consumer_(&consumer) {}
+
+  // This constructor only applies to NoLocDiagnosticEmitter.
+  explicit DiagnosticEmitter(DiagnosticConsumer* consumer)
+    requires(std::is_same_v<LocT, void*>)
+      : converter_(nullptr), consumer_(consumer) {
+    struct FileDiagnosticConverter : DiagnosticConverter<void*> {
+      auto ConvertLoc(void* /*loc*/, ContextFnT /*context_fn*/) const
+          -> ConvertedDiagnosticLoc override {
+        return {.loc = {.filename = ""}, .last_byte_offset = -1};
+      }
+    };
+    static FileDiagnosticConverter no_loc_converter;
+    converter_ = no_loc_converter;
+  }
+
   ~DiagnosticEmitter() = default;
 
   // Emits an error.
@@ -187,6 +203,13 @@ class DiagnosticEmitter {
             Internal::NoTypeDeduction<Args>... args) -> void {
     DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
         .Emit();
+  }
+
+  template <typename... Args>
+    requires(std::is_same_v<LocT, void*>)
+  auto Emit(const DiagnosticBase<Args...>& diagnostic_base,
+            Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
+    Emit(nullptr, diagnostic_base, args...);
   }
 
   // A fluent interface for building a diagnostic and attaching notes for added
@@ -228,6 +251,9 @@ class DiagnosticEmitter {
   llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
       annotate_fns_;
 };
+
+// This relies on `void*` location handling on `DiagnosticEmitter`.
+using NoLocDiagnosticEmitter = DiagnosticEmitter<void*>;
 
 // An RAII object that denotes a scope in which any diagnostic produced should
 // be annotated in some way.

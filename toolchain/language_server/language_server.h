@@ -14,8 +14,7 @@ namespace Carbon::LanguageServer {
 // error_stream is primarily for errors that don't fit into LSP. Returns true if
 // the server cleanly exits.
 auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
-         llvm::raw_ostream& error_stream, FileDiagnosticEmitter& emitter)
-    -> bool;
+         llvm::raw_ostream& error_stream, DiagnosticConsumer& consumer) -> bool;
 
 }  // namespace Carbon::LanguageServer
 

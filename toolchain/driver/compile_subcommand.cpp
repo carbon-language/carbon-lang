@@ -11,6 +11,7 @@
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/file_diagnostics.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lex/lex.h"
@@ -282,7 +283,7 @@ static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
   }
 }
 
-auto CompileSubcommand::ValidateOptions(FileDiagnosticEmitter& emitter) const
+auto CompileSubcommand::ValidateOptions(NoLocDiagnosticEmitter& emitter) const
     -> bool {
   CARBON_DIAGNOSTIC(
       CompilePhaseFlagConflict, Error,
@@ -292,22 +293,22 @@ auto CompileSubcommand::ValidateOptions(FileDiagnosticEmitter& emitter) const
   switch (options_.phase) {
     case Phase::Lex:
       if (options_.dump_parse_tree) {
-        emitter.EmitWithoutFile(CompilePhaseFlagConflict, "parse tree",
-                                PhaseToString(options_.phase));
+        emitter.Emit(CompilePhaseFlagConflict, "parse tree",
+                     PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
     case Phase::Parse:
       if (options_.dump_sem_ir) {
-        emitter.EmitWithoutFile(CompilePhaseFlagConflict, "SemIR",
-                                PhaseToString(options_.phase));
+        emitter.Emit(CompilePhaseFlagConflict, "SemIR",
+                     PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
-        emitter.EmitWithoutFile(CompilePhaseFlagConflict, "LLVM IR",
-                                PhaseToString(options_.phase));
+        emitter.Emit(CompilePhaseFlagConflict, "LLVM IR",
+                     PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
@@ -668,8 +669,7 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
                           "output file name must be specified for input `{0}` "
                           "that is not a regular file",
                           std::string);
-        driver_env_->file_emitter.EmitWithoutFile(CompileInputNotRegularFile,
-                                                  input_filename_);
+        driver_env_->emitter.Emit(CompileInputNotRegularFile, input_filename_);
         return false;
       }
       output_filename = input_filename_;
@@ -693,9 +693,8 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       CARBON_DIAGNOSTIC(CompileOutputFileOpenError, Error,
                         "could not open output file `{0}`: {1}", std::string,
                         std::string);
-      driver_env_->file_emitter.EmitWithoutFile(CompileOutputFileOpenError,
-                                                output_filename.str().str(),
-                                                ec.message());
+      driver_env_->emitter.Emit(CompileOutputFileOpenError,
+                                output_filename.str().str(), ec.message());
       return false;
     }
     if (options_.asm_output) {
@@ -744,7 +743,7 @@ auto CompilationUnit::IncludeInDumps(llvm::StringRef filename) const -> bool {
 }  // namespace
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  if (!ValidateOptions(driver_env.file_emitter)) {
+  if (!ValidateOptions(driver_env.emitter)) {
     return {.success = false};
   }
 
@@ -759,8 +758,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     } else {
       // TODO: Change ReadPreludeManifest to produce diagnostics.
       CARBON_DIAGNOSTIC(CompilePreludeManifestError, Error, "{0}", std::string);
-      driver_env.file_emitter.EmitWithoutFile(CompilePreludeManifestError,
-                                              PrintToString(find.error()));
+      driver_env.emitter.Emit(CompilePreludeManifestError,
+                              PrintToString(find.error()));
       return {.success = false};
     }
   }

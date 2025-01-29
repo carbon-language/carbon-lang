@@ -59,7 +59,7 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     CARBON_DIAGNOSTIC(FormatMultipleFilesToOneOutput, Error,
                       "multiple input files are being provided; --output only "
                       "works with one input");
-    driver_env.file_emitter.EmitWithoutFile(FormatMultipleFilesToOneOutput);
+    driver_env.emitter.Emit(FormatMultipleFilesToOneOutput);
     result.success = false;
     return result;
   }

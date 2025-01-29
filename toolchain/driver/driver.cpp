@@ -96,8 +96,8 @@ applies to each message that forms a diagnostic, not just the primary message.
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   if (driver_env_.installation->error()) {
     CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);
-    driver_env_.file_emitter.EmitWithoutFile(
-        DriverInstallInvalid, driver_env_.installation->error()->str());
+    driver_env_.emitter.Emit(DriverInstallInvalid,
+                             driver_env_.installation->error()->str());
     return {.success = false};
   }
 
@@ -114,8 +114,8 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
 
   if (!result.ok()) {
     CARBON_DIAGNOSTIC(DriverCommandLineParseFailed, Error, "{0}", std::string);
-    driver_env_.file_emitter.EmitWithoutFile(DriverCommandLineParseFailed,
-                                             PrintToString(result.error()));
+    driver_env_.emitter.Emit(DriverCommandLineParseFailed,
+                             PrintToString(result.error()));
     return {.success = false};
   } else if (*result == CommandLine::ParseResult::MetaSuccess) {
     return {.success = true};
