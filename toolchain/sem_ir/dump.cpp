@@ -246,6 +246,9 @@ LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
 LLVM_DUMP_METHOD static auto MakeConstantId(int id) -> ConstantId {
   return ConstantId(id);
 }
+LLVM_DUMP_METHOD static auto MakeSymbolicConstantId(int id) -> ConstantId {
+  return ConstantId::ForSymbolicConstantIndex(id);
+}
 LLVM_DUMP_METHOD static auto MakeEntityNameId(int id) -> EntityNameId {
   return EntityNameId(id);
 }
