@@ -1587,7 +1587,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                         &SemIR::FacetValue::witness_inst_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::FunctionType::specific_id);
+                                        &SemIR::FunctionType::enclosing_args_id);
     case SemIR::GenericClassType::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::GenericClassType::enclosing_specific_id);

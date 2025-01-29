@@ -273,7 +273,8 @@ static auto BuildFunctionDecl(Context& context,
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
   function_decl.type_id = context.GetFunctionType(
-      function_decl.function_id, context.scope_stack().PeekSpecificId());
+      function_decl.function_id, context.specifics().GetArgsOrEmpty(
+                                     context.scope_stack().PeekSpecificId()));
 
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(decl_id, function_decl);

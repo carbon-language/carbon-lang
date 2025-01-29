@@ -12,7 +12,7 @@ namespace Carbon::SemIR {
 
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::None,
-                           .enclosing_specific_id = SpecificId::None,
+                           .enclosing_args_id = InstBlockId::Empty,
                            .resolved_specific_id = SpecificId::None,
                            .self_id = InstId::None,
                            .is_error = false};
@@ -41,7 +41,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   }
 
   result.function_id = fn_type->function_id;
-  result.enclosing_specific_id = fn_type->specific_id;
+  result.enclosing_args_id = fn_type->enclosing_args_id;
   return result;
 }
 

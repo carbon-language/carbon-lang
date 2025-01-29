@@ -38,8 +38,9 @@ static auto NoteAssociatedFunction(Context& context,
 // `BuiltinErrorInst` if the function is not usable.
 static auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
-    SemIR::InstId impl_decl_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::InstId {
+    SemIR::InstId impl_decl_id, SemIR::SpecificId interface_specific_id,
+    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
+    -> SemIR::InstId {
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {
@@ -61,7 +62,7 @@ static auto CheckAssociatedFunctionImplementation(
   // parameters.
   auto interface_function_specific_id =
       GetSelfSpecificForInterfaceMemberWithSelfType(
-          context, impl_decl_id, interface_function_type.specific_id,
+          context, impl_decl_id, interface_specific_id,
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,
@@ -380,8 +381,8 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_block[index] = CheckAssociatedFunctionImplementation(
-              context, *fn_type, lookup_result.target_inst_id(), self_type_id,
-              impl.witness_id);
+              context, *fn_type, lookup_result.target_inst_id(),
+              interface_type->specific_id, self_type_id, impl.witness_id);
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,

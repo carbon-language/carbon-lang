@@ -59,6 +59,8 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 // `args_id` should be a canonical instruction block referring to constants.
 auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId;
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
+                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId;
 
 // Builds a new specific if the given generic is it has a value. Otherwise
 // returns `None`.

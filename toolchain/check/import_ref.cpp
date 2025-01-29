@@ -1837,7 +1837,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 // importing the function declaration in order to resolve cycles.
 static auto MakeFunctionDecl(ImportContext& context,
                              const SemIR::Function& import_function,
-                             SemIR::SpecificId specific_id)
+                             SemIR::InstBlockId enclosing_args_id)
     -> std::pair<SemIR::FunctionId, SemIR::ConstantId> {
   SemIR::FunctionDecl function_decl = {
       .type_id = SemIR::TypeId::None,
@@ -1855,7 +1855,7 @@ static auto MakeFunctionDecl(ImportContext& context,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = context.local_context().GetFunctionType(
-      function_decl.function_id, specific_id);
+      function_decl.function_id, enclosing_args_id);
 
   // Write the function ID and type into the FunctionDecl.
   context.local_context().ReplaceInstBeforeConstantUse(function_decl_id,
@@ -1873,10 +1873,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   SemIR::FunctionId function_id = SemIR::FunctionId::None;
   if (!function_const_id.has_value()) {
-    auto import_specific_id = resolver.import_types()
-                                  .GetAs<SemIR::FunctionType>(inst.type_id)
-                                  .specific_id;
-    auto specific_data = GetLocalSpecificData(resolver, import_specific_id);
+    auto import_enclosing_args_id =
+        resolver.import_types()
+            .GetAs<SemIR::FunctionType>(inst.type_id)
+            .enclosing_args_id;
+    auto enclosing_args =
+        GetLocalInstBlockContents(resolver, import_enclosing_args_id);
     if (resolver.HasNewWork()) {
       // This is the end of the first phase. Don't make a new function yet if
       // we already have new work.
@@ -1884,10 +1886,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     }
 
     // On the second phase, create a forward declaration of the interface.
-    auto specific_id =
-        GetOrAddLocalSpecific(resolver, import_specific_id, specific_data);
+    auto enclosing_args_id = GetLocalCanonicalInstBlockId(
+        resolver, import_enclosing_args_id, enclosing_args);
     std::tie(function_id, function_const_id) =
-        MakeFunctionDecl(resolver, import_function, specific_id);
+        MakeFunctionDecl(resolver, import_function, enclosing_args_id);
   } else {
     // On the third phase, compute the function ID from the constant value of
     // the declaration.
@@ -1942,7 +1944,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto fn_val_id = GetLocalConstantInstId(
       resolver,
       resolver.import_functions().Get(inst.function_id).first_decl_id());
-  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+  auto enclosing_args =
+      GetLocalInstBlockContents(resolver, inst.enclosing_args_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1952,8 +1955,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .function_id = resolver.local_types()
                                     .GetAs<SemIR::FunctionType>(fn_type_id)
                                     .function_id,
-                 .specific_id = GetOrAddLocalSpecific(
-                     resolver, inst.specific_id, specific_data)});
+                 .enclosing_args_id = GetLocalCanonicalInstBlockId(
+                     resolver, inst.enclosing_args_id, enclosing_args)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

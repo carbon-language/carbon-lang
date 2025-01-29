@@ -100,8 +100,8 @@ class File;
 struct CalleeFunction {
   // The function. `None` if not a function.
   SemIR::FunctionId function_id;
-  // The specific that contains the function.
-  SemIR::SpecificId enclosing_specific_id;
+  // The arguments for generic parameters that enclose the function.
+  SemIR::InstBlockId enclosing_args_id;
   // The specific for the callee itself, in a resolved call.
   SemIR::SpecificId resolved_specific_id;
   // The bound `self` parameter. `None` if not a method.
