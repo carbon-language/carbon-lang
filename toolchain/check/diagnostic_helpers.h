@@ -12,8 +12,9 @@
 
 namespace Carbon::Check {
 
-// Diagnostic locations produced by checking may be either a parse node
-// directly, or an inst ID which is later translated to a parse node.
+// Tracks a location for diagnostic use, which is either a parse node or an inst
+// ID which can be translated to a parse node. Used when code needs to support
+// multiple possible ways of reporting a diagnostic location.
 class SemIRLoc {
  public:
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -26,6 +27,8 @@ class SemIRLoc {
   // NOLINTNEXTLINE(google-explicit-constructor)
   SemIRLoc(SemIR::LocId loc_id) : SemIRLoc(loc_id, false) {}
 
+  // If `token_only` is true, refers to the specific node; otherwise, refers to
+  // the node and its children.
   explicit SemIRLoc(SemIR::LocId loc_id, bool token_only)
       : loc_id_(loc_id), is_inst_id_(false), token_only_(token_only) {}
 
