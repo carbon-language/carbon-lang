@@ -21,7 +21,7 @@ cc_library(
         ":outgoing_messages",
         "//common:ostream",
         "//common:raw_string_ostream",
-        "//toolchain/diagnostics:filename_diagnostics",
+        "//toolchain/diagnostics:file_diagnostics",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )

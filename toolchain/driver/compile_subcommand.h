@@ -10,7 +10,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/diagnostics/filename_diagnostics.h"
+#include "toolchain/diagnostics/file_diagnostics.h"
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
@@ -77,7 +77,7 @@ class CompileSubcommand : public DriverSubcommand {
   // Does custom validation of the compile-subcommand options structure beyond
   // what the command line parsing library supports. Diagnoses and returns false
   // on failure.
-  auto ValidateOptions(FilenameDiagnosticEmitter& emitter) const -> bool;
+  auto ValidateOptions(FileDiagnosticEmitter& emitter) const -> bool;
 
   CompileOptions options_;
 };

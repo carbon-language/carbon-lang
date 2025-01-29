@@ -11,7 +11,7 @@
 #include "common/ostream.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/filename_diagnostics.h"
+#include "toolchain/diagnostics/file_diagnostics.h"
 #include "toolchain/install/install_paths.h"
 
 namespace Carbon {
@@ -29,7 +29,7 @@ struct DriverEnv {
         error_stream(error_stream),
         fuzzing(fuzzing),
         consumer(error_stream),
-        filename_emitter(&consumer) {}
+        file_emitter(&consumer) {}
 
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
@@ -53,7 +53,7 @@ struct DriverEnv {
   StreamDiagnosticConsumer consumer;
 
   // A diagnostic emitter that uses the `StringRef` location as the filename.
-  FilenameDiagnosticEmitter filename_emitter;
+  FileDiagnosticEmitter file_emitter;
 
   // For CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream = nullptr;

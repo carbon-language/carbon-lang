@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_FILENAME_DIAGNOSTICS_H_
-#define CARBON_TOOLCHAIN_DIAGNOSTICS_FILENAME_DIAGNOSTICS_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_FILE_DIAGNOSTICS_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_FILE_DIAGNOSTICS_H_
 
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -12,23 +12,30 @@ namespace Carbon {
 // We frequently want a `DiagnosticEmitter` that directly uses a filename. Note
 // that an empty string can be used for a diagnostic that has no particular
 // location.
-class FilenameDiagnosticEmitter : public DiagnosticEmitter<llvm::StringRef> {
+class FileDiagnosticEmitter : public DiagnosticEmitter<llvm::StringRef> {
  public:
-  explicit FilenameDiagnosticEmitter(DiagnosticConsumer* consumer)
+  explicit FileDiagnosticEmitter(DiagnosticConsumer* consumer)
       : DiagnosticEmitter<llvm::StringRef>(converter_, *consumer) {}
+
+  // Emits an error without a file association.
+  template <typename... Args>
+  auto EmitWithoutFile(const DiagnosticBase<Args...>& diagnostic_base,
+                       Internal::NoTypeDeduction<Args>... args) -> void {
+    Emit(diagnostic_base, args...);
+  }
 
  private:
   // Converts a filename directly to the diagnostic location.
-  struct FilenameDiagnosticConverter : DiagnosticConverter<llvm::StringRef> {
+  struct FileDiagnosticConverter : DiagnosticConverter<llvm::StringRef> {
     auto ConvertLoc(llvm::StringRef filename, ContextFnT /*context_fn*/) const
         -> ConvertedDiagnosticLoc override {
       return {.loc = {.filename = filename}, .last_byte_offset = -1};
     }
   };
 
-  FilenameDiagnosticConverter converter_;
+  FileDiagnosticConverter converter_;
 };
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_FILENAME_DIAGNOSTICS_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_FILE_DIAGNOSTICS_H_

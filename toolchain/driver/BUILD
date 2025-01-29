@@ -125,7 +125,7 @@ cc_library(
         "//toolchain/check",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:filename_diagnostics",
+        "//toolchain/diagnostics:file_diagnostics",
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
         "//toolchain/format",
         "//toolchain/install:install_paths",

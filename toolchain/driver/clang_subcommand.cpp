@@ -54,7 +54,7 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     CARBON_DIAGNOSTIC(
         ClangFuzzingDisallowed, Error,
         "preventing fuzzing of `clang` subcommand due to library crashes");
-    driver_env.filename_emitter.Emit("", ClangFuzzingDisallowed);
+    driver_env.file_emitter.EmitWithoutFile(ClangFuzzingDisallowed);
     return {.success = false};
   }
 

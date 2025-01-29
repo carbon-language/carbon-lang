@@ -7,7 +7,7 @@
 #include <limits>
 
 #include "llvm/Support/ErrorOr.h"
-#include "toolchain/diagnostics/filename_diagnostics.h"
+#include "toolchain/diagnostics/file_diagnostics.h"
 
 namespace Carbon {
 
@@ -21,7 +21,7 @@ auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
                                 llvm::StringRef filename,
                                 DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
-  FilenameDiagnosticEmitter emitter(&consumer);
+  FileDiagnosticEmitter emitter(&consumer);
 
   llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>> file =
       fs.openFileForRead(filename);
@@ -55,7 +55,7 @@ auto SourceBuffer::MakeFromMemoryBuffer(
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
     llvm::StringRef filename, bool is_regular_file,
     DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {
-  FilenameDiagnosticEmitter emitter(&consumer);
+  FileDiagnosticEmitter emitter(&consumer);
 
   if (buffer.getError()) {
     CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "error reading file: {0}",

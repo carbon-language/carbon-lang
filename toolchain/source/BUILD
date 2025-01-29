@@ -13,7 +13,7 @@ cc_library(
     deps = [
         "//common:error",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:filename_diagnostics",
+        "//toolchain/diagnostics:file_diagnostics",
         "//toolchain/diagnostics:format_providers",
         "@llvm-project//llvm:Support",
     ],

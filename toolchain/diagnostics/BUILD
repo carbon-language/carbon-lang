@@ -82,8 +82,8 @@ cc_test(
 )
 
 cc_library(
-    name = "filename_diagnostics",
-    hdrs = ["filename_diagnostics.h"],
+    name = "file_diagnostics",
+    hdrs = ["file_diagnostics.h"],
     deps = [
         ":diagnostic_emitter",
         "@llvm-project//llvm:Support",
