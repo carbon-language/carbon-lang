@@ -46,8 +46,8 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   auto Flush() -> void override { stream_->flush(); }
 
   auto set_stream(llvm::raw_ostream* stream) -> void { stream_ = stream; }
-  auto set_include_diagnostic_kind(bool include) -> void {
-    include_diagnostic_kind_ = include;
+  auto set_include_diagnostic_kind(bool value) -> void {
+    include_diagnostic_kind_ = value;
   }
 
  private:
