@@ -538,11 +538,11 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
     method_or_id_end = keyword_end;
     extra_content_start = keyword_end;
   }
-  auto method_or_id = content->substr(method_or_id_start,
-                                      method_or_id_end - method_or_id_start);
+  auto method_or_id =
+      llvm::StringRef(*content).slice(method_or_id_start, method_or_id_end);
 
   auto extra_content =
-      content->substr(extra_content_start, keyword_end - extra_content_start);
+      llvm::StringRef(*content).slice(extra_content_start, keyword_end);
   std::string extra_content_sep;
   if (!extra_content.empty()) {
     extra_content_sep = ",";
