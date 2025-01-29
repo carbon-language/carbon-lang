@@ -12,6 +12,9 @@ namespace Carbon {
 // We frequently want a `DiagnosticEmitter` that directly uses a filename. Note
 // that an empty string can be used for a diagnostic that has no particular
 // location.
+//
+// Note this provides no way to set a line or column on diagnostics. More
+// specific emitters must be used for that.
 class FileDiagnosticEmitter : public DiagnosticEmitter<llvm::StringRef> {
  public:
   explicit FileDiagnosticEmitter(DiagnosticConsumer* consumer)

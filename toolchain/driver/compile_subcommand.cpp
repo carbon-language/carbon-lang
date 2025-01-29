@@ -757,6 +757,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
+      // TODO: Change ReadPreludeManifest to produce diagnostics.
       CARBON_DIAGNOSTIC(CompilePreludeManifestError, Error, "{0}", std::string);
       driver_env.file_emitter.EmitWithoutFile(CompilePreludeManifestError,
                                               PrintToString(find.error()));
