@@ -55,7 +55,6 @@ The following words are interpreted as keywords:
 -   `base`
 -   `break`
 -   `Core`
--   `Cpp`
 -   `case`
 -   `choice`
 -   `class`
