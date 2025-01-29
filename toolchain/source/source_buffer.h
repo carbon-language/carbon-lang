@@ -57,6 +57,10 @@ class SourceBuffer {
     }
   }
 
+  static auto MakeFromStringRef(llvm::StringRef filename, llvm::StringRef text,
+                                DiagnosticConsumer& consumer)
+      -> std::optional<SourceBuffer>;
+
   // Use one of the factory functions above to create a source buffer.
   SourceBuffer() = delete;
 

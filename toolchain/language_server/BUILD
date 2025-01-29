@@ -28,10 +28,20 @@ cc_library(
 
 cc_library(
     name = "context",
+    srcs = ["context.cpp"],
     hdrs = ["context.h"],
     deps = [
         "//common:map",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:file_diagnostics",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/lex",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:file",
+        "//toolchain/source:source_buffer",
     ],
 )
 
