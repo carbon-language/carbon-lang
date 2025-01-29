@@ -746,10 +746,7 @@ struct FunctionType {
 
   TypeId type_id;
   FunctionId function_id;
-  // Enclosing arguments that have known values. This includes arguments from
-  // the enclosing generic and, for an associated function in an interface, the
-  // `Self` type.
-  InstBlockId enclosing_args_id;
+  SpecificId specific_id;
 };
 
 // The type of the name of a generic class. The corresponding value is an empty

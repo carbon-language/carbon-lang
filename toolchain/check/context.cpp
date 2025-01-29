@@ -1550,9 +1550,8 @@ auto Context::GetClassType(SemIR::ClassId class_id,
 }
 
 auto Context::GetFunctionType(SemIR::FunctionId fn_id,
-                              SemIR::InstBlockId enclosing_args_id) -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id,
-                                                  enclosing_args_id);
+                              SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
 }
 
 auto Context::GetGenericClassType(SemIR::ClassId class_id,

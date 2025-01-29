@@ -188,11 +188,12 @@ class DeductionWorklist {
 // State that is tracked throughout the deduction process.
 class DeductionContext {
  public:
-  // Preparse to perform deduction. If an enclosing argument list is provided,
-  // adds those arguments as known arguments that will not be deduced.
+  // Preparse to perform deduction. If an enclosing specific is provided, adds
+  // the arguments from the given specific as known arguments that will not be
+  // deduced.
   DeductionContext(Context& context, SemIR::LocId loc_id,
                    SemIR::GenericId generic_id,
-                   SemIR::InstBlockId enclosing_args_id, bool diagnose);
+                   SemIR::SpecificId enclosing_specific_id, bool diagnose);
 
   auto context() const -> Context& { return *context_; }
 
@@ -248,7 +249,7 @@ static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
 
 DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
                                    SemIR::GenericId generic_id,
-                                   SemIR::InstBlockId enclosing_args_id,
+                                   SemIR::SpecificId enclosing_specific_id,
                                    bool diagnose)
     : context_(&context),
       loc_id_(loc_id),
@@ -266,20 +267,23 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
           .size(),
       SemIR::InstId::None);
 
-  // Copy any outer generic arguments from the specified instance and prepare to
-  // substitute them into the function declaration.
-  auto enclosing_args = context.inst_blocks().GetOrEmpty(enclosing_args_id);
-  llvm::copy(enclosing_args, result_arg_ids_.begin());
+  if (enclosing_specific_id.has_value()) {
+    // Copy any outer generic arguments from the specified instance and prepare
+    // to substitute them into the function declaration.
+    auto args = context.inst_blocks().Get(
+        context.specifics().Get(enclosing_specific_id).args_id);
+    llvm::copy(args, result_arg_ids_.begin());
 
-  // TODO: Subst is linear in the length of the substitutions list. Change it so
-  // we can pass in an array mapping indexes to substitutions instead.
-  substitutions_.reserve(enclosing_args.size());
-  for (auto [i, subst_inst_id] : llvm::enumerate(enclosing_args)) {
-    substitutions_.push_back(
-        {.bind_id = SemIR::CompileTimeBindIndex(i),
-         .replacement_id = context.constant_values().Get(subst_inst_id)});
+    // TODO: Subst is linear in the length of the substitutions list. Change
+    // it so we can pass in an array mapping indexes to substitutions instead.
+    substitutions_.reserve(args.size());
+    for (auto [i, subst_inst_id] : llvm::enumerate(args)) {
+      substitutions_.push_back(
+          {.bind_id = SemIR::CompileTimeBindIndex(i),
+           .replacement_id = context.constant_values().Get(subst_inst_id)});
+    }
+    first_deduced_index_ = SemIR::CompileTimeBindIndex(args.size());
   }
-  first_deduced_index_ = SemIR::CompileTimeBindIndex(enclosing_args.size());
 
   non_deduced_indexes_.resize(result_arg_ids_.size() -
                               first_deduced_index_.index);
@@ -507,11 +511,11 @@ auto DeductionContext::MakeSpecific() -> SemIR::SpecificId {
 
 auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
-    SemIR::InstBlockId enclosing_args_id,
+    SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_params_id,
     SemIR::InstBlockId params_id, [[maybe_unused]] SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
-  DeductionContext deduction(context, loc_id, generic_id, enclosing_args_id,
+  DeductionContext deduction(context, loc_id, generic_id, enclosing_specific_id,
                              /*diagnose=*/true);
 
   // Prepare to perform deduction of the explicit parameters against their
@@ -531,10 +535,9 @@ auto DeduceGenericCallArguments(
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                          const SemIR::Impl& impl, SemIR::ConstantId self_id,
                          SemIR::ConstantId constraint_id) -> SemIR::SpecificId {
-  DeductionContext deduction(
-      context, loc_id, impl.generic_id,
-      /*enclosing_specific_id=*/SemIR::InstBlockId::Empty,
-      /*diagnose=*/false);
+  DeductionContext deduction(context, loc_id, impl.generic_id,
+                             /*enclosing_specific_id=*/SemIR::SpecificId::None,
+                             /*diagnose=*/false);
 
   // Prepare to perform deduction of the type and interface.
   deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id),

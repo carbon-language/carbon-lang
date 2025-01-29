@@ -122,14 +122,16 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
                                     context.insts().Get(decl_id).type_id());
   } else if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(
                  decl.type_id())) {
-    // Form an enclosing argument list for the function including the Self type,
-    // and build a corresponding `FunctionType`.
-    auto generic_id = context.functions().Get(fn->function_id).generic_id;
-    auto args =
-        GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
-                                   self_type_id, self_witness_id);
-    return context.GetFunctionType(fn->function_id,
-                                   context.inst_blocks().AddCanonical(args));
+    return SemIR::GetTypeInSpecific(context.sem_ir(), interface_specific_id,
+                                    context.insts().Get(decl_id).type_id());
+    // // Form an enclosing argument list for the function including the Self type,
+    // // and build a corresponding `FunctionType`.
+    // auto generic_id = context.functions().Get(fn->function_id).generic_id;
+    // auto args =
+    //     GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
+    //                                self_type_id, self_witness_id);
+    // return context.GetFunctionType(fn->function_id,
+    //                                context.inst_blocks().AddCanonical(args));
   } else {
     CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
   }

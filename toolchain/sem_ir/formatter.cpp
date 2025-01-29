@@ -1033,14 +1033,6 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(FunctionType inst) -> void {
-    if (inst.enclosing_args_id == InstBlockId::Empty) {
-      FormatArgs(inst.function_id);
-    } else {
-      FormatArgs(inst.function_id, inst.enclosing_args_id);
-    }
-  }
-
   auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
     llvm::SaveAndRestore class_scope(scope_,
