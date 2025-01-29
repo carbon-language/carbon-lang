@@ -49,10 +49,17 @@ class B {}
 fn F(T:! Generic(A));
 fn G(T:! Generic(B)) {
   // TODO: Include generic arguments in the type name.
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+7]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+14]]:3: error: semantics TODO: `Facet value converting to facet value` [SemanticsTodo]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F(T:! Generic(A));
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+7]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn F(T:! Generic(A));
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -497,7 +504,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.4ce = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T.bae)]
-// CHECK:STDOUT:     %.loc19: %Generic.type.c7c = converted %T.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc26: %Generic.type.c7c = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
