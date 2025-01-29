@@ -122,8 +122,13 @@ class DeclNameStack {
     // Returns the name_id for a new instruction. This is `None` when the name
     // resolved.
     auto name_id_for_new_inst() -> SemIR::NameId {
-      return state == State::Unresolved ? unresolved_name_id
-                                        : SemIR::NameId::None;
+      switch (state) {
+        case State::Unresolved:
+        case State::Poisoned:
+          return unresolved_name_id;
+        default:
+          return SemIR::NameId::None;
+      }
     }
 
     // The current scope when this name began. This is the scope that we will

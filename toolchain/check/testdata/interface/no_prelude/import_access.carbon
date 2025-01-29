@@ -412,8 +412,8 @@ private interface Redecl {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
-// CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Forward.type: type = facet_type <@Forward> [template]
+// CHECK:STDOUT:   %Self: %Forward.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -433,11 +433,11 @@ private interface Redecl {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}
+// CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [template = constants.%Forward.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @.1 {
-// CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @Forward {
+// CHECK:STDOUT:   %Self: %Forward.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
