@@ -2126,9 +2126,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
                           InstIdAsType);
-        if (loc.is_inst_id && !loc.inst_id.has_value()) {
-          return;
-        }
         builder.Note(loc, ResolvingSpecificHere,
                      GetInstForSpecific(context, specific_id));
       });

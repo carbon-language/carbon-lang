@@ -53,7 +53,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
     if (import_loc_id.is_node_id()) {
       // For imports in the current file, the location is simple.
       in_import_loc = ConvertLocInFile(cursor_ir, import_loc_id.node_id(),
-                                       loc.token_only, context_fn);
+                                       loc.token_only_, context_fn);
     } else if (import_loc_id.is_import_ir_inst_id()) {
       // For implicit imports, we need to unravel the location a little
       // further.
@@ -67,7 +67,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
                    "Should only be one layer of implicit imports");
       in_import_loc =
           ConvertLocInFile(implicit_ir.sem_ir, implicit_loc_id.node_id(),
-                           loc.token_only, context_fn);
+                           loc.token_only_, context_fn);
     }
 
     // TODO: Add an "In implicit import of prelude." note for the case where we
@@ -91,16 +91,16 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
       return std::nullopt;
     } else {
       // Parse nodes always refer to the current IR.
-      return ConvertLocInFile(cursor_ir, loc_id.node_id(), loc.token_only,
+      return ConvertLocInFile(cursor_ir, loc_id.node_id(), loc.token_only_,
                               context_fn);
     }
   };
 
   // Handle the base location.
-  if (loc.is_inst_id) {
-    cursor_inst_id = loc.inst_id;
+  if (loc.is_inst_id_) {
+    cursor_inst_id = loc.inst_id_;
   } else {
-    if (auto diag_loc = handle_loc(loc.loc_id)) {
+    if (auto diag_loc = handle_loc(loc.loc_id_)) {
       return *diag_loc;
     }
     CARBON_CHECK(cursor_inst_id.has_value(), "Should have been set");
@@ -135,7 +135,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
     }
 
     // `None` parse node but not an import; just nothing to point at.
-    return ConvertLocInFile(cursor_ir, Parse::NodeId::None, loc.token_only,
+    return ConvertLocInFile(cursor_ir, Parse::NodeId::None, loc.token_only_,
                             context_fn);
   }
 }
