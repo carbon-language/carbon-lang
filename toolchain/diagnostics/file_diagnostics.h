@@ -24,7 +24,7 @@ class FileDiagnosticEmitter : public DiagnosticEmitter<llvm::StringRef> {
   template <typename... Args>
   auto EmitWithoutFile(const DiagnosticBase<Args...>& diagnostic_base,
                        Internal::NoTypeDeduction<Args>... args) -> void {
-    Emit(diagnostic_base, args...);
+    Emit("", diagnostic_base, args...);
   }
 
  private:
