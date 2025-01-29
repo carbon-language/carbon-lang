@@ -82,12 +82,13 @@ base fn InvalidModifier();
 // CHECK:STDERR:
 default final virtual fn ModifiersConflict2() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:8: error: `private` must appear before `extern` [ModifierMustAppearBefore]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:8: error: `private` must appear before `extern` [ModifierMustAppearBefore]
 // CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
 // CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: note: `extern` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `extern` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 extern private fn ExternOrderAndConflict() {}
 
 // CHECK:STDOUT: --- fail_modifiers.carbon

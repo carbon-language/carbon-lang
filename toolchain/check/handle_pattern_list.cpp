@@ -17,7 +17,7 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
-  if (context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
+  if (context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
     context.EndSubpatternAsEmpty();
@@ -37,6 +37,12 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
   context.BeginSubpattern();
+  // TODO: Remove this branch once the parse tree differentiates between
+  // tuple patterns and param patterns.
+  if (context.full_pattern_stack().CurrentKind() ==
+      FullPatternStack::Kind::ImplicitParamList) {
+    context.full_pattern_stack().EndImplicitParamList();
+  }
   return true;
 }
 

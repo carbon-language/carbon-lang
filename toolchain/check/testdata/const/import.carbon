@@ -39,7 +39,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -63,9 +63,28 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     %return.param: ref %const = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %const = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_ref.patt: %const = binding_pattern a_ref
+// CHECK:STDOUT:     %.loc6_1: %const = var_pattern %a_ref.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %const = var a_ref
+// CHECK:STDOUT:   %.loc6_12: type = splice_block %const.loc6 [template = constants.%const] {
+// CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %const.loc6: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %const = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_ptr_ref.patt: %ptr = binding_pattern a_ptr_ref
+// CHECK:STDOUT:     %.loc7_1: %ptr = var_pattern %a_ptr_ref.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr = var a_ptr_ref
+// CHECK:STDOUT:   %.loc7_25: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %const.loc7: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:     %ptr: type = ptr_type %const [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr_ref: ref %ptr = bind_name a_ptr_ref, %a_ptr_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,11 +111,11 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.bde = import_ref Implicit//default, F, unloaded
-// CHECK:STDOUT:   %import_ref.ae7: ref %const = import_ref Implicit//default, a_ref, loaded
-// CHECK:STDOUT:   %import_ref.1ef: ref %ptr = import_ref Implicit//default, a_ptr_ref, loaded
+// CHECK:STDOUT:   %Implicit.F = import_ref Implicit//default, F, unloaded
+// CHECK:STDOUT:   %Implicit.a_ref: ref %const = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %Implicit.a_ptr_ref: ref %ptr = import_ref Implicit//default, a_ptr_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -104,28 +123,48 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref.bde
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.ae7
-// CHECK:STDOUT:     .a_ptr_ref = imports.%import_ref.1ef
+// CHECK:STDOUT:     .F = imports.%Implicit.F
+// CHECK:STDOUT:     .a_ref = imports.%Implicit.a_ref
+// CHECK:STDOUT:     .a_ptr_ref = imports.%Implicit.a_ptr_ref
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_ptr = %a_ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a
+// CHECK:STDOUT:     %.loc6_1: %ptr = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
+// CHECK:STDOUT:   %.loc6_17: type = splice_block %ptr.loc6 [template = constants.%ptr] {
+// CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %const.loc6: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:     %ptr.loc6: type = ptr_type %const [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_ptr.patt: %ptr = binding_pattern a_ptr
+// CHECK:STDOUT:     %.loc7_1: %ptr = var_pattern %a_ptr.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr.var: ref %ptr = var a_ptr
+// CHECK:STDOUT:   %.loc7_21: type = splice_block %ptr.loc7 [template = constants.%ptr] {
+// CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %const.loc7: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:     %ptr.loc7: type = ptr_type %const [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr: ref %ptr = bind_name a_ptr, %a_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, imports.%import_ref.ae7
+// CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, imports.%Implicit.a_ref
 // CHECK:STDOUT:   %addr: %ptr = addr_of %a_ref.ref
 // CHECK:STDOUT:   assign file.%a.var, %addr
-// CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr = name_ref a_ptr_ref, imports.%import_ref.1ef
+// CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr = name_ref a_ptr_ref, imports.%Implicit.a_ptr_ref
 // CHECK:STDOUT:   %.loc7: %ptr = bind_value %a_ptr_ref.ref
 // CHECK:STDOUT:   assign file.%a_ptr.var, %.loc7
 // CHECK:STDOUT:   return

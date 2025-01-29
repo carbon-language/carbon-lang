@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/inst_namer.h"
 
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
@@ -45,7 +46,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     auto fn_scope = GetScopeFor(fn_id);
     // TODO: Provide a location for the function for use as a
     // disambiguator.
-    auto fn_loc = Parse::NodeId::Invalid;
+    auto fn_loc = Parse::NodeId::None;
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir->names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
@@ -67,7 +68,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     ClassId class_id(i);
     auto class_scope = GetScopeFor(class_id);
     // TODO: Provide a location for the class for use as a disambiguator.
-    auto class_loc = Parse::NodeId::Invalid;
+    auto class_loc = Parse::NodeId::None;
     GetScopeInfo(class_scope).name = globals_.AllocateName(
         *this, class_loc,
         sem_ir->names().GetIRBaseName(class_info.name_id).str());
@@ -82,7 +83,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     InterfaceId interface_id(i);
     auto interface_scope = GetScopeFor(interface_id);
     // TODO: Provide a location for the interface for use as a disambiguator.
-    auto interface_loc = Parse::NodeId::Invalid;
+    auto interface_loc = Parse::NodeId::None;
     GetScopeInfo(interface_scope).name = globals_.AllocateName(
         *this, interface_loc,
         sem_ir->names().GetIRBaseName(interface_info.name_id).str());
@@ -92,12 +93,24 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     CollectNamesInGeneric(interface_scope, interface_info.generic_id);
   }
 
+  // Build each associated constant scope.
+  for (auto [i, assoc_const_info] :
+       llvm::enumerate(sem_ir->associated_constants().array_ref())) {
+    AssociatedConstantId assoc_const_id(i);
+    auto assoc_const_scope = GetScopeFor(assoc_const_id);
+    auto assoc_const_loc = sem_ir->insts().GetLocId(assoc_const_info.decl_id);
+    GetScopeInfo(assoc_const_scope).name = globals_.AllocateName(
+        *this, assoc_const_loc,
+        sem_ir->names().GetIRBaseName(assoc_const_info.name_id).str());
+    CollectNamesInGeneric(assoc_const_scope, assoc_const_info.generic_id);
+  }
+
   // Build each impl scope.
   for (auto [i, impl_info] : llvm::enumerate(sem_ir->impls().array_ref())) {
     ImplId impl_id(i);
     auto impl_scope = GetScopeFor(impl_id);
     // TODO: Provide a location for the impl for use as a disambiguator.
-    auto impl_loc = Parse::NodeId::Invalid;
+    auto impl_loc = Parse::NodeId::None;
     // TODO: Invent a name based on the self and constraint types.
     GetScopeInfo(impl_scope).name =
         globals_.AllocateName(*this, impl_loc, "impl");
@@ -110,7 +123,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
 auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
   switch (scope) {
     case ScopeId::None:
-      return "<invalid scope>";
+      return "<no scope>";
 
     // These are treated as SemIR keywords.
     case ScopeId::File:
@@ -127,7 +140,7 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
 }
 
 auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
-  if (!inst_id.is_valid()) {
+  if (!inst_id.has_value()) {
     return "";
   }
   const auto& inst_name = insts_[inst_id.index].second;
@@ -136,7 +149,7 @@ auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
 
 auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     -> std::string {
-  if (!inst_id.is_valid()) {
+  if (!inst_id.has_value()) {
     return "invalid";
   }
 
@@ -152,18 +165,17 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   const auto& [inst_scope, inst_name] = insts_[inst_id.index];
   if (!inst_name) {
     // This should not happen in valid IR.
-    std::string str;
-    llvm::raw_string_ostream str_stream(str);
-    str_stream << "<unexpected>." << inst_id;
+    RawStringOstream out;
+    out << "<unexpected>." << inst_id;
     auto loc_id = sem_ir_->insts().GetLocId(inst_id);
     // TODO: Consider handling inst_id cases.
     if (loc_id.is_node_id()) {
       const auto& tree = sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id.node_id());
-      str_stream << ".loc" << tree.tokens().GetLineNumber(token) << "_"
-                 << tree.tokens().GetColumnNumber(token);
+      out << ".loc" << tree.tokens().GetLineNumber(token) << "_"
+          << tree.tokens().GetColumnNumber(token);
     }
-    return str;
+    return out.TakeStr();
   }
   if (inst_scope == scope_id) {
     return ("%" + inst_name.str()).str();
@@ -173,7 +185,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
 
 auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
     -> llvm::StringRef {
-  if (!block_id.is_valid()) {
+  if (!block_id.has_value()) {
     return "";
   }
   const auto& label_name = labels_[block_id.index].second;
@@ -183,17 +195,16 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
 // Returns the IR name to use for a label, when referenced from a given scope.
 auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     -> std::string {
-  if (!block_id.is_valid()) {
+  if (!block_id.has_value()) {
     return "!invalid";
   }
 
   const auto& [label_scope, label_name] = labels_[block_id.index];
   if (!label_name) {
     // This should not happen in valid IR.
-    std::string str;
-    llvm::raw_string_ostream(str)
-        << "<unexpected instblockref " << block_id << ">";
-    return str;
+    RawStringOstream out;
+    out << "<unexpected instblockref " << block_id << ">";
+    return out.TakeStr();
   }
   if (label_scope == scope_id) {
     return ("!" + label_name.str()).str();
@@ -289,11 +300,11 @@ auto InstNamer::Namespace::AllocateName(
 
 auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                               std::string name, SemIR::LocId loc_id) -> void {
-  if (!block_id.is_valid() || labels_[block_id.index].second) {
+  if (!block_id.has_value() || labels_[block_id.index].second) {
     return;
   }
 
-  if (!loc_id.is_valid()) {
+  if (!loc_id.has_value()) {
     if (const auto& block = sem_ir_->inst_blocks().Get(block_id);
         !block.empty()) {
       loc_id = sem_ir_->insts().GetLocId(block.front());
@@ -309,6 +320,10 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
 // represents some kind of branch.
 auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
                               AnyBranch branch) -> void {
+  if (!loc_id.node_id().has_value()) {
+    AddBlockLabel(scope_id, branch.target_id, "", loc_id);
+    return;
+  }
   llvm::StringRef name;
   switch (sem_ir_->parse_tree().node_kind(loc_id.node_id())) {
     case Parse::NodeKind::IfExprIf:
@@ -377,7 +392,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
 
 auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
     -> void {
-  if (block_id.is_valid()) {
+  if (block_id.has_value()) {
     CollectNamesInBlock(scope_id, sem_ir_->inst_blocks().Get(block_id));
   }
 }
@@ -394,13 +409,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   auto queue_block_insts = [&](ScopeId scope_id,
                                llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.is_valid()) {
+      if (inst_id.has_value()) {
         insts.push_back(std::make_pair(scope_id, inst_id));
       }
     }
   };
   auto queue_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
-    if (block_id.is_valid()) {
+    if (block_id.has_value()) {
       queue_block_insts(scope_id, sem_ir_->inst_blocks().Get(block_id));
     }
   };
@@ -418,7 +433,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       ScopeId old_scope_id = insts_[inst_id.index].first;
       if (old_scope_id == ScopeId::None) {
         std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint =
-            SemIR::LocId::Invalid;
+            SemIR::LocId::None;
         if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
           loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
         } else {
@@ -439,8 +454,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     auto add_int_or_float_type_name = [&](char type_literal_prefix,
                                           SemIR::InstId bit_width_id,
                                           llvm::StringRef suffix = "") {
-      std::string name;
-      llvm::raw_string_ostream out(name);
+      RawStringOstream out;
       out << type_literal_prefix;
       if (auto bit_width = sem_ir_->insts().TryGetAs<IntValue>(bit_width_id)) {
         out << sem_ir_->ints().Get(bit_width->int_id);
@@ -448,7 +462,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         out << "N";
       }
       out << suffix;
-      add_inst_name(std::move(name));
+      add_inst_name(out.TakeStr());
     };
     auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
       if (auto name = sem_ir_->insts().TryGetAs<NameRef>(facet_value_inst_id)) {
@@ -457,7 +471,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                      facet_value_inst_id)) {
         return sem_ir_->entity_names().Get(symbolic->entity_name_id).name_id;
       }
-      return NameId::Invalid;
+      return NameId::None;
     };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
@@ -475,27 +489,38 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedConstantDecl inst): {
-        add_inst_name_id(inst.name_id);
+        add_inst_name_id(
+            sem_ir_->associated_constants().Get(inst.assoc_const_id).name_id);
+        queue_block_id(GetScopeFor(inst.assoc_const_id), inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(AssociatedEntity inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "assoc" << inst.index.index;
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
         continue;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        // TODO: Try to get the name of the interface associated with
-        // `inst.interface_type_id`.
-        if (auto fn_ty =
-                sem_ir_->types().TryGetAs<FunctionType>(inst.entity_type_id)) {
-          add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
-                           ".assoc_type");
-        } else {
-          // TODO: Handle other cases.
-          add_inst_name("assoc_type");
+        auto facet_type =
+            sem_ir_->types().TryGetAs<FacetType>(inst.interface_type_id);
+        if (!facet_type) {
+          // Should never happen, but we don't want the instruction namer to
+          // crash on bad IR.
+          add_inst_name("<invalid interface>");
+          continue;
         }
+        const auto& facet_type_info =
+            sem_ir_->facet_types().Get(facet_type->facet_type_id);
+        auto interface = facet_type_info.TryAsSingleInterface();
+        if (!interface) {
+          // Should never happen, but we don't want the instruction namer to
+          // crash on bad IR.
+          add_inst_name("<invalid interface>");
+          continue;
+        }
+        const auto& interface_info =
+            sem_ir_->interfaces().Get(interface->interface_id);
+        add_inst_name_id(interface_info.name_id, ".assoc_type");
         continue;
       }
       case BindAlias::Kind:
@@ -535,7 +560,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case CARBON_KIND(Call inst): {
         auto callee_function =
             SemIR::GetCalleeFunction(*sem_ir_, inst.callee_id);
-        if (!callee_function.function_id.is_valid()) {
+        if (!callee_function.function_id.has_value()) {
           break;
         }
         const auto& function =
@@ -581,7 +606,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(FacetAccessType inst): {
         auto name_id = facet_access_name_id(inst.facet_value_inst_id);
-        if (name_id.is_valid()) {
+        if (name_id.has_value()) {
           add_inst_name_id(name_id, ".as_type");
         } else {
           add_inst_name("as_type");
@@ -590,7 +615,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(FacetAccessWitness inst): {
         auto name_id = facet_access_name_id(inst.facet_value_inst_id);
-        if (name_id.is_valid()) {
+        if (name_id.has_value()) {
           add_inst_name_id(name_id, ".as_wit");
         } else {
           add_inst_name("as_wit");
@@ -675,14 +700,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
         // TODO: Include information about the impl?
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "impl.elem" << inst.index.index;
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
         continue;
       }
       case CARBON_KIND(ImportDecl inst): {
-        if (inst.package_id.is_valid()) {
+        if (inst.package_id.has_value()) {
           add_inst_name_id(inst.package_id, ".import");
         } else {
           add_inst_name("default.import");
@@ -691,12 +715,37 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
-        add_inst_name("import_ref");
+        // Build the base import name: <package>.<entity-name>
+        RawStringOstream out;
+
+        auto inst = untyped_inst.As<AnyImportRef>();
+        auto import_ir_inst =
+            sem_ir_->import_ir_insts().Get(inst.import_ir_inst_id);
+        const auto& import_ir =
+            *sem_ir_->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+        if (import_ir.package_id().has_value()) {
+          out << import_ir.identifiers().Get(import_ir.package_id());
+        } else {
+          out << "Main";
+        }
+        out << ".";
+
+        // Add entity name if available.
+        if (inst.entity_name_id.has_value()) {
+          auto name_id =
+              sem_ir_->entity_names().Get(inst.entity_name_id).name_id;
+          out << sem_ir_->names().GetIRBaseName(name_id);
+        } else {
+          out << "import_ref";
+        }
+
+        add_inst_name(out.TakeStr());
+
         // When building import refs, we frequently add instructions without
         // a block. Constants that refer to them need to be separately
         // named.
         auto const_id = sem_ir_->constant_values().Get(inst_id);
-        if (const_id.is_valid() && const_id.is_template()) {
+        if (const_id.has_value() && const_id.is_template()) {
           auto const_inst_id = sem_ir_->constant_values().GetInstId(const_id);
           if (!insts_[const_inst_id.index].second) {
             queue_block_insts(ScopeId::ImportRefs,
@@ -720,10 +769,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(IntValue inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "int_" << sem_ir_->ints().Get(inst.int_id);
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
+        continue;
+      }
+      case CARBON_KIND(NameBindingDecl inst): {
+        queue_block_id(scope_id, inst.pattern_block_id);
         continue;
       }
       case CARBON_KIND(NameRef inst): {
@@ -832,10 +884,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(TupleAccess inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "tuple.elem" << inst.index.index;
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
         continue;
       }
       case CARBON_KIND(TupleType inst): {
@@ -867,7 +918,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(VarStorage inst): {
-        add_inst_name_id(inst.name_id, ".var");
+        add_inst_name_id(inst.pretty_name_id, ".var");
         continue;
       }
       default: {
@@ -884,7 +935,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
 
 auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
     -> void {
-  if (!generic_id.is_valid()) {
+  if (!generic_id.has_value()) {
     return;
   }
   generic_scopes_[generic_id.index] = scope_id;

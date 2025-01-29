@@ -10,8 +10,8 @@ namespace Carbon::SemIR {
 
 auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
   auto self_id = sem_ir_.constant_values().GetConstantInstId(impl.self_id);
-  InterfaceId interface_id = InterfaceId::Invalid;
-  SpecificId specific_id = SpecificId::Invalid;
+  InterfaceId interface_id = InterfaceId::None;
+  SpecificId specific_id = SpecificId::None;
   auto facet_type_id = TypeId::ForTypeConstant(
       sem_ir_.constant_values().Get(impl.constraint_id));
   if (auto facet_type =
@@ -26,7 +26,7 @@ auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
   return LookupBucketRef(
       *this, lookup_
                  .Insert(std::tuple{self_id, interface_id, specific_id},
-                         [] { return ImplOrLookupBucketId::Invalid; })
+                         [] { return ImplOrLookupBucketId::None; })
                  .value());
 }
 

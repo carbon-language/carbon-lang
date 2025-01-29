@@ -26,9 +26,10 @@ class Foo[a: i32];
 // CHECK:STDERR:
 interface Bar[] {}
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:23: error: a `(` for parameters is required after implicit parameters [ParamsRequiredAfterImplicit]
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+4]]:23: error: a `(` for parameters is required after implicit parameters [ParamsRequiredAfterImplicit]
 // CHECK:STDERR: interface Bar[a: i32] {}
 // CHECK:STDERR:                       ^
+// CHECK:STDERR:
 interface Bar[a: i32] {}
 
 // CHECK:STDOUT: - filename: fail_no_parens.carbon
@@ -44,7 +45,7 @@ interface Bar[a: i32] {}
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
@@ -57,7 +58,7 @@ interface Bar[a: i32] {}
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'InterfaceDecl', text: '}', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

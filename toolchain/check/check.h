@@ -37,7 +37,8 @@ struct Unit {
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
 auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::raw_ostream* vlog_stream) -> void;
+                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void;
 
 }  // namespace Carbon::Check
 

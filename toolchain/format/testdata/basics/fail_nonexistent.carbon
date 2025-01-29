@@ -9,3 +9,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/format/testdata/basics/fail_nonexistent.carbon
 // CHECK:STDERR: fail_target_file.carbon: error: error opening file for read: No such file or directory
+// CHECK:STDERR:

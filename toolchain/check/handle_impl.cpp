@@ -42,6 +42,8 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
   // and only push a pattern block in `forall` case.
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 
@@ -72,11 +74,11 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
 // TODO: Should this be somewhere more central?
 static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<SemIR::ClassDecl> {
-  if (!scope_id.is_valid()) {
+  if (!scope_id.has_value()) {
     return std::nullopt;
   }
   auto& scope = context.name_scopes().Get(scope_id);
-  if (!scope.inst_id().is_valid()) {
+  if (!scope.inst_id().has_value()) {
     return std::nullopt;
   }
   return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
@@ -91,13 +93,13 @@ static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
 
   // TODO: This is also valid in a mixin.
 
-  return SemIR::TypeId::Invalid;
+  return SemIR::TypeId::None;
 }
 
 auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     -> bool {
   auto self_type_id = GetDefaultSelfType(context);
-  if (!self_type_id.is_valid()) {
+  if (!self_type_id.has_value()) {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
@@ -142,7 +144,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     return;
   }
 
-  if (params_node.is_valid()) {
+  if (params_node.has_value()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
                       "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
@@ -201,7 +203,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     // because `impl`s are never actually called at runtime.
     auto call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
-                           SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
+                           SemIR::InstBlockId::None, SemIR::InstId::None);
     CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
                  llvm::all_of(context.inst_blocks().Get(call_params_id),
                               [](SemIR::InstId inst_id) {
@@ -212,52 +214,23 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
-
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
-  auto end_node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
-  CARBON_CHECK(end_node_kind == Parse::NodeKind::ImplDefinitionStart ||
-               end_node_kind == Parse::NodeKind::ImplDecl);
   Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
   --last_param_iter;
 
-  // Following proposal #3763, exclude a final `where` clause, if present. See:
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
-
-  // Caches the NodeKind for the current value of *last_param_iter so
-  if (context.parse_tree().node_kind(*last_param_iter) ==
-      Parse::NodeKind::WhereExpr) {
-    int where_operands_to_skip = 1;
-    --last_param_iter;
-    CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                 last_param_iter);
-    do {
-      auto node_kind = context.parse_tree().node_kind(*last_param_iter);
-      if (node_kind == Parse::NodeKind::WhereExpr) {
-        // If we have a nested `where`, we need to see another `WhereOperand`
-        // before we find the one that matches our original `WhereExpr` node.
-        ++where_operands_to_skip;
-      } else if (node_kind == Parse::NodeKind::WhereOperand) {
-        --where_operands_to_skip;
-      }
-      --last_param_iter;
-      CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                   last_param_iter);
-    } while (where_operands_to_skip > 0);
-  }
-
   return {
-      .name_loc_id = Parse::NodeId::Invalid,
-      .name_id = SemIR::NameId::Invalid,
+      .name_loc_id = Parse::NodeId::None,
+      .name_id = SemIR::NameId::None,
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = *last_param_iter,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
-          implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
-      .params_loc_id = Parse::NodeId::Invalid,
-      .param_patterns_id = SemIR::InstBlockId::Invalid,
-      .call_params_id = SemIR::InstBlockId::Invalid,
-      .return_slot_pattern_id = SemIR::InstId::Invalid,
+          implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
+      .params_loc_id = Parse::NodeId::None,
+      .param_patterns_id = SemIR::InstBlockId::None,
+      .call_params_id = SemIR::InstBlockId::None,
+      .return_slot_pattern_id = SemIR::InstId::None,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
@@ -269,7 +242,7 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
-                              DeclParams(prev_impl), SemIR::SpecificId::Invalid,
+                              DeclParams(prev_impl), SemIR::SpecificId::None,
                               /*check_syntax=*/true, /*diagnose=*/false)) {
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
@@ -313,9 +286,6 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 
   // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
-  // TODO: Merge information from the new declaration into the old one as
-  // needed.
-
   return true;
 }
 
@@ -339,7 +309,7 @@ static auto ResolveFacetTypeToInterface(Context& context,
   auto resolved_id = context.ResolveFacetType(
       facet_type_id, context.insts().GetLocId(impl.constraint_id), *facet_type,
       Context::FacetTypeImpl);
-  if (!resolved_id.is_valid()) {
+  if (!resolved_id.has_value()) {
     return nullptr;
   }
   const auto& resolved = context.resolved_facet_types().Get(resolved_id);
@@ -386,16 +356,18 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check for an orphan `impl`.
 
   // Add the impl declaration.
-  SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::Invalid,
+  SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
   auto impl_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, impl_decl));
 
-  SemIR::Impl impl_info = {
-      name_context.MakeEntityWithParamsBase(name, impl_decl_id,
-                                            /*is_extern=*/false,
-                                            SemIR::LibraryNameId::Invalid),
-      {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
+  SemIR::Impl impl_info = {name_context.MakeEntityWithParamsBase(
+                               name, impl_decl_id,
+                               /*is_extern=*/false, SemIR::LibraryNameId::None),
+                           {.self_id = self_inst_id,
+                            .constraint_id = constraint_inst_id,
+                            .interface_id = SemIR::InterfaceId::None,
+                            .specific_id = SemIR::SpecificId::None}};
 
   const SemIR::ResolvedFacetType::RequiredInterface* required_interface =
       ResolveFacetTypeToInterface(context, impl_info);
@@ -409,6 +381,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
+  // TODO: Detect two impl declarations with the same self type and interface,
+  // and issue an error if they don't match.
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
       if (IsValidImplRedecl(context, impl_info, prev_impl_id)) {
@@ -423,13 +397,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Create a new impl if this isn't a valid redeclaration.
-  if (!impl_decl.impl_id.is_valid()) {
+  if (!impl_decl.impl_id.has_value()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     if (required_interface) {
       impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
       AddConstantsToImplWitnessFromConstraint(
-          context, impl_info, *required_interface, impl_info.witness_id,
-          impl_decl.impl_id);
+          context, impl_info, *required_interface, impl_info.witness_id);
     } else {
       impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
     }
@@ -437,12 +410,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
-    auto& first_impl = context.impls().GetMutable(impl_decl.impl_id);
-    if (required_interface) {
-      AddConstantsToImplWitnessFromConstraint(
-          context, impl_info, *required_interface, first_impl.witness_id,
-          impl_decl.impl_id);
-    }
+    const auto& first_impl = context.impls().Get(impl_decl.impl_id);
     FinishGenericRedecl(context, impl_decl_id, first_impl.generic_id);
   }
 
@@ -452,7 +420,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
-    if (impl_info.generic_id.is_valid()) {
+    if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
       constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
           context.insts().GetLocId(constraint_inst_id),
@@ -490,17 +458,14 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   CARBON_CHECK(!impl_info.has_definition_started());
   impl_info.definition_id = impl_decl_id;
   impl_info.scope_id =
-      context.name_scopes().Add(impl_decl_id, SemIR::NameId::Invalid,
+      context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());
 
   context.scope_stack().Push(
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);
-
-  if (!impl_info.is_defined()) {
-    ImplWitnessStartDefinition(context, impl_info);
-  }
+  ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 
@@ -523,11 +488,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
   auto& impl_info = context.impls().Get(impl_id);
-  if (!impl_info.is_defined()) {
-    FinishImplWitness(context, impl_info);
-    impl_info.defined = true;
-  }
-
+  CARBON_CHECK(!impl_info.is_defined());
+  FinishImplWitness(context, impl_info);
+  impl_info.defined = true;
   FinishGenericDefinition(context, impl_info.generic_id);
 
   context.inst_block_stack().Pop();

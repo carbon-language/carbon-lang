@@ -57,11 +57,19 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
+// CHECK:STDOUT:     %.loc16_3: %empty_tuple.type = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   %B.ref: %A.type = name_ref B, file.%B [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %B.ref()
 // CHECK:STDOUT:   assign %b.var, %A.call
+// CHECK:STDOUT:   %.loc16_11.1: type = splice_block %.loc16_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc16_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc16_11.3: type = converted %.loc16_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

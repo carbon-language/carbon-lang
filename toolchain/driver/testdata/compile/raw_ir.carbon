@@ -20,13 +20,13 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT: filename:        raw_ir.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {decl_id: inst<invalid>, is_export: false}
+// CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst36}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst36}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind0}
-// CHECK:STDOUT:     entity_name1:    {name: name2, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
+// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: comp_time_bind0}
+// CHECK:STDOUT:     entity_name1:    {name: name2, parent_scope: name_scope<none>, index: comp_time_bind<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_slot_pattern: inst31, body: [inst_block16]}
 // CHECK:STDOUT:   classes:         {}
@@ -60,12 +60,12 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       0:               type(symbolic_constant3)
 // CHECK:STDOUT:       1:               type(inst23)
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst12:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst12:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst13:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst32, type: type(TypeType)}
-// CHECK:STDOUT:     inst14:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst14:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst15:          {kind: SymbolicBindingPattern, arg0: entity_name0, type: type(TypeType)}
 // CHECK:STDOUT:     inst16:          {kind: SymbolicBindingPattern, arg0: entity_name0, type: type(TypeType)}
-// CHECK:STDOUT:     inst17:          {kind: ValueParamPattern, arg0: inst15, arg1: runtime_param<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst17:          {kind: ValueParamPattern, arg0: inst15, arg1: runtime_param<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst18:          {kind: NameRef, arg0: name1, arg1: inst13, type: type(TypeType)}
 // CHECK:STDOUT:     inst19:          {kind: BindName, arg0: entity_name1, arg1: inst33, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst20:          {kind: BindingPattern, arg0: entity_name1, type: type(symbolic_constant3)}
@@ -80,15 +80,15 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst29:          {kind: Converted, arg0: inst26, arg1: inst28, type: type(TypeType)}
 // CHECK:STDOUT:     inst30:          {kind: ReturnSlotPattern, arg0: inst26, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst31:          {kind: OutParamPattern, arg0: inst30, arg1: runtime_param1, type: type(symbolic_constant5)}
-// CHECK:STDOUT:     inst32:          {kind: ValueParam, arg0: runtime_param<invalid>, arg1: name1, type: type(TypeType)}
+// CHECK:STDOUT:     inst32:          {kind: ValueParam, arg0: runtime_param<none>, arg1: name1, type: type(TypeType)}
 // CHECK:STDOUT:     inst33:          {kind: ValueParam, arg0: runtime_param0, arg1: name2, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst34:          {kind: OutParam, arg0: runtime_param1, arg1: name(ReturnSlot), type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst35:          {kind: ReturnSlot, arg0: inst26, arg1: inst34, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst36:          {kind: FunctionDecl, arg0: function0, arg1: inst_block11, type: type(inst40)}
-// CHECK:STDOUT:     inst37:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst37:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst38:          {kind: SymbolicBindingPattern, arg0: entity_name0, type: type(TypeType)}
 // CHECK:STDOUT:     inst39:          {kind: TupleType, arg0: type_block3, type: type(TypeType)}
-// CHECK:STDOUT:     inst40:          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst40:          {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst41:          {kind: StructValue, arg0: inst_block_empty, type: type(inst40)}
 // CHECK:STDOUT:     inst42:          {kind: PointerType, arg0: type(symbolic_constant2), type: type(TypeType)}
 // CHECK:STDOUT:     inst43:          {kind: RequireCompleteType, arg0: type(symbolic_constant2), type: type(inst(WitnessType))}
@@ -144,15 +144,15 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst61:          symbolic_constant9
 // CHECK:STDOUT:     inst62:          symbolic_constant10
 // CHECK:STDOUT:   symbolic_constants:
-// CHECK:STDOUT:     symbolic_constant0: {inst: inst14, generic: generic<invalid>, index: generic_inst<invalid>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant1: {inst: inst16, generic: generic<invalid>, index: generic_inst<invalid>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant2: {inst: inst28, generic: generic<invalid>, index: generic_inst<invalid>, .Self: false}
+// CHECK:STDOUT:     symbolic_constant0: {inst: inst14, generic: generic<none>, index: generic_inst<none>, .Self: false}
+// CHECK:STDOUT:     symbolic_constant1: {inst: inst16, generic: generic<none>, index: generic_inst<none>, .Self: false}
+// CHECK:STDOUT:     symbolic_constant2: {inst: inst28, generic: generic<none>, index: generic_inst<none>, .Self: false}
 // CHECK:STDOUT:     symbolic_constant3: {inst: inst14, generic: generic0, index: generic_inst_in_decl0, .Self: false}
 // CHECK:STDOUT:     symbolic_constant4: {inst: inst16, generic: generic0, index: generic_inst_in_decl1, .Self: false}
 // CHECK:STDOUT:     symbolic_constant5: {inst: inst28, generic: generic0, index: generic_inst_in_decl2, .Self: false}
-// CHECK:STDOUT:     symbolic_constant6: {inst: inst42, generic: generic<invalid>, index: generic_inst<invalid>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant7: {inst: inst44, generic: generic<invalid>, index: generic_inst<invalid>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant8: {inst: inst46, generic: generic<invalid>, index: generic_inst<invalid>, .Self: false}
+// CHECK:STDOUT:     symbolic_constant6: {inst: inst42, generic: generic<none>, index: generic_inst<none>, .Self: false}
+// CHECK:STDOUT:     symbolic_constant7: {inst: inst44, generic: generic<none>, index: generic_inst<none>, .Self: false}
+// CHECK:STDOUT:     symbolic_constant8: {inst: inst46, generic: generic<none>, index: generic_inst<none>, .Self: false}
 // CHECK:STDOUT:     symbolic_constant9: {inst: inst44, generic: generic0, index: generic_inst_in_def0, .Self: false}
 // CHECK:STDOUT:     symbolic_constant10: {inst: inst46, generic: generic0, index: generic_inst_in_def1, .Self: false}
 // CHECK:STDOUT:   inst_blocks:

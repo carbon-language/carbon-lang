@@ -201,9 +201,10 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn_use";
 
-// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+3]]:13: error: member name `F` not found in `Other` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+4]]:13: error: member name `F` not found in `Other` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn UseF() { Other.F(); }
 // CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR:
 fn UseF() { Other.F(); }
 
 // CHECK:STDOUT: --- other_fn.carbon
@@ -301,21 +302,21 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Other.F: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref
+// CHECK:STDOUT:     .F = imports.%Other.F
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Other.F [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -345,13 +346,13 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.f04
-// CHECK:STDOUT:     .F2 = %import_ref.b85
+// CHECK:STDOUT:     .F = %Other.F
+// CHECK:STDOUT:     .F2 = %Other.F2
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.f04: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.b85: %F2.type = import_ref Other//other_fn2, F2, loaded [template = constants.%F2]
+// CHECK:STDOUT:   %Other.F: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Other.F2: %F2.type = import_ref Other//other_fn2, F2, loaded [template = constants.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -366,10 +367,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.f04 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Other.F [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F2.ref: %F2.type = name_ref F2, imports.%import_ref.b85 [template = constants.%F2]
+// CHECK:STDOUT:   %F2.ref: %F2.type = name_ref F2, imports.%Other.F2 [template = constants.%F2]
 // CHECK:STDOUT:   %F2.call: init %empty_tuple.type = call %F2.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -390,11 +391,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.f04
+// CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.f04: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Other.F: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -409,7 +410,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.f04 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Other.F [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -444,11 +445,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.f04
+// CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.f04: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Other.F: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -463,7 +464,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.f04 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Other.F [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -473,14 +474,14 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.b19: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.b6b: <namespace> = import_ref Main//main_other_ns, Other, loaded
-// CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.b6b, [template] {
-// CHECK:STDOUT:     .F = file.%F.decl
+// CHECK:STDOUT:   %Main.Other: <namespace> = import_ref Main//main_other_ns, Other, loaded
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Main.Other, [template] {
+// CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -489,12 +490,14 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.b19] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"] {
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

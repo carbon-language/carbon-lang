@@ -118,9 +118,10 @@ var test_f1000000000000: f1000000000000;
 library "[[@TEST_NAME]]";
 
 // TODO: Some or all of these should eventually work.
-// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+3]]:15: error: semantics TODO: `Currently only f64 is allowed` [SemanticsTodo]
+// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+4]]:15: error: semantics TODO: `Currently only f64 is allowed` [SemanticsTodo]
 // CHECK:STDERR: var test_f16: f16;
 // CHECK:STDERR:               ^~~
+// CHECK:STDERR:
 var test_f16: f16;
 var test_f32: f32;
 var test_f128: f128;
@@ -138,7 +139,7 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -152,11 +153,35 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_i64 = %test_i64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_i8.patt: %i8 = binding_pattern test_i8
+// CHECK:STDOUT:     %.loc3_1: %i8 = var_pattern %test_i8.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i8.var: ref %i8 = var test_i8
+// CHECK:STDOUT:   %.loc3_14: type = splice_block %i8 [template = constants.%i8] {
+// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
+// CHECK:STDOUT:     %i8: type = class_type @Int, @Int(constants.%int_8) [template = constants.%i8]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i8: ref %i8 = bind_name test_i8, %test_i8.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_i16.patt: %i16 = binding_pattern test_i16
+// CHECK:STDOUT:     %.loc4_1: %i16 = var_pattern %test_i16.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16.var: ref %i16 = var test_i16
+// CHECK:STDOUT:   %.loc4_15: type = splice_block %i16 [template = constants.%i16] {
+// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
+// CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16: ref %i16 = bind_name test_i16, %test_i16.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_i64.patt: %i64 = binding_pattern test_i64
+// CHECK:STDOUT:     %.loc5_1: %i64 = var_pattern %test_i64.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64.var: ref %i64 = var test_i64
+// CHECK:STDOUT:   %.loc5_15: type = splice_block %i64 [template = constants.%i64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64: ref %i64 = bind_name test_i64, %test_i64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -180,7 +205,7 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .UInt = %import_ref.bcd
+// CHECK:STDOUT:     .UInt = %Core.UInt
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -194,11 +219,35 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_u64 = %test_u64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_u8.patt: %u8 = binding_pattern test_u8
+// CHECK:STDOUT:     %.loc3_1: %u8 = var_pattern %test_u8.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u8.var: ref %u8 = var test_u8
+// CHECK:STDOUT:   %.loc3_14: type = splice_block %u8 [template = constants.%u8] {
+// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
+// CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [template = constants.%u8]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u8: ref %u8 = bind_name test_u8, %test_u8.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_u16.patt: %u16 = binding_pattern test_u16
+// CHECK:STDOUT:     %.loc4_1: %u16 = var_pattern %test_u16.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16.var: ref %u16 = var test_u16
+// CHECK:STDOUT:   %.loc4_15: type = splice_block %u16 [template = constants.%u16] {
+// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
+// CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16: ref %u16 = bind_name test_u16, %test_u16.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_u64.patt: %u64 = binding_pattern test_u64
+// CHECK:STDOUT:     %.loc5_1: %u64 = var_pattern %test_u64.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64.var: ref %u64 = var test_u64
+// CHECK:STDOUT:   %.loc5_15: type = splice_block %u64 [template = constants.%u64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %u64: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64: ref %u64 = bind_name test_u64, %test_u64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

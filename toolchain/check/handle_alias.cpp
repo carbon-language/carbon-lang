@@ -37,10 +37,10 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto entity_name_id = context.entity_names().Add(
       {.name_id = name_context.name_id_for_new_inst(),
        .parent_scope_id = name_context.parent_scope_id,
-       .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+       .bind_index = SemIR::CompileTimeBindIndex::None});
 
-  auto alias_type_id = SemIR::TypeId::Invalid;
-  auto alias_value_id = SemIR::InstId::Invalid;
+  auto alias_type_id = SemIR::TypeId::None;
+  auto alias_value_id = SemIR::InstId::None;
   if (SemIR::IsSingletonInstId(expr_id)) {
     // Type (`bool`) and value (`false`) literals provided by the builtin
     // structure should be turned into name references.

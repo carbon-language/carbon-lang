@@ -10,3 +10,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_missing_file.carbon
 // CHECK:STDERR: not_file.carbon: error: error opening file for read: No such file or directory [ErrorOpeningFile]
+// CHECK:STDERR:

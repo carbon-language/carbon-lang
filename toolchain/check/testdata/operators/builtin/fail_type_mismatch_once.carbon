@@ -11,9 +11,10 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Core.Add` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Add` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return {} + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR:
   return {} + 3.4 + 12;
 }
 
@@ -26,14 +27,14 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .Add = %import_ref.fe6
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Add = %Core.Add
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -58,7 +59,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc18: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template = constants.%float]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
 // CHECK:STDOUT:   %impl.elem0: %Op.type = impl_witness_access <error>, element0 [template = <error>]

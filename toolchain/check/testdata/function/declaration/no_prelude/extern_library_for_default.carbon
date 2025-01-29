@@ -28,13 +28,14 @@ package Foo library "[[@TEST_NAME]]";
 
 import library default;
 
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+7]]:1: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
+// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+8]]:1: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_wrong_library.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: default.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
 // CHECK:STDERR: extern library "expected" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn F();
 
 // CHECK:STDOUT: --- default.carbon
@@ -67,7 +68,7 @@ extern fn F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,7 +88,7 @@ extern fn F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

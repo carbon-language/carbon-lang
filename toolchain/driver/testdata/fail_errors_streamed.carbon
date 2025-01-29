@@ -13,11 +13,12 @@
 fn run(String program) {
   return True;
 
-// CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE+7]]:10: error: invalid digit 'a' in decimal numeric literal
+// CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE+8]]:10: error: invalid digit 'a' in decimal numeric literal
 // CHECK:STDERR: var x = 3a;
 // CHECK:STDERR:          ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE-7]]:24: error: opening symbol without a corresponding closing symbol
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
+// CHECK:STDERR:
 var x = 3a;

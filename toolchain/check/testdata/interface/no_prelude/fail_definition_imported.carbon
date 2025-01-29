@@ -19,13 +19,14 @@ interface I;
 library "[[@TEST_NAME]]";
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: a.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
 interface I {}
 
 // CHECK:STDOUT: --- a.carbon
@@ -52,14 +53,14 @@ interface I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Main//a, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [template = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref
+// CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

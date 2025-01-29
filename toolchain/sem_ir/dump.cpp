@@ -12,7 +12,7 @@
 namespace Carbon::SemIR {
 
 static auto DumpNameIfValid(const File& file, NameId name_id) -> void {
-  if (name_id.is_valid()) {
+  if (name_id.has_value()) {
     llvm::errs() << " `" << file.names().GetFormatted(name_id) << "`";
   }
 }
@@ -31,14 +31,14 @@ static auto DumpNoNewline(const File& file, ConstantId const_id) -> void {
 
 static auto DumpNoNewline(const File& file, InstId inst_id) -> void {
   llvm::errs() << inst_id;
-  if (inst_id.is_valid()) {
+  if (inst_id.has_value()) {
     llvm::errs() << ": " << file.insts().Get(inst_id);
   }
 }
 
 static auto DumpNoNewline(const File& file, InterfaceId interface_id) -> void {
   llvm::errs() << interface_id;
-  if (interface_id.is_valid()) {
+  if (interface_id.has_value()) {
     const auto& interface = file.interfaces().Get(interface_id);
     llvm::errs() << ": " << interface;
     DumpNameIfValid(file, interface.name_id);
@@ -47,14 +47,14 @@ static auto DumpNoNewline(const File& file, InterfaceId interface_id) -> void {
 
 static auto DumpNoNewline(const File& file, SpecificId specific_id) -> void {
   llvm::errs() << specific_id;
-  if (specific_id.is_valid()) {
+  if (specific_id.has_value()) {
     llvm::errs() << ": " << file.specifics().Get(specific_id);
   }
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> void {
   llvm::errs() << class_id;
-  if (class_id.is_valid()) {
+  if (class_id.has_value()) {
     const auto& class_obj = file.classes().Get(class_id);
     llvm::errs() << ": " << class_obj;
     DumpNameIfValid(file, class_obj.name_id);
@@ -70,7 +70,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id) -> void {
 LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
     -> void {
   llvm::errs() << entity_name_id;
-  if (entity_name_id.is_valid()) {
+  if (entity_name_id.has_value()) {
     auto entity_name = file.entity_names().Get(entity_name_id);
     llvm::errs() << ": " << entity_name;
     DumpNameIfValid(file, entity_name.name_id);
@@ -81,13 +81,13 @@ LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
 LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
     -> void {
   llvm::errs() << facet_type_id;
-  if (facet_type_id.is_valid()) {
+  if (facet_type_id.has_value()) {
     const auto& facet_type = file.facet_types().Get(facet_type_id);
     llvm::errs() << ": " << facet_type << "\n";
     for (auto impls : facet_type.impls_constraints) {
       llvm::errs() << "  - ";
       DumpNoNewline(file, impls.interface_id);
-      if (impls.specific_id.is_valid()) {
+      if (impls.specific_id.has_value()) {
         llvm::errs() << "; ";
         DumpNoNewline(file, impls.specific_id);
       }
@@ -99,7 +99,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
       llvm::errs() << "  - ";
       Dump(file, rewrite.rhs_const_id);
     }
-    if (facet_type.resolved_id.is_valid()) {
+    if (facet_type.resolved_id.has_value()) {
       llvm::errs() << "resolved: ";
       Dump(file, facet_type.resolved_id);
     }
@@ -110,7 +110,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
 
 LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id) -> void {
   llvm::errs() << function_id;
-  if (function_id.is_valid()) {
+  if (function_id.has_value()) {
     const auto& function = file.functions().Get(function_id);
     llvm::errs() << ": " << function;
     DumpNameIfValid(file, function.name_id);
@@ -120,7 +120,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id) -> void {
 
 LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id) -> void {
   llvm::errs() << generic_id;
-  if (generic_id.is_valid()) {
+  if (generic_id.has_value()) {
     llvm::errs() << ": " << file.generics().Get(generic_id);
   }
   llvm::errs() << '\n';
@@ -128,7 +128,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id) -> void {
 
 LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> void {
   llvm::errs() << impl_id;
-  if (impl_id.is_valid()) {
+  if (impl_id.has_value()) {
     llvm::errs() << ": " << file.impls().Get(impl_id);
   }
   llvm::errs() << '\n';
@@ -137,7 +137,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> void {
 LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
     -> void {
   llvm::errs() << inst_block_id;
-  if (inst_block_id.is_valid()) {
+  if (inst_block_id.has_value()) {
     llvm::errs() << ":";
     auto inst_block = file.inst_blocks().Get(inst_block_id);
     for (auto inst_id : inst_block) {
@@ -151,14 +151,14 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
 LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> void {
   DumpNoNewline(file, inst_id);
   llvm::errs() << '\n';
-  if (inst_id.is_valid()) {
+  if (inst_id.has_value()) {
     Inst inst = file.insts().Get(inst_id);
-    if (inst.type_id().is_valid()) {
+    if (inst.type_id().has_value()) {
       llvm::errs() << "  - type ";
       Dump(file, inst.type_id());
     }
     ConstantId const_id = file.constant_values().Get(inst_id);
-    if (const_id.is_valid()) {
+    if (const_id.has_value()) {
       InstId const_inst_id = file.constant_values().GetInstId(const_id);
       llvm::errs() << "  - value ";
       if (const_inst_id == inst_id) {
@@ -184,10 +184,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameId name_id) -> void {
 LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
     -> void {
   llvm::errs() << name_scope_id;
-  if (name_scope_id.is_valid()) {
+  if (name_scope_id.has_value()) {
     const auto& name_scope = file.name_scopes().Get(name_scope_id);
     llvm::errs() << ": " << name_scope;
-    if (name_scope.inst_id().is_valid()) {
+    if (name_scope.inst_id().has_value()) {
       llvm::errs() << " " << file.insts().Get(name_scope.inst_id());
     }
     DumpNameIfValid(file, name_scope.name_id());
@@ -197,9 +197,11 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
 
 // Helper for Dump() of ResolvedFacetTypeId.
 static auto DumpAssociatedEntityName(const File& file, InstId inst_id) {
-  if (auto associated_const =
+  if (auto assoc_const_decl =
           file.insts().TryGetAs<AssociatedConstantDecl>(inst_id)) {
-    llvm::errs() << "." << file.names().GetFormatted(associated_const->name_id)
+    auto& assoc_const =
+        file.associated_constants().Get(assoc_const_decl->assoc_const_id);
+    llvm::errs() << "." << file.names().GetFormatted(assoc_const.name_id)
                  << " = ";
   }
 }
@@ -207,14 +209,14 @@ static auto DumpAssociatedEntityName(const File& file, InstId inst_id) {
 LLVM_DUMP_METHOD auto Dump(const File& file,
                            ResolvedFacetTypeId resolved_facet_type_id) -> void {
   llvm::errs() << resolved_facet_type_id << "\n";
-  if (resolved_facet_type_id.is_valid()) {
+  if (resolved_facet_type_id.has_value()) {
     const auto& resolved_facet_type =
         file.resolved_facet_types().Get(resolved_facet_type_id);
     for (auto [i, req_interface] :
          llvm::enumerate(resolved_facet_type.required_interfaces)) {
       llvm::errs() << "  - ";
       DumpNoNewline(file, req_interface.interface_id);
-      if (req_interface.specific_id.is_valid()) {
+      if (req_interface.specific_id.has_value()) {
         llvm::errs() << "; ";
         DumpNoNewline(file, req_interface.specific_id);
       }
@@ -227,9 +229,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
       auto entities = file.inst_blocks().Get(interface.associated_entities_id);
       for (auto [j, const_id] :
            llvm::enumerate(req_interface.associated_consts)) {
-        if (const_id.is_valid()) {
+        if (const_id.has_value()) {
           llvm::errs() << "    [" << j << "]: ";
-          if (entities[j].is_valid()) {
+          if (entities[j].has_value()) {
             DumpAssociatedEntityName(file, entities[j]);
           }
           Dump(file, const_id);
@@ -247,13 +249,13 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id) -> void {
 LLVM_DUMP_METHOD auto Dump(const File& file,
                            StructTypeFieldsId struct_type_fields_id) -> void {
   llvm::errs() << struct_type_fields_id;
-  if (struct_type_fields_id.is_valid()) {
+  if (struct_type_fields_id.has_value()) {
     llvm::errs() << ":";
     auto block = file.struct_type_fields().Get(struct_type_fields_id);
     for (auto field : block) {
       llvm::errs() << "\n  - " << field;
       DumpNameIfValid(file, field.name_id);
-      if (field.type_id.is_valid()) {
+      if (field.type_id.has_value()) {
         InstId inst_id =
             file.constant_values().GetInstId(field.type_id.AsConstantId());
         llvm::errs() << ": " << StringifyTypeExpr(file, inst_id);
@@ -266,7 +268,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 LLVM_DUMP_METHOD auto Dump(const File& file, TypeBlockId type_block_id)
     -> void {
   llvm::errs() << type_block_id;
-  if (type_block_id.is_valid()) {
+  if (type_block_id.has_value()) {
     llvm::errs() << ":\n";
     auto type_block = file.type_blocks().Get(type_block_id);
     for (auto type_id : type_block) {
@@ -280,7 +282,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeBlockId type_block_id)
 
 LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> void {
   llvm::errs() << type_id;
-  if (type_id.is_valid()) {
+  if (type_id.has_value()) {
     InstId inst_id = file.constant_values().GetInstId(type_id.AsConstantId());
     llvm::errs() << ": " << StringifyTypeExpr(file, inst_id) << "; "
                  << file.insts().Get(inst_id);
@@ -295,6 +297,9 @@ LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
 }
 LLVM_DUMP_METHOD static auto MakeConstantId(int id) -> ConstantId {
   return ConstantId(id);
+}
+LLVM_DUMP_METHOD static auto MakeSymbolicConstantId(int id) -> ConstantId {
+  return ConstantId::ForSymbolicConstantIndex(id);
 }
 LLVM_DUMP_METHOD static auto MakeEntityNameId(int id) -> EntityNameId {
   return EntityNameId(id);

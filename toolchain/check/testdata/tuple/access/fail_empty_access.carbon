@@ -11,9 +11,10 @@
 fn F() {}
 
 fn Run() {
-  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+3]]:3: error: tuple element index `0` is past the end of type `()` [TupleIndexOutOfBounds]
+  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+4]]:3: error: tuple element index `0` is past the end of type `()` [TupleIndexOutOfBounds]
   // CHECK:STDERR:   F().0;
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
   F().0;
 }
 
@@ -56,8 +57,8 @@ fn Run() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc17_5.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:   %.loc17_5.2: ref %empty_tuple.type = temporary %.loc17_5.1, %F.call
+// CHECK:STDOUT:   %.loc18_5.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc18_5.2: ref %empty_tuple.type = temporary %.loc18_5.1, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

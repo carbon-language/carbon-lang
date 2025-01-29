@@ -27,8 +27,8 @@ TEST(ValueStore, Real) {
   RealId id1 = reals.Add(real1);
   RealId id2 = reals.Add(real2);
 
-  ASSERT_TRUE(id1.is_valid());
-  ASSERT_TRUE(id2.is_valid());
+  ASSERT_TRUE(id1.has_value());
+  ASSERT_TRUE(id2.has_value());
   EXPECT_THAT(id1, Not(Eq(id2)));
 
   const auto& real1_copy = reals.Get(id1);
@@ -50,8 +50,8 @@ TEST(ValueStore, Float) {
   FloatId id1 = floats.Add(float1);
   FloatId id2 = floats.Add(float2);
 
-  ASSERT_TRUE(id1.is_valid());
-  ASSERT_TRUE(id2.is_valid());
+  ASSERT_TRUE(id1.has_value());
+  ASSERT_TRUE(id2.has_value());
   EXPECT_THAT(id1, Not(Eq(id2)));
 
   EXPECT_THAT(floats.Get(id1).compare(float1), Eq(llvm::APFloatBase::cmpEqual));
@@ -69,15 +69,15 @@ TEST(ValueStore, Identifiers) {
   auto a_id = identifiers.Add(a);
   auto b_id = identifiers.Add(b);
 
-  ASSERT_TRUE(a_id.is_valid());
-  ASSERT_TRUE(b_id.is_valid());
+  ASSERT_TRUE(a_id.has_value());
+  ASSERT_TRUE(b_id.has_value());
   EXPECT_THAT(a_id, Not(Eq(b_id)));
 
   EXPECT_THAT(identifiers.Get(a_id), Eq(a));
   EXPECT_THAT(identifiers.Get(b_id), Eq(b));
 
   EXPECT_THAT(identifiers.Lookup(a), Eq(a_id));
-  EXPECT_THAT(identifiers.Lookup("c"), Eq(IdentifierId::Invalid));
+  EXPECT_THAT(identifiers.Lookup("c"), Eq(IdentifierId::None));
 }
 
 TEST(ValueStore, StringLiterals) {
@@ -88,15 +88,15 @@ TEST(ValueStore, StringLiterals) {
   auto a_id = string_literals.Add(a);
   auto b_id = string_literals.Add(b);
 
-  ASSERT_TRUE(a_id.is_valid());
-  ASSERT_TRUE(b_id.is_valid());
+  ASSERT_TRUE(a_id.has_value());
+  ASSERT_TRUE(b_id.has_value());
   EXPECT_THAT(a_id, Not(Eq(b_id)));
 
   EXPECT_THAT(string_literals.Get(a_id), Eq(a));
   EXPECT_THAT(string_literals.Get(b_id), Eq(b));
 
   EXPECT_THAT(string_literals.Lookup(a), Eq(a_id));
-  EXPECT_THAT(string_literals.Lookup("c"), Eq(StringLiteralValueId::Invalid));
+  EXPECT_THAT(string_literals.Lookup("c"), Eq(StringLiteralValueId::None));
 }
 
 }  // namespace

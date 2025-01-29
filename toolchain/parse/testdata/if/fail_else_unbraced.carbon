@@ -27,9 +27,10 @@ fn F() {
       // CHECK:STDERR:
       d;
   else
-    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+3]]:5: error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+4]]:5: error: expected braced code block [ExpectedCodeBlock]
     // CHECK:STDERR:     e;
     // CHECK:STDERR:     ^
+    // CHECK:STDERR:
     e;
   if (x) { f; }
   else if (x) { g; }

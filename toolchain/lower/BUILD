@@ -46,6 +46,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:map",
+        "//common:raw_string_ostream",
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/check:sem_ir_diagnostic_converter",

@@ -26,7 +26,7 @@ fn Run() {
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
@@ -41,8 +41,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -86,8 +86,11 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t.patt: %array_type = binding_pattern t
+// CHECK:STDOUT:     %.loc14_3.1: %array_type = var_pattern %t.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %array_type = var t
-// CHECK:STDOUT:   %t: ref %array_type = bind_name t, %t.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %tuple.type.a1c = call %F.ref()
 // CHECK:STDOUT:   %.loc14_23.1: ref %tuple.type.a1c = temporary_storage
@@ -98,8 +101,15 @@ fn Run() {
 // CHECK:STDOUT:   %.loc14_23.4: ref %i32 = array_index %t.var, %int_0
 // CHECK:STDOUT:   %.loc14_23.5: init %i32 = initialize_from %.loc14_23.3 to %.loc14_23.4
 // CHECK:STDOUT:   %.loc14_23.6: init %array_type = array_init (%.loc14_23.5) to %t.var
-// CHECK:STDOUT:   %.loc14_24: init %array_type = converted %F.call, %.loc14_23.6
-// CHECK:STDOUT:   assign %t.var, %.loc14_24
+// CHECK:STDOUT:   %.loc14_3.2: init %array_type = converted %F.call, %.loc14_23.6
+// CHECK:STDOUT:   assign %t.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_17: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %t: ref %array_type = bind_name t, %t.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

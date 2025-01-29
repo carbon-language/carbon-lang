@@ -28,7 +28,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
@@ -39,8 +39,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -53,9 +53,26 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_orig.patt: %i32 = binding_pattern a_orig
+// CHECK:STDOUT:     %.loc4_1: %i32 = var_pattern %a_orig.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig.var: ref %i32 = var a_orig
+// CHECK:STDOUT:   %.loc4_13: type = splice_block %i32.loc4 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc4: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig: ref %i32 = bind_name a_orig, %a_orig.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_ref.patt: %ptr = binding_pattern a_ref
+// CHECK:STDOUT:     %.loc5_1: %ptr = var_pattern %a_ref.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %ptr = var a_ref
+// CHECK:STDOUT:   %.loc5_15: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %ptr = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,10 +100,10 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.505 = import_ref Implicit//default, a_orig, unloaded
-// CHECK:STDOUT:   %import_ref.524: ref %ptr = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %Implicit.a_orig = import_ref Implicit//default, a_orig, unloaded
+// CHECK:STDOUT:   %Implicit.a_ref: ref %ptr = import_ref Implicit//default, a_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.2c8
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -94,21 +111,30 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_orig = imports.%import_ref.505
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.524
+// CHECK:STDOUT:     .a_orig = imports.%Implicit.a_orig
+// CHECK:STDOUT:     .a_ref = imports.%Implicit.a_ref
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a
+// CHECK:STDOUT:     %.loc4_1: %ptr = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
+// CHECK:STDOUT:   %.loc4_11: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %ptr = name_ref a_ref, imports.%import_ref.524
+// CHECK:STDOUT:   %a_ref.ref: ref %ptr = name_ref a_ref, imports.%Implicit.a_ref
 // CHECK:STDOUT:   %.loc4: %ptr = bind_value %a_ref.ref
 // CHECK:STDOUT:   assign file.%a.var, %.loc4
 // CHECK:STDOUT:   return

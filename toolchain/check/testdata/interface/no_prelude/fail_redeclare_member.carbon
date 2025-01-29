@@ -10,12 +10,13 @@
 
 interface Interface {
   fn F();
-  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE+6]]:3: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE+7]]:3: error: duplicate name being declared in the same scope [NameDeclDuplicate]
   // CHECK:STDERR:   fn F();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE-4]]:3: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:   fn F();
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   fn F();
 }
 
@@ -26,8 +27,8 @@ interface Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Interface.type, %F.type [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type %Interface.type [template]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.563: %.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -42,7 +43,7 @@ interface Interface {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.563] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -52,12 +53,10 @@ interface Interface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

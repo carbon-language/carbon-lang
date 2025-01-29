@@ -43,15 +43,16 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `WrongSelf` to `Class` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `WrongSelf` to `Class` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note: type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:3: note: type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~
+  // CHECK:STDERR:
   ws.F();
 }
 
@@ -75,7 +76,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -135,12 +136,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %return.loc18: ref %Class = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongSelf {
@@ -153,11 +154,11 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%WrongSelf
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1(%self.param_patt: %Class) {
@@ -167,7 +168,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
+// CHECK:STDOUT:     %.loc33: %Class = var_pattern %self.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.var: ref %Class = var self
+// CHECK:STDOUT:   %Self.ref.loc33: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %self: ref %Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref %Class = name_ref self, %self
 // CHECK:STDOUT:   %.loc38: %Class = bind_value %self.ref
@@ -181,7 +187,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.25f = name_ref F, @WrongSelf.%F.decl [template = constants.%F.3a3]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc55: %Class = converted %ws.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc56: %Class = converted %ws.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -21,9 +21,10 @@ fn F(x: X) {
   var s: String = "hello";
 
   // TODO: Decide on rules for when classes are copyable.
-  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:14: error: cannot copy value of type `X` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+4]]:14: error: cannot copy value of type `X` [CopyOfUncopyableType]
   // CHECK:STDERR:   var y: X = x;
   // CHECK:STDERR:              ^
+  // CHECK:STDERR:
   var y: X = x;
 }
 
@@ -58,29 +59,38 @@ fn F(x: X) {
 // CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
-// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param_patt: %X) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: String = binding_pattern s
+// CHECK:STDOUT:     %.loc21: String = var_pattern %s.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref String = var s
-// CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %str: String = string_literal "hello" [template = constants.%str]
 // CHECK:STDOUT:   assign %s.var, <error>
+// CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %X = binding_pattern y
+// CHECK:STDOUT:     %.loc28: %X = var_pattern %y.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %X = var y
-// CHECK:STDOUT:   %y: ref %X = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
+// CHECK:STDOUT:   %X.ref.loc28: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %y: ref %X = bind_name y, %y.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

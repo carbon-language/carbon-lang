@@ -36,15 +36,16 @@ fn Test(a: C, b: D) -> C {
 
 fn TestAssign(b: D) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `D` to `C` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:8: error: cannot implicitly convert from `D` to `C` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:8: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:8: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:24: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:                        ^~~~~~~~
+  // CHECK:STDERR:
   a += b;
 }
 
@@ -76,14 +77,14 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Add = %import_ref.fe6
-// CHECK:STDOUT:     .AddAssign = %import_ref.e1b
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Add = %Core.Add
+// CHECK:STDOUT:     .AddAssign = %Core.AddAssign
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.fe6: type = import_ref Core//prelude/operators/arithmetic, Add, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.e1b: type = import_ref Core//prelude/operators/arithmetic, AddAssign, loaded [template = constants.%AddAssign.type]
+// CHECK:STDOUT:   %Core.Add: type = import_ref Core//prelude/operators/arithmetic, Add, loaded [template = constants.%Add.type]
+// CHECK:STDOUT:   %Core.AddAssign: type = import_ref Core//prelude/operators/arithmetic, AddAssign, loaded [template = constants.%AddAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -100,13 +101,13 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%import_ref.fe6 [template = constants.%Add.type]
+// CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%Core.Add [template = constants.%Add.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness.796]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.e1b [template = constants.%AddAssign.type]
+// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%Core.AddAssign [template = constants.%AddAssign.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.2.%Op.decl) [template = constants.%impl_witness.95d]
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
@@ -188,18 +189,18 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self.param_patt: %C](%other.param_patt: %C) -> %C;
@@ -220,18 +221,23 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%b.param_patt: %D) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc38_3.1: %C = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var a
-// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc38_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc38_15.2: init %C = class_init (), %a.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc38_16: init %C = converted %.loc38_15.1, %.loc38_15.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign %a.var, %.loc38_16
+// CHECK:STDOUT:   %.loc38_3.2: init %C = converted %.loc38_15.1, %.loc38_15.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign %a.var, %.loc38_3.2
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %Op.type.421 = impl_witness_access constants.%impl_witness.95d, element0 [template = constants.%Op.d8e]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %a.ref
-// CHECK:STDOUT:   %.loc48: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc49: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr, <error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

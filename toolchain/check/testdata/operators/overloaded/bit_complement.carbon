@@ -42,11 +42,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .BitComplement = %import_ref.009
+// CHECK:STDOUT:     .BitComplement = %Core.BitComplement
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.009: type = import_ref Core//prelude/operators/bitwise, BitComplement, loaded [template = constants.%BitComplement.type]
+// CHECK:STDOUT:   %Core.BitComplement: type = import_ref Core//prelude/operators/bitwise, BitComplement, loaded [template = constants.%BitComplement.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,7 +60,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, imports.%import_ref.009 [template = constants.%BitComplement.type]
+// CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, imports.%Core.BitComplement [template = constants.%BitComplement.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
@@ -100,10 +100,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self.param_patt: %C]() -> %return.param_patt: %C {

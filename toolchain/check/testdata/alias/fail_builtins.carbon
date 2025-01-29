@@ -14,9 +14,10 @@
 // CHECK:STDERR:
 alias a = i32;
 
-// CHECK:STDERR: fail_builtins.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
+// CHECK:STDERR: fail_builtins.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias b = bool;
 // CHECK:STDERR:           ^~~~
+// CHECK:STDERR:
 alias b = bool;
 
 // CHECK:STDOUT: --- fail_builtins.carbon
@@ -30,8 +31,8 @@ alias b = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .Bool = %import_ref.783
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

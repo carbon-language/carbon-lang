@@ -10,6 +10,7 @@
 #include <concepts>
 #include <type_traits>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -469,15 +470,14 @@ TEST(HashingTest, TupleRecursion) {
 constexpr uint64_t TestSeed = 42ULL * 1024;
 
 auto ToHexBytes(llvm::StringRef s) -> std::string {
-  std::string rendered;
-  llvm::raw_string_ostream os(rendered);
-  os << "{";
+  RawStringOstream rendered;
+  rendered << "{";
   llvm::ListSeparator sep(", ");
   for (const char c : s) {
-    os << sep << llvm::formatv("{0:x2}", static_cast<uint8_t>(c));
+    rendered << sep << llvm::formatv("{0:x2}", static_cast<uint8_t>(c));
   }
-  os << "}";
-  return rendered;
+  rendered << "}";
+  return rendered.TakeStr();
 }
 
 template <typename T>

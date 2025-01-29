@@ -8,21 +8,21 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_numeric_literal_overflow.carbon
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 39999999999999999993 too large for type `i32` [IntTooLargeForType]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: integer value 39999999999999999993 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let a: i32 = 39999999999999999993;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let a: i32 = 39999999999999999993;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let b: i32 = 2_147_483_648;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:              ^~~~~~~~~~~~~
 // CHECK:STDERR:
 let b: i32 = 2_147_483_648;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let c: i32 = 0x8000_0000;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:              ^~~~~~~~~~~
 // CHECK:STDERR:
 let c: i32 = 0x8000_0000;
 
@@ -32,9 +32,10 @@ let c: i32 = 0x8000_0000;
 // CHECK:STDERR:
 let d: f64 = 39999999999999999993.0e3;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+3]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
 // CHECK:STDERR: let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let e: f64 = 5.0e39999999999999999993;
 
 // CHECK:STDOUT: --- fail_numeric_literal_overflow.carbon
@@ -44,7 +45,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_39999999999999999993.af6: Core.IntLiteral = int_value 39999999999999999993 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.7ef: <bound method> = bound_method %int_39999999999999999993.af6, %Convert.956 [template]
@@ -54,13 +55,16 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %Convert.bound.85f: <bound method> = bound_method %int_2147483648.1db, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.387: <specific function> = specific_function %Convert.bound.85f, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2147483648.8df: %i32 = int_value 2147483648 [template]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
-// CHECK:STDOUT:     .Float = %import_ref.1d6
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Float = %Core.Float
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -69,43 +73,82 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .a = @__global_init.%a
-// CHECK:STDOUT:     .b = @__global_init.%b
-// CHECK:STDOUT:     .c = @__global_init.%c
-// CHECK:STDOUT:     .d = @__global_init.%d
-// CHECK:STDOUT:     .e = @__global_init.%e
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:     .d = %d
+// CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15_8: type = splice_block %i32.loc15 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc15: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc15: <bound method> = bound_method @__global_init.%int_39999999999999999993, %impl.elem0.loc15 [template = constants.%Convert.bound.7ef]
+// CHECK:STDOUT:   %Convert.specific_fn.loc15: <specific function> = specific_function %Convert.bound.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2ed]
+// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %Convert.specific_fn.loc15(@__global_init.%int_39999999999999999993) [template = constants.%int_39999999999999999993.dee]
+// CHECK:STDOUT:   %.loc15_14.1: %i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%int_39999999999999999993.dee]
+// CHECK:STDOUT:   %.loc15_14.2: %i32 = converted @__global_init.%int_39999999999999999993, %.loc15_14.1 [template = constants.%int_39999999999999999993.dee]
+// CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc15_14.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc21_8: type = splice_block %i32.loc21 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc21: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc21: <bound method> = bound_method @__global_init.%int_2147483648.loc21, %impl.elem0.loc21 [template = constants.%Convert.bound.85f]
+// CHECK:STDOUT:   %Convert.specific_fn.loc21: <specific function> = specific_function %Convert.bound.loc21, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.387]
+// CHECK:STDOUT:   %int.convert_checked.loc21: init %i32 = call %Convert.specific_fn.loc21(@__global_init.%int_2147483648.loc21) [template = constants.%int_2147483648.8df]
+// CHECK:STDOUT:   %.loc21_14.1: %i32 = value_of_initializer %int.convert_checked.loc21 [template = constants.%int_2147483648.8df]
+// CHECK:STDOUT:   %.loc21_14.2: %i32 = converted @__global_init.%int_2147483648.loc21, %.loc21_14.1 [template = constants.%int_2147483648.8df]
+// CHECK:STDOUT:   %b: %i32 = bind_name b, %.loc21_14.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %i32 = binding_pattern c
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc27_8: type = splice_block %i32.loc27 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc27: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc27: <bound method> = bound_method @__global_init.%int_2147483648.loc27, %impl.elem0.loc27 [template = constants.%Convert.bound.85f]
+// CHECK:STDOUT:   %Convert.specific_fn.loc27: <specific function> = specific_function %Convert.bound.loc27, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.387]
+// CHECK:STDOUT:   %int.convert_checked.loc27: init %i32 = call %Convert.specific_fn.loc27(@__global_init.%int_2147483648.loc27) [template = constants.%int_2147483648.8df]
+// CHECK:STDOUT:   %.loc27_14.1: %i32 = value_of_initializer %int.convert_checked.loc27 [template = constants.%int_2147483648.8df]
+// CHECK:STDOUT:   %.loc27_14.2: %i32 = converted @__global_init.%int_2147483648.loc27, %.loc27_14.1 [template = constants.%int_2147483648.8df]
+// CHECK:STDOUT:   %c: %i32 = bind_name c, %.loc27_14.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: f64 = binding_pattern d
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc33_8.1: type = splice_block %.loc33_8.3 [template = f64] {
+// CHECK:STDOUT:     %int_64.loc33: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc33: init type = call constants.%Float(%int_64.loc33) [template = f64]
+// CHECK:STDOUT:     %.loc33_8.2: type = value_of_initializer %float.make_type.loc33 [template = f64]
+// CHECK:STDOUT:     %.loc33_8.3: type = converted %float.make_type.loc33, %.loc33_8.2 [template = f64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %d: f64 = bind_name d, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: f64 = binding_pattern e
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc39_8.1: type = splice_block %.loc39_8.3 [template = f64] {
+// CHECK:STDOUT:     %int_64.loc39: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc39: init type = call constants.%Float(%int_64.loc39) [template = f64]
+// CHECK:STDOUT:     %.loc39_8.2: type = value_of_initializer %float.make_type.loc39 [template = f64]
+// CHECK:STDOUT:     %.loc39_8.3: type = converted %float.make_type.loc39, %.loc39_8.2 [template = f64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %e: f64 = bind_name e, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_39999999999999999993: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993.af6]
-// CHECK:STDOUT:   %impl.elem0.loc15: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc15: <bound method> = bound_method %int_39999999999999999993, %impl.elem0.loc15 [template = constants.%Convert.bound.7ef]
-// CHECK:STDOUT:   %Convert.specific_fn.loc15: <specific function> = specific_function %Convert.bound.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2ed]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %Convert.specific_fn.loc15(%int_39999999999999999993) [template = constants.%int_39999999999999999993.dee]
-// CHECK:STDOUT:   %.loc15_34.1: %i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%int_39999999999999999993.dee]
-// CHECK:STDOUT:   %.loc15_34.2: %i32 = converted %int_39999999999999999993, %.loc15_34.1 [template = constants.%int_39999999999999999993.dee]
-// CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc15_34.2
 // CHECK:STDOUT:   %int_2147483648.loc21: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1db]
-// CHECK:STDOUT:   %impl.elem0.loc21: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc21: <bound method> = bound_method %int_2147483648.loc21, %impl.elem0.loc21 [template = constants.%Convert.bound.85f]
-// CHECK:STDOUT:   %Convert.specific_fn.loc21: <specific function> = specific_function %Convert.bound.loc21, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.387]
-// CHECK:STDOUT:   %int.convert_checked.loc21: init %i32 = call %Convert.specific_fn.loc21(%int_2147483648.loc21) [template = constants.%int_2147483648.8df]
-// CHECK:STDOUT:   %.loc21_27.1: %i32 = value_of_initializer %int.convert_checked.loc21 [template = constants.%int_2147483648.8df]
-// CHECK:STDOUT:   %.loc21_27.2: %i32 = converted %int_2147483648.loc21, %.loc21_27.1 [template = constants.%int_2147483648.8df]
-// CHECK:STDOUT:   %b: %i32 = bind_name b, %.loc21_27.2
 // CHECK:STDOUT:   %int_2147483648.loc27: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1db]
-// CHECK:STDOUT:   %impl.elem0.loc27: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc27: <bound method> = bound_method %int_2147483648.loc27, %impl.elem0.loc27 [template = constants.%Convert.bound.85f]
-// CHECK:STDOUT:   %Convert.specific_fn.loc27: <specific function> = specific_function %Convert.bound.loc27, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.387]
-// CHECK:STDOUT:   %int.convert_checked.loc27: init %i32 = call %Convert.specific_fn.loc27(%int_2147483648.loc27) [template = constants.%int_2147483648.8df]
-// CHECK:STDOUT:   %.loc27_25.1: %i32 = value_of_initializer %int.convert_checked.loc27 [template = constants.%int_2147483648.8df]
-// CHECK:STDOUT:   %.loc27_25.2: %i32 = converted %int_2147483648.loc27, %.loc27_25.1 [template = constants.%int_2147483648.8df]
-// CHECK:STDOUT:   %c: %i32 = bind_name c, %.loc27_25.2
-// CHECK:STDOUT:   %d: f64 = bind_name d, <error>
-// CHECK:STDOUT:   %e: f64 = bind_name e, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

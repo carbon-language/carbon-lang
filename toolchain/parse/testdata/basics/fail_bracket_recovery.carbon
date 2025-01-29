@@ -15,17 +15,18 @@ fn F() {
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
   var x: ([i32; 3) = (0, 1, 2);
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+11]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+12]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+7]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+8]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                          ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+3]]:27: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:27: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                           ^
+  // CHECK:STDERR:
   var x: {.y: (} = {.y = ((};
 }
 
@@ -38,15 +39,16 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'ArrayExprStart', text: '['},
-// CHECK:STDOUT:                 {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:               {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:             {kind: 'ArrayExpr', text: ']', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 9},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:               {kind: 'ParenExprStart', text: '('},
+// CHECK:STDOUT:                   {kind: 'ArrayExprStart', text: '['},
+// CHECK:STDOUT:                   {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:                 {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},
+// CHECK:STDOUT:                 {kind: 'IntLiteral', text: '3'},
+// CHECK:STDOUT:               {kind: 'ArrayExpr', text: ']', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 7},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 10},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
@@ -55,17 +57,18 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
 // CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 19},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 20},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:             {kind: 'StructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
-// CHECK:STDOUT:               {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'StructTypeLiteralField', text: ':', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'StructTypeLiteral', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 9},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:               {kind: 'StructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:                   {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
+// CHECK:STDOUT:                 {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:                   {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'StructTypeLiteralField', text: ':', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'StructTypeLiteral', text: '}', subtree_size: 7},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 10},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
@@ -76,7 +79,7 @@ fn F() {
 // CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'StructLiteralField', text: '=', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 21},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 46},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 22},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 48},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

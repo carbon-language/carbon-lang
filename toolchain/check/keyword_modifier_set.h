@@ -45,6 +45,7 @@ class KeywordModifierSet {
     Final = 1 << 8,
     Impl = 1 << 9,
     Virtual = 1 << 10,
+    Returned = 1 << 11,
 
     // Sets of modifiers:
     Access = Private | Protected,
@@ -52,10 +53,10 @@ class KeywordModifierSet {
     Method = Abstract | Impl | Virtual,
     ImplDecl = Extend | Final,
     Interface = Default | Final,
-    Decl = Class | Method | ImplDecl | Interface | Export,
+    Decl = Class | Method | ImplDecl | Interface | Export | Returned,
     None = 0,
 
-    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Virtual)
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Returned)
   };
 
   // Default construct to empty.
@@ -85,7 +86,7 @@ class KeywordModifierSet {
   //                .Default(SomeEnum::DefaultValue);
   //   ```
   template <typename T>
-  auto ToEnum() -> auto {
+  auto ToEnum() const -> auto {
     class Converter {
      public:
       explicit Converter(const KeywordModifierSet& set) : set_(set) {}
@@ -112,7 +113,7 @@ class KeywordModifierSet {
   }
 
   // Returns the access kind from modifiers.
-  auto GetAccessKind() -> SemIR::AccessKind {
+  auto GetAccessKind() const -> SemIR::AccessKind {
     if (HasAnyOf(KeywordModifierSet::Protected)) {
       return SemIR::AccessKind::Protected;
     }
@@ -123,15 +124,16 @@ class KeywordModifierSet {
   }
 
   // Returns true if empty.
-  constexpr auto empty() -> bool { return !set_; }
+  constexpr auto empty() const -> bool { return !set_; }
 
   // Returns the set intersection.
-  constexpr auto operator&(KeywordModifierSet other) -> KeywordModifierSet {
+  constexpr auto operator&(KeywordModifierSet other) const
+      -> KeywordModifierSet {
     return set_ & other.set_;
   }
 
   // Returns the set inverse.
-  auto operator~() -> KeywordModifierSet { return ~set_; }
+  auto operator~() const -> KeywordModifierSet { return ~set_; }
 
  private:
   RawEnumType set_;

@@ -18,13 +18,95 @@ enum class AccessKind : int8_t {
   Private,
 };
 
+// Represents the result of a name lookup.
+//
+// Lookup results are constructed through the `Make()` factory functions. Each
+// result takes one of a few forms, depending on the function used:
+// - Found when the lookup was successful returning an existing `InstId`. Can be
+//   constructed using `MakeFound()` or `MakeWrappedLookupResult()` with an
+//   existing `inst_id`.
+// - Not found when the name wasn't declared or nor poisoned. Can be constructed
+//   using `MakeNotFound()` or using `MakeWrappedLookupResult()` with a `None`
+//   `inst_id`.
+// - Poisoned when the name wasn't declared but was poisoned and so also
+//   considered to not be found in that scope. Can be constructed using
+//   `MakePoisoned()`.
+// - Represent that an error has occurred during lookup. This is still
+//   considered found and the error `InstId` is considered existing. Can be
+//   constructed using `MakeError()` or using `MakeWrappedLookupResult()` with
+//   `ErrorInst::SingletonInstId`.
+class ScopeLookupResult {
+ public:
+  static auto MakeFound(InstId inst_id, AccessKind access_kind)
+      -> ScopeLookupResult {
+    CARBON_CHECK(inst_id.has_value());
+    return MakeWrappedLookupResult(inst_id, access_kind);
+  }
+
+  static auto MakeNotFound() -> ScopeLookupResult {
+    return MakeWrappedLookupResult(InstId::None, AccessKind::Public);
+  }
+
+  static auto MakePoisoned() -> ScopeLookupResult {
+    return ScopeLookupResult(InstId::None, AccessKind::Public,
+                             /*is_poisoned=*/true);
+  }
+
+  static auto MakeError() -> ScopeLookupResult {
+    return MakeFound(ErrorInst::SingletonInstId, AccessKind::Public);
+  }
+
+  static auto MakeWrappedLookupResult(InstId inst_id, AccessKind access_kind)
+      -> ScopeLookupResult {
+    return ScopeLookupResult(inst_id, access_kind, /*is_poisoned=*/false);
+  }
+
+  // True iff CreatePoisoned() was used.
+  auto is_poisoned() const -> bool { return is_poisoned_; }
+
+  // True when lookup was successful or resulted with an error. False for
+  // poisoned or not found.
+  auto is_found() const -> bool {
+    return !is_poisoned() && inst_id_.has_value();
+  }
+
+  // The `InstId` of the result of the lookup. Must only be called when lookup
+  // was successful e.g. `is_found()` returns true. Always returns an existing
+  // `InstId`.
+  auto target_inst_id() const -> InstId {
+    CARBON_CHECK(is_found());
+    return inst_id_;
+  }
+
+  auto access_kind() const -> AccessKind { return access_kind_; }
+
+  // Equality means either:
+  // - Both are not poisoned and have the same `InstId` and `AccessKind`.
+  // - Both are poisoned.
+  friend auto operator==(const ScopeLookupResult&, const ScopeLookupResult&)
+      -> bool = default;
+
+ private:
+  explicit ScopeLookupResult(InstId inst_id, AccessKind access_kind,
+                             bool is_poisoned)
+      : inst_id_(inst_id),
+        access_kind_(access_kind),
+        is_poisoned_(is_poisoned) {}
+
+  InstId inst_id_;
+  AccessKind access_kind_;
+  bool is_poisoned_;
+};
+static_assert(sizeof(ScopeLookupResult) == 8);
+
 class NameScope : public Printable<NameScope> {
  public:
   struct Entry {
     NameId name_id;
-    InstId inst_id;
-    AccessKind access_kind;
-    bool is_poisoned = false;
+    ScopeLookupResult result;
+
+    // Equality means they have the same `name_id` and equal `result`.
+    friend auto operator==(const Entry&, const Entry&) -> bool = default;
   };
   static_assert(sizeof(Entry) == 12);
 
@@ -62,25 +144,28 @@ class NameScope : public Printable<NameScope> {
     return lookup.value();
   }
 
-  // Adds a new name known to not exist. Must not be poisoned.
+  // Adds a new name that is known to not exist. The new entry is not allowed to
+  // be poisoned. An existing poisoned entry can be overwritten.
   auto AddRequired(Entry name_entry) -> void;
 
-  // If the given name already exists, return true with the EntryId; the entry
-  // might be poisoned. Otherwise, adds the name using inst_id and access_kind
-  // and returns false with the new EntryId.
+  // Searches for the given name. If found, including if a poisoned entry is
+  // found, returns true with the existing EntryId. Otherwise, adds the name
+  // using inst_id and access_kind and returns false with the new EntryId.
   //
-  // This cannot be used to add poisoned entries; use AddPoison instead.
-  auto LookupOrAdd(SemIR::NameId name_id, InstId inst_id,
-                   AccessKind access_kind) -> std::pair<bool, EntryId>;
+  // This cannot be used to add poisoned entries; use LookupOrPoison instead.
+  auto LookupOrAdd(NameId name_id, InstId inst_id, AccessKind access_kind)
+      -> std::pair<bool, EntryId>;
 
-  // Adds a new poisoned name.
-  auto AddPoison(NameId name_id) -> void;
+  // Searches for the given name. If found, including if a poisoned entry is
+  // found, returns the corresponding EntryId. Otherwise, returns nullopt and
+  // poisons the name so it can't be declared later.
+  auto LookupOrPoison(NameId name_id) -> std::optional<EntryId>;
 
   auto extended_scopes() const -> llvm::ArrayRef<InstId> {
     return extended_scopes_;
   }
 
-  auto AddExtendedScope(SemIR::InstId extended_scope) -> void {
+  auto AddExtendedScope(InstId extended_scope) -> void {
     extended_scopes_.push_back(extended_scope);
   }
 
@@ -108,13 +193,12 @@ class NameScope : public Printable<NameScope> {
   }
 
   auto import_ir_scopes() const
-      -> llvm::ArrayRef<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>> {
+      -> llvm::ArrayRef<std::pair<ImportIRId, NameScopeId>> {
     return import_ir_scopes_;
   }
 
   auto AddImportIRScope(
-      const std::pair<SemIR::ImportIRId, SemIR::NameScopeId>& import_ir_scope)
-      -> void {
+      const std::pair<ImportIRId, NameScopeId>& import_ir_scope) -> void {
     import_ir_scopes_.push_back(import_ir_scope);
   }
 
@@ -147,7 +231,7 @@ class NameScope : public Printable<NameScope> {
   // The instruction which owns the scope.
   InstId inst_id_;
 
-  // When the scope is a namespace, the name. Otherwise, invalid.
+  // When the scope is a namespace, the name. Otherwise, `None`.
   NameId name_id_;
 
   // The parent scope.
@@ -165,8 +249,7 @@ class NameScope : public Printable<NameScope> {
 
   // Imported IR scopes that compose this namespace. This will be empty for
   // scopes that correspond to the current package.
-  llvm::SmallVector<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>, 0>
-      import_ir_scopes_;
+  llvm::SmallVector<std::pair<ImportIRId, NameScopeId>, 0> import_ir_scopes_;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.
@@ -181,12 +264,12 @@ class NameScopeStore {
   }
 
   // Adds a name that is required to exist in a name scope, such as `Self`.
-  // The name must never conflict. inst_id must not be poisoned.
+  // The name must never conflict.
   auto AddRequiredName(NameScopeId scope_id, NameId name_id, InstId inst_id)
       -> void {
-    Get(scope_id).AddRequired({.name_id = name_id,
-                               .inst_id = inst_id,
-                               .access_kind = AccessKind::Public});
+    Get(scope_id).AddRequired(
+        {.name_id = name_id,
+         .result = ScopeLookupResult::MakeFound(inst_id, AccessKind::Public)});
   }
 
   // Returns the requested name scope.
@@ -197,18 +280,18 @@ class NameScopeStore {
     return values_.Get(scope_id);
   }
 
-  // Returns the instruction owning the requested name scope, or Invalid with
-  // nullopt if the scope is either invalid or has no associated instruction.
+  // Returns the instruction owning the requested name scope, or `None` with
+  // nullopt if the scope is either `None` or has no associated instruction.
   auto GetInstIfValid(NameScopeId scope_id) const
       -> std::pair<InstId, std::optional<Inst>>;
 
   // Returns whether the provided scope ID is for a package scope.
   auto IsPackage(NameScopeId scope_id) const -> bool {
-    if (!scope_id.is_valid()) {
+    if (!scope_id.has_value()) {
       return false;
     }
     // A package is either the current package or an imported package.
-    return scope_id == SemIR::NameScopeId::Package ||
+    return scope_id == NameScopeId::Package ||
            Get(scope_id).is_imported_package();
   }
 

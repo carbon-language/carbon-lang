@@ -44,7 +44,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %Convert.type.c23: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.8bb: %Convert.type.c23 = struct_value () [template]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [template]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%import_ref.78a), @impl.5(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.5(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.7, @impl.5(%int_32) [template]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.e80: <bound method> = bound_method %int_4.0c1, %Convert.197 [template]
@@ -55,19 +55,19 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .As = %import_ref.16b
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.16b: %As.type.90f = import_ref Core//prelude/operators/as, As, loaded [template = constants.%As.generic]
+// CHECK:STDOUT:   %Core.As: %As.type.90f = import_ref Core//prelude/operators/as, As, loaded [template = constants.%As.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .X = %X.decl
-// CHECK:STDOUT:     .n = @__global_init.%n
+// CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
@@ -75,7 +75,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %As.ref: %As.type.90f = name_ref As, imports.%import_ref.16b [template = constants.%As.generic]
+// CHECK:STDOUT:     %As.ref: %As.type.90f = name_ref As, imports.%Core.As [template = constants.%As.generic]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%X)> [template = constants.%As.type.602]
 // CHECK:STDOUT:   }
@@ -83,12 +83,20 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %As.ref: %As.type.90f = name_ref As, imports.%import_ref.16b [template = constants.%As.generic]
+// CHECK:STDOUT:     %As.ref: %As.type.90f = name_ref As, imports.%Core.As [template = constants.%As.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [template = constants.%As.type.fd4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.2.%Convert.decl) [template = constants.%impl_witness.662]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n: %i32 = bind_name n, @__global_init.%.loc23_32.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %i32 as %As.type {
@@ -136,13 +144,17 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc12: %X.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %X.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %X.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %X.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .n = %.loc12
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %i32]() -> %return.param_patt: %X {
@@ -159,7 +171,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: fn @Convert.3[%self.param_patt: %X]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12 [template = @X.%.loc12]
+// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12_8 [template = @X.%.loc12_8]
 // CHECK:STDOUT:   %.loc20_45.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc20_45.2: %i32 = bind_value %.loc20_45.1
 // CHECK:STDOUT:   return %.loc20_45.2
@@ -191,7 +203,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %Convert.call.loc23_32: init %i32 = call %Convert.bound.loc23_32(%.loc23_26.4)
 // CHECK:STDOUT:   %.loc23_32.1: %i32 = value_of_initializer %Convert.call.loc23_32
 // CHECK:STDOUT:   %.loc23_32.2: %i32 = converted %.loc23_26.2, %.loc23_32.1
-// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc23_32.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

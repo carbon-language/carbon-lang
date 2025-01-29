@@ -20,9 +20,10 @@ fn F() -> {} {
   // CHECK:STDERR:                ^~
   // CHECK:STDERR:
   alias NS.a = {};
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+3]]:10: error: member name `a` not found in `NS` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:10: error: member name `a` not found in `NS` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return NS.a;
   // CHECK:STDERR:          ^~~~
+  // CHECK:STDERR:
   return NS.a;
 }
 
@@ -54,7 +55,7 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @F() -> %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc22_17: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc22_12: <error> = bind_alias <invalid>, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22_12: <error> = bind_alias <none>, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>

@@ -24,16 +24,16 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT:   %b.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %c.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %a.var), !dbg !7
-// CHECK:STDOUT:   store ptr %p, ptr %a.var, align 8, !dbg !8
+// CHECK:STDOUT:   store ptr %p, ptr %a.var, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %b.var), !dbg !7
-// CHECK:STDOUT:   %.loc13_17.2 = load ptr, ptr %p, align 8, !dbg !9
-// CHECK:STDOUT:   store ptr %.loc13_17.2, ptr %b.var, align 8, !dbg !10
+// CHECK:STDOUT:   %.loc13_17.2 = load ptr, ptr %p, align 8, !dbg !8
+// CHECK:STDOUT:   store ptr %.loc13_17.2, ptr %b.var, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %c.var), !dbg !7
-// CHECK:STDOUT:   store ptr %b.var, ptr %c.var, align 8, !dbg !11
-// CHECK:STDOUT:   %.loc15_12 = load ptr, ptr %c.var, align 8, !dbg !12
-// CHECK:STDOUT:   %.loc15_11.2 = load ptr, ptr %.loc15_12, align 8, !dbg !13
-// CHECK:STDOUT:   %.loc15_10.2 = load i32, ptr %.loc15_11.2, align 4, !dbg !14
-// CHECK:STDOUT:   ret i32 %.loc15_10.2, !dbg !15
+// CHECK:STDOUT:   store ptr %b.var, ptr %c.var, align 8, !dbg !10
+// CHECK:STDOUT:   %.loc15_12 = load ptr, ptr %c.var, align 8, !dbg !11
+// CHECK:STDOUT:   %.loc15_11.2 = load ptr, ptr %.loc15_12, align 8, !dbg !12
+// CHECK:STDOUT:   %.loc15_10.2 = load i32, ptr %.loc15_11.2, align 4, !dbg !13
+// CHECK:STDOUT:   ret i32 %.loc15_10.2, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -54,12 +54,11 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 17, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 12, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 11, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 10, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 17, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 12, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 11, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 10, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 3, scope: !4)

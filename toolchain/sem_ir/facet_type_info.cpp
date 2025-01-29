@@ -13,7 +13,7 @@ static auto SortAndDeduplicate(VecT& vec) -> void {
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  CARBON_CHECK(!resolved_id.is_valid());
+  CARBON_CHECK(!resolved_id.has_value());
   SortAndDeduplicate(impls_constraints);
   SortAndDeduplicate(rewrite_constraints);
 }
@@ -27,7 +27,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     llvm::ListSeparator sep;
     for (ImplsConstraint req : impls_constraints) {
       out << sep << req.interface_id;
-      if (req.specific_id.is_valid()) {
+      if (req.specific_id.has_value()) {
         out << "(" << req.specific_id << ")";
       }
     }
@@ -45,7 +45,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     out << outer_sep << "+ TODO requirements";
   }
 
-  if (resolved_id.is_valid()) {
+  if (resolved_id.has_value()) {
     out << outer_sep << "resolved: " << resolved_id;
   }
   out << "}";

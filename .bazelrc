@@ -28,6 +28,9 @@ build:clang-tidy --action_env=PATH --host_action_env=PATH
 # not firing in our normal builds.
 build:clang-tidy --copt=-Wno-unknown-pragmas
 
+# --config=non-fatal-checks makes CHECK failures not terminate compilation.
+build:non-fatal-checks --per_file_copt=common/check_internal.cpp@-DCARBON_NON_FATAL_CHECKS
+
 # Provide an alias for controlling the `carbon_*` Bazel rules' configuration. We
 # enable use of the target config here to make our build and tests more
 # efficient, see the documentation in //bazel/carbon_rules/BUILD for details.

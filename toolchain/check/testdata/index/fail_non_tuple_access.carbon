@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_non_tuple_access.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+3]]:3: error: type `Core.IntLiteral` does not support indexing [TypeNotIndexable]
+  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:3: error: type `Core.IntLiteral` does not support indexing [TypeNotIndexable]
   // CHECK:STDERR:   0[1];
   // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:
   0[1];
 }
 
@@ -26,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .IndexWith = %import_ref.671
+// CHECK:STDOUT:     .IndexWith = %Core.IndexWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

@@ -43,9 +43,10 @@ abstract base default final alias A = Class;
 // CHECK:STDERR:
 impl alias B = Class;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `extern` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `extern` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: extern alias C = Class;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 extern alias C = Class;
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
@@ -68,15 +69,15 @@ extern alias C = Class;
 // CHECK:STDOUT:   %A: type = bind_alias A, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %Class.ref.loc44: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %B: type = bind_alias B, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %Class.ref.loc49: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc50: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %C: type = bind_alias C, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

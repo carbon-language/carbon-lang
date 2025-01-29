@@ -44,12 +44,13 @@ let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:
 var x: {.a: i32} = {.a = 1, .a = 2};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:39: error: duplicated field name `b` in struct literal [StructNameDuplicate]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:39: error: duplicated field name `b` in struct literal [StructNameDuplicate]
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                                       ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:31: note: field with the same name here [StructNamePrevious]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:31: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                               ^
+// CHECK:STDERR:
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 
 // CHECK:STDOUT: --- fail_duplicate_name.carbon
@@ -70,7 +71,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -80,8 +81,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .v = @__global_init.%v
-// CHECK:STDOUT:     .w = @__global_init.%w
+// CHECK:STDOUT:     .v = %v
+// CHECK:STDOUT:     .w = %w
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
@@ -103,9 +104,47 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:     %int_32.loc27_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc27_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc27_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc27_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %w.patt: %i32 = binding_pattern w
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc36: type = splice_block %i32.loc36 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc36: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc36: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %w: %i32 = bind_name w, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.a.ba9 = binding_pattern x
+// CHECK:STDOUT:     %.loc45_1: %struct_type.a.ba9 = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.ba9 = var x
+// CHECK:STDOUT:   %.loc45_16: type = splice_block %struct_type.a [template = constants.%struct_type.a.ba9] {
+// CHECK:STDOUT:     %int_32.loc45: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc45: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a.ba9]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %struct_type.b.c = binding_pattern y
+// CHECK:STDOUT:     %.loc54_1: %struct_type.b.c = var_pattern %y.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.c = var y
+// CHECK:STDOUT:   %.loc54_25: type = splice_block %struct_type.b.c [template = constants.%struct_type.b.c] {
+// CHECK:STDOUT:     %int_32.loc54_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc54_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc54_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc54_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.b.c: type = struct_type {.b: %i32, .c: %i32} [template = constants.%struct_type.b.c]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.b.c = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -115,11 +154,9 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1.loc27: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc27: %struct_type.a.a6c = struct_literal (%int_1.loc27)
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2.loc36: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %def.ref: <error> = name_ref def, <error> [template = <error>]
-// CHECK:STDOUT:   %w: %i32 = bind_name w, <error>
 // CHECK:STDOUT:   %int_1.loc45: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2.loc45: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   assign file.%x.var, <error>

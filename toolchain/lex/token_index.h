@@ -31,13 +31,13 @@ struct TokenIndex : public IndexBase<TokenIndex> {
   static constexpr int Max = 1 << Bits;
 
   static constexpr llvm::StringLiteral Label = "token";
-  static const TokenIndex Invalid;
+  static const TokenIndex None;
   // Comments aren't tokenized, so this is the first token after FileStart.
   static const TokenIndex FirstNonCommentToken;
   using IndexBase::IndexBase;
 };
 
-constexpr TokenIndex TokenIndex::Invalid(TokenIndex::InvalidIndex);
+constexpr TokenIndex TokenIndex::None(TokenIndex::NoneIndex);
 constexpr TokenIndex TokenIndex::FirstNonCommentToken(1);
 
 // A lightweight handle to a lexed token in a `TokenizedBuffer` whose kind is

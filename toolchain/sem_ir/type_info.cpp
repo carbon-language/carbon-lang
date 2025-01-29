@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/type_info.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
@@ -70,13 +71,13 @@ auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
 auto NumericTypeLiteralInfo::ForType(const File& file, ClassType class_type)
     -> NumericTypeLiteralInfo {
   // Quickly rule out any class that's not a specific.
-  if (!class_type.specific_id.is_valid()) {
+  if (!class_type.specific_id.has_value()) {
     return NumericTypeLiteralInfo::Invalid;
   }
 
   // The class must be declared in the `Core` package.
   const auto& class_info = file.classes().Get(class_type.class_id);
-  if (!class_info.scope_id.is_valid() ||
+  if (!class_info.scope_id.has_value() ||
       !file.name_scopes().IsCorePackage(
           file.name_scopes().Get(class_info.scope_id).parent_scope_id())) {
     return NumericTypeLiteralInfo::Invalid;
@@ -121,10 +122,9 @@ auto NumericTypeLiteralInfo::PrintLiteral(const File& file,
 
 auto NumericTypeLiteralInfo::GetLiteralAsString(const File& file) const
     -> std::string {
-  std::string result;
-  llvm::raw_string_ostream out(result);
+  RawStringOstream out;
   PrintLiteral(file, out);
-  return result;
+  return out.TakeStr();
 }
 
 }  // namespace Carbon::SemIR

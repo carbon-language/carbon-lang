@@ -25,17 +25,17 @@ using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 
 // Returns a key form of the package object. file_package_id is only used for
 // imports, not the main package declaration; as a consequence, it will be
-// invalid for the main package declaration.
+// `None` for the main package declaration.
 static auto GetImportKey(UnitAndImports& unit_info,
                          IdentifierId file_package_id,
                          Parse::Tree::PackagingNames names) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
   llvm::StringRef package_name =
-      names.package_id.is_valid()  ? stores->identifiers().Get(names.package_id)
-      : file_package_id.is_valid() ? stores->identifiers().Get(file_package_id)
-                                   : "";
+      names.package_id.has_value() ? stores->identifiers().Get(names.package_id)
+      : file_package_id.has_value() ? stores->identifiers().Get(file_package_id)
+                                    : "";
   llvm::StringRef library_name =
-      names.library_id.is_valid()
+      names.library_id.has_value()
           ? stores->string_literal_values().Get(names.library_id)
           : "";
   return {package_name, library_name};
@@ -61,16 +61,36 @@ static auto RenderImportKey(ImportKey import_key) -> std::string {
 static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
                         Map<ImportKey, Parse::NodeId>* explicit_import_map,
                         UnitAndImports& unit_info,
-                        Parse::Tree::PackagingNames import) -> void {
+                        Parse::Tree::PackagingNames import, bool fuzzing)
+    -> void {
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
   IdentifierId file_package_id =
-      packaging ? packaging->names.package_id : IdentifierId::Invalid;
-  auto import_key = GetImportKey(unit_info, file_package_id, import);
+      packaging ? packaging->names.package_id : IdentifierId::None;
+  const auto import_key = GetImportKey(unit_info, file_package_id, import);
+  const auto& [import_package_name, import_library_name] = import_key;
+
+  if (import_package_name == CppPackageName) {
+    if (import_library_name.empty()) {
+      CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
+                        "`Cpp` import missing library");
+      unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary);
+      return;
+    }
+    if (fuzzing) {
+      // Clang is not crash-resilient.
+      CARBON_DIAGNOSTIC(CppInteropFuzzing, Error,
+                        "`Cpp` import found during fuzzing");
+      unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
+      return;
+    }
+    unit_info.cpp_imports.push_back(import);
+    return;
+  }
 
   // True if the import has `Main` as the package name, even if it comes from
   // the file's packaging (diagnostics may differentiate).
-  bool is_explicit_main = import_key.first == MainPackageName;
+  bool is_explicit_main = import_package_name == MainPackageName;
 
   // Explicit imports need more validation than implicit ones. We try to do
   // these in an order of imports that should be removed, followed by imports
@@ -92,12 +112,12 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     // True if the file's package is implicitly `Main` (by omitting an explicit
     // package name).
     bool is_file_implicit_main =
-        !packaging || !packaging->names.package_id.is_valid();
+        !packaging || !packaging->names.package_id.has_value();
     // True if the import is using implicit "current package" syntax (by
     // omitting an explicit package name).
-    bool is_import_implicit_current_package = !import.package_id.is_valid();
+    bool is_import_implicit_current_package = !import.package_id.has_value();
     // True if the import is using `default` library syntax.
-    bool is_import_default_library = !import.library_id.is_valid();
+    bool is_import_default_library = !import.library_id.has_value();
     // True if the import and file point at the same package, even by
     // incorrectly specifying the current package name to `import`.
     bool is_same_package = is_import_implicit_current_package ||
@@ -185,7 +205,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   } else {
     // The imported api is missing.
     package_imports.has_load_error = true;
-    if (!explicit_import_map && import_key.first == CppPackageName) {
+    if (!explicit_import_map && import_package_name == CppPackageName) {
       // Don't diagnose the implicit import in `impl package Cpp`, because we'll
       // have diagnosed the use of `Cpp` in the declaration.
       return;
@@ -212,7 +232,7 @@ static auto BuildApiMapAndDiagnosePackaging(
     const auto& packaging = unit_info.parse_tree().packaging_decl();
     // An import key formed from the `package` or `library` declaration. Or, for
     // Main//default, a placeholder key.
-    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::Invalid,
+    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::None,
                                                packaging->names)
                                 // Construct a boring key for Main//default.
                                 : ImportKey{"", ""};
@@ -257,8 +277,8 @@ static auto BuildApiMapAndDiagnosePackaging(
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
                             "`Main//default` previously provided by `{0}`",
                             std::string);
-          // Use the invalid node because there's no node to associate with.
-          unit_info.emitter.Emit(Parse::NodeId::Invalid, DuplicateMainApi,
+          // Use `NodeId::None` because there's no node to associate with.
+          unit_info.emitter.Emit(Parse::NodeId::None, DuplicateMainApi,
                                  prev_filename.str());
         }
       }
@@ -279,13 +299,13 @@ static auto BuildApiMapAndDiagnosePackaging(
             "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}",
             BoolAsSelect);
         auto diag = unit_info.emitter.Build(
-            packaging ? packaging->names.node_id : Parse::NodeId::Invalid,
+            packaging ? packaging->names.node_id : Parse::NodeId::None,
             IncorrectExtension, is_impl);
         if (is_api_with_impl_ext) {
           CARBON_DIAGNOSTIC(
               IncorrectExtensionImplNote, Note,
               "file extension of `.impl.carbon` only allowed for `impl`");
-          diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote);
+          diag.Note(Parse::NodeId::None, IncorrectExtensionImplNote);
         }
         diag.Emit();
       }
@@ -295,7 +315,8 @@ static auto BuildApiMapAndDiagnosePackaging(
 }
 
 auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::raw_ostream* vlog_stream) -> void {
+                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos;
@@ -315,8 +336,8 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
-      implicit_names.package_id = IdentifierId::Invalid;
-      TrackImport(api_map, nullptr, unit_info, implicit_names);
+      implicit_names.package_id = IdentifierId::None;
+      TrackImport(api_map, nullptr, unit_info, implicit_names, fuzzing);
     }
 
     Map<ImportKey, Parse::NodeId> explicit_import_map;
@@ -330,13 +351,14 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
       TrackImport(api_map, &explicit_import_map, unit_info,
-                  {.node_id = Parse::InvalidNodeId(),
+                  {.node_id = Parse::NoneNodeId(),
                    .package_id = core_ident_id,
-                   .library_id = prelude_id});
+                   .library_id = prelude_id},
+                  fuzzing);
     }
 
     for (const auto& import : unit_info.parse_tree().imports()) {
-      TrackImport(api_map, &explicit_import_map, unit_info, import);
+      TrackImport(api_map, &explicit_import_map, unit_info, import, fuzzing);
     }
 
     // If there were no imports, mark the file as ready to check for below.
@@ -350,7 +372,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, units.size(), vlog_stream).Run();
+    CheckUnit(unit_info, units.size(), fs, vlog_stream).Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -397,7 +419,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, units.size(), vlog_stream).Run();
+        CheckUnit(&unit_info, units.size(), fs, vlog_stream).Run();
       }
     }
   }

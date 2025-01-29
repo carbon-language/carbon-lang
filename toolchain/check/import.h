@@ -39,13 +39,13 @@ auto ImportLibrariesFromOtherPackage(Context& context,
                                      bool has_load_error) -> void;
 
 // Given a name scope that corresponds to another package (having one or more
-// import_irs), looks for the name in imports. Name resolution results are added
-// to the scope, and the InstId (possibly invalid) is returned.
+// `import_irs`), looks for the name in imports. Name resolution results are
+// added to the scope, and the `InstId` (possibly `None`) is returned.
 //
-// In general, this will add an ImportRef and load it; it's never left unloaded
-// because the result is expected to be immediately used. Namespaces will be
-// directly produced, similar to how they function for imports from the current
-// package. Conflicts will be resolved and diagnosed.
+// In general, this will add an `ImportRef` and load it; it's never left
+// unloaded because the result is expected to be immediately used. Namespaces
+// will be directly produced, similar to how they function for imports from the
+// current package. Conflicts will be resolved and diagnosed.
 //
 // Arguments are all in the context of the current IR. Scope lookup is expected
 // to be resolved first.

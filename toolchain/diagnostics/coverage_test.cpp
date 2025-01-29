@@ -24,6 +24,9 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::TestDiagnostic,
     DiagnosticKind::TestDiagnosticNote,
 
+    // Driver specific.
+    DiagnosticKind::CppInteropFuzzing,
+
     // These diagnose filesystem issues that are hard to unit test.
     DiagnosticKind::ErrorReadingFile,
     DiagnosticKind::ErrorStattingFile,
@@ -42,7 +45,7 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 // Looks for diagnostic kinds that aren't covered by a file_test.
 TEST(Coverage, DiagnosticKind) {
   Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest),
-                            R"(^ *// CHECK:STDERR: .*\.carbon:.* \[(\w+)\]$)",
+                            R"(^ *// CHECK:STDERR: .* \[(\w+)\]$)",
                             llvm::ArrayRef(DiagnosticKinds),
                             llvm::ArrayRef(UntestedDiagnosticKinds));
 }

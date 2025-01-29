@@ -15,12 +15,13 @@ interface I {
 }
 
 impl i32 as I {
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+6]]:8: error: type `C(i32)` of parameter 1 in redeclaration differs from previous parameter type `C(i32 as I)` [RedeclParamDiffersType]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+7]]:8: error: type `C(i32)` of parameter 1 in redeclaration differs from previous parameter type `C(i32 as I)` [RedeclParamDiffersType]
   // CHECK:STDERR:   fn F(c: C(i32));
   // CHECK:STDERR:        ^~~~~~~~~
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-7]]:8: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   fn F(c: C(Self));
   // CHECK:STDERR:        ^~~~~~~~~~
+  // CHECK:STDERR:
   fn F(c: C(i32));
 }
 
@@ -41,8 +42,8 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.dbb: type = class_type @C, @C(%I.type, %Self) [symbolic]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.cf0 [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template]
@@ -55,7 +56,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -70,13 +71,13 @@ impl i32 as I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_9.1, runtime_param<invalid> [symbolic = %T.patt.loc11_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_9.1, runtime_param<none> [symbolic = %T.patt.loc11_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %X.patt.loc11_19.1: @C.%T.loc11_9.2 (%T) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc11_19.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: @C.%T.loc11_9.2 (%T) = value_param_pattern %X.patt.loc11_19.1, runtime_param<invalid> [symbolic = %X.patt.loc11_19.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: @C.%T.loc11_9.2 (%T) = value_param_pattern %X.patt.loc11_19.1, runtime_param<none> [symbolic = %X.patt.loc11_19.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc11_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_9.2 (constants.%T)]
-// CHECK:STDOUT:     %X.param: @C.%T.loc11_9.2 (%T) = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %X.param: @C.%T.loc11_9.2 (%T) = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_9.1 [symbolic = %T.loc11_9.2 (constants.%T)]
 // CHECK:STDOUT:     %X.loc11_19.1: @C.%T.loc11_9.2 (%T) = bind_symbolic_name X, 1, %X.param [symbolic = %X.loc11_19.2 (constants.%X)]
 // CHECK:STDOUT:   }
@@ -103,7 +104,7 @@ impl i32 as I {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: @F.1.%C.loc14_17.1 (%C.dbb) = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -117,7 +118,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param_patt: %C.6fb = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.6fb = value_param runtime_param0
-// CHECK:STDOUT:     %.loc24: type = splice_block %C [template = constants.%C.6fb] {
+// CHECK:STDOUT:     %.loc25: type = splice_block %C [template = constants.%C.6fb] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
@@ -141,10 +142,10 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.b36
-// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

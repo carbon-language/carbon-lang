@@ -35,24 +35,29 @@ var a: A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %A = binding_pattern a
+// CHECK:STDOUT:     %.loc12: %A = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var a
+// CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc12_13.2: init %A = class_init (), file.%a.var [template = constants.%A.val]
-// CHECK:STDOUT:   %.loc12_14: init %A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%A.val]
-// CHECK:STDOUT:   assign file.%a.var, %.loc12_14
+// CHECK:STDOUT:   %.loc12_1: init %A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%A.val]
+// CHECK:STDOUT:   assign file.%a.var, %.loc12_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

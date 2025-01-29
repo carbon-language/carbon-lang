@@ -4,7 +4,9 @@
 
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/stringify_type.h"
+
 namespace Carbon::Check {
 
 auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
@@ -14,7 +16,7 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
-  if (last_token_.is_valid()) {
+  if (last_token_.has_value()) {
     last_offset = sem_ir_->parse_tree().tokens().GetByteOffset(last_token_);
   }
 
@@ -35,15 +37,15 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
     -> ConvertedDiagnosticLoc {
   // Cursors for the current IR and instruction in that IR.
   const auto* cursor_ir = sem_ir_;
-  auto cursor_inst_id = SemIR::InstId::Invalid;
+  auto cursor_inst_id = SemIR::InstId::None;
 
   // Notes an import on the diagnostic and updates cursors to point at the
   // imported IR.
   auto follow_import_ref = [&](SemIR::ImportIRInstId import_ir_inst_id) {
     auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
     const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id);
-    CARBON_CHECK(import_ir.decl_id.is_valid(),
-                 "If we get invalid locations here, we may need to more "
+    CARBON_CHECK(import_ir.decl_id.has_value(),
+                 "If we get `None` locations here, we may need to more "
                  "thoroughly track ImportDecls.");
 
     ConvertedDiagnosticLoc in_import_loc;
@@ -70,7 +72,7 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
 
     // TODO: Add an "In implicit import of prelude." note for the case where we
     // don't have a location.
-    if (import_loc_id.is_valid()) {
+    if (import_loc_id.has_value()) {
       // TODO: Include the name of the imported library in the diagnostic.
       CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
       context_fn(in_import_loc.loc, InImport);
@@ -101,21 +103,21 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
     if (auto diag_loc = handle_loc(loc.loc_id)) {
       return *diag_loc;
     }
-    CARBON_CHECK(cursor_inst_id.is_valid(), "Should have been set");
+    CARBON_CHECK(cursor_inst_id.has_value(), "Should have been set");
   }
 
   while (true) {
-    if (cursor_inst_id.is_valid()) {
+    if (cursor_inst_id.has_value()) {
       auto cursor_inst = cursor_ir->insts().Get(cursor_inst_id);
       if (auto bind_ref = cursor_inst.TryAs<SemIR::ExportDecl>();
-          bind_ref && bind_ref->value_id.is_valid()) {
+          bind_ref && bind_ref->value_id.has_value()) {
         cursor_inst_id = bind_ref->value_id;
         continue;
       }
 
-      // If the parse node is valid, use it for the location.
+      // If the parse node has a value, use it for the location.
       if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-          loc_id.is_valid()) {
+          loc_id.has_value()) {
         if (auto diag_loc = handle_loc(loc_id)) {
           return *diag_loc;
         }
@@ -125,15 +127,15 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
       // If a namespace has an instruction for an import, switch to looking at
       // it.
       if (auto ns = cursor_inst.TryAs<SemIR::Namespace>()) {
-        if (ns->import_id.is_valid()) {
+        if (ns->import_id.has_value()) {
           cursor_inst_id = ns->import_id;
           continue;
         }
       }
     }
 
-    // Invalid parse node but not an import; just nothing to point at.
-    return ConvertLocInFile(cursor_ir, Parse::NodeId::Invalid, loc.token_only,
+    // `None` parse node but not an import; just nothing to point at.
+    return ConvertLocInFile(cursor_ir, Parse::NodeId::None, loc.token_only,
                             context_fn);
   }
 }
@@ -143,14 +145,15 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     std::string library_name;
     if (*library_name_id == SemIR::LibraryNameId::Default) {
       library_name = "default library";
-    } else if (!library_name_id->is_valid()) {
-      library_name = "library <invalid>";
+    } else if (!library_name_id->has_value()) {
+      library_name = "library <none>";
     } else {
-      llvm::raw_string_ostream stream(library_name);
-      stream << "library \"";
-      stream << sem_ir_->string_literal_values().Get(
-          library_name_id->AsStringLiteralValueId());
-      stream << "\"";
+      RawStringOstream stream;
+      stream << "library \""
+             << sem_ir_->string_literal_values().Get(
+                    library_name_id->AsStringLiteralValueId())
+             << "\"";
+      library_name = stream.TakeStr();
     }
     return library_name;
   }
@@ -158,7 +161,7 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return sem_ir_->names().GetFormatted(*name_id).str();
   }
   if (auto* type_of_expr = llvm::any_cast<TypeOfInstId>(&arg)) {
-    if (!type_of_expr->inst_id.is_valid()) {
+    if (!type_of_expr->inst_id.has_value()) {
       return "<none>";
     }
     // TODO: Where possible, produce a better description of the type based on

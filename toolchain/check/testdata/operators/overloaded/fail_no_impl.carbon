@@ -35,9 +35,10 @@ fn TestRef(b: C) {
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   a += b;
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: error: cannot access member of interface `Core.Inc` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Inc` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   ++a;
 }
 
@@ -58,10 +59,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Negate = %import_ref.6e9
-// CHECK:STDOUT:     .Add = %import_ref.fe6
-// CHECK:STDOUT:     .AddAssign = %import_ref.e1b
-// CHECK:STDOUT:     .Inc = %import_ref.04f
+// CHECK:STDOUT:     .Negate = %Core.Negate
+// CHECK:STDOUT:     .Add = %Core.Add
+// CHECK:STDOUT:     .AddAssign = %Core.AddAssign
+// CHECK:STDOUT:     .Inc = %Core.Inc
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -113,17 +114,17 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestUnary(%a.param_patt: %C) -> %return.param_patt: %C {
@@ -141,15 +142,20 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRef(%b.param_patt: %C) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc32_3.1: %C = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var a
-// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc32_15.2: init %C = class_init (), %a.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc32_16: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign %a.var, %.loc32_16
+// CHECK:STDOUT:   %.loc32_3.2: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign %a.var, %.loc32_3.2
+// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc42: ref %C = name_ref a, %a
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

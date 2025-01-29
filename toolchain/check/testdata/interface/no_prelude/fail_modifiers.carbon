@@ -67,9 +67,10 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_protected_member.carbon:[[@LINE+3]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+  // CHECK:STDERR: fail_protected_member.carbon:[[@LINE+4]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
   // CHECK:STDERR:   protected fn F[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   protected fn F[self: Self]();
 }
 
@@ -155,8 +156,8 @@ interface I {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -180,7 +181,7 @@ interface I {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @F.%Self.as_type.loc9_22.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -208,8 +209,8 @@ interface I {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -222,18 +223,18 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%Self.as_type.loc8_24.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%Self.as_type.loc8_24.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: @F.%Self.as_type.loc9_24.1 (%Self.as_type) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.%Self.as_type.loc9_24.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc8_24.1 (%Self.as_type) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc8_24.1: type = splice_block %.loc8_24.2 [symbolic = %Self.as_type.loc8_24.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc9_24.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc9_24.1: type = splice_block %.loc9_24.2 [symbolic = %Self.as_type.loc9_24.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc8_24.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_24.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc8_24.2: type = converted %Self.ref, %Self.as_type.loc8_24.2 [symbolic = %Self.as_type.loc8_24.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc9_24.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc9_24.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc9_24.2: type = converted %Self.ref, %Self.as_type.loc9_24.2 [symbolic = %Self.as_type.loc9_24.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.%Self.as_type.loc8_24.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @F.%Self.as_type.loc9_24.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -243,13 +244,13 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc8_24.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_24.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %Self.as_type.loc9_24.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_24.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self.as_type.loc8_24.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self.as_type.loc9_24.1 (%Self.as_type)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc8_24.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc9_24.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -13,9 +13,10 @@ interface Simple {
 }
 
 impl i32 as Simple {
-  // CHECK:STDERR: fail_call_invalid.carbon:[[@LINE+3]]:14: error: name `Undeclared` not found [NameNotFound]
+  // CHECK:STDERR: fail_call_invalid.carbon:[[@LINE+4]]:14: error: name `Undeclared` not found [NameNotFound]
   // CHECK:STDERR:   fn G[self: Undeclared]();
   // CHECK:STDERR:              ^~~~~~~~~~
+  // CHECK:STDERR:
   fn G[self: Undeclared]();
 }
 
@@ -31,8 +32,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Self.as_type.716: type = facet_access_type %Self.3c9 [symbolic]
 // CHECK:STDOUT:   %G.type.b60: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.cb0: %G.type.b60 = struct_value () [template]
-// CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Simple.type, %G.type.b60 [template]
-// CHECK:STDOUT:   %assoc0.f1b: %G.assoc_type = assoc_entity element0, @Simple.%G.decl [template]
+// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type %Simple.type [template]
+// CHECK:STDOUT:   %assoc0.45f: %Simple.assoc_type = assoc_entity element0, @Simple.%G.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (<error>) [template]
@@ -45,7 +46,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -70,7 +71,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc22: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %.loc23: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
@@ -92,7 +93,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type.716) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0.f1b]
+// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0.45f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -128,7 +129,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0.f1b]
+// CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0.45f]
 // CHECK:STDOUT:   %impl.elem0: %G.type.b60 = impl_witness_access constants.%impl_witness.85b, element0 [template = <error>]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   return

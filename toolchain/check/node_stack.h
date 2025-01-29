@@ -19,8 +19,8 @@ namespace Carbon::Check {
 // A non-discriminated union of ID types.
 class IdUnion {
  public:
-  // The default constructor forms an invalid ID.
-  explicit constexpr IdUnion() : index(AnyIdBase::InvalidIndex) {}
+  // The default constructor forms a `None` ID.
+  explicit constexpr IdUnion() : index(AnyIdBase::NoneIndex) {}
 
   template <typename IdT>
     requires SemIR::IdKind::Contains<IdT>
@@ -41,7 +41,7 @@ class IdUnion {
     return As<SemIR::IdKind::TypeFor<K>>();
   }
 
-  // Translates an ID type to the enum ID kind. Returns Invalid if `IdT` isn't
+  // Translates an ID type to the enum ID kind. Returns `None` if `IdT` isn't
   // a type that can be stored in this union.
   template <typename IdT>
   static constexpr auto KindFor() -> Kind {
@@ -92,7 +92,7 @@ class NodeStack {
     auto kind = parse_tree_->node_kind(node_id);
     CARBON_CHECK(NodeKindToIdKind(kind) == Id::KindFor<IdT>(),
                  "Parse kind expected a different IdT: {0} -> {1}\n", kind, id);
-    CARBON_CHECK(id.is_valid(), "Push called with invalid id: {0}",
+    CARBON_CHECK(id.has_value(), "Push called with `None` id: {0}",
                  parse_tree_->node_kind(node_id));
     CARBON_VLOG("Node Push {0}: {1} -> {2}\n", stack_.size(), kind, id);
     CARBON_CHECK(stack_.size() < (1 << 20),
@@ -105,25 +105,10 @@ class NodeStack {
     return !stack_.empty() && PeekNodeKind() == kind;
   }
 
-  // Returns whether there is a node of the specified kind on top of the stack.
-  // Templated for consistency with other functions taking a parse node kind.
-  template <const Parse::NodeKind& RequiredParseKind>
-  auto PeekIs() const -> bool {
-    return PeekIs(RequiredParseKind);
-  }
-
   // Returns whether the node on the top of the stack has an overlapping
   // category.
   auto PeekIs(Parse::NodeCategory category) const -> bool {
     return !stack_.empty() && PeekNodeKind().category().HasAnyOf(category);
-  }
-
-  // Returns whether the node on the top of the stack has an overlapping
-  // category. Templated for consistency with other functions taking a parse
-  // node category.
-  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
-  auto PeekIs() const -> bool {
-    return PeekIs(RequiredParseCategory);
   }
 
   // Returns whether there is a node with the corresponding ID on top of the
@@ -138,11 +123,9 @@ class NodeStack {
   // have the breadth of support versus other Peek functions because it's
   // expected to be used in narrow circumstances when determining how to treat
   // the *current* top of the stack.
-  template <const Parse::NodeKind& RequiredParseKind>
-  auto PeekNextIs() const -> bool {
+  auto PeekNextIs(Parse::NodeKind kind) const -> bool {
     CARBON_CHECK(stack_.size() >= 2);
-    return parse_tree_->node_kind(stack_[stack_.size() - 2].node_id) ==
-           RequiredParseKind;
+    return parse_tree_->node_kind(stack_[stack_.size() - 2].node_id) == kind;
   }
 
   // Pops the top of the stack without any verification.
@@ -166,7 +149,7 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopForSoloNodeIdIf()
       -> std::optional<Parse::NodeIdForKind<RequiredParseKind>> {
-    if (PeekIs<RequiredParseKind>()) {
+    if (PeekIs(RequiredParseKind)) {
       return PopForSoloNodeId<RequiredParseKind>();
     }
     return std::nullopt;
@@ -182,7 +165,7 @@ class NodeStack {
   // was popped.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopAndDiscardSoloNodeIdIf() -> bool {
-    if (!PeekIs<RequiredParseKind>()) {
+    if (!PeekIs(RequiredParseKind)) {
       return false;
     }
     PopForSoloNodeId<RequiredParseKind>();
@@ -229,6 +212,8 @@ class NodeStack {
 
   // Pops a pattern from the top of the stack and returns the ID.
   // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  // TODO: TuplePatterns store an InstBlockId instead and must be dealt with as
+  // a special case before calling this function.
   auto PopPattern() -> SemIR::InstId { return PopPatternWithNodeId().second; }
 
   // Pops a name from the top of the stack and returns the ID.
@@ -256,7 +241,7 @@ class NodeStack {
   // Otherwise returns std::nullopt.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseKind>())> {
-    if (PeekIs<RequiredParseKind>()) {
+    if (PeekIs(RequiredParseKind)) {
       return Pop<RequiredParseKind>();
     }
     return std::nullopt;
@@ -266,7 +251,7 @@ class NodeStack {
   // Otherwise returns std::nullopt.
   template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseCategory>())> {
-    if (PeekIs<RequiredParseCategory>()) {
+    if (PeekIs(RequiredParseCategory)) {
       return Pop<RequiredParseCategory>();
     }
     return std::nullopt;
@@ -287,8 +272,8 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithNodeIdIf() -> std::pair<Parse::NodeIdForKind<RequiredParseKind>,
                                       decltype(PopIf<RequiredParseKind>())> {
-    if (!PeekIs<RequiredParseKind>()) {
-      return {Parse::NodeId::Invalid, std::nullopt};
+    if (!PeekIs(RequiredParseKind)) {
+      return {Parse::NodeId::None, std::nullopt};
     }
     return PopWithNodeId<RequiredParseKind>();
   }
@@ -299,8 +284,8 @@ class NodeStack {
   auto PopWithNodeIdIf()
       -> std::pair<Parse::NodeIdInCategory<RequiredParseCategory>,
                    decltype(PopIf<RequiredParseCategory>())> {
-    if (!PeekIs<RequiredParseCategory>()) {
-      return {Parse::NodeId::Invalid, std::nullopt};
+    if (!PeekIs(RequiredParseCategory)) {
+      return {Parse::NodeId::None, std::nullopt};
     }
     return PopWithNodeId<RequiredParseCategory>();
   }
@@ -332,6 +317,12 @@ class NodeStack {
     static_assert(RequiredIdKind.has_value());
     return Peek<*RequiredIdKind>();
   }
+
+  // Peeks at the ID associated with the pattern at the top of the stack.
+  // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  // TODO: TuplePatterns store an InstBlockId instead and must be dealt with as
+  // a special case before calling this function.
+  auto PeekPattern() const -> SemIR::InstId;
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void;
@@ -415,14 +406,16 @@ class NodeStack {
       }
       switch (node_kind) {
         case Parse::NodeKind::Addr:
-        case Parse::NodeKind::BindingPattern:
         case Parse::NodeKind::CallExprStart:
         case Parse::NodeKind::CompileTimeBindingPattern:
         case Parse::NodeKind::IfExprThen:
+        case Parse::NodeKind::LetBindingPattern:
         case Parse::NodeKind::ReturnType:
         case Parse::NodeKind::ShortCircuitOperandAnd:
         case Parse::NodeKind::ShortCircuitOperandOr:
         case Parse::NodeKind::StructLiteralField:
+        case Parse::NodeKind::VarBindingPattern:
+        case Parse::NodeKind::VariablePattern:
         case Parse::NodeKind::WhereOperand:
           return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::IfCondition:
@@ -732,6 +725,10 @@ constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
 inline auto NodeStack::PopExprWithNodeId()
     -> std::pair<Parse::AnyExprId, SemIR::InstId> {
   return PopWithNodeId<Parse::NodeCategory::Expr>();
+}
+
+inline auto NodeStack::PeekPattern() const -> SemIR::InstId {
+  return Peek<Id::KindFor<SemIR::InstId>()>();
 }
 
 }  // namespace Carbon::Check

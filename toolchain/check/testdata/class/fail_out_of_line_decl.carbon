@@ -10,9 +10,10 @@
 
 class C {}
 
-// CHECK:STDERR: fail_out_of_line_decl.carbon:[[@LINE+3]]:6: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
+// CHECK:STDERR: fail_out_of_line_decl.carbon:[[@LINE+4]]:6: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
 // CHECK:STDERR: fn C.F() {}
 // CHECK:STDERR:      ^
+// CHECK:STDERR:
 fn C.F() {}
 
 // CHECK:STDOUT: --- fail_out_of_line_decl.carbon
@@ -44,11 +45,11 @@ fn C.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = file.%F.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

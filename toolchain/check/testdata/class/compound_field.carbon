@@ -65,7 +65,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -151,40 +151,60 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc12: %Base.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc13: %Base.elem = field_decl b, element1 [template]
-// CHECK:STDOUT:   %.loc14: %Base.elem = field_decl c, element2 [template]
+// CHECK:STDOUT:   %.loc12_8: %Base.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Base.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc12: ref %Base.elem = var <none>
+// CHECK:STDOUT:   %.loc13_8: %Base.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc13_3: %Base.elem = var_pattern %.loc13_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc13: ref %Base.elem = var <none>
+// CHECK:STDOUT:   %.loc14_8: %Base.elem = field_decl c, element2 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc14_3: %Base.elem = var_pattern %.loc14_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc14: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%complete_type.ebc]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc12
-// CHECK:STDOUT:   .b = %.loc13
-// CHECK:STDOUT:   .c = %.loc14
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
+// CHECK:STDOUT:   .c = %.loc14_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc18: %Derived.elem.69e = base_decl %Base.ref, element0 [template]
-// CHECK:STDOUT:   %.loc20: %Derived.elem.344 = field_decl d, element1 [template]
-// CHECK:STDOUT:   %.loc21: %Derived.elem.344 = field_decl e, element2 [template]
+// CHECK:STDOUT:   %.loc20_8: %Derived.elem.344 = field_decl d, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc20_3: %Derived.elem.344 = var_pattern %.loc20_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc20: ref %Derived.elem.344 = var <none>
+// CHECK:STDOUT:   %.loc21_8: %Derived.elem.344 = field_decl e, element2 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc21_3: %Derived.elem.344 = var_pattern %.loc21_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc21: ref %Derived.elem.344 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.e.6a7 [template = constants.%complete_type.401]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc18
-// CHECK:STDOUT:   .d = %.loc20
-// CHECK:STDOUT:   .e = %.loc21
+// CHECK:STDOUT:   .d = %.loc20_8
+// CHECK:STDOUT:   .e = %.loc21_8
 // CHECK:STDOUT:   extend %Base.ref
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessDerived(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc25_10: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Derived.ref.loc25: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:   %d.ref.loc25_20: %Derived.elem.344 = name_ref d, @Derived.%.loc20 [template = @Derived.%.loc20]
+// CHECK:STDOUT:   %d.ref.loc25_20: %Derived.elem.344 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc25_11.1: ref %i32 = class_element_access %d.ref.loc25_10, element1
 // CHECK:STDOUT:   %.loc25_11.2: %i32 = bind_value %.loc25_11.1
 // CHECK:STDOUT:   return %.loc25_11.2
@@ -194,7 +214,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc13 [template = @Base.%.loc13]
+// CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
 // CHECK:STDOUT:   %.loc29_11.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc29_11.2: ref %Base = converted %d.ref, %.loc29_11.1
 // CHECK:STDOUT:   %.loc29_11.3: ref %i32 = class_element_access %.loc29_11.2, element1
@@ -206,7 +226,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %Derived.ref.loc33: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:   %d.ref: %Derived.elem.344 = name_ref d, @Derived.%.loc20 [template = @Derived.%.loc20]
+// CHECK:STDOUT:   %d.ref: %Derived.elem.344 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc33_12.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc33_12.2: ref %i32 = class_element_access %.loc33_12.1, element1
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of %.loc33_12.2
@@ -217,7 +237,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc13 [template = @Base.%.loc13]
+// CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
 // CHECK:STDOUT:   %.loc37_12.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc37_12.2: ref %Base = class_element_access %.loc37_12.1, element0
 // CHECK:STDOUT:   %.loc37_12.3: ref %Base = converted %.loc37_12.1, %.loc37_12.2

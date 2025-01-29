@@ -10,3 +10,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_input_is_directory.carbon
 // CHECK:STDERR: .: error: error opening file for read: Invalid argument
+// CHECK:STDERR:

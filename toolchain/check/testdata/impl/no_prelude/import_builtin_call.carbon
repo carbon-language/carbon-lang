@@ -84,8 +84,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.d59: %Op.type.31b = struct_value () [template]
-// CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.31b [template]
-// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, @Add.%Op.decl [template]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [template]
+// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, @Add.%Op.decl [template]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
@@ -142,9 +142,9 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyInt.decl: %MyInt.type = class_decl @MyInt [template = constants.%MyInt.generic] {
 // CHECK:STDOUT:     %N.patt.loc11_13.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_13.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc11_13.1, runtime_param<invalid> [symbolic = %N.patt.loc11_13.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc11_13.1, runtime_param<none> [symbolic = %N.patt.loc11_13.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_28.1: type = splice_block %.loc11_28.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
@@ -155,13 +155,13 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %N.patt.loc15_14.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc15_14.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc15_14.1, runtime_param<invalid> [symbolic = %N.patt.loc15_14.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc15_14.1, runtime_param<none> [symbolic = %N.patt.loc15_14.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %MyInt.ref: %MyInt.type = name_ref MyInt, file.%MyInt.decl [template = constants.%MyInt.generic]
 // CHECK:STDOUT:     %N.ref: Core.IntLiteral = name_ref N, %N.loc15_14.1 [symbolic = %N.loc15_14.2 (constants.%N)]
 // CHECK:STDOUT:     %MyInt.loc15_39.1: type = class_type @MyInt, @MyInt(constants.%N) [symbolic = %MyInt.loc15_39.2 (constants.%MyInt)]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, file.%Add.decl [template = constants.%Add.type]
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc15_29.1: type = splice_block %.loc15_29.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
@@ -173,7 +173,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl), @impl(constants.%N) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
 // CHECK:STDOUT:   %Double.decl: %Double.type = fn_decl @Double [template = constants.%Double] {
 // CHECK:STDOUT:     %N.patt.loc19_11.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc19_11.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc19_11.1, runtime_param<invalid> [symbolic = %N.patt.loc19_11.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc19_11.1, runtime_param<none> [symbolic = %N.patt.loc19_11.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %x.patt: @Double.%MyInt.loc19_39.2 (%MyInt) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Double.%MyInt.loc19_39.2 (%MyInt) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @Double.%MyInt.loc19_39.2 (%MyInt) = return_slot_pattern
@@ -182,7 +182,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %MyInt.ref.loc19_45: %MyInt.type = name_ref MyInt, file.%MyInt.decl [template = constants.%MyInt.generic]
 // CHECK:STDOUT:     %N.ref.loc19_51: Core.IntLiteral = name_ref N, %N.loc19_11.1 [symbolic = %N.loc19_11.2 (constants.%N)]
 // CHECK:STDOUT:     %MyInt.loc19_52: type = class_type @MyInt, @MyInt(constants.%N) [symbolic = %MyInt.loc19_39.2 (constants.%MyInt)]
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc19_26.1: type = splice_block %.loc19_26.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
@@ -232,7 +232,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.param: ref @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, %Op.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, %Op.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -294,10 +294,10 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %.loc12_15.2: type = converted %int.make_type_signed, %.loc12_15.1 [symbolic = %iN.builtin (constants.%iN.builtin)]
 // CHECK:STDOUT:     adapt_decl %.loc12_15.2 [template]
 // CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %iN.builtin [symbolic = %complete_type.loc13_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%MyInt
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -335,7 +335,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref.loc20_10: @Double.%MyInt.loc19_39.2 (%MyInt) = name_ref x, %x
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, file.%Add.decl [template = constants.%Add.type]
-// CHECK:STDOUT:     %Op.ref: %Op.assoc_type = name_ref Op, @Add.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %Op.ref: %Add.assoc_type = name_ref Op, @Add.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0: %Op.type.31b = impl_witness_access constants.%impl_witness, element0 [symbolic = %Op (constants.%Op.8bc)]
 // CHECK:STDOUT:     %Op.bound: <bound method> = bound_method %x.ref.loc20_10, %impl.elem0
 // CHECK:STDOUT:     %x.ref.loc20_21: @Double.%MyInt.loc19_39.2 (%MyInt) = name_ref x, %x
@@ -421,18 +421,18 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %complete_type.4a1: <witness> = complete_type_witness %i64.builtin [template]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.31b [template]
-// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, imports.%import_ref.047 [template]
-// CHECK:STDOUT:   %impl_witness.3a3: <witness> = impl_witness (imports.%import_ref.19b), @impl(%N) [symbolic]
-// CHECK:STDOUT:   %Op.type.883: type = fn_type @Op.2, @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [template]
+// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [template]
+// CHECK:STDOUT:   %impl_witness.3a3: <witness> = impl_witness (imports.%Main.import_ref.19b), @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Op.type.883: type = fn_type @Op.1, @impl(%N) [symbolic]
 // CHECK:STDOUT:   %Op.8bc: %Op.type.883 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.fc7: <witness> = require_complete_type %MyInt.09f [symbolic]
-// CHECK:STDOUT:   %impl_witness.8d6: <witness> = impl_witness (imports.%import_ref.19b), @impl(%int_64) [template]
-// CHECK:STDOUT:   %impl_witness.7e5: <witness> = impl_witness (imports.%import_ref.464), @impl(%N) [symbolic]
-// CHECK:STDOUT:   %Op.type.5a6: type = fn_type @Op.2, @impl(%int_64) [template]
+// CHECK:STDOUT:   %impl_witness.8d6: <witness> = impl_witness (imports.%Main.import_ref.19b), @impl(%int_64) [template]
+// CHECK:STDOUT:   %impl_witness.7e5: <witness> = impl_witness (imports.%Main.import_ref.464), @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Op.type.5a6: type = fn_type @Op.1, @impl(%int_64) [template]
 // CHECK:STDOUT:   %Op.cf9: %Op.type.5a6 = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %CallImportedDouble.type: type = fn_type @CallImportedDouble [template]
 // CHECK:STDOUT:   %CallImportedDouble: %CallImportedDouble.type = struct_value () [template]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [template]
@@ -441,45 +441,45 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.fe6: type = import_ref Main//generic_impl, Add, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.174 = import_ref Main//generic_impl, IntLiteral, unloaded
-// CHECK:STDOUT:   %import_ref.0dc = import_ref Main//generic_impl, Int, unloaded
-// CHECK:STDOUT:   %import_ref.370: %MyInt.type = import_ref Main//generic_impl, MyInt, loaded [template = constants.%MyInt.generic]
-// CHECK:STDOUT:   %import_ref.1a7: %Double.type = import_ref Main//generic_impl, Double, loaded [template = constants.%Double]
-// CHECK:STDOUT:   %import_ref.9e9: <witness> = import_ref Main//generic_impl, loc13_1, loaded [symbolic = @MyInt.%complete_type (constants.%complete_type.a87)]
-// CHECK:STDOUT:   %import_ref.697 = import_ref Main//generic_impl, inst89 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.07c = import_ref Main//generic_impl, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.6d9: %Op.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.044 = import_ref Main//generic_impl, Op, unloaded
-// CHECK:STDOUT:   %import_ref.33b: <witness> = import_ref Main//generic_impl, loc15_48, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.7e5)]
-// CHECK:STDOUT:   %import_ref.719: type = import_ref Main//generic_impl, loc15_39, loaded [symbolic = @impl.%MyInt (constants.%MyInt.09f)]
-// CHECK:STDOUT:   %import_ref.bf0: type = import_ref Main//generic_impl, loc15_44, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.19b: @impl.%Op.type (%Op.type.883) = import_ref Main//generic_impl, loc16_42, loaded [symbolic = @impl.%Op (constants.%Op.8bc)]
+// CHECK:STDOUT:   %Main.Add: type = import_ref Main//generic_impl, Add, loaded [template = constants.%Add.type]
+// CHECK:STDOUT:   %Main.IntLiteral = import_ref Main//generic_impl, IntLiteral, unloaded
+// CHECK:STDOUT:   %Main.Int = import_ref Main//generic_impl, Int, unloaded
+// CHECK:STDOUT:   %Main.MyInt: %MyInt.type = import_ref Main//generic_impl, MyInt, loaded [template = constants.%MyInt.generic]
+// CHECK:STDOUT:   %Main.Double: %Double.type = import_ref Main//generic_impl, Double, loaded [template = constants.%Double]
+// CHECK:STDOUT:   %Main.import_ref.9e9: <witness> = import_ref Main//generic_impl, loc13_1, loaded [symbolic = @MyInt.%complete_type (constants.%complete_type.a87)]
+// CHECK:STDOUT:   %Main.import_ref.697 = import_ref Main//generic_impl, inst89 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//generic_impl, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.db7: %Add.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.Op = import_ref Main//generic_impl, Op, unloaded
+// CHECK:STDOUT:   %Main.import_ref.33b: <witness> = import_ref Main//generic_impl, loc15_48, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.7e5)]
+// CHECK:STDOUT:   %Main.import_ref.719: type = import_ref Main//generic_impl, loc15_39, loaded [symbolic = @impl.%MyInt (constants.%MyInt.09f)]
+// CHECK:STDOUT:   %Main.import_ref.bf0: type = import_ref Main//generic_impl, loc15_44, loaded [template = constants.%Add.type]
+// CHECK:STDOUT:   %Main.import_ref.19b: @impl.%Op.type (%Op.type.883) = import_ref Main//generic_impl, loc16_42, loaded [symbolic = @impl.%Op (constants.%Op.8bc)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Add = imports.%import_ref.fe6
-// CHECK:STDOUT:     .IntLiteral = imports.%import_ref.174
-// CHECK:STDOUT:     .Int = imports.%import_ref.0dc
-// CHECK:STDOUT:     .MyInt = imports.%import_ref.370
-// CHECK:STDOUT:     .Double = imports.%import_ref.1a7
+// CHECK:STDOUT:     .Add = imports.%Main.Add
+// CHECK:STDOUT:     .IntLiteral = imports.%Main.IntLiteral
+// CHECK:STDOUT:     .Int = imports.%Main.Int
+// CHECK:STDOUT:     .MyInt = imports.%Main.MyInt
+// CHECK:STDOUT:     .Double = imports.%Main.Double
 // CHECK:STDOUT:     .LocalDouble = %LocalDouble.decl
 // CHECK:STDOUT:     .CallImportedDouble = %CallImportedDouble.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %LocalDouble.decl: %LocalDouble.type = fn_decl @LocalDouble [template = constants.%LocalDouble] {
 // CHECK:STDOUT:     %x.patt: %MyInt.f30 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %MyInt.f30 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %MyInt.f30 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %MyInt.f30 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %MyInt.ref.loc8_33: %MyInt.type = name_ref MyInt, imports.%import_ref.370 [template = constants.%MyInt.generic]
+// CHECK:STDOUT:     %MyInt.ref.loc8_33: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [template = constants.%MyInt.generic]
 // CHECK:STDOUT:     %int_64.loc8_39: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %MyInt.loc8_41: type = class_type @MyInt, @MyInt(constants.%int_64) [template = constants.%MyInt.f30]
 // CHECK:STDOUT:     %x.param: %MyInt.f30 = value_param runtime_param0
 // CHECK:STDOUT:     %.loc8: type = splice_block %MyInt.loc8_27 [template = constants.%MyInt.f30] {
-// CHECK:STDOUT:       %MyInt.ref.loc8_19: %MyInt.type = name_ref MyInt, imports.%import_ref.370 [template = constants.%MyInt.generic]
+// CHECK:STDOUT:       %MyInt.ref.loc8_19: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [template = constants.%MyInt.generic]
 // CHECK:STDOUT:       %int_64.loc8_25: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:       %MyInt.loc8_27: type = class_type @MyInt, @MyInt(constants.%int_64) [template = constants.%MyInt.f30]
 // CHECK:STDOUT:     }
@@ -493,12 +493,12 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.patt: %MyInt.f30 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %MyInt.f30 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %MyInt.ref.loc12_40: %MyInt.type = name_ref MyInt, imports.%import_ref.370 [template = constants.%MyInt.generic]
+// CHECK:STDOUT:     %MyInt.ref.loc12_40: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [template = constants.%MyInt.generic]
 // CHECK:STDOUT:     %int_64.loc12_46: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %MyInt.loc12_48: type = class_type @MyInt, @MyInt(constants.%int_64) [template = constants.%MyInt.f30]
 // CHECK:STDOUT:     %n.param: %MyInt.f30 = value_param runtime_param0
 // CHECK:STDOUT:     %.loc12: type = splice_block %MyInt.loc12_34 [template = constants.%MyInt.f30] {
-// CHECK:STDOUT:       %MyInt.ref.loc12_26: %MyInt.type = name_ref MyInt, imports.%import_ref.370 [template = constants.%MyInt.generic]
+// CHECK:STDOUT:       %MyInt.ref.loc12_26: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [template = constants.%MyInt.generic]
 // CHECK:STDOUT:       %int_64.loc12_32: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:       %MyInt.loc12_34: type = class_type @MyInt, @MyInt(constants.%int_64) [template = constants.%MyInt.f30]
 // CHECK:STDOUT:     }
@@ -510,25 +510,25 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add [from "generic_impl.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.07c
-// CHECK:STDOUT:   .Op = imports.%import_ref.6d9
-// CHECK:STDOUT:   witness = (imports.%import_ref.044)
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.07c
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.db7
+// CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(constants.%N: Core.IntLiteral) [from "generic_impl.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.09f)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%import_ref.19b), @impl(%N) [symbolic = %impl_witness (constants.%impl_witness.3a3)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.19b), @impl(%N) [symbolic = %impl_witness (constants.%impl_witness.3a3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]
 // CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type.883) = struct_value () [symbolic = %Op (constants.%Op.8bc)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%MyInt (%MyInt.09f) [symbolic = %require_complete (constants.%require_complete.fc7)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%import_ref.719 as imports.%import_ref.bf0 {
+// CHECK:STDOUT:   impl: imports.%Main.import_ref.719 as imports.%Main.import_ref.bf0 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%import_ref.33b
+// CHECK:STDOUT:     witness = imports.%Main.import_ref.33b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -542,46 +542,47 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness @MyInt.%iN.builtin (%iN.builtin) [symbolic = %complete_type (constants.%complete_type.a87)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.9e9
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.697
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.9e9
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.697
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @LocalDouble(%x.param_patt: %MyInt.f30) -> %MyInt.f30 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc9_10: %MyInt.f30 = name_ref x, %x
-// CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.fe6 [template = constants.%Add.type]
-// CHECK:STDOUT:   %Op.ref: %Op.assoc_type = name_ref Op, imports.%import_ref.6d9 [template = constants.%assoc0]
+// CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [template = constants.%Add.type]
+// CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.db7 [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %Op.type.31b = impl_witness_access constants.%impl_witness.8d6, element0 [template = constants.%Op.cf9]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.ref.loc9_10, %impl.elem0
 // CHECK:STDOUT:   %x.ref.loc9_21: %MyInt.f30 = name_ref x, %x
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.bound, @Op.2(constants.%int_64)
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.bound, @Op.1(constants.%int_64)
 // CHECK:STDOUT:   %int.sadd: init %MyInt.f30 = call %Op.specific_fn(%x.ref.loc9_10, %x.ref.loc9_21)
 // CHECK:STDOUT:   %.loc9_23.1: %MyInt.f30 = value_of_initializer %int.sadd
 // CHECK:STDOUT:   %.loc9_23.2: %MyInt.f30 = converted %int.sadd, %.loc9_23.1
 // CHECK:STDOUT:   return %.loc9_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%Self: %Add.type) [from "generic_impl.carbon"] {
-// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type)) -> @Op.1.%Self.as_type (%Self.as_type);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%N: Core.IntLiteral) [from "generic_impl.carbon"] {
+// CHECK:STDOUT: generic fn @Op.1(constants.%N: Core.IntLiteral) [from "generic_impl.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.09f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%MyInt (%MyInt.09f)](%other.param_patt: @Op.2.%MyInt (%MyInt.09f)) -> @Op.2.%MyInt (%MyInt.09f) = "int.sadd";
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%MyInt (%MyInt.09f)](%other.param_patt: @Op.1.%MyInt (%MyInt.09f)) -> @Op.1.%MyInt (%MyInt.09f) = "int.sadd";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %Add.type) [from "generic_impl.carbon"] {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.2.%Self.as_type (%Self.as_type)) -> @Op.2.%Self.as_type (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallImportedDouble(%n.param_patt: %MyInt.f30) -> %MyInt.f30 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Double.ref: %Double.type = name_ref Double, imports.%import_ref.1a7 [template = constants.%Double]
+// CHECK:STDOUT:   %Double.ref: %Double.type = name_ref Double, imports.%Main.Double [template = constants.%Double]
 // CHECK:STDOUT:   %n.ref: %MyInt.f30 = name_ref n, %n
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double.ref, @Double(constants.%int_64) [template = constants.%Double.specific_fn]
 // CHECK:STDOUT:   %Double.call: init %MyInt.f30 = call %Double.specific_fn(%n.ref)
@@ -597,7 +598,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Double.%MyInt (%MyInt.09f) [symbolic = %require_complete (constants.%require_complete.fc7)]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]
 // CHECK:STDOUT:   %Op: @Double.%Op.type (%Op.type.883) = struct_value () [symbolic = %Op (constants.%Op.8bc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%x.param_patt: @Double.%MyInt (%MyInt.09f)) -> @Double.%MyInt (%MyInt.09f);
@@ -623,11 +624,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.4a1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %N.patt => constants.%N
@@ -644,9 +640,9 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%N) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
+// CHECK:STDOUT: specific @MyInt(@Op.1.%N) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.2(constants.%N) {
+// CHECK:STDOUT: specific @Op.1(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.09f
 // CHECK:STDOUT:
@@ -665,7 +661,12 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.4a1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.2(constants.%int_64) {
+// CHECK:STDOUT: specific @Op.2(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%int_64) {
 // CHECK:STDOUT:   %N => constants.%int_64
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.f30
 // CHECK:STDOUT:
@@ -809,7 +810,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %N.patt.loc9_9.1: %i32.builtin = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc9_9.2 (constants.%N.patt.36b)]
-// CHECK:STDOUT:     %N.param_patt: %i32.builtin = value_param_pattern %N.patt.loc9_9.1, runtime_param<invalid> [symbolic = %N.patt.loc9_9.2 (constants.%N.patt.36b)]
+// CHECK:STDOUT:     %N.param_patt: %i32.builtin = value_param_pattern %N.patt.loc9_9.1, runtime_param<none> [symbolic = %N.patt.loc9_9.2 (constants.%N.patt.36b)]
 // CHECK:STDOUT:     %return.patt: @Make.%iN.builtin (%iN.builtin.016) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Make.%iN.builtin (%iN.builtin.016) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -822,7 +823,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %int.make_type_signed.loc9_41: init type = call %Int.ref.loc9_25(%.loc9_40.2) [symbolic = %iN.builtin (constants.%iN.builtin.016)]
 // CHECK:STDOUT:     %.loc9_41.1: type = value_of_initializer %int.make_type_signed.loc9_41 [symbolic = %iN.builtin (constants.%iN.builtin.016)]
 // CHECK:STDOUT:     %.loc9_41.2: type = converted %int.make_type_signed.loc9_41, %.loc9_41.1 [symbolic = %iN.builtin (constants.%iN.builtin.016)]
-// CHECK:STDOUT:     %N.param: %i32.builtin = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: %i32.builtin = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc9_19.1: type = splice_block %.loc9_19.3 [template = constants.%i32.builtin] {
 // CHECK:STDOUT:       %Int.ref.loc9_13: %Int.type = name_ref Int, file.%Int.decl [template = constants.%Int]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -853,7 +854,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeFromClass.decl: %MakeFromClass.type = fn_decl @MakeFromClass [template = constants.%MakeFromClass] {
 // CHECK:STDOUT:     %N.patt.loc18_18.1: %OtherInt = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc18_18.2 (constants.%N.patt.59d)]
-// CHECK:STDOUT:     %N.param_patt: %OtherInt = value_param_pattern %N.patt.loc18_18.1, runtime_param<invalid> [symbolic = %N.patt.loc18_18.2 (constants.%N.patt.59d)]
+// CHECK:STDOUT:     %N.param_patt: %OtherInt = value_param_pattern %N.patt.loc18_18.1, runtime_param<none> [symbolic = %N.patt.loc18_18.2 (constants.%N.patt.59d)]
 // CHECK:STDOUT:     %return.patt: @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -867,7 +868,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%.loc18_51.2) [symbolic = %iN.builtin (constants.%iN.builtin.9ef)]
 // CHECK:STDOUT:     %.loc18_52.1: type = value_of_initializer %int.make_type_signed [symbolic = %iN.builtin (constants.%iN.builtin.9ef)]
 // CHECK:STDOUT:     %.loc18_52.2: type = converted %int.make_type_signed, %.loc18_52.1 [symbolic = %iN.builtin (constants.%iN.builtin.9ef)]
-// CHECK:STDOUT:     %N.param: %OtherInt = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: %OtherInt = value_param runtime_param<none>
 // CHECK:STDOUT:     %OtherInt.ref: type = name_ref OtherInt, file.%OtherInt.decl [template = constants.%OtherInt]
 // CHECK:STDOUT:     %N.loc18_18.1: %OtherInt = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc18_18.2 (constants.%N.335)]
 // CHECK:STDOUT:     %return.param: ref @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = out_param runtime_param0
@@ -899,11 +900,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.loc13: ref Core.IntLiteral = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%OtherInt
 // CHECK:STDOUT:   .ToLiteral = %ToLiteral.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
@@ -1030,42 +1031,65 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.174 = import_ref Main//convert_symbolic, IntLiteral, unloaded
-// CHECK:STDOUT:   %import_ref.4a2: %Int.type = import_ref Main//convert_symbolic, Int, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.e08 = import_ref Main//convert_symbolic, ToLiteral, unloaded
-// CHECK:STDOUT:   %import_ref.527: %FromLiteral.type = import_ref Main//convert_symbolic, FromLiteral, loaded [template = constants.%FromLiteral]
-// CHECK:STDOUT:   %import_ref.eaa: %Make.type = import_ref Main//convert_symbolic, Make, loaded [template = constants.%Make]
-// CHECK:STDOUT:   %import_ref.466: type = import_ref Main//convert_symbolic, OtherInt, loaded [template = constants.%OtherInt]
-// CHECK:STDOUT:   %import_ref.10c: %MakeFromClass.type = import_ref Main//convert_symbolic, MakeFromClass, loaded [template = constants.%MakeFromClass]
-// CHECK:STDOUT:   %import_ref.b03: <witness> = import_ref Main//convert_symbolic, loc14_1, loaded [template = constants.%complete_type.f8a]
-// CHECK:STDOUT:   %import_ref.d11 = import_ref Main//convert_symbolic, inst129 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.8f7 = import_ref Main//convert_symbolic, loc13_45, unloaded
+// CHECK:STDOUT:   %Main.IntLiteral = import_ref Main//convert_symbolic, IntLiteral, unloaded
+// CHECK:STDOUT:   %Main.Int: %Int.type = import_ref Main//convert_symbolic, Int, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %Main.ToLiteral = import_ref Main//convert_symbolic, ToLiteral, unloaded
+// CHECK:STDOUT:   %Main.FromLiteral: %FromLiteral.type = import_ref Main//convert_symbolic, FromLiteral, loaded [template = constants.%FromLiteral]
+// CHECK:STDOUT:   %Main.Make: %Make.type = import_ref Main//convert_symbolic, Make, loaded [template = constants.%Make]
+// CHECK:STDOUT:   %Main.OtherInt: type = import_ref Main//convert_symbolic, OtherInt, loaded [template = constants.%OtherInt]
+// CHECK:STDOUT:   %Main.MakeFromClass: %MakeFromClass.type = import_ref Main//convert_symbolic, MakeFromClass, loaded [template = constants.%MakeFromClass]
+// CHECK:STDOUT:   %Main.import_ref.b03: <witness> = import_ref Main//convert_symbolic, loc14_1, loaded [template = constants.%complete_type.f8a]
+// CHECK:STDOUT:   %Main.import_ref.d11 = import_ref Main//convert_symbolic, inst129 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8f7 = import_ref Main//convert_symbolic, loc13_45, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .IntLiteral = imports.%import_ref.174
-// CHECK:STDOUT:     .Int = imports.%import_ref.4a2
-// CHECK:STDOUT:     .ToLiteral = imports.%import_ref.e08
-// CHECK:STDOUT:     .FromLiteral = imports.%import_ref.527
-// CHECK:STDOUT:     .Make = imports.%import_ref.eaa
-// CHECK:STDOUT:     .OtherInt = imports.%import_ref.466
-// CHECK:STDOUT:     .MakeFromClass = imports.%import_ref.10c
+// CHECK:STDOUT:     .IntLiteral = imports.%Main.IntLiteral
+// CHECK:STDOUT:     .Int = imports.%Main.Int
+// CHECK:STDOUT:     .ToLiteral = imports.%Main.ToLiteral
+// CHECK:STDOUT:     .FromLiteral = imports.%Main.FromLiteral
+// CHECK:STDOUT:     .Make = imports.%Main.Make
+// CHECK:STDOUT:     .OtherInt = imports.%Main.OtherInt
+// CHECK:STDOUT:     .MakeFromClass = imports.%Main.MakeFromClass
 // CHECK:STDOUT:     .m = %m
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %m.patt: %i64.builtin = binding_pattern m
+// CHECK:STDOUT:     %.loc6_1: %i64.builtin = var_pattern %m.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m.var: ref %i64.builtin = var m
+// CHECK:STDOUT:   %.loc6_14.1: type = splice_block %.loc6_14.3 [template = constants.%i64.builtin] {
+// CHECK:STDOUT:     %Int.ref.loc6: %Int.type = name_ref Int, imports.%Main.Int [template = constants.%Int]
+// CHECK:STDOUT:     %int_64.loc6: Core.IntLiteral = int_value 64 [template = constants.%int_64.fab]
+// CHECK:STDOUT:     %int.make_type_signed.loc6: init type = call %Int.ref.loc6(%int_64.loc6) [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_signed.loc6, %.loc6_14.2 [template = constants.%i64.builtin]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m: ref %i64.builtin = bind_name m, %m.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %i64.builtin = binding_pattern n
+// CHECK:STDOUT:     %.loc7_1: %i64.builtin = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i64.builtin = var n
+// CHECK:STDOUT:   %.loc7_14.1: type = splice_block %.loc7_14.3 [template = constants.%i64.builtin] {
+// CHECK:STDOUT:     %Int.ref.loc7: %Int.type = name_ref Int, imports.%Main.Int [template = constants.%Int]
+// CHECK:STDOUT:     %int_64.loc7: Core.IntLiteral = int_value 64 [template = constants.%int_64.fab]
+// CHECK:STDOUT:     %int.make_type_signed.loc7: init type = call %Int.ref.loc7(%int_64.loc7) [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc7_14.2: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc7_14.3: type = converted %int.make_type_signed.loc7, %.loc7_14.2 [template = constants.%i64.builtin]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %i64.builtin = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @OtherInt [from "convert_symbolic.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.b03
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.d11
-// CHECK:STDOUT:   .ToLiteral = imports.%import_ref.8f7
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.b03
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.d11
+// CHECK:STDOUT:   .ToLiteral = imports.%Main.import_ref.8f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "convert_symbolic.carbon"];
@@ -1105,8 +1129,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%import_ref.eaa [template = constants.%Make]
-// CHECK:STDOUT:   %FromLiteral.ref.loc6: %FromLiteral.type = name_ref FromLiteral, imports.%import_ref.527 [template = constants.%FromLiteral]
+// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%Main.Make [template = constants.%Make]
+// CHECK:STDOUT:   %FromLiteral.ref.loc6: %FromLiteral.type = name_ref FromLiteral, imports.%Main.FromLiteral [template = constants.%FromLiteral]
 // CHECK:STDOUT:   %int_64.loc6: Core.IntLiteral = int_value 64 [template = constants.%int_64.fab]
 // CHECK:STDOUT:   %int.convert_checked.loc6: init %i32.builtin = call %FromLiteral.ref.loc6(%int_64.loc6) [template = constants.%int_64.f82]
 // CHECK:STDOUT:   %.loc6_38.1: %i32.builtin = value_of_initializer %int.convert_checked.loc6 [template = constants.%int_64.f82]
@@ -1114,11 +1138,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make.ref, @Make(constants.%int_64.f82) [template = constants.%Make.specific_fn.02d]
 // CHECK:STDOUT:   %Make.call: init %i64.builtin = call %Make.specific_fn()
 // CHECK:STDOUT:   assign file.%m.var, %Make.call
-// CHECK:STDOUT:   %MakeFromClass.ref: %MakeFromClass.type = name_ref MakeFromClass, imports.%import_ref.10c [template = constants.%MakeFromClass]
-// CHECK:STDOUT:   %FromLiteral.ref.loc7: %FromLiteral.type = name_ref FromLiteral, imports.%import_ref.527 [template = constants.%FromLiteral]
+// CHECK:STDOUT:   %MakeFromClass.ref: %MakeFromClass.type = name_ref MakeFromClass, imports.%Main.MakeFromClass [template = constants.%MakeFromClass]
+// CHECK:STDOUT:   %FromLiteral.ref.loc7: %FromLiteral.type = name_ref FromLiteral, imports.%Main.FromLiteral [template = constants.%FromLiteral]
 // CHECK:STDOUT:   %int_64.loc7: Core.IntLiteral = int_value 64 [template = constants.%int_64.fab]
 // CHECK:STDOUT:   %int.convert_checked.loc7: init %i32.builtin = call %FromLiteral.ref.loc7(%int_64.loc7) [template = constants.%int_64.f82]
-// CHECK:STDOUT:   %OtherInt.ref: type = name_ref OtherInt, imports.%import_ref.466 [template = constants.%OtherInt]
+// CHECK:STDOUT:   %OtherInt.ref: type = name_ref OtherInt, imports.%Main.OtherInt [template = constants.%OtherInt]
 // CHECK:STDOUT:   %.loc7_48.1: init %OtherInt = as_compatible %int.convert_checked.loc7 [template = constants.%int_64.f82]
 // CHECK:STDOUT:   %.loc7_48.2: init %OtherInt = converted %int.convert_checked.loc7, %.loc7_48.1 [template = constants.%int_64.f82]
 // CHECK:STDOUT:   %.loc7_59.1: %OtherInt = value_of_initializer %.loc7_48.2 [template = constants.%int_64.f82]

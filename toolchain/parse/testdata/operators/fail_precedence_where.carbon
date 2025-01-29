@@ -91,9 +91,10 @@ fn AsInArgument() {
 // --- fail_greater_in_argument.carbon
 
 fn GreaterInArgument() {
-  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
+  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+4]]:15: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
   // CHECK:STDERR:   Q where .AA > .BB impls CC;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
   Q where .AA > .BB impls CC;
 }
 

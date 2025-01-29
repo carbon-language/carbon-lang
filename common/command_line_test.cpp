@@ -8,15 +8,14 @@
 #include <gtest/gtest.h>
 
 #include "common/error_test_helpers.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "testing/base/test_raw_ostream.h"
 
 namespace Carbon::CommandLine {
 namespace {
 
 using ::Carbon::Testing::IsError;
 using ::Carbon::Testing::IsSuccess;
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::StrEq;
@@ -92,7 +91,7 @@ TEST(ArgParserTest, BooleanFlags) {
               IsSuccess(Eq(ParseResult::Success)));
   EXPECT_FALSE(flag);
 
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(
       parse({"--no-flag=true"}, os),
       IsError(StrEq("cannot specify a value when using a flag name prefixed "
@@ -187,7 +186,7 @@ TEST(ArgParserTest, ShortArgs) {
   EXPECT_TRUE(example);
   EXPECT_THAT(integer_option, Eq(123));
 
-  TestRawOstream os;
+  RawStringOstream os;
 
   EXPECT_THAT(parse({"-v"}, os), IsError(StrEq("unknown short option `-v`")));
   EXPECT_THAT(parse({"-xvx"}, os), IsError(StrEq("unknown short option `-v`")));
@@ -231,7 +230,7 @@ TEST(ArgParserTest, PositionalArgs) {
     });
   };
 
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(parse({"--flag", "--option=x"}, os),
               IsError(StrEq(
                   "not all required positional arguments were provided; first "
@@ -277,7 +276,7 @@ TEST(ArgParserTest, PositionalAppendArgs) {
     });
   };
 
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(parse({"--flag", "--option=x"}, os),
               IsError(StrEq(
                   "not all required positional arguments were provided; first "
@@ -339,7 +338,7 @@ TEST(ArgParserTest, BasicSubcommands) {
     });
   };
 
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(parse({}, os),
               IsError(StrEq("no subcommand specified; available subcommands: "
                             "`sub1`, `sub2`, or `help`")));
@@ -474,7 +473,7 @@ TEST(ArgParserTest, OneOfOption) {
               IsSuccess(Eq(ParseResult::Success)));
   EXPECT_THAT(value, Eq(3));
 
-  TestRawOstream os;
+  RawStringOstream os;
 
   EXPECT_THAT(
       parse({"--option"}, os),
@@ -502,7 +501,7 @@ TEST(ArgParserTest, OneOfOption) {
 
 TEST(ArgParserTest, OneOfOptionWithTwoOptions) {
   int value = 0;
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(ParseOneOfOption({"--option=z"}, os,
                                [&](auto& arg_b) {
                                  arg_b.SetOneOf(
@@ -518,7 +517,7 @@ TEST(ArgParserTest, OneOfOptionWithTwoOptions) {
 
 TEST(ArgParserTest, OneOfOptionWithOneOption) {
   int value = 0;
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(ParseOneOfOption({"--option=z"}, os,
                                [&](auto& arg_b) {
                                  arg_b.SetOneOf(
@@ -611,7 +610,7 @@ TEST(ArgParserTest, RequiredArgs) {
     });
   };
 
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(parse({}, os),
               IsError(StrEq("required options not provided: --opt1, --opt2")));
 
@@ -771,7 +770,7 @@ A hidden subcommand.
         });
   };
 
-  TestRawOstream os;
+  RawStringOstream os;
 
   EXPECT_THAT(parse({"--flag", "--help"}, os),
               IsSuccess(Eq(ParseResult::MetaSuccess)));
@@ -936,7 +935,7 @@ x
         });
   };
 
-  TestRawOstream os;
+  RawStringOstream os;
   EXPECT_THAT(parse({"--help"}, os), IsSuccess(Eq(ParseResult::MetaSuccess)));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::StringRef(R"""(
 Usage:

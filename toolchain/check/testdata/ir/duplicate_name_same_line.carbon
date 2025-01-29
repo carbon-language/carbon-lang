@@ -20,7 +20,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
@@ -34,8 +34,8 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -56,15 +56,23 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %true.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_18:
-// CHECK:STDOUT:   %n.var.loc11_26: ref %i32 = var n
-// CHECK:STDOUT:   %n.loc11_26: ref %i32 = bind_name n, %n.var.loc11_26
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt.loc11_26: %i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc11_22.1: %i32 = var_pattern %n.patt.loc11_26
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.var.loc11_22: ref %i32 = var n
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc11_36: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc11_36: <bound method> = bound_method %int_1, %impl.elem0.loc11_36 [template = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_36: <specific function> = specific_function %Convert.bound.loc11_36, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
-// CHECK:STDOUT:   %int.convert_checked.loc11_36: init %i32 = call %Convert.specific_fn.loc11_36(%int_1) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11_36: init %i32 = converted %int_1, %int.convert_checked.loc11_36 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %n.var.loc11_26, %.loc11_36
+// CHECK:STDOUT:   %impl.elem0.loc11_22: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc11_22: <bound method> = bound_method %int_1, %impl.elem0.loc11_22 [template = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_22: <specific function> = specific_function %Convert.bound.loc11_22, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
+// CHECK:STDOUT:   %int.convert_checked.loc11_22: init %i32 = call %Convert.specific_fn.loc11_22(%int_1) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11_22.2: init %i32 = converted %int_1, %int.convert_checked.loc11_22 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %n.var.loc11_22, %.loc11_22.2
+// CHECK:STDOUT:   %.loc11_29: type = splice_block %i32.loc11_29 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc11_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_29: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.loc11_26: ref %i32 = bind_name n, %n.var.loc11_22
 // CHECK:STDOUT:   br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11_18:
@@ -72,15 +80,23 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %true.loc11_44 br !if.then.loc11_48 else br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_48:
-// CHECK:STDOUT:   %n.var.loc11_56: ref %i32 = var n
-// CHECK:STDOUT:   %n.loc11_56: ref %i32 = bind_name n, %n.var.loc11_56
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt.loc11_56: %i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc11_52.1: %i32 = var_pattern %n.patt.loc11_56
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.var.loc11_52: ref %i32 = var n
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc11_66: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc11_66: <bound method> = bound_method %int_2, %impl.elem0.loc11_66 [template = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_66: <specific function> = specific_function %Convert.bound.loc11_66, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.787]
-// CHECK:STDOUT:   %int.convert_checked.loc11_66: init %i32 = call %Convert.specific_fn.loc11_66(%int_2) [template = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc11_66: init %i32 = converted %int_2, %int.convert_checked.loc11_66 [template = constants.%int_2.ef8]
-// CHECK:STDOUT:   assign %n.var.loc11_56, %.loc11_66
+// CHECK:STDOUT:   %impl.elem0.loc11_52: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc11_52: <bound method> = bound_method %int_2, %impl.elem0.loc11_52 [template = constants.%Convert.bound.ef9]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_52: <specific function> = specific_function %Convert.bound.loc11_52, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.787]
+// CHECK:STDOUT:   %int.convert_checked.loc11_52: init %i32 = call %Convert.specific_fn.loc11_52(%int_2) [template = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc11_52.2: init %i32 = converted %int_2, %int.convert_checked.loc11_52 [template = constants.%int_2.ef8]
+// CHECK:STDOUT:   assign %n.var.loc11_52, %.loc11_52.2
+// CHECK:STDOUT:   %.loc11_59: type = splice_block %i32.loc11_59 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc11_59: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_59: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.loc11_56: ref %i32 = bind_name n, %n.var.loc11_52
 // CHECK:STDOUT:   br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11_48:

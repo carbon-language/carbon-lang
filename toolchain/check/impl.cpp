@@ -6,10 +6,12 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -28,70 +30,6 @@ static auto NoteAssociatedFunction(Context& context,
   const auto& function = context.functions().Get(function_id);
   builder.Note(function.latest_decl_id(), AssociatedFunctionHere,
                function.name_id);
-}
-
-// Adds the location of the previous declaration to a diagnostic.
-static auto NotePreviousDecl(Context& context,
-                             Context::DiagnosticBuilder& builder,
-                             SemIR::ImplId impl_id) -> void {
-  CARBON_DIAGNOSTIC(ImplPreviousDeclHere, Note,
-                    "impl previously declared here");
-  const auto& impl = context.impls().Get(impl_id);
-  builder.Note(impl.latest_decl_id(), ImplPreviousDeclHere);
-}
-
-// Gets the self specific of a generic declaration that is an interface member,
-// given a specific for an enclosing generic, plus a type to use as `Self`.
-static auto GetSelfSpecificForInterfaceMemberWithSelfType(
-    Context& context, SemIRLoc loc, SemIR::SpecificId enclosing_specific_id,
-    SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::SpecificId {
-  const auto& generic = context.generics().Get(generic_id);
-  auto bindings = context.inst_blocks().Get(generic.bindings_id);
-
-  llvm::SmallVector<SemIR::InstId> arg_ids;
-  arg_ids.reserve(bindings.size());
-
-  // Start with the enclosing arguments.
-  if (enclosing_specific_id.is_valid()) {
-    auto enclosing_specific_args_id =
-        context.specifics().Get(enclosing_specific_id).args_id;
-    auto enclosing_specific_args =
-        context.inst_blocks().Get(enclosing_specific_args_id);
-    arg_ids.assign(enclosing_specific_args.begin(),
-                   enclosing_specific_args.end());
-  }
-
-  // Add the `Self` argument. First find the `Self` binding.
-  auto self_binding =
-      context.insts().GetAs<SemIR::BindSymbolicName>(bindings[arg_ids.size()]);
-  CARBON_CHECK(
-      context.entity_names().Get(self_binding.entity_name_id).name_id ==
-          SemIR::NameId::SelfType,
-      "Expected a Self binding, found {0}", self_binding);
-  // Create a facet value to be the value of `Self` in the interface.
-  // This facet value consists of the type `self_type_id` and a witness that the
-  // type implements `self_binding.type_id`. Note that the witness is incomplete
-  // since we haven't finished defining the implementation here.
-  auto type_inst_id = context.types().GetInstId(self_type_id);
-  auto facet_value_const_id =
-      TryEvalInst(context, SemIR::InstId::Invalid,
-                  SemIR::FacetValue{.type_id = self_binding.type_id,
-                                    .type_inst_id = type_inst_id,
-                                    .witness_inst_id = witness_inst_id});
-  arg_ids.push_back(context.constant_values().GetInstId(facet_value_const_id));
-
-  // Take any trailing argument values from the self specific.
-  // TODO: If these refer to outer arguments, for example in their types, we may
-  // need to perform extra substitutions here.
-  auto self_specific_args = context.inst_blocks().Get(
-      context.specifics().Get(generic.self_specific_id).args_id);
-  for (auto arg_id : self_specific_args.drop_front(arg_ids.size())) {
-    arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
-  }
-
-  auto args_id = context.inst_blocks().AddCanonical(arg_ids);
-  return MakeSpecific(context, loc, generic_id, args_id);
 }
 
 // Checks that `impl_function_id` is a valid implementation of the function
@@ -129,9 +67,6 @@ static auto CheckAssociatedFunctionImplementation(
               .generic_id,
           self_type_id, witness_inst_id);
 
-  // TODO: This should be a semantic check rather than a syntactic one. The
-  // functions should be allowed to have different signatures as long as we can
-  // synthesize a suitable thunk.
   if (!CheckFunctionTypeMatches(
           context, context.functions().Get(impl_function_decl->function_id),
           context.functions().Get(interface_function_type.function_id),
@@ -143,6 +78,7 @@ static auto CheckAssociatedFunctionImplementation(
 }
 
 // Builds an initial empty witness.
+// TODO: Fill the witness with the rewrites from the declaration.
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
@@ -155,7 +91,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
   }
 
   llvm::SmallVector<SemIR::InstId> table(assoc_entities.size(),
-                                         SemIR::InstId::Invalid);
+                                         SemIR::InstId::None);
   auto table_id = context.inst_blocks().Add(table);
   return context.AddInst<SemIR::ImplWitness>(
       context.insts().GetLocId(impl.latest_decl_id()),
@@ -164,11 +100,13 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
        .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
 }
 
+// TODO: Merge this function into `ImplWitnessForDeclaration`.
 auto AddConstantsToImplWitnessFromConstraint(
     Context& context, const SemIR::Impl& impl,
     const SemIR::ResolvedFacetType::RequiredInterface& required_interface,
-    SemIR::InstId witness_id, SemIR::ImplId prev_decl_id) -> void {
-  CARBON_CHECK(witness_id.is_valid());
+    SemIR::InstId witness_id) -> void {
+  CARBON_CHECK(!impl.has_definition_started());
+  CARBON_CHECK(witness_id.has_value());
   if (witness_id == SemIR::ErrorInst::SingletonInstId) {
     return;
   }
@@ -185,50 +123,55 @@ auto AddConstantsToImplWitnessFromConstraint(
   const auto& rewrite_values = required_interface.associated_consts;
   CARBON_CHECK(rewrite_values.size() == assoc_entities.size());
 
-  // For each non-function associated constant, update witness entry.
+  // For each non-function associated constant, set the witness entry.
   for (auto index : llvm::seq(assoc_entities.size())) {
-    auto decl_id = assoc_entities[index];
-    decl_id =
-        context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), required_interface.specific_id, decl_id));
-    CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
+    auto decl_id =
+        context.constant_values().GetConstantInstId(assoc_entities[index]);
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      auto& witness_value = witness_block[index];
       auto rewrite_value = rewrite_values[index];
-      if (witness_value.is_valid() &&
-          witness_value != SemIR::ErrorInst::SingletonInstId) {
-        // TODO: Support just using the witness values if the redeclaration uses
-        // `where _`, per proposal #1084.
-        if (!rewrite_value.is_valid()) {
-          CARBON_DIAGNOSTIC(AssociatedConstantMissingInRedecl, Error,
-                            "associated constant {0} given value in "
-                            "declaration but not redeclaration",
-                            SemIR::NameId);
-          auto builder = context.emitter().Build(
-              impl.latest_decl_id(), AssociatedConstantMissingInRedecl,
-              decl->name_id);
-          NotePreviousDecl(context, builder, prev_decl_id);
-          builder.Emit();
-          continue;
-        }
-        auto witness_const_id = context.constant_values().Get(witness_value);
-        if (witness_const_id != rewrite_value &&
+
+      // If the associated constant has a symbolic type, convert the rewrite
+      // value to that type now we know the value of `Self`.
+      SemIR::TypeId assoc_const_type_id = decl->type_id;
+      if (context.types().GetConstantId(assoc_const_type_id).is_symbolic()) {
+        // Get the type of the associated constant in this interface with this
+        // value for `Self`.
+        assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
+            context, impl.constraint_id, required_interface.specific_id,
+            decl_id, context.GetTypeIdForTypeInst(impl.self_id), witness_id);
+
+        // Perform the conversion of the value to the type. We skipped this when
+        // forming the facet type because the type of the associated constant
+        // was symbolic.
+        auto converted_inst_id = ConvertToValueOfType(
+            context, context.insts().GetLocId(impl.constraint_id),
+            context.constant_values().GetInstId(rewrite_value),
+            assoc_const_type_id);
+        rewrite_value = context.constant_values().Get(converted_inst_id);
+
+        // The result of conversion can be non-constant even if the original
+        // value was constant.
+        if (!rewrite_value.is_constant() &&
             rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
-          // TODO: Figure out how to print the two different values
+          const auto& assoc_const =
+              context.associated_constants().Get(decl->assoc_const_id);
           CARBON_DIAGNOSTIC(
-              AssociatedConstantDifferentInRedecl, Error,
-              "redeclaration with different value for associated constant {0}",
-              SemIR::NameId);
-          auto builder = context.emitter().Build(
-              impl.latest_decl_id(), AssociatedConstantDifferentInRedecl,
-              decl->name_id);
-          NotePreviousDecl(context, builder, prev_decl_id);
-          builder.Emit();
-          continue;
+              AssociatedConstantNotConstantAfterConversion, Error,
+              "associated constant {0} given value that is not constant "
+              "after conversion to {1}",
+              SemIR::NameId, SemIR::TypeId);
+          context.emitter().Emit(impl.constraint_id,
+                                 AssociatedConstantNotConstantAfterConversion,
+                                 assoc_const.name_id, assoc_const_type_id);
+          rewrite_value = SemIR::ErrorInst::SingletonConstantId;
         }
-      } else if (rewrite_value.is_valid()) {
-        witness_value = context.constant_values().GetInstId(rewrite_value);
+      }
+
+      if (rewrite_value.has_value()) {
+        witness_block[index] =
+            context.constant_values().GetInstId(rewrite_value);
       }
     }
   }
@@ -236,7 +179,7 @@ auto AddConstantsToImplWitnessFromConstraint(
 
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   CARBON_CHECK(impl.is_being_defined());
-  CARBON_CHECK(impl.witness_id.is_valid());
+  CARBON_CHECK(impl.witness_id.has_value());
   if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     return;
   }
@@ -262,25 +205,25 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   // witness.
   for (auto index : llvm::seq(assoc_entities.size())) {
     auto decl_id = assoc_entities[index];
-    decl_id =
-        context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), interface_type->specific_id, decl_id));
-    CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
+    decl_id = context.constant_values().GetConstantInstId(decl_id);
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
       auto& witness_value = witness_block[index];
-      if (!witness_value.is_valid()) {
+      if (!witness_value.has_value()) {
         CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
                           "associated constant {0} not given a value in impl "
                           "of interface {1}",
                           SemIR::NameId, SemIR::NameId);
         CARBON_DIAGNOSTIC(AssociatedConstantHere, Note,
-                          "associated constant {0} declared here",
-                          SemIR::NameId);
+                          "associated constant declared here");
         context.emitter()
             .Build(impl.constraint_id, ImplAssociatedConstantNeedsValue,
-                   decl->name_id, interface.name_id)
-            .Note(assoc_entities[index], AssociatedConstantHere, decl->name_id)
+                   context.associated_constants()
+                       .Get(decl->assoc_const_id)
+                       .name_id,
+                   interface.name_id)
+            .Note(assoc_entities[index], AssociatedConstantHere)
             .Emit();
 
         witness_value = SemIR::ErrorInst::SingletonInstId;
@@ -293,7 +236,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
 // interface.
 auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
   CARBON_CHECK(impl.is_being_defined());
-  CARBON_CHECK(impl.witness_id.is_valid());
+  CARBON_CHECK(impl.witness_id.has_value());
   if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     return;
   }
@@ -322,7 +265,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
     decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_type->specific_id, decl_id));
-    CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
@@ -336,12 +279,13 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
           CARBON_FATAL("Unexpected type: {0}", type_inst);
         }
         auto& fn = context.functions().Get(fn_type->function_id);
-        auto [impl_decl_id, _, is_poisoned] = context.LookupNameInExactScope(
+        auto lookup_result = context.LookupNameInExactScope(
             decl_id, fn.name_id, impl.scope_id, impl_scope);
-        if (impl_decl_id.is_valid()) {
-          used_decl_ids.push_back(impl_decl_id);
+        if (lookup_result.is_found()) {
+          used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_block[index] = CheckAssociatedFunctionImplementation(
-              context, *fn_type, impl_decl_id, self_type_id, impl.witness_id);
+              context, *fn_type, lookup_result.target_inst_id(), self_type_id,
+              impl.witness_id);
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
@@ -373,12 +317,12 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
 }
 
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
-  if (impl.witness_id.is_valid() &&
+  if (impl.witness_id.has_value() &&
       impl.witness_id != SemIR::ErrorInst::SingletonInstId) {
     auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
     auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
     for (auto& elem : witness_block) {
-      if (!elem.is_valid()) {
+      if (!elem.has_value()) {
         elem = SemIR::ErrorInst::SingletonInstId;
       }
     }

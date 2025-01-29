@@ -28,12 +28,13 @@ library "[[@TEST_NAME]]";
 
 interface J;
 class C {}
-// CHECK:STDERR: fail_class.carbon:[[@LINE+6]]:11: error: impl of undefined interface J [ResolveFacetTypeWithUndefinedInterface]
+// CHECK:STDERR: fail_class.carbon:[[@LINE+7]]:11: error: impl of undefined interface J [ResolveFacetTypeWithUndefinedInterface]
 // CHECK:STDERR: impl C as J {}
 // CHECK:STDERR:           ^
 // CHECK:STDERR: fail_class.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface J;
 // CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as J {}
 
 // CHECK:STDOUT: --- fail_empty_struct.carbon
@@ -93,9 +94,9 @@ impl C as J {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

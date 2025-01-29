@@ -6,6 +6,11 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
+
 cc_library(
     name = "language_server",
     srcs = ["language_server.cpp"],
@@ -16,6 +21,7 @@ cc_library(
         ":outgoing_messages",
         "//common:error",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )

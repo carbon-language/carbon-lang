@@ -25,14 +25,15 @@ fn NS() {}
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
 // CHECK:STDERR: fn.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS() {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
 // CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 import library "namespace";
 import library "fn";
 
@@ -105,9 +106,9 @@ fn NS.Bar() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.d58: <namespace> = import_ref Example//namespace, NS, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.d58, [template] {
-// CHECK:STDOUT:     .Foo = %import_ref.32e
+// CHECK:STDOUT:   %Example.NS: <namespace> = import_ref Example//namespace, NS, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %Example.NS, [template] {
+// CHECK:STDOUT:     .Foo = %Example.Foo
 // CHECK:STDOUT:     .Bar = file.%Bar.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -122,7 +123,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

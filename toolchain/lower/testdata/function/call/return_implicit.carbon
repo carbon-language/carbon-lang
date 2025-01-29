@@ -49,6 +49,6 @@ fn Main() {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 7, scope: !8)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 15, scope: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !8)

@@ -50,7 +50,8 @@ fn Div(a: i32, b: i32) -> i32 = "int.udiv";
 // CHECK:STDERR:
 let a: i32 = Div(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+3]]:14: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR: let b: i32 = Div(0, 0);
 // CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR:
 let b: i32 = Div(0, 0);

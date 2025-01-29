@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_init_with_self.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:15: error: name `x` not found [NameNotFound]
+  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+4]]:15: error: `x` used before initialization [UsedBeforeInitialization]
   // CHECK:STDERR:   var x: () = x;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
   var x: () = x;
 }
 
@@ -32,10 +33,18 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc16_3: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT:   %.loc16_11.1: type = splice_block %.loc16_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc16_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc16_11.3: type = converted %.loc16_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

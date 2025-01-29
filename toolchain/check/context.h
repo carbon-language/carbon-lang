@@ -11,6 +11,7 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
@@ -34,22 +35,19 @@ namespace Carbon::Check {
 struct LookupScope {
   // The name scope in which names are searched.
   SemIR::NameScopeId name_scope_id;
-  // The specific for the name scope, or `Invalid` if the name scope is not
+  // The specific for the name scope, or `None` if the name scope is not
   // defined by a generic or we should perform lookup into the generic itself.
   SemIR::SpecificId specific_id;
 };
 
 // A result produced by name lookup.
 struct LookupResult {
-  // The specific in which the lookup result was found. `Invalid` if the result
+  // The specific in which the lookup result was found. `None` if the result
   // was not found in a specific.
   SemIR::SpecificId specific_id;
-  // The declaration that was found by name lookup.
-  // Invalid for poisoned items.
-  // TODO: Make this point to the poisoning declaration.
-  SemIR::InstId inst_id;
-  // Whether the lookup found a poisoned name.
-  bool is_poisoned = false;
+
+  // The result from the lookup in the scope.
+  SemIR::ScopeLookupResult scope_result;
 };
 
 // Information about an access.
@@ -72,17 +70,6 @@ class Context {
   // add contextual notes as appropriate.
   using BuildDiagnosticFn =
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
-
-  struct LookupNameInExactScopeResult {
-    // The matching entity if found, or invalid if poisoned or not found.
-    SemIR::InstId inst_id;
-
-    // The access level required to use inst_id, if it's valid.
-    SemIR::AccessKind access_kind;
-
-    // Whether a poisoned entry was found.
-    bool is_poisoned = false;
-  };
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
@@ -189,15 +176,15 @@ class Context {
     node_stack_.Push(node_id, AddInst(node_id, inst));
   }
 
-  // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
-  // is required to not have been used in any constant evaluation, either
-  // because it's newly created and entirely unused, or because it's only used
-  // in a position that constant evaluation ignores, such as a return slot.
+  // Replaces the instruction at `inst_id` with `loc_id_and_inst`. The
+  // instruction is required to not have been used in any constant evaluation,
+  // either because it's newly created and entirely unused, or because it's only
+  // used in a position that constant evaluation ignores, such as a return slot.
   auto ReplaceLocIdAndInstBeforeConstantUse(SemIR::InstId inst_id,
                                             SemIR::LocIdAndInst loc_id_and_inst)
       -> void;
 
-  // Replaces the instruction `inst_id` with `inst`, not affecting location.
+  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
   // The instruction is required to not have been used in any constant
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
@@ -205,7 +192,7 @@ class Context {
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
 
-  // Replaces the instruction `inst_id` with `inst`, not affecting location.
+  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
   // The instruction is required to not change its constant value.
   auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
                                           SemIR::Inst inst) -> void;
@@ -224,30 +211,35 @@ class Context {
   // specified, `scope_index` specifies which lexical scope the name is inserted
   // into, otherwise the name is inserted into the current scope.
   auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::Invalid) -> void;
+                       ScopeIndex scope_index = ScopeIndex::None) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
-  // declaration. If scope_id is invalid, performs lookup into the lexical scope
+  // declaration. If scope_id is `None`, performs lookup into the lexical scope
   // specified by scope_index instead. If found, returns the referenced
-  // instruction and false. If poisoned, returns an invalid instruction and
-  // true.
-  // TODO: For poisoned names, return the poisoning instruction.
+  // `InstId` and false. If poisoned, returns `InstId::None` and true.
+  // TODO: For poisoned names, return the poisoning `InstId`.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id, ScopeIndex scope_index)
-      -> std::pair<SemIR::InstId, bool>;
+      -> SemIR::ScopeLookupResult;
 
-  // Performs an unqualified name lookup, returning the referenced instruction.
+  // Performs an unqualified name lookup, returning the referenced `InstId`.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                              bool required = true) -> LookupResult;
 
   // Performs a name lookup in a specified scope, returning the referenced
-  // instruction. Does not look into extended scopes. Returns an invalid
-  // instruction if the name is poisoned or not found.
-  // TODO: Return the poisoning instruction if poisoned.
+  // `InstId`. Does not look into extended scopes. Returns `InstId::None` if the
+  // name is not found.
+  //
+  // If `is_being_declared` is false, then this is a regular name lookup, and
+  // the name will be poisoned if not found so that later lookups will fail; a
+  // poisoned name will be treated as if it is not declared. Otherwise, this is
+  // a lookup for a name being declared, so the name will not be poisoned, but
+  // poison will be returned if it's already been looked up.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
-                              const SemIR::NameScope& scope)
-      -> LookupNameInExactScopeResult;
+                              SemIR::NameScope& scope,
+                              bool is_being_declared = false)
+      -> SemIR::ScopeLookupResult;
 
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
   // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
@@ -258,16 +250,17 @@ class Context {
       -> bool;
 
   // Performs a qualified name lookup in a specified scopes and in scopes that
-  // they extend, returning the referenced instruction.
+  // they extend, returning the referenced `InstId`.
   auto LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
                            llvm::ArrayRef<LookupScope> lookup_scopes,
                            bool required = true,
                            std::optional<AccessInfo> access_info = std::nullopt)
       -> LookupResult;
 
-  // Returns the instruction corresponding to a name in the core package, or
+  // Returns the `InstId` corresponding to a name in the core package, or
   // BuiltinErrorInst if not found.
-  auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
+  auto LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
+      -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
@@ -462,9 +455,14 @@ class Context {
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
-  // Gets the type for the name of an associated entity.
-  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id,
-                               SemIR::TypeId entity_type_id) -> SemIR::TypeId;
+  // Gets the type to use for an unbound associated entity declared in this
+  // interface. For example, this is the type of `I.T` after
+  // `interface I { let T:! type; }`.
+  // The name of the interface is used for diagnostics.
+  // TODO: Should we use a different type for each such entity, or the same type
+  // for all associated entities?
+  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id)
+      -> SemIR::TypeId;
 
   // Gets a singleton type. The returned type will be complete. Requires that
   // `singleton_id` is already validated to be a singleton.
@@ -514,7 +512,7 @@ class Context {
 
   auto Finalize() -> void;
 
-  // Returns the imported IR ID for an IR, or invalid if not imported.
+  // Returns the imported IR ID for an IR, or `None` if not imported.
   auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
     return check_ir_map_[sem_ir.check_ir_id().index];
   }
@@ -595,6 +593,8 @@ class Context {
     return generic_region_stack_;
   }
 
+  auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
@@ -620,6 +620,9 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
+  }
+  auto associated_constants() -> ValueStore<SemIR::AssociatedConstantId>& {
+    return sem_ir().associated_constants();
   }
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
@@ -709,6 +712,14 @@ class Context {
     return bind_name_map_;
   }
 
+  auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
+    return var_storage_map_;
+  }
+
+  auto full_pattern_stack() -> FullPatternStack& {
+    return scope_stack_.full_pattern_stack();
+  }
+
  private:
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
@@ -782,6 +793,10 @@ class Context {
   // The stack of generic regions we are currently within.
   GenericRegionStack generic_region_stack_;
 
+  // Contains a vtable block for each `class` scope which is currently being
+  // defined, regardless of whether the class can have virtual functions.
+  InstBlockStack vtable_stack_;
+
   // Cache of reverse mapping from type constants to types.
   //
   // TODO: Instead of mapping to a dense `TypeId` space, we could make `TypeId`
@@ -821,6 +836,11 @@ class Context {
   llvm::SmallVector<SemIR::InstId> import_ref_ids_;
 
   Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
+
+  // Map from VarPattern insts to the corresponding VarStorage insts. The
+  // VarStorage insts are allocated, emitted, and stored in the map after
+  // processing the enclosing full-pattern.
+  Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
   // Stack of single-entry regions being built.
   ArrayStack<SemIR::InstBlockId> region_stack_;

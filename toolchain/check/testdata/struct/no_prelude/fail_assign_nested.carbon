@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/no_prelude/fail_assign_nested.carbon
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:19: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+4]]:19: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
 // CHECK:STDERR: var x: {.a: {}} = {.b = {}};
 // CHECK:STDERR:                   ^~~~~~~~~
+// CHECK:STDERR:
 var x: {.a: {}} = {.b = {}};
 
 // CHECK:STDOUT: --- fail_assign_nested.carbon
@@ -25,14 +26,23 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.a.225 = binding_pattern x
+// CHECK:STDOUT:     %.loc15_1: %struct_type.a.225 = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var x
+// CHECK:STDOUT:   %.loc15_15: type = splice_block %struct_type.a [template = constants.%struct_type.a.225] {
+// CHECK:STDOUT:     %.loc15_14.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_14.2: type = converted %.loc15_14.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_struct_type} [template = constants.%struct_type.a.225]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.225 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc14_27: %struct_type.b = struct_literal (%.loc14_26)
+// CHECK:STDOUT:   %.loc15_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc15_27: %struct_type.b = struct_literal (%.loc15_26)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

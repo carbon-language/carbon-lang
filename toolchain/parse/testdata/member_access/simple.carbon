@@ -23,7 +23,7 @@ fn F(a: T) {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},

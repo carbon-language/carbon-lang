@@ -16,6 +16,7 @@ filegroup(
         "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
         "//toolchain/format:testdata",
+        "//toolchain/language_server:testdata",
         "//toolchain/lex:testdata",
         "//toolchain/lower:testdata",
         "//toolchain/parse:testdata",
@@ -73,6 +74,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",

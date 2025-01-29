@@ -23,11 +23,11 @@ static auto FindAssociatedImportIRs(Context& context,
     // We will look for impls in the import IR associated with the first owning
     // declaration.
     auto decl_id = entity.first_owning_decl_id;
-    if (!decl_id.is_valid()) {
+    if (!decl_id.has_value()) {
       return;
     }
     if (auto ir_id = GetCanonicalImportIRInst(context, decl_id).ir_id;
-        ir_id.is_valid()) {
+        ir_id.has_value()) {
       result.push_back(ir_id);
     }
   };
@@ -38,14 +38,14 @@ static auto FindAssociatedImportIRs(Context& context,
 
   // Push the contents of an instruction block onto our worklist.
   auto push_block = [&](SemIR::InstBlockId block_id) {
-    if (block_id.is_valid()) {
+    if (block_id.has_value()) {
       llvm::append_range(worklist, context.inst_blocks().Get(block_id));
     }
   };
 
   // Add the arguments of a specific to the worklist.
   auto push_args = [&](SemIR::SpecificId specific_id) {
-    if (specific_id.is_valid()) {
+    if (specific_id.has_value()) {
       push_block(context.specifics().Get(specific_id).args_id);
     }
   };
@@ -60,7 +60,7 @@ static auto FindAssociatedImportIRs(Context& context,
          {std::pair{inst.arg0(), arg0_kind}, {inst.arg1(), arg1_kind}}) {
       switch (kind) {
         case SemIR::IdKind::For<SemIR::InstId>: {
-          if (auto id = SemIR::InstId(arg); id.is_valid()) {
+          if (auto id = SemIR::InstId(arg); id.has_value()) {
             worklist.push_back(id);
           }
           break;
@@ -134,11 +134,11 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // considering impls that are for the same interface we're querying. We can
   // also skip impls that mention any types that aren't part of our impl query.
   for (const auto& impl : context.impls().array_ref()) {
-    auto specific_id = SemIR::SpecificId::Invalid;
-    if (impl.generic_id.is_valid()) {
+    auto specific_id = SemIR::SpecificId::None;
+    if (impl.generic_id.has_value()) {
       specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
                                         interface_const_id);
-      if (!specific_id.is_valid()) {
+      if (!specific_id.has_value()) {
         continue;
       }
     }
@@ -156,12 +156,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       // the constraint's interfaces.
       continue;
     }
-    if (!impl.witness_id.is_valid()) {
+    if (!impl.witness_id.has_value()) {
       // TODO: Diagnose if the impl isn't defined yet?
-      return SemIR::InstId::Invalid;
+      return SemIR::InstId::None;
     }
     LoadImportRef(context, impl.witness_id);
-    if (specific_id.is_valid()) {
+    if (specific_id.has_value()) {
       // We need a definition of the specific `impl` so we can access its
       // witness.
       ResolveSpecificDefinition(context, loc_id, specific_id);
@@ -170,7 +170,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                           impl.witness_id));
   }
-  return SemIR::InstId::Invalid;
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check

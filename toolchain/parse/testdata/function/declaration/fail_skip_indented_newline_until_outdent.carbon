@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_skip_indented_newline_until_outdent.carbon
 
-  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+3]]:6: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+4]]:6: error: `fn` introducer should be followed by a name [ExpectedDeclName]
   // CHECK:STDERR:   fn (x,
   // CHECK:STDERR:      ^
+  // CHECK:STDERR:
   fn (x,
       y,
       z)

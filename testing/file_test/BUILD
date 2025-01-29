@@ -18,6 +18,8 @@ cc_library(
     deps = [
         "//common:check",
         "//common:ostream",
+        "//common:raw_string_ostream",
+        "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:string_view",
         "@llvm-project//llvm:Support",
         "@re2",
@@ -36,6 +38,7 @@ cc_library(
         "//common:exe_path",
         "//common:init_llvm",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
         "@googletest//:gtest",

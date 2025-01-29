@@ -56,12 +56,13 @@ fn J() -> ();
 fn J() {}
 
 fn K() -> ();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR: fn K() -> {} { return {}; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with return type `()` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR: fn K() -> ();
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 fn K() -> {} { return {}; }
 
 // CHECK:STDOUT: --- fail_decl_param_mismatch.carbon
@@ -177,12 +178,12 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc65: %.type.b6a92a.6 = fn_decl @.6 [template = constants.%.d852be.6] {
+// CHECK:STDOUT:   %.decl.loc66: %.type.b6a92a.6 = fn_decl @.6 [template = constants.%.d852be.6] {
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc65_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc65_12.2: type = converted %.loc65_12.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc66_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc66_12.2: type = converted %.loc66_12.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -230,9 +231,9 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.6() -> %empty_struct_type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc65_24: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc66_24: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc65_25: %empty_struct_type = converted %.loc65_24, %empty_struct [template = constants.%empty_struct]
-// CHECK:STDOUT:   return %.loc65_25
+// CHECK:STDOUT:   %.loc66_25: %empty_struct_type = converted %.loc66_24, %empty_struct [template = constants.%empty_struct]
+// CHECK:STDOUT:   return %.loc66_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

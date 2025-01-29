@@ -28,7 +28,7 @@ choice OptionalElement(T:! type) {
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'value'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ChoiceAlternativeListComma', text: ','},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'None'},

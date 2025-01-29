@@ -50,9 +50,10 @@ impl package C;
 
 package CycleChild;
 
-// CHECK:STDERR: fail_cycle_child.carbon:[[@LINE+3]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
+// CHECK:STDERR: fail_cycle_child.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import B;
 
 // CHECK:STDOUT: --- fail_a.carbon
@@ -132,7 +133,7 @@ import B;
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

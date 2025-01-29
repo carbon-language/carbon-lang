@@ -10,5 +10,6 @@
 //   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/codegen/testdata/fail_target_triple.carbon
 // NOAUTOUPDATE
 // CHECK:STDERR: error: invalid target: {{.*}}x86_687{{.*}}
+// CHECK:STDERR:
 
 fn Main() {}

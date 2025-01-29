@@ -13,12 +13,13 @@ namespace NS;
 alias ns = NS;
 
 // Aliases can't be used when declaring names.
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+7]]:4: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
 // CHECK:STDERR: fn ns.A() -> i32 { return 0; }
 // CHECK:STDERR:    ^~
 // CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: alias ns = NS;
 // CHECK:STDERR:       ^~
+// CHECK:STDERR:
 fn ns.A() -> i32 { return 0; }
 
 // CHECK:STDOUT: --- fail_decl_in_alias.carbon
@@ -30,7 +31,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %.d85: %.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
@@ -40,8 +41,8 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -75,8 +76,8 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc22_28.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc22_28.2: %i32 = converted %int_0, %.loc22_28.1 [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc22_28.2
+// CHECK:STDOUT:   %.loc23_28.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc23_28.2: %i32 = converted %int_0, %.loc23_28.1 [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   return %.loc23_28.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

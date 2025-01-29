@@ -29,7 +29,7 @@ auto GlobalInit::Finalize() -> void {
   }
 
   Resume();
-  context_->AddInst<SemIR::Return>(Parse::NodeId::Invalid, {});
+  context_->AddInst<SemIR::Return>(Parse::NodeId::None, {});
   // Pop the GlobalInit block here to finalize it.
   context_->inst_block_stack().Pop();
 
@@ -37,18 +37,18 @@ auto GlobalInit::Finalize() -> void {
   context_->sem_ir().set_global_ctor_id(context_->sem_ir().functions().Add(
       {{.name_id = SemIR::NameId::ForIdentifier(name_id),
         .parent_scope_id = SemIR::NameScopeId::Package,
-        .generic_id = SemIR::GenericId::Invalid,
-        .first_param_node_id = Parse::NodeId::Invalid,
-        .last_param_node_id = Parse::NodeId::Invalid,
+        .generic_id = SemIR::GenericId::None,
+        .first_param_node_id = Parse::NodeId::None,
+        .last_param_node_id = Parse::NodeId::None,
         .pattern_block_id = SemIR::InstBlockId::Empty,
-        .implicit_param_patterns_id = SemIR::InstBlockId::Invalid,
+        .implicit_param_patterns_id = SemIR::InstBlockId::None,
         .param_patterns_id = SemIR::InstBlockId::Empty,
         .call_params_id = SemIR::InstBlockId::Empty,
         .is_extern = false,
-        .extern_library_id = SemIR::LibraryNameId::Invalid,
-        .non_owning_decl_id = SemIR::InstId::Invalid,
-        .first_owning_decl_id = SemIR::InstId::Invalid},
-       {.return_slot_pattern_id = SemIR::InstId::Invalid,
+        .extern_library_id = SemIR::LibraryNameId::None,
+        .non_owning_decl_id = SemIR::InstId::None,
+        .first_owning_decl_id = SemIR::InstId::None},
+       {.return_slot_pattern_id = SemIR::InstId::None,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 

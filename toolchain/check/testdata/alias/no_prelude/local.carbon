@@ -40,12 +40,20 @@ fn F() -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
+// CHECK:STDOUT:     %.loc12_3.1: %empty_tuple.type = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc12_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_16.2: init %empty_tuple.type = tuple_init () to %a.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_17: init %empty_tuple.type = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %a.var, %.loc12_17
+// CHECK:STDOUT:   %.loc12_3.2: init %empty_tuple.type = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %a.var, %.loc12_3.2
+// CHECK:STDOUT:   %.loc12_11.1: type = splice_block %.loc12_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_11.3: type = converted %.loc12_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_alias b, %a
 // CHECK:STDOUT:   %b.ref: ref %empty_tuple.type = name_ref b, %b

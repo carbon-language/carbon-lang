@@ -26,9 +26,10 @@ fn F() {
 
 class C {
   fn F() {
-    // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:5: error: `base` declaration outside class [ClassSpecificDeclOutsideClass]
+    // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:5: error: `base` declaration outside class [ClassSpecificDeclOutsideClass]
     // CHECK:STDERR:     extend base: B;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~
+    // CHECK:STDERR:
     extend base: B;
   }
 }
@@ -69,20 +70,20 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.2 [template = constants.%F.437] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {

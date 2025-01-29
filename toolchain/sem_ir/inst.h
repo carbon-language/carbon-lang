@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "common/hashing.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/int.h"
@@ -88,15 +89,14 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
   }
   // A name that can be streamed to an llvm::raw_ostream.
   static auto DebugName() -> std::string {
-    std::string str;
-    llvm::raw_string_ostream out(str);
+    RawStringOstream out;
     out << "{";
     llvm::ListSeparator sep;
     for (auto kind : InstCat::Kinds) {
       out << sep << kind;
     }
     out << "}";
-    return out.str();
+    return out.TakeStr();
   }
 };
 
@@ -136,7 +136,7 @@ class Inst : public Printable<Inst> {
     // self-referential TypeType.
     auto type_id = kind == InstKind::ErrorInst ? ErrorInst::SingletonTypeId
                                                : TypeType::SingletonTypeId;
-    return Inst(kind, type_id, InstId::InvalidIndex, InstId::InvalidIndex);
+    return Inst(kind, type_id, InstId::NoneIndex, InstId::NoneIndex);
   }
 
   template <typename TypedInst>
@@ -145,9 +145,9 @@ class Inst : public Printable<Inst> {
   Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
       : kind_(),
-        type_id_(TypeId::Invalid),
-        arg0_(InstId::InvalidIndex),
-        arg1_(InstId::InvalidIndex) {
+        type_id_(TypeId::None),
+        arg0_(InstId::NoneIndex),
+        arg1_(InstId::NoneIndex) {
     if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
       kind_ = typed_inst.kind.AsInt();
     } else {
@@ -322,7 +322,7 @@ struct LocIdAndInst {
   // constants block.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(LocId::Invalid, inst, /*is_unchecked=*/true);
+    return LocIdAndInst(LocId::None, inst, /*is_unchecked=*/true);
   }
 
   // Unsafely form a pair of a location and an instruction. Used in the cases
@@ -397,7 +397,7 @@ class InstStore {
   // of that type. Otherwise returns nullopt.
   template <typename InstT>
   auto TryGetAsIfValid(InstId inst_id) const -> std::optional<InstT> {
-    if (!inst_id.is_valid()) {
+    if (!inst_id.has_value()) {
       return std::nullopt;
     }
     return TryGetAs<InstT>(inst_id);
@@ -471,7 +471,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Returns the contents of the specified block, or an empty array if the block
   // is invalid.
   auto GetOrEmpty(InstBlockId block_id) const -> llvm::ArrayRef<InstId> {
-    return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
+    return block_id.has_value() ? Get(block_id) : llvm::ArrayRef<InstId>();
   }
 };
 

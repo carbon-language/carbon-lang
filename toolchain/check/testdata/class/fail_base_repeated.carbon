@@ -26,12 +26,13 @@ class C {
 class D {
   // TODO: Consider adding a custom diagnostic for this case.
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:3: error: multiple `base` declarations in class; multiple inheritance is not permitted [BaseDeclRepeated]
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+7]]:3: error: multiple `base` declarations in class; multiple inheritance is not permitted [BaseDeclRepeated]
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: note: previous `base` declaration is here [ClassSpecificDeclPrevious]
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   extend base: B1;
 }
 
@@ -74,18 +75,18 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B1
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -93,24 +94,24 @@ class D {
 // CHECK:STDOUT:   %.loc15: %C.elem = base_decl %B1.ref, element0 [template]
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.5ac]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc15
 // CHECK:STDOUT:   extend %B1.ref
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B1.ref.loc28: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:   %.loc28: %D.elem = base_decl %B1.ref.loc28, element0 [template]
-// CHECK:STDOUT:   %B1.ref.loc35: type = name_ref B1, file.%B1.decl [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc36: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.5ac]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc28
 // CHECK:STDOUT:   extend %B1.ref.loc28
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

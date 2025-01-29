@@ -9,6 +9,7 @@
 
 #include "absl/random/random.h"
 #include "common/check.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "testing/base/source_gen.h"
@@ -173,13 +174,14 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
   // First place tokens onto each line.
   for (auto i : llvm::seq(NumTokens / options.tokens_per_line)) {
     lines.push_back("");
-    llvm::raw_string_ostream os(lines.back());
+    RawStringOstream os;
     // Arbitrarily indent each line by two spaces.
     os << "  ";
     llvm::ListSeparator sep(" ");
     for (int j : llvm::seq(options.tokens_per_line)) {
       os << sep << tokens[i * options.tokens_per_line + j];
     }
+    lines.push_back(os.TakeStr());
   }
 
   // Next, synthesize blank and comment lines with the correct distribution.
@@ -217,14 +219,14 @@ class LexerBenchHelper {
   }
 
   auto DiagnoseErrors() -> std::string {
-    std::string result;
-    llvm::raw_string_ostream out(result);
-    StreamDiagnosticConsumer consumer(out, /*include_diagnostic_kind=*/false);
+    RawStringOstream result;
+    StreamDiagnosticConsumer consumer(result,
+                                      /*include_diagnostic_kind=*/false);
     auto buffer = Lex::Lex(value_stores_, source_, consumer);
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors(),
                  "Asked to diagnose errors but none found!");
-    return result;
+    return result.TakeStr();
   }
 
   auto source_text() -> llvm::StringRef { return source_.text(); }
@@ -419,8 +421,7 @@ void BM_GroupingSymbols(benchmark::State& state) {
   // are also active and have some reasonable icache pressure.
   llvm::SmallVector<llvm::StringRef> ids =
       Testing::SourceGen::Global().GetShuffledIdentifiers(NumTokens);
-  std::string source;
-  llvm::raw_string_ostream os(source);
+  RawStringOstream os;
   int num_tokens_per_nest =
       curly_brace_depth * 2 + paren_depth * 2 + square_bracket_depth * 2 + 2;
   int num_nests = NumTokens / num_tokens_per_nest;
@@ -449,7 +450,8 @@ void BM_GroupingSymbols(benchmark::State& state) {
     os << ids[(i * 2 + 1) % NumTokens] << "\n";
   }
 
-  LexerBenchHelper helper(os.str());
+  std::string source = os.TakeStr();
+  LexerBenchHelper helper(source);
   for (auto _ : state) {
     TokenizedBuffer buffer = helper.Lex();
 
@@ -524,15 +526,15 @@ void BM_CommentLines(benchmark::State& state) {
   int num_comment_lines = state.range(0);
   int comment_length = state.range(1);
   int comment_indent = state.range(2);
-  std::string separator;
-  llvm::raw_string_ostream os(separator);
+  RawStringOstream os;
   os << "\n";
   for (int i : llvm::seq(num_comment_lines)) {
     static_cast<void>(i);
     os << std::string(comment_indent, ' ') << "//"
        << std::string(comment_length, ' ') << "\n";
   }
-  std::string source = RandomIdentifierSeq(3, 5, /*uniform=*/true, separator);
+  std::string source =
+      RandomIdentifierSeq(3, 5, /*uniform=*/true, os.TakeStr());
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {

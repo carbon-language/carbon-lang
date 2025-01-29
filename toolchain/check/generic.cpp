@@ -9,6 +9,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -79,7 +80,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
   // block, and substitute them for the instructions in the eval block.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
     auto const_id = context_.constant_values().Get(inst_id);
-    if (!const_id.is_valid()) {
+    if (!const_id.has_value()) {
       // An unloaded import ref should never contain anything we need to
       // substitute into. Don't trigger loading it here.
       CARBON_CHECK(
@@ -103,7 +104,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       if (const_id != context_.constant_values().Get(result.value())) {
         inst_id = result.value();
       }
-      CARBON_CHECK(inst_id.is_valid());
+      CARBON_CHECK(inst_id.has_value());
       return true;
     }
 
@@ -113,7 +114,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
             context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
       if (context_.entity_names()
               .Get(binding->entity_name_id)
-              .bind_index.is_valid()) {
+              .bind_index.has_value()) {
         inst_id = Rebuild(inst_id, *binding);
         return true;
       }
@@ -334,7 +335,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
                                          .inst_id),
                  context.insts().Get(decl_id));
     context.generic_region_stack().Pop();
-    return SemIR::GenericId::Invalid;
+    return SemIR::GenericId::None;
   }
 
   // Build the new Generic object. Note that we intentionally do not hold a
@@ -346,7 +347,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   SemIR::GenericId generic_id = context.generics().Add(
       SemIR::Generic{.decl_id = decl_id,
                      .bindings_id = bindings_id,
-                     .self_specific_id = SemIR::SpecificId::Invalid});
+                     .self_specific_id = SemIR::SpecificId::None});
   // MakeSelfSpecificId could cause something to be imported, which would
   // invalidate the return value of `context.generics().Get(generic_id)`.
   auto self_specific_id = MakeSelfSpecificId(context, generic_id);
@@ -356,7 +357,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
 
 auto FinishGenericDecl(Context& context, SemIRLoc loc,
                        SemIR::GenericId generic_id) -> void {
-  if (!generic_id.is_valid()) {
+  if (!generic_id.has_value()) {
     return;
   }
   auto decl_block_id = MakeGenericEvalBlock(
@@ -371,7 +372,7 @@ auto FinishGenericDecl(Context& context, SemIRLoc loc,
 auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId {
   SemIR::GenericId generic_id = BuildGeneric(context, decl_id);
-  if (generic_id.is_valid()) {
+  if (generic_id.has_value()) {
     FinishGenericDecl(context, decl_id, generic_id);
   }
   return generic_id;
@@ -386,7 +387,7 @@ auto FinishGenericRedecl(Context& context, SemIR::InstId /*decl_id*/,
 
 auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     -> void {
-  if (!generic_id.is_valid()) {
+  if (!generic_id.has_value()) {
     // TODO: We can have symbolic constants in a context that had a non-generic
     // declaration, for example if there's a local generic let binding in a
     // function definition. Handle this case somehow -- perhaps by forming
@@ -406,7 +407,7 @@ static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
                                        SemIR::SpecificId specific_id) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
-  if (!context.specifics().Get(specific_id).decl_block_id.is_valid()) {
+  if (!context.specifics().Get(specific_id).decl_block_id.has_value()) {
     // Set a placeholder value as the decl block ID so we won't attempt to
     // recursively resolve the same specific.
     context.specifics().Get(specific_id).decl_block_id =
@@ -430,8 +431,8 @@ auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId {
-  if (!generic_id.is_valid()) {
-    return SemIR::SpecificId::Invalid;
+  if (!generic_id.has_value()) {
+    return SemIR::SpecificId::None;
   }
 
   auto& generic = context.generics().Get(generic_id);
@@ -463,12 +464,12 @@ auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
   // TODO: Handle recursive resolution of the same generic definition.
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
-  CARBON_CHECK(generic_id.is_valid(), "Specific with no generic ID");
+  CARBON_CHECK(generic_id.has_value(), "Specific with no generic ID");
 
-  if (!specific.definition_block_id.is_valid()) {
+  if (!specific.definition_block_id.has_value()) {
     // Evaluate the eval block for the definition of the generic.
     auto& generic = context.generics().Get(generic_id);
-    if (!generic.definition_block_id.is_valid()) {
+    if (!generic.definition_block_id.has_value()) {
       // The generic is not defined yet.
       return false;
     }
@@ -484,7 +485,7 @@ auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
 
 auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
     -> SemIR::InstId {
-  CARBON_CHECK(specific_id.is_valid());
+  CARBON_CHECK(specific_id.has_value());
   const auto& specific = context.specifics().Get(specific_id);
   const auto& generic = context.generics().Get(specific.generic_id);
   auto decl = context.insts().Get(generic.decl_id);
@@ -499,12 +500,16 @@ auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
     }
     case SemIR::FunctionDecl::Kind: {
       return context.constant_values().GetInstId(
-          TryEvalInst(context, SemIR::InstId::Invalid,
+          TryEvalInst(context, SemIR::InstId::None,
                       SemIR::SpecificFunction{
                           .type_id = context.GetSingletonType(
                               SemIR::SpecificFunctionType::SingletonInstId),
                           .callee_id = generic.decl_id,
                           .specific_id = specific_id}));
+    }
+    case SemIR::AssociatedConstantDecl::Kind: {
+      // TODO: We don't have a good instruction to use here.
+      return generic.decl_id;
     }
     default: {
       CARBON_FATAL("Unknown kind for generic declaration {0}", decl);

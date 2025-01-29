@@ -13,7 +13,7 @@ using llvm::isa;
 namespace Carbon {
 
 auto AbstractPattern::kind() const -> Kind {
-  if (value_.is<const Pattern*>()) {
+  if (isa<const Pattern*>(value_)) {
     return Compound;
   }
   if (const auto* value = value_.dyn_cast<const Value*>()) {
@@ -22,7 +22,7 @@ auto AbstractPattern::kind() const -> Kind {
     }
     return Primitive;
   }
-  CARBON_CHECK(value_.is<const WildcardTag*>());
+  CARBON_CHECK(isa<const WildcardTag*>(value_));
   return Wildcard;
 }
 
@@ -92,7 +92,7 @@ void AbstractPattern::AppendElementsTo(
 
 auto AbstractPattern::value() const -> const Value& {
   CARBON_CHECK(kind() == Primitive);
-  return *value_.get<const Value*>();
+  return *cast<const Value*>(value_);
 }
 
 auto AbstractPattern::type() const -> const Value& {

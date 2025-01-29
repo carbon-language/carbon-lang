@@ -128,7 +128,10 @@ TEST_F(TypedNodeTest, For) {
   ASSERT_TRUE(for_header.has_value());
   auto for_var = tree.Extract(for_header->var);
   ASSERT_TRUE(for_var.has_value());
-  auto for_var_binding = tree.ExtractAs<BindingPattern>(for_var->pattern);
+  auto for_var_pattern = tree.ExtractAs<VariablePattern>(for_var->pattern);
+  ASSERT_TRUE(for_var_pattern.has_value());
+  auto for_var_binding =
+      tree.ExtractAs<LetBindingPattern>(for_var_pattern->inner);
   ASSERT_TRUE(for_var_binding.has_value());
   auto for_var_name =
       tree.ExtractAs<IdentifierNameNotBeforeParams>(for_var_binding->name);
@@ -176,10 +179,10 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
                                  R"Trace(Aggregate [^:]*: begin
 Optional [^:]*: begin
 Aggregate [^:]*: begin
-NodeIdInCategory Expr error: kind BindingPattern doesn't match
+NodeIdInCategory Expr error: kind VariablePattern doesn't match
 Aggregate [^:]*: error
 Optional [^:]*: missing
-NodeIdInCategory Pattern: kind BindingPattern consumed
+NodeIdForKind: VariablePattern consumed
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
 Optional [^:]*: missing
@@ -211,7 +214,7 @@ NodeIdInCategory Expr: kind MemberAccessExpr consumed
 NodeIdForKind: VariableInitializer consumed
 Aggregate [^:]*: success
 Optional [^:]*: found
-NodeIdInCategory Pattern: kind BindingPattern consumed
+NodeIdForKind: VariablePattern consumed
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
 Optional [^:]*: missing
@@ -292,9 +295,9 @@ TEST_F(TypedNodeTest, Token) {
   ASSERT_TRUE(n_intro.has_value());
   EXPECT_EQ(tokens.GetKind(n_intro->token), Lex::TokenKind::Var);
 
-  auto n_patt = tree.ExtractAs<BindingPattern>(n_var->pattern);
+  auto n_patt = tree.ExtractAs<VariablePattern>(n_var->pattern);
   ASSERT_TRUE(n_patt.has_value());
-  EXPECT_EQ(tokens.GetKind(n_patt->token), Lex::TokenKind::Colon);
+  EXPECT_EQ(tokens.GetKind(n_patt->token), Lex::TokenKind::Var);
 }
 
 TEST_F(TypedNodeTest, VerifyInvalid) {

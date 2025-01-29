@@ -72,11 +72,11 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.1 [template = constants.%F.1f2] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MemberNamedSelf {
@@ -95,31 +95,47 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %y.loc21: %Self = bind_name y, %y.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MemberNamedSelf
 // CHECK:STDOUT:   .r#Self = %Self.decl
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Self {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Self
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %Self.patt: %ptr.e71 = binding_pattern r#Self
+// CHECK:STDOUT:     %.loc13_5: %ptr.e71 = var_pattern %Self.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var r#Self
+// CHECK:STDOUT:   %.loc13_21: type = splice_block %ptr.loc13 [template = constants.%ptr.e71] {
+// CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Class [template = constants.%ptr.e71]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self: ref %ptr.e71 = bind_name r#Self, %Self.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %ptr.e71 = binding_pattern p
+// CHECK:STDOUT:     %.loc14_5: %ptr.e71 = var_pattern %p.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.e71 = var p
+// CHECK:STDOUT:   %Self.ref.loc14_20: ref %ptr.e71 = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc14_20: %ptr.e71 = bind_value %Self.ref.loc14_20
+// CHECK:STDOUT:   assign %p.var, %.loc14_20
+// CHECK:STDOUT:   %.loc14_16: type = splice_block %ptr.loc14 [template = constants.%ptr.e71] {
+// CHECK:STDOUT:     %Self.ref.loc14_12: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Class [template = constants.%ptr.e71]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
-// CHECK:STDOUT:   %Self.ref: ref %ptr.e71 = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc14: %ptr.e71 = bind_value %Self.ref
-// CHECK:STDOUT:   assign %p.var, %.loc14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -11,20 +11,21 @@
 // TODO: Should this be valid?
 fn F(a: i32) -> i32 {
   let T:! type = i32;
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `T` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:14: error: cannot implicitly convert from `Core.IntLiteral` to `T` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   let x: T = 5;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let x: T = 5;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:              ^
   // CHECK:STDERR:
   let x: T = 5;
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   return x;
 }
 
@@ -36,13 +37,14 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -75,14 +77,21 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32.loc13 [symbolic = constants.%T]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %T = binding_pattern x
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc21: %T = converted %int_5, <error> [template = <error>]
 // CHECK:STDOUT:   %x: %T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
-// CHECK:STDOUT:   %.loc28: %i32 = converted %x.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc29: %i32 = converted %x.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

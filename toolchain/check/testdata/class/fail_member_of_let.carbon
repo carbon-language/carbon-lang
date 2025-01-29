@@ -17,12 +17,13 @@ let T: type = Class;
 
 // The class name is required to be written in the same way as in the class
 // declaration. An expression that evaluates to the class name is not accepted.
-// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
+// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+7]]:4: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
 // CHECK:STDERR: fn T.F() {}
 // CHECK:STDERR:    ^
 // CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: let T: type = Class;
 // CHECK:STDERR:     ^
+// CHECK:STDERR:
 fn T.F() {}
 
 // CHECK:STDOUT: --- fail_member_of_let.carbon
@@ -41,7 +42,7 @@ fn T.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -51,10 +52,14 @@ fn T.F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .T = @__global_init.%T
+// CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %T.patt: type = binding_pattern T
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %T: type = bind_name T, @__global_init.%Class.ref
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,11 +74,11 @@ fn T.F() {}
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32;
@@ -86,7 +91,6 @@ fn T.F() {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

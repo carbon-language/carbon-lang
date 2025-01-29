@@ -13,9 +13,10 @@
 class C {}
 interface I {}
 
-// CHECK:STDERR: fail_fuzz_crash.carbon:[[@LINE+3]]:14: error: parameters of generic types must be constant [GenericParamMustBeConstant]
+// CHECK:STDERR: fail_fuzz_crash.carbon:[[@LINE+4]]:14: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR: impl forall [T: type] C as I { }
 // CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:
 impl forall [T: type] C as I { }
 
 // CHECK:STDOUT: --- fail_fuzz_crash.carbon
@@ -58,9 +59,9 @@ impl forall [T: type] C as I { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

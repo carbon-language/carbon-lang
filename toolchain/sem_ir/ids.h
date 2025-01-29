@@ -18,8 +18,10 @@ namespace Carbon::SemIR {
 class File;
 class Inst;
 class NameScope;
-struct EntityName;
+struct AssociatedConstant;
 struct Class;
+struct EntityName;
+struct ExprRegion;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
@@ -30,7 +32,6 @@ struct ImportIRInst;
 struct Impl;
 struct Interface;
 struct StructTypeField;
-struct ExprRegion;
 struct TypeInfo;
 
 // The ID of an instruction.
@@ -38,15 +39,20 @@ struct InstId : public IdBase<InstId> {
   static constexpr llvm::StringLiteral Label = "inst";
   using ValueType = Inst;
 
-  // An explicitly invalid ID.
-  static const InstId Invalid;
+  // An ID with no value.
+  static const InstId None;
+
+  // Represents the result of a name lookup that is temporarily disallowed
+  // because the name is currently being initialized.
+  static const InstId InitTombstone;
 
   using IdBase::IdBase;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr InstId InstId::Invalid = InstId(InvalidIndex);
+constexpr InstId InstId::None = InstId(NoneIndex);
+constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 2);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction
@@ -84,8 +90,8 @@ struct ConstantId : public IdBase<ConstantId> {
 
   // An ID for an expression that is not constant.
   static const ConstantId NotConstant;
-  // An explicitly invalid ID.
-  static const ConstantId Invalid;
+  // An ID with no value.
+  static const ConstantId None;
 
   // Returns the constant ID corresponding to a template constant, which should
   // either be in the `constants` block in the file or should be known to be
@@ -102,19 +108,19 @@ struct ConstantId : public IdBase<ConstantId> {
 
   using IdBase::IdBase;
 
-  // Returns whether this represents a constant. Requires is_valid.
+  // Returns whether this represents a constant. Requires has_value.
   auto is_constant() const -> bool {
-    CARBON_DCHECK(is_valid());
+    CARBON_DCHECK(has_value());
     return *this != ConstantId::NotConstant;
   }
-  // Returns whether this represents a symbolic constant. Requires is_valid.
+  // Returns whether this represents a symbolic constant. Requires has_value.
   auto is_symbolic() const -> bool {
-    CARBON_DCHECK(is_valid());
+    CARBON_DCHECK(has_value());
     return index <= FirstSymbolicIndex;
   }
-  // Returns whether this represents a template constant. Requires is_valid.
+  // Returns whether this represents a template constant. Requires has_value.
   auto is_template() const -> bool {
-    CARBON_DCHECK(is_valid());
+    CARBON_DCHECK(has_value());
     return index >= 0;
   }
 
@@ -146,25 +152,25 @@ struct ConstantId : public IdBase<ConstantId> {
     return FirstSymbolicIndex - index;
   }
 
-  static constexpr int32_t NotConstantIndex = InvalidIndex - 1;
-  static constexpr int32_t FirstSymbolicIndex = InvalidIndex - 2;
+  static constexpr int32_t NotConstantIndex = NoneIndex - 1;
+  static constexpr int32_t FirstSymbolicIndex = NoneIndex - 2;
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
-constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
+constexpr ConstantId ConstantId::None = ConstantId(NoneIndex);
 
 // The ID of a EntityName.
 struct EntityNameId : public IdBase<EntityNameId> {
   static constexpr llvm::StringLiteral Label = "entity_name";
   using ValueType = EntityName;
 
-  // An explicitly invalid ID.
-  static const EntityNameId Invalid;
+  // An ID with no value.
+  static const EntityNameId None;
 
   using IdBase::IdBase;
 };
 
-constexpr EntityNameId EntityNameId::Invalid = EntityNameId(InvalidIndex);
+constexpr EntityNameId EntityNameId::None = EntityNameId(NoneIndex);
 
 // The index of a compile-time binding. This is the de Bruijn level for the
 // binding -- that is, this is the number of other compile time bindings whose
@@ -172,14 +178,14 @@ constexpr EntityNameId EntityNameId::Invalid = EntityNameId(InvalidIndex);
 struct CompileTimeBindIndex : public IndexBase<CompileTimeBindIndex> {
   static constexpr llvm::StringLiteral Label = "comp_time_bind";
 
-  // An explicitly invalid index.
-  static const CompileTimeBindIndex Invalid;
+  // An index with no value.
+  static const CompileTimeBindIndex None;
 
   using IndexBase::IndexBase;
 };
 
-constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
-    CompileTimeBindIndex(InvalidIndex);
+constexpr CompileTimeBindIndex CompileTimeBindIndex::None =
+    CompileTimeBindIndex(NoneIndex);
 
 // The index of a runtime parameter in a function. These are allocated
 // sequentially, left-to-right, to the function parameters that will have
@@ -191,8 +197,8 @@ constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
 struct RuntimeParamIndex : public IndexBase<RuntimeParamIndex> {
   static constexpr llvm::StringLiteral Label = "runtime_param";
 
-  // An explicitly invalid index.
-  static const RuntimeParamIndex Invalid;
+  // An index with no value.
+  static const RuntimeParamIndex None;
 
   // An placeholder for index whose value is not yet known.
   static const RuntimeParamIndex Unknown;
@@ -202,24 +208,24 @@ struct RuntimeParamIndex : public IndexBase<RuntimeParamIndex> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr RuntimeParamIndex RuntimeParamIndex::Invalid =
-    RuntimeParamIndex(InvalidIndex);
+constexpr RuntimeParamIndex RuntimeParamIndex::None =
+    RuntimeParamIndex(NoneIndex);
 
 constexpr RuntimeParamIndex RuntimeParamIndex::Unknown =
-    RuntimeParamIndex(InvalidIndex - 1);
+    RuntimeParamIndex(NoneIndex - 1);
 
 // The ID of a function.
 struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
   using ValueType = Function;
 
-  // An explicitly invalid ID.
-  static const FunctionId Invalid;
+  // An ID with no value.
+  static const FunctionId None;
 
   using IdBase::IdBase;
 };
 
-constexpr FunctionId FunctionId::Invalid = FunctionId(InvalidIndex);
+constexpr FunctionId FunctionId::None = FunctionId(NoneIndex);
 
 // The ID of an IR within the set of all IRs being evaluated in the current
 // check execution.
@@ -233,79 +239,93 @@ struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
   using ValueType = Class;
 
-  // An explicitly invalid ID.
-  static const ClassId Invalid;
+  // An ID with no value.
+  static const ClassId None;
 
   using IdBase::IdBase;
 };
 
-constexpr ClassId ClassId::Invalid = ClassId(InvalidIndex);
+constexpr ClassId ClassId::None = ClassId(NoneIndex);
 
 // The ID of an interface.
 struct InterfaceId : public IdBase<InterfaceId> {
   static constexpr llvm::StringLiteral Label = "interface";
   using ValueType = Interface;
 
-  // An explicitly invalid ID.
-  static const InterfaceId Invalid;
+  // An ID with no value.
+  static const InterfaceId None;
 
   using IdBase::IdBase;
 };
 
-constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
+constexpr InterfaceId InterfaceId::None = InterfaceId(NoneIndex);
+
+// The ID of an associated constant.
+struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
+  static constexpr llvm::StringLiteral Label = "assoc_const";
+  using ValueType = AssociatedConstant;
+
+  // An ID with no value.
+  static const AssociatedConstantId None;
+
+  using IdBase::IdBase;
+};
+
+constexpr AssociatedConstantId AssociatedConstantId::None =
+    AssociatedConstantId(NoneIndex);
 
 // The ID of an faceet type value.
 struct FacetTypeId : public IdBase<FacetTypeId> {
   static constexpr llvm::StringLiteral Label = "facet_type";
   using ValueType = FacetTypeInfo;
 
-  // An explicitly invalid ID.
-  static const FacetTypeId Invalid;
+  // An ID with no value.
+  static const FacetTypeId None;
 
   using IdBase::IdBase;
 };
 
-constexpr FacetTypeId FacetTypeId::Invalid = FacetTypeId(InvalidIndex);
+constexpr FacetTypeId FacetTypeId::None = FacetTypeId(NoneIndex);
 
 // The ID of an resolved faceet type value.
 struct ResolvedFacetTypeId : public IdBase<ResolvedFacetTypeId> {
   static constexpr llvm::StringLiteral Label = "resolved_facet_type";
   using ValueType = ResolvedFacetType;
 
-  // An explicitly invalid ID.
-  static const ResolvedFacetTypeId Invalid;
+  // An ID with no value.
+  static const ResolvedFacetTypeId None;
 
   using IdBase::IdBase;
 };
 
-constexpr ResolvedFacetTypeId ResolvedFacetTypeId::Invalid =
-    ResolvedFacetTypeId(InvalidIndex);
+constexpr ResolvedFacetTypeId ResolvedFacetTypeId::None =
+    ResolvedFacetTypeId(NoneIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase<ImplId> {
   static constexpr llvm::StringLiteral Label = "impl";
   using ValueType = Impl;
 
-  // An explicitly invalid ID.
-  static const ImplId Invalid;
+  // An ID with no value.
+  static const ImplId None;
 
   using IdBase::IdBase;
 };
 
-constexpr ImplId ImplId::Invalid = ImplId(InvalidIndex);
+constexpr ImplId ImplId::None = ImplId(NoneIndex);
 
 // The ID of a generic.
 struct GenericId : public IdBase<GenericId> {
   static constexpr llvm::StringLiteral Label = "generic";
   using ValueType = Generic;
 
-  // An explicitly invalid ID.
-  static const GenericId Invalid;
+  // An ID with no value.
+  static const GenericId None;
 
   using IdBase::IdBase;
 };
 
-constexpr GenericId GenericId::Invalid = GenericId(InvalidIndex);
+constexpr GenericId GenericId::None = GenericId(NoneIndex);
 
 // The ID of a specific, which is the result of specifying the generic arguments
 // for a generic.
@@ -313,14 +333,14 @@ struct SpecificId : public IdBase<SpecificId> {
   static constexpr llvm::StringLiteral Label = "specific";
   using ValueType = Specific;
 
-  // An explicitly invalid ID. This is typically used to represent a non-generic
+  // An ID with no value. This is typically used to represent a non-generic
   // entity.
-  static const SpecificId Invalid;
+  static const SpecificId None;
 
   using IdBase::IdBase;
 };
 
-constexpr SpecificId SpecificId::Invalid = SpecificId(InvalidIndex);
+constexpr SpecificId SpecificId::None = SpecificId(NoneIndex);
 
 // The index of an instruction that depends on generic parameters within a
 // region of a generic. A corresponding specific version of the instruction can
@@ -335,8 +355,8 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
     Definition,
   };
 
-  // An explicitly invalid index.
-  static const GenericInstIndex Invalid;
+  // An index with no value.
+  static const GenericInstIndex None;
 
   explicit constexpr GenericInstIndex(Region region, int32_t index)
       : IndexBase(region == Declaration ? index
@@ -346,39 +366,39 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
 
   // Returns the index of the instruction within the region.
   auto index() const -> int32_t {
-    CARBON_CHECK(is_valid());
+    CARBON_CHECK(has_value());
     return IndexBase::index >= 0 ? IndexBase::index
                                  : FirstDefinitionIndex - IndexBase::index;
   }
 
   // Returns the region within which this instruction was first used.
   auto region() const -> Region {
-    CARBON_CHECK(is_valid());
+    CARBON_CHECK(has_value());
     return IndexBase::index >= 0 ? Declaration : Definition;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  static constexpr auto MakeInvalid() -> GenericInstIndex {
+  static constexpr auto MakeNone() -> GenericInstIndex {
     GenericInstIndex result(Declaration, 0);
-    result.IndexBase::index = InvalidIndex;
+    result.IndexBase::index = NoneIndex;
     return result;
   }
 
-  static constexpr int32_t FirstDefinitionIndex = InvalidIndex - 1;
+  static constexpr int32_t FirstDefinitionIndex = NoneIndex - 1;
 };
 
-constexpr GenericInstIndex GenericInstIndex::Invalid =
-    GenericInstIndex::MakeInvalid();
+constexpr GenericInstIndex GenericInstIndex::None =
+    GenericInstIndex::MakeNone();
 
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
   static constexpr llvm::StringLiteral Label = "ir";
   using ValueType = ImportIR;
 
-  // An explicitly invalid ID.
-  static const ImportIRId Invalid;
+  // An ID with no value.
+  static const ImportIRId None;
 
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
@@ -388,7 +408,7 @@ struct ImportIRId : public IdBase<ImportIRId> {
   using IdBase::IdBase;
 };
 
-constexpr ImportIRId ImportIRId::Invalid = ImportIRId(InvalidIndex);
+constexpr ImportIRId ImportIRId::None = ImportIRId(NoneIndex);
 constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
 
 // A boolean value.
@@ -456,8 +476,8 @@ struct NameId : public IdBase<NameId> {
   // names().GetFormatted() is used for diagnostics.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
-  // An explicitly invalid ID.
-  static const NameId Invalid;
+  // An ID with no value.
+  static const NameId None;
   // The name of `self`.
   static const NameId SelfValue;
   // The name of `Self`.
@@ -482,23 +502,23 @@ struct NameId : public IdBase<NameId> {
 
   using IdBase::IdBase;
 
-  // Returns the IdentifierId corresponding to this NameId, or an invalid
-  // IdentifierId if this is a special name.
+  // Returns the IdentifierId corresponding to this NameId, or `None` if this is
+  // a special name.
   auto AsIdentifierId() const -> IdentifierId {
-    return index >= 0 ? IdentifierId(index) : IdentifierId::Invalid;
+    return index >= 0 ? IdentifierId(index) : IdentifierId::None;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr NameId NameId::Invalid = NameId(InvalidIndex);
-constexpr NameId NameId::SelfValue = NameId(InvalidIndex - 1);
-constexpr NameId NameId::SelfType = NameId(InvalidIndex - 2);
-constexpr NameId NameId::PeriodSelf = NameId(InvalidIndex - 3);
-constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 4);
-constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 5);
-constexpr NameId NameId::Base = NameId(InvalidIndex - 6);
-constexpr NameId NameId::Vptr = NameId(InvalidIndex - 7);
+constexpr NameId NameId::None = NameId(NoneIndex);
+constexpr NameId NameId::SelfValue = NameId(NoneIndex - 1);
+constexpr NameId NameId::SelfType = NameId(NoneIndex - 2);
+constexpr NameId NameId::PeriodSelf = NameId(NoneIndex - 3);
+constexpr NameId NameId::ReturnSlot = NameId(NoneIndex - 4);
+constexpr NameId NameId::PackageNamespace = NameId(NoneIndex - 5);
+constexpr NameId NameId::Base = NameId(NoneIndex - 6);
+constexpr NameId NameId::Vptr = NameId(NoneIndex - 7);
 constexpr int NameId::NonIndexValueCount = 8;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Vptr.index);
@@ -508,15 +528,15 @@ struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
   using ValueType = NameScope;
 
-  // An explicitly invalid ID.
-  static const NameScopeId Invalid;
+  // An ID with no value.
+  static const NameScopeId None;
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
 
   using IdBase::IdBase;
 };
 
-constexpr NameScopeId NameScopeId::Invalid = NameScopeId(InvalidIndex);
+constexpr NameScopeId NameScopeId::None = NameScopeId(NoneIndex);
 constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an instruction block.
@@ -543,8 +563,8 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // be inserted into it.
   static const InstBlockId GlobalInit;
 
-  // An explicitly invalid ID.
-  static const InstBlockId Invalid;
+  // An ID with no value.
+  static const InstBlockId None;
 
   // An ID for unreachable code.
   static const InstBlockId Unreachable;
@@ -557,8 +577,8 @@ constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
 constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
-constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
-constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
+constexpr InstBlockId InstBlockId::None = InstBlockId(NoneIndex);
+constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 
 // An ID of an instruction block that is referenced absolutely by an
 // instruction. This should only be used as the type of a field within a typed
@@ -610,13 +630,13 @@ struct ExprRegionId : public IdBase<ExprRegionId> {
   static constexpr llvm::StringLiteral Label = "region";
   using ValueType = ExprRegion;
 
-  // An explicitly invalid ID.
-  static const ExprRegionId Invalid;
+  // An ID with no value.
+  static const ExprRegionId None;
 
   using IdBase::IdBase;
 };
 
-constexpr ExprRegionId ExprRegionId::Invalid = ExprRegionId(InvalidIndex);
+constexpr ExprRegionId ExprRegionId::None = ExprRegionId(NoneIndex);
 
 // The ID of a struct type field block.
 struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
@@ -625,8 +645,8 @@ struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   using ElementType = StructTypeField;
   using ValueType = llvm::MutableArrayRef<StructTypeField>;
 
-  // An explicitly invalid ID.
-  static const StructTypeFieldsId Invalid;
+  // An ID with no value.
+  static const StructTypeFieldsId None;
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.
@@ -635,8 +655,8 @@ struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   using IdBase::IdBase;
 };
 
-constexpr StructTypeFieldsId StructTypeFieldsId::Invalid =
-    StructTypeFieldsId(InvalidIndex);
+constexpr StructTypeFieldsId StructTypeFieldsId::None =
+    StructTypeFieldsId(NoneIndex);
 constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
 
 // The ID of a type.
@@ -648,8 +668,8 @@ struct TypeId : public IdBase<TypeId> {
   // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
-  // An explicitly invalid ID.
-  static const TypeId Invalid;
+  // An ID with no value.
+  static const TypeId None;
 
   using IdBase::IdBase;
 
@@ -666,7 +686,7 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
+constexpr TypeId TypeId::None = TypeId(NoneIndex);
 
 // The ID of a type block.
 struct TypeBlockId : public IdBase<TypeBlockId> {
@@ -675,8 +695,8 @@ struct TypeBlockId : public IdBase<TypeBlockId> {
   using ElementType = TypeId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
-  // An explicitly invalid ID.
-  static const TypeBlockId Invalid;
+  // An ID with no value.
+  static const TypeBlockId None;
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.
@@ -685,7 +705,7 @@ struct TypeBlockId : public IdBase<TypeBlockId> {
   using IdBase::IdBase;
 };
 
-constexpr TypeBlockId TypeBlockId::Invalid = TypeBlockId(InvalidIndex);
+constexpr TypeBlockId TypeBlockId::None = TypeBlockId(NoneIndex);
 constexpr TypeBlockId TypeBlockId::Empty = TypeBlockId(0);
 
 // An index for element access, for structs, tuples, and classes.
@@ -693,19 +713,19 @@ struct ElementIndex : public IndexBase<ElementIndex> {
   static constexpr llvm::StringLiteral Label = "element";
   using IndexBase::IndexBase;
 
-  // An explicitly invalid ID.
-  static const ElementIndex Invalid;
+  // An ID with no value.
+  static const ElementIndex None;
 };
 
-constexpr ElementIndex ElementIndex::Invalid = ElementIndex(InvalidIndex);
+constexpr ElementIndex ElementIndex::None = ElementIndex(NoneIndex);
 
 // The ID of a library name. This is either a string literal or `default`.
 struct LibraryNameId : public IdBase<LibraryNameId> {
   static constexpr llvm::StringLiteral Label = "library_name";
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
-  // An explicitly invalid ID.
-  static const LibraryNameId Invalid;
+  // An ID with no value.
+  static const LibraryNameId None;
   // The name of `default`.
   static const LibraryNameId Default;
   // Track cases where the library name was set, but has been diagnosed and
@@ -719,37 +739,36 @@ struct LibraryNameId : public IdBase<LibraryNameId> {
 
   // Converts a LibraryNameId back to a string literal.
   auto AsStringLiteralValueId() const -> StringLiteralValueId {
-    CARBON_CHECK(index >= InvalidIndex, "{0} must be handled directly", *this);
+    CARBON_CHECK(index >= NoneIndex, "{0} must be handled directly", *this);
     return StringLiteralValueId(index);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr LibraryNameId LibraryNameId::Invalid = LibraryNameId(InvalidIndex);
-constexpr LibraryNameId LibraryNameId::Default =
-    LibraryNameId(InvalidIndex - 1);
-constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(InvalidIndex - 2);
+constexpr LibraryNameId LibraryNameId::None = LibraryNameId(NoneIndex);
+constexpr LibraryNameId LibraryNameId::Default = LibraryNameId(NoneIndex - 1);
+constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(NoneIndex - 2);
 
 // The ID of an ImportIRInst.
 struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
   using ValueType = ImportIRInst;
 
-  // An explicitly invalid ID.
-  static const ImportIRInstId Invalid;
+  // An ID with no value.
+  static const ImportIRInstId None;
 
   using IdBase::IdBase;
 };
 
-constexpr ImportIRInstId ImportIRInstId::Invalid = ImportIRInstId(InvalidIndex);
+constexpr ImportIRInstId ImportIRInstId::None = ImportIRInstId(NoneIndex);
 
 // A SemIR location used as the location of instructions.
 //
 // Contents:
-// - index > Invalid: A Parse::NodeId in the current IR.
-// - index < Invalid: An ImportIRInstId.
-// - index == Invalid: Can be used for either.
+// - index > None: A Parse::NodeId in the current IR.
+// - index < None: An ImportIRInstId.
+// - index == None: Can be used for either.
 struct LocId : public IdBase<LocId> {
   static constexpr llvm::StringLiteral Label = "loc";
 
@@ -757,61 +776,61 @@ struct LocId : public IdBase<LocId> {
   // operations performed implicitly.
   static const int32_t ImplicitBit = 1 << 30;
 
-  // An explicitly invalid ID.
-  static const LocId Invalid;
+  // An ID with no value.
+  static const LocId None;
 
   using IdBase::IdBase;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(Parse::InvalidNodeId /*invalid*/) : IdBase(InvalidIndex) {}
+  constexpr LocId(Parse::NoneNodeId /*none*/) : IdBase(NoneIndex) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
-    CARBON_CHECK(node_id.is_valid() == is_valid());
+    CARBON_CHECK(node_id.has_value() == has_value());
     CARBON_CHECK(!is_implicit());
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(ImportIRInstId inst_id)
-      : IdBase(InvalidIndex + ImportIRInstId::InvalidIndex - inst_id.index) {
-    CARBON_CHECK(inst_id.is_valid() == is_valid());
+      : IdBase(NoneIndex + ImportIRInstId::NoneIndex - inst_id.index) {
+    CARBON_CHECK(inst_id.has_value() == has_value());
     CARBON_CHECK(index & ImplicitBit);
   }
 
   // Forms an equivalent LocId for an implicit location.
   auto ToImplicit() const -> LocId {
-    // For import IR locations and the invalid location, the implicit bit is
+    // For import IR locations and the `None` location, the implicit bit is
     // always set, so this is a no-op.
     return LocId(index | ImplicitBit);
   }
 
-  auto is_node_id() const -> bool { return index > InvalidIndex; }
-  auto is_import_ir_inst_id() const -> bool { return index < InvalidIndex; }
+  auto is_node_id() const -> bool { return index > NoneIndex; }
+  auto is_import_ir_inst_id() const -> bool { return index < NoneIndex; }
   auto is_implicit() const -> bool {
     return is_node_id() && (index & ImplicitBit) != 0;
   }
 
-  // This is allowed to return an invalid NodeId, but should never be used for a
-  // valid InstId.
+  // This is allowed to return `NodeId::None`, but should never be used for
+  // `InstId` other than `InstId::None`.
   auto node_id() const -> Parse::NodeId {
-    if (!is_valid()) {
-      return Parse::NodeId::Invalid;
+    if (!has_value()) {
+      return Parse::NodeId::None;
     }
     CARBON_CHECK(is_node_id());
     return Parse::NodeId(index & ~ImplicitBit);
   }
 
-  // This is allowed to return an invalid InstId, but should never be used for a
-  // valid NodeId.
+  // This is allowed to return `InstId::None`, but should never be used for
+  // `NodeId` other than `NodeId::None`.
   auto import_ir_inst_id() const -> ImportIRInstId {
-    CARBON_CHECK(is_import_ir_inst_id() || !is_valid());
-    return ImportIRInstId(InvalidIndex + ImportIRInstId::InvalidIndex - index);
+    CARBON_CHECK(is_import_ir_inst_id() || !has_value());
+    return ImportIRInstId(NoneIndex + ImportIRInstId::NoneIndex - index);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
+constexpr LocId LocId::None = LocId(Parse::NodeId::None);
 
 // Polymorphic id for fields in `Any[...]` typed instruction category. Used for
 // fields where the specific instruction structs have different field types in
@@ -825,13 +844,13 @@ constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
 //   same position, the `Any[...]` type will hold its raw value in the
 //   `AnyRawId` field.
 // - In the case the specific instruction has no field in the same position, the
-//   `Any[...]` type will hold a default constructed `AnyRawId` with an invalid
+//   `Any[...]` type will hold a default constructed `AnyRawId` with a `None`
 //   value.
 struct AnyRawId : public AnyIdBase {
   // For IdKind.
   static constexpr llvm::StringLiteral Label = "any_raw";
 
-  constexpr explicit AnyRawId() : AnyIdBase(AnyIdBase::InvalidIndex) {}
+  constexpr explicit AnyRawId() : AnyIdBase(AnyIdBase::NoneIndex) {}
   constexpr explicit AnyRawId(int32_t id) : AnyIdBase(id) {}
 };
 

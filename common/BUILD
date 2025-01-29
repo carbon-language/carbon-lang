@@ -43,6 +43,7 @@ cc_library(
         ":check",
         ":error",
         ":ostream",
+        ":raw_string_ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -54,8 +55,8 @@ cc_test(
     deps = [
         ":command_line",
         ":error_test_helpers",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -108,8 +109,8 @@ cc_test(
     deps = [
         ":enum_base",
         ":enum_base_test_def",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -120,6 +121,7 @@ cc_library(
     deps = [
         ":check",
         ":ostream",
+        ":raw_string_ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -141,8 +143,8 @@ cc_test(
     deps = [
         ":error",
         ":error_test_helpers",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -185,8 +187,8 @@ cc_test(
     srcs = ["hashing_test.cpp"],
     deps = [
         ":hashing",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -289,7 +291,6 @@ cc_test(
         ":map",
         ":raw_hashtable_test_helpers",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -412,6 +413,26 @@ cc_library(
 )
 
 cc_library(
+    name = "raw_string_ostream",
+    hdrs = ["raw_string_ostream.h"],
+    deps = [
+        ":check",
+        ":ostream",
+    ],
+)
+
+cc_test(
+    name = "raw_string_ostream_test",
+    size = "small",
+    srcs = ["raw_string_ostream_test.cpp"],
+    deps = [
+        ":raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "set",
     hdrs = ["set.h"],
     deps = [
@@ -430,7 +451,6 @@ cc_test(
         ":raw_hashtable_test_helpers",
         ":set",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -616,9 +636,9 @@ cc_test(
     size = "small",
     srcs = ["vlog_test.cpp"],
     deps = [
+        ":raw_string_ostream",
         ":vlog",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )

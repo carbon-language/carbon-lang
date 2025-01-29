@@ -10,3 +10,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_missing_stdin_output.carbon
 // CHECK:STDERR: error: output file name must be specified for input `-` that is not a regular file
+// CHECK:STDERR:

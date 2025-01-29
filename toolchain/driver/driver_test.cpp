@@ -11,17 +11,16 @@
 #include <fstream>
 #include <utility>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "testing/base/global_exe_path.h"
-#include "testing/base/test_raw_ostream.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
@@ -44,7 +43,8 @@ class DriverTest : public testing::Test {
   DriverTest()
       : installation_(
             InstallPaths::MakeForBazelRunfiles(Testing::GetExePath())),
-        driver_(fs_, &installation_, test_output_stream_, test_error_stream_) {
+        driver_(fs_, &installation_, /*input_stream=*/nullptr,
+                &test_output_stream_, &test_error_stream_) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir_env != nullptr);
     test_tmpdir_ = tmpdir_env;
@@ -94,8 +94,8 @@ class DriverTest : public testing::Test {
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs_ =
       new llvm::vfs::InMemoryFileSystem;
   const InstallPaths installation_;
-  TestRawOstream test_output_stream_;
-  TestRawOstream test_error_stream_;
+  RawStringOstream test_output_stream_;
+  RawStringOstream test_error_stream_;
 
   // Some tests work directly with files in the test temporary directory.
   std::filesystem::path test_tmpdir_;
@@ -223,6 +223,11 @@ TEST_F(DriverTest, FileOutput) {
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
   EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));
+}
+
+TEST_F(DriverTest, LanguageServerNoStdin) {
+  EXPECT_FALSE(driver_.RunCommand({"language-server"}).success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("requires input_stream"));
 }
 
 }  // namespace

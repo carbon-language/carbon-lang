@@ -89,9 +89,10 @@ import Implicit library "implicit_lib";
 // --- fail_not_found.carbon
 package NotFound;
 
-// CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:1: error: imported API 'ImportNotFound' not found [ImportNotFound]
+// CHECK:STDERR: fail_not_found.carbon:[[@LINE+4]]:1: error: imported API 'ImportNotFound' not found [ImportNotFound]
 // CHECK:STDERR: import ImportNotFound;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import ImportNotFound;
 
 // CHECK:STDOUT: --- fail_main.carbon
@@ -188,7 +189,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -222,7 +223,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

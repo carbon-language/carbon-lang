@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_negative_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:14: error: tuple element index `-10` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+4]]:14: error: tuple element index `-10` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var b: i32 = a.(-10);
 // CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:
 var b: i32 = a.(-10);
 
 // CHECK:STDOUT: --- fail_negative_indexing.carbon
@@ -19,12 +20,13 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %int_12.6a3: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %int_6.462: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.221: <bound method> = bound_method %int_12.6a3, %Convert.956 [template]
@@ -35,8 +37,8 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %int_6.e56: %i32 = int_value 6 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.d07 = tuple_value (%int_12.1e1, %int_6.e56) [template]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template]
+// CHECK:STDOUT:   %impl_witness.0f6: <witness> = impl_witness (imports.%Core.import_ref.c15) [template]
 // CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.13 [template]
-// CHECK:STDOUT:   %impl_witness.0f6: <witness> = impl_witness (imports.%import_ref.c15) [template]
 // CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.14 [template]
 // CHECK:STDOUT:   %Op.bba: %Op.type.1be = struct_value () [template]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %Op.bba [template]
@@ -45,9 +47,9 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
-// CHECK:STDOUT:     .Negate = %import_ref.6e9
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Negate = %Core.Negate
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -60,9 +62,29 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %tuple.type.d07 = binding_pattern a
+// CHECK:STDOUT:     %.loc11_1: %tuple.type.d07 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %tuple.type.d07 = var a
+// CHECK:STDOUT:   %.loc11_17.1: type = splice_block %.loc11_17.3 [template = constants.%tuple.type.d07] {
+// CHECK:STDOUT:     %int_32.loc11_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_17.2: %tuple.type.24b = tuple_literal (%i32.loc11_9, %i32.loc11_14)
+// CHECK:STDOUT:     %.loc11_17.3: type = converted %.loc11_17.2, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %tuple.type.d07 = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
+// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32.loc16 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -86,15 +108,15 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access file.%a.var, element1
 // CHECK:STDOUT:   %.loc11_27.5: init %i32 = initialize_from %.loc11_27.4 to %tuple.elem1 [template = constants.%int_6.e56]
 // CHECK:STDOUT:   %.loc11_27.6: init %tuple.type.d07 = tuple_init (%.loc11_27.3, %.loc11_27.5) to file.%a.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_28: init %tuple.type.d07 = converted %.loc11_27.1, %.loc11_27.6 [template = constants.%tuple]
-// CHECK:STDOUT:   assign file.%a.var, %.loc11_28
+// CHECK:STDOUT:   %.loc11_1: init %tuple.type.d07 = converted %.loc11_27.1, %.loc11_27.6 [template = constants.%tuple]
+// CHECK:STDOUT:   assign file.%a.var, %.loc11_1
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
-// CHECK:STDOUT:   %impl.elem0.loc15: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc15 [template = constants.%Op.bound]
+// CHECK:STDOUT:   %impl.elem0.loc16: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc16 [template = constants.%Op.bound]
 // CHECK:STDOUT:   %int.snegate: init Core.IntLiteral = call %Op.bound(%int_10) [template = constants.%int_-10]
-// CHECK:STDOUT:   %.loc15_17.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10]
-// CHECK:STDOUT:   %.loc15_17.2: Core.IntLiteral = converted %int.snegate, %.loc15_17.1 [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc16_17.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc16_17.2: Core.IntLiteral = converted %int.snegate, %.loc16_17.1 [template = constants.%int_-10]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

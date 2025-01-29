@@ -59,7 +59,7 @@ fn Main() {
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Bar", linkageName: "_CBar.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 14, column: 23, scope: !8)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 7, scope: !10)
+// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 3, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 17, column: 19, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 17, column: 15, scope: !10)
 // CHECK:STDOUT: !14 = !DILocation(line: 16, column: 1, scope: !10)

@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_returned_var_type.carbon
 
 fn Mismatch() -> i32 {
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+6]]:19: error: type `f64` of `returned var` does not match return type of enclosing function [ReturnedVarWrongType]
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+7]]:19: error: type `f64` of `returned var` does not match return type of enclosing function [ReturnedVarWrongType]
   // CHECK:STDERR:   returned var v: f64 = 0.0;
   // CHECK:STDERR:                   ^~~
   // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:15: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR: fn Mismatch() -> i32 {
   // CHECK:STDERR:               ^~~~~~
+  // CHECK:STDERR:
   returned var v: f64 = 0.0;
   return var;
 }
@@ -26,13 +27,16 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Mismatch.type: type = fn_type @Mismatch [template]
 // CHECK:STDOUT:   %Mismatch: %Mismatch.type = struct_value () [template]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .Float = %import_ref.1d6
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Float = %Core.Float
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -57,9 +61,21 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v: f64 = bind_name v, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: f64 = binding_pattern v
+// CHECK:STDOUT:     %.loc19_12: f64 = var_pattern %v.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v.var: ref f64 = var v
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template = constants.%float]
-// CHECK:STDOUT:   assign <error>, <error>
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   assign %v.var, %float
+// CHECK:STDOUT:   %.loc19_19.1: type = splice_block %.loc19_19.3 [template = f64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
+// CHECK:STDOUT:     %.loc19_19.2: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc19_19.3: type = converted %float.make_type, %.loc19_19.2 [template = f64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: ref f64 = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc19_16: f64 = bind_value %v
+// CHECK:STDOUT:   return %.loc19_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

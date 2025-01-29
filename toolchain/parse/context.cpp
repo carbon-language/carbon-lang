@@ -391,7 +391,7 @@ auto Context::ParseLibraryName(bool accept_default)
   if (accept_default) {
     if (auto default_token = ConsumeIf(Lex::TokenKind::Default)) {
       AddLeafNode(NodeKind::DefaultLibrary, *default_token);
-      return StringLiteralValueId::Invalid;
+      return StringLiteralValueId::None;
     }
   }
 

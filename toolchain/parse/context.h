@@ -63,7 +63,14 @@ class Context {
     State state;
     // Set to true to indicate that an error was found, and that contextual
     // error recovery may be needed.
-    bool has_error = false;
+    bool has_error : 1 = false;
+
+    // Set to true to indicate that this state is handling a pattern nested
+    // inside a `var` pattern.
+    // TODO: This is meaningful only for patterns, and the precedence fields
+    // are meaningful only for expressions, so expressing them as a union
+    // could help catch errors.
+    bool in_var_pattern : 1 = false;
 
     // Precedence information used by expression states in order to determine
     // operator precedence. The ambient_precedence deals with how the expression
@@ -82,7 +89,7 @@ class Context {
 
   // We expect StateStackEntry to fit into 12 bytes:
   //   state = 1 byte
-  //   has_error = 1 byte
+  //   has_error and in_var_pattern = 1 byte
   //   ambient_precedence = 1 byte
   //   lhs_precedence = 1 byte
   //   token = 4 bytes
@@ -282,6 +289,15 @@ class Context {
                .subtree_start = tree_->size()});
   }
 
+  // Pushes a new state for handling a pattern. `in_var_pattern` indicates
+  // whether that pattern is nested inside a `var` pattern.
+  auto PushStateForPattern(State state, bool in_var_pattern) -> void {
+    PushState({.state = state,
+               .in_var_pattern = in_var_pattern,
+               .token = *position_,
+               .subtree_start = tree_->size()});
+  }
+
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
     CARBON_VLOG("Push {0}: {1}\n", state_stack_.size(), state);
@@ -382,7 +398,7 @@ class Context {
     return first_non_packaging_token_;
   }
   auto set_first_non_packaging_token(Lex::TokenIndex token) -> void {
-    CARBON_CHECK(!first_non_packaging_token_.is_valid());
+    CARBON_CHECK(!first_non_packaging_token_.has_value());
     first_non_packaging_token_ = token;
   }
 
@@ -438,7 +454,7 @@ class Context {
   PackagingState packaging_state_ = PackagingState::FileStart;
   // The first non-packaging token, starting as invalid. Used for packaging
   // state warnings.
-  Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
+  Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::None;
 };
 
 }  // namespace Carbon::Parse

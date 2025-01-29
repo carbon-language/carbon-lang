@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_use_in_init.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+3]]:16: error: name `a` not found [NameNotFound]
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+4]]:16: error: `a` used before initialization [UsedBeforeInitialization]
   // CHECK:STDERR:   let a: i32 = a;
   // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   let a: i32 = a;
 }
 
@@ -26,7 +27,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -43,7 +44,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc16: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %i32 = bind_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

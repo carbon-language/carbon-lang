@@ -12,7 +12,7 @@
 namespace Carbon::Parse {
 
 auto DumpNoNewline(const Tree& tree, NodeId node_id) -> void {
-  if (!node_id.is_valid()) {
+  if (!node_id.has_value()) {
     llvm::errs() << "NodeId(invalid)";
     return;
   }

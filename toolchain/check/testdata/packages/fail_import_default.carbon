@@ -40,9 +40,10 @@ import library default;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_lib_import_default.carbon:[[@LINE+3]]:1: error: cannot import `Main//default` [ImportMainDefaultLibrary]
+// CHECK:STDERR: fail_main_lib_import_default.carbon:[[@LINE+4]]:1: error: cannot import `Main//default` [ImportMainDefaultLibrary]
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library default;
 
 // CHECK:STDOUT: --- fail_default_api.carbon
@@ -75,7 +76,7 @@ import library default;
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.import = import A
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

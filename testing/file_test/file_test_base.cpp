@@ -18,6 +18,7 @@
 #include "common/error.h"
 #include "common/exe_path.h"
 #include "common/init_llvm.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -56,6 +57,8 @@ using ::testing::internal::GetCapturedStdout;
 using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
+
+static constexpr llvm::StringLiteral StdinFilename = "STDIN";
 
 // Reads a file to string.
 static auto ReadFile(std::string_view path) -> ErrorOr<std::string> {
@@ -108,8 +111,7 @@ enum class BazelMode : uint8_t {
 // Returns the requested bazel command string for the given execution mode.
 static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
     -> std::string {
-  std::string args_str;
-  llvm::raw_string_ostream args(args_str);
+  RawStringOstream args;
 
   const char* target = getenv("TEST_TARGET");
   args << "bazel " << ((mode == BazelMode::Test) ? "test" : "run") << " "
@@ -131,7 +133,7 @@ static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
 
   args << "--file_tests=";
   args << test_name;
-  return args_str;
+  return args.TakeStr();
 }
 
 // Runs a test and compares output. This keeps output split by line so that
@@ -186,15 +188,15 @@ auto FileTestBase::TestBody() -> void {
   }
   SCOPED_TRACE(update_message);
   if (context.check_subset) {
-    EXPECT_THAT(SplitOutput(context.stdout),
+    EXPECT_THAT(SplitOutput(context.actual_stdout),
                 IsSupersetOf(context.expected_stdout));
-    EXPECT_THAT(SplitOutput(context.stderr),
+    EXPECT_THAT(SplitOutput(context.actual_stderr),
                 IsSupersetOf(context.expected_stderr));
 
   } else {
-    EXPECT_THAT(SplitOutput(context.stdout),
+    EXPECT_THAT(SplitOutput(context.actual_stdout),
                 ElementsAreArray(context.expected_stdout));
-    EXPECT_THAT(SplitOutput(context.stderr),
+    EXPECT_THAT(SplitOutput(context.actual_stderr),
                 ElementsAreArray(context.expected_stderr));
   }
 
@@ -232,8 +234,9 @@ auto FileTestBase::RunAutoupdater(const TestContext& context, bool dry_run)
              GetBazelCommand(BazelMode::Test, test_name_),
              GetBazelCommand(BazelMode::Dump, test_name_),
              context.input_content, filenames, *context.autoupdate_line_number,
-             context.autoupdate_split, context.non_check_lines, context.stdout,
-             context.stderr, GetDefaultFileRE(expected_filenames),
+             context.autoupdate_split, context.non_check_lines,
+             context.actual_stdout, context.actual_stderr,
+             GetDefaultFileRE(expected_filenames),
              GetLineNumberReplacements(expected_filenames),
              [&](std::string& line) { DoExtraCheckReplacements(line); })
       .Run(dry_run);
@@ -266,7 +269,8 @@ auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
     return ErrorBuilder() << "Error updating " << test_name_ << ": "
                           << run_result.error();
   }
-  llvm::errs() << banner << context.stdout << banner << "= Exit with success: "
+  llvm::errs() << banner << context.actual_stdout << banner
+               << "= Exit with success: "
                << (context.run_result.success ? "true" : "false") << "\n"
                << banner;
   return Success();
@@ -297,18 +301,32 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   CARBON_RETURN_IF_ERROR(
       DoArgReplacements(context.test_args, context.test_files));
 
+  // stdin needs to exist on-disk for compatibility. We'll use a pointer for it.
+  FILE* input_stream = nullptr;
+  auto erase_input_on_exit = llvm::make_scope_exit([&input_stream]() {
+    if (input_stream) {
+      // fclose should delete the tmpfile.
+      fclose(input_stream);
+      input_stream = nullptr;
+    }
+  });
+
   // Create the files in-memory.
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   for (const auto& test_file : context.test_files) {
-    if (!fs->addFile(test_file.filename, /*ModificationTime=*/0,
-                     llvm::MemoryBuffer::getMemBuffer(
-                         test_file.content, test_file.filename,
-                         /*RequiresNullTerminator=*/false))) {
+    if (test_file.filename == StdinFilename) {
+      input_stream = tmpfile();
+      fwrite(test_file.content.c_str(), sizeof(char), test_file.content.size(),
+             input_stream);
+      rewind(input_stream);
+    } else if (!fs->addFile(test_file.filename, /*ModificationTime=*/0,
+                            llvm::MemoryBuffer::getMemBuffer(
+                                test_file.content, test_file.filename,
+                                /*RequiresNullTerminator=*/false))) {
       return ErrorBuilder() << "File is repeated: " << test_file.filename;
     }
   }
-
   // Convert the arguments to StringRef and const char* to match the
   // expectations of PrettyStackTraceProgram and Run.
   llvm::SmallVector<llvm::StringRef> test_args_ref;
@@ -326,13 +344,16 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   llvm::PrettyStackTraceProgram stack_trace_entry(
       test_argv_for_stack_trace.size() - 1, test_argv_for_stack_trace.data());
 
+  // Execution must be serialized for either serial tests or console output.
+  std::unique_lock<std::mutex> output_lock;
+  if (output_mutex_ &&
+      (context.capture_console_output || !AllowParallelRun())) {
+    output_lock = std::unique_lock<std::mutex>(*output_mutex_);
+  }
+
   // Conditionally capture console output. We use a scope exit to ensure the
   // captures terminate even on run failures.
-  std::unique_lock<std::mutex> output_lock;
   if (context.capture_console_output) {
-    if (output_mutex_) {
-      output_lock = std::unique_lock<std::mutex>(*output_mutex_);
-    }
     CaptureStderr();
     CaptureStdout();
   }
@@ -340,20 +361,21 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
     if (context.capture_console_output) {
       // No need to flush stderr.
       llvm::outs().flush();
-      context.stdout += GetCapturedStdout();
-      context.stderr += GetCapturedStderr();
+      context.actual_stdout += GetCapturedStdout();
+      context.actual_stderr += GetCapturedStderr();
     }
   });
 
   // Prepare string streams to capture output. In order to address casting
   // constraints, we split calls to Run as a ternary based on whether we want to
   // capture output.
-  llvm::raw_svector_ostream stdout(context.stdout);
-  llvm::raw_svector_ostream stderr(context.stderr);
+  llvm::raw_svector_ostream output_stream(context.actual_stdout);
+  llvm::raw_svector_ostream error_stream(context.actual_stderr);
   CARBON_ASSIGN_OR_RETURN(
       context.run_result,
-      context.dump_output ? Run(test_args_ref, fs, llvm::outs(), llvm::errs())
-                          : Run(test_args_ref, fs, stdout, stderr));
+      context.dump_output
+          ? Run(test_args_ref, fs, input_stream, llvm::outs(), llvm::errs())
+          : Run(test_args_ref, fs, input_stream, output_stream, error_stream));
 
   return Success();
 }
@@ -380,10 +402,11 @@ auto FileTestBase::DoArgReplacements(
         it = test_args.erase(it);
         for (const auto& file : test_files) {
           const std::string& filename = file.filename;
-          if (!filename.ends_with(".h")) {
-            it = test_args.insert(it, filename);
-            ++it;
+          if (filename == StdinFilename || filename.ends_with(".h")) {
+            continue;
           }
+          it = test_args.insert(it, filename);
+          ++it;
         }
         // Back up once because the for loop will advance.
         --it;
@@ -494,6 +517,84 @@ struct SplitState {
   int file_index = 0;
 };
 
+// Replaces the keyword at the given position. Returns the position to start a
+// find for the next keyword.
+static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
+                                    llvm::StringRef test_name, int* lsp_id)
+    -> ErrorOr<size_t> {
+  auto keyword = llvm::StringRef(*content).substr(keyword_pos);
+
+  // Line replacements aren't handled here.
+  static constexpr llvm::StringLiteral Line = "[[@LINE";
+  if (keyword.starts_with(Line)) {
+    // Just move past the prefix to find the next one.
+    return keyword_pos + Line.size();
+  }
+
+  // Replaced with the actual test name.
+  static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
+  if (keyword.starts_with(TestName)) {
+    content->replace(keyword_pos, TestName.size(), test_name);
+    return keyword_pos + test_name.size();
+  }
+
+  // Reformatted as an LSP call with headers.
+  static constexpr llvm::StringLiteral Lsp = "[[@LSP:";
+  if (keyword.starts_with(Lsp)) {
+    auto method_start = keyword_pos + Lsp.size();
+
+    static constexpr llvm::StringLiteral LspEnd = "]]";
+    auto keyword_end = content->find("]]", method_start);
+    if (keyword_end == std::string::npos) {
+      return ErrorBuilder()
+             << "Missing `" << LspEnd << "` after `" << Lsp << "`";
+    }
+
+    auto method_end = content->find(":", method_start);
+    auto extra_content_start = method_end + 1;
+    if (method_end == std::string::npos || method_end > keyword_end) {
+      method_end = keyword_end;
+      extra_content_start = keyword_end;
+    }
+    auto method = content->substr(method_start, method_end - method_start);
+
+    auto extra_content =
+        content->substr(extra_content_start, keyword_end - extra_content_start);
+    std::string extra_content_sep;
+    if (!extra_content.empty()) {
+      extra_content_sep = ",";
+      if (!extra_content.starts_with("\n")) {
+        extra_content_sep += " ";
+      }
+    }
+
+    // Form the JSON.
+    std::string json;
+    if (method == "exit") {
+      if (!extra_content.empty()) {
+        return Error("`[[@LSP:exit:` cannot include extra content");
+      }
+      json = R"({"jsonrpc": "2.0", "method": "exit"})";
+    } else {
+      json = llvm::formatv(
+                 R"({{"jsonrpc": "2.0", "id": "{0}", "method": "{1}"{2}{3}})",
+                 ++(*lsp_id), method, extra_content_sep, extra_content)
+                 .str();
+    }
+    // Add the Content-Length header. The `2` accounts for extra newlines.
+    auto json_with_header =
+        llvm::formatv("Content-Length: {0}\n\n{1}\n", json.size() + 2, json)
+            .str();
+    // Insert the content.
+    content->replace(keyword_pos, keyword_end + 2 - keyword_pos,
+                     json_with_header);
+    return keyword_pos + json_with_header.size();
+  }
+
+  return ErrorBuilder() << "Unexpected use of `[[@` at `"
+                        << keyword.substr(0, 5) << "`";
+}
+
 // Replaces the content keywords.
 //
 // TEST_NAME is the only content keyword at present, but we do validate that
@@ -523,20 +624,13 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
   test_name.consume_front("fail_");
   test_name.consume_front("todo_");
 
+  // A counter for LSP calls.
+  int lsp_id = 0;
   while (keyword_pos != std::string::npos) {
-    static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
-    auto keyword = llvm::StringRef(*content).substr(keyword_pos);
-    if (keyword.starts_with(TestName)) {
-      content->replace(keyword_pos, TestName.size(), test_name);
-      keyword_pos += test_name.size();
-    } else if (keyword.starts_with("[[@LINE")) {
-      // Just move past the prefix to find the next one.
-      keyword_pos += Prefix.size();
-    } else {
-      return ErrorBuilder()
-             << "Unexpected use of `[[@` at `" << keyword.substr(0, 5) << "`";
-    }
-    keyword_pos = content->find(Prefix, keyword_pos);
+    CARBON_ASSIGN_OR_RETURN(
+        auto keyword_end,
+        ReplaceContentKeywordAt(content, keyword_pos, test_name, &lsp_id));
+    keyword_pos = content->find(Prefix, keyword_end);
   }
   return Success();
 }
@@ -546,7 +640,6 @@ static auto AddTestFile(llvm::StringRef filename, std::string* content,
                         llvm::SmallVector<FileTestBase::TestFile>* test_files)
     -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(ReplaceContentKeywords(filename, content));
-
   test_files->push_back(
       {.filename = filename.str(), .content = std::move(*content)});
   content->clear();

@@ -14,23 +14,28 @@
 // CHECK:STDERR:
 var a: [i32; 39999999999999999993];
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:9: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:9: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
+// CHECK:STDERR:
 var b: [1; 39999999999999999993];
 
 // CHECK:STDOUT: --- fail_bound_overflow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %int_39999999999999999993: Core.IntLiteral = int_value 39999999999999999993 [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -43,9 +48,29 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
+// CHECK:STDOUT:     %.loc15_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc15_34: type = splice_block %array_type.loc15 [template = <error>] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_39999999999999999993.loc15: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
+// CHECK:STDOUT:     %array_type.loc15: type = array_type %int_39999999999999999993.loc15, %i32 [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
+// CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc24_32: type = splice_block %array_type.loc24 [template = <error>] {
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:     %int_39999999999999999993.loc24: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
+// CHECK:STDOUT:     %.loc24_9: type = converted %int_1, <error> [template = <error>]
+// CHECK:STDOUT:     %array_type.loc24: type = array_type %int_39999999999999999993.loc24, <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

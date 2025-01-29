@@ -14,13 +14,14 @@ class Class {
 
 fn F() -> bool {
   var c1: Class = {.b = true};
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+7]]:17: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+8]]:17: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+4]]:17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR:
   var c2: Class.Self = c1;
   return c2.b;
 }
@@ -37,13 +38,17 @@ fn F() -> bool {
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: %Class.elem = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl b, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .b = %.loc12
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   .b = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool;

@@ -183,6 +183,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::NameBindingDecl /*inst*/) -> void {
+  // A NameBindingDecl is lowered by pattern matching.
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);

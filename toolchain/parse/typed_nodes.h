@@ -294,9 +294,19 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
-// A pattern binding, such as `name: Type`.
-struct BindingPattern {
-  static constexpr auto Kind = NodeKind::BindingPattern.Define(
+// A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
+struct LetBindingPattern {
+  static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+  Lex::ColonTokenIndex token;
+  AnyExprId type;
+};
+
+// A pattern binding, such as `name: Type`, that is inside a `var` pattern.
+struct VarBindingPattern {
+  static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
@@ -488,7 +498,7 @@ struct VariableDecl {
   VariableIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<ReturnedModifierId> returned;
-  AnyPatternId pattern;
+  VariablePatternId pattern;
 
   struct Initializer {
     VariableInitializerId equals;
@@ -496,6 +506,15 @@ struct VariableDecl {
   };
   std::optional<Initializer> initializer;
   Lex::SemiTokenIndex token;
+};
+
+// A `var` pattern.
+struct VariablePattern {
+  static constexpr auto Kind = NodeKind::VariablePattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::VarTokenIndex token;
+  AnyPatternId inner;
 };
 
 // Statement nodes

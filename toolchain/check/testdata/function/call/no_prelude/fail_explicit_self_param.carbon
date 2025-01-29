@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/no_prelude/fail_explicit_self_param.carbon
 
-// CHECK:STDERR: fail_explicit_self_param.carbon:[[@LINE+3]]:6: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
+// CHECK:STDERR: fail_explicit_self_param.carbon:[[@LINE+4]]:6: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
 // CHECK:STDERR: fn F(self: ());
 // CHECK:STDERR:      ^~~~~~~~
+// CHECK:STDERR:
 fn F(self: ());
 
 fn Run() {
@@ -38,9 +39,9 @@ fn Run() {
 // CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc14_13.1: type = splice_block %.loc14_13.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc14_13.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc14_13.3: type = converted %.loc14_13.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc15_13.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc15_13.3: type = converted %.loc15_13.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -52,10 +53,10 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc17_6.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_6.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_6.2: %empty_tuple.type = converted %.loc17_6.1, %empty_tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc17_6.2)
+// CHECK:STDOUT:   %.loc18_6.2: %empty_tuple.type = converted %.loc18_6.1, %empty_tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc18_6.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

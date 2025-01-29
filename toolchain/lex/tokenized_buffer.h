@@ -39,20 +39,20 @@ class TokenizedBuffer;
 // All other APIs to query a `LineIndex` are on the `TokenizedBuffer`.
 struct LineIndex : public IndexBase<LineIndex> {
   static constexpr llvm::StringLiteral Label = "line";
-  static const LineIndex Invalid;
+  static const LineIndex None;
   using IndexBase::IndexBase;
 };
 
-constexpr LineIndex LineIndex::Invalid(InvalidIndex);
+constexpr LineIndex LineIndex::None(NoneIndex);
 
 // Indices for comments within the buffer.
 struct CommentIndex : public IndexBase<CommentIndex> {
   static constexpr llvm::StringLiteral Label = "comment";
-  static const CommentIndex Invalid;
+  static const CommentIndex None;
   using IndexBase::IndexBase;
 };
 
-constexpr CommentIndex CommentIndex::Invalid(InvalidIndex);
+constexpr CommentIndex CommentIndex::None(NoneIndex);
 
 // Random-access iterator over comments within the buffer.
 using CommentIterator = IndexIterator<CommentIndex>;

@@ -20,12 +20,13 @@ class A {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+6]]:3: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
   // CHECK:STDERR:   import C;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-15]]:1: note: first declaration is here [FirstDecl]
   // CHECK:STDERR: class A {
   // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR:
   import C;
 }
 

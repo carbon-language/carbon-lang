@@ -27,9 +27,10 @@ impl class
 // --- fail_extend_adapt_base.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_adapt_base.carbon:[[@LINE+3]]:16: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_extend_adapt_base.carbon:[[@LINE+4]]:16: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   extend adapt base B;
   // CHECK:STDERR:                ^~~~
+  // CHECK:STDERR:
   extend adapt base B;
 }
 

@@ -39,7 +39,7 @@ static auto DiagnoseNotAllowed(
     SemIR::LocId context_loc_id) -> void {
   auto diag = StartDiagnoseNotAllowed(context, diagnostic_base, modifier_node,
                                       decl_kind);
-  if (context_loc_id.is_valid()) {
+  if (context_loc_id.has_value()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note, "containing definition here");
     diag.Note(context_loc_id, ModifierNotInContext);
   }
@@ -67,7 +67,7 @@ template <typename DiagnosticBaseT>
 static auto ForbidModifiersOnDecl(
     Context& context, const DiagnosticBaseT& diagnostic_base,
     DeclIntroducerState& introducer, KeywordModifierSet forbidden,
-    SemIR::LocId context_loc_id = SemIR::LocId::Invalid) -> void {
+    SemIR::LocId context_loc_id = SemIR::LocId::None) -> void {
   auto not_allowed = introducer.modifier_set & forbidden;
   if (not_allowed.empty()) {
     return;
@@ -80,7 +80,7 @@ static auto ForbidModifiersOnDecl(
       DiagnoseNotAllowed(context, diagnostic_base,
                          introducer.modifier_node_id(order), introducer.kind,
                          context_loc_id);
-      introducer.set_modifier_node_id(order, Parse::NodeId::Invalid);
+      introducer.set_modifier_node_id(order, Parse::NodeId::None);
     }
   }
 
@@ -189,7 +189,7 @@ auto RestrictExternModifierOnDecl(Context& context,
     ForbidModifiersOnDecl(context, ModifierExternNotAllowed, introducer,
                           KeywordModifierSet::Extern);
     // Treat as unset.
-    introducer.extern_library = SemIR::LibraryNameId::Invalid;
+    introducer.extern_library = SemIR::LibraryNameId::None;
     return;
   }
 
@@ -204,7 +204,7 @@ auto RestrictExternModifierOnDecl(Context& context,
     // Right now this can produce both this and the below diagnostic.
   }
 
-  if (is_definition && introducer.extern_library.is_valid()) {
+  if (is_definition && introducer.extern_library.has_value()) {
     CARBON_DIAGNOSTIC(ExternLibraryOnDefinition, Error,
                       "a library cannot be provided for an `extern` modifier "
                       "on a definition");

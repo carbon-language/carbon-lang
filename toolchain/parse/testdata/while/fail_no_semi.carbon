@@ -19,9 +19,10 @@ fn F() {
     }
     if (c) {
       continue
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:5: error: `continue` statements must end with a `;` [ExpectedStatementSemi]
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:5: error: `continue` statements must end with a `;` [ExpectedStatementSemi]
     // CHECK:STDERR:     }
     // CHECK:STDERR:     ^
+    // CHECK:STDERR:
     }
   }
 }

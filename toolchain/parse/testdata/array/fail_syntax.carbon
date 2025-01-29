@@ -62,22 +62,24 @@ var x: [i32;;
 
 // --- fail_no_semi.carbon
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:12: error: expected `;` in array type [ExpectedArraySemi]
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:12: error: expected `;` in array type [ExpectedArraySemi]
 // CHECK:STDERR: var x: [i32];
 // CHECK:STDERR:            ^
+// CHECK:STDERR:
 var x: [i32];
 
 // CHECK:STDOUT: - filename: fail_type.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '['},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:               {kind: 'ArrayExprStart', text: '['},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_invalid_char.carbon
@@ -100,24 +102,26 @@ var x: [i32];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
-// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '['},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
+// CHECK:STDOUT:               {kind: 'ArrayExprStart', text: '['},
+// CHECK:STDOUT:               {kind: 'InvalidParse', text: '`', has_error: yes},
+// CHECK:STDOUT:             {kind: 'ArrayExprSemi', text: '`', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: '`', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: '`', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: '`', has_error: yes},
-// CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:           {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_no_close_bracket.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: '[', has_error: yes},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: '[', has_error: yes},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -125,12 +129,13 @@ var x: [i32];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '['},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:               {kind: 'ArrayExprStart', text: '['},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

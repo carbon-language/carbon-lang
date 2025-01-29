@@ -17,9 +17,10 @@ fn Main() {
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:
   a = a.(a);
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   a = a.(F)();
   // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR:
   a = a.(F)();
 }
 
@@ -32,7 +33,7 @@ fn Main() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.d04: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
@@ -48,8 +49,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -88,25 +89,33 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc14_3.1: %i32 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
-// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_3, %impl.elem0 [template = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.b42]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_3) [template = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc14: init %i32 = converted %int_3, %int.convert_checked [template = constants.%int_3.822]
-// CHECK:STDOUT:   assign %a.var, %.loc14
+// CHECK:STDOUT:   %.loc14_3.2: init %i32 = converted %int_3, %int.convert_checked [template = constants.%int_3.822]
+// CHECK:STDOUT:   assign %a.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_10: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref.loc19_3: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_10: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc19: %i32 = bind_value %a.ref.loc19_10
 // CHECK:STDOUT:   assign %a.ref.loc19_3, %.loc19
-// CHECK:STDOUT:   %a.ref.loc23_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc23_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc24_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc24_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   assign %a.ref.loc23_3, %F.call
+// CHECK:STDOUT:   assign %a.ref.loc24_3, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -46,12 +46,13 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+6]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl library "foo";
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-39]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR:
   impl library "foo";
 }
 

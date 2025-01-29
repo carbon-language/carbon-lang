@@ -51,9 +51,10 @@ fn F() {
   // CHECK:STDERR:
   t->(2, 3);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+3]]:9: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:9: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:   s->(g h i ());
   // CHECK:STDERR:         ^
+  // CHECK:STDERR:
   s->(g h i ());
 }
 

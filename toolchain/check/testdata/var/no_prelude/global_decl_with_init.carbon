@@ -23,7 +23,16 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.v = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %struct_type.v = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var x
+// CHECK:STDOUT:   %.loc11_15: type = splice_block %struct_type.v [template = constants.%struct_type.v] {
+// CHECK:STDOUT:     %.loc11_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template = constants.%struct_type.v]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -35,8 +44,8 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:   %.loc11_26.2: init %empty_tuple.type = tuple_init () to %.loc11_27.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_27.3: init %empty_tuple.type = converted %.loc11_26.1, %.loc11_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_27.4: init %struct_type.v = struct_init (%.loc11_27.3) to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_28: init %struct_type.v = converted %.loc11_27.1, %.loc11_27.4 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc11_28
+// CHECK:STDOUT:   %.loc11_1: init %struct_type.v = converted %.loc11_27.1, %.loc11_27.4 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc11_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

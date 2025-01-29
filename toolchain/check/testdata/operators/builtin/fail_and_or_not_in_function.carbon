@@ -14,13 +14,15 @@ fn F(b: bool) -> type {
 }
 
 // TODO: Short-circuit operators should be permitted outside functions.
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+10]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var and_: F(true and true);
 // CHECK:STDERR:             ^~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:11: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+6]]:11: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var and_: F(true and true);
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR:
 var and_: F(true and true);
 
@@ -38,27 +40,30 @@ var and_: F(true and true);
 // CHECK:STDERR:
 var and_val: bool = true and true;
 
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:12: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+10]]:12: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_: F(true or true);
 // CHECK:STDERR:            ^~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+6]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var or_: F(true or true);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:
 var or_: F(true or true);
 
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+11]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+12]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_val: bool = true or true;
 // CHECK:STDERR:                    ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+7]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_val: bool = true or true;
 // CHECK:STDERR:                    ^~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+3]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_val: bool = true or true;
 // CHECK:STDERR:                    ^~~~~~~~~~~~
+// CHECK:STDERR:
 var or_val: bool = true or true;
 
 // CHECK:STDOUT: --- fail_and_or_not_in_function.carbon
@@ -79,9 +84,9 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.783
-// CHECK:STDOUT:     .Int = %import_ref.485
-// CHECK:STDOUT:     .Float = %import_ref.1d6
+// CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Float = %Core.Float
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -113,13 +118,39 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %and_.patt: <error> = binding_pattern and_
+// CHECK:STDOUT:     %.loc27: <error> = var_pattern %and_.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %and_.var: ref <error> = var and_
-// CHECK:STDOUT:   %and_: ref <error> = bind_name and_, %and_.var
+// CHECK:STDOUT:   %and_: <error> = bind_name and_, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %and_val.patt: bool = binding_pattern and_val
+// CHECK:STDOUT:     %.loc41_1: bool = var_pattern %and_val.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %and_val.var: ref bool = var and_val
+// CHECK:STDOUT:   %.loc41_14.1: type = splice_block %.loc41_14.3 [template = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc41: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc41_14.2: type = value_of_initializer %bool.make_type.loc41 [template = bool]
+// CHECK:STDOUT:     %.loc41_14.3: type = converted %bool.make_type.loc41, %.loc41_14.2 [template = bool]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %and_val: ref bool = bind_name and_val, %and_val.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %or_.patt: <error> = binding_pattern or_
+// CHECK:STDOUT:     %.loc53: <error> = var_pattern %or_.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
-// CHECK:STDOUT:   %or_: ref <error> = bind_name or_, %or_.var
+// CHECK:STDOUT:   %or_: <error> = bind_name or_, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %or_val.patt: bool = binding_pattern or_val
+// CHECK:STDOUT:     %.loc67_1: bool = var_pattern %or_val.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %or_val.var: ref bool = var or_val
+// CHECK:STDOUT:   %.loc67_13.1: type = splice_block %.loc67_13.3 [template = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc67: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc67_13.2: type = value_of_initializer %bool.make_type.loc67 [template = bool]
+// CHECK:STDOUT:     %.loc67_13.3: type = converted %bool.make_type.loc67, %.loc67_13.2 [template = bool]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %or_val: ref bool = bind_name or_val, %or_val.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
