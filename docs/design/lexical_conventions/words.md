@@ -39,7 +39,7 @@ in Unicode Normalization Form C (NFC).
 
 <!--
 Keep in sync:
-- utils/textmate/Syntaxes/Carbon.plist
+- utils/textmate/Syntaxes/carbom.tmLanguage.json
 - utils/tree_sitter/queries/highlights.scm
 -->
 
@@ -54,6 +54,8 @@ The following words are interpreted as keywords:
 -   `auto`
 -   `base`
 -   `break`
+-   `Core`
+-   `Cpp`
 -   `case`
 -   `choice`
 -   `class`
@@ -92,6 +94,7 @@ The following words are interpreted as keywords:
 -   `return`
 -   `returned`
 -   `Self`
+-   `self`
 -   `template`
 -   `then`
 -   `type`

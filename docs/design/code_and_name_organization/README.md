@@ -546,6 +546,7 @@ the caller.
 
 ```regex
 import IDENTIFIER (library NAME_PATH)?;
+import Core (library NAME_PATH)?;
 import library NAME_PATH;
 import library default;
 ```
@@ -554,7 +555,9 @@ An import with a package name `IDENTIFIER` declares a package entity named after
 the imported package, and makes API entities from the imported library available
 through it. `Main` cannot be imported from other packages; in other words, only
 `import library NAME_PATH` syntax can be used to import from `Main`. Imports of
-`Main//default` are invalid.
+`Main//default` are invalid. The keyword `Core` can be used as a package name in
+an import in order to import portions of the standard library that are not part
+of the prelude.
 
 The full name path is a concatenation of the names of the package entity, any
 namespace entities applied, and the final entity addressed. Child namespaces or
