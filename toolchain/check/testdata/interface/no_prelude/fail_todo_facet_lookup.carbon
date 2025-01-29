@@ -11,9 +11,12 @@
 interface Interface { fn F(); }
 
 fn CallStatic(T:! Interface) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: value of type `<type of F>` is not callable [CallToNonCallable]
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `Self` [DeductionIncomplete]
   // CHECK:STDERR:   T.F();
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE-6]]:23: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: interface Interface { fn F(); }
+  // CHECK:STDERR:                       ^~~~~~~
   // CHECK:STDERR:
   T.F();
 }
@@ -63,21 +66,21 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %T.loc13_15.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet.decl: %CallFacet.type = fn_decl @CallFacet [template = constants.%CallFacet] {
-// CHECK:STDOUT:     %T.patt.loc21_14.1: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %Interface.type = value_param_pattern %T.patt.loc21_14.1, runtime_param<none> [symbolic = %T.patt.loc21_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %x.patt: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %T.patt.loc24_14.1: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: %Interface.type = value_param_pattern %T.patt.loc24_14.1, runtime_param<none> [symbolic = %T.patt.loc24_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %x.patt: @CallFacet.%T.as_type.loc24_32.2 (%T.as_type) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @CallFacet.%T.as_type.loc24_32.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %Interface.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc21_32.1: type = splice_block %.loc21_32.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)] {
-// CHECK:STDOUT:       %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:       %T.as_type.loc21_32.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc21_32.2: type = converted %T.ref, %T.as_type.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.loc24_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc24_14.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @CallFacet.%T.as_type.loc24_32.2 (%T.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc24_32.1: type = splice_block %.loc24_32.2 [symbolic = %T.as_type.loc24_32.2 (constants.%T.as_type)] {
+// CHECK:STDOUT:       %T.ref: %Interface.type = name_ref T, %T.loc24_14.1 [symbolic = %T.loc24_14.2 (constants.%T)]
+// CHECK:STDOUT:       %T.as_type.loc24_32.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc24_32.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc24_32.2: type = converted %T.ref, %T.as_type.loc24_32.1 [symbolic = %T.as_type.loc24_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @CallFacet.%T.as_type.loc24_32.2 (%T.as_type) = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,33 +104,33 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %T.patt.loc13_15.2: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc18_4.2: type = facet_access_type %T.loc13_15.2 [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %T.as_wit.loc18_4.2: <witness> = facet_access_witness %T.loc13_15.2 [symbolic = %T.as_wit.loc18_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:   %impl.elem0.loc18_4.2: %F.type = impl_witness_access %T.as_wit.loc18_4.2, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %T.as_type.loc21_4.2: type = facet_access_type %T.loc13_15.2 [symbolic = %T.as_type.loc21_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_wit.loc21_4.2: <witness> = facet_access_witness %T.loc13_15.2 [symbolic = %T.as_wit.loc21_4.2 (constants.%T.as_wit)]
+// CHECK:STDOUT:   %impl.elem0.loc21_4.2: %F.type = impl_witness_access %T.as_wit.loc21_4.2, element0 [symbolic = %impl.elem0.loc21_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc13_15.1 [symbolic = %T.loc13_15.2 (constants.%T)]
 // CHECK:STDOUT:     %F.ref: %Interface.assoc_type = name_ref F, @Interface.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %T.as_type.loc18_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc18: type = converted %T.ref, %T.as_type.loc18_4.1 [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.as_wit.loc18_4.1: <witness> = facet_access_witness %T.ref [symbolic = %T.as_wit.loc18_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:     %impl.elem0.loc18_4.1: %F.type = impl_witness_access %T.as_wit.loc18_4.1, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %T.as_type.loc21_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc21_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc21: type = converted %T.ref, %T.as_type.loc21_4.1 [symbolic = %T.as_type.loc21_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.as_wit.loc21_4.1: <witness> = facet_access_witness %T.ref [symbolic = %T.as_wit.loc21_4.2 (constants.%T.as_wit)]
+// CHECK:STDOUT:     %impl.elem0.loc21_4.1: %F.type = impl_witness_access %T.as_wit.loc21_4.1, element0 [symbolic = %impl.elem0.loc21_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @CallFacet(%T.loc21_14.1: %Interface.type) {
-// CHECK:STDOUT:   %T.loc21_14.2: %Interface.type = bind_symbolic_name T, 0 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc21_14.2: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.as_type.loc21_32.2: type = facet_access_type %T.loc21_14.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
+// CHECK:STDOUT: generic fn @CallFacet(%T.loc24_14.1: %Interface.type) {
+// CHECK:STDOUT:   %T.loc24_14.2: %Interface.type = bind_symbolic_name T, 0 [symbolic = %T.loc24_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc24_14.2: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.as_type.loc24_32.2: type = facet_access_type %T.loc24_14.2 [symbolic = %T.as_type.loc24_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallFacet.%T.as_type.loc24_32.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %Interface.type, %x.param_patt: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn(%T.param_patt: %Interface.type, %x.param_patt: @CallFacet.%T.as_type.loc24_32.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref: @CallFacet.%T.as_type.loc24_32.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -140,8 +143,8 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallFacet(constants.%T) {
-// CHECK:STDOUT:   %T.loc21_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc21_14.2 => constants.%T
-// CHECK:STDOUT:   %T.as_type.loc21_32.2 => constants.%T.as_type
+// CHECK:STDOUT:   %T.loc24_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc24_14.2 => constants.%T
+// CHECK:STDOUT:   %T.as_type.loc24_32.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

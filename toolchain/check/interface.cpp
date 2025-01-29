@@ -108,11 +108,20 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
             .Get(assoc_const->assoc_const_id)
             .generic_id,
         self_type_id, self_witness_id);
+    return SemIR::GetTypeInSpecific(context.sem_ir(), specific_id,
+                                    context.insts().Get(decl_id).type_id());
+  } else if (auto fn = decl.TryAs<SemIR::FunctionDecl>()) {
+    specific_id = GetSelfSpecificForInterfaceMemberWithSelfType(
+        context, loc, interface_specific_id,
+        context.functions()
+            .Get(fn->function_id)
+            .generic_id,
+        self_type_id, self_witness_id);
+    return context.GetSelfBoundAssociatedFunctionType(fn->function_id,
+                                                      specific_id);
+  } else {
+    CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
   }
-  // TODO: For a `FunctionDecl`, should we substitute `Self` into the type?
-
-  return SemIR::GetTypeInSpecific(context.sem_ir(), specific_id,
-                                  context.insts().Get(decl_id).type_id());
 }
 
 }  // namespace Carbon::Check
