@@ -402,9 +402,10 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
         }
         [[fallthrough]];
       }
-      default:
+      default: {
         // Not an instance member: no instance binding.
         return member_id;
+      }
     }
   }
 }
@@ -503,6 +504,14 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   auto member_id = LookupMemberNameInScope(context, loc_id, base_id, name_id,
                                            base_type_const_id, lookup_scopes,
                                            /*lookup_in_type_of_base=*/true);
+
+  // For name lookup into a facet, never perform instance binding.
+  // TODO: According to the design, this should be a "lookup in base" lookup,
+  // not a "lookup in type of base" lookup, and the facet itself should have
+  // member names that directly name members of the `impl`.
+  if (context.IsFacetType(base_type_id)) {
+    return member_id;
+  }
 
   // Perform instance binding if we found an instance member.
   member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);
