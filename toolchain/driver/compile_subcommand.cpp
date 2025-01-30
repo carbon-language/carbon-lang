@@ -333,12 +333,15 @@ class CompilationUnit {
   // Parses tokens. Returns true on success.
   auto RunParse() -> void;
 
-  auto PreCheck() -> Parse::NodeLocConverter&;
+  // Prepares per-IR lazy fetch functions which may come up in cross-IR
+  // diagnostics.
+  auto PreCheck() -> llvm::function_ref<const Parse::TreeAndSubtrees&()>;
 
   // Returns information needed to check this unit.
-  auto GetCheckUnit(SemIR::CheckIRId check_ir_id,
-                    llvm::ArrayRef<Parse::NodeLocConverter*> node_converters)
-      -> Check::Unit;
+  auto GetCheckUnit(
+      SemIR::CheckIRId check_ir_id,
+      llvm::ArrayRef<llvm::function_ref<const Parse::TreeAndSubtrees&()>>
+          all_trees_and_subtrees) -> Check::Unit;
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
   auto PostCheck() -> void;
@@ -411,7 +414,6 @@ class CompilationUnit {
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<const Parse::TreeAndSubtrees&()>>
       get_parse_tree_and_subtrees_;
-  std::optional<Parse::NodeLocConverter> node_converter_;
   std::optional<Check::SemIRDiagnosticConverter> sem_ir_converter_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
@@ -497,33 +499,32 @@ auto CompilationUnit::RunParse() -> void {
   }
 }
 
-auto CompilationUnit::PreCheck() -> Parse::NodeLocConverter& {
+auto CompilationUnit::PreCheck()
+    -> llvm::function_ref<const Parse::TreeAndSubtrees&()> {
   CARBON_CHECK(parse_tree_, "Must call RunParse first");
-  CARBON_CHECK(!node_converter_, "Called PreCheck twice");
+  CARBON_CHECK(!get_parse_tree_and_subtrees_, "Called PreCheck twice");
 
   get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  node_converter_.emplace(&*tokens_, source_->filename(),
-                          *get_parse_tree_and_subtrees_);
-  return *node_converter_;
+  return *get_parse_tree_and_subtrees_;
 }
 
 auto CompilationUnit::GetCheckUnit(
     SemIR::CheckIRId check_ir_id,
-    llvm::ArrayRef<Parse::NodeLocConverter*> node_converters) -> Check::Unit {
-  CARBON_CHECK(node_converter_, "Must call PreCheck first");
+    llvm::ArrayRef<llvm::function_ref<const Parse::TreeAndSubtrees&()>>
+        all_trees_and_subtrees) -> Check::Unit {
+  CARBON_CHECK(get_parse_tree_and_subtrees_, "Must call PreCheck first");
   CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
 
   sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
-  sem_ir_converter_.emplace(node_converters, &*sem_ir_);
+  sem_ir_converter_.emplace(all_trees_and_subtrees, &*sem_ir_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
           .sem_ir = &*sem_ir_,
-          .node_converter = &*node_converter_,
           .sem_ir_converter = &*sem_ir_converter_};
 }
 
@@ -841,23 +842,25 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Pre-check assigns IR IDs and constructs node converters.
-  llvm::SmallVector<Parse::NodeLocConverter*> node_converters;
+  llvm::SmallVector<llvm::function_ref<const Parse::TreeAndSubtrees&()>>
+      all_trees_and_subtrees;
   // This size may not match due to units that are missing source, but that's an
   // error case and not worth extra work.
-  node_converters.reserve(units.size());
+  all_trees_and_subtrees.reserve(units.size());
   for (auto& unit : units) {
     if (unit->has_source()) {
-      node_converters.push_back(&unit->PreCheck());
+      all_trees_and_subtrees.push_back(unit->PreCheck());
     }
   }
 
   // Gather Check::Units.
   llvm::SmallVector<Check::Unit> check_units;
-  check_units.reserve(node_converters.size());
+  check_units.reserve(all_trees_and_subtrees.size());
   for (auto& unit : units) {
     if (unit->has_source()) {
       SemIR::CheckIRId check_ir_id(check_units.size());
-      check_units.push_back(unit->GetCheckUnit(check_ir_id, node_converters));
+      check_units.push_back(
+          unit->GetCheckUnit(check_ir_id, all_trees_and_subtrees));
     }
   }
 

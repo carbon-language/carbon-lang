@@ -363,8 +363,8 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    auto converted = unit_and_imports_->unit->node_converter->ConvertLoc(
-        node_id, [](DiagnosticLoc, const DiagnosticBase<>&) {});
+    const auto& tree = unit_and_imports_->unit->get_parse_tree_and_subtrees();
+    auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.

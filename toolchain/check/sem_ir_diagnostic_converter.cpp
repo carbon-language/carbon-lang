@@ -198,10 +198,11 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
 auto SemIRDiagnosticConverter::ConvertLocInFile(const SemIR::File* sem_ir,
                                                 Parse::NodeId node_id,
                                                 bool token_only,
-                                                ContextFnT context_fn) const
+                                                ContextFnT /*context_fn*/) const
     -> ConvertedDiagnosticLoc {
-  return node_converters_[sem_ir->check_ir_id().index]->ConvertLoc(
-      Parse::NodeLoc(node_id, token_only), context_fn);
+  const auto& tree_and_subtrees =
+      imported_trees_and_subtrees_[sem_ir->check_ir_id().index]();
+  return tree_and_subtrees.NodeToDiagnosticLoc(node_id, token_only);
 }
 
 }  // namespace Carbon::Check

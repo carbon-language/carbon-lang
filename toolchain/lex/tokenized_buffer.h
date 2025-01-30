@@ -194,6 +194,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
+  // Converts a token to a diagnostic location.
+  auto TokenToDiagnosticLoc(TokenIndex token) const -> ConvertedDiagnosticLoc;
+
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
 
@@ -221,7 +224,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
  private:
   friend class Lexer;
-  friend class TokenDiagnosticConverter;
 
   // A diagnostic location converter that maps token locations into source
   // buffer locations.
@@ -238,6 +240,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
    private:
     const TokenizedBuffer* tokens_;
   };
+
+  // Converts a pointer into the source to a diagnostic location.
+  auto SourcePointerToDiagnosticLoc(const char* loc) const
+      -> ConvertedDiagnosticLoc;
 
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.

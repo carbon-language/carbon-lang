@@ -403,24 +403,26 @@ class Context {
   }
 
  private:
-  // Applies the `position_` to the `last_byte_offset` returned by `ConvertLoc`.
+  // Applies the `position_` to the `last_byte_offset` returned by
+  // `TokenToDiagnosticLoc`.
   class TokenDiagnosticConverterForParse
-      : public Lex::TokenDiagnosticConverter {
+      : public DiagnosticConverter<Lex::TokenIndex> {
    public:
     explicit TokenDiagnosticConverterForParse(Lex::TokenizedBuffer* tokens,
                                               Lex::TokenIterator* position)
-        : Lex::TokenDiagnosticConverter(tokens), position_(position) {}
+        : tokens_(tokens), position_(position) {}
 
-    auto ConvertLoc(Lex::TokenIndex token, ContextFnT context_fn) const
+    auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
         -> ConvertedDiagnosticLoc override {
-      auto converted =
-          Lex::TokenDiagnosticConverter::ConvertLoc(token, context_fn);
+      auto converted = tokens_->TokenToDiagnosticLoc(token);
       converted.last_byte_offset = std::max(
-          converted.last_byte_offset, tokens().GetByteOffset(**position_));
+          converted.last_byte_offset, tokens_->GetByteOffset(**position_));
       return converted;
     }
 
    private:
+    Lex::TokenizedBuffer* tokens_;
+
     // The position in `Parse()`.
     Lex::TokenIterator* position_;
   };
