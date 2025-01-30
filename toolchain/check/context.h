@@ -489,6 +489,10 @@ class Context {
                                SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
 
+  // Gets the type of a function in an impl. The returned type will be complete.
+  auto GetImplFunctionType(SemIR::InstId interface_function_type_id,
+                           SemIR::InstId self_id) -> SemIR::TypeId;
+
   // Gets the facet type corresponding to a particular interface.
   auto GetInterfaceType(SemIR::InterfaceId interface_id,
                         SemIR::SpecificId specific_id) -> SemIR::TypeId;

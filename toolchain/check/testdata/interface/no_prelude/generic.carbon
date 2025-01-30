@@ -91,7 +91,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %impl_witness.49b: <witness> = impl_witness (@impl.2.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.005: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.317: %F.type.005 = struct_value () [template]
-// CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.ce6 = facet_value %C, %impl_witness.49b [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.683 = facet_value %C, %impl_witness.49b [template]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [template]
 // CHECK:STDOUT:   %N: %T.8b3 = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T.8b3 = symbolic_binding_pattern N, 1 [symbolic]

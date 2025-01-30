@@ -14,6 +14,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::None,
                            .enclosing_specific_id = SpecificId::None,
                            .resolved_specific_id = SpecificId::None,
+                           .self_type_id = InstId::None,
                            .self_id = InstId::None,
                            .is_error = false};
 
@@ -34,6 +35,13 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
     return result;
   }
   auto val = sem_ir.insts().Get(val_id);
+
+  if (auto impl_fn_type =
+          sem_ir.types().TryGetAs<ImplFunctionType>(val.type_id())) {
+    result.self_type_id = impl_fn_type->self_id;
+    val = sem_ir.insts().Get(impl_fn_type->interface_function_type_id);
+  }
+
   auto fn_type = sem_ir.types().TryGetAs<FunctionType>(val.type_id());
   if (!fn_type) {
     result.is_error = val.type_id() == SemIR::ErrorInst::SingletonTypeId;

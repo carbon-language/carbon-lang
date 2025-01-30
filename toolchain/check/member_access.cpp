@@ -355,49 +355,57 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   auto member_type_id = context.insts().Get(member_id).type_id();
-  CARBON_KIND_SWITCH(context.types().GetAsInst(member_type_id)) {
-    case CARBON_KIND(SemIR::UnboundElementType unbound_element_type): {
-      // Convert the base to the type of the element if necessary.
-      base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
-                                          unbound_element_type.class_type_id);
+  auto member_type_inst_id = context.types().GetInstId(member_type_id);
+  while (true) {
+    CARBON_KIND_SWITCH(context.insts().Get(member_type_inst_id)) {
+      case CARBON_KIND(SemIR::UnboundElementType unbound_element_type): {
+        // Convert the base to the type of the element if necessary.
+        base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
+                                            unbound_element_type.class_type_id);
 
-      // Find the specified element, which could be either a field or a base
-      // class, and build an element access expression.
-      auto element_id = context.constant_values().GetConstantInstId(member_id);
-      CARBON_CHECK(element_id.has_value(),
-                   "Non-constant value {0} of unbound element type",
-                   context.insts().Get(member_id));
-      auto index = GetClassElementIndex(context, element_id);
-      auto access_id = context.GetOrAddInst<SemIR::ClassElementAccess>(
-          loc_id, {.type_id = unbound_element_type.element_type_id,
-                   .base_id = base_id,
-                   .index = index});
-      if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
-              SemIR::ExprCategory::Value &&
-          SemIR::GetExprCategory(context.sem_ir(), access_id) !=
-              SemIR::ExprCategory::Value) {
-        // Class element access on a value expression produces an ephemeral
-        // reference if the class's value representation is a pointer to the
-        // object representation. Add a value binding in that case so that the
-        // expression category of the result matches the expression category of
-        // the base.
-        access_id = ConvertToValueExpr(context, access_id);
+        // Find the specified element, which could be either a field or a base
+        // class, and build an element access expression.
+        auto element_id =
+            context.constant_values().GetConstantInstId(member_id);
+        CARBON_CHECK(element_id.has_value(),
+                     "Non-constant value {0} of unbound element type",
+                     context.insts().Get(member_id));
+        auto index = GetClassElementIndex(context, element_id);
+        auto access_id = context.GetOrAddInst<SemIR::ClassElementAccess>(
+            loc_id, {.type_id = unbound_element_type.element_type_id,
+                     .base_id = base_id,
+                     .index = index});
+        if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
+                SemIR::ExprCategory::Value &&
+            SemIR::GetExprCategory(context.sem_ir(), access_id) !=
+                SemIR::ExprCategory::Value) {
+          // Class element access on a value expression produces an ephemeral
+          // reference if the class's value representation is a pointer to the
+          // object representation. Add a value binding in that case so that the
+          // expression category of the result matches the expression category
+          // of the base.
+          access_id = ConvertToValueExpr(context, access_id);
+        }
+        return access_id;
       }
-      return access_id;
-    }
-    case CARBON_KIND(SemIR::FunctionType fn_type): {
-      if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
-        return context.GetOrAddInst<SemIR::BoundMethod>(
-            loc_id, {.type_id = context.GetSingletonType(
-                         SemIR::BoundMethodType::SingletonInstId),
-                     .object_id = base_id,
-                     .function_decl_id = member_id});
+      case CARBON_KIND(SemIR::ImplFunctionType impl_fn_type): {
+        member_type_inst_id = impl_fn_type.interface_function_type_id;
+        continue;
       }
-      [[fallthrough]];
+      case CARBON_KIND(SemIR::FunctionType fn_type): {
+        if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
+          return context.GetOrAddInst<SemIR::BoundMethod>(
+              loc_id, {.type_id = context.GetSingletonType(
+                           SemIR::BoundMethodType::SingletonInstId),
+                       .object_id = base_id,
+                       .function_decl_id = member_id});
+        }
+        [[fallthrough]];
+      }
+      default:
+        // Not an instance member: no instance binding.
+        return member_id;
     }
-    default:
-      // Not an instance member: no instance binding.
-      return member_id;
   }
 }
 

@@ -1595,6 +1595,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return RebuildIfFieldsAreConstant(
           eval_context, inst,
           &SemIR::GenericInterfaceType::enclosing_specific_id);
+    case SemIR::ImplFunctionType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst,
+          &SemIR::ImplFunctionType::interface_function_type_id,
+          &SemIR::ImplFunctionType::self_id);
     case SemIR::ImplWitness::Kind:
       // We intentionally don't replace the `elements_id` field here. We want to
       // track that specific InstBlock in particular, not coalesce blocks with

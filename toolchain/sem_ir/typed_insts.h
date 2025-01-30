@@ -793,6 +793,23 @@ struct ImplDecl {
   DeclInstBlockId decl_block_id;
 };
 
+// The type of an associated function within an `impl`.
+struct ImplFunctionType {
+  static constexpr auto Kind =
+      InstKind::ImplFunctionType.Define<Parse::NoneNodeId>(
+          {.ir_name = "impl_fn_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Conditional,
+           .is_lowered = false});
+
+  TypeId type_id;
+  // The type of the function within the interface. This includes the interface's
+  // SpecificId if applicable.
+  InstId interface_function_type_id;
+  // The value to use for `Self` in this function.
+  InstId self_id;
+};
+
 // A witness that a type implements an interface.
 struct ImplWitness {
   static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(

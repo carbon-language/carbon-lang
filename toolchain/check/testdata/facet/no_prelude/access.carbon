@@ -17,12 +17,9 @@ interface I {
 }
 
 fn Use(T:! I) {
-  // CHECK:STDERR: simple.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `Self` [DeductionIncomplete]
+  // CHECK:STDERR: simple.carbon:[[@LINE+4]]:3: error: value of type `<type of DoIt in T as I>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   T.DoIt();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: simple.carbon:[[@LINE-7]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR:   fn DoIt();
-  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   T.DoIt();
 }
@@ -36,12 +33,9 @@ interface I {
 }
 
 fn Use(T:! I) -> T {
-  // CHECK:STDERR: fail_todo_use_self.carbon:[[@LINE+7]]:10: error: cannot deduce value for generic parameter `Self` [DeductionIncomplete]
+  // CHECK:STDERR: fail_todo_use_self.carbon:[[@LINE+4]]:10: error: value of type `<type of Make in T as I>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   return T.Make();
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_todo_use_self.carbon:[[@LINE-7]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR:   fn Make() -> Self;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   return T.Make();
 }
@@ -61,7 +55,9 @@ fn Use(T:! I) -> T {
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %T.as_wit: <witness> = facet_access_witness %T [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %DoIt.type = impl_witness_access %T.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type, %T.as_wit [symbolic]
+// CHECK:STDOUT:   %.1bb: type = impl_fn_type %DoIt.type, %I.facet [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.1bb = impl_witness_access %T.as_wit, element0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -100,18 +96,20 @@ fn Use(T:! I) -> T {
 // CHECK:STDOUT:   %T.patt.loc8_8.2: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc16_4.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc16_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %T.as_wit.loc16_4.2: <witness> = facet_access_witness %T.loc8_8.2 [symbolic = %T.as_wit.loc16_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:   %impl.elem0.loc16_4.2: %DoIt.type = impl_witness_access %T.as_wit.loc16_4.2, element0 [symbolic = %impl.elem0.loc16_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %T.as_type.loc13_4.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_wit.loc13_4.2: <witness> = facet_access_witness %T.loc8_8.2 [symbolic = %T.as_wit.loc13_4.2 (constants.%T.as_wit)]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc13_4.2, %T.as_wit.loc13_4.2 [symbolic = %I.facet (constants.%I.facet)]
+// CHECK:STDOUT:   %.loc13_4.2: type = impl_fn_type constants.%DoIt.type, %I.facet [symbolic = %.loc13_4.2 (constants.%.1bb)]
+// CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.1bb) = impl_witness_access %T.as_wit.loc13_4.2, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %I.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %DoIt.ref: %I.assoc_type = name_ref DoIt, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %T.as_type.loc16_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc16_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc16: type = converted %T.ref, %T.as_type.loc16_4.1 [symbolic = %T.as_type.loc16_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.as_wit.loc16_4.1: <witness> = facet_access_witness %T.ref [symbolic = %T.as_wit.loc16_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:     %impl.elem0.loc16_4.1: %DoIt.type = impl_witness_access %T.as_wit.loc16_4.1, element0 [symbolic = %impl.elem0.loc16_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %T.as_type.loc13_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc13_4.1: type = converted %T.ref, %T.as_type.loc13_4.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.as_wit.loc13_4.1: <witness> = facet_access_witness %T.ref [symbolic = %T.as_wit.loc13_4.2 (constants.%T.as_wit)]
+// CHECK:STDOUT:     %impl.elem0.loc13_4.1: @Use.%.loc13_4.2 (%.1bb) = impl_witness_access %T.as_wit.loc13_4.1, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -140,7 +138,9 @@ fn Use(T:! I) -> T {
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %T.as_wit: <witness> = facet_access_witness %T [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %Make.type = impl_witness_access %T.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type, %T.as_wit [symbolic]
+// CHECK:STDOUT:   %.eae: type = impl_fn_type %Make.type, %I.facet [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.eae = impl_witness_access %T.as_wit, element0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -200,17 +200,19 @@ fn Use(T:! I) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%T.as_type.loc8_18.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %T.as_wit.loc16_11.2: <witness> = facet_access_witness %T.loc8_8.2 [symbolic = %T.as_wit.loc16_11.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:   %impl.elem0.loc16_11.2: %Make.type = impl_witness_access %T.as_wit.loc16_11.2, element0 [symbolic = %impl.elem0.loc16_11.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %T.as_wit.loc13_11.2: <witness> = facet_access_witness %T.loc8_8.2 [symbolic = %T.as_wit.loc13_11.2 (constants.%T.as_wit)]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc8_18.2, %T.as_wit.loc13_11.2 [symbolic = %I.facet (constants.%I.facet)]
+// CHECK:STDOUT:   %.loc13_11.2: type = impl_fn_type constants.%Make.type, %I.facet [symbolic = %.loc13_11.2 (constants.%.eae)]
+// CHECK:STDOUT:   %impl.elem0.loc13_11.2: @Use.%.loc13_11.2 (%.eae) = impl_witness_access %T.as_wit.loc13_11.2, element0 [symbolic = %impl.elem0.loc13_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %I.type) -> @Use.%T.as_type.loc8_18.2 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc16: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc13: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %Make.ref: %I.assoc_type = name_ref Make, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %T.as_type.loc16: type = facet_access_type %T.ref.loc16 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc16: type = converted %T.ref.loc16, %T.as_type.loc16 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.as_wit.loc16_11.1: <witness> = facet_access_witness %T.ref.loc16 [symbolic = %T.as_wit.loc16_11.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:     %impl.elem0.loc16_11.1: %Make.type = impl_witness_access %T.as_wit.loc16_11.1, element0 [symbolic = %impl.elem0.loc16_11.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %T.as_type.loc13: type = facet_access_type %T.ref.loc13 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc13_11.1: type = converted %T.ref.loc13, %T.as_type.loc13 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.as_wit.loc13_11.1: <witness> = facet_access_witness %T.ref.loc13 [symbolic = %T.as_wit.loc13_11.2 (constants.%T.as_wit)]
+// CHECK:STDOUT:     %impl.elem0.loc13_11.1: @Use.%.loc13_11.2 (%.eae) = impl_witness_access %T.as_wit.loc13_11.1, element0 [symbolic = %impl.elem0.loc13_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

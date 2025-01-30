@@ -767,6 +767,20 @@ static auto GetLocalCanonicalInstBlockId(ImportContext& context,
   return context.local_inst_blocks().AddCanonical(contents);
 }
 
+// Gets a local instruction block containing ImportRefs referring to the
+// instructions in the specified imported instruction block.
+static auto GetLocalImportRefInstBlock(ImportContext& context,
+                                       SemIR::InstBlockId import_inst_block_id)
+    -> SemIR::InstBlockId {
+  llvm::SmallVector<SemIR::InstId> elements;
+  auto import_elements = context.import_inst_blocks().Get(import_inst_block_id);
+  elements.reserve(import_elements.size());
+  for (auto element : import_elements) {
+    elements.push_back(AddImportRef(context, element));
+  }
+  return context.local_inst_blocks().Add(elements);
+}
+
 // Gets an incomplete local version of an imported generic. Most fields are
 // set in the third phase.
 static auto MakeIncompleteGeneric(ImportContext& context, SemIR::InstId decl_id,
@@ -785,34 +799,30 @@ static auto MakeIncompleteGeneric(ImportContext& context, SemIR::InstId decl_id,
 namespace {
 // Local information associated with an imported generic.
 struct GenericData {
-  llvm::SmallVector<SemIR::InstId> bindings;
+  // TODO: Delete `GenericData` if we still don't use it once generic import is
+  // more stable.
 };
 }  // namespace
 
 // Gets a local version of the data associated with a generic.
-static auto GetLocalGenericData(ImportRefResolver& resolver,
-                                SemIR::GenericId generic_id) -> GenericData {
-  if (!generic_id.has_value()) {
-    return GenericData();
-  }
-
-  const auto& generic = resolver.import_generics().Get(generic_id);
-  return {.bindings = GetLocalInstBlockContents(resolver, generic.bindings_id)};
+static auto GetLocalGenericData(ImportRefResolver& /*resolver*/,
+                                SemIR::GenericId /*generic_id*/) -> GenericData {
+  return GenericData{};
 }
 
 // Adds the given local generic data to the given generic.
 static auto SetGenericData(ImportContext& context,
                            SemIR::GenericId import_generic_id,
                            SemIR::GenericId new_generic_id,
-                           const GenericData& generic_data) -> void {
+                           const GenericData& /*generic_data*/) -> void {
   if (!import_generic_id.has_value()) {
     return;
   }
 
   const auto& import_generic = context.import_generics().Get(import_generic_id);
   auto& new_generic = context.local_generics().Get(new_generic_id);
-  new_generic.bindings_id = GetLocalCanonicalInstBlockId(
-      context, import_generic.bindings_id, generic_data.bindings);
+  new_generic.bindings_id =
+      GetLocalImportRefInstBlock(context, import_generic.bindings_id);
 
   // Track that we need to fill in the remaining information in
   // FinishPendingGeneric.
@@ -2117,6 +2127,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ImplFunctionType inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
+  auto interface_function_type_id = GetLocalConstantInstId(
+      resolver, inst.interface_function_type_id);
+  auto self_id = GetLocalConstantInstId(
+      resolver, inst.self_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::ImplFunctionType>(
+      resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
+                 .interface_function_type_id = interface_function_type_id,
+                 .self_id = self_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImportRefLoaded /*inst*/,
                                 SemIR::InstId inst_id) -> ResolveResult {
   // Return the constant for the instruction of the imported constant.
@@ -2393,13 +2420,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  llvm::SmallVector<SemIR::InstId> elements;
-  auto import_elements = resolver.import_inst_blocks().Get(inst.elements_id);
-  elements.reserve(import_elements.size());
-  for (auto element : import_elements) {
-    elements.push_back(AddImportRef(resolver, element));
-  }
-  auto elements_id = resolver.local_inst_blocks().Add(elements);
+  auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::ImplWitness>(
@@ -2755,6 +2776,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ImplDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
     }
+    case CARBON_KIND(SemIR::ImplFunctionType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::ImplWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2928,6 +2952,14 @@ static auto FinishPendingGeneric(ImportRefResolver& resolver,
     -> void {
   const auto& import_generic =
       resolver.import_generics().Get(pending.import_id);
+
+  // Load the bindings for the generic eagerly; they're used to form the self
+  // specific.
+  // TODO: Avoid recursion.
+  for (auto binding_id : resolver.local_inst_blocks().Get(
+           resolver.local_generics().Get(pending.local_id).bindings_id)) {
+    LoadImportRef(resolver.local_context(), binding_id);
+  }
 
   // Don't store the local generic between calls: the generics list can be
   // reallocated by ResolveLocalEvalBlock importing more specifics.

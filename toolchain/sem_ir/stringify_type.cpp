@@ -325,6 +325,15 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << "<type of " << sem_ir.names().GetFormatted(fn_name_id) << ">";
         break;
       }
+      case CARBON_KIND(ImplFunctionType inst): {
+        auto fn_inst =
+            sem_ir.insts().GetAs<FunctionType>(inst.interface_function_type_id);
+        auto fn_name_id = sem_ir.functions().Get(fn_inst.function_id).name_id;
+        out << "<type of " << sem_ir.names().GetFormatted(fn_name_id) << " in ";
+        step_stack.PushString(">");
+        step_stack.PushInstId(inst.self_id);
+        break;
+      }
       case CARBON_KIND(GenericClassType inst): {
         auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
         out << "<type of " << sem_ir.names().GetFormatted(class_name_id) << ">";
