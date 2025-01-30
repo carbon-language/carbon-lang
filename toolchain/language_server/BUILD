@@ -22,7 +22,6 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:file_diagnostics",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )

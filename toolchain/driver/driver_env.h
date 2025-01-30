@@ -11,7 +11,6 @@
 #include "common/ostream.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/file_diagnostics.h"
 #include "toolchain/install/install_paths.h"
 
 namespace Carbon {
