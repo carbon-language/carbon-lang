@@ -9,7 +9,6 @@
 #include "clang-tools-extra/clangd/support/Logger.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/file_diagnostics.h"
 #include "toolchain/language_server/context.h"
 #include "toolchain/language_server/incoming_messages.h"
 #include "toolchain/language_server/outgoing_messages.h"

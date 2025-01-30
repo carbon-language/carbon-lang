@@ -22,7 +22,6 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:file_diagnostics",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )
@@ -33,7 +32,6 @@ cc_library(
     deps = [
         "//common:map",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:file_diagnostics",
     ],
 )
 

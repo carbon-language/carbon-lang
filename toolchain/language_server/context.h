@@ -10,7 +10,6 @@
 #include "common/map.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/file_diagnostics.h"
 
 namespace Carbon::LanguageServer {
 
