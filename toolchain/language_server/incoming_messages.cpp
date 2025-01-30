@@ -102,8 +102,8 @@ auto IncomingMessages::onNotify(llvm::StringRef name, llvm::json::Value value)
   } else {
     CARBON_DIAGNOSTIC(LanguageServerUnsupportedNotification, Warning,
                       "unsupported notification `{0}`", std::string);
-    context_->emitter().Emit("", LanguageServerUnsupportedNotification,
-                             name.str());
+    context_->no_loc_emitter().Emit(LanguageServerUnsupportedNotification,
+                                    name.str());
   }
 
   return true;
@@ -123,8 +123,8 @@ auto IncomingMessages::onReply(llvm::json::Value id,
   CARBON_DIAGNOSTIC(LanguageServerUnexpectedReply, Warning,
                     "unexpected reply to request ID {0}: {1}", std::string,
                     std::string);
-  context_->emitter().Emit("", LanguageServerUnexpectedReply, id_str.TakeStr(),
-                           result_str.TakeStr());
+  context_->no_loc_emitter().Emit(LanguageServerUnexpectedReply,
+                                  id_str.TakeStr(), result_str.TakeStr());
   return true;
 }
 

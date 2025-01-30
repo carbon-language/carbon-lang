@@ -9,6 +9,7 @@
 
 #include "common/map.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/file_diagnostics.h"
 
 namespace Carbon::LanguageServer {
@@ -16,15 +17,15 @@ namespace Carbon::LanguageServer {
 // Context for LSP call handling.
 class Context {
  public:
-  // `emitter` is required.
-  explicit Context(DiagnosticConsumer* consumer) : emitter_(consumer) {}
+  // `consumer` is required.
+  explicit Context(DiagnosticConsumer* consumer) : no_loc_emitter_(consumer) {}
 
-  auto emitter() -> FileDiagnosticEmitter& { return emitter_; }
+  auto no_loc_emitter() -> NoLocDiagnosticEmitter& { return no_loc_emitter_; }
 
   auto files() -> Map<std::string, std::string>& { return files_; }
 
  private:
-  FileDiagnosticEmitter emitter_;
+  NoLocDiagnosticEmitter no_loc_emitter_;
 
   // Content of files managed by the language client.
   Map<std::string, std::string> files_;
