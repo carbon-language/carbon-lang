@@ -793,7 +793,8 @@ struct ImplDecl {
   DeclInstBlockId decl_block_id;
 };
 
-// The type of an associated function within an `impl`.
+// The type of an associated function within an `impl`. This is the type of
+// `(SelfType as Interface).AssociatedFunction`.
 struct ImplFunctionType {
   static constexpr auto Kind =
       InstKind::ImplFunctionType.Define<Parse::NoneNodeId>(

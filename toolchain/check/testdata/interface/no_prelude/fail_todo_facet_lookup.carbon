@@ -11,9 +11,12 @@
 interface Interface { fn F(); }
 
 fn CallStatic(T:! Interface) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: value of type `<type of F in T as Interface>` is not callable [CallToNonCallable]
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `Self` [DeductionIncomplete]
   // CHECK:STDERR:   T.F();
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE-6]]:23: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: interface Interface { fn F(); }
+  // CHECK:STDERR:                       ^~~~~~~
   // CHECK:STDERR:
   T.F();
 }

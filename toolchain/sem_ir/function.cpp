@@ -29,22 +29,22 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
     callee_id = bound_method->function_decl_id;
   }
 
-  // Identify the function we're calling.
+  // Identify the function we're calling by its type.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
     return result;
   }
-  auto val = sem_ir.insts().Get(val_id);
+  auto fn_type_inst =
+      sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
-  if (auto impl_fn_type =
-          sem_ir.types().TryGetAs<ImplFunctionType>(val.type_id())) {
+  if (auto impl_fn_type = fn_type_inst.TryAs<ImplFunctionType>()) {
     result.self_type_id = impl_fn_type->self_id;
-    val = sem_ir.insts().Get(impl_fn_type->interface_function_type_id);
+    fn_type_inst = sem_ir.insts().Get(impl_fn_type->interface_function_type_id);
   }
 
-  auto fn_type = sem_ir.types().TryGetAs<FunctionType>(val.type_id());
+  auto fn_type = fn_type_inst.TryAs<FunctionType>();
   if (!fn_type) {
-    result.is_error = val.type_id() == SemIR::ErrorInst::SingletonTypeId;
+    result.is_error = fn_type_inst.Is<SemIR::ErrorInst>();
     return result;
   }
 

@@ -17,9 +17,12 @@ interface I {
 }
 
 fn Use(T:! I) {
-  // CHECK:STDERR: simple.carbon:[[@LINE+4]]:3: error: value of type `<type of DoIt in T as I>` is not callable [CallToNonCallable]
+  // CHECK:STDERR: simple.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `Self` [DeductionIncomplete]
   // CHECK:STDERR:   T.DoIt();
   // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: simple.carbon:[[@LINE-7]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:   fn DoIt();
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   T.DoIt();
 }
@@ -33,9 +36,12 @@ interface I {
 }
 
 fn Use(T:! I) -> T {
-  // CHECK:STDERR: fail_todo_use_self.carbon:[[@LINE+4]]:10: error: value of type `<type of Make in T as I>` is not callable [CallToNonCallable]
+  // CHECK:STDERR: fail_todo_use_self.carbon:[[@LINE+7]]:10: error: cannot deduce value for generic parameter `Self` [DeductionIncomplete]
   // CHECK:STDERR:   return T.Make();
   // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR: fail_todo_use_self.carbon:[[@LINE-7]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:   fn Make() -> Self;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   return T.Make();
 }
