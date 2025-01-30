@@ -806,7 +806,8 @@ struct GenericData {
 
 // Gets a local version of the data associated with a generic.
 static auto GetLocalGenericData(ImportRefResolver& /*resolver*/,
-                                SemIR::GenericId /*generic_id*/) -> GenericData {
+                                SemIR::GenericId /*generic_id*/)
+    -> GenericData {
   return GenericData{};
 }
 
@@ -2129,10 +2130,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplFunctionType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
-  auto interface_function_type_id = GetLocalConstantInstId(
-      resolver, inst.interface_function_type_id);
-  auto self_id = GetLocalConstantInstId(
-      resolver, inst.self_id);
+  auto interface_function_type_id =
+      GetLocalConstantInstId(resolver, inst.interface_function_type_id);
+  auto self_id = GetLocalConstantInstId(resolver, inst.self_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }

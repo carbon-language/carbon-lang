@@ -44,7 +44,8 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 // and a generic for an associated entity within it.
 static auto GetSelfBinding(Context& context,
                            SemIR::SpecificId interface_specific_id,
-                           SemIR::GenericId assoc_entity_generic_id) -> SemIR::InstId {
+                           SemIR::GenericId assoc_entity_generic_id)
+    -> SemIR::InstId {
   const auto& generic = context.generics().Get(assoc_entity_generic_id);
   auto bindings = context.inst_blocks().Get(generic.bindings_id);
   auto interface_args_id =
