@@ -234,12 +234,11 @@ class DiagnosticEmitter {
 
 // This relies on `void*` location handling on `DiagnosticEmitter`.
 //
-// TODO: Based on how this ends up used or if we get more distinct
-// emitters, it might be worth considering having diagnostics
-// specify that they don't apply to source-location carrying
-// emitters. For example, this might look like a
-// `CARBON_NO_LOC_DIAGNOSTIC` macro, or some other factoring.
-// But it might end up being more noise than it is worth.
+// TODO: Based on how this ends up used or if we get more distinct emitters, it
+// might be worth considering having diagnostics specify that they don't apply
+// to source-location carrying emitters. For example, this might look like a
+// `CARBON_NO_LOC_DIAGNOSTIC` macro, or some other factoring. But it might end
+// up being more noise than it is worth.
 class NoLocDiagnosticEmitter : public DiagnosticEmitter<void*> {
  public:
   // This constructor only applies to NoLocDiagnosticEmitter.
