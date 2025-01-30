@@ -21,7 +21,6 @@ cc_library(
     hdrs = [
         "diagnostic.h",
         "diagnostic_consumer.h",
-        "diagnostic_converter.h",
         "diagnostic_emitter.h",
     ],
     deps = [

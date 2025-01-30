@@ -16,7 +16,6 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
-#include "toolchain/diagnostics/diagnostic_converter.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
 namespace Carbon {
@@ -32,6 +31,51 @@ using NoTypeDeduction = std::type_identity_t<Arg>;
 
 template <typename LocT, typename AnnotateFn>
 class DiagnosticAnnotationScope;
+
+// The result of `DiagnosticConvert::ConvertLoc`. This is non-templated to allow
+// sharing across converters.
+struct ConvertedDiagnosticLoc {
+  // Becomes DiagnosticMessage::loc.
+  DiagnosticLoc loc;
+  // Becomes Diagnostic::last_byte_offset.
+  int32_t last_byte_offset;
+};
+
+// An interface that can convert some representation of a location into a
+// diagnostic location.
+template <typename LocT>
+class DiagnosticConverter {
+ public:
+  // Callback type used to report context messages from ConvertLoc.
+  // Note that the first parameter type is DiagnosticLoc rather than
+  // LocT, because ConvertLoc must not recurse.
+  using ContextFnT =
+      llvm::function_ref<void(DiagnosticLoc, const DiagnosticBase<>&)>;
+
+  virtual ~DiagnosticConverter() = default;
+
+  // Converts a LocT to a DiagnosticLoc and its `last_byte_offset` (see
+  // `DiagnosticMessage`). ConvertLoc may invoke context_fn to provide context
+  // messages.
+  virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
+      -> ConvertedDiagnosticLoc = 0;
+
+  // Converts arg types as needed. Not all uses require conversion, so the
+  // default returns the argument unchanged.
+  virtual auto ConvertArg(llvm::Any arg) const -> llvm::Any { return arg; }
+};
+
+// Used by types to indicate a diagnostic type conversion that results in the
+// provided StorageType. For example, to convert NameId to a std::string, we
+// write:
+//
+// struct NameId {
+//   using DiagnosticType = DiagnosticTypeInfo<std::string>;
+// };
+template <typename StorageTypeT>
+struct DiagnosticTypeInfo {
+  using StorageType = StorageTypeT;
+};
 
 // Manages the creation of reports, the testing if diagnostics are enabled, and
 // the collection of reports.
@@ -61,29 +105,12 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Note(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
-      if (!emitter_) {
-        return *this;
-      }
-      CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note ||
-                       diagnostic_base.Level == DiagnosticLevel::LocationInfo,
-                   "{0}", static_cast<int>(diagnostic_base.Level));
-      AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
-      return *this;
-    }
+              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder&;
 
     // Emits the built diagnostic and its attached notes.
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
-    auto Emit() -> void {
-      if (!emitter_) {
-        return;
-      }
-      for (auto annotate_fn : llvm::reverse(emitter_->annotate_fns_)) {
-        annotate_fn(*this);
-      }
-      emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
-    }
+    auto Emit() -> void;
 
     // Returns true if this DiagnosticBuilder may emit a diagnostic. Can be used
     // to avoid excess work computing notes, etc, if no diagnostic is going to
@@ -96,11 +123,7 @@ class DiagnosticEmitter {
     template <typename... Args>
     explicit DiagnosticBuilder(DiagnosticEmitter<LocT>* emitter, LocT loc,
                                const DiagnosticBase<Args...>& diagnostic_base,
-                               llvm::SmallVector<llvm::Any> args)
-        : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
-      AddMessage(loc, diagnostic_base, std::move(args));
-      CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
-    }
+                               llvm::SmallVector<llvm::Any> args);
 
     // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
     // be silently ignored.
@@ -110,22 +133,7 @@ class DiagnosticEmitter {
     // arguments.
     template <typename... Args>
     auto AddMessage(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-                    llvm::SmallVector<llvm::Any> args) -> void {
-      if (!emitter_) {
-        return;
-      }
-      auto converted = emitter_->converter_->ConvertLoc(
-          loc, [&](DiagnosticLoc context_loc,
-                   const DiagnosticBase<>& context_diagnostic_base) {
-            AddMessageWithDiagnosticLoc(context_loc, context_diagnostic_base,
-                                        {});
-          });
-      // Use the last byte offset from the first message.
-      if (diagnostic_.messages.empty()) {
-        diagnostic_.last_byte_offset = converted.last_byte_offset;
-      }
-      AddMessageWithDiagnosticLoc(converted.loc, diagnostic_base, args);
-    }
+                    llvm::SmallVector<llvm::Any> args) -> void;
 
     // Adds a message to the diagnostic, handling conversion of the arguments. A
     // DiagnosticLoc must be provided instead of a LocT in order to
@@ -133,21 +141,7 @@ class DiagnosticEmitter {
     template <typename... Args>
     auto AddMessageWithDiagnosticLoc(
         DiagnosticLoc loc, const DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args) -> void {
-      if (!emitter_) {
-        return;
-      }
-      diagnostic_.messages.emplace_back(DiagnosticMessage{
-          .kind = diagnostic_base.Kind,
-          .level = diagnostic_base.Level,
-          .loc = loc,
-          .format = diagnostic_base.Format,
-          .format_args = std::move(args),
-          .format_fn = [](const DiagnosticMessage& message) -> std::string {
-            return FormatFn<Args...>(
-                message, std::make_index_sequence<sizeof...(Args)>());
-          }});
-    }
+        llvm::SmallVector<llvm::Any> args) -> void;
 
     // Handles the cast of llvm::Any to Args types for formatv.
     // TODO: Custom formatting can be provided with an format_provider, but that
@@ -155,17 +149,7 @@ class DiagnosticEmitter {
     // that allows diagnostic-specific formatting.
     template <typename... Args, size_t... N>
     static auto FormatFn(const DiagnosticMessage& message,
-                         std::index_sequence<N...> /*indices*/) -> std::string {
-      static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");
-      CARBON_CHECK(message.format_args.size() == sizeof...(Args),
-                   "Argument count mismatch on {0}: {1} != {2}", message.kind,
-                   message.format_args.size(), sizeof...(Args));
-      return llvm::formatv(
-          message.format.data(),
-          llvm::any_cast<
-              typename Internal::DiagnosticTypeForArg<Args>::StorageType>(
-              message.format_args[N])...);
-    }
+                         std::index_sequence<N...> /*indices*/) -> std::string;
 
     DiagnosticEmitter<LocT>* emitter_;
     Diagnostic diagnostic_;
@@ -187,10 +171,7 @@ class DiagnosticEmitter {
   // may outlive the `Emit` call.
   template <typename... Args>
   auto Emit(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-            Internal::NoTypeDeduction<Args>... args) -> void {
-    DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
-        .Emit();
-  }
+            Internal::NoTypeDeduction<Args>... args) -> void;
 
   // A fluent interface for building a diagnostic and attaching notes for added
   // context or information. For example:
@@ -200,10 +181,7 @@ class DiagnosticEmitter {
   //     .Emit();
   template <typename... Args>
   auto Build(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-             Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
-    return DiagnosticBuilder(this, loc, diagnostic_base,
-                             {MakeAny<Args>(args)...});
-  }
+             Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder;
 
   // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
   // be silently ignored.
@@ -213,15 +191,7 @@ class DiagnosticEmitter {
   // Converts an argument to llvm::Any for storage, handling input to storage
   // type conversion when needed.
   template <typename Arg>
-  auto MakeAny(Arg arg) -> llvm::Any {
-    llvm::Any converted = converter_->ConvertArg(arg);
-    using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
-    CARBON_CHECK(
-        llvm::any_cast<Storage>(&converted),
-        "Failed to convert argument of type {0} to its storage type {1}",
-        typeid(Arg).name(), typeid(Storage).name());
-    return converted;
-  }
+  auto MakeAny(Arg arg) -> llvm::Any;
 
   template <typename OtherLocT, typename AnnotateFn>
   friend class DiagnosticAnnotationScope;
@@ -289,6 +259,151 @@ class DiagnosticAnnotationScope {
 template <typename LocT, typename AnnotateFn>
 DiagnosticAnnotationScope(DiagnosticEmitter<LocT>* emitter, AnnotateFn annotate)
     -> DiagnosticAnnotationScope<LocT, AnnotateFn>;
+
+// ============================================================================
+// Only internal implementation details below this point.
+// ============================================================================
+
+namespace Internal {
+
+// Determines whether there's a DiagnosticType member on Arg.
+// Used by DiagnosticEmitter.
+template <typename Arg>
+concept HasDiagnosticType = requires { typename Arg::DiagnosticType; };
+
+// The default implementation with no conversion.
+template <typename Arg>
+struct DiagnosticTypeForArg : public DiagnosticTypeInfo<Arg> {};
+
+// Exposes a custom conversion for an argument type.
+template <typename Arg>
+  requires HasDiagnosticType<Arg>
+struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
+
+}  // namespace Internal
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Note(
+    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+    Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
+  if (!emitter_) {
+    return *this;
+  }
+  CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note ||
+                   diagnostic_base.Level == DiagnosticLevel::LocationInfo,
+               "{0}", static_cast<int>(diagnostic_base.Level));
+  AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
+  return *this;
+}
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() -> void {
+  if (!emitter_) {
+    return;
+  }
+  for (auto annotate_fn : llvm::reverse(emitter_->annotate_fns_)) {
+    annotate_fn(*this);
+  }
+  emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
+}
+
+template <typename LocT>
+template <typename... Args>
+DiagnosticEmitter<LocT>::DiagnosticBuilder::DiagnosticBuilder(
+    DiagnosticEmitter<LocT>* emitter, LocT loc,
+    const DiagnosticBase<Args...>& diagnostic_base,
+    llvm::SmallVector<llvm::Any> args)
+    : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
+  AddMessage(loc, diagnostic_base, std::move(args));
+  CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
+}
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::AddMessage(
+    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+    llvm::SmallVector<llvm::Any> args) -> void {
+  if (!emitter_) {
+    return;
+  }
+  auto converted = emitter_->converter_->ConvertLoc(
+      loc, [&](DiagnosticLoc context_loc,
+               const DiagnosticBase<>& context_diagnostic_base) {
+        AddMessageWithDiagnosticLoc(context_loc, context_diagnostic_base, {});
+      });
+  // Use the last byte offset from the first message.
+  if (diagnostic_.messages.empty()) {
+    diagnostic_.last_byte_offset = converted.last_byte_offset;
+  }
+  AddMessageWithDiagnosticLoc(converted.loc, diagnostic_base, args);
+}
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::AddMessageWithDiagnosticLoc(
+    DiagnosticLoc loc, const DiagnosticBase<Args...>& diagnostic_base,
+    llvm::SmallVector<llvm::Any> args) -> void {
+  if (!emitter_) {
+    return;
+  }
+  diagnostic_.messages.emplace_back(DiagnosticMessage{
+      .kind = diagnostic_base.Kind,
+      .level = diagnostic_base.Level,
+      .loc = loc,
+      .format = diagnostic_base.Format,
+      .format_args = std::move(args),
+      .format_fn = [](const DiagnosticMessage& message) -> std::string {
+        return FormatFn<Args...>(message,
+                                 std::make_index_sequence<sizeof...(Args)>());
+      }});
+}
+
+template <typename LocT>
+template <typename... Args, size_t... N>
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::FormatFn(
+    const DiagnosticMessage& message, std::index_sequence<N...> /*indices*/)
+    -> std::string {
+  static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");
+  CARBON_CHECK(message.format_args.size() == sizeof...(Args),
+               "Argument count mismatch on {0}: {1} != {2}", message.kind,
+               message.format_args.size(), sizeof...(Args));
+  return llvm::formatv(
+      message.format.data(),
+      llvm::any_cast<
+          typename Internal::DiagnosticTypeForArg<Args>::StorageType>(
+          message.format_args[N])...);
+}
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::Emit(
+    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+    Internal::NoTypeDeduction<Args>... args) -> void {
+  DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
+      .Emit();
+}
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::Build(
+    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+    Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
+  return DiagnosticBuilder(this, loc, diagnostic_base,
+                           {MakeAny<Args>(args)...});
+}
+
+template <typename LocT>
+template <typename Arg>
+auto DiagnosticEmitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
+  llvm::Any converted = converter_->ConvertArg(arg);
+  using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
+  CARBON_CHECK(llvm::any_cast<Storage>(&converted),
+               "Failed to convert argument of type {0} to its storage type {1}",
+               typeid(Arg).name(), typeid(Storage).name());
+  return converted;
+}
 
 }  // namespace Carbon
 

@@ -9,7 +9,6 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
-#include "toolchain/diagnostics/diagnostic_converter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
