@@ -10,8 +10,8 @@
 
 namespace Carbon::Check {
 
-auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
-                                          ContextFnT context_fn) const
+auto SemIRLocDiagnosticEmitter::ConvertLoc(SemIRLoc loc,
+                                           ContextFnT context_fn) const
     -> ConvertedDiagnosticLoc {
   auto converted = ConvertLocImpl(loc, context_fn);
 
@@ -33,8 +33,8 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
   return converted;
 }
 
-auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
-                                              ContextFnT context_fn) const
+auto SemIRLocDiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
+                                               ContextFnT context_fn) const
     -> ConvertedDiagnosticLoc {
   llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
       loc.is_inst_id_ ? SemIR::GetAbsoluteNodeId(sem_ir_, loc.inst_id_)
@@ -66,7 +66,7 @@ auto SemIRDiagnosticConverter::ConvertLocInFile(
                                                token_only);
 }
 
-auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
+auto SemIRLocDiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   if (auto* library_name_id = llvm::any_cast<SemIR::LibraryNameId>(&arg)) {
     std::string library_name;
     if (*library_name_id == SemIR::LibraryNameId::Default) {
@@ -118,7 +118,7 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
   }
-  return DiagnosticConverter<SemIRLoc>::ConvertArg(arg);
+  return DiagnosticEmitter<SemIRLoc>::ConvertArg(arg);
 }
 
 }  // namespace Carbon::Check

@@ -61,8 +61,8 @@ static auto RenderImportKey(ImportKey import_key) -> std::string {
 static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
                         Map<ImportKey, Parse::NodeId>* explicit_import_map,
                         UnitAndImports& unit_info,
-                        Parse::Tree::PackagingNames import, bool fuzzing)
-    -> void {
+                        Parse::Tree::PackagingNames import,
+                        bool fuzzing) -> void {
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
   IdentifierId file_package_id =
@@ -320,9 +320,12 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos;
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> all_trees_and_subtrees;
   unit_infos.reserve(units.size());
+  all_trees_and_subtrees.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
     unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
+    all_trees_and_subtrees.push_back(unit.get_parse_tree_and_subtrees);
   }
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -372,7 +375,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, units.size(), fs, vlog_stream).Run();
+    CheckUnit(unit_info, all_trees_and_subtrees, fs, vlog_stream).Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -419,7 +422,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, units.size(), fs, vlog_stream).Run();
+        CheckUnit(&unit_info, all_trees_and_subtrees, fs, vlog_stream).Run();
       }
     }
   }

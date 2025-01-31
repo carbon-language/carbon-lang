@@ -9,6 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -43,33 +44,35 @@ struct PackageImports {
   llvm::SmallVector<Import> imports;
 };
 
-// Converts a `NodeId` to a diagnostic location for `UnitAndImports`.
-class UnitAndImportsDiagnosticConverter
-    : public DiagnosticConverter<Parse::NodeId> {
- public:
-  explicit UnitAndImportsDiagnosticConverter(
-      Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees)
-      : get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees) {}
-
-  auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
-      -> ConvertedDiagnosticLoc override {
-    return get_parse_tree_and_subtrees_().NodeToDiagnosticLoc(
-        node_id, /*token_only=*/false);
-  }
-
- private:
-  Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees_;
-};
-
 // Contains information accumulated while checking a `Unit` (primarily import
 // information), in addition to the `Unit` itself.
 struct UnitAndImports {
+  // Converts a `NodeId` to a diagnostic location for `UnitAndImports`.
+  class Emitter : public DiagnosticEmitter<Parse::NodeId> {
+   public:
+    explicit Emitter(DiagnosticConsumer* consumer,
+                     llvm::function_ref<const Parse::TreeAndSubtrees&()>
+                         get_parse_tree_and_subtrees)
+        : DiagnosticEmitter(consumer),
+          get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees) {}
+
+   protected:
+    auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
+        -> ConvertedDiagnosticLoc override {
+      return get_parse_tree_and_subtrees_().NodeToDiagnosticLoc(
+          node_id, /*token_only=*/false);
+    }
+
+   private:
+    llvm::function_ref<const Parse::TreeAndSubtrees&()>
+        get_parse_tree_and_subtrees_;
+  };
+
   explicit UnitAndImports(SemIR::CheckIRId check_ir_id, Unit& unit)
       : check_ir_id(check_ir_id),
         unit(&unit),
         err_tracker(*unit.consumer),
-        converter(unit.get_parse_tree_and_subtrees),
-        emitter(converter, err_tracker) {}
+        emitter(&err_tracker, unit.get_parse_tree_and_subtrees) {}
 
   auto parse_tree() -> const Parse::Tree& { return unit->sem_ir->parse_tree(); }
   auto source() -> const SourceBuffer& {
@@ -81,8 +84,7 @@ struct UnitAndImports {
 
   // Emitter information.
   ErrorTrackingDiagnosticConsumer err_tracker;
-  UnitAndImportsDiagnosticConverter converter;
-  DiagnosticEmitter<Parse::NodeId> emitter;
+  Emitter emitter;
 
   // List of the outgoing imports. If a package includes unavailable library
   // imports, it has an entry with has_load_error set. Invalid imports (for
@@ -119,9 +121,11 @@ struct UnitAndImports {
 // logic in check.cpp.
 class CheckUnit {
  public:
-  explicit CheckUnit(UnitAndImports* unit_and_imports, int total_ir_count,
-                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream);
+  explicit CheckUnit(
+      UnitAndImports* unit_and_imports,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> all_trees_and_subtrees,
+      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+      llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;
@@ -134,15 +138,14 @@ class CheckUnit {
   auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
                             llvm::MutableArrayRef<int> ir_to_result_index,
                             SemIR::InstId import_decl_id,
-                            const PackageImports& imports, bool is_local)
-      -> void;
+                            const PackageImports& imports,
+                            bool is_local) -> void;
 
   // Collects transitive imports, handling deduplication. These will be unified
   // between local_imports and api_imports.
-  auto CollectTransitiveImports(SemIR::InstId import_decl_id,
-                                const PackageImports* local_imports,
-                                const PackageImports* api_imports)
-      -> llvm::SmallVector<SemIR::ImportIR>;
+  auto CollectTransitiveImports(
+      SemIR::InstId import_decl_id, const PackageImports* local_imports,
+      const PackageImports* api_imports) -> llvm::SmallVector<SemIR::ImportIR>;
 
   // Imports the current package.
   auto ImportCurrentPackage(SemIR::InstId package_inst_id,
@@ -171,7 +174,7 @@ class CheckUnit {
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::raw_ostream* vlog_stream_;
 
-  Context::DiagnosticEmitter emitter_;
+  SemIRLocDiagnosticEmitter emitter_;
   Context context_;
 };
 

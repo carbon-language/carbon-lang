@@ -20,7 +20,11 @@ using ::testing::InSequence;
 
 CARBON_DIAGNOSTIC(TestDiagnostic, Error, "M{0}", int);
 
-struct FakeDiagnosticConverter : DiagnosticConverter<int32_t> {
+class FakeDiagnosticEmitter : public DiagnosticEmitter<int32_t> {
+ public:
+  using DiagnosticEmitter::DiagnosticEmitter;
+
+ protected:
   auto ConvertLoc(int32_t last_byte_offset, ContextFnT /*context_fn*/) const
       -> ConvertedDiagnosticLoc override {
     return {.loc = {}, .last_byte_offset = last_byte_offset};
@@ -28,10 +32,9 @@ struct FakeDiagnosticConverter : DiagnosticConverter<int32_t> {
 };
 
 TEST(SortedDiagnosticEmitterTest, SortErrors) {
-  FakeDiagnosticConverter converter;
   Testing::MockDiagnosticConsumer consumer;
   SortingDiagnosticConsumer sorting_consumer(consumer);
-  DiagnosticEmitter<int32_t> emitter(converter, sorting_consumer);
+  FakeDiagnosticEmitter emitter(&sorting_consumer);
 
   emitter.Emit(1, TestDiagnostic, 1);
   emitter.Emit(-1, TestDiagnostic, 2);

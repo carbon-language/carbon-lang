@@ -415,12 +415,6 @@ auto TokenizedBuffer::SourcePointerToDiagnosticLoc(const char* loc) const
           .last_byte_offset = offset};
 }
 
-auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
-    const char* loc, ContextFnT /*context_fn*/) const
-    -> ConvertedDiagnosticLoc {
-  return tokens_->SourcePointerToDiagnosticLoc(loc);
-}
-
 auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
     -> ConvertedDiagnosticLoc {
   // Map the token location into a position within the source buffer.
@@ -433,12 +427,6 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
   auto converted = SourcePointerToDiagnosticLoc(token_start);
   converted.loc.length = GetTokenText(token).size();
   return converted;
-}
-
-auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
-                                          ContextFnT /*context_fn*/) const
-    -> ConvertedDiagnosticLoc {
-  return tokens_->TokenToDiagnosticLoc(token);
 }
 
 }  // namespace Carbon::Lex

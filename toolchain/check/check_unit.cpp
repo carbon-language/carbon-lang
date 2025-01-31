@@ -34,19 +34,21 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
   return count;
 }
 
-CheckUnit::CheckUnit(UnitAndImports* unit_and_imports, int total_ir_count,
-                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream)
+CheckUnit::CheckUnit(
+    UnitAndImports* unit_and_imports,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> all_trees_and_subtrees,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
-      total_ir_count_(total_ir_count),
+      total_ir_count_(all_trees_and_subtrees.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
-      emitter_(*unit_and_imports_->unit->sem_ir_converter,
-               unit_and_imports_->err_tracker),
+      emitter_(&unit_and_imports_->err_tracker, all_trees_and_subtrees,
+               unit_and_imports_->unit->sem_ir),
       context_(&emitter_, unit_and_imports_->unit->get_parse_tree_and_subtrees,
                unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports), total_ir_count,
-               vlog_stream) {}
+               GetImportedIRCount(unit_and_imports),
+               all_trees_and_subtrees.size(), vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -162,10 +164,9 @@ auto CheckUnit::CollectDirectImports(
   }
 }
 
-auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
-                                         const PackageImports* local_imports,
-                                         const PackageImports* api_imports)
-    -> llvm::SmallVector<SemIR::ImportIR> {
+auto CheckUnit::CollectTransitiveImports(
+    SemIR::InstId import_decl_id, const PackageImports* local_imports,
+    const PackageImports* api_imports) -> llvm::SmallVector<SemIR::ImportIR> {
   llvm::SmallVector<SemIR::ImportIR> results;
 
   // Track whether an IR was imported in full, including `export import`. This
@@ -374,7 +375,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   while (auto maybe_node_id = traversal.Next()) {
     node_id = *maybe_node_id;
 
-    unit_and_imports_->unit->sem_ir_converter->AdvanceToken(
+    unit_and_imports_->unit->sem_ir_loc_emitter->AdvanceToken(
         context_.parse_tree().node_token(node_id));
 
     if (context_.parse_tree().node_has_error(node_id)) {

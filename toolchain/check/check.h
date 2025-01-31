@@ -29,7 +29,7 @@ struct Unit {
   SemIR::File* sem_ir;
 
   // Diagnostic converters.
-  SemIRDiagnosticConverter* sem_ir_converter;
+  SemIRLocDiagnosticEmitter* sem_ir_loc_emitter;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

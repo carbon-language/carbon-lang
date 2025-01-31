@@ -17,13 +17,21 @@
 namespace Carbon::Check {
 
 // Handles the transformation of a SemIRLoc to a DiagnosticLoc.
-class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
+class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
  public:
-  explicit SemIRDiagnosticConverter(
+  explicit SemIRLocDiagnosticEmitter(
+      DiagnosticConsumer* consumer,
       llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees,
       const SemIR::File* sem_ir)
-      : imported_trees_and_subtrees_(imported_trees_and_subtrees),
+      : DiagnosticEmitter(consumer),
+        imported_trees_and_subtrees_(imported_trees_and_subtrees),
         sem_ir_(sem_ir) {}
+
+  // If a byte offset is past the current last byte offset, advances forward.
+  // Earlier offsets are ignored.
+  auto AdvanceToken(Lex::TokenIndex token) -> void {
+    last_token_ = std::max(last_token_, token);
+  }
 
   // Implements `DiagnosticConverter::ConvertLoc`. Adds context for any imports
   // used in the current SemIR to get to the underlying code.
@@ -31,17 +39,14 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
   // For the last byte offset, this uses `last_token_` exclusively for imported
   // locations, or `loc` if it's in the same file and (for whatever reason)
   // later.
+  //
+  // TODO: Make this private after it's no longer used by lowering.
   auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
       -> ConvertedDiagnosticLoc override;
 
+ protected:
   // Implements argument conversions for supported check-phase arguments.
   auto ConvertArg(llvm::Any arg) const -> llvm::Any override;
-
-  // If a byte offset is past the current last byte offset, advances forward.
-  // Earlier offsets are ignored.
-  auto AdvanceToken(Lex::TokenIndex token) -> void {
-    last_token_ = std::max(last_token_, token);
-  }
 
  private:
   // Implements `ConvertLoc`, but without `last_token_` applied.
