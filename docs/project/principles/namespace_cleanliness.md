@@ -34,8 +34,8 @@ for entities. Different languages make different choices in this space:
 
 -   Many languages have a set of keywords that are not usable as identifiers,
     with no workaround. If this set collides with a name needed by user code,
-    the user is left to solve this problem, often by picking an uglified
-    identifier (`klass` or `class_`), which sometimes conflicts with the general
+    the user is left to solve this problem, often by rewriting the
+    identifier in some way (`klass` or `class_`), which sometimes conflicts with the general
     naming convention used by the code. And conversely, suboptimal choices are
     made for new language keywords to avoid causing problems for existing code.
 -   C and C++ reserve a family of identifiers, such as those beginning with an
