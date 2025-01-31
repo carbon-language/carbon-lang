@@ -808,7 +808,7 @@ struct GenericData {
 static auto GetLocalGenericData(ImportRefResolver& /*resolver*/,
                                 SemIR::GenericId /*generic_id*/)
     -> GenericData {
-  return GenericData{};
+  return {};
 }
 
 // Adds the given local generic data to the given generic.
