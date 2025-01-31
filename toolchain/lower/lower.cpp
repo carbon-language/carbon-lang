@@ -8,14 +8,15 @@
 
 namespace Carbon::Lower {
 
-auto LowerToLLVM(llvm::LLVMContext& llvm_context, bool include_debug_info,
-                 const Check::SemIRDiagnosticConverter& converter,
+auto LowerToLLVM(llvm::LLVMContext& llvm_context,
+                 std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+                     all_trees_and_subtrees_for_debug_info,
                  llvm::StringRef module_name, const SemIR::File& sem_ir,
                  const SemIR::InstNamer* inst_namer,
                  llvm::raw_ostream* vlog_stream)
     -> std::unique_ptr<llvm::Module> {
-  FileContext context(llvm_context, include_debug_info, converter, module_name,
-                      sem_ir, inst_namer, vlog_stream);
+  FileContext context(llvm_context, all_trees_and_subtrees_for_debug_info,
+                      module_name, sem_ir, inst_namer, vlog_stream);
   return context.Run();
 }
 

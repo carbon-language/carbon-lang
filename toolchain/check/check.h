@@ -23,8 +23,7 @@ struct Unit {
   Timings* timings;
 
   // Returns a lazily constructed TreeAndSubtrees.
-  llvm::function_ref<const Parse::TreeAndSubtrees&()>
-      get_parse_tree_and_subtrees;
+  Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees;
 
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;

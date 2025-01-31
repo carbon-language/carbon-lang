@@ -73,8 +73,7 @@ class Context {
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
-                   llvm::function_ref<const Parse::TreeAndSubtrees&()>
-                       get_parse_tree_and_subtrees,
+                   Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
 
@@ -744,8 +743,7 @@ class Context {
   DiagnosticEmitter* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
-  llvm::function_ref<const Parse::TreeAndSubtrees&()>
-      get_parse_tree_and_subtrees_;
+  Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees_;
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;

@@ -48,8 +48,7 @@ class UnitAndImportsDiagnosticConverter
     : public DiagnosticConverter<Parse::NodeId> {
  public:
   explicit UnitAndImportsDiagnosticConverter(
-      llvm::function_ref<const Parse::TreeAndSubtrees&()>
-          get_parse_tree_and_subtrees)
+      Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees)
       : get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees) {}
 
   auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
@@ -59,8 +58,7 @@ class UnitAndImportsDiagnosticConverter
   }
 
  private:
-  llvm::function_ref<const Parse::TreeAndSubtrees&()>
-      get_parse_tree_and_subtrees_;
+  Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees_;
 };
 
 // Contains information accumulated while checking a `Unit` (primarily import

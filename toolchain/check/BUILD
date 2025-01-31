@@ -273,7 +273,9 @@ cc_library(
         "//toolchain/lex:token_index",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:resolve_node_id",
         "//toolchain/sem_ir:stringify_type",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )

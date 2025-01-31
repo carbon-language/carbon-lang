@@ -143,6 +143,7 @@ cc_library(
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:value_store",
+        "//toolchain/lex:token_index",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],

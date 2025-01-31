@@ -4,6 +4,8 @@
 
 #include "toolchain/parse/tree_and_subtrees.h"
 
+#include "toolchain/lex/token_index.h"
+
 namespace Carbon::Parse {
 
 TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
@@ -239,6 +241,26 @@ auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
                     subtree_sizes_);
 }
 
+auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
+  // Construct a location that encompasses all tokens that descend from this
+  // node (including the root).
+  TokenRange range = {.start = tree_->node_token(node_id),
+                      .end = Lex::TokenIndex::None};
+  range.end = range.start;
+  for (NodeId desc : postorder(node_id)) {
+    Lex::TokenIndex desc_token = tree_->node_token(desc);
+    if (!desc_token.has_value()) {
+      continue;
+    }
+    if (desc_token < range.start) {
+      range.start = desc_token;
+    } else if (desc_token > range.end) {
+      range.end = desc_token;
+    }
+  }
+  return range;
+}
+
 auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
     -> ConvertedDiagnosticLoc {
   // Support the invalid token as a way to emit only the filename, when there
@@ -253,24 +275,12 @@ auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
 
   // Construct a location that encompasses all tokens that descend from this
   // node (including the root).
-  Lex::TokenIndex start_token = tree_->node_token(node_id);
-  Lex::TokenIndex end_token = start_token;
-  for (NodeId desc : postorder(node_id)) {
-    Lex::TokenIndex desc_token = tree_->node_token(desc);
-    if (!desc_token.has_value()) {
-      continue;
-    }
-    if (desc_token < start_token) {
-      start_token = desc_token;
-    } else if (desc_token > end_token) {
-      end_token = desc_token;
-    }
-  }
-  auto start_loc = tree_->tokens().TokenToDiagnosticLoc(start_token);
-  if (start_token == end_token) {
+  TokenRange token_range = GetSubtreeTokenRange(node_id);
+  auto start_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.start);
+  if (token_range.start == token_range.end) {
     return start_loc;
   }
-  auto end_loc = tree_->tokens().TokenToDiagnosticLoc(end_token);
+  auto end_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.end);
   start_loc.last_byte_offset = end_loc.last_byte_offset;
   // For multiline locations we simply return the rest of the line for now
   // since true multiline locations are not yet supported.

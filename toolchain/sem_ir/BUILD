@@ -219,6 +219,18 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "resolve_node_id",
+    srcs = ["resolve_node_id.cpp"],
+    hdrs = ["resolve_node_id.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "typed_insts_test",
     size = "small",
