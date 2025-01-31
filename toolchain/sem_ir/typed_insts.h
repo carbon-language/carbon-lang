@@ -804,7 +804,7 @@ struct ImplFunctionType {
            .is_lowered = false});
 
   TypeId type_id;
-  // The type of the function within the interface. This includes the
+  // The `FunctionType` within the interface. This includes the
   // interface's SpecificId if applicable.
   InstId interface_function_type_id;
   // The value to use for `Self` in this function.
