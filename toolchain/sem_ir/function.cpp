@@ -38,6 +38,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
   if (auto impl_fn_type = fn_type_inst.TryAs<ImplFunctionType>()) {
+    // Combine the associated function's `self` with the interface function data.
     result.self_type_id = impl_fn_type->self_id;
     fn_type_inst = sem_ir.insts().Get(impl_fn_type->interface_function_type_id);
   }
