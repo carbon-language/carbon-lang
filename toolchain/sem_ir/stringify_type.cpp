@@ -325,7 +325,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << "<type of " << sem_ir.names().GetFormatted(fn_name_id) << ">";
         break;
       }
-      case CARBON_KIND(ImplFunctionType inst): {
+      case CARBON_KIND(FunctionTypeWithSelf inst): {
         auto fn_inst =
             sem_ir.insts().GetAs<FunctionType>(inst.interface_function_type_id);
         auto fn_name_id = sem_ir.functions().Get(fn_inst.function_id).name_id;

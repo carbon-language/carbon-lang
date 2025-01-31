@@ -388,10 +388,6 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
         }
         return access_id;
       }
-      case CARBON_KIND(SemIR::ImplFunctionType impl_fn_type): {
-        member_type_inst_id = impl_fn_type.interface_function_type_id;
-        continue;
-      }
       case CARBON_KIND(SemIR::FunctionType fn_type): {
         if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
           return context.GetOrAddInst<SemIR::BoundMethod>(
@@ -400,7 +396,12 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                        .object_id = base_id,
                        .function_decl_id = member_id});
         }
-        [[fallthrough]];
+        // Static function: no instance binding.
+        return member_id;
+      }
+      case CARBON_KIND(SemIR::FunctionTypeWithSelf impl_fn_type): {
+        member_type_inst_id = impl_fn_type.interface_function_type_id;
+        continue;
       }
       default: {
         // Not an instance member: no instance binding.

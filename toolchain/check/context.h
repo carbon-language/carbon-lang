@@ -475,6 +475,11 @@ class Context {
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
       -> SemIR::TypeId;
 
+  // Gets the type of an associated function with the `Self` parameter bound to
+  // a particular value. The returned type will be complete.
+  auto GetFunctionTypeWithSelf(SemIR::InstId interface_function_type_id,
+                               SemIR::InstId self_id) -> SemIR::TypeId;
+
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
   // type will be complete.
@@ -488,10 +493,6 @@ class Context {
   auto GetGenericInterfaceType(SemIR::InterfaceId interface_id,
                                SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
-
-  // Gets the type of a function in an impl. The returned type will be complete.
-  auto GetImplFunctionType(SemIR::InstId interface_function_type_id,
-                           SemIR::InstId self_id) -> SemIR::TypeId;
 
   // Gets the facet type corresponding to a particular interface.
   auto GetInterfaceType(SemIR::InterfaceId interface_id,

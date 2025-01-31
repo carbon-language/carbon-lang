@@ -1968,6 +1968,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::FunctionTypeWithSelf inst)
+    -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
+  auto interface_function_type_id =
+      GetLocalConstantInstId(resolver, inst.interface_function_type_id);
+  auto self_id = GetLocalConstantInstId(resolver, inst.self_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::FunctionTypeWithSelf>(
+      resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
+                 .interface_function_type_id = interface_function_type_id,
+                 .self_id = self_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::GenericClassType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
   auto class_val_id = GetLocalConstantInstId(
@@ -2125,22 +2142,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   return ResolveResult::Done(impl_const_id, new_impl.first_decl_id());
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ImplFunctionType inst) -> ResolveResult {
-  CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
-  auto interface_function_type_id =
-      GetLocalConstantInstId(resolver, inst.interface_function_type_id);
-  auto self_id = GetLocalConstantInstId(resolver, inst.self_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  return ResolveAs<SemIR::ImplFunctionType>(
-      resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
-                 .interface_function_type_id = interface_function_type_id,
-                 .self_id = self_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2767,6 +2768,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::FunctionType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::FunctionTypeWithSelf inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::GenericClassType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2775,9 +2779,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::ImplDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
-    }
-    case CARBON_KIND(SemIR::ImplFunctionType inst): {
-      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitness inst): {
       return TryResolveTypedInst(resolver, inst);

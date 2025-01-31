@@ -1291,8 +1291,8 @@ class TypeCompleter {
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::FacetAccessType,
-             SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
-             SemIR::GenericInterfaceType, SemIR::ImplFunctionType,
+             SemIR::FacetType, SemIR::FunctionType, SemIR::FunctionTypeWithSelf,
+             SemIR::GenericClassType, SemIR::GenericInterfaceType,
              SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
@@ -1554,6 +1554,12 @@ auto Context::GetFunctionType(SemIR::FunctionId fn_id,
   return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
 }
 
+auto Context::GetFunctionTypeWithSelf(SemIR::InstId interface_function_type_id,
+                                      SemIR::InstId self_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::FunctionTypeWithSelf>(
+      *this, interface_function_type_id, self_id);
+}
+
 auto Context::GetGenericClassType(SemIR::ClassId class_id,
                                   SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId {
@@ -1566,12 +1572,6 @@ auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id,
     -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::GenericInterfaceType>(
       *this, interface_id, enclosing_specific_id);
-}
-
-auto Context::GetImplFunctionType(SemIR::InstId interface_function_type_id,
-                                  SemIR::InstId self_id) -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::ImplFunctionType>(
-      *this, interface_function_type_id, self_id);
 }
 
 auto Context::GetInterfaceType(SemIR::InterfaceId interface_id,

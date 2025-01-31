@@ -749,6 +749,25 @@ struct FunctionType {
   SpecificId specific_id;
 };
 
+// The type of an associated function within an `impl`, modeled as an underlying
+// `FunctionType` plus the value of the `Self` parameter. This is the type of
+// `(SelfType as Interface).AssociatedFunction`.
+struct FunctionTypeWithSelf {
+  static constexpr auto Kind =
+      InstKind::FunctionTypeWithSelf.Define<Parse::NoneNodeId>(
+          {.ir_name = "impl_fn_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Conditional,
+           .is_lowered = false});
+
+  TypeId type_id;
+  // The `FunctionType` within the interface. This includes the
+  // interface's SpecificId if applicable.
+  InstId interface_function_type_id;
+  // The value to use for `Self` in this function.
+  InstId self_id;
+};
+
 // The type of the name of a generic class. The corresponding value is an empty
 // `StructValue`.
 struct GenericClassType {
@@ -791,24 +810,6 @@ struct ImplDecl {
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
   DeclInstBlockId decl_block_id;
-};
-
-// The type of an associated function within an `impl`. This is the type of
-// `(SelfType as Interface).AssociatedFunction`.
-struct ImplFunctionType {
-  static constexpr auto Kind =
-      InstKind::ImplFunctionType.Define<Parse::NoneNodeId>(
-          {.ir_name = "impl_fn_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional,
-           .is_lowered = false});
-
-  TypeId type_id;
-  // The `FunctionType` within the interface. This includes the
-  // interface's SpecificId if applicable.
-  InstId interface_function_type_id;
-  // The value to use for `Self` in this function.
-  InstId self_id;
 };
 
 // A witness that a type implements an interface.

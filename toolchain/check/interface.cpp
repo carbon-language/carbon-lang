@@ -179,7 +179,7 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
         GetSelfFacet(context, interface_specific_id,
                      context.functions().Get(fn->function_id).generic_id,
                      self_type_id, self_witness_id);
-    return context.GetImplFunctionType(
+    return context.GetFunctionTypeWithSelf(
         context.types().GetInstId(interface_fn_type_id), self_facet_id);
   } else {
     CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
