@@ -515,9 +515,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
 auto DeductionContext::MakeSpecific() -> SemIR::SpecificId {
   // TODO: Convert the deduced values to the types of the bindings.
 
-  return Check::MakeSpecific(
-      context(), loc_id_, generic_id_,
-      context().inst_blocks().AddCanonical(result_arg_ids_));
+  return Check::MakeSpecific(context(), loc_id_, generic_id_, result_arg_ids_);
 }
 
 auto DeduceGenericCallArguments(
