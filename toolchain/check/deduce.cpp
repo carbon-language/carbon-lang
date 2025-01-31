@@ -188,7 +188,7 @@ class DeductionWorklist {
 // State that is tracked throughout the deduction process.
 class DeductionContext {
  public:
-  // Preparse to perform deduction. If an enclosing specific and/or self type
+  // Preparse to perform deduction. If an enclosing specific or self type
   // are provided, adds the corresponding arguments as known arguments that will
   // not be deduced.
   DeductionContext(Context& context, SemIR::LocId loc_id,
