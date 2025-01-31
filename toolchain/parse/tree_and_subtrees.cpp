@@ -242,8 +242,6 @@ auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
 }
 
 auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
-  // Construct a location that encompasses all tokens that descend from this
-  // node (including the root).
   TokenRange range = {.start = tree_->node_token(node_id),
                       .end = Lex::TokenIndex::None};
   range.end = range.start;

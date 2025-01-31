@@ -24,7 +24,7 @@ struct ResolvedNodeId {
 auto ResolveNodeId(const File* sem_ir, InstId inst_id)
     -> llvm::SmallVector<ResolvedNodeId>;
 
-// Similar to `ResolveNodeId`, but starting at a `LocId`.
+// Similar to to above overload, but starting at a `LocId`.
 auto ResolveNodeId(const File* sem_ir, LocId loc_id)
     -> llvm::SmallVector<ResolvedNodeId>;
 
