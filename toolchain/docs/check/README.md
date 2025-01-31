@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Subtopics](#subtopics)
 -   [Postorder processing](#postorder-processing)
 -   [Key IR concepts](#key-ir-concepts)
     -   [Instruction operands](#instruction-operands)
@@ -46,6 +47,12 @@ Check takes the parse tree and generates a semantic intermediate representation,
 or SemIR. This will look closer to a series of instructions, in preparation for
 transformation to LLVM IR. Semantic analysis and type checking occurs during the
 production of SemIR. It also does any validation that requires context.
+
+## Subtopics
+
+Some particular topics have their own documentation:
+
+-   [Associated constants](associated_constants.md)
 
 ## Postorder processing
 

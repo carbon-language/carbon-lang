@@ -28,7 +28,7 @@ _Note:_ This document only describes non-function associated constants.
 An associated constant is declared within an interface scope with the syntax:
 
 ```carbon
-let NAME:! TYPE [= INITIALIZER] ;
+[MODIFIERS] let NAME:! TYPE [= INITIALIZER] ;
 ```
 
 Associated constants introduce a slot in the witness table for an interface that
@@ -55,7 +55,7 @@ constant declaration handling proceeds as follows:
 
 1.  ```carbon
     let NAME:! TYPE [= INITIALIZER] ;
-       ^
+    ^
     ```
 
     `StartAssociatedConstant` is called at the start of an interface-scope `let`
@@ -97,9 +97,9 @@ constant declaration handling proceeds as follows:
     -   Adds the associated constant to name lookup.
 
     _Note:_ The pattern might not be valid for an associated constant. In this
-    \*case, we won't have built an `AssociatedConstantDecl` in the previous
-    step. When this happens, we instead just discard the generic declaration
-    region and continue. The invalid pattern will be diagnosed later.
+    case, we won't have built an `AssociatedConstantDecl` in the previous step.
+    When this happens, we instead just discard the generic declaration region
+    and continue. The invalid pattern will be diagnosed later.
 
 4.  ```carbon
     let NAME:! TYPE = INITIALIZER ;
@@ -128,7 +128,9 @@ constant declaration handling proceeds as follows:
 ## Specifying rewrite constraints
 
 TODO: Fill this out. In particular, note that we do not convert the rewrite to
-the type of the associated constant if the constant's type is symbolic.
+the type of the associated constant as part of forming a `where` expression if
+the constant's type is symbolic, and instead defer that until the facet type is
+resolved.
 
 ## Definition of associated constant values
 
@@ -143,21 +145,25 @@ The work to handle uses of associated constants starts in
 [member_access.cpp](/toolchain/check/member_access.cpp).
 
 When an `AssociatedEntity` is the member in a member access, impl lookup is
-performed to find the corresponding impl witness. This can happen in two
-different ways.
+performed to find the corresponding impl witness. The self type in impl lookup
+depends on how the member name was found.
 
 ### Simple member access
 
 In `LookupMemberNameInScope`, if lookup for `y` in `x.y` finds an associated
 constant from interface `I`, then a witness is determined as follows:
 
--   If `y` was found in the type `T` of `x`, then:
+-   If the lookup scope is the type `T` of `x`, then:
     -   If `T` is a non-type facet, the witness for that facet is used. TODO:
         That facet might not contain a witness for `I`. In that case we will
         need to perform impl lookup for `T as I` instead.
     -   Otherwise, impl lookup for `T as I` is performed to find the witness.
--   If `y` is itself a scope, and neither a facet type nor a namespace, then
-    impl lookup for `y as I` is performed to find the witness.
+-   If the lookup scope is `x` itself, then:
+    -   If `x` is a facet type or a namespace, impl lookup is not performed, and
+        the result is simply `y`. This happens for cases such as
+        `Interface.AssocConst`.
+    -   Otherwise, `x` must be a type other than a facet type, and impl lookup
+        for `x as I` is performed to find the witness.
 
 ### Compound member access
 
