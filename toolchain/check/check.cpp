@@ -61,8 +61,8 @@ static auto RenderImportKey(ImportKey import_key) -> std::string {
 static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
                         Map<ImportKey, Parse::NodeId>* explicit_import_map,
                         UnitAndImports& unit_info,
-                        Parse::Tree::PackagingNames import,
-                        bool fuzzing) -> void {
+                        Parse::Tree::PackagingNames import, bool fuzzing)
+    -> void {
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
   IdentifierId file_package_id =

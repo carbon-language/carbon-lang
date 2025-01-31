@@ -138,14 +138,15 @@ class CheckUnit {
   auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
                             llvm::MutableArrayRef<int> ir_to_result_index,
                             SemIR::InstId import_decl_id,
-                            const PackageImports& imports,
-                            bool is_local) -> void;
+                            const PackageImports& imports, bool is_local)
+      -> void;
 
   // Collects transitive imports, handling deduplication. These will be unified
   // between local_imports and api_imports.
-  auto CollectTransitiveImports(
-      SemIR::InstId import_decl_id, const PackageImports* local_imports,
-      const PackageImports* api_imports) -> llvm::SmallVector<SemIR::ImportIR>;
+  auto CollectTransitiveImports(SemIR::InstId import_decl_id,
+                                const PackageImports* local_imports,
+                                const PackageImports* api_imports)
+      -> llvm::SmallVector<SemIR::ImportIR>;
 
   // Imports the current package.
   auto ImportCurrentPackage(SemIR::InstId package_inst_id,

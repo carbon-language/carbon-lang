@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_SEM_IR_DIAGNOSTIC_CONVERTER_H_
-#define CARBON_TOOLCHAIN_CHECK_SEM_IR_DIAGNOSTIC_CONVERTER_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_
+#define CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -70,4 +70,4 @@ class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_SEM_IR_DIAGNOSTIC_CONVERTER_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_

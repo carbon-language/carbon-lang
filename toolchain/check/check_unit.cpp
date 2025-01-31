@@ -164,9 +164,10 @@ auto CheckUnit::CollectDirectImports(
   }
 }
 
-auto CheckUnit::CollectTransitiveImports(
-    SemIR::InstId import_decl_id, const PackageImports* local_imports,
-    const PackageImports* api_imports) -> llvm::SmallVector<SemIR::ImportIR> {
+auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
+                                         const PackageImports* local_imports,
+                                         const PackageImports* api_imports)
+    -> llvm::SmallVector<SemIR::ImportIR> {
   llvm::SmallVector<SemIR::ImportIR> results;
 
   // Track whether an IR was imported in full, including `export import`. This
