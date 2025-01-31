@@ -17,7 +17,7 @@ cc_library(
     hdrs = ["lower.h"],
     deps = [
         ":context",
-        "//toolchain/check:sem_ir_diagnostic_converter",
+        "//toolchain/check:sem_ir_loc_diagnostic_emitter",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",

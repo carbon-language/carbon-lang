@@ -9,7 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/sem_ir_diagnostic_converter.h"
+#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {

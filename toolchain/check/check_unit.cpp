@@ -375,8 +375,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   while (auto maybe_node_id = traversal.Next()) {
     node_id = *maybe_node_id;
 
-    unit_and_imports_->unit->sem_ir_loc_emitter->AdvanceToken(
-        context_.parse_tree().node_token(node_id));
+    emitter_.AdvanceToken(context_.parse_tree().node_token(node_id));
 
     if (context_.parse_tree().node_has_error(node_id)) {
       context_.TODO(node_id, "handle invalid parse trees in `check`");

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/sem_ir_diagnostic_converter.h"
+#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
