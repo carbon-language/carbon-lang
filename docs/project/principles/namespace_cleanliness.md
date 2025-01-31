@@ -34,8 +34,8 @@ for entities. Different languages make different choices in this space:
 
 -   Many languages have a set of keywords that are not usable as identifiers,
     with no workaround. If this set collides with a name needed by user code,
-    the user is left to solve this problem, often by rewriting the
-    identifier in some way (`klass` or `class_`), which sometimes conflicts with the general
+    the user is left to solve this problem, often by rewriting the identifier in
+    some way (`klass` or `class_`), which sometimes conflicts with the general
     naming convention used by the code. And conversely, suboptimal choices are
     made for new language keywords to avoid causing problems for existing code.
 -   C and C++ reserve a family of identifiers, such as those beginning with an
@@ -44,7 +44,12 @@ for entities. Different languages make different choices in this space:
     library vendors and compiler authors, as well as between implementation
     extensions and language extensions.
     -   MSVC provides a `__identifier(keyword)` extension that allows using a
-        keyword as an identifier.
+        keyword as an identifier. This extension is also implemented by Clang in
+        `-fms-extensions` mode.
+    -   GCC provides an `__asm__(symbol)` extension that allows a specific
+        symbol to be assigned to an object or function, which provides ABI
+        compatibility but not source compatibility with code that uses a keyword
+        as a symbol name. This extension is also implemented by Clang.
 -   Python reserves some identifiers but still allows them to be freely
     overwritten (such as `bool`) and reserves some identifiers but rejects
     assignment to them (such as `True`).
@@ -61,10 +66,11 @@ for entities. Different languages make different choices in this space:
     extending this to allow arbitrary non-word-shaped character sequences
     between the `` ` ``s.
 
-Carbon provides raw identifier syntax, for example `r#for`, to allow using
-keywords as identifiers. Carbon also has strict shadowing rules that mean that
-predeclared identifiers that are _not_ keywords are difficult or impossible to
-redeclare and use in inner scopes.
+Carbon provides
+[raw identifier syntax](/docs/design/lexical_conventions/words.md#raw-identifiers),
+for example `r#for`, to allow using keywords as identifiers. Carbon also intends
+to have strict shadowing rules that may make predeclared identifiers that are
+_not_ keywords difficult or impossible to redeclare and use in inner scopes.
 
 ## Principle
 
@@ -77,7 +83,8 @@ Conversely, when adding language keywords, we will not select an inferior
 keyword merely to avoid the risk of breaking existing programs. We will still
 take into account how often it is desirable to use the word as an identifier,
 including in domain-specific contexts, because that is a factor in whether it
-would make a good keyword.
+would make a good keyword, and will manage the rollout of new keywords to make
+it straightforward to migrate existing uses to `r#` or a different name.
 
 ## Applications of this principle
 
