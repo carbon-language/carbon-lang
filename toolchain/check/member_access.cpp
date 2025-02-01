@@ -358,8 +358,9 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
   // If the member is a function, check whether it's an instance method.
   if (auto callee = SemIR::GetCalleeFunction(context.sem_ir(), member_id);
       callee.function_id.has_value()) {
-    if (!IsInstanceMethod(context.sem_ir(), callee.function_id)) {
-      // Found a static member function.
+    if (!IsInstanceMethod(context.sem_ir(), callee.function_id) ||
+        callee.self_id.has_value()) {
+      // Found a static member function or an already-bound method.
       return member_id;
     }
 
