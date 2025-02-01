@@ -40,8 +40,8 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
       {.type_id = type_id, .index = index, .decl_id = decl_id});
 }
 
-// Get the `Self` binding for an interface, given a specific for the interface
-// and a generic for an associated entity within it.
+// Returns the `Self` binding for an interface, given a specific for the
+// interface and a generic for an associated entity within it.
 static auto GetSelfBinding(Context& context,
                            SemIR::SpecificId interface_specific_id,
                            SemIR::GenericId assoc_entity_generic_id)
@@ -51,31 +51,34 @@ static auto GetSelfBinding(Context& context,
   auto interface_args_id =
       context.specifics().GetArgsOrEmpty(interface_specific_id);
   auto interface_args = context.inst_blocks().Get(interface_args_id);
+
   // The `Self` binding is the first binding after the interface's arguments.
-  return bindings[interface_args.size()];
+  auto self_binding_id = bindings[interface_args.size()];
+
+  // Check that we found the self binding. The binding might be a
+  // `BindSymbolicName` or an `ImportRef` naming one.
+  auto self_binding_const_inst_id =
+      context.constant_values().GetConstantInstId(self_binding_id);
+  auto bind_name_inst = context.insts().GetAs<SemIR::BindSymbolicName>(
+      self_binding_const_inst_id);
+  CARBON_CHECK(
+      context.entity_names().Get(bind_name_inst.entity_name_id).name_id ==
+          SemIR::NameId::SelfType,
+      "Expected a Self binding, found {0}", bind_name_inst);
+
+  return self_binding_id;
 }
 
 // Given a `Self` type and a witness that it implements an interface, along with
-// that interface's `Self` binding, form a facet that can be used as the
-// argument for that `Self` binding.
+// that interface's `Self` binding, forms and returns a facet that can be used
+// as the argument for that `Self` binding.
 static auto GetSelfFacet(Context& context,
                          SemIR::SpecificId interface_specific_id,
-                         SemIR::InstId self_binding_id,
+                         SemIR::GenericId generic_id,
                          SemIR::TypeId self_type_id,
                          SemIR::InstId self_witness_id) -> SemIR::InstId {
-  // Check that we were given a self binding. The binding might be a
-  // `BindSymbolicName` or an `ImportRef` naming one.
-  {
-    auto self_binding_const_inst_id =
-        context.constant_values().GetConstantInstId(self_binding_id);
-    auto bind_name_inst = context.insts().GetAs<SemIR::BindSymbolicName>(
-        self_binding_const_inst_id);
-    CARBON_CHECK(
-        context.entity_names().Get(bind_name_inst.entity_name_id).name_id ==
-            SemIR::NameId::SelfType,
-        "Expected a Self binding, found {0}", bind_name_inst);
-  }
-
+  auto self_binding_id =
+      GetSelfBinding(context, interface_specific_id, generic_id);
   auto self_binding = context.insts().Get(self_binding_id);
   auto self_facet_type_id = SemIR::GetTypeInSpecific(
       context.sem_ir(), interface_specific_id, self_binding.type_id());
@@ -91,19 +94,8 @@ static auto GetSelfFacet(Context& context,
   return context.constant_values().GetInstId(self_value_const_id);
 }
 
-static auto GetSelfFacet(Context& context,
-                         SemIR::SpecificId interface_specific_id,
-                         SemIR::GenericId generic_id,
-                         SemIR::TypeId self_type_id,
-                         SemIR::InstId self_witness_id) -> SemIR::InstId {
-  return GetSelfFacet(
-      context, interface_specific_id,
-      GetSelfBinding(context, interface_specific_id, generic_id), self_type_id,
-      self_witness_id);
-}
-
-// Get the argument list from `interface_specific_id` with a value for the
-// `Self` parameter of `generic_id` appended.
+// Builds and returns the argument list from `interface_specific_id` with a
+// value for the `Self` parameter of `generic_id` appended.
 static auto GetGenericArgsWithSelfType(Context& context,
                                        SemIR::SpecificId interface_specific_id,
                                        SemIR::GenericId generic_id,
