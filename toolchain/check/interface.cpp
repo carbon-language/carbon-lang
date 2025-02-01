@@ -100,18 +100,17 @@ static auto GetGenericArgsWithSelfType(Context& context,
                                        SemIR::SpecificId interface_specific_id,
                                        SemIR::GenericId generic_id,
                                        SemIR::TypeId self_type_id,
-                                       SemIR::InstId witness_inst_id)
+                                       SemIR::InstId witness_inst_id,
+                                       std::size_t reserve_args_size = 0)
     -> llvm::SmallVector<SemIR::InstId> {
-  const auto& generic = context.generics().Get(generic_id);
-  auto bindings = context.inst_blocks().Get(generic.bindings_id);
-
-  llvm::SmallVector<SemIR::InstId> arg_ids;
-  arg_ids.reserve(bindings.size());
-
-  // Start with the enclosing arguments from the interface.
   auto interface_args_id =
       context.specifics().GetArgsOrEmpty(interface_specific_id);
   auto interface_args = context.inst_blocks().Get(interface_args_id);
+
+  llvm::SmallVector<SemIR::InstId> arg_ids;
+  arg_ids.reserve(std::max(reserve_args_size, interface_args.size() + 1));
+
+  // Start with the enclosing arguments from the interface.
   arg_ids.assign(interface_args.begin(), interface_args.end());
 
   // Add the `Self` argument.
@@ -125,16 +124,17 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
     Context& context, SemIRLoc loc, SemIR::SpecificId interface_specific_id,
     SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
     SemIR::InstId witness_inst_id) -> SemIR::SpecificId {
-  auto arg_ids =
-      GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
-                                 self_type_id, witness_inst_id);
+  const auto& generic = context.generics().Get(generic_id);
+  auto self_specific_args = context.inst_blocks().Get(
+      context.specifics().Get(generic.self_specific_id).args_id);
+
+  auto arg_ids = GetGenericArgsWithSelfType(
+      context, interface_specific_id, generic_id, self_type_id, witness_inst_id,
+      self_specific_args.size());
 
   // Take any trailing argument values from the self specific.
   // TODO: If these refer to outer arguments, for example in their types, we may
   // need to perform extra substitutions here.
-  const auto& generic = context.generics().Get(generic_id);
-  auto self_specific_args = context.inst_blocks().Get(
-      context.specifics().Get(generic.self_specific_id).args_id);
   for (auto arg_id : self_specific_args.drop_front(arg_ids.size())) {
     arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
   }
