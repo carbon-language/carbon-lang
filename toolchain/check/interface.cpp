@@ -156,10 +156,10 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
     auto generic_id = context.associated_constants()
                           .Get(assoc_const->assoc_const_id)
                           .generic_id;
-    auto args =
+    auto arg_ids =
         GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
                                    self_type_id, self_witness_id);
-    auto const_specific_id = MakeSpecific(context, loc, generic_id, args);
+    auto const_specific_id = MakeSpecific(context, loc, generic_id, arg_ids);
     return SemIR::GetTypeInSpecific(context.sem_ir(), const_specific_id,
                                     context.insts().Get(decl_id).type_id());
   } else if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(
