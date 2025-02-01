@@ -102,6 +102,8 @@ static auto GetSelfFacet(Context& context,
       self_witness_id);
 }
 
+// Get the argument list from `interface_specific_id` with a value for the
+// `Self` parameter of `generic_id` appended.
 static auto GetGenericArgsWithSelfType(Context& context,
                                        SemIR::SpecificId interface_specific_id,
                                        SemIR::GenericId generic_id,
