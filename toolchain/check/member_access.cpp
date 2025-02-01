@@ -399,7 +399,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
         // Static function: no instance binding.
         return member_id;
       }
-      case CARBON_KIND(SemIR::FunctionTypeWithSelf impl_fn_type): {
+      case CARBON_KIND(SemIR::FunctionTypeWithSelfType impl_fn_type): {
         member_type_inst_id = impl_fn_type.interface_function_type_id;
         continue;
       }

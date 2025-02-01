@@ -1588,11 +1588,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
-    case SemIR::FunctionTypeWithSelf::Kind:
+    case SemIR::FunctionTypeWithSelfType::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst,
-          &SemIR::FunctionTypeWithSelf::interface_function_type_id,
-          &SemIR::FunctionTypeWithSelf::self_id);
+          &SemIR::FunctionTypeWithSelfType::interface_function_type_id,
+          &SemIR::FunctionTypeWithSelfType::self_id);
     case SemIR::GenericClassType::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::GenericClassType::enclosing_specific_id);

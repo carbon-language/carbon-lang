@@ -477,8 +477,8 @@ class Context {
 
   // Gets the type of an associated function with the `Self` parameter bound to
   // a particular value. The returned type will be complete.
-  auto GetFunctionTypeWithSelf(SemIR::InstId interface_function_type_id,
-                               SemIR::InstId self_id) -> SemIR::TypeId;
+  auto GetFunctionTypeWithSelfType(SemIR::InstId interface_function_type_id,
+                                   SemIR::InstId self_id) -> SemIR::TypeId;
 
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned

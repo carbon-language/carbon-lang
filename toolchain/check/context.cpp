@@ -1291,9 +1291,10 @@ class TypeCompleter {
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::FacetAccessType,
-             SemIR::FacetType, SemIR::FunctionType, SemIR::FunctionTypeWithSelf,
-             SemIR::GenericClassType, SemIR::GenericInterfaceType,
-             SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::FacetType, SemIR::FunctionType,
+             SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+             SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+             SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // These types have no runtime operations, so we use an empty value
@@ -1554,9 +1555,10 @@ auto Context::GetFunctionType(SemIR::FunctionId fn_id,
   return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
 }
 
-auto Context::GetFunctionTypeWithSelf(SemIR::InstId interface_function_type_id,
-                                      SemIR::InstId self_id) -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::FunctionTypeWithSelf>(
+auto Context::GetFunctionTypeWithSelfType(
+    SemIR::InstId interface_function_type_id, SemIR::InstId self_id)
+    -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::FunctionTypeWithSelfType>(
       *this, interface_function_type_id, self_id);
 }
 

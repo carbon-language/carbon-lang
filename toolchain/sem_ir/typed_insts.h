@@ -752,17 +752,18 @@ struct FunctionType {
 // The type of an associated function within an `impl`, modeled as an underlying
 // `FunctionType` plus the value of the `Self` parameter. This is the type of
 // `(SelfType as Interface).AssociatedFunction`.
-struct FunctionTypeWithSelf {
+struct FunctionTypeWithSelfType {
   static constexpr auto Kind =
-      InstKind::FunctionTypeWithSelf.Define<Parse::NoneNodeId>(
+      InstKind::FunctionTypeWithSelfType.Define<Parse::NoneNodeId>(
           {.ir_name = "impl_fn_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Conditional,
            .is_lowered = false});
 
   TypeId type_id;
-  // The `FunctionType` within the interface. This includes the
-  // interface's SpecificId if applicable.
+  // The type of the function within the interface. This includes the
+  // interface's SpecificId if applicable. This will be a `FunctionType` except
+  // in error cases.
   InstId interface_function_type_id;
   // The value to use for `Self` in this function.
   InstId self_id;

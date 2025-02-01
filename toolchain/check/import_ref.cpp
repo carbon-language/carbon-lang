@@ -1968,7 +1968,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::FunctionTypeWithSelf inst)
+                                SemIR::FunctionTypeWithSelfType inst)
     -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
   auto interface_function_type_id =
@@ -1978,7 +1978,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::FunctionTypeWithSelf>(
+  return ResolveAs<SemIR::FunctionTypeWithSelfType>(
       resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
                  .interface_function_type_id = interface_function_type_id,
                  .self_id = self_id});
@@ -2768,7 +2768,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::FunctionType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::FunctionTypeWithSelf inst): {
+    case CARBON_KIND(SemIR::FunctionTypeWithSelfType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::GenericClassType inst): {
