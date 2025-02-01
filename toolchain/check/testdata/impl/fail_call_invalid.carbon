@@ -132,7 +132,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
 // CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0.45f]
 // CHECK:STDOUT:   %impl.elem0: %.28b = impl_witness_access constants.%impl_witness.85b, element0 [template = <error>]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
