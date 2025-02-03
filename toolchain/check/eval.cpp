@@ -1512,6 +1512,7 @@ static auto MakeFacetTypeResult(Context& context,
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
+// NOLINTNEXTLINE(misc-no-recursion): TODO: Remove the recursion here.
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -1893,10 +1894,23 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return MakeConstantResult(eval_context.context(), bind, phase);
     }
 
-    // These semantic wrappers don't change the constant value.
+    // AsCompatible changes the type of the source instruction; its constant
+    // value, if there is one, needs to be modified to be of the same type.
     case CARBON_KIND(SemIR::AsCompatible inst): {
-      return eval_context.GetConstantValue(inst.source_id);
+      auto value = eval_context.GetConstantValue(inst.source_id);
+      if (!value.is_constant()) {
+        return value;
+      }
+      auto value_inst = eval_context.insts().Get(
+          eval_context.constant_values().GetInstId(value));
+      value_inst.SetType(inst.type_id);
+      // TODO: Find a way to avoid recursion for this. Make this function into
+      // a while loop?
+      return TryEvalInstInContext(eval_context, SemIR::InstId::None,
+                                  value_inst);
     }
+
+    // These semantic wrappers don't change the constant value.
     case CARBON_KIND(SemIR::BindAlias typed_inst): {
       return eval_context.GetConstantValue(typed_inst.value_id);
     }
