@@ -195,6 +195,18 @@ cc_library(
 )
 
 cc_library(
+    name = "canonical_node_id",
+    srcs = ["canonical_node_id.cpp"],
+    hdrs = ["canonical_node_id.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "dump",
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
@@ -216,18 +228,6 @@ cc_test(
         ":file",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
-    ],
-)
-
-cc_library(
-    name = "resolve_node_id",
-    srcs = ["resolve_node_id.cpp"],
-    hdrs = ["resolve_node_id.h"],
-    deps = [
-        ":file",
-        ":typed_insts",
-        "//toolchain/parse:tree",
-        "@llvm-project//llvm:Support",
     ],
 )
 

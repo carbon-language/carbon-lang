@@ -5,7 +5,7 @@
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 
 #include "common/raw_string_ostream.h"
-#include "toolchain/sem_ir/resolve_node_id.h"
+#include "toolchain/sem_ir/canonical_node_id.h"
 #include "toolchain/sem_ir/stringify_type.h"
 
 namespace Carbon::Check {
@@ -36,19 +36,20 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
 auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
                                               ContextFnT context_fn) const
     -> ConvertedDiagnosticLoc {
-  llvm::SmallVector<SemIR::ResolvedNodeId> resolved_node_ids =
-      loc.is_inst_id_ ? SemIR::ResolveNodeId(sem_ir_, loc.inst_id_)
-                      : SemIR::ResolveNodeId(sem_ir_, loc.loc_id_);
+  llvm::SmallVector<SemIR::CanonicalNodeId> canonical_node_ids =
+      loc.is_inst_id_ ? SemIR::GetCanonicalNodeId(sem_ir_, loc.inst_id_)
+                      : SemIR::GetCanonicalNodeId(sem_ir_, loc.loc_id_);
 
-  auto final_node_id = resolved_node_ids.pop_back_val();
-  for (const auto& resolved_node_id : resolved_node_ids) {
-    if (!resolved_node_id.node_id.has_value()) {
+  auto final_node_id = canonical_node_ids.pop_back_val();
+  for (const auto& canonical_node_id : canonical_node_ids) {
+    if (!canonical_node_id.node_id.has_value()) {
       // TODO: Add an "In implicit import of prelude." note for the case where
       // we don't have a location.
       continue;
     }
+    // TODO: Include the name of the imported library in the diagnostic.
     auto diag_loc =
-        ConvertLocInFile(resolved_node_id, loc.token_only_, context_fn);
+        ConvertLocInFile(canonical_node_id, loc.token_only_, context_fn);
     CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
     context_fn(diag_loc.loc, InImport);
   }
@@ -57,11 +58,11 @@ auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
 }
 
 auto SemIRDiagnosticConverter::ConvertLocInFile(
-    SemIR::ResolvedNodeId resolved_node_id, bool token_only,
+    SemIR::CanonicalNodeId canonical_node_id, bool token_only,
     ContextFnT /*context_fn*/) const -> ConvertedDiagnosticLoc {
   const auto& tree_and_subtrees =
-      imported_trees_and_subtrees_[resolved_node_id.check_ir_id.index]();
-  return tree_and_subtrees.NodeToDiagnosticLoc(resolved_node_id.node_id,
+      imported_trees_and_subtrees_[canonical_node_id.check_ir_id.index]();
+  return tree_and_subtrees.NodeToDiagnosticLoc(canonical_node_id.node_id,
                                                token_only);
 }
 

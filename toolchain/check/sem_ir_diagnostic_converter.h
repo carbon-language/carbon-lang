@@ -10,9 +10,9 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/parse/tree_and_subtrees.h"
+#include "toolchain/sem_ir/canonical_node_id.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/resolve_node_id.h"
 
 namespace Carbon::Check {
 
@@ -50,8 +50,9 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
 
   // Converts a node_id corresponding to a specific sem_ir to a diagnostic
   // location.
-  auto ConvertLocInFile(SemIR::ResolvedNodeId resolved_node_id, bool token_only,
-                        ContextFnT context_fn) const -> ConvertedDiagnosticLoc;
+  auto ConvertLocInFile(SemIR::CanonicalNodeId canonical_node_id,
+                        bool token_only, ContextFnT context_fn) const
+      -> ConvertedDiagnosticLoc;
 
   // Converters for each SemIR.
   llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees_;

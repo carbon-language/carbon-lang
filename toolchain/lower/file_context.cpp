@@ -12,13 +12,13 @@
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
+#include "toolchain/sem_ir/canonical_node_id.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/resolve_node_id.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -618,7 +618,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::ResolvedNodeId resolved = ResolveNodeId(sem_ir_, inst_id).back();
+  SemIR::CanonicalNodeId resolved = GetCanonicalNodeId(sem_ir_, inst_id).back();
   const auto& tree_and_subtrees =
       (*all_trees_and_subtrees_for_debug_info_)[resolved.check_ir_id.index]();
   const auto& tokens = tree_and_subtrees.tree().tokens();
