@@ -723,7 +723,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
             // TODO: Support generic base classes, rather than passing
             // `SpecificId::Invalid`.
             CheckFunctionTypeMatches(context, override_fn, fn,
-                                     SemIR::SpecificId::Invalid,
+                                     SemIR::SpecificId::None,
                                      /*check_syntax=*/false);
             fn_decl_id = override_fn_decl_id;
           }
