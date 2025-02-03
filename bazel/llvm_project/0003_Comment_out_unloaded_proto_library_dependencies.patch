@@ -1,0 +1,69 @@
+From 01f35f954121def682097d8e697ac524b2c8acc6 Mon Sep 17 00:00:00 2001
+From: jonmeow <jperkins@google.com>
+Date: Mon, 3 Feb 2025 11:18:25 -0800
+Subject: [PATCH] Comment out unloaded proto_library dependencies
+
+---
+ .../llvm-project-overlay/clang/BUILD.bazel    | 46 +++++++++----------
+ 1 file changed, 23 insertions(+), 23 deletions(-)
+
+diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+index e3b20e43dd22..8b26e322a0ed 100644
+--- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+@@ -2603,29 +2603,29 @@ cc_library(
+     ],
+ )
+ 
+-proto_library(
+-    name = "cxx-proto",
+-    srcs = ["tools/clang-fuzzer/cxx_proto.proto"],
+-)
+-
+-cc_proto_library(
+-    name = "cxx_cc_proto",
+-    deps = [":cxx-proto"],
+-)
+-
+-cc_library(
+-    name = "proto-to-cxx-lib",
+-    srcs = ["tools/clang-fuzzer/proto-to-cxx/proto_to_cxx.cpp"],
+-    hdrs = ["tools/clang-fuzzer/proto-to-cxx/proto_to_cxx.h"],
+-    includes = ["tools/clang-fuzzer"],
+-    deps = [":cxx_cc_proto"],
+-)
+-
+-cc_binary(
+-    name = "clang-proto-to-cxx",
+-    srcs = ["tools/clang-fuzzer/proto-to-cxx/proto_to_cxx_main.cpp"],
+-    deps = [":proto-to-cxx-lib"],
+-)
++# proto_library(
++#     name = "cxx-proto",
++#     srcs = ["tools/clang-fuzzer/cxx_proto.proto"],
++# )
++#
++# cc_proto_library(
++#     name = "cxx_cc_proto",
++#     deps = [":cxx-proto"],
++# )
++#
++# cc_library(
++#     name = "proto-to-cxx-lib",
++#     srcs = ["tools/clang-fuzzer/proto-to-cxx/proto_to_cxx.cpp"],
++#     hdrs = ["tools/clang-fuzzer/proto-to-cxx/proto_to_cxx.h"],
++#     includes = ["tools/clang-fuzzer"],
++#     deps = [":cxx_cc_proto"],
++# )
++#
++# cc_binary(
++#     name = "clang-proto-to-cxx",
++#     srcs = ["tools/clang-fuzzer/proto-to-cxx/proto_to_cxx_main.cpp"],
++#     deps = [":proto-to-cxx-lib"],
++# )
+ 
+ cc_library(
+     name = "clang-fuzzer-initialize",
+-- 
+2.48.1
+
