@@ -26,7 +26,7 @@ import Cpp library "file2.h";
 // CHECK:STDOUT: --- multiple_imports.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import.loc4, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp.loc4, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

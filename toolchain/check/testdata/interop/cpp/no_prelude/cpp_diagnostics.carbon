@@ -232,7 +232,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -245,7 +245,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- import_cpp_file_with_multiple_warnings.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -272,7 +272,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- import_multiple_cpp_files_with_warnings.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import.loc4, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp.loc4, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

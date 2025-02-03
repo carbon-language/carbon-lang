@@ -21,7 +21,7 @@ import Cpp library "function_decl.h";
 // CHECK:STDOUT: --- import_function_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

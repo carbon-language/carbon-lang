@@ -706,7 +706,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case ImportCppDecl::Kind: {
-        add_inst_name("cpp_import");
+        add_inst_name("import_cpp");
         continue;
       }
       case CARBON_KIND(ImportDecl inst): {

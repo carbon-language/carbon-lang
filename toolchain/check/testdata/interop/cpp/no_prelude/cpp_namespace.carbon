@@ -60,7 +60,7 @@ class Cpp.C {};
 // CHECK:STDOUT: --- fail_duplicate_cpp_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -74,7 +74,7 @@ class Cpp.C {};
 // CHECK:STDOUT: --- cpp_in_inner_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -92,7 +92,7 @@ class Cpp.C {};
 // CHECK:STDOUT: --- alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -114,7 +114,7 @@ class Cpp.C {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%cpp_import, [template] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
