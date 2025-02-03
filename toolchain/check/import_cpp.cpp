@@ -87,11 +87,13 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
   SemIR::TypeId namespace_type_id =
       context.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
 
-  auto* parent_scope = &context.name_scopes().Get(SemIR::NameScopeId::Package);
-  auto [inserted, entry_id] = parent_scope->LookupOrAdd(
-      name_id,
-      // This InstId is temporary and would be overridden if used.
-      first_import_decl_id, SemIR::AccessKind::Public);
+  auto [inserted, entry_id] =
+      context.name_scopes()
+          .Get(SemIR::NameScopeId::Package)
+          .LookupOrAdd(
+              name_id,
+              // This InstId is temporary and would be overridden if used.
+              first_import_decl_id, SemIR::AccessKind::Public);
   CARBON_CHECK(inserted);
 
   auto import_loc_id = context.insts().GetLocId(first_import_decl_id);
@@ -119,10 +121,11 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
 
   // Note we have to get the parent scope freshly, creating the imported
   // namespace may invalidate the pointer above.
-  parent_scope = &context.name_scopes().Get(SemIR::NameScopeId::Package);
-
-  parent_scope->GetEntry(entry_id).result = SemIR::ScopeLookupResult::MakeFound(
-      namespace_id, SemIR::AccessKind::Public);
+  context.name_scopes()
+      .Get(SemIR::NameScopeId::Package)
+      .GetEntry(entry_id)
+      .result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
+                                                    SemIR::AccessKind::Public);
 
   auto& scope = context.name_scopes().Get(namespace_inst.name_scope_id);
   scope.set_is_closed_import(true);
