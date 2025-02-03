@@ -224,6 +224,19 @@ class DeductionContext {
   auto MakeSpecific() -> SemIR::SpecificId;
 
  private:
+  void NoteInitializingParam(SemIR::InstId param_id, auto& builder) {
+    if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
+            param_id)) {
+      CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
+                        "initializing generic parameter `{0}` declared here",
+                        SemIR::NameId);
+      builder.Note(param_id, InitializingGenericParam,
+                   context().entity_names().Get(param->entity_name_id).name_id);
+    } else {
+      NoteGenericHere(context(), generic_id_, builder);
+    }
+  }
+
   Context* context_;
   SemIR::LocId loc_id_;
   SemIR::GenericId generic_id_;
@@ -276,7 +289,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
 
     // TODO: Subst is linear in the length of the substitutions list. Change
     // it so we can pass in an array mapping indexes to substitutions instead.
-    substitutions_.reserve(args.size());
+    substitutions_.reserve(args.size() + result_arg_ids_.size());
     for (auto [i, subst_inst_id] : llvm::enumerate(args)) {
       substitutions_.push_back(
           {.bind_id = SemIR::CompileTimeBindIndex(i),
@@ -293,36 +306,23 @@ auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
     auto [param_id, arg_id, needs_substitution] = worklist_.PopNext();
 
-    auto note_initializing_param = [&](auto& builder) {
-      if (auto param =
-              context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
-                  param_id)) {
-        CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
-                          "initializing generic parameter `{0}` declared here",
-                          SemIR::NameId);
-        builder.Note(
-            param_id, InitializingGenericParam,
-            context().entity_names().Get(param->entity_name_id).name_id);
-      } else {
-        NoteGenericHere(context(), generic_id_, builder);
-      }
-    };
-
     // TODO: Bail out if there's nothing to deduce: if we're not in a pattern
     // and the parameter doesn't have a symbolic constant value.
 
-    // If the parameter has a symbolic type, deduce against that.
     auto param_type_id = context().insts().Get(param_id).type_id();
+    // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.AsConstantId().is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),
           context().types().GetInstId(context().insts().Get(arg_id).type_id()),
           needs_substitution);
     } else {
-      // The argument needs to have the same type as the parameter.
-      // TODO: Suppress diagnostics here if diagnose_ is false.
-      // TODO: Only do this when deducing against a symbolic pattern.
-      DiagnosticAnnotationScope annotate_diagnostics(&context().emitter(),
-                                                     note_initializing_param);
+      // The argument may be a runtime value (e.g. TupleLiteral of types), but
+      // is convertible to a compile-time value (e.g. TupleType). So we do this
+      // conversion here, even though we will later try convert again when we
+      // have deduced all of the bindings.
+      DiagnosticAnnotationScope annotate_diagnostics(
+          &context().emitter(),
+          [&](auto& builder) { NoteInitializingParam(param_id, builder); });
       arg_id = ConvertToValueOfType(context(), loc_id_, arg_id, param_type_id);
       if (arg_id == SemIR::ErrorInst::SingletonInstId) {
         return false;
@@ -364,7 +364,7 @@ auto DeductionContext::Deduce() -> bool {
                               "compile-time constant");
             auto diag =
                 context().emitter().Build(loc_id_, CompTimeArgumentNotConstant);
-            note_initializing_param(diag);
+            NoteInitializingParam(param_id, diag);
             diag.Emit();
           }
           return false;
@@ -472,15 +472,17 @@ auto DeductionContext::Deduce() -> bool {
 }
 
 auto DeductionContext::CheckDeductionIsComplete() -> bool {
-  // Check we deduced an argument value for every parameter.
-  for (auto [i, deduced_arg_id] :
-       llvm::enumerate(llvm::ArrayRef(result_arg_ids_)
+  // Check we deduced an argument value for every parameter, and convert each
+  // argument to match the final parameter type after substituting any deduced
+  // types it depends on.
+  for (auto&& [i, deduced_arg_id] :
+       llvm::enumerate(llvm::MutableArrayRef(result_arg_ids_)
                            .drop_front(first_deduced_index_.index))) {
+    auto binding_index = first_deduced_index_.index + i;
+    auto binding_id = context().inst_blocks().Get(
+        context().generics().Get(generic_id_).bindings_id)[binding_index];
     if (!deduced_arg_id.has_value()) {
       if (diagnose_) {
-        auto binding_index = first_deduced_index_.index + i;
-        auto binding_id = context().inst_blocks().Get(
-            context().generics().Get(generic_id_).bindings_id)[binding_index];
         auto entity_name_id = context()
                                   .insts()
                                   .GetAs<SemIR::AnyBindName>(binding_id)
@@ -496,8 +498,46 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       }
       return false;
     }
-  }
 
+    // If the binding is symbolic it can refer to other earlier bindings in the
+    // same generic, or from an enclosing specific. Substitute to replace those
+    // and get a non-symbolic type in order for us to know the final type that
+    // the argument needs to be converted to.
+    //
+    // Note that when typechecking a function declaration, the arguments can
+    // still be symbolic, so the substitution would also be symbolic. We are
+    // unable to get the final type for symbolic bindings until deducing with
+    // non-symbolic arguments.
+    auto arg_type_id = context().insts().Get(deduced_arg_id).type_id();
+    auto binding_type_id = context().insts().Get(binding_id).type_id();
+    if (!arg_type_id.AsConstantId().is_symbolic() &&
+        binding_type_id.AsConstantId().is_symbolic()) {
+      auto param_type_const_id = SubstConstant(
+          context(), binding_type_id.AsConstantId(), substitutions_);
+      CARBON_CHECK(param_type_const_id.has_value());
+      CARBON_CHECK(!param_type_const_id.is_symbolic());
+      binding_type_id = context().GetTypeIdForTypeConstant(param_type_const_id);
+
+      // TODO: Suppress diagnostics here if `diagnose_` is false.
+      DiagnosticAnnotationScope annotate_diagnostics(
+          &context().emitter(),
+          [&](auto& builder) { NoteInitializingParam(binding_id, builder); });
+      auto converted_arg_id = ConvertToValueOfType(
+          context(), loc_id_, deduced_arg_id, binding_type_id);
+      if (converted_arg_id != SemIR::ErrorInst::SingletonInstId) {
+        // Replace the deduced arg with its value converted to the parameter
+        // type.
+        auto converted_arg_const_inst_id = converted_arg_id;
+        CARBON_CHECK(converted_arg_const_inst_id.has_value(),
+                     "Compile-time constant value converted to runtime value?");
+        deduced_arg_id = converted_arg_const_inst_id;
+      }
+    }
+
+    substitutions_.push_back(
+        {.bind_id = SemIR::CompileTimeBindIndex(binding_index),
+         .replacement_id = context().constant_values().Get(deduced_arg_id)});
+  }
   return true;
 }
 
