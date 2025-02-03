@@ -346,9 +346,9 @@ auto CheckUnit::ImportCppPackages() -> void {
   }
 
   IdentifierId package_id = imports.front().names.package_id;
-  for (size_t i = 1; i < imports.size(); ++i) {
-    CARBON_CHECK(imports[i].names.package_id == package_id);
-  }
+  CARBON_CHECK(llvm::all_of(imports, [&](const CppImport& import) {
+    return import.names.package_id == package_id;
+  }));
 
   llvm::SmallVector<std::pair<llvm::StringRef, SemIRLoc>> import_pairs;
   import_pairs.reserve(imports.size());
