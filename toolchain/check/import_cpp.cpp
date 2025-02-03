@@ -94,7 +94,6 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
       first_import_decl_id, SemIR::AccessKind::Public);
   CARBON_CHECK(inserted);
 
-  CARBON_CHECK(first_import_decl_id.has_value());
   auto import_loc_id = context.insts().GetLocId(first_import_decl_id);
 
   auto namespace_inst = SemIR::Namespace{
