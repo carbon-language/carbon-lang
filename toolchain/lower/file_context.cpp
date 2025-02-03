@@ -624,7 +624,7 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
   if (resolved.node_id.has_value()) {
-    auto token = tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id).start;
+    auto token = tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id).begin;
     return {.filename = tokens.source().filename(),
             .line_number = tokens.GetLineNumber(token),
             .column_number = tokens.GetColumnNumber(token)};

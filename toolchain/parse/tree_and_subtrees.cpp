@@ -112,10 +112,10 @@ auto TreeAndSubtrees::Verify() const -> ErrorOr<Success> {
 
 auto TreeAndSubtrees::postorder(NodeId n) const
     -> llvm::iterator_range<Tree::PostorderIterator> {
-  // The postorder ends after this node, the root, and begins at the start of
+  // The postorder ends after this node, the root, and begins at the begin of
   // its subtree.
-  int start_index = n.index - subtree_sizes_[n.index] + 1;
-  return Tree::PostorderIterator::MakeRange(NodeId(start_index), n);
+  int begin_index = n.index - subtree_sizes_[n.index] + 1;
+  return Tree::PostorderIterator::MakeRange(NodeId(begin_index), n);
 }
 
 auto TreeAndSubtrees::children(NodeId n) const
@@ -242,16 +242,16 @@ auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
 }
 
 auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
-  TokenRange range = {.start = tree_->node_token(node_id),
+  TokenRange range = {.begin = tree_->node_token(node_id),
                       .end = Lex::TokenIndex::None};
-  range.end = range.start;
+  range.end = range.begin;
   for (NodeId desc : postorder(node_id)) {
     Lex::TokenIndex desc_token = tree_->node_token(desc);
     if (!desc_token.has_value()) {
       continue;
     }
-    if (desc_token < range.start) {
-      range.start = desc_token;
+    if (desc_token < range.begin) {
+      range.begin = desc_token;
     } else if (desc_token > range.end) {
       range.end = desc_token;
     }
@@ -274,24 +274,24 @@ auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
   // Construct a location that encompasses all tokens that descend from this
   // node (including the root).
   TokenRange token_range = GetSubtreeTokenRange(node_id);
-  auto start_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.start);
-  if (token_range.start == token_range.end) {
-    return start_loc;
+  auto begin_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.begin);
+  if (token_range.begin == token_range.end) {
+    return begin_loc;
   }
   auto end_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.end);
-  start_loc.last_byte_offset = end_loc.last_byte_offset;
+  begin_loc.last_byte_offset = end_loc.last_byte_offset;
   // For multiline locations we simply return the rest of the line for now
   // since true multiline locations are not yet supported.
-  if (start_loc.loc.line_number != end_loc.loc.line_number) {
-    start_loc.loc.length =
-        start_loc.loc.line.size() - start_loc.loc.column_number + 1;
+  if (begin_loc.loc.line_number != end_loc.loc.line_number) {
+    begin_loc.loc.length =
+        begin_loc.loc.line.size() - begin_loc.loc.column_number + 1;
   } else {
-    if (start_loc.loc.column_number != end_loc.loc.column_number) {
-      start_loc.loc.length = end_loc.loc.column_number + end_loc.loc.length -
-                             start_loc.loc.column_number;
+    if (begin_loc.loc.column_number != end_loc.loc.column_number) {
+      begin_loc.loc.length = end_loc.loc.column_number + end_loc.loc.length -
+                             begin_loc.loc.column_number;
     }
   }
-  return start_loc;
+  return begin_loc;
 }
 
 auto TreeAndSubtrees::SiblingIterator::Print(llvm::raw_ostream& output) const
