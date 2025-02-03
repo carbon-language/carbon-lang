@@ -365,12 +365,13 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Returns the type ID for a constant is a type value, i.e. it is a value of
-  // type `TypeType` or `FacetType`.
+  // Returns the type ID for a constant is a type value or constraint value,
+  // i.e. it is a value of type `TypeType` or `FacetType`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
   // Returns the type ID for an instruction whose constant value is a type
-  // value, i.e. it is a value of type `TypeType` or `FacetType`.
+  // value or constraint value, i.e. it is a value of type `TypeType` or
+  // `FacetType`.
   auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
     return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
   }
