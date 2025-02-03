@@ -1512,7 +1512,6 @@ static auto MakeFacetTypeResult(Context& context,
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
-// NOLINTNEXTLINE(misc-no-recursion): TODO: Remove the recursion here.
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -1904,10 +1903,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       auto value_inst = eval_context.insts().Get(
           eval_context.constant_values().GetInstId(value));
       value_inst.SetType(inst.type_id);
-      // TODO: Find a way to avoid recursion for this. Make this function into
-      // a while loop?
-      return TryEvalInstInContext(eval_context, SemIR::InstId::None,
-                                  value_inst);
+      auto phase = value.is_symbolic() ? Phase::Symbolic : Phase::Template;
+      return MakeConstantResult(eval_context.context(), value_inst, phase);
     }
 
     // These semantic wrappers don't change the constant value.
