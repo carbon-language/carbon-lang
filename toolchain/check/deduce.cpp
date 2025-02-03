@@ -508,6 +508,13 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // still be symbolic, so the substitution would also be symbolic. We are
     // unable to get the final type for symbolic bindings until deducing with
     // non-symbolic arguments.
+    //
+    // TODO: If arguments of different values, but that _convert to_ the same
+    // value, are deduced for the same symbolic binding, then we will fail
+    // typechecking in Deduce() with conflicting types via the
+    // `DeductionInconsistent` diagnostic. If we defer that check until after
+    // all conversions are done (after the code below) then we won't diagnose
+    // that incorrectly.
     auto arg_type_id = context().insts().Get(deduced_arg_id).type_id();
     auto binding_type_id = context().insts().Get(binding_id).type_id();
     if (!arg_type_id.AsConstantId().is_symbolic() &&
@@ -524,14 +531,12 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
           [&](auto& builder) { NoteInitializingParam(binding_id, builder); });
       auto converted_arg_id = ConvertToValueOfType(
           context(), loc_id_, deduced_arg_id, binding_type_id);
-      if (converted_arg_id != SemIR::ErrorInst::SingletonInstId) {
-        // Replace the deduced arg with its value converted to the parameter
-        // type.
-        auto converted_arg_const_inst_id = converted_arg_id;
-        CARBON_CHECK(converted_arg_const_inst_id.has_value(),
-                     "Compile-time constant value converted to runtime value?");
-        deduced_arg_id = converted_arg_const_inst_id;
-      }
+      // Replace the deduced arg with its value converted to the parameter
+      // type.
+      CARBON_CHECK(converted_arg_id == SemIR::ErrorInst::SingletonInstId ||
+                       converted_arg_id.has_value(),
+                   "Compile-time constant value converted to runtime value?");
+      deduced_arg_id = converted_arg_id;
     }
 
     substitutions_.push_back(
