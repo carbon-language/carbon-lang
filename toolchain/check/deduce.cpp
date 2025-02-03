@@ -504,7 +504,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // and get a non-symbolic type in order for us to know the final type that
     // the argument needs to be converted to.
     //
-    // Note that when typechecking a function declaration, the arguments can
+    // Note that when typechecking a checked generic, the arguments can
     // still be symbolic, so the substitution would also be symbolic. We are
     // unable to get the final type for symbolic bindings until deducing with
     // non-symbolic arguments.
