@@ -316,10 +316,10 @@ auto DeductionContext::Deduce() -> bool {
           context().types().GetInstId(context().insts().Get(arg_id).type_id()),
           needs_substitution);
     } else {
-      // The argument may be a runtime value (e.g. TupleLiteral of types), but
-      // is convertible to a compile-time value (e.g. TupleType). So we do this
-      // conversion here, even though we will later try convert again when we
-      // have deduced all of the bindings.
+      // The argument (e.g. a TupleLiteral of types) may be convertible to a
+      // compile-time value (e.g. TupleType) that we can decompose further.
+      // So we do this conversion here, even though we will later try convert
+      // again when we have deduced all of the bindings.
       DiagnosticAnnotationScope annotate_diagnostics(
           &context().emitter(),
           [&](auto& builder) { NoteInitializingParam(param_id, builder); });
