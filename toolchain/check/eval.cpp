@@ -1512,6 +1512,7 @@ static auto MakeFacetTypeResult(Context& context,
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
+// NOLINTNEXTLINE(misc-no-recursion): TODO: Remove the recursion here.
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -1900,11 +1901,36 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       if (!value.is_constant()) {
         return value;
       }
+
+      auto type_id = inst.type_id;
       auto value_inst = eval_context.insts().Get(
           eval_context.constant_values().GetInstId(value));
-      value_inst.SetType(inst.type_id);
-      auto phase = value.is_symbolic() ? Phase::Symbolic : Phase::Template;
-      return MakeConstantResult(eval_context.context(), value_inst, phase);
+      value_inst.SetType(type_id);
+
+      auto from_phase = value.is_symbolic() ? Phase::Symbolic : Phase::Template;
+      auto to_phase = eval_context.types().GetConstantId(type_id).is_symbolic()
+                          ? Phase::Symbolic
+                          : Phase::Template;
+      if (to_phase >= from_phase) {
+        // If moving from a template constant value to a symbolic type, the new
+        // constant value takes on the phase of the new type. We're adding the
+        // symbolic bit to the new constant value due to the presence of a
+        // symbolic type.
+        return MakeConstantResult(eval_context.context(), value_inst, to_phase);
+      } else {
+        // If moving from a symbolic constant value to a template type, the new
+        // constant value has a phase that depends on what is in the value. If
+        // there is anything symbolic within the value, then it's symbolic. We
+        // can't easily determine that here without evaluating a new constant
+        // value. See
+        // https://github.com/carbon-language/carbon-lang/pull/4881#discussion_r1939961372
+        //
+        // TODO: Find a way to avoid recursion for this. Make this function into
+        // a while loop? Track the phase of the constant value separately from
+        // the phase of the value's type?
+        return TryEvalInstInContext(eval_context, SemIR::InstId::None,
+                                    value_inst);
+      }
     }
 
     // These semantic wrappers don't change the constant value.
