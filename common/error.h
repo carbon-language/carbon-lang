@@ -5,7 +5,9 @@
 #ifndef CARBON_COMMON_ERROR_H_
 #define CARBON_COMMON_ERROR_H_
 
+#include <functional>
 #include <string>
+#include <type_traits>
 #include <variant>
 
 #include "common/check.h"
@@ -76,18 +78,29 @@ class [[nodiscard]] Error : public Printable<Error> {
 template <typename T>
 class [[nodiscard]] ErrorOr {
  public:
+  using ValueT = std::remove_reference_t<T>;
+
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
   ErrorOr(Error err) : val_(std::move(err)) {}
 
+  // Constructs with a reference.
+  // Implicit for easy construction on returns.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ErrorOr(T ref)
+    requires std::is_reference_v<T>
+      : val_(std::ref(ref)) {}
+
   // Constructs with a value.
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(T val) : val_(std::move(val)) {}
+  ErrorOr(T val)
+    requires(!std::is_reference_v<T>)
+      : val_(std::move(val)) {}
 
   // Returns true for success.
-  auto ok() const -> bool { return std::holds_alternative<T>(val_); }
+  auto ok() const -> bool { return std::holds_alternative<StoredT>(val_); }
 
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
@@ -102,35 +115,32 @@ class [[nodiscard]] ErrorOr {
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator*() -> T& {
+  auto operator*() -> ValueT& {
     CARBON_CHECK(ok());
-    return std::get<T>(val_);
+    return std::get<StoredT>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator*() const -> const T& {
+  auto operator*() const -> const ValueT& {
     CARBON_CHECK(ok());
-    return std::get<T>(val_);
+    return std::get<StoredT>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator->() -> T* {
-    CARBON_CHECK(ok());
-    return &std::get<T>(val_);
-  }
+  auto operator->() -> ValueT* { return &**this; }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator->() const -> const T* {
-    CARBON_CHECK(ok());
-    return &std::get<T>(val_);
-  }
+  auto operator->() const -> const ValueT* { return &**this; }
 
  private:
+  using StoredT = std::conditional_t<std::is_reference_v<T>,
+                                     std::reference_wrapper<ValueT>, T>;
+
   // Either an error message or a value.
-  std::variant<Error, T> val_;
+  std::variant<Error, StoredT> val_;
 };
 
 // A helper class for accumulating error message and converting to
