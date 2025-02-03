@@ -721,7 +721,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
                   SemIR::FunctionFields::VirtualModifier::Impl &&
               override_fn.name_id == fn.name_id) {
             // TODO: Support generic base classes, rather than passing
-            // `SpecificId::Invalid`.
+            // `SpecificId::None`.
             CheckFunctionTypeMatches(context, override_fn, fn,
                                      SemIR::SpecificId::None,
                                      /*check_syntax=*/false);
