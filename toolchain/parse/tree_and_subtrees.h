@@ -19,7 +19,7 @@ class TreeAndSubtrees {
  public:
   // A range of tokens, returned by GetSubtreeTokenRange.
   struct TokenRange {
-    Lex::TokenIndex start;
+    Lex::TokenIndex begin;
     Lex::TokenIndex end;
   };
 
