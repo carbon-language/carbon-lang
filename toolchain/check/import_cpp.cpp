@@ -96,8 +96,10 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
 
   auto import_loc_id = context.insts().GetLocId(first_import_decl_id);
 
-  auto namespace_inst = SemIR::Namespace{
-      namespace_type_id, SemIR::NameScopeId::None, first_import_decl_id};
+  auto namespace_inst =
+      SemIR::Namespace{.type_id = namespace_type_id,
+                       .name_scope_id = SemIR::NameScopeId::None,
+                       .import_id = first_import_decl_id};
 
   auto namespace_inst_and_loc =
       import_loc_id.is_import_ir_inst_id()
