@@ -190,6 +190,17 @@ TEST(NameScope, LookupOrPoison) {
   EXPECT_EQ(lookup, std::nullopt);
 }
 
+TEST(NameScope, LookupOrPoisonSelfType) {
+  int id = 0;
+
+  InstId scope_inst_id(++id);
+  NameId scope_name_id(++id);
+  NameScopeId parent_scope_id(++id);
+  NameScope name_scope(scope_inst_id, scope_name_id, parent_scope_id);
+
+  EXPECT_DEATH(name_scope.LookupOrPoison(NameId::SelfType), "SelfType");
+}
+
 TEST(NameScope, LookupOrAdd) {
   int id = 0;
 
