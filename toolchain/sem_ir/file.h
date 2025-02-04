@@ -15,6 +15,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
@@ -137,6 +138,12 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
+  auto associated_constants() -> ValueStore<AssociatedConstantId>& {
+    return associated_constants_;
+  }
+  auto associated_constants() const -> const ValueStore<AssociatedConstantId>& {
+    return associated_constants_;
+  }
   auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }
@@ -245,6 +252,9 @@ class File : public Printable<File> {
 
   // Storage for interfaces.
   ValueStore<InterfaceId> interfaces_;
+
+  // Storage for associated constants.
+  ValueStore<AssociatedConstantId> associated_constants_;
 
   // Storage for facet types.
   CanonicalValueStore<FacetTypeId> facet_types_;

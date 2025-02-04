@@ -9,6 +9,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -505,6 +506,10 @@ auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
                               SemIR::SpecificFunctionType::SingletonInstId),
                           .callee_id = generic.decl_id,
                           .specific_id = specific_id}));
+    }
+    case SemIR::AssociatedConstantDecl::Kind: {
+      // TODO: We don't have a good instruction to use here.
+      return generic.decl_id;
     }
     default: {
       CARBON_FATAL("Unknown kind for generic declaration {0}", decl);

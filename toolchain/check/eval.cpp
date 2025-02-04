@@ -1568,8 +1568,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                         &SemIR::AssociatedEntity::type_id);
     case SemIR::AssociatedEntityType::Kind:
       return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id,
-          &SemIR::AssociatedEntityType::entity_type_id);
+          eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::BoundMethod::type_id,
@@ -2127,9 +2126,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
                           InstIdAsType);
-        if (loc.is_inst_id && !loc.inst_id.has_value()) {
-          return;
-        }
         builder.Note(loc, ResolvingSpecificHere,
                      GetInstForSpecific(context, specific_id));
       });

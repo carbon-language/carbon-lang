@@ -24,8 +24,10 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::TestDiagnostic,
     DiagnosticKind::TestDiagnosticNote,
 
-    // Driver specific.
-    DiagnosticKind::CppInteropFuzzing,
+    // Diagnosing erroneous install conditions, but test environments are
+    // typically correct.
+    DiagnosticKind::CompilePreludeManifestError,
+    DiagnosticKind::DriverInstallInvalid,
 
     // These diagnose filesystem issues that are hard to unit test.
     DiagnosticKind::ErrorReadingFile,

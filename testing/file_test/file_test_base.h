@@ -29,9 +29,8 @@ class FileTestBase : public testing::Test {
     friend void PrintTo(const TestFile& f, std::ostream* os) {
       // Print content escaped.
       llvm::raw_os_ostream os_wrap(*os);
-      os_wrap << "TestFile(" << f.filename << ", \"";
-      os_wrap.write_escaped(f.content);
-      os_wrap << "\")";
+      os_wrap << "TestFile(" << f.filename << ", \"" << FormatEscaped(f.content)
+              << "\")";
     }
 
     std::string filename;
@@ -116,6 +115,12 @@ class FileTestBase : public testing::Test {
 
   // Optionally allows children to provide extra replacements for autoupdate.
   virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) -> void {}
+
+  // Whether to allow running the test in parallel, particularly for autoupdate.
+  // This can be overridden to force some tests to be run serially. At any given
+  // time, all parallel tests and a single non-parallel test will be allowed to
+  // run.
+  virtual auto AllowParallelRun() const -> bool { return true; }
 
   // Runs a test and compares output. This keeps output split by line so that
   // issues are a little easier to identify by the different line.

@@ -160,8 +160,8 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
         }
 
         name_scope.AddRequired({.name_id = name_context.unresolved_name_id,
-                                .inst_id = target_id,
-                                .access_kind = access_kind});
+                                .result = SemIR::ScopeLookupResult::MakeFound(
+                                    target_id, access_kind)});
       }
       break;
 
@@ -175,7 +175,7 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
                                       SemIR::InstId target_id,
                                       SemIR::AccessKind access_kind) -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    context_->DiagnosePoisonedName(target_id);
+    context_->DiagnosePoisonedName(name_context.poisoning_loc_id, target_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
     context_->DiagnoseDuplicateName(target_id, id);
   } else {
@@ -186,15 +186,16 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
 auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                     SemIR::InstId target_id,
                                     SemIR::AccessKind access_kind)
-    -> std::pair<SemIR::InstId, bool> {
+    -> SemIR::ScopeLookupResult {
   if (name_context.state == NameContext::State::Poisoned) {
-    return {SemIR::InstId::None, true};
+    return SemIR::ScopeLookupResult::MakePoisoned(
+        name_context.poisoning_loc_id);
   }
   if (auto id = name_context.prev_inst_id(); id.has_value()) {
-    return {id, false};
+    return SemIR::ScopeLookupResult::MakeFound(id, access_kind);
   }
   AddName(name_context, target_id, access_kind);
-  return {SemIR::InstId::None, false};
+  return SemIR::ScopeLookupResult::MakeNotFound();
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
@@ -262,20 +263,21 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
   }
 
   // For identifier nodes, we need to perform a lookup on the identifier.
-  auto [resolved_inst_id, is_poisoned] = context_->LookupNameInDecl(
+  auto lookup_result = context_->LookupNameInDecl(
       name_context.loc_id, name_id, name_context.parent_scope_id,
       name_context.initial_scope_index);
-  if (is_poisoned) {
+  if (lookup_result.is_poisoned()) {
     name_context.unresolved_name_id = name_id;
+    name_context.poisoning_loc_id = lookup_result.poisoning_loc_id();
     name_context.state = NameContext::State::Poisoned;
-  } else if (!resolved_inst_id.has_value()) {
+  } else if (!lookup_result.is_found()) {
     // Invalid indicates an unresolved name. Store it and return.
     name_context.unresolved_name_id = name_id;
     name_context.state = NameContext::State::Unresolved;
   } else {
     // Store the resolved instruction and continue for the target scope
     // update.
-    name_context.resolved_inst_id = resolved_inst_id;
+    name_context.resolved_inst_id = lookup_result.target_inst_id();
     name_context.state = NameContext::State::Resolved;
   }
 }

@@ -79,8 +79,8 @@ interface Class { }
 // CHECK:STDOUT:   %Self.86e: %.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %.type, %F.type [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @.1.%F.decl [template]
+// CHECK:STDOUT:   %.assoc_type: type = assoc_entity_type %.type [template]
+// CHECK:STDOUT:   %assoc0: %.assoc_type = assoc_entity element0, @.1.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -102,7 +102,7 @@ interface Class { }
 // CHECK:STDOUT: interface @.1 {
 // CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.86e]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -111,7 +111,6 @@ interface Class { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@.1.%Self: %.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,8 +126,8 @@ interface Class { }
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.86e [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %.type, %F.type [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @.1.%F.decl [template]
+// CHECK:STDOUT:   %.assoc_type: type = assoc_entity_type %.type [template]
+// CHECK:STDOUT:   %assoc0: %.assoc_type = assoc_entity element0, @.1.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -161,7 +160,7 @@ interface Class { }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @F.%Self.as_type.loc14_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

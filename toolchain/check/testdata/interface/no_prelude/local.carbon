@@ -28,8 +28,8 @@ fn F() {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.bff: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.f0a: %G.type.bff = struct_value () [template]
-// CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %I.type, %G.type.bff [template]
-// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, @I.%G.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%G.decl [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [template]
 // CHECK:STDOUT:   %G.type.c84: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.5a2: %G.type.c84 = struct_value () [template]
@@ -46,7 +46,7 @@ fn F() {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %G.decl: %G.type.bff = fn_decl @G.1 [template = constants.%G.f0a] {} {}
-// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -73,14 +73,13 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %.loc18: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [template = constants.%I.type]
-// CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %G.type.bff = impl_witness_access constants.%impl_witness, element0 [template = constants.%G.5a2]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G.1(@I.%Self: %I.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

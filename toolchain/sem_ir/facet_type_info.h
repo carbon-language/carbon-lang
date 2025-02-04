@@ -28,12 +28,16 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     InterfaceId interface_id;
     SpecificId specific_id;
 
-    auto operator==(const ImplsConstraint& rhs) const -> bool {
-      return interface_id == rhs.interface_id && specific_id == rhs.specific_id;
+    friend auto operator==(const ImplsConstraint& lhs,
+                           const ImplsConstraint& rhs) -> bool {
+      return lhs.interface_id == rhs.interface_id &&
+             lhs.specific_id == rhs.specific_id;
     }
     // Canonically ordered by the numerical ids.
-    auto operator<=>(const ImplsConstraint& rhs) const -> std::strong_ordering {
-      return std::tie(interface_id.index, specific_id.index) <=>
+    friend auto operator<=>(const ImplsConstraint& lhs,
+                            const ImplsConstraint& rhs)
+        -> std::strong_ordering {
+      return std::tie(lhs.interface_id.index, lhs.specific_id.index) <=>
              std::tie(rhs.interface_id.index, rhs.specific_id.index);
     }
   };
@@ -44,14 +48,16 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     ConstantId lhs_const_id;
     ConstantId rhs_const_id;
 
-    auto operator==(const RewriteConstraint& rhs) const -> bool {
-      return lhs_const_id == rhs.lhs_const_id &&
-             rhs_const_id == rhs.rhs_const_id;
+    friend auto operator==(const RewriteConstraint& lhs,
+                           const RewriteConstraint& rhs) -> bool {
+      return lhs.lhs_const_id == rhs.lhs_const_id &&
+             lhs.rhs_const_id == rhs.rhs_const_id;
     }
     // Canonically ordered by the numerical ids.
-    auto operator<=>(const RewriteConstraint& rhs) const
+    friend auto operator<=>(const RewriteConstraint& lhs,
+                            const RewriteConstraint& rhs)
         -> std::strong_ordering {
-      return std::tie(lhs_const_id.index, rhs_const_id.index) <=>
+      return std::tie(lhs.lhs_const_id.index, lhs.rhs_const_id.index) <=>
              std::tie(rhs.lhs_const_id.index, rhs.rhs_const_id.index);
     }
   };
@@ -78,10 +84,11 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return std::nullopt;
   }
 
-  auto operator==(const FacetTypeInfo& rhs) const -> bool {
-    return impls_constraints == rhs.impls_constraints &&
-           rewrite_constraints == rhs.rewrite_constraints &&
-           other_requirements == rhs.other_requirements;
+  friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
+      -> bool {
+    return lhs.impls_constraints == rhs.impls_constraints &&
+           lhs.rewrite_constraints == rhs.rewrite_constraints &&
+           lhs.other_requirements == rhs.other_requirements;
   }
 };
 

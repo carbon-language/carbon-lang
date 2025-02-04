@@ -217,8 +217,8 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
   context.name_scopes()
       .Get(choice_info.name_scope_id)
       .AddRequired({.name_id = binding.name_component.name_id,
-                    .inst_id = bind_name_id,
-                    .access_kind = SemIR::AccessKind::Public});
+                    .result = SemIR::ScopeLookupResult::MakeFound(
+                        bind_name_id, SemIR::AccessKind::Public)});
 }
 
 auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)

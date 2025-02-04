@@ -93,6 +93,18 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     CollectNamesInGeneric(interface_scope, interface_info.generic_id);
   }
 
+  // Build each associated constant scope.
+  for (auto [i, assoc_const_info] :
+       llvm::enumerate(sem_ir->associated_constants().array_ref())) {
+    AssociatedConstantId assoc_const_id(i);
+    auto assoc_const_scope = GetScopeFor(assoc_const_id);
+    auto assoc_const_loc = sem_ir->insts().GetLocId(assoc_const_info.decl_id);
+    GetScopeInfo(assoc_const_scope).name = globals_.AllocateName(
+        *this, assoc_const_loc,
+        sem_ir->names().GetIRBaseName(assoc_const_info.name_id).str());
+    CollectNamesInGeneric(assoc_const_scope, assoc_const_info.generic_id);
+  }
+
   // Build each impl scope.
   for (auto [i, impl_info] : llvm::enumerate(sem_ir->impls().array_ref())) {
     ImplId impl_id(i);
@@ -477,7 +489,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedConstantDecl inst): {
-        add_inst_name_id(inst.name_id);
+        add_inst_name_id(
+            sem_ir_->associated_constants().Get(inst.assoc_const_id).name_id);
+        queue_block_id(GetScopeFor(inst.assoc_const_id), inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(AssociatedEntity inst): {
@@ -487,16 +501,26 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        // TODO: Try to get the name of the interface associated with
-        // `inst.interface_type_id`.
-        if (auto fn_ty =
-                sem_ir_->types().TryGetAs<FunctionType>(inst.entity_type_id)) {
-          add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
-                           ".assoc_type");
-        } else {
-          // TODO: Handle other cases.
-          add_inst_name("assoc_type");
+        auto facet_type =
+            sem_ir_->types().TryGetAs<FacetType>(inst.interface_type_id);
+        if (!facet_type) {
+          // Should never happen, but we don't want the instruction namer to
+          // crash on bad IR.
+          add_inst_name("<invalid interface>");
+          continue;
         }
+        const auto& facet_type_info =
+            sem_ir_->facet_types().Get(facet_type->facet_type_id);
+        auto interface = facet_type_info.TryAsSingleInterface();
+        if (!interface) {
+          // Should never happen, but we don't want the instruction namer to
+          // crash on bad IR.
+          add_inst_name("<invalid interface>");
+          continue;
+        }
+        const auto& interface_info =
+            sem_ir_->interfaces().Get(interface->interface_id);
+        add_inst_name_id(interface_info.name_id, ".assoc_type");
         continue;
       }
       case BindAlias::Kind:

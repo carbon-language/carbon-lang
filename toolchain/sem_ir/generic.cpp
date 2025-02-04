@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/generic.h"
 
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 

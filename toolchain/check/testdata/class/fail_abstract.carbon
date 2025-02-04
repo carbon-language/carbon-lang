@@ -34,7 +34,7 @@ abstract class Abstract {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: variable has abstract type `Abstract` [AbstractTypeInVarDecl]
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]

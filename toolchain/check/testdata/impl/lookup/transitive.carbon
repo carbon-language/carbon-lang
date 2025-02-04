@@ -50,8 +50,8 @@ fn Call() {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -73,7 +73,7 @@ fn Call() {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -82,7 +82,6 @@ fn Call() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %I.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,7 +110,7 @@ fn Call() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//i, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.4a0 = import_ref Main//i, loc4_21, unloaded
+// CHECK:STDOUT:   %Main.import_ref.1e0 = import_ref Main//i, loc4_21, unloaded
 // CHECK:STDOUT:   %Main.F: %F.type.cf0 = import_ref Main//i, F, loaded [template = constants.%F.bc6]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -134,7 +133,7 @@ fn Call() {
 // CHECK:STDOUT: interface @I [from "i.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.4a0
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.1e0
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,7 +154,6 @@ fn Call() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "i.carbon"] {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,10 +226,10 @@ fn Call() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.cf0 [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, imports.%Main.import_ref.777 [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.742) [template]
+// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -246,7 +244,7 @@ fn Call() {
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//get, inst21 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//get, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//i, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.b5b: %F.assoc_type = import_ref Main//i, loc4_21, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//i, loc4_21, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//i, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e53: <witness> = import_ref Main//c, loc7_13, loaded [template = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//c, loc7_6, loaded [template = constants.%C]
@@ -268,7 +266,7 @@ fn Call() {
 // CHECK:STDOUT: interface @I [from "i.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.b5b
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.bcb
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,7 +288,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9: ref %C = temporary_storage
 // CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc9
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
-// CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, imports.%Main.import_ref.b5b [template = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %F.type.cf0 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.a2e]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
@@ -299,7 +297,6 @@ fn Call() {
 // CHECK:STDOUT: fn @Get() -> %C [from "get.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "i.carbon"] {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

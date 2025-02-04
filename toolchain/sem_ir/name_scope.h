@@ -18,13 +18,115 @@ enum class AccessKind : int8_t {
   Private,
 };
 
+// Represents the result of a name lookup.
+//
+// Lookup results are constructed through the `Make()` factory functions. Each
+// result takes one of a few forms, depending on the function used:
+// - Found when the lookup was successful returning an existing `InstId`. Can be
+//   constructed using `MakeFound()` or `MakeWrappedLookupResult()` with an
+//   existing `inst_id`.
+// - Not found when the name wasn't declared or nor poisoned. Can be constructed
+//   using `MakeNotFound()` or using `MakeWrappedLookupResult()` with a `None`
+//   `inst_id`.
+// - Poisoned when the name wasn't declared but was poisoned and so also
+//   considered to not be found in that scope. Can be constructed using
+//   `MakePoisoned()`.
+// - Represent that an error has occurred during lookup. This is still
+//   considered found and the error `InstId` is considered existing. Can be
+//   constructed using `MakeError()` or using `MakeWrappedLookupResult()` with
+//   `ErrorInst::SingletonInstId`.
+class ScopeLookupResult {
+ public:
+  static auto MakeFound(InstId target_inst_id, AccessKind access_kind)
+      -> ScopeLookupResult {
+    CARBON_CHECK(target_inst_id.has_value());
+    return MakeWrappedLookupResult(target_inst_id, access_kind);
+  }
+
+  static auto MakeNotFound() -> ScopeLookupResult {
+    return MakeWrappedLookupResult(InstId::None, AccessKind::Public);
+  }
+
+  static auto MakePoisoned(LocId poisoning_loc_id) -> ScopeLookupResult {
+    return ScopeLookupResult(poisoning_loc_id);
+  }
+
+  static auto MakeError() -> ScopeLookupResult {
+    return MakeFound(ErrorInst::SingletonInstId, AccessKind::Public);
+  }
+
+  static auto MakeWrappedLookupResult(InstId target_inst_id,
+                                      AccessKind access_kind)
+      -> ScopeLookupResult {
+    return ScopeLookupResult(target_inst_id, access_kind);
+  }
+
+  // True iff CreatePoisoned() was used.
+  auto is_poisoned() const -> bool { return is_poisoned_; }
+
+  // True when lookup was successful or resulted with an error. False for
+  // poisoned or not found.
+  auto is_found() const -> bool {
+    return !is_poisoned() && target_inst_id_.has_value();
+  }
+
+  // The `InstId` of the result of the lookup. Must only be called when lookup
+  // was successful; in other words, when `is_found()` returns true. Always
+  // returns an existing `InstId`.
+  auto target_inst_id() const -> InstId {
+    CARBON_CHECK(is_found());
+    return target_inst_id_;
+  }
+
+  // The `LocId` where the name poisoning was triggered. Must only be called
+  // when lookup returned a poisoned name; in other words, when `is_poisoned()`
+  // returns true. Always returns an existing `InstId`.
+  auto poisoning_loc_id() const -> LocId {
+    CARBON_CHECK(is_poisoned());
+    return poisoning_loc_id_;
+  }
+
+  auto access_kind() const -> AccessKind { return access_kind_; }
+
+  // Equality means either:
+  // - Both are not poisoned and have the same `InstId` and `AccessKind`.
+  // - Both are poisoned and have the same `LocId`.
+  friend auto operator==(const ScopeLookupResult& lhs,
+                         const ScopeLookupResult& rhs) -> bool {
+    return lhs.is_poisoned_ == rhs.is_poisoned_ &&
+           lhs.access_kind_ == rhs.access_kind_ &&
+           (lhs.is_poisoned_ ? lhs.poisoning_loc_id_ == rhs.poisoning_loc_id_
+                             : lhs.target_inst_id_ == rhs.target_inst_id_);
+  }
+
+ private:
+  explicit ScopeLookupResult(InstId target_inst_id, AccessKind access_kind)
+      : target_inst_id_(target_inst_id),
+        access_kind_(access_kind),
+        is_poisoned_(false) {}
+
+  explicit ScopeLookupResult(LocId loc_id)
+      : poisoning_loc_id_(loc_id),
+        access_kind_(AccessKind::Public),
+        is_poisoned_(true) {}
+
+  union {
+    InstId target_inst_id_;
+    LocId poisoning_loc_id_;
+  };
+  AccessKind access_kind_;
+  bool is_poisoned_;
+};
+static_assert(sizeof(ScopeLookupResult) == 8);
+
 class NameScope : public Printable<NameScope> {
  public:
   struct Entry {
     NameId name_id;
-    InstId inst_id;
-    AccessKind access_kind;
-    bool is_poisoned = false;
+    ScopeLookupResult result;
+
+    // Equality means they have the same `name_id` and equal `result`.
+    friend auto operator==(const Entry&, const Entry&) -> bool = default;
   };
   static_assert(sizeof(Entry) == 12);
 
@@ -77,7 +179,7 @@ class NameScope : public Printable<NameScope> {
   // Searches for the given name. If found, including if a poisoned entry is
   // found, returns the corresponding EntryId. Otherwise, returns nullopt and
   // poisons the name so it can't be declared later.
-  auto LookupOrPoison(NameId name_id) -> std::optional<EntryId>;
+  auto LookupOrPoison(LocId loc_id, NameId name_id) -> std::optional<EntryId>;
 
   auto extended_scopes() const -> llvm::ArrayRef<InstId> {
     return extended_scopes_;
@@ -185,9 +287,9 @@ class NameScopeStore {
   // The name must never conflict.
   auto AddRequiredName(NameScopeId scope_id, NameId name_id, InstId inst_id)
       -> void {
-    Get(scope_id).AddRequired({.name_id = name_id,
-                               .inst_id = inst_id,
-                               .access_kind = AccessKind::Public});
+    Get(scope_id).AddRequired(
+        {.name_id = name_id,
+         .result = ScopeLookupResult::MakeFound(inst_id, AccessKind::Public)});
   }
 
   // Returns the requested name scope.

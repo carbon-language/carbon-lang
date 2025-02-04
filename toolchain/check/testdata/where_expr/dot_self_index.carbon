@@ -31,16 +31,18 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty.generic: %Empty.type.d5a = struct_value () [template]
 // CHECK:STDOUT:   %Empty.type.3e5fde.1: type = facet_type <@Empty, @Empty(%W)> [symbolic]
 // CHECK:STDOUT:   %Self: %Empty.type.3e5fde.1 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %assoc_type.79df66.1: type = assoc_entity_type %Empty.type.3e5fde.1, type [symbolic]
-// CHECK:STDOUT:   %assoc0.b2890e.1: %assoc_type.79df66.1 = assoc_entity element0, @Empty.%A [symbolic]
+// CHECK:STDOUT:   %Empty.assoc_type.54c14f.1: type = assoc_entity_type %Empty.type.3e5fde.1 [symbolic]
+// CHECK:STDOUT:   %assoc0.68f673.1: %Empty.assoc_type.54c14f.1 = assoc_entity element0, @Empty.%A [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Empty.type.3e5fde.2: type = facet_type <@Empty, @Empty(%T)> [symbolic]
 // CHECK:STDOUT:   %.Self.c95: %Empty.type.3e5fde.2 = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %require_complete.22f: <witness> = require_complete_type %Empty.type.3e5fde.2 [symbolic]
-// CHECK:STDOUT:   %assoc_type.79df66.2: type = assoc_entity_type %Empty.type.3e5fde.2, type [symbolic]
-// CHECK:STDOUT:   %assoc0.b2890e.2: %assoc_type.79df66.2 = assoc_entity element0, @Empty.%A [symbolic]
+// CHECK:STDOUT:   %Empty.assoc_type.54c14f.2: type = assoc_entity_type %Empty.type.3e5fde.2 [symbolic]
+// CHECK:STDOUT:   %assoc0.68f673.2: %Empty.assoc_type.54c14f.2 = assoc_entity element0, @Empty.%A [symbolic]
+// CHECK:STDOUT:   %.Self.as_type.a75: type = facet_access_type %.Self.c95 [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.da4: <witness> = facet_access_witness %.Self.c95 [symbolic]
+// CHECK:STDOUT:   %Empty.facet.bea: %Empty.type.3e5fde.1 = facet_value %.Self.as_type.a75, %.Self.as_wit.da4 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.41c: type = impl_witness_access %.Self.as_wit.da4, element0 [symbolic]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %Empty_where.type.4ed: type = facet_type <@Empty, @Empty(%T) where %impl.elem0.41c = %ptr.79f> [symbolic]
@@ -53,9 +55,11 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Empty.type.f0b: type = facet_type <@Empty, @Empty(%i32)> [template]
 // CHECK:STDOUT:   %.Self.e6e: %Empty.type.f0b = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %assoc_type.eda: type = assoc_entity_type %Empty.type.f0b, type [template]
-// CHECK:STDOUT:   %assoc0.da0: %assoc_type.eda = assoc_entity element0, @Empty.%A [template]
+// CHECK:STDOUT:   %Empty.assoc_type.a46: type = assoc_entity_type %Empty.type.f0b [template]
+// CHECK:STDOUT:   %assoc0.0c3: %Empty.assoc_type.a46 = assoc_entity element0, @Empty.%A [template]
+// CHECK:STDOUT:   %.Self.as_type.920: type = facet_access_type %.Self.e6e [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.581: <witness> = facet_access_witness %.Self.e6e [symbolic]
+// CHECK:STDOUT:   %Empty.facet.a44: %Empty.type.3e5fde.1 = facet_value %.Self.as_type.920, %.Self.as_wit.581 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.797: type = impl_witness_access %.Self.as_wit.581, element0 [symbolic]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %Empty_where.type.a58: type = facet_type <@Empty, @Empty(%i32) where %impl.elem0.797 = %ptr.235> [template]
@@ -109,8 +113,10 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %Empty.type.loc18_26.1: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3e5fde.2)]
 // CHECK:STDOUT:       %.Self.1: @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.c95)]
 // CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.c95)]
-// CHECK:STDOUT:       %.loc18_34: @H.%assoc_type (%assoc_type.79df66.2) = specific_constant @Empty.%assoc0.loc12_8.1, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.b2890e.2)]
-// CHECK:STDOUT:       %A.ref: @H.%assoc_type (%assoc_type.79df66.2) = name_ref A, %.loc18_34 [symbolic = %assoc0 (constants.%assoc0.b2890e.2)]
+// CHECK:STDOUT:       %.loc18_34.1: @H.%Empty.assoc_type (%Empty.assoc_type.54c14f.2) = specific_constant @A.%assoc0, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.68f673.2)]
+// CHECK:STDOUT:       %A.ref: @H.%Empty.assoc_type (%Empty.assoc_type.54c14f.2) = name_ref A, %.loc18_34.1 [symbolic = %assoc0 (constants.%assoc0.68f673.2)]
+// CHECK:STDOUT:       %.Self.as_type.loc18_34.1: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc18_34.2 (constants.%.Self.as_type.a75)]
+// CHECK:STDOUT:       %.loc18_34.2: type = converted %.Self.ref, %.Self.as_type.loc18_34.1 [symbolic = %.Self.as_type.loc18_34.2 (constants.%.Self.as_type.a75)]
 // CHECK:STDOUT:       %.Self.as_wit.loc18_34.1: <witness> = facet_access_witness %.Self.ref [symbolic = %.Self.as_wit.loc18_34.2 (constants.%.Self.as_wit.da4)]
 // CHECK:STDOUT:       %impl.elem0.loc18_34.1: type = impl_witness_access %.Self.as_wit.loc18_34.1, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.41c)]
 // CHECK:STDOUT:       %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
@@ -135,8 +141,10 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %Empty.type: type = facet_type <@Empty, @Empty(constants.%i32)> [template = constants.%Empty.type.f0b]
 // CHECK:STDOUT:       %.Self: %Empty.type.f0b = bind_symbolic_name .Self [symbolic = constants.%.Self.e6e]
 // CHECK:STDOUT:       %.Self.ref: %Empty.type.f0b = name_ref .Self, %.Self [symbolic = constants.%.Self.e6e]
-// CHECK:STDOUT:       %.loc20_26: %assoc_type.eda = specific_constant @Empty.%assoc0.loc12_8.1, @Empty(constants.%i32) [template = constants.%assoc0.da0]
-// CHECK:STDOUT:       %A.ref: %assoc_type.eda = name_ref A, %.loc20_26 [template = constants.%assoc0.da0]
+// CHECK:STDOUT:       %.loc20_26.1: %Empty.assoc_type.a46 = specific_constant @A.%assoc0, @Empty(constants.%i32) [template = constants.%assoc0.0c3]
+// CHECK:STDOUT:       %A.ref: %Empty.assoc_type.a46 = name_ref A, %.loc20_26.1 [template = constants.%assoc0.0c3]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type.920]
+// CHECK:STDOUT:       %.loc20_26.2: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type.920]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit.581]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0.797]
 // CHECK:STDOUT:       %int_32.loc20_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -157,19 +165,24 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty, @Empty(%W.loc11_17.2)> [symbolic = %Empty.type (constants.%Empty.type.3e5fde.1)]
 // CHECK:STDOUT:   %Self.2: %Empty.type.3e5fde.1 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type @Empty.%Empty.type (%Empty.type.3e5fde.1), type [symbolic = %assoc_type (constants.%assoc_type.79df66.1)]
-// CHECK:STDOUT:   %assoc0.loc12_8.2: @Empty.%assoc_type (%assoc_type.79df66.1) = assoc_entity element0, %A [symbolic = %assoc0.loc12_8.2 (constants.%assoc0.b2890e.1)]
+// CHECK:STDOUT:   %Empty.assoc_type: type = assoc_entity_type @Empty.%Empty.type (%Empty.type.3e5fde.1) [symbolic = %Empty.assoc_type (constants.%Empty.assoc_type.54c14f.1)]
+// CHECK:STDOUT:   %assoc0: @Empty.%Empty.assoc_type (%Empty.assoc_type.54c14f.1) = assoc_entity element0, %A [symbolic = %assoc0 (constants.%assoc0.68f673.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Empty.%Empty.type (%Empty.type.3e5fde.1) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %A: type = assoc_const_decl A [template]
-// CHECK:STDOUT:     %assoc0.loc12_8.1: @Empty.%assoc_type (%assoc_type.79df66.1) = assoc_entity element0, %A [symbolic = %assoc0.loc12_8.2 (constants.%assoc0.b2890e.1)]
+// CHECK:STDOUT:     %A: type = assoc_const_decl @A [template] {
+// CHECK:STDOUT:       %assoc0: @Empty.%Empty.assoc_type (%Empty.assoc_type.54c14f.1) = assoc_entity element0, @Empty.%A [symbolic = @Empty.%assoc0 (constants.%assoc0.68f673.1)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
-// CHECK:STDOUT:     .A = %assoc0.loc12_8.1
+// CHECK:STDOUT:     .A = @A.%assoc0
 // CHECK:STDOUT:     witness = (%A)
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @A(@Empty.%W.loc11_17.1: type, @Empty.%Self.1: @Empty.%Empty.type (%Empty.type.3e5fde.1)) {
+// CHECK:STDOUT:   assoc_const A:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @H(%T.loc18_6.1: type, %V.loc18_43.1: type) {
@@ -178,8 +191,9 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty.type.loc18_26.2: type = facet_type <@Empty, @Empty(%T.loc18_6.2)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3e5fde.2)]
 // CHECK:STDOUT:   %.Self.2: @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.c95)]
 // CHECK:STDOUT:   %require_complete.loc18_34: <witness> = require_complete_type @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) [symbolic = %require_complete.loc18_34 (constants.%require_complete.22f)]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2), type [symbolic = %assoc_type (constants.%assoc_type.79df66.2)]
-// CHECK:STDOUT:   %assoc0: @H.%assoc_type (%assoc_type.79df66.2) = assoc_entity element0, @Empty.%A [symbolic = %assoc0 (constants.%assoc0.b2890e.2)]
+// CHECK:STDOUT:   %Empty.assoc_type: type = assoc_entity_type @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) [symbolic = %Empty.assoc_type (constants.%Empty.assoc_type.54c14f.2)]
+// CHECK:STDOUT:   %assoc0: @H.%Empty.assoc_type (%Empty.assoc_type.54c14f.2) = assoc_entity element0, @Empty.%A [symbolic = %assoc0 (constants.%assoc0.68f673.2)]
+// CHECK:STDOUT:   %.Self.as_type.loc18_34.2: type = facet_access_type %.Self.2 [symbolic = %.Self.as_type.loc18_34.2 (constants.%.Self.as_type.a75)]
 // CHECK:STDOUT:   %.Self.as_wit.loc18_34.2: <witness> = facet_access_witness %.Self.2 [symbolic = %.Self.as_wit.loc18_34.2 (constants.%.Self.as_wit.da4)]
 // CHECK:STDOUT:   %impl.elem0.loc18_34.2: type = impl_witness_access %.Self.as_wit.loc18_34.2, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.41c)]
 // CHECK:STDOUT:   %ptr.loc18_40.2: type = ptr_type @H.%T.loc18_6.2 (%T) [symbolic = %ptr.loc18_40.2 (constants.%ptr.79f)]
@@ -215,6 +229,8 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%W, constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(%W.loc11_17.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%T) {
@@ -224,9 +240,11 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type => constants.%Empty.type.3e5fde.2
 // CHECK:STDOUT:   %Self.2 => constants.%Self
-// CHECK:STDOUT:   %assoc_type => constants.%assoc_type.79df66.2
-// CHECK:STDOUT:   %assoc0.loc12_8.2 => constants.%assoc0.b2890e.2
+// CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.54c14f.2
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.68f673.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%T, constants.%Empty.facet.bea) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%T, constants.%V) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%T
@@ -234,8 +252,9 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.3e5fde.2
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.c95
 // CHECK:STDOUT:   %require_complete.loc18_34 => constants.%require_complete.22f
-// CHECK:STDOUT:   %assoc_type => constants.%assoc_type.79df66.2
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.b2890e.2
+// CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.54c14f.2
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.68f673.2
+// CHECK:STDOUT:   %.Self.as_type.loc18_34.2 => constants.%.Self.as_type.a75
 // CHECK:STDOUT:   %.Self.as_wit.loc18_34.2 => constants.%.Self.as_wit.da4
 // CHECK:STDOUT:   %impl.elem0.loc18_34.2 => constants.%impl.elem0.41c
 // CHECK:STDOUT:   %ptr.loc18_40.2 => constants.%ptr.79f
@@ -253,9 +272,11 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type => constants.%Empty.type.f0b
 // CHECK:STDOUT:   %Self.2 => constants.%Self
-// CHECK:STDOUT:   %assoc_type => constants.%assoc_type.eda
-// CHECK:STDOUT:   %assoc0.loc12_8.2 => constants.%assoc0.da0
+// CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.a46
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.0c3
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%i32, constants.%Empty.facet.a44) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%i32, bool) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%i32
@@ -263,8 +284,9 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.f0b
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.e6e
 // CHECK:STDOUT:   %require_complete.loc18_34 => constants.%complete_type.091
-// CHECK:STDOUT:   %assoc_type => constants.%assoc_type.eda
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.da0
+// CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.a46
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.0c3
+// CHECK:STDOUT:   %.Self.as_type.loc18_34.2 => constants.%.Self.as_type.920
 // CHECK:STDOUT:   %.Self.as_wit.loc18_34.2 => constants.%.Self.as_wit.581
 // CHECK:STDOUT:   %impl.elem0.loc18_34.2 => constants.%impl.elem0.797
 // CHECK:STDOUT:   %ptr.loc18_40.2 => constants.%ptr.235

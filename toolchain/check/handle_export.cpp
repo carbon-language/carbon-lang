@@ -78,10 +78,11 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   // diagnostic and so that cross-package imports can find it easily.
   auto entity_name = context.entity_names().Get(import_ref->entity_name_id);
   auto& parent_scope = context.name_scopes().Get(entity_name.parent_scope_id);
-  auto& scope_inst_id =
-      parent_scope.GetEntry(*parent_scope.Lookup(entity_name.name_id)).inst_id;
-  CARBON_CHECK(scope_inst_id == inst_id);
-  scope_inst_id = export_id;
+  auto& scope_result =
+      parent_scope.GetEntry(*parent_scope.Lookup(entity_name.name_id)).result;
+  CARBON_CHECK(scope_result.target_inst_id() == inst_id);
+  scope_result = SemIR::ScopeLookupResult::MakeFound(
+      export_id, scope_result.access_kind());
 
   return true;
 }

@@ -11,6 +11,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/value_ids.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -163,7 +164,8 @@ struct Worklist {
     }
   }
 
-  auto AddEntity(const EntityWithParamsBase& entity) -> void {
+  template <typename EntityT = EntityWithParamsBase>
+  auto AddEntity(const std::type_identity_t<EntityT>& entity) -> void {
     Add(entity.name_id);
     if (entity.parent_scope_id.has_value()) {
       Add(sem_ir->name_scopes().Get(entity.parent_scope_id).inst_id());
@@ -180,6 +182,11 @@ struct Worklist {
 
   auto Add(InterfaceId interface_id) -> void {
     AddEntity(sem_ir->interfaces().Get(interface_id));
+  }
+
+  auto Add(AssociatedConstantId assoc_const_id) -> void {
+    AddEntity<AssociatedConstant>(
+        sem_ir->associated_constants().Get(assoc_const_id));
   }
 
   auto Add(ImplId impl_id) -> void {

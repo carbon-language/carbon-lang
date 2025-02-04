@@ -11,6 +11,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/import_ref.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -55,16 +57,19 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
 static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
-  auto [_, self_type_inst_id, is_poisoned] = context.LookupUnqualifiedName(
-      loc_id.node_id(), SemIR::NameId::SelfType, /*required=*/false);
-  CARBON_CHECK(!is_poisoned);
-  if (!self_type_inst_id.has_value()) {
+  SemIR::ScopeLookupResult lookup_result =
+      context
+          .LookupUnqualifiedName(loc_id.node_id(), SemIR::NameId::SelfType,
+                                 /*required=*/false)
+          .scope_result;
+  CARBON_CHECK(!lookup_result.is_poisoned());
+  if (!lookup_result.is_found()) {
     return SemIR::AccessKind::Public;
   }
 
   // TODO: Support other types for `Self`.
-  auto self_class_type =
-      context.insts().TryGetAs<SemIR::ClassType>(self_type_inst_id);
+  auto self_class_type = context.insts().TryGetAs<SemIR::ClassType>(
+      lookup_result.target_inst_id());
   if (!self_class_type) {
     return SemIR::AccessKind::Public;
   }
@@ -138,9 +143,9 @@ static auto GetInterfaceFromFacetType(Context& context, SemIR::TypeId type_id)
 }
 
 static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
+                                      SemIR::TypeId self_type_id,
                                       SemIR::InstId witness_id,
                                       SemIR::SpecificId interface_specific_id,
-                                      SemIR::AssociatedEntityType assoc_type,
                                       SemIR::InstId member_id)
     -> SemIR::InstId {
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
@@ -158,14 +163,15 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // TODO: This produces the type of the associated entity with no value for
-  // `Self`. The type `Self` might appear in the type of an associated constant,
-  // and if so, we'll need to substitute it here somehow.
-  auto subst_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), interface_specific_id, assoc_type.entity_type_id);
+  // Substitute the interface specific and `Self` type into the type of the
+  // associated entity to find the type of the member access.
+  LoadImportRef(context, assoc_entity->decl_id);
+  auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
+      context, loc_id, interface_specific_id, assoc_entity->decl_id,
+      self_type_id, witness_id);
 
   return context.GetOrAddInst<SemIR::ImplWitnessAccess>(
-      loc_id, {.type_id = subst_type_id,
+      loc_id, {.type_id = assoc_type_id,
                .witness_id = witness_id,
                .index = assoc_entity->index});
 }
@@ -186,6 +192,7 @@ static auto PerformImplLookup(
     return SemIR::ErrorInst::SingletonInstId;
   }
 
+  auto self_type_id = context.GetTypeIdForTypeConstant(type_const_id);
   auto witness_id =
       LookupImplWitness(context, loc_id, type_const_id,
                         assoc_type.interface_type_id.AsConstantId());
@@ -199,7 +206,7 @@ static auto PerformImplLookup(
                         SemIR::TypeId, SemIR::TypeId);
       missing_impl_diagnoser()
           .Note(loc_id, MissingImplInMemberAccessNote, interface_type_id,
-                context.GetTypeIdForTypeConstant(type_const_id))
+                self_type_id)
           .Emit();
     } else {
       // TODO: Pass in the expression whose type we are printing.
@@ -208,14 +215,12 @@ static auto PerformImplLookup(
                         "that does not implement that interface",
                         SemIR::TypeId, SemIR::TypeId);
       context.emitter().Emit(loc_id, MissingImplInMemberAccess,
-                             interface_type_id,
-                             context.GetTypeIdForTypeConstant(type_const_id));
+                             interface_type_id, self_type_id);
     }
     return SemIR::ErrorInst::SingletonInstId;
   }
-  return AccessMemberOfImplWitness(context, loc_id, witness_id,
-                                   interface_type->specific_id, assoc_type,
-                                   member_id);
+  return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
+                                   interface_type->specific_id, member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing
@@ -237,12 +242,12 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       context.LookupQualifiedName(loc_id, name_id, lookup_scopes,
                                   /*required=*/true, access_info);
 
-  if (!result.inst_id.has_value()) {
+  if (!result.scope_result.is_found()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
-  auto inst = context.insts().Get(result.inst_id);
+  auto inst = context.insts().Get(result.scope_result.target_inst_id());
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           inst.type_id());
   CARBON_CHECK(type_id.has_value(), "Missing type for member {0}", inst);
@@ -250,18 +255,23 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.
   if (result.specific_id.has_value() &&
-      context.constant_values().Get(result.inst_id).is_symbolic()) {
-    result.inst_id = context.GetOrAddInst<SemIR::SpecificConstant>(
-        loc_id, {.type_id = type_id,
-                 .inst_id = result.inst_id,
-                 .specific_id = result.specific_id});
+      context.constant_values()
+          .Get(result.scope_result.target_inst_id())
+          .is_symbolic()) {
+    result.scope_result = SemIR::ScopeLookupResult::MakeFound(
+        context.GetOrAddInst<SemIR::SpecificConstant>(
+            loc_id, {.type_id = type_id,
+                     .inst_id = result.scope_result.target_inst_id(),
+                     .specific_id = result.specific_id}),
+        SemIR::AccessKind::Public);
   }
 
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
   auto member_id = context.GetOrAddInst<SemIR::NameRef>(
-      loc_id,
-      {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
+      loc_id, {.type_id = type_id,
+               .name_id = name_id,
+               .value_id = result.scope_result.target_inst_id()});
 
   // If member name lookup finds an associated entity name, and the scope is not
   // a facet type, perform impl lookup.
@@ -276,6 +286,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       if (base_type_id != SemIR::TypeType::SingletonTypeId &&
           context.IsFacetType(base_type_id)) {
         // Handles `T.F` when `T` is a non-type facet.
+        auto base_as_type = ExprAsType(context, loc_id, base_id);
 
         auto assoc_interface =
             GetInterfaceFromFacetType(context, assoc_type->interface_type_id);
@@ -315,9 +326,9 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           return SemIR::ErrorInst::SingletonInstId;
         }
 
-        member_id = AccessMemberOfImplWitness(context, loc_id, witness_inst_id,
-                                              assoc_interface->specific_id,
-                                              *assoc_type, member_id);
+        member_id = AccessMemberOfImplWitness(
+            context, loc_id, base_as_type.type_id, witness_inst_id,
+            assoc_interface->specific_id, member_id);
       } else {
         // Handles `x.F` if `x` is of type `class C` that extends an interface
         // containing `F`.

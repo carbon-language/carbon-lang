@@ -45,11 +45,9 @@ struct LookupResult {
   // The specific in which the lookup result was found. `None` if the result
   // was not found in a specific.
   SemIR::SpecificId specific_id;
-  // The declaration that was found by name lookup. `None` for poisoned items.
-  // TODO: Make this point to the poisoning declaration.
-  SemIR::InstId inst_id;
-  // Whether the lookup found a poisoned name.
-  bool is_poisoned = false;
+
+  // The result from the lookup in the scope.
+  SemIR::ScopeLookupResult scope_result;
 };
 
 // Information about an access.
@@ -72,17 +70,6 @@ class Context {
   // add contextual notes as appropriate.
   using BuildDiagnosticFn =
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
-
-  struct LookupNameInExactScopeResult {
-    // The matching entity if found, or `None` if poisoned or not found.
-    SemIR::InstId inst_id;
-
-    // The access level required to use inst_id when it's not `None`.
-    SemIR::AccessKind access_kind;
-
-    // Whether a poisoned entry was found.
-    bool is_poisoned = false;
-  };
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
@@ -228,12 +215,10 @@ class Context {
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration. If scope_id is `None`, performs lookup into the lexical scope
-  // specified by scope_index instead. If found, returns the referenced
-  // `InstId` and false. If poisoned, returns `InstId::None` and true.
-  // TODO: For poisoned names, return the poisoning `InstId`.
+  // specified by scope_index instead.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id, ScopeIndex scope_index)
-      -> std::pair<SemIR::InstId, bool>;
+      -> SemIR::ScopeLookupResult;
 
   // Performs an unqualified name lookup, returning the referenced `InstId`.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
@@ -248,11 +233,11 @@ class Context {
   // poisoned name will be treated as if it is not declared. Otherwise, this is
   // a lookup for a name being declared, so the name will not be poisoned, but
   // poison will be returned if it's already been looked up.
-  auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+  auto LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
                               SemIR::NameScope& scope,
                               bool is_being_declared = false)
-      -> LookupNameInExactScopeResult;
+      -> SemIR::ScopeLookupResult;
 
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
   // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
@@ -272,13 +257,15 @@ class Context {
 
   // Returns the `InstId` corresponding to a name in the core package, or
   // BuiltinErrorInst if not found.
-  auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
+  auto LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
+      -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
-  // Prints a diagnostic for a poisoned name.
-  auto DiagnosePoisonedName(SemIRLoc loc) -> void;
+  // Prints a diagnostic for a poisoned name when it's later declared.
+  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+                            SemIR::InstId decl_inst_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
@@ -467,9 +454,14 @@ class Context {
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
-  // Gets the type for the name of an associated entity.
-  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id,
-                               SemIR::TypeId entity_type_id) -> SemIR::TypeId;
+  // Gets the type to use for an unbound associated entity declared in this
+  // interface. For example, this is the type of `I.T` after
+  // `interface I { let T:! type; }`.
+  // The name of the interface is used for diagnostics.
+  // TODO: Should we use a different type for each such entity, or the same type
+  // for all associated entities?
+  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id)
+      -> SemIR::TypeId;
 
   // Gets a singleton type. The returned type will be complete. Requires that
   // `singleton_id` is already validated to be a singleton.
@@ -627,6 +619,9 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
+  }
+  auto associated_constants() -> ValueStore<SemIR::AssociatedConstantId>& {
+    return sem_ir().associated_constants();
   }
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();

@@ -40,8 +40,8 @@ fn G(c: C) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.cf0 [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.f36: type = fn_type @F.2 [template]
@@ -63,7 +63,7 @@ fn G(c: C) {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [template = constants.%F.bc6] {} {}
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -94,7 +94,6 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,10 +117,10 @@ fn G(c: C) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.cf0 [template]
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, imports.%Main.import_ref.777 [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [template]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.f6d) [template]
+// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.type.f36: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.4c3: %F.type.f36 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -133,7 +132,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//extend_impl_library, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.3019d1.1: type = import_ref Main//extend_impl_library, loc9_18, loaded [template = constants.%I.type]
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//extend_impl_library, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.b5b: %F.assoc_type = import_ref Main//extend_impl_library, loc5_9, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//extend_impl_library, loc5_9, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//extend_impl_library, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b86: <witness> = import_ref Main//extend_impl_library, loc9_20, loaded [template = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//extend_impl_library, loc9_15, loaded [template = constants.%C]
@@ -160,7 +159,7 @@ fn G(c: C) {
 // CHECK:STDOUT: interface @I [from "extend_impl_library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.b5b
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.bcb
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -180,18 +179,17 @@ fn G(c: C) {
 // CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc7: type = name_ref C, imports.%Main.C [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc7: %F.assoc_type = name_ref F, imports.%Main.import_ref.b5b [template = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref.loc7: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0.loc7: %F.type.cf0 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.4c3]
 // CHECK:STDOUT:   %F.call.loc7: init %empty_tuple.type = call %impl.elem0.loc7()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc8: %F.assoc_type = name_ref F, imports.%Main.import_ref.b5b [template = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref.loc8: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0.loc8: %F.type.cf0 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.4c3]
 // CHECK:STDOUT:   %F.call.loc8: init %empty_tuple.type = call %impl.elem0.loc8()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "extend_impl_library.carbon"] {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

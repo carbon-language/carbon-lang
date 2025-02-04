@@ -126,13 +126,13 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %At.type.b28: type = fn_type @At.1, @IndexWith(%SubscriptType) [symbolic]
 // CHECK:STDOUT:   %At.921: %At.type.b28 = struct_value () [symbolic]
-// CHECK:STDOUT:   %At.assoc_type.315: type = assoc_entity_type %IndexWith.type.518, %At.type.b28 [symbolic]
-// CHECK:STDOUT:   %assoc0.d83: %At.assoc_type.315 = assoc_entity element0, @IndexWith.%At.decl [symbolic]
+// CHECK:STDOUT:   %IndexWith.assoc_type.c82: type = assoc_entity_type %IndexWith.type.518 [symbolic]
+// CHECK:STDOUT:   %assoc0.d63: %IndexWith.assoc_type.c82 = assoc_entity element0, @IndexWith.%At.decl [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.4ab: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type)> [template]
 // CHECK:STDOUT:   %At.type.082: type = fn_type @At.1, @IndexWith(%empty_tuple.type) [template]
 // CHECK:STDOUT:   %At.d80: %At.type.082 = struct_value () [template]
-// CHECK:STDOUT:   %At.assoc_type.61a: type = assoc_entity_type %IndexWith.type.4ab, %At.type.082 [template]
-// CHECK:STDOUT:   %assoc0.ca3: %At.assoc_type.61a = assoc_entity element0, @IndexWith.%At.decl [template]
+// CHECK:STDOUT:   %IndexWith.assoc_type.81e: type = assoc_entity_type %IndexWith.type.4ab [template]
+// CHECK:STDOUT:   %assoc0.5bc: %IndexWith.assoc_type.81e = assoc_entity element0, @IndexWith.%At.decl [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%At.decl) [template]
 // CHECK:STDOUT:   %At.type.8fc: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.8ba: %At.type.8fc = struct_value () [template]
@@ -180,8 +180,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.518 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType.loc5_26.2) [symbolic = %At.type (constants.%At.type.b28)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.b28) = struct_value () [symbolic = %At (constants.%At.921)]
-// CHECK:STDOUT:   %At.assoc_type: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.518), @IndexWith.%At.type (%At.type.b28) [symbolic = %At.assoc_type (constants.%At.assoc_type.315)]
-// CHECK:STDOUT:   %assoc0.loc6_52.2: @IndexWith.%At.assoc_type (%At.assoc_type.315) = assoc_entity element0, %At.decl [symbolic = %assoc0.loc6_52.2 (constants.%assoc0.d83)]
+// CHECK:STDOUT:   %IndexWith.assoc_type: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.518) [symbolic = %IndexWith.assoc_type (constants.%IndexWith.assoc_type.c82)]
+// CHECK:STDOUT:   %assoc0.loc6_52.2: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.c82) = assoc_entity element0, %At.decl [symbolic = %assoc0.loc6_52.2 (constants.%assoc0.d63)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.518) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
@@ -209,7 +209,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc6_52.1: @IndexWith.%At.assoc_type (%At.assoc_type.315) = assoc_entity element0, %At.decl [symbolic = %assoc0.loc6_52.2 (constants.%assoc0.d83)]
+// CHECK:STDOUT:     %assoc0.loc6_52.1: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.c82) = assoc_entity element0, %At.decl [symbolic = %assoc0.loc6_52.2 (constants.%assoc0.d63)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -303,8 +303,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT:   %At.type => constants.%At.type.082
 // CHECK:STDOUT:   %At => constants.%At.d80
-// CHECK:STDOUT:   %At.assoc_type => constants.%At.assoc_type.61a
-// CHECK:STDOUT:   %assoc0.loc6_52.2 => constants.%assoc0.ca3
+// CHECK:STDOUT:   %IndexWith.assoc_type => constants.%IndexWith.assoc_type.81e
+// CHECK:STDOUT:   %assoc0.loc6_52.2 => constants.%assoc0.5bc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%empty_tuple.type, constants.%IndexWith.facet) {

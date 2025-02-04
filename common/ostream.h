@@ -53,6 +53,26 @@ class Printable {
   }
 };
 
+// Helper class for printing strings with escapes.
+//
+// For example:
+//   stream << FormatEscaped(str);
+// Is equivalent to:
+//   stream.write_escaped(str);
+class FormatEscaped : public Printable<FormatEscaped> {
+ public:
+  explicit FormatEscaped(llvm::StringRef str, bool use_hex_escapes = false)
+      : str_(str), use_hex_escapes_(use_hex_escapes) {}
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out.write_escaped(str_, use_hex_escapes_);
+  }
+
+ private:
+  llvm::StringRef str_;
+  bool use_hex_escapes_;
+};
+
 // Returns the result of printing the value.
 template <typename T>
   requires std::derived_from<T, Printable<T>>

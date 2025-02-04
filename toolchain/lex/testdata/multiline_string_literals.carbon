@@ -35,13 +35,7 @@ a
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_indent_mismatch.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   - { index: 1, kind: 'StringLiteral', line: {{ *}}2, column: 3, indent: 3, spelling: ''''
-// CHECK:STDOUT: a
-// CHECK:STDOUT:   '''', value: `a
-// CHECK:STDOUT: `, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}2, column: 3, indent: 3, spelling: "'''\na\n  '''", value: "a\n", has_leading_space: true }
 // CHECK:STDOUT: - filename: fail_quotes.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   - { index: 1, kind: 'StringLiteral', line: {{ *}}2, column: 1, indent: 1, spelling: '"""
-// CHECK:STDOUT: a
-// CHECK:STDOUT: """', value: `a
-// CHECK:STDOUT: `, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}2, column: 1, indent: 1, spelling: "\"\"\"\na\n\"\"\"", value: "a\n", has_leading_space: true }

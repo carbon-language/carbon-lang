@@ -62,8 +62,8 @@ interface BeingDefined {
 // CHECK:STDOUT:   %Self: %BeingDefined.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %H.assoc_type: type = assoc_entity_type %BeingDefined.type, %H.type [template]
-// CHECK:STDOUT:   %assoc0: %H.assoc_type = assoc_entity element0, @BeingDefined.%H.decl [template]
+// CHECK:STDOUT:   %BeingDefined.assoc_type: type = assoc_entity_type %BeingDefined.type [template]
+// CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, @BeingDefined.%H.decl [template]
 // CHECK:STDOUT:   %.type.5fb: type = fn_type @.2 [template]
 // CHECK:STDOUT:   %.b15: %.type.5fb = struct_value () [template]
 // CHECK:STDOUT: }
@@ -93,7 +93,7 @@ interface BeingDefined {
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %H.assoc_type = assoc_entity element0, %H.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, %H.decl [template = constants.%assoc0]
 // CHECK:STDOUT:   %.decl: %.type.5fb = fn_decl @.2 [template = constants.%.b15] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -112,12 +112,10 @@ interface BeingDefined {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @H(@BeingDefined.%Self: %BeingDefined.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.2(@BeingDefined.%Self: %BeingDefined.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

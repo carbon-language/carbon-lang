@@ -9,6 +9,7 @@
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_info.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -199,12 +200,17 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.element_type_id);
         break;
       }
+      case CARBON_KIND(AssociatedConstantDecl inst): {
+        const auto& assoc_const =
+            sem_ir.associated_constants().Get(inst.assoc_const_id);
+        step_stack.PushQualifiedName(assoc_const.parent_scope_id,
+                                     assoc_const.name_id);
+        break;
+      }
       case CARBON_KIND(AssociatedEntityType inst): {
-        out << "<associated ";
+        out << "<associated entity in ";
         step_stack.PushString(">");
         step_stack.PushTypeId(inst.interface_type_id);
-        step_stack.PushString(" in ");
-        step_stack.PushTypeId(inst.entity_type_id);
         break;
       }
       case BindAlias::Kind:
@@ -354,7 +360,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           if (auto associated_const =
                   sem_ir.insts().TryGetAs<AssociatedConstantDecl>(
                       entity_inst_id)) {
-            step_stack.PushNameId(associated_const->name_id);
+            step_stack.PushNameId(sem_ir.associated_constants()
+                                      .Get(associated_const->assoc_const_id)
+                                      .name_id);
           } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
                          entity_inst_id)) {
             const auto& function =
@@ -540,7 +548,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ArrayInit::Kind:
       case AsCompatible::Kind:
       case Assign::Kind:
-      case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case BaseDecl::Kind:
       case BindName::Kind:

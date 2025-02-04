@@ -74,6 +74,10 @@ class FormatterImpl {
       FormatInterface(InterfaceId(i));
     }
 
+    for (int i : llvm::seq(sem_ir_->associated_constants().size())) {
+      FormatAssociatedConstant(AssociatedConstantId(i));
+    }
+
     for (int i : llvm::seq(sem_ir_->impls().size())) {
       FormatImpl(ImplId(i));
     }
@@ -181,11 +185,15 @@ class FormatterImpl {
 
   // Determines whether the specified entity should be included in the formatted
   // output.
-  auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
-    if (!entity.latest_decl_id().has_value()) {
+  auto ShouldFormatEntity(SemIR::InstId decl_id) -> bool {
+    if (!decl_id.has_value()) {
       return true;
     }
-    return should_format_entity_(entity.latest_decl_id());
+    return should_format_entity_(decl_id);
+  }
+
+  auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
+    return ShouldFormatEntity(entity.latest_decl_id());
   }
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
@@ -327,6 +335,33 @@ class FormatterImpl {
     FormatEntityEnd(interface_info.generic_id);
   }
 
+  // Formats an associated constant entity.
+  auto FormatAssociatedConstant(AssociatedConstantId id) -> void {
+    const AssociatedConstant& assoc_const =
+        sem_ir_->associated_constants().Get(id);
+    if (!ShouldFormatEntity(assoc_const.decl_id)) {
+      return;
+    }
+
+    FormatEntityStart("assoc_const", assoc_const.decl_id,
+                      assoc_const.generic_id, id);
+
+    llvm::SaveAndRestore assoc_const_scope(scope_,
+                                           inst_namer_->GetScopeFor(id));
+
+    out_ << " ";
+    FormatName(assoc_const.name_id);
+    out_ << ":! ";
+    FormatArg(sem_ir_->insts().Get(assoc_const.decl_id).type_id());
+    if (assoc_const.default_value_id.has_value()) {
+      out_ << " = ";
+      FormatArg(assoc_const.default_value_id);
+    }
+    out_ << ";\n";
+
+    FormatEntityEnd(assoc_const.generic_id);
+  }
+
   // Formats a full impl.
   auto FormatImpl(ImplId id) -> void {
     const Impl& impl_info = sem_ir_->impls().Get(id);
@@ -414,10 +449,10 @@ class FormatterImpl {
     }
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
-      out_ << " = \"";
-      out_.write_escaped(fn.builtin_function_kind.name(),
-                         /*UseHexEscapes=*/true);
-      out_ << "\"";
+      out_ << " = \""
+           << FormatEscaped(fn.builtin_function_kind.name(),
+                            /*use_hex_escapes=*/true)
+           << "\"";
     }
 
     if (!fn.body_block_ids.empty()) {
@@ -528,12 +563,12 @@ class FormatterImpl {
   // Provides common formatting for entities, paired with FormatEntityEnd.
   template <typename IdT>
   auto FormatEntityStart(llvm::StringRef entity_kind,
-                         const EntityWithParamsBase& entity, IdT entity_id)
-      -> void {
+                         InstId first_owning_decl_id, GenericId generic_id,
+                         IdT entity_id) -> void {
     // If this entity was imported from a different IR, annotate the name of
     // that IR in the output before the `{` or `;`.
-    if (entity.first_owning_decl_id.has_value()) {
-      auto loc_id = sem_ir_->insts().GetLocId(entity.first_owning_decl_id);
+    if (first_owning_decl_id.has_value()) {
+      auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
       if (loc_id.is_import_ir_inst_id()) {
         auto import_ir_id =
             sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
@@ -543,12 +578,12 @@ class FormatterImpl {
       }
     }
 
-    auto generic_id = entity.generic_id;
     if (generic_id.has_value()) {
       FormatGenericStart(entity_kind, generic_id);
     }
 
     out_ << "\n";
+    after_open_brace_ = false;
     Indent();
     out_ << entity_kind;
 
@@ -558,6 +593,14 @@ class FormatterImpl {
       out_ << " ";
       FormatName(entity_id);
     }
+  }
+
+  template <typename IdT>
+  auto FormatEntityStart(llvm::StringRef entity_kind,
+                         const EntityWithParamsBase& entity, IdT entity_id)
+      -> void {
+    FormatEntityStart(entity_kind, entity.first_owning_decl_id,
+                      entity.generic_id, entity_id);
   }
 
   // Provides common formatting for entities, paired with FormatEntityStart.
@@ -629,15 +672,15 @@ class FormatterImpl {
       out_ << label;
     }
 
-    for (auto [name_id, inst_id, access_kind, is_poisoned] : scope.entries()) {
-      if (is_poisoned) {
+    for (auto [name_id, result] : scope.entries()) {
+      if (result.is_poisoned()) {
         // TODO: Add poisoned names.
         continue;
       }
       Indent();
       out_ << ".";
       FormatName(name_id);
-      switch (access_kind) {
+      switch (result.access_kind()) {
         case SemIR::AccessKind::Public:
           break;
         case SemIR::AccessKind::Protected:
@@ -648,7 +691,7 @@ class FormatterImpl {
           break;
       }
       out_ << " = ";
-      FormatName(inst_id);
+      FormatName(result.is_found() ? result.target_inst_id() : InstId::None);
       out_ << "\n";
     }
 
@@ -740,9 +783,7 @@ class FormatterImpl {
     if (space_where == AddSpace::Before) {
       out_ << ' ';
     }
-    out_ << "[from \"";
-    out_.write_escaped(pending_imported_from_);
-    out_ << "\"]";
+    out_ << "[from \"" << FormatEscaped(pending_imported_from_) << "\"]";
     if (space_where == AddSpace::After) {
       out_ << ' ';
     }
@@ -1017,6 +1058,13 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
+  auto FormatInstRHS(AssociatedConstantDecl inst) -> void {
+    FormatArgs(inst.assoc_const_id);
+    llvm::SaveAndRestore assoc_const_scope(
+        scope_, inst_namer_->GetScopeFor(inst.assoc_const_id));
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
   auto FormatInstRHS(IntValue inst) -> void {
     out_ << " ";
     sem_ir_->ints()
@@ -1216,10 +1264,10 @@ class FormatterImpl {
   }
 
   auto FormatArg(StringLiteralValueId id) -> void {
-    out_ << '"';
-    out_.write_escaped(sem_ir_->string_literal_values().Get(id),
-                       /*UseHexEscapes=*/true);
-    out_ << '"';
+    out_ << '"'
+         << FormatEscaped(sem_ir_->string_literal_values().Get(id),
+                          /*use_hex_escapes=*/true)
+         << '"';
   }
 
   auto FormatArg(TypeId id) -> void { FormatType(id); }

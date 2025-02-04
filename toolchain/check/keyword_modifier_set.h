@@ -86,7 +86,7 @@ class KeywordModifierSet {
   //                .Default(SomeEnum::DefaultValue);
   //   ```
   template <typename T>
-  auto ToEnum() -> auto {
+  auto ToEnum() const -> auto {
     class Converter {
      public:
       explicit Converter(const KeywordModifierSet& set) : set_(set) {}
@@ -124,15 +124,16 @@ class KeywordModifierSet {
   }
 
   // Returns true if empty.
-  constexpr auto empty() -> bool { return !set_; }
+  constexpr auto empty() const -> bool { return !set_; }
 
   // Returns the set intersection.
-  constexpr auto operator&(KeywordModifierSet other) -> KeywordModifierSet {
+  constexpr auto operator&(KeywordModifierSet other) const
+      -> KeywordModifierSet {
     return set_ & other.set_;
   }
 
   // Returns the set inverse.
-  auto operator~() -> KeywordModifierSet { return ~set_; }
+  auto operator~() const -> KeywordModifierSet { return ~set_; }
 
  private:
   RawEnumType set_;

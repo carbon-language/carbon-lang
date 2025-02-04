@@ -42,7 +42,8 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
   // and only push a pattern block in `forall` case.
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 
@@ -213,39 +214,10 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
-
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
-  auto end_node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
-  CARBON_CHECK(end_node_kind == Parse::NodeKind::ImplDefinitionStart ||
-               end_node_kind == Parse::NodeKind::ImplDecl);
   Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
   --last_param_iter;
-
-  // Following proposal #3763, exclude a final `where` clause, if present. See:
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
-
-  // Caches the NodeKind for the current value of *last_param_iter so
-  if (context.parse_tree().node_kind(*last_param_iter) ==
-      Parse::NodeKind::WhereExpr) {
-    int where_operands_to_skip = 1;
-    --last_param_iter;
-    CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                 last_param_iter);
-    do {
-      auto node_kind = context.parse_tree().node_kind(*last_param_iter);
-      if (node_kind == Parse::NodeKind::WhereExpr) {
-        // If we have a nested `where`, we need to see another `WhereOperand`
-        // before we find the one that matches our original `WhereExpr` node.
-        ++where_operands_to_skip;
-      } else if (node_kind == Parse::NodeKind::WhereOperand) {
-        --where_operands_to_skip;
-      }
-      --last_param_iter;
-      CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                   last_param_iter);
-    } while (where_operands_to_skip > 0);
-  }
 
   return {
       .name_loc_id = Parse::NodeId::None,
@@ -314,9 +286,6 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 
   // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
-  // TODO: Merge information from the new declaration into the old one as
-  // needed.
-
   return true;
 }
 
@@ -374,6 +343,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
+  // TODO: Detect two impl declarations with the same self type and interface,
+  // and issue an error if they don't match.
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
       if (IsValidImplRedecl(context, impl_info, prev_impl_id)) {
@@ -391,15 +362,13 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (!impl_decl.impl_id.has_value()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
-    AddConstantsToImplWitnessFromConstraint(
-        context, impl_info, impl_info.witness_id, impl_decl.impl_id);
+    AddConstantsToImplWitnessFromConstraint(context, impl_info,
+                                            impl_info.witness_id);
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
     const auto& first_impl = context.impls().Get(impl_decl.impl_id);
-    AddConstantsToImplWitnessFromConstraint(
-        context, impl_info, first_impl.witness_id, impl_decl.impl_id);
     FinishGenericRedecl(context, impl_decl_id, first_impl.generic_id);
   }
 

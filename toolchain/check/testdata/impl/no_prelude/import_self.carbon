@@ -38,8 +38,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
-// CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type [template]
-// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, @Add.%Op.decl [template]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [template]
+// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, @Add.%Op.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,7 +79,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %return.param: ref @Op.%Self.as_type.loc5_15.1 (%Self.as_type) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @Op.%Self.as_type.loc5_15.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, %Op.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, %Op.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -115,14 +115,14 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.31b [template]
-// CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, imports.%Main.import_ref.047 [template]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [template]
+// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Add: type = import_ref Main//a, Add, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//a, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.6d9: %Op.assoc_type = import_ref Main//a, loc5_41, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.db7: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op: %Op.type.31b = import_ref Main//a, Op, loaded [template = constants.%Op.d59]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -168,7 +168,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: interface @Add [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.07c
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.6d9
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.db7
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,7 +216,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [template = constants.%Add.type]
-// CHECK:STDOUT:   %Op.ref: %Op.assoc_type = name_ref Op, imports.%Main.import_ref.6d9 [template = constants.%assoc0]
+// CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.db7 [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %Op.type.31b = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.489]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y

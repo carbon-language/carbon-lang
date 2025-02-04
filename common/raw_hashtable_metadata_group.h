@@ -192,8 +192,8 @@ class BitIndexRange
     Iterator() = default;
     explicit Iterator(BitsT bits) : bits_(bits) {}
 
-    auto operator==(const Iterator& rhs) const -> bool {
-      return bits_ == rhs.bits_;
+    friend auto operator==(const Iterator& lhs, const Iterator& rhs) -> bool {
+      return lhs.bits_ == rhs.bits_;
     }
 
     auto operator*() -> ssize_t& {

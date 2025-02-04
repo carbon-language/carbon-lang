@@ -6,6 +6,11 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
+
 cc_library(
     name = "language_server",
     srcs = ["language_server.cpp"],
@@ -14,9 +19,9 @@ cc_library(
         ":context",
         ":incoming_messages",
         ":outgoing_messages",
-        "//common:error",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )
@@ -26,6 +31,7 @@ cc_library(
     hdrs = ["context.h"],
     deps = [
         "//common:map",
+        "//toolchain/diagnostics:diagnostic_emitter",
     ],
 )
 
@@ -55,6 +61,8 @@ cc_library(
         ":handle",
         "//common:check",
         "//common:map",
+        "//common:ostream",
+        "//common:raw_string_ostream",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )

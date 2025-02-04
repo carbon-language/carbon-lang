@@ -81,6 +81,7 @@ cc_library(
         "type_info.cpp",
     ],
     hdrs = [
+        "associated_constant.h",
         "builtin_function_kind.h",
         "class.h",
         "constant.h",

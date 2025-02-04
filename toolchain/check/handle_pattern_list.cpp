@@ -37,6 +37,12 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
   context.BeginSubpattern();
+  // TODO: Remove this branch once the parse tree differentiates between
+  // tuple patterns and param patterns.
+  if (context.full_pattern_stack().CurrentKind() ==
+      FullPatternStack::Kind::ImplicitParamList) {
+    context.full_pattern_stack().EndImplicitParamList();
+  }
   return true;
 }
 

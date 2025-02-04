@@ -17,6 +17,24 @@
 #endif
 
 // ============================================================================
+// Driver and subcommand diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(DriverInstallInvalid)
+CARBON_DIAGNOSTIC_KIND(DriverCommandLineParseFailed)
+CARBON_DIAGNOSTIC_KIND(ClangFuzzingDisallowed)
+CARBON_DIAGNOSTIC_KIND(CompilePhaseFlagConflict)
+CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
+CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
+CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
+CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
+CARBON_DIAGNOSTIC_KIND(LanguageServerMissingInputStream)
+CARBON_DIAGNOSTIC_KIND(LanguageServerNotificationParseError)
+CARBON_DIAGNOSTIC_KIND(LanguageServerTransportError)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnexpectedReply)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
+
+// ============================================================================
 // SourceBuffer diagnostics
 // ============================================================================
 
@@ -256,9 +274,8 @@ CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
 
 // Impl checking.
-CARBON_DIAGNOSTIC_KIND(AssociatedConstantDifferentInRedecl)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
-CARBON_DIAGNOSTIC_KIND(AssociatedConstantMissingInRedecl)
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedFunctionHere)
 CARBON_DIAGNOSTIC_KIND(ExtendImplForall)
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
@@ -272,7 +289,6 @@ CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
 CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
-CARBON_DIAGNOSTIC_KIND(ImplPreviousDeclHere)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
 
@@ -305,7 +321,7 @@ CARBON_DIAGNOSTIC_KIND(AbstractTypeInAdaptDecl)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInFunctionReturnType)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInInit)
-CARBON_DIAGNOSTIC_KIND(AbstractTypeInVarDecl)
+CARBON_DIAGNOSTIC_KIND(AbstractTypeInVarPattern)
 CARBON_DIAGNOSTIC_KIND(AddrOfEphemeralRef)
 CARBON_DIAGNOSTIC_KIND(AddrOfNonRef)
 CARBON_DIAGNOSTIC_KIND(AddrOnNonSelfParam)
@@ -344,15 +360,14 @@ CARBON_DIAGNOSTIC_KIND(RepeatedConst)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAdaptDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAssociatedDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBaseDecl)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBindingDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInConversion)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionParam)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionReturnType)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInMonomorphization)
-CARBON_DIAGNOSTIC_KIND(IncompleteTypeInLetDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInValueConversion)
-CARBON_DIAGNOSTIC_KIND(IncompleteTypeInVarDecl)
 CARBON_DIAGNOSTIC_KIND(InCopy)
 CARBON_DIAGNOSTIC_KIND(IntTooLargeForType)
 CARBON_DIAGNOSTIC_KIND(IntWidthNotMultipleOf8)

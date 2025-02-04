@@ -223,15 +223,15 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
       .Emit();
 }
 
-auto Context::DiagnosePoisonedName(SemIRLoc loc) -> void {
-  // TODO: Improve the diagnostic to replace NodeId::None with the location
-  // where the name was poisoned. See discussion in
-  // https://github.com/carbon-language/carbon-lang/pull/4654#discussion_r1876607172
+auto Context::DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+                                   SemIR::InstId decl_inst_id) -> void {
+  CARBON_CHECK(poisoning_loc_id.has_value(),
+               "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name used before it was declared");
   CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
-  emitter_->Build(SemIR::LocId::None, NameUseBeforeDecl)
-      .Note(loc, NameUseBeforeDeclNote)
+  emitter_->Build(poisoning_loc_id, NameUseBeforeDecl)
+      .Note(decl_inst_id, NameUseBeforeDeclNote)
       .Emit();
 }
 
@@ -317,7 +317,7 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
 auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id,
                                ScopeIndex scope_index)
-    -> std::pair<SemIR::InstId, bool> {
+    -> SemIR::ScopeLookupResult {
   if (!scope_id.has_value()) {
     // Look for a name in the specified scope or a scope nested within it only.
     // There are two cases where the name would be in an outer scope:
@@ -353,8 +353,9 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //
     //    In this case, the class C is not a redeclaration of its parameter, but
     //    we find the parameter in order to diagnose a redeclaration error.
-    return {scope_stack().LookupInLexicalScopesWithin(name_id, scope_index),
-            false};
+    return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+        scope_stack().LookupInLexicalScopesWithin(name_id, scope_index),
+        SemIR::AccessKind::Public);
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
     // declaration must specify the exact scope in which the name was originally
@@ -365,10 +366,9 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    auto result = LookupNameInExactScope(loc_id, name_id, scope_id,
-                                         name_scopes().Get(scope_id),
-                                         /*is_being_declared=*/true);
-    return {result.inst_id, result.is_poisoned};
+    return LookupNameInExactScope(loc_id, name_id, scope_id,
+                                  name_scopes().Get(scope_id),
+                                  /*is_being_declared=*/true);
   }
 }
 
@@ -390,7 +390,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                                 LookupScope{.name_scope_id = lookup_scope_id,
                                             .specific_id = specific_id},
                                 /*required=*/false);
-        non_lexical_result.inst_id.has_value()) {
+        non_lexical_result.scope_result.is_found()) {
       return non_lexical_result;
     }
   }
@@ -400,14 +400,16 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                       "`{0}` used before initialization", SemIR::NameId);
     emitter_->Emit(node_id, UsedBeforeInitialization, name_id);
     return {.specific_id = SemIR::SpecificId::None,
-            .inst_id = SemIR::ErrorInst::SingletonInstId};
+            .scope_result = SemIR::ScopeLookupResult::MakeError()};
   }
 
   if (lexical_result.has_value()) {
     // A lexical scope never needs an associated specific. If there's a
     // lexically enclosing generic, then it also encloses the point of use of
     // the name.
-    return {.specific_id = SemIR::SpecificId::None, .inst_id = lexical_result};
+    return {.specific_id = SemIR::SpecificId::None,
+            .scope_result = SemIR::ScopeLookupResult::MakeFound(
+                lexical_result, SemIR::AccessKind::Public)};
   }
 
   // We didn't find anything at all.
@@ -416,32 +418,32 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   return {.specific_id = SemIR::SpecificId::None,
-          .inst_id = SemIR::ErrorInst::SingletonInstId};
+          .scope_result = SemIR::ScopeLookupResult::MakeError()};
 }
 
-auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+auto Context::LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      SemIR::NameScope& scope,
                                      bool is_being_declared)
-    -> LookupNameInExactScopeResult {
-  if (auto entry_id = is_being_declared ? scope.Lookup(name_id)
-                                        : scope.LookupOrPoison(name_id)) {
-    auto entry = scope.GetEntry(*entry_id);
-    if (!entry.is_poisoned) {
-      LoadImportRef(*this, entry.inst_id);
-    } else if (is_being_declared) {
-      entry.inst_id = SemIR::InstId::None;
+    -> SemIR::ScopeLookupResult {
+  if (auto entry_id = is_being_declared
+                          ? scope.Lookup(name_id)
+                          : scope.LookupOrPoison(loc_id, name_id)) {
+    auto lookup_result = scope.GetEntry(*entry_id).result;
+    if (!lookup_result.is_poisoned()) {
+      LoadImportRef(*this, lookup_result.target_inst_id());
     }
-    return {entry.inst_id, entry.access_kind, entry.is_poisoned};
+    return lookup_result;
   }
 
   if (!scope.import_ir_scopes().empty()) {
     // TODO: Enforce other access modifiers for imports.
-    return {ImportNameFromOtherPackage(*this, loc, scope_id,
-                                       scope.import_ir_scopes(), name_id),
-            SemIR::AccessKind::Public};
+    return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+        ImportNameFromOtherPackage(*this, loc_id, scope_id,
+                                   scope.import_ir_scopes(), name_id),
+        SemIR::AccessKind::Public);
   }
-  return {SemIR::InstId::None, SemIR::AccessKind::Public};
+  return SemIR::ScopeLookupResult::MakeNotFound();
 }
 
 // Prints diagnostics on invalid qualified name access.
@@ -583,8 +585,9 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
   // TODO: Support reporting of multiple prohibited access.
   llvm::SmallVector<ProhibitedAccessInfo> prohibited_accesses;
 
-  LookupResult result = {.specific_id = SemIR::SpecificId::None,
-                         .inst_id = SemIR::InstId::None};
+  LookupResult result = {
+      .specific_id = SemIR::SpecificId::None,
+      .scope_result = SemIR::ScopeLookupResult::MakeNotFound()};
   bool has_error = false;
   bool is_parent_access = false;
 
@@ -598,8 +601,9 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
     auto& name_scope = name_scopes().Get(scope_id);
     has_error |= name_scope.has_error();
 
-    auto [scope_result_id, access_kind, is_poisoned] =
+    const SemIR::ScopeLookupResult scope_result =
         LookupNameInExactScope(loc_id, name_id, scope_id, name_scope);
+    SemIR::AccessKind access_kind = scope_result.access_kind();
 
     auto is_access_prohibited =
         IsAccessProhibited(access_info, access_kind, is_parent_access);
@@ -608,13 +612,13 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
     // multiple prohibited accesses if we can't find a suitable lookup.
     if (is_access_prohibited) {
       prohibited_accesses.push_back({
-          .scope_result_id = scope_result_id,
+          .scope_result_id = scope_result.target_inst_id(),
           .access_kind = access_kind,
           .is_parent_access = is_parent_access,
       });
     }
 
-    if (!scope_result_id.has_value() || is_access_prohibited) {
+    if (!scope_result.is_found() || is_access_prohibited) {
       // If nothing is found in this scope or if we encountered an invalid
       // access, look in its extended scopes.
       const auto& extended = name_scope.extended_scopes();
@@ -643,7 +647,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
     }
 
     // If this is our second lookup result, diagnose an ambiguity.
-    if (result.inst_id.has_value()) {
+    if (result.scope_result.is_found()) {
       CARBON_DIAGNOSTIC(
           NameAmbiguousDueToExtend, Error,
           "ambiguous use of name `{0}` found in multiple extended scopes",
@@ -651,15 +655,14 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
       emitter_->Emit(loc_id, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return {.specific_id = SemIR::SpecificId::None,
-              .inst_id = SemIR::ErrorInst::SingletonInstId};
+              .scope_result = SemIR::ScopeLookupResult::MakeError()};
     }
 
-    result.inst_id = scope_result_id;
+    result.scope_result = scope_result;
     result.specific_id = specific_id;
-    result.is_poisoned = is_poisoned;
   }
 
-  if (required && !result.inst_id.has_value()) {
+  if (required && !result.scope_result.is_found()) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
         DiagnoseMemberNameNotFound(loc_id, name_id, lookup_scopes);
@@ -677,9 +680,9 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
       }
     }
 
+    CARBON_CHECK(!result.scope_result.is_poisoned());
     return {.specific_id = SemIR::SpecificId::None,
-            .inst_id = SemIR::ErrorInst::SingletonInstId,
-            .is_poisoned = result.is_poisoned};
+            .scope_result = SemIR::ScopeLookupResult::MakeError()};
   }
 
   return result;
@@ -689,8 +692,8 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
 //
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
-static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
-    -> SemIR::NameScopeId {
+static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
+                           llvm::StringRef name) -> SemIR::NameScopeId {
   auto core_ident_id = context.identifiers().Add("Core");
   auto packaging = context.parse_tree().packaging_decl();
   if (packaging && packaging->names.package_id == core_ident_id) {
@@ -699,13 +702,13 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
   auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
 
   // Look up `package.Core`.
-  auto [core_inst_id, _, is_poisoned] = context.LookupNameInExactScope(
-      loc, core_name_id, SemIR::NameScopeId::Package,
+  auto core_scope_result = context.LookupNameInExactScope(
+      loc_id, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
-  if (core_inst_id.has_value()) {
+  if (core_scope_result.is_found()) {
     // We expect it to be a namespace.
-    if (auto namespace_inst =
-            context.insts().TryGetAs<SemIR::Namespace>(core_inst_id)) {
+    if (auto namespace_inst = context.insts().TryGetAs<SemIR::Namespace>(
+            core_scope_result.target_inst_id())) {
       // TODO: Decide whether to allow the case where `Core` is not a package.
       return namespace_inst->name_scope_id;
     }
@@ -715,31 +718,31 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
       CoreNotFound, Error,
       "`Core.{0}` implicitly referenced here, but package `Core` not found",
       std::string);
-  context.emitter().Emit(loc, CoreNotFound, name.str());
+  context.emitter().Emit(loc_id, CoreNotFound, name.str());
   return SemIR::NameScopeId::None;
 }
 
-auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
+auto Context::LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
     -> SemIR::InstId {
-  auto core_package_id = GetCorePackage(*this, loc, name);
+  auto core_package_id = GetCorePackage(*this, loc_id, name);
   if (!core_package_id.has_value()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
-  auto [inst_id, _, is_poisoned] = LookupNameInExactScope(
-      loc, name_id, core_package_id, name_scopes().Get(core_package_id));
-  if (!inst_id.has_value()) {
+  auto scope_result = LookupNameInExactScope(
+      loc_id, name_id, core_package_id, name_scopes().Get(core_package_id));
+  if (!scope_result.is_found()) {
     CARBON_DIAGNOSTIC(
         CoreNameNotFound, Error,
         "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
-    emitter_->Emit(loc, CoreNameNotFound, name_id);
+    emitter_->Emit(loc_id, CoreNameNotFound, name_id);
     return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Look through import_refs and aliases.
-  return constant_values().GetConstantInstId(inst_id);
+  return constant_values().GetConstantInstId(scope_result.target_inst_id());
 }
 
 template <typename BranchNode, typename... Args>
@@ -1454,6 +1457,19 @@ auto Context::RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
       }
     }
     // TODO: Finish facet type resolution.
+    //
+    // Note that we will need Self to be passed into facet type resolution.
+    // The `.Self` of a facet type created by `where` will then be bound to the
+    // provided self type.
+    //
+    // For example, in `T:! X where ...`, we will bind the `.Self` of the
+    // `where` facet type to `T`, and in `(X where ...) where ...`, we will bind
+    // the inner `.Self` to the outer `.Self`.
+    //
+    // If the facet type contains a rewrite, we may have deferred converting the
+    // rewritten value to the type of the associated constant. That conversion
+    // should also be performed as part of resolution, and may depend on the
+    // Self type.
   }
 
   return true;
@@ -1516,11 +1532,9 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
                                        type_blocks().AddCanonical(type_ids));
 }
 
-auto Context::GetAssociatedEntityType(SemIR::TypeId interface_type_id,
-                                      SemIR::TypeId entity_type_id)
+auto Context::GetAssociatedEntityType(SemIR::TypeId interface_type_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_type_id,
-                                                  entity_type_id);
+  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_type_id);
 }
 
 auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {

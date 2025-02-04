@@ -212,6 +212,8 @@ class NodeStack {
 
   // Pops a pattern from the top of the stack and returns the ID.
   // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  // TODO: TuplePatterns store an InstBlockId instead and must be dealt with as
+  // a special case before calling this function.
   auto PopPattern() -> SemIR::InstId { return PopPatternWithNodeId().second; }
 
   // Pops a name from the top of the stack and returns the ID.
@@ -315,6 +317,12 @@ class NodeStack {
     static_assert(RequiredIdKind.has_value());
     return Peek<*RequiredIdKind>();
   }
+
+  // Peeks at the ID associated with the pattern at the top of the stack.
+  // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  // TODO: TuplePatterns store an InstBlockId instead and must be dealt with as
+  // a special case before calling this function.
+  auto PeekPattern() const -> SemIR::InstId;
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void;
@@ -718,6 +726,10 @@ constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
 inline auto NodeStack::PopExprWithNodeId()
     -> std::pair<Parse::AnyExprId, SemIR::InstId> {
   return PopWithNodeId<Parse::NodeCategory::Expr>();
+}
+
+inline auto NodeStack::PeekPattern() const -> SemIR::InstId {
+  return Peek<Id::KindFor<SemIR::InstId>()>();
 }
 
 }  // namespace Carbon::Check

@@ -24,7 +24,7 @@ abstract class Abstract {
 
 // --- override_import.carbon
 
-package OverrideImport;
+library "[[@TEST_NAME]]";
 
 import Modifiers;
 
@@ -35,7 +35,7 @@ class Derived {
 
 // --- todo_fail_later_base.carbon
 
-package FailLaterBase;
+library "[[@TEST_NAME]]";
 
 import Modifiers;
 
@@ -46,7 +46,7 @@ base class Derived {
 
 // --- init.carbon
 
-package Init;
+library "[[@TEST_NAME]]";
 
 import Modifiers;
 
@@ -56,7 +56,7 @@ fn F() {
 
 // --- impl_abstract.carbon
 
-package ImplAbstract;
+library "[[@TEST_NAME]]";
 
 abstract class A1 {
   virtual fn F();
@@ -69,7 +69,7 @@ abstract class A2 {
 
 // --- impl_base.carbon
 
-package ImplBase;
+library "[[@TEST_NAME]]";
 
 base class B1 {
   virtual fn F();
@@ -87,7 +87,7 @@ class C {
 
 // --- fail_modifiers.carbon
 
-package FailModifiers;
+library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
@@ -99,7 +99,7 @@ class C {
 
 // --- init_members.carbon
 
-package InitMembers;
+library "[[@TEST_NAME]]";
 
 base class Base {
   var m1: i32;
@@ -120,7 +120,7 @@ fn F() {
 
 // --- todo_fail_impl_without_base_declaration.carbon
 
-package ImplWithoutBaseDeclaration;
+library "[[@TEST_NAME]]";
 
 base class Base {
 }
@@ -132,7 +132,7 @@ class Derived {
 
 // --- abstract_impl.carbon
 
-package AbstractImpl;
+library "[[@TEST_NAME]]";
 
 abstract class AbstractBase {
   abstract fn F();
@@ -149,7 +149,7 @@ class Derived {
 
 // --- virtual_impl.carbon
 
-package VirtualImpl;
+library "[[@TEST_NAME]]";
 
 base class VirtualBase {
   virtual fn F();
@@ -162,6 +162,81 @@ base class VirtualIntermediate {
 class Derived {
   extend base: VirtualIntermediate;
   impl fn F();
+}
+
+// --- fail_impl_mismatch.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base {
+  virtual fn F();
+}
+
+class Derived {
+  extend base: Base;
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
+  // CHECK:STDERR:   impl fn F(v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
+  // CHECK:STDERR:   virtual fn F();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  impl fn F(v: i32);
+}
+
+// --- fail_todo_impl_conversion.carbon
+
+library "[[@TEST_NAME]]";
+
+class T1 {
+}
+
+class T2 {
+}
+
+impl T2 as Core.ImplicitAs(T1) {
+  fn Convert[self: Self]() -> T1 {
+    return {};
+  }
+}
+
+base class Base {
+  virtual fn F() -> T1;
+}
+
+class Derived {
+  extend base: Base;
+  // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE+7]]:3: error: function redeclaration differs because return type is `T2` [FunctionRedeclReturnTypeDiffers]
+  // CHECK:STDERR:   impl fn F() -> T2;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE-8]]:3: note: previously declared with return type `T1` [FunctionRedeclReturnTypePrevious]
+  // CHECK:STDERR:   virtual fn F() -> T1;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  impl fn F() -> T2;
+}
+
+// --- fail_todo_impl_generic_base.carbon
+
+library "[[@TEST_NAME]]";
+
+class T1 {
+}
+
+base class Base(T:! type) {
+  virtual fn F(t: T);
+}
+
+class Derived {
+  extend base: Base(T1);
+  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE+7]]:13: error: type `T1` of parameter 1 in redeclaration differs from previous parameter type `T` [RedeclParamDiffersType]
+  // CHECK:STDERR:   impl fn F(t: T1);
+  // CHECK:STDERR:             ^~~~~
+  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE-8]]:16: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+  // CHECK:STDERR:   virtual fn F(t: T);
+  // CHECK:STDERR:                ^~~~
+  // CHECK:STDERR:
+  impl fn F(t: T1);
 }
 
 // CHECK:STDOUT: --- modifiers.carbon
@@ -1035,4 +1110,379 @@ class Derived {
 // CHECK:STDOUT: virtual fn @F.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F.2();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_impl_mismatch.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [template]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.5ee: <vtable> = vtable (%F.d17) [template]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [template]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [template = constants.%F.d17] {} {}
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.5ee]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:   %.loc9: %Derived.elem = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {
+// CHECK:STDOUT:     %v.patt: %i32 = binding_pattern v
+// CHECK:STDOUT:     %v.param_patt: %i32 = value_param_pattern %v.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %v.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc17: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %v: %i32 = bind_name v, %v.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F.decl) [template = constants.%.88d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .base = %.loc9
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F.1();
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F.2(%v.param_patt: %i32);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_impl_conversion.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T1: type = class_type @T1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %T2: type = class_type @T2 [template]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type.e40: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [template]
+// CHECK:STDOUT:   %Convert.type.c41: type = fn_type @Convert.2 [template]
+// CHECK:STDOUT:   %Convert.f35: %Convert.type.c41 = struct_value () [template]
+// CHECK:STDOUT:   %T1.val: %T1 = struct_value () [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [template]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.5ee: <vtable> = vtable (%F.d17) [template]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [template]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:     .T2 = %T2.decl
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [template = constants.%T1] {} {}
+// CHECK:STDOUT:   %T2.decl: type = class_decl @T2 [template = constants.%T2] {} {}
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [template = constants.%T2]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T1)> [template = constants.%ImplicitAs.type.e40]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %T2.ref as %ImplicitAs.type {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.c41 = fn_decl @Convert.2 [template = constants.%Convert.f35] {
+// CHECK:STDOUT:     %self.patt: %T2 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %T2 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:     %self.param: %T2 = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%T2.ref [template = constants.%T2]
+// CHECK:STDOUT:     %self: %T2 = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref %T1 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%T1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T2 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%T2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [template = constants.%F.d17] {
+// CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:     %return.param: ref %T1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F.decl) [template = constants.%.5ee]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:   %.loc21: %Derived.elem = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {
+// CHECK:STDOUT:     %return.patt: %T2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %T2 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [template = constants.%T2]
+// CHECK:STDOUT:     %return.param: ref %T2 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %T2 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc30: <vtable> = vtable (%F.decl) [template = constants.%.88d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .base = %.loc21
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert.2[%self.param_patt: %T2]() -> %return.param_patt: %T1 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_13.2: init %T1 = class_init (), %return [template = constants.%T1.val]
+// CHECK:STDOUT:   %.loc12_14: init %T1 = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%T1.val]
+// CHECK:STDOUT:   return %.loc12_14 to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F.1() -> %T1;
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F.2() -> %T2;
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_impl_generic_base.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T1: type = class_type @T1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [template]
+// CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [template]
+// CHECK:STDOUT:   %Base.370: type = class_type @Base, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %F.type.f17: type = fn_type @F.1, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %F.e26: %F.type.f17 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.f89: <vtable> = vtable (%F.e26) [symbolic]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Base.ea5: type = class_type @Base, @Base(%T1) [template]
+// CHECK:STDOUT:   %F.type.d82: type = fn_type @F.1, @Base(%T1) [template]
+// CHECK:STDOUT:   %F.d25: %F.type.d82 = struct_value () [template]
+// CHECK:STDOUT:   %.611: <vtable> = vtable (%F.d25) [template]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.ea5 [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [template]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base.ea5} [template]
+// CHECK:STDOUT:   %complete_type.65a: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [template = constants.%T1] {} {}
+// CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [template = constants.%Base.generic] {
+// CHECK:STDOUT:     %T.patt.loc7_17.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_17.1, runtime_param<none> [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc7_17.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_17.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%T1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @Base(%T.loc7_17.1: type) {
+// CHECK:STDOUT:   %T.loc7_17.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_17.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc7_17.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @Base(%T.loc7_17.2) [symbolic = %F.type (constants.%F.type.f17)]
+// CHECK:STDOUT:   %F: @Base.%F.type (%F.type.f17) = struct_value () [symbolic = %F (constants.%F.e26)]
+// CHECK:STDOUT:   %.loc9_1.2: <vtable> = vtable (%F) [symbolic = %.loc9_1.2 (constants.%.f89)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %F.decl: @Base.%F.type (%F.type.f17) = fn_decl @F.1 [symbolic = @Base.%F (constants.%F.e26)] {
+// CHECK:STDOUT:       %t.patt: @F.1.%T (%T) = binding_pattern t
+// CHECK:STDOUT:       %t.param_patt: @F.1.%T (%T) = value_param_pattern %t.patt, runtime_param0
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %t.param: @F.1.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Base.%T.loc7_17.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %t: @F.1.%T (%T) = bind_name t, %t.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc9_1.1: <vtable> = vtable (%F.decl) [symbolic = %.loc9_1.2 (constants.%.f89)]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Base.370
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: %Base.type = name_ref Base, file.%Base.decl [template = constants.%Base.generic]
+// CHECK:STDOUT:   %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(constants.%T1) [template = constants.%Base.ea5]
+// CHECK:STDOUT:   %.loc12: %Derived.elem = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {
+// CHECK:STDOUT:     %t.patt: %T1 = binding_pattern t
+// CHECK:STDOUT:     %t.param_patt: %T1 = value_param_pattern %t.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %t.param: %T1 = value_param runtime_param0
+// CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
+// CHECK:STDOUT:     %t: %T1 = bind_name t, %t.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc21: <vtable> = vtable (%F.decl) [template = constants.%.88d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.65a]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .base = %.loc12
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   extend %Base
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F.1(@Base.%T.loc7_17.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%t.param_patt: @F.1.%T (%T));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F.2(%t.param_patt: %T1);
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base(constants.%T) {
+// CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base(%T.loc7_17.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base(constants.%T1) {
+// CHECK:STDOUT:   %T.loc7_17.2 => constants.%T1
+// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.d82
+// CHECK:STDOUT:   %F => constants.%F.d25
+// CHECK:STDOUT:   %.loc9_1.2 => constants.%.611
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

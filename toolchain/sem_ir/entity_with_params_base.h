@@ -86,13 +86,13 @@ struct EntityWithParamsBase {
   // The following members always have values, and do not change throughout the
   // lifetime of the entity.
 
-  // The class name.
+  // The entity's name.
   NameId name_id;
 
   // The parent scope.
   NameScopeId parent_scope_id;
 
-  // If this is a generic function, information about the generic.
+  // If this is a generic entity, information about the generic.
   GenericId generic_id;
 
   // Parse tree bounds for the parameters, including both implicit and explicit
