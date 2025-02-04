@@ -67,7 +67,7 @@ class Cpp.C {};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   import_cpp
+// CHECK:STDOUT:   %import_cpp = import_cpp
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,7 +82,7 @@ class Cpp.C {};
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   import_cpp
+// CHECK:STDOUT:   %import_cpp = import_cpp
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = %Cpp
 // CHECK:STDOUT:   }
@@ -100,7 +100,7 @@ class Cpp.C {};
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:     .MyCpp = %MyCpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   import_cpp
+// CHECK:STDOUT:   %import_cpp = import_cpp
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [template = imports.%Cpp]
 // CHECK:STDOUT:   %MyCpp: <namespace> = bind_alias MyCpp, imports.%Cpp [template = imports.%Cpp]
 // CHECK:STDOUT: }
@@ -123,7 +123,7 @@ class Cpp.C {};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   import_cpp
+// CHECK:STDOUT:   %import_cpp = import_cpp
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

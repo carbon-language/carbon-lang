@@ -33,7 +33,7 @@ import Cpp library "file2.h";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   import_cpp
-// CHECK:STDOUT:   import_cpp
+// CHECK:STDOUT:   %import_cpp.loc4 = import_cpp
+// CHECK:STDOUT:   %import_cpp.loc5 = import_cpp
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

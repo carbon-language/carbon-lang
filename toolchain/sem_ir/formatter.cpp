@@ -846,6 +846,12 @@ class FormatterImpl {
     }
   }
 
+  // Format ImportCppDecl with its name.
+  auto FormatInstLHS(InstId inst_id, ImportCppDecl /*inst*/) -> void {
+    FormatName(inst_id);
+    out_ << " = ";
+  }
+
   // Format ImportDecl with its name.
   auto FormatInstLHS(InstId inst_id, ImportDecl /*inst*/) -> void {
     FormatName(inst_id);

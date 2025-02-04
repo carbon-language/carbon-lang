@@ -58,6 +58,6 @@ import Cpp library "\"foo.h\"";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   import_cpp
+// CHECK:STDOUT:   %import_cpp = import_cpp
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

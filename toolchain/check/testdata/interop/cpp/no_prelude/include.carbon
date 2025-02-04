@@ -32,6 +32,6 @@ import Cpp library "including_file.h";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   import_cpp
+// CHECK:STDOUT:   %import_cpp = import_cpp
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
