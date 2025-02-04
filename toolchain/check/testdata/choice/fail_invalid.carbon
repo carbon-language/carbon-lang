@@ -22,13 +22,6 @@ fn F() {
   let never: Never = {};
 }
 
-// --- fail_empty_params.carbon
-library "[[@TEST_NAME]]";
-
-choice Wont {
-  Compile()
-}
-
 // CHECK:STDOUT: --- fail_no_alternative_construct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -79,54 +72,5 @@ choice Wont {
 // CHECK:STDOUT:   %.loc11_23.4: ref %Never = converted %.loc11_23.1, %.loc11_23.3
 // CHECK:STDOUT:   %never: ref %Never = bind_name never, %.loc11_23.4
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_empty_params.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Wont: type = class_type @Wont [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
-// CHECK:STDOUT:   %Wont.val: %Wont = struct_value (%empty_tuple) [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Wont = %Wont.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Wont.decl: type = class_decl @Wont [template = constants.%Wont] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Wont {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
-// CHECK:STDOUT:   %.loc5_1.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.2: %empty_tuple.type = converted %.loc5_1.1, %empty_tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.3: %struct_type.discriminant = struct_literal (%.loc5_1.2)
-// CHECK:STDOUT:   %.loc5_1.4: ref %Wont = temporary_storage
-// CHECK:STDOUT:   %.loc5_1.5: ref %empty_tuple.type = class_element_access %.loc5_1.4, element0
-// CHECK:STDOUT:   %.loc5_1.6: init %empty_tuple.type = tuple_init () to %.loc5_1.5 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.7: init %empty_tuple.type = converted %.loc5_1.2, %.loc5_1.6 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.8: init %Wont = class_init (%.loc5_1.7), %.loc5_1.4 [template = constants.%Wont.val]
-// CHECK:STDOUT:   %.loc5_1.9: ref %Wont = temporary %.loc5_1.4, %.loc5_1.8
-// CHECK:STDOUT:   %.loc5_1.10: ref %Wont = converted %.loc5_1.3, %.loc5_1.9
-// CHECK:STDOUT:   %.loc5_1.11: %Wont = bind_value %.loc5_1.10
-// CHECK:STDOUT:   %Compile: %Wont = bind_name Compile, %.loc5_1.11
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Wont
-// CHECK:STDOUT:   .Compile = %Compile
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

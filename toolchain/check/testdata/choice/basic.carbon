@@ -41,6 +41,17 @@ fn H() {
   let inc: Ordering = Ordering.Incomparable;
 }
 
+// --- empty_params.carbon
+library "[[@TEST_NAME]]";
+
+choice Always {
+  Sunny()
+}
+
+fn G() {
+  let mood: Always = Always.Sunny;
+}
+
 // CHECK:STDOUT: --- no_alternative.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -302,6 +313,71 @@ fn H() {
 // CHECK:STDOUT:   %Incomparable.ref: %Ordering = name_ref Incomparable, @Ordering.%Incomparable
 // CHECK:STDOUT:   %Ordering.ref.loc14_12: type = name_ref Ordering, file.%Ordering.decl [template = constants.%Ordering]
 // CHECK:STDOUT:   %inc: %Ordering = bind_name inc, %Incomparable.ref
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- empty_params.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Always: type = class_type @Always [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
+// CHECK:STDOUT:   %Always.val: %Always = struct_value (%empty_tuple) [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Always = %Always.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Always.decl: type = class_decl @Always [template = constants.%Always] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Always {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
+// CHECK:STDOUT:   %.loc5_1.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.2: %empty_tuple.type = converted %.loc5_1.1, %empty_tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.3: %struct_type.discriminant = struct_literal (%.loc5_1.2)
+// CHECK:STDOUT:   %.loc5_1.4: ref %Always = temporary_storage
+// CHECK:STDOUT:   %.loc5_1.5: ref %empty_tuple.type = class_element_access %.loc5_1.4, element0
+// CHECK:STDOUT:   %.loc5_1.6: init %empty_tuple.type = tuple_init () to %.loc5_1.5 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.7: init %empty_tuple.type = converted %.loc5_1.2, %.loc5_1.6 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.8: init %Always = class_init (%.loc5_1.7), %.loc5_1.4 [template = constants.%Always.val]
+// CHECK:STDOUT:   %.loc5_1.9: ref %Always = temporary %.loc5_1.4, %.loc5_1.8
+// CHECK:STDOUT:   %.loc5_1.10: ref %Always = converted %.loc5_1.3, %.loc5_1.9
+// CHECK:STDOUT:   %.loc5_1.11: %Always = bind_value %.loc5_1.10
+// CHECK:STDOUT:   %Sunny: %Always = bind_name Sunny, %.loc5_1.11
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Always
+// CHECK:STDOUT:   .Sunny = %Sunny
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %mood.patt: %Always = binding_pattern mood
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Always.ref.loc8_22: type = name_ref Always, file.%Always.decl [template = constants.%Always]
+// CHECK:STDOUT:   %Sunny.ref: %Always = name_ref Sunny, @Always.%Sunny
+// CHECK:STDOUT:   %Always.ref.loc8_13: type = name_ref Always, file.%Always.decl [template = constants.%Always]
+// CHECK:STDOUT:   %mood: %Always = bind_name mood, %Sunny.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
