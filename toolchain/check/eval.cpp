@@ -1512,7 +1512,7 @@ static auto MakeFacetTypeResult(Context& context,
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
-
+//
 // Tail call should not be diagnosed as recursion.
 // https://github.com/llvm/llvm-project/issues/125724
 // NOLINTNEXTLINE(misc-no-recursion): Tail call.
