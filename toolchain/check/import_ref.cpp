@@ -2121,13 +2121,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::InstId inst_id) -> ResolveResult {
   // Return the constant for the instruction of the imported constant.
   auto constant_id = resolver.import_constant_values().Get(inst_id);
-  if (!constant_id.has_value()) {
-    return ResolveResult::Done(SemIR::ErrorInst::SingletonConstantId);
-  }
+  CARBON_CHECK(constant_id.has_value(),
+               "Loaded import ref has no constant value");
   if (!constant_id.is_constant()) {
     resolver.local_context().TODO(
         inst_id, "Non-constant ImportRefLoaded (comes up with var)");
-    return ResolveResult::Done(SemIR::ErrorInst::SingletonConstantId);
+    return ResolveResult::Done(constant_id);
   }
 
   auto new_constant_id = GetLocalConstantId(
@@ -2811,10 +2810,13 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       auto constant_inst_id =
           resolver.import_constant_values().GetConstantInstId(inst_id);
       if (constant_inst_id == inst_id) {
+        // Produce a diagnostic to provide a source location with the CHECK
+        // failure.
         resolver.local_context().TODO(
             SemIR::LocId(AddImportIRInst(resolver, inst_id)),
             llvm::formatv("TryResolveInst on {0}", untyped_inst.kind()).str());
-        return {.const_id = SemIR::ErrorInst::SingletonConstantId};
+        CARBON_FATAL("TryResolveInst on unsupported instruction kind {0}",
+                     untyped_inst.kind());
       }
       // Try to resolve the constant value instead. Note that this can only
       // retry once.
