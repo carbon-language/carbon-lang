@@ -126,12 +126,6 @@ build --allow_unresolved_symlinks=false
 # RC file here if present.
 try-import %workspace%/user.bazelrc
 
-# This excludes things like rules_android to reduce warnings.
-# TODO: There's a pending fix, so hopefully we can remove it soon.
-# - Issue: https://github.com/bazelbuild/bazel/issues/23929
-# - 8.0.1 tracker: https://github.com/bazelbuild/bazel/issues/24649
-common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_shell
-
 # Query error in `@bazel_tools`. This reproduces with
 # `bazel query 'deps(//...)'`.
 # TODO: Enable the flag once compatibility issues are fixed.
