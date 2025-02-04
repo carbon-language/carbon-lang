@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_fn_invalid_use.carbon
 
-// --- member_access.carbon
+// --- fail_member_access.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -17,14 +17,14 @@ interface I {
 }
 
 fn Use(T:! I) {
-  // CHECK:STDERR: member_access.carbon:[[@LINE+4]]:3: error: type `<type of F in T as I>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_member_access.carbon:[[@LINE+4]]:3: error: type `<type of F in T as I>` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   T.F.member;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   T.F.member;
 }
 
-// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT: --- fail_member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
