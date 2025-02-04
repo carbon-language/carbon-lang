@@ -15,8 +15,6 @@ filegroup(
     data = [
         "//explorer",
         "//installers/local:carbon",
-        "//migrate_cpp:rewriter",
-        "//migrate_cpp/cpp_refactoring",
         "//toolchain/install:carbon-busybox",
         # The tree sitter rules can't be queried; evaluation fails on
         # @platforms.

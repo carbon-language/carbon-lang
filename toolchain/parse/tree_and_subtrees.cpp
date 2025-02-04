@@ -239,6 +239,53 @@ auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
                     subtree_sizes_);
 }
 
+auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
+    -> ConvertedDiagnosticLoc {
+  // Support the invalid token as a way to emit only the filename, when there
+  // is no line association.
+  if (!node_id.has_value()) {
+    return {{.filename = tree_->tokens().source().filename()}, -1};
+  }
+
+  if (token_only) {
+    return tree_->tokens().TokenToDiagnosticLoc(tree_->node_token(node_id));
+  }
+
+  // Construct a location that encompasses all tokens that descend from this
+  // node (including the root).
+  Lex::TokenIndex start_token = tree_->node_token(node_id);
+  Lex::TokenIndex end_token = start_token;
+  for (NodeId desc : postorder(node_id)) {
+    Lex::TokenIndex desc_token = tree_->node_token(desc);
+    if (!desc_token.has_value()) {
+      continue;
+    }
+    if (desc_token < start_token) {
+      start_token = desc_token;
+    } else if (desc_token > end_token) {
+      end_token = desc_token;
+    }
+  }
+  auto start_loc = tree_->tokens().TokenToDiagnosticLoc(start_token);
+  if (start_token == end_token) {
+    return start_loc;
+  }
+  auto end_loc = tree_->tokens().TokenToDiagnosticLoc(end_token);
+  start_loc.last_byte_offset = end_loc.last_byte_offset;
+  // For multiline locations we simply return the rest of the line for now
+  // since true multiline locations are not yet supported.
+  if (start_loc.loc.line_number != end_loc.loc.line_number) {
+    start_loc.loc.length =
+        start_loc.loc.line.size() - start_loc.loc.column_number + 1;
+  } else {
+    if (start_loc.loc.column_number != end_loc.loc.column_number) {
+      start_loc.loc.length = end_loc.loc.column_number + end_loc.loc.length -
+                             start_loc.loc.column_number;
+    }
+  }
+  return start_loc;
+}
+
 auto TreeAndSubtrees::SiblingIterator::Print(llvm::raw_ostream& output) const
     -> void {
   output << node_;

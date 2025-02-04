@@ -225,10 +225,5 @@ TEST_F(DriverTest, FileOutput) {
   EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));
 }
 
-TEST_F(DriverTest, LanguageServerNoStdin) {
-  EXPECT_FALSE(driver_.RunCommand({"language-server"}).success);
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("requires input_stream"));
-}
-
 }  // namespace
 }  // namespace Carbon

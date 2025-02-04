@@ -9,7 +9,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
 #include "toolchain/check/context.h"
-#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -44,6 +43,26 @@ struct PackageImports {
   llvm::SmallVector<Import> imports;
 };
 
+// Converts a `NodeId` to a diagnostic location for `UnitAndImports`.
+class UnitAndImportsDiagnosticConverter
+    : public DiagnosticConverter<Parse::NodeId> {
+ public:
+  explicit UnitAndImportsDiagnosticConverter(
+      llvm::function_ref<const Parse::TreeAndSubtrees&()>
+          get_parse_tree_and_subtrees)
+      : get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees) {}
+
+  auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
+      -> ConvertedDiagnosticLoc override {
+    return get_parse_tree_and_subtrees_().NodeToDiagnosticLoc(
+        node_id, /*token_only=*/false);
+  }
+
+ private:
+  llvm::function_ref<const Parse::TreeAndSubtrees&()>
+      get_parse_tree_and_subtrees_;
+};
+
 // Contains information accumulated while checking a `Unit` (primarily import
 // information), in addition to the `Unit` itself.
 struct UnitAndImports {
@@ -51,7 +70,8 @@ struct UnitAndImports {
       : check_ir_id(check_ir_id),
         unit(&unit),
         err_tracker(*unit.consumer),
-        emitter(*unit.node_converter, err_tracker) {}
+        converter(unit.get_parse_tree_and_subtrees),
+        emitter(converter, err_tracker) {}
 
   auto parse_tree() -> const Parse::Tree& { return unit->sem_ir->parse_tree(); }
   auto source() -> const SourceBuffer& {
@@ -63,7 +83,8 @@ struct UnitAndImports {
 
   // Emitter information.
   ErrorTrackingDiagnosticConsumer err_tracker;
-  DiagnosticEmitter<Parse::NodeLoc> emitter;
+  UnitAndImportsDiagnosticConverter converter;
+  DiagnosticEmitter<Parse::NodeId> emitter;
 
   // List of the outgoing imports. If a package includes unavailable library
   // imports, it has an entry with has_load_error set. Invalid imports (for

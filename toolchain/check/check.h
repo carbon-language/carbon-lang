@@ -30,7 +30,6 @@ struct Unit {
   SemIR::File* sem_ir;
 
   // Diagnostic converters.
-  Parse::NodeLocConverter* node_converter;
   SemIRDiagnosticConverter* sem_ir_converter;
 };
 

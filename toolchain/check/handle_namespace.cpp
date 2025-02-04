@@ -46,7 +46,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
                                                 SemIR::AccessKind::Public);
   if (lookup_result.is_poisoned()) {
-    context.DiagnosePoisonedName(namespace_id);
+    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
+                                 namespace_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_inst_id = lookup_result.target_inst_id();
     if (auto existing =
