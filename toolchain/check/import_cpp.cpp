@@ -120,7 +120,7 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
   // Note we have to get the parent scope freshly, creating the imported
-  // namespace may invalidate the pointer above.
+  // namespace may invalidate any pointers into `name_scopes()`.
   context.name_scopes()
       .Get(SemIR::NameScopeId::Package)
       .GetEntry(entry_id)
