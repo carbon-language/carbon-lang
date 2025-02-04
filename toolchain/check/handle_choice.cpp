@@ -73,7 +73,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
        // For example:
        //
        //   choice C {
-       //     Alt(if true then i32 else f64),
+       //     Alt(x: if true then i32 else f64),
        //   }
        //
        // We may need to track a list of instruction blocks here, as we do for a
@@ -103,28 +103,25 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // `Class` in the ValueStore.
   SemIR::Class& mut_class = context.classes().Get(class_decl.class_id);
   // Build the `Self` type using the resulting type constant.
-  mut_class.self_type_id = context.GetTypeIdForTypeConstant(
+  auto self_type_id = context.GetTypeIdForTypeConstant(
       TryEvalInst(context, SemIR::InstId::None,
                   SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                                    .class_id = class_decl.class_id,
                                    .specific_id = self_specific_id}));
+  mut_class.self_type_id = self_type_id;
 
   // Enter the choice scope.
   context.scope_stack().Push(class_decl_id, class_info.scope_id,
                              self_specific_id);
   // Checking the binding pattern for an alternative requires a non-empty stack.
-  // FIXME: `Lex::TokenKind::Choice` is incorrect as we're not parsing the
-  // pattern for a choice name, but there's no Lex token that's a decl
-  // introducer that we could safely use here. Is there a better way to
-  // communicate to `HandleAnyBindingPattern` that we're checking a choice
-  // alternative?
+  // We reuse the Choice token even though we're now checking an alternative
+  // inside the Choice, since there's no better token to use.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   StartGenericDefinition(context);
 
-  // TODO: Do Choice types have a `Self` name they can use in the alternatives?
-  // context.name_scopes().AddRequiredName(
-  //     class_info.scope_id, SemIR::NameId::SelfType,
-  //     context.types().GetInstId(class_info.self_type_id));
+  context.name_scopes().AddRequiredName(
+      class_info.scope_id, SemIR::NameId::SelfType,
+      context.types().GetInstId(self_type_id));
 
   // Mark the beginning of the choice body.
   context.node_stack().Push(node_id, class_decl.class_id);
@@ -141,15 +138,8 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
   // node to pop here.
   auto name_component = PopNameComponent(context);
   if (name_component.param_patterns_id == SemIR::InstBlockId::Empty) {
-    CARBON_DIAGNOSTIC(ChoiceAlternativeEmptyParams, Error,
-                      "choice alternative has empty parameter list");
-    CARBON_DIAGNOSTIC(ChoiceAlternativeEmptyParamsNote, Note,
-                      "remove the empty `()`");
-    context.emitter()
-        .Build(name_component.params_loc_id, ChoiceAlternativeEmptyParams)
-        .Note(name_component.params_loc_id, ChoiceAlternativeEmptyParamsNote)
-        .Emit();
-    return;
+    // Treat an empty parameter list the same as no parameter list.
+    name_component.param_patterns_id = SemIR::InstBlockId::None;
   }
   if (name_component.param_patterns_id.has_value()) {
     context.TODO(name_component.params_loc_id,
@@ -159,20 +149,32 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
   context.choice_deferred_bindings().push_back({node_id, name_component});
 }
 
-static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
-                           SemIR::NameScopeId choice_name_scope_id,
-                           SemIR::TypeId discriminant_type_id, int index,
-                           int num_alternative_bits,
+// Info about the Choice type, used to construct each alternative member of the
+// class representing the Choice.
+struct ChoiceInfo {
+  // The `Self` type.
+  SemIR::TypeId self_type_id;
+  // The scope of the class for adding the alternatives to.
+  SemIR::NameScopeId name_scope_id;
+  // A struct type with the same fields as `Self`. Used to construct `Self`.
+  SemIR::TypeId self_struct_type_id;
+  // The type of the discriminant value.
+  SemIR::TypeId discriminant_type_id;
+  int num_alternative_bits;
+};
+
+// Builds a `let` binding for an alternative without parameters as a member of
+// the resulting class for the Choice definition. If the alternative was `Alt`
+// then the binding will be like:
+// ```
+//   let Alt: ChoiceType = <ChoiceType with Alt selected>;
+// ```
+static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
+                           int alternative_index,
                            const Context::ChoiceDeferredBinding& binding)
     -> void {
-  llvm::SmallVector<SemIR::StructTypeField, 2> self_fields;
-  self_fields.push_back({
-      .name_id = SemIR::NameId::ChoiceDiscriminant,
-      .type_id = discriminant_type_id,
-  });
-
   SemIR::InstId discriminant_value_id = [&] {
-    if (num_alternative_bits == 0) {
+    if (choice_info.num_alternative_bits == 0) {
       return context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
           binding.node_id, SemIR::TupleLiteral{
                                .type_id = context.GetTupleType({}),
@@ -180,21 +182,19 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
                            }));
     } else {
       return MakeIntLiteral(context, binding.node_id,
-                            context.ints().Add(index));
+                            context.ints().Add(alternative_index));
     }
   }();
-  discriminant_value_id = ConvertToValueOfType(
-      context, binding.node_id, discriminant_value_id, discriminant_type_id);
-
-  auto self_struct_type_id = context.GetStructType(
-      context.struct_type_fields().AddCanonical(self_fields));
+  discriminant_value_id =
+      ConvertToValueOfType(context, binding.node_id, discriminant_value_id,
+                           choice_info.discriminant_type_id);
 
   auto self_value_id = ConvertToValueOfType(
       context, binding.node_id,
       context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
           binding.node_id,
           SemIR::StructLiteral{
-              .type_id = self_struct_type_id,
+              .type_id = choice_info.self_struct_type_id,
               .elements_id =
                   [&] {
                     context.inst_block_stack().Push();
@@ -202,20 +202,20 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
                     return context.inst_block_stack().Pop();
                   }(),
           })),
-      self_type_id);
+      choice_info.self_type_id);
 
   auto entity_name_id = context.entity_names().Add(
       {.name_id = binding.name_component.name_id,
-       .parent_scope_id = choice_name_scope_id,
+       .parent_scope_id = choice_info.name_scope_id,
        .bind_index = SemIR::CompileTimeBindIndex::None});
   auto bind_name_id = context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
       binding.node_id, SemIR::BindName{
-                           .type_id = self_type_id,
+                           .type_id = choice_info.self_type_id,
                            .entity_name_id = entity_name_id,
                            .value_id = self_value_id,
                        }));
   context.name_scopes()
-      .Get(choice_name_scope_id)
+      .Get(choice_info.name_scope_id)
       .AddRequired({.name_id = binding.name_component.name_id,
                     .inst_id = bind_name_id,
                     .access_kind = SemIR::AccessKind::Public});
@@ -243,9 +243,12 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
 
   SemIR::TypeId discriminant_type_id = [&] {
     if (num_alternative_bits == 0) {
-      // An empty choice is not constructible (which can be a useful type). We
-      // always add an empty tuple as a field to make it not constructible
-      // directly.
+      // Even though there's no bits needed, we add an empty field. We want to
+      // prevent constructing the Choice from an empty struct literal instead of
+      // going through an alternative. And in the case there is no alternative,
+      // then there's no way to construct the Choice (which can be a useful
+      // type).
+      //
       // TODO: Find a way to produce a better diagnostic, and not require an
       // empty field.
       return context.GetTupleType({});
@@ -255,7 +258,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     }
   }();
 
-  llvm::SmallVector<SemIR::StructTypeField> struct_type_fields;
+  llvm::SmallVector<SemIR::StructTypeField, 1> struct_type_fields;
   struct_type_fields.push_back({
       .name_id = SemIR::NameId::ChoiceDiscriminant,
       .type_id = discriminant_type_id,
@@ -273,10 +276,20 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   auto self_type_id = context.classes().Get(class_id).self_type_id;
   auto name_scope_id = context.classes().Get(class_id).scope_id;
 
-  for (auto [index, binding] :
+  auto self_struct_type_id = context.GetStructType(
+      context.struct_type_fields().AddCanonical(struct_type_fields));
+
+  for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
-    MakeLetBinding(context, self_type_id, name_scope_id, discriminant_type_id,
-                   index, num_alternative_bits, binding);
+    MakeLetBinding(context,
+                   ChoiceInfo{
+                       .self_type_id = self_type_id,
+                       .name_scope_id = name_scope_id,
+                       .self_struct_type_id = self_struct_type_id,
+                       .discriminant_type_id = discriminant_type_id,
+                       .num_alternative_bits = num_alternative_bits,
+                   },
+                   i, deferred_binding);
   }
 
   // The scopes and blocks for the choice itself.

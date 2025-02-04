@@ -242,14 +242,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           break;
         }
         case Lex::TokenKind::Choice:
-          // Check if we're building a pattern for a choice alternative, not the
-          // choice type itself.
-          if (context.node_stack()
-                  .PeekContains<Parse::NodeKind::ChoiceDefinitionStart>()) {
-            // Implicit param lists are prevented during parse.
-            CARBON_CHECK(
-                context_node_kind != Parse::NodeKind::ImplicitParamListStart,
-                "choice alternative with implicit parameters");
+          if (context.scope_stack().PeekInstId().has_value()) {
+            // We are building a pattern for a choice alternative, not the
+            // choice type itself.
             break;
           }
           [[fallthrough]];

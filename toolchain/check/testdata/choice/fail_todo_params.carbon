@@ -32,6 +32,17 @@ choice C(T:! type) {
   Alt(a: T)
 }
 
+// --- fail_todo_self_param.carbon
+library "[[@TEST_NAME]]";
+
+choice C {
+  // CHECK:STDERR: fail_todo_self_param.carbon:[[@LINE+4]]:6: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
+  // CHECK:STDERR:   Alt(a: Self*)
+  // CHECK:STDERR:      ^~~~~~~~~~
+  // CHECK:STDERR:
+  Alt(a: Self*)
+}
+
 // constants {
 //   %S: type = class_type @S [template]
 //   %TAlt: type = class_type @TAlt [template]
@@ -183,6 +194,7 @@ choice C(T:! type) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .a = %a
 // CHECK:STDOUT:   .b = %b
 // CHECK:STDOUT:   .Alt1 = %Alt1
@@ -197,6 +209,7 @@ choice C(T:! type) {
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template]
 // CHECK:STDOUT: }
@@ -237,6 +250,7 @@ choice C(T:! type) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -244,5 +258,46 @@ choice C(T:! type) {
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_10.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc3_10.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_self_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %a.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:   %.loc8: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %ptr = bind_name a, %a.param
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .a = %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

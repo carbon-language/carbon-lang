@@ -69,6 +69,9 @@ fn H() {
 // CHECK:STDOUT: class @Never {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Never
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- one_alternative.carbon
@@ -120,6 +123,7 @@ fn H() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Always
 // CHECK:STDOUT:   .Sunny = %Sunny
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -261,6 +265,7 @@ fn H() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Ordering
 // CHECK:STDOUT:   .Less = %Less
 // CHECK:STDOUT:   .Equivalent = %Equivalent
 // CHECK:STDOUT:   .Greater = %Greater

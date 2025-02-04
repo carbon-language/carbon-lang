@@ -26,13 +26,6 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 choice Wont {
-  // CHECK:STDERR: fail_empty_params.carbon:[[@LINE+7]]:10: error: choice alternative has empty parameter list [ChoiceAlternativeEmptyParams]
-  // CHECK:STDERR:   Compile()
-  // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_empty_params.carbon:[[@LINE+4]]:10: note: remove the empty `()` [ChoiceAlternativeEmptyParamsNote]
-  // CHECK:STDERR:   Compile()
-  // CHECK:STDERR:          ^~
-  // CHECK:STDERR:
   Compile()
 }
 
@@ -69,6 +62,9 @@ choice Wont {
 // CHECK:STDOUT: class @Never {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Never
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -92,6 +88,8 @@ choice Wont {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
+// CHECK:STDOUT:   %Wont.val: %Wont = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -112,6 +110,23 @@ choice Wont {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Wont {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
+// CHECK:STDOUT:   %.loc5_1.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.2: %empty_tuple.type = converted %.loc5_1.1, %empty_tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.3: %struct_type.discriminant = struct_literal (%.loc5_1.2)
+// CHECK:STDOUT:   %.loc5_1.4: ref %Wont = temporary_storage
+// CHECK:STDOUT:   %.loc5_1.5: ref %empty_tuple.type = class_element_access %.loc5_1.4, element0
+// CHECK:STDOUT:   %.loc5_1.6: init %empty_tuple.type = tuple_init () to %.loc5_1.5 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.7: init %empty_tuple.type = converted %.loc5_1.2, %.loc5_1.6 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_1.8: init %Wont = class_init (%.loc5_1.7), %.loc5_1.4 [template = constants.%Wont.val]
+// CHECK:STDOUT:   %.loc5_1.9: ref %Wont = temporary %.loc5_1.4, %.loc5_1.8
+// CHECK:STDOUT:   %.loc5_1.10: ref %Wont = converted %.loc5_1.3, %.loc5_1.9
+// CHECK:STDOUT:   %.loc5_1.11: %Wont = bind_value %.loc5_1.10
+// CHECK:STDOUT:   %Compile: %Wont = bind_name Compile, %.loc5_1.11
 // CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Wont
+// CHECK:STDOUT:   .Compile = %Compile
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

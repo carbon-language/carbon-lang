@@ -721,6 +721,10 @@ class Context {
     return scope_stack_.full_pattern_stack();
   }
 
+  // During Choice typechecking, each alternative turns into a name binding on
+  // the Choice type, but this can't be done until the full Choice type is
+  // known. This represents each binding to be done at the end of checking the
+  // Choice type.
   struct ChoiceDeferredBinding {
     Parse::NodeId node_id;
     NameComponent name_component;
@@ -854,8 +858,12 @@ class Context {
   // Stack of single-entry regions being built.
   ArrayStack<SemIR::InstBlockId> region_stack_;
 
-  // Each alternative in a Choice gets an entry here, they are stored in order.
-  // The vector is consumed and emptied at the end of the Choice definition.
+  // Each alternative in a Choice gets an entry here, they are stored in
+  // declaration order. The vector is consumed and emptied at the end of the
+  // Choice definition.
+  //
+  // TODO: This may need to be a stack of vectors if it becomes possible to
+  // define a Choice type inside an alternative's parameter set.
   llvm::SmallVector<ChoiceDeferredBinding> choice_deferred_bindings_;
 };
 

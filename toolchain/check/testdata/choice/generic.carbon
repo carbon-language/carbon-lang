@@ -77,6 +77,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Always
 // CHECK:STDOUT:     .Sunny = %Sunny
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
