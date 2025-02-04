@@ -1512,7 +1512,10 @@ static auto MakeFacetTypeResult(Context& context,
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
-// NOLINTNEXTLINE(misc-no-recursion): TODO: Remove the recursion here.
+
+// Tail call should not be diagnosed as recursion.
+// https://github.com/llvm/llvm-project/issues/125724
+// NOLINTNEXTLINE(misc-no-recursion): Tail call.
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -1902,15 +1905,16 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         return value;
       }
 
-      auto type_id = inst.type_id;
-      auto value_inst = eval_context.insts().Get(
-          eval_context.constant_values().GetInstId(value));
+      auto from_phase = Phase::Template;
+      auto value_inst_id =
+          GetConstantValue(eval_context, inst.source_id, &from_phase);
+
+      auto to_phase = Phase::Template;
+      auto type_id = GetConstantValue(eval_context, inst.type_id, &to_phase);
+
+      auto value_inst = eval_context.insts().Get(value_inst_id);
       value_inst.SetType(type_id);
 
-      auto from_phase = value.is_symbolic() ? Phase::Symbolic : Phase::Template;
-      auto to_phase = eval_context.types().GetConstantId(type_id).is_symbolic()
-                          ? Phase::Symbolic
-                          : Phase::Template;
       if (to_phase >= from_phase) {
         // If moving from a template constant value to a symbolic type, the new
         // constant value takes on the phase of the new type. We're adding the
@@ -1924,12 +1928,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         // can't easily determine that here without evaluating a new constant
         // value. See
         // https://github.com/carbon-language/carbon-lang/pull/4881#discussion_r1939961372
-        //
-        // TODO: Find a way to avoid recursion for this. Make this function into
-        // a while loop? Track the phase of the constant value separately from
-        // the phase of the value's type?
-        return TryEvalInstInContext(eval_context, SemIR::InstId::None,
-                                    value_inst);
+        [[clang::musttail]] return TryEvalInstInContext(
+            eval_context, SemIR::InstId::None, value_inst);
       }
     }
 
