@@ -329,6 +329,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(FunctionTypeWithSelfType inst): {
         out << "<type of ";
+        step_stack.PushString(">");
+        step_stack.PushInstId(inst.self_id);
+        step_stack.PushString(" in ");
         if (auto fn_inst = sem_ir.insts().TryGetAs<FunctionType>(
                 inst.interface_function_type_id)) {
           const auto& fn = sem_ir.functions().Get(fn_inst->function_id);
@@ -336,9 +339,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         } else {
           step_stack.PushInstId(inst.interface_function_type_id);
         }
-        step_stack.PushString(">");
-        step_stack.PushInstId(inst.self_id);
-        step_stack.PushString(" in ");
         break;
       }
       case CARBON_KIND(GenericClassType inst): {
