@@ -52,7 +52,7 @@ production of SemIR. It also does any validation that requires context.
 
 Some particular topics have their own documentation:
 
--   [Associated constants](associated_constants.md)
+-   [Associated constants](associated_constant.md)
 
 ## Postorder processing
 
