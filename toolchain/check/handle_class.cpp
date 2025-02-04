@@ -14,6 +14,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -53,9 +54,8 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
 //
 // If merging is successful, returns true and may update the previous class.
 // Otherwise, returns false. Prints a diagnostic when appropriate.
-static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
-                             SemIR::Class& new_class, bool new_is_import,
-                             bool new_is_definition,
+static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
+                             SemIR::Class& new_class, bool new_is_definition,
                              SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
@@ -69,7 +69,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
 
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Class, prev_class.name_id,
-      RedeclInfo(new_class, new_loc, new_is_definition),
+      RedeclInfo(new_class, node_id, new_is_definition),
       RedeclInfo(prev_class, prev_loc, prev_class.has_definition_started()),
       prev_import_ir_id);
 
@@ -87,12 +87,11 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     prev_class.complete_type_witness_id = new_class.complete_type_witness_id;
   }
 
-  if ((prev_import_ir_id.has_value() && !new_is_import) ||
+  if (prev_import_ir_id.has_value() ||
       (prev_class.is_extern && !new_class.is_extern)) {
     prev_class.first_owning_decl_id = new_class.first_owning_decl_id;
-    ReplacePrevInstForMerge(
-        context, new_class.parent_scope_id, prev_class.name_id,
-        new_is_import ? new_loc.inst_id : new_class.first_owning_decl_id);
+    ReplacePrevInstForMerge(context, new_class.parent_scope_id,
+                            prev_class.name_id, new_class.first_owning_decl_id);
   }
   return true;
 }
@@ -105,17 +104,21 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
                            SemIR::AccessKind access_kind) -> void {
-  auto [prev_id, is_poisoned] = context.decl_name_stack().LookupOrAddName(
-      name_context, class_decl_id, access_kind);
-  if (is_poisoned) {
+  SemIR::ScopeLookupResult lookup_result =
+      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id,
+                                                access_kind);
+  if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(class_decl_id);
+    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
+                                 class_decl_id);
     return;
   }
 
-  if (!prev_id.has_value()) {
+  if (!lookup_result.is_found()) {
     return;
   }
+
+  SemIR::InstId prev_id = lookup_result.target_inst_id();
 
   auto prev_class_id = SemIR::ClassId::None;
   auto prev_import_ir_id = SemIR::ImportIRId::None;
@@ -162,9 +165,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
   // TODO: Fix `extern` logic. It doesn't work correctly, but doesn't seem worth
   // ripping out because existing code may incrementally help.
-  if (MergeClassRedecl(context, node_id, class_info,
-                       /*new_is_import=*/false, is_definition, prev_class_id,
-                       prev_import_ir_id)) {
+  if (MergeClassRedecl(context, node_id, class_info, is_definition,
+                       prev_class_id, prev_import_ir_id)) {
     // When merging, use the existing entity rather than adding a new one.
     class_decl.class_id = prev_class_id;
     class_decl.type_id = prev.type_id();

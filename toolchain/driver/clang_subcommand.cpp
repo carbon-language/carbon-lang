@@ -51,8 +51,10 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.
   if (driver_env.fuzzing) {
-    *driver_env.error_stream
-        << "error: cannot run `clang` subcommand productively when fuzzing\n";
+    CARBON_DIAGNOSTIC(
+        ClangFuzzingDisallowed, Error,
+        "preventing fuzzing of `clang` subcommand due to library crashes");
+    driver_env.emitter.Emit(ClangFuzzingDisallowed);
     return {.success = false};
   }
 

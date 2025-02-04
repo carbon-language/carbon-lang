@@ -215,9 +215,7 @@ class Context {
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration. If scope_id is `None`, performs lookup into the lexical scope
-  // specified by scope_index instead. If found, returns the referenced
-  // `InstId` and false. If poisoned, returns `InstId::None` and true.
-  // TODO: For poisoned names, return the poisoning `InstId`.
+  // specified by scope_index instead.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id, ScopeIndex scope_index)
       -> SemIR::ScopeLookupResult;
@@ -235,7 +233,7 @@ class Context {
   // poisoned name will be treated as if it is not declared. Otherwise, this is
   // a lookup for a name being declared, so the name will not be poisoned, but
   // poison will be returned if it's already been looked up.
-  auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+  auto LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
                               SemIR::NameScope& scope,
                               bool is_being_declared = false)
@@ -259,13 +257,15 @@ class Context {
 
   // Returns the `InstId` corresponding to a name in the core package, or
   // BuiltinErrorInst if not found.
-  auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
+  auto LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
+      -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
-  // Prints a diagnostic for a poisoned name.
-  auto DiagnosePoisonedName(SemIRLoc loc) -> void;
+  // Prints a diagnostic for a poisoned name when it's later declared.
+  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+                            SemIR::InstId decl_inst_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;

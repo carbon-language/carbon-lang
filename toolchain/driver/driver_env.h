@@ -6,9 +6,11 @@
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_ENV_H_
 
 #include <cstdio>
+#include <utility>
 
 #include "common/ostream.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/install/install_paths.h"
 
 namespace Carbon {
@@ -24,7 +26,9 @@ struct DriverEnv {
         input_stream(input_stream),
         output_stream(output_stream),
         error_stream(error_stream),
-        fuzzing(fuzzing) {}
+        fuzzing(fuzzing),
+        consumer(error_stream),
+        emitter(&consumer) {}
 
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
@@ -39,13 +43,19 @@ struct DriverEnv {
   // Error output; stderr.
   llvm::raw_pwrite_stream* error_stream;
 
-  // For CARBON_VLOG.
-  llvm::raw_pwrite_stream* vlog_stream = nullptr;
-
   // Tracks when the driver is being fuzzed. This allows specific commands to
   // error rather than perform operations that aren't well behaved during
   // fuzzing.
   bool fuzzing;
+
+  // A diagnostic consumer, to be able to connect output.
+  StreamDiagnosticConsumer consumer;
+
+  // A diagnostic emitter that has no locations.
+  NoLocDiagnosticEmitter emitter;
+
+  // For CARBON_VLOG.
+  llvm::raw_pwrite_stream* vlog_stream = nullptr;
 };
 
 }  // namespace Carbon

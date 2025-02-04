@@ -189,16 +189,6 @@ cc_fuzz_test(
 )
 
 cc_library(
-    name = "tree_node_diagnostic_converter",
-    hdrs = ["tree_node_diagnostic_converter.h"],
-    deps = [
-        ":tree",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lex:tokenized_buffer",
-    ],
-)
-
-cc_library(
     name = "precedence",
     srcs = ["precedence.cpp"],
     hdrs = ["precedence.h"],

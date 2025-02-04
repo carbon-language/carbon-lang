@@ -77,9 +77,10 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
 //
 // If merging is successful, returns true and may update the previous function.
 // Otherwise, returns false. Prints a diagnostic when appropriate.
-static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
+static auto MergeFunctionRedecl(Context& context,
+                                Parse::AnyFunctionDeclId node_id,
                                 SemIR::Function& new_function,
-                                bool new_is_import, bool new_is_definition,
+                                bool new_is_definition,
                                 SemIR::FunctionId prev_function_id,
                                 SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
@@ -90,7 +91,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
 
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Fn, prev_function.name_id,
-      RedeclInfo(new_function, new_loc, new_is_definition),
+      RedeclInfo(new_function, node_id, new_is_definition),
       RedeclInfo(prev_function, prev_function.latest_decl_id(),
                  prev_function.has_definition_started()),
       prev_import_ir_id);
@@ -107,7 +108,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     prev_function.MergeDefinition(new_function);
     prev_function.return_slot_pattern_id = new_function.return_slot_pattern_id;
   }
-  if ((prev_import_ir_id.has_value() && !new_is_import)) {
+  if (prev_import_ir_id.has_value()) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,
                             prev_function.name_id,
                             new_function.first_owning_decl_id);
@@ -162,8 +163,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     return;
   }
 
-  if (MergeFunctionRedecl(context, node_id, function_info,
-                          /*new_is_import=*/false, is_definition,
+  if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
                           prev_function_id, prev_import_ir_id)) {
     // When merging, use the existing function rather than adding a new one.
     function_decl.function_id = prev_function_id;
@@ -255,7 +255,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    context.DiagnosePoisonedName(function_info.latest_decl_id());
+    context.DiagnosePoisonedName(name_context.poisoning_loc_id,
+                                 function_info.latest_decl_id());
   } else {
     TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
                    function_info, is_definition);

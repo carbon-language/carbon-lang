@@ -223,15 +223,15 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
       .Emit();
 }
 
-auto Context::DiagnosePoisonedName(SemIRLoc loc) -> void {
-  // TODO: Improve the diagnostic to replace NodeId::None with the location
-  // where the name was poisoned. See discussion in
-  // https://github.com/carbon-language/carbon-lang/pull/4654#discussion_r1876607172
+auto Context::DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+                                   SemIR::InstId decl_inst_id) -> void {
+  CARBON_CHECK(poisoning_loc_id.has_value(),
+               "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name used before it was declared");
   CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
-  emitter_->Build(SemIR::LocId::None, NameUseBeforeDecl)
-      .Note(loc, NameUseBeforeDeclNote)
+  emitter_->Build(poisoning_loc_id, NameUseBeforeDecl)
+      .Note(decl_inst_id, NameUseBeforeDeclNote)
       .Emit();
 }
 
@@ -421,13 +421,14 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
           .scope_result = SemIR::ScopeLookupResult::MakeError()};
 }
 
-auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+auto Context::LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      SemIR::NameScope& scope,
                                      bool is_being_declared)
     -> SemIR::ScopeLookupResult {
-  if (auto entry_id = is_being_declared ? scope.Lookup(name_id)
-                                        : scope.LookupOrPoison(name_id)) {
+  if (auto entry_id = is_being_declared
+                          ? scope.Lookup(name_id)
+                          : scope.LookupOrPoison(loc_id, name_id)) {
     auto lookup_result = scope.GetEntry(*entry_id).result;
     if (!lookup_result.is_poisoned()) {
       LoadImportRef(*this, lookup_result.target_inst_id());
@@ -438,7 +439,7 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
   if (!scope.import_ir_scopes().empty()) {
     // TODO: Enforce other access modifiers for imports.
     return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
-        ImportNameFromOtherPackage(*this, loc, scope_id,
+        ImportNameFromOtherPackage(*this, loc_id, scope_id,
                                    scope.import_ir_scopes(), name_id),
         SemIR::AccessKind::Public);
   }
@@ -691,8 +692,8 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
 //
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
-static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
-    -> SemIR::NameScopeId {
+static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
+                           llvm::StringRef name) -> SemIR::NameScopeId {
   auto core_ident_id = context.identifiers().Add("Core");
   auto packaging = context.parse_tree().packaging_decl();
   if (packaging && packaging->names.package_id == core_ident_id) {
@@ -702,7 +703,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
 
   // Look up `package.Core`.
   auto core_scope_result = context.LookupNameInExactScope(
-      loc, core_name_id, SemIR::NameScopeId::Package,
+      loc_id, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (core_scope_result.is_found()) {
     // We expect it to be a namespace.
@@ -717,26 +718,26 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
       CoreNotFound, Error,
       "`Core.{0}` implicitly referenced here, but package `Core` not found",
       std::string);
-  context.emitter().Emit(loc, CoreNotFound, name.str());
+  context.emitter().Emit(loc_id, CoreNotFound, name.str());
   return SemIR::NameScopeId::None;
 }
 
-auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
+auto Context::LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
     -> SemIR::InstId {
-  auto core_package_id = GetCorePackage(*this, loc, name);
+  auto core_package_id = GetCorePackage(*this, loc_id, name);
   if (!core_package_id.has_value()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
   auto scope_result = LookupNameInExactScope(
-      loc, name_id, core_package_id, name_scopes().Get(core_package_id));
+      loc_id, name_id, core_package_id, name_scopes().Get(core_package_id));
   if (!scope_result.is_found()) {
     CARBON_DIAGNOSTIC(
         CoreNameNotFound, Error,
         "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
-    emitter_->Emit(loc, CoreNameNotFound, name_id);
+    emitter_->Emit(loc_id, CoreNameNotFound, name_id);
     return SemIR::ErrorInst::SingletonInstId;
   }
 

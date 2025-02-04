@@ -119,7 +119,9 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
           CARBON_CHECK(import_id.has_value());
           context.DiagnoseDuplicateName(import_id, prev_inst_id);
         }
-        return {namespace_inst->name_scope_id, prev_inst_id, true};
+        return {.name_scope_id = namespace_inst->name_scope_id,
+                .inst_id = prev_inst_id,
+                .is_duplicate_of_namespace_in_current_package = true};
       }
     }
   }
@@ -129,7 +131,9 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
   auto import_loc_id = context.insts().GetLocId(import_id);
 
   auto namespace_inst =
-      SemIR::Namespace{namespace_type_id, SemIR::NameScopeId::None, import_id};
+      SemIR::Namespace{.type_id = namespace_type_id,
+                       .name_scope_id = SemIR::NameScopeId::None,
+                       .import_id = import_id};
   auto namespace_inst_and_loc =
       import_loc_id.is_import_ir_inst_id()
           ? context.MakeImportedLocAndInst(import_loc_id.import_ir_inst_id(),
@@ -158,7 +162,9 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
   }
   result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
                                                SemIR::AccessKind::Public);
-  return {namespace_inst.name_scope_id, namespace_id, false};
+  return {.name_scope_id = namespace_inst.name_scope_id,
+          .inst_id = namespace_id,
+          .is_duplicate_of_namespace_in_current_package = false};
 }
 
 // Adds a copied namespace to the cache.

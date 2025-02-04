@@ -10,7 +10,7 @@
 
 // --- STDIN
 [[@LSP:initialize]]
-[[@LSP:exit]]
+[[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 

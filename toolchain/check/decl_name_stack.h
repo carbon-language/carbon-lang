@@ -122,8 +122,13 @@ class DeclNameStack {
     // Returns the name_id for a new instruction. This is `None` when the name
     // resolved.
     auto name_id_for_new_inst() -> SemIR::NameId {
-      return state == State::Unresolved ? unresolved_name_id
-                                        : SemIR::NameId::None;
+      switch (state) {
+        case State::Unresolved:
+        case State::Poisoned:
+          return unresolved_name_id;
+        default:
+          return SemIR::NameId::None;
+      }
     }
 
     // The current scope when this name began. This is the scope that we will
@@ -151,6 +156,10 @@ class DeclNameStack {
       // The ID of an unresolved identifier.
       SemIR::NameId unresolved_name_id = SemIR::NameId::None;
     };
+
+    // When `state` is `Poisoned` (name is unresolved due to name poisoning),
+    // the poisoning location.
+    SemIR::LocId poisoning_loc_id = SemIR::LocId::None;
   };
 
   // Information about a declaration name that has been temporarily removed from
@@ -238,12 +247,10 @@ class DeclNameStack {
                          SemIR::AccessKind access_kind) -> void;
 
   // Adds a name to name lookup if neither already declared nor poisoned in this
-  // scope. If declared, returns the existing `InstId` and false. If poisoned,
-  // returns `None` and true.
-  // TODO: Return the poisoning instruction if poisoned.
+  // scope.
   auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id,
                        SemIR::AccessKind access_kind)
-      -> std::pair<SemIR::InstId, bool>;
+      -> SemIR::ScopeLookupResult;
 
  private:
   // Returns a name context corresponding to an empty name.
