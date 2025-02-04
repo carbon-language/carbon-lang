@@ -250,6 +250,20 @@ struct Worklist {
     Add(sem_ir->floats().Get(float_id).bitcastToAPInt());
   }
 
+  auto Add(PackageId package_id) -> void {
+    if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+      AddString(sem_ir->identifiers().Get(ident_id));
+    } else if (package_id == PackageId::None) {
+      AddString("Main");
+    } else if (package_id == PackageId::Core) {
+      // TODO: May collide with a user package of the same name. Consider using
+      // a different value.
+      AddString("Core");
+    } else {
+      CARBON_FATAL("Unexpected package ID {0}", package_id);
+    }
+  }
+
   auto Add(LibraryNameId lib_name_id) -> void {
     if (lib_name_id == LibraryNameId::Default) {
       AddString("");

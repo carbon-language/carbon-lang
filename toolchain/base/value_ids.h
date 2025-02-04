@@ -71,6 +71,31 @@ struct IdentifierId : public IdBase<IdentifierId> {
 };
 constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
 
+// The identity of a package, which is either an identifier ID or the special
+// `Core` package.
+//
+// TODO: Consider also treating `Main` and `Cpp` as special package names.
+struct PackageId : public IdBase<PackageId> {
+  static constexpr llvm::StringLiteral Label = "package";
+  static const PackageId None;
+  static const PackageId Core;
+
+  // Returns the PackageNameId corresponding to a particular IdentifierId.
+  static auto ForIdentifier(IdentifierId id) -> PackageId {
+    return PackageId(id.index);
+  }
+
+  using IdBase::IdBase;
+
+  // Returns the IdentifierId corresponding to this PackageNameId, or `None` if
+  // this is a special package name.
+  auto AsIdentifierId() const -> IdentifierId {
+    return index >= 0 ? IdentifierId(index) : IdentifierId::None;
+  }
+};
+constexpr PackageId PackageId::None(PackageId::NoneIndex);
+constexpr PackageId PackageId::Core(PackageId::NoneIndex - 1);
+
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
   static constexpr llvm::StringLiteral Label = "string";
