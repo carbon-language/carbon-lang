@@ -166,10 +166,12 @@ common --incompatible_default_to_explicit_init_py
 common --incompatible_depset_for_java_output_source_jars
 common --incompatible_depset_for_libraries_to_link_getter
 common --incompatible_disable_native_android_rules
+common --incompatible_disable_native_apple_binary_rule
 common --incompatible_disable_native_repo_rules
 common --incompatible_disable_objc_library_transition
 common --incompatible_disable_target_provider_fields
 common --incompatible_disallow_ctx_resolve_tools
+common --incompatible_disallow_empty_glob
 common --incompatible_disallow_legacy_py_provider
 common --incompatible_disallow_sdk_frameworks_attributes
 common --incompatible_disallow_struct_provider_syntax
@@ -185,6 +187,7 @@ common --incompatible_fail_on_unknown_attributes
 common --incompatible_fix_package_group_reporoot_syntax
 common --incompatible_java_common_parameters
 common --incompatible_legacy_local_fallback
+common --incompatible_locations_prefers_executable
 common --incompatible_make_thinlto_command_lines_standalone
 common --incompatible_merge_fixed_and_default_shell_env
 common --incompatible_merge_genfiles_directory
