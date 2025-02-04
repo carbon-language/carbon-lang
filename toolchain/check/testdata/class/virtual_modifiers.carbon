@@ -1134,7 +1134,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1223,11 +1223,11 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.d44: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1244,7 +1244,7 @@ class Derived {
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [template = constants.%T2]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%import_ref.d44 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [template = constants.%T1]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T1)> [template = constants.%ImplicitAs.type.e40]
 // CHECK:STDOUT:   }
@@ -1389,9 +1389,9 @@ class Derived {
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [template = constants.%T1] {} {}
 // CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [template = constants.%Base.generic] {
 // CHECK:STDOUT:     %T.patt.loc7_17.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_17.1, runtime_param<invalid> [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_17.1, runtime_param<none> [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %T.loc7_17.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_17.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
