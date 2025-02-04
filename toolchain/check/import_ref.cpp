@@ -491,6 +491,7 @@ class ImportRefResolver : public ImportContext {
 
   // Performs resolution for one instruction and then performs all work we
   // deferred.
+  // NOLINTNEXTLINE(misc-no-recursion)
   auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
     auto const_id = ResolveOneInst(inst_id);
     PerformPendingWork();
@@ -498,11 +499,13 @@ class ImportRefResolver : public ImportContext {
   }
 
   // Wraps constant evaluation with logic to handle constants.
+  // NOLINTNEXTLINE(misc-no-recursion)
   auto ResolveConstant(SemIR::ConstantId import_const_id) -> SemIR::ConstantId {
     return Resolve(GetInstWithConstantValue(import_ir(), import_const_id));
   }
 
   // Wraps constant evaluation with logic to handle types.
+  // NOLINTNEXTLINE(misc-no-recursion)
   auto ResolveType(SemIR::TypeId import_type_id) -> SemIR::TypeId {
     if (!import_type_id.has_value()) {
       return import_type_id;
@@ -2948,6 +2951,7 @@ static auto ResolveLocalEvalBlock(ImportRefResolver& resolver,
 }
 
 // Fills in the remaining information in a partially-imported generic.
+// NOLINTNEXTLINE(misc-no-recursion)
 static auto FinishPendingGeneric(ImportRefResolver& resolver,
                                  ImportContext::PendingGeneric pending)
     -> void {
@@ -3029,6 +3033,7 @@ static auto FinishPendingSpecific(ImportRefResolver& resolver,
 }
 
 // Perform any work that we deferred until the end of the main Resolve loop.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto ImportRefResolver::PerformPendingWork() -> void {
   // Note that the individual Finish steps can add new pending work, so keep
   // going until we have no more work to do.
@@ -3091,6 +3096,7 @@ static auto GetInstForLoad(Context& context,
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   auto inst = context.insts().TryGetAs<SemIR::ImportRefUnloaded>(inst_id);
   if (!inst) {
