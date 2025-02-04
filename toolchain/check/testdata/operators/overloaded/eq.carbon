@@ -102,10 +102,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Eq.facet: %Eq.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [template]
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [template]
-// CHECK:STDOUT:   %.76c: type = impl_fn_type %Equal.type.79c, %Eq.facet [template]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %Equal.type.79c, %Eq.facet [template]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [template]
 // CHECK:STDOUT:   %TestNotEqual: %TestNotEqual.type = struct_value () [template]
-// CHECK:STDOUT:   %.de4: type = impl_fn_type %NotEqual.type.e6c, %Eq.facet [template]
+// CHECK:STDOUT:   %.d23: type = fn_type_with_self_type %NotEqual.type.e6c, %Eq.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -239,7 +239,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.76c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.f96]
+// CHECK:STDOUT:   %impl.elem0: %.dad = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.f96]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %Equal.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Equal.call
@@ -251,7 +251,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.de4 = impl_witness_access constants.%impl_witness, element1 [template = constants.%NotEqual.c3f]
+// CHECK:STDOUT:   %impl.elem1: %.d23 = impl_witness_access constants.%impl_witness, element1 [template = constants.%NotEqual.c3f]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %NotEqual.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc16_16.1: bool = value_of_initializer %NotEqual.call
@@ -374,7 +374,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Eq.facet: %Eq.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %TestRhsBad.type: type = fn_type @TestRhsBad [template]
 // CHECK:STDOUT:   %TestRhsBad: %TestRhsBad.type = struct_value () [template]
-// CHECK:STDOUT:   %.76c: type = impl_fn_type %Equal.type.79c, %Eq.facet [template]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %Equal.type.79c, %Eq.facet [template]
 // CHECK:STDOUT:   %TestLhsBad.type: type = fn_type @TestLhsBad [template]
 // CHECK:STDOUT:   %TestLhsBad: %TestLhsBad.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -521,7 +521,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.76c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.f96]
+// CHECK:STDOUT:   %impl.elem0: %.dad = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.f96]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23_15: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Equal.call: init bool = call %bound_method(%a.ref, <error>)

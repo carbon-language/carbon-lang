@@ -42,7 +42,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, %impl_witness.85b [template]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [template]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [template]
-// CHECK:STDOUT:   %.28b: type = impl_fn_type %G.type.b60, %Simple.facet [template]
+// CHECK:STDOUT:   %.eac: type = fn_type_with_self_type %G.type.b60, %Simple.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -131,7 +131,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
 // CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0.45f]
-// CHECK:STDOUT:   %impl.elem0: %.28b = impl_witness_access constants.%impl_witness.85b, element0 [template = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.eac = impl_witness_access constants.%impl_witness.85b, element0 [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -109,7 +109,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.facet: %Action.type.cb0 = facet_value %A, %impl_witness [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.883: type = impl_fn_type %Op.type.54d, %Action.facet [template]
+// CHECK:STDOUT:   %.920: type = fn_type_with_self_type %Op.type.54d, %Action.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -220,7 +220,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [template = constants.%Action.type.cb0]
 // CHECK:STDOUT:   %.loc16: %Action.assoc_type.827 = specific_constant @Action.%assoc0.loc5_10.1, @Action(constants.%B) [template = constants.%assoc0.035]
 // CHECK:STDOUT:   %Op.ref: %Action.assoc_type.827 = name_ref Op, %.loc16 [template = constants.%assoc0.035]
-// CHECK:STDOUT:   %impl.elem0: %.883 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.40d]
+// CHECK:STDOUT:   %impl.elem0: %.920 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.40d]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -277,7 +277,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.905ab9.2: %Action.assoc_type.8f9 = assoc_entity element0, imports.%Main.import_ref.0e3753.2 [symbolic]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.d0b) [template]
 // CHECK:STDOUT:   %Action.facet: %Action.type.cb0 = facet_value %A, %impl_witness [template]
-// CHECK:STDOUT:   %.a65: type = impl_fn_type %Op.type.54d, %Action.facet [template]
+// CHECK:STDOUT:   %.ae7: type = fn_type_with_self_type %Op.type.54d, %Action.facet [template]
 // CHECK:STDOUT:   %Op.type.4b4: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.40d: %Op.type.4b4 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -378,7 +378,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [template = constants.%Action.type.cb0]
 // CHECK:STDOUT:   %.loc4: %Action.assoc_type.827 = specific_constant imports.%Main.import_ref.318, @Action(constants.%B) [template = constants.%assoc0.4cc]
 // CHECK:STDOUT:   %Op.ref: %Action.assoc_type.827 = name_ref Op, %.loc4 [template = constants.%assoc0.4cc]
-// CHECK:STDOUT:   %impl.elem0: %.a65 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.40d]
+// CHECK:STDOUT:   %impl.elem0: %.ae7 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.40d]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -760,7 +760,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.35472f.2: %Factory.assoc_type.ca7 = assoc_entity element0, imports.%Main.import_ref.21018a.2 [symbolic]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.9ec) [template]
 // CHECK:STDOUT:   %Factory.facet: %Factory.type.a5d = facet_value %A, %impl_witness [template]
-// CHECK:STDOUT:   %.e56: type = impl_fn_type %Make.type.c59, %Factory.facet [template]
+// CHECK:STDOUT:   %.357: type = fn_type_with_self_type %Make.type.c59, %Factory.facet [template]
 // CHECK:STDOUT:   %Make.type.ec4: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.377: %Make.type.ec4 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -864,7 +864,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [template = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   %.loc5: %Factory.assoc_type.668 = specific_constant imports.%Main.import_ref.8d5, @Factory(constants.%B) [template = constants.%assoc0.503]
 // CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.668 = name_ref Make, %.loc5 [template = constants.%assoc0.503]
-// CHECK:STDOUT:   %impl.elem0: %.e56 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Make.377]
+// CHECK:STDOUT:   %impl.elem0: %.357 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Make.377]
 // CHECK:STDOUT:   %.loc4: ref %B = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %B = call %impl.elem0() to %.loc4
 // CHECK:STDOUT:   return %Make.call to %return

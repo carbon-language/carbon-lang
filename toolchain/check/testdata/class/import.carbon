@@ -175,7 +175,7 @@ fn Run() {
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, %impl_witness.b97 [template]
-// CHECK:STDOUT:   %.c38: type = impl_fn_type %Convert.type.6da, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.39b: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound.43e: <bound method> = bound_method %int_1.5b8, %Convert.16d [template]
 // CHECK:STDOUT:   %Convert.specific_fn.c37: <specific function> = specific_function %Convert.bound.43e, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.47b: %i32 = int_value 1 [template]
@@ -290,7 +290,7 @@ fn Run() {
 // CHECK:STDOUT:   %b.var: ref %Field = var b
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_25.1: %struct_type.x.c96 = struct_literal (%int_1)
-// CHECK:STDOUT:   %impl.elem0.loc9: %.c38 = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
+// CHECK:STDOUT:   %impl.elem0.loc9: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %int_1, %impl.elem0.loc9 [template = constants.%Convert.bound.43e]
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %bound_method.loc9, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.c37]
 // CHECK:STDOUT:   %int.convert_checked.loc9: init %i32 = call %specific_fn.loc9(%int_1) [template = constants.%int_1.47b]
@@ -306,7 +306,7 @@ fn Run() {
 // CHECK:STDOUT:   %x.ref: %Field.elem = name_ref x, imports.%Main.import_ref.4d2 [template = imports.%.d33]
 // CHECK:STDOUT:   %.loc10_4: ref %i32 = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc10: %.c38 = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
+// CHECK:STDOUT:   %impl.elem0.loc10: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_2, %impl.elem0.loc10 [template = constants.%Convert.bound.918]
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %bound_method.loc10, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.5a4]
 // CHECK:STDOUT:   %int.convert_checked.loc10: init %i32 = call %specific_fn.loc10(%int_2) [template = constants.%int_2.d0d]

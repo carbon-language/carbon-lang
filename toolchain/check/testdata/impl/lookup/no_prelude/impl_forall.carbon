@@ -93,7 +93,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %F.type.0fea45.2: type = fn_type @F.2, @impl(%W) [symbolic]
 // CHECK:STDOUT:   %F.d6ae34.2: %F.type.0fea45.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet.5b0ece.2: %I.type.325e65.3 = facet_value %A.13025a.3, %impl_witness.ab3b51.2 [symbolic]
-// CHECK:STDOUT:   %.363: type = impl_fn_type %F.type.2aef59.3, %I.facet.5b0ece.2 [symbolic]
+// CHECK:STDOUT:   %.051: type = fn_type_with_self_type %F.type.2aef59.3, %I.facet.5b0ece.2 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %A.235: type = class_type @A, @A(%empty_struct_type) [template]
 // CHECK:STDOUT:   %TestSpecific.type: type = fn_type @TestSpecific [template]
@@ -112,7 +112,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %F.type.875: type = fn_type @F.2, @impl(%empty_struct_type) [template]
 // CHECK:STDOUT:   %F.158: %F.type.875 = struct_value () [template]
 // CHECK:STDOUT:   %I.facet.f67: %I.type.885 = facet_value %A.235, %impl_witness.f35 [template]
-// CHECK:STDOUT:   %.b2a: type = impl_fn_type %F.type.684, %I.facet.f67 [template]
+// CHECK:STDOUT:   %.f01: type = fn_type_with_self_type %F.type.684, %I.facet.f67 [template]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,7 +336,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %F.type.loc17_11.1: type = fn_type @F.1, @I(%W.loc16_16.2) [symbolic = %F.type.loc17_11.1 (constants.%F.type.2aef59.3)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(%W.loc16_16.2) [symbolic = %impl_witness (constants.%impl_witness.ab3b51.2)]
 // CHECK:STDOUT:   %I.facet: @TestGeneric.%I.type.loc17_16.2 (%I.type.325e65.3) = facet_value %A.loc16_32.2, %impl_witness [symbolic = %I.facet (constants.%I.facet.5b0ece.2)]
-// CHECK:STDOUT:   %.loc17_11: type = impl_fn_type %F.type.loc17_11.1, %I.facet [symbolic = %.loc17_11 (constants.%.363)]
+// CHECK:STDOUT:   %.loc17_11: type = fn_type_with_self_type %F.type.loc17_11.1, %I.facet [symbolic = %.loc17_11 (constants.%.051)]
 // CHECK:STDOUT:   %F.type.loc17_11.2: type = fn_type @F.2, @impl(%W.loc16_16.2) [symbolic = %F.type.loc17_11.2 (constants.%F.type.0fea45.2)]
 // CHECK:STDOUT:   %F: @TestGeneric.%F.type.loc17_11.2 (%F.type.0fea45.2) = struct_value () [symbolic = %F (constants.%F.d6ae34.2)]
 // CHECK:STDOUT:
@@ -348,7 +348,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %I.type.loc17_16.1: type = facet_type <@I, @I(constants.%W)> [symbolic = %I.type.loc17_16.2 (constants.%I.type.325e65.3)]
 // CHECK:STDOUT:     %.loc17_17: @TestGeneric.%I.assoc_type (%I.assoc_type.955255.3) = specific_constant @I.%assoc0.loc7_26.1, @I(constants.%W) [symbolic = %assoc0 (constants.%assoc0.fef501.3)]
 // CHECK:STDOUT:     %F.ref: @TestGeneric.%I.assoc_type (%I.assoc_type.955255.3) = name_ref F, %.loc17_17 [symbolic = %assoc0 (constants.%assoc0.fef501.3)]
-// CHECK:STDOUT:     %impl.elem0: @TestGeneric.%.loc17_11 (%.363) = impl_witness_access constants.%impl_witness.ab3b51.2, element0 [symbolic = %F (constants.%F.d6ae34.2)]
+// CHECK:STDOUT:     %impl.elem0: @TestGeneric.%.loc17_11 (%.051) = impl_witness_access constants.%impl_witness.ab3b51.2, element0 [symbolic = %F (constants.%F.d6ae34.2)]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %bound_method, @F.2(constants.%W)
 // CHECK:STDOUT:     %F.call: init @TestGeneric.%W.loc16_16.2 (%W) = call %specific_fn(%a.ref)
@@ -367,7 +367,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [template = constants.%I.type.885]
 // CHECK:STDOUT:   %.loc21_18: %I.assoc_type.67f = specific_constant @I.%assoc0.loc7_26.1, @I(constants.%empty_struct_type) [template = constants.%assoc0.639]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type.67f = name_ref F, %.loc21_18 [template = constants.%assoc0.639]
-// CHECK:STDOUT:   %impl.elem0: %.b2a = impl_witness_access constants.%impl_witness.f35, element0 [template = constants.%F.158]
+// CHECK:STDOUT:   %impl.elem0: %.f01 = impl_witness_access constants.%impl_witness.f35, element0 [template = constants.%F.158]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @F.2(constants.%empty_struct_type)
 // CHECK:STDOUT:   %F.call: init %empty_struct_type = call %specific_fn(%a.ref)

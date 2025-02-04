@@ -40,7 +40,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
-// CHECK:STDOUT:   %.ec9: type = impl_fn_type %Op.type.e3a, %Inc.facet [template]
+// CHECK:STDOUT:   %.e6d: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -112,7 +112,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0: %.ec9 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.0c9]
+// CHECK:STDOUT:   %impl.elem0: %.e6d = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.0c9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.ref
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr)

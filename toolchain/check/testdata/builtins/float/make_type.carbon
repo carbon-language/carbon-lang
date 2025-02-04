@@ -101,7 +101,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, %impl_witness.b97 [template]
-// CHECK:STDOUT:   %.c38: type = impl_fn_type %Convert.type.6da, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.39b: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_64.fab, %Convert.16d [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_64.198: %i32 = int_value 64 [template]
@@ -137,7 +137,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %.loc6_16.1: type = splice_block %.loc6_16.3 [template = f64] {
 // CHECK:STDOUT:     %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [template = constants.%Float]
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64.fab]
-// CHECK:STDOUT:     %impl.elem0: %.c38 = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
+// CHECK:STDOUT:     %impl.elem0: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_64, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %specific_fn(%int_64) [template = constants.%int_64.198]
@@ -197,7 +197,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.1(%int_32.be0) [template]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, %impl_witness.b97 [template]
-// CHECK:STDOUT:   %.c38: type = impl_fn_type %Convert.type.6da, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.39b: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound.cce: <bound method> = bound_method %int_32.be0, %Convert.16d [template]
 // CHECK:STDOUT:   %Convert.specific_fn.23b: <specific function> = specific_function %Convert.bound.cce, @Convert.2(%int_32.be0) [template]
 // CHECK:STDOUT:   %int_32.4de: %i32 = int_value 32 [template]
@@ -235,7 +235,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %.loc10_28.1: type = splice_block %.loc10_28.3 [template = <error>] {
 // CHECK:STDOUT:     %Float.ref.loc10: %Float.type = name_ref Float, imports.%Main.Float [template = constants.%Float]
 // CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [template = constants.%int_32.be0]
-// CHECK:STDOUT:     %impl.elem0: %.c38 = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
+// CHECK:STDOUT:     %impl.elem0: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_32.loc10, %impl.elem0 [template = constants.%Convert.bound.cce]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32.be0) [template = constants.%Convert.specific_fn.23b]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %specific_fn(%int_32.loc10) [template = constants.%int_32.4de]
@@ -277,7 +277,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64.fab]
-// CHECK:STDOUT:   %impl.elem0: %.c38 = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
+// CHECK:STDOUT:   %impl.elem0: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_64, %impl.elem0 [template = constants.%Convert.bound.575]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32.be0) [template = constants.%Convert.specific_fn.bd8]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(%int_64) [template = constants.%int_64.198]

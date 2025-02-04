@@ -50,7 +50,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [template]
-// CHECK:STDOUT:   %.b3a: type = impl_fn_type %Convert.type.1b6, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound.7ef: <bound method> = bound_method %int_39999999999999999993.af6, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2ed: <specific function> = specific_function %Convert.bound.7ef, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_39999999999999999993.dee: %i32 = int_value 39999999999999999993 [template]
@@ -90,7 +90,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc15: %.b3a = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc15: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method @__global_init.%int_39999999999999999993, %impl.elem0.loc15 [template = constants.%Convert.bound.7ef]
 // CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %bound_method.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2ed]
 // CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %specific_fn.loc15(@__global_init.%int_39999999999999999993) [template = constants.%int_39999999999999999993.dee]
@@ -104,7 +104,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc21: %.b3a = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method @__global_init.%int_2147483648.loc21, %impl.elem0.loc21 [template = constants.%Convert.bound.85f]
 // CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %bound_method.loc21, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.387]
 // CHECK:STDOUT:   %int.convert_checked.loc21: init %i32 = call %specific_fn.loc21(@__global_init.%int_2147483648.loc21) [template = constants.%int_2147483648.8df]
@@ -118,7 +118,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc27: %.b3a = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc27: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method @__global_init.%int_2147483648.loc27, %impl.elem0.loc27 [template = constants.%Convert.bound.85f]
 // CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %bound_method.loc27, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.387]
 // CHECK:STDOUT:   %int.convert_checked.loc27: init %i32 = call %specific_fn.loc27(@__global_init.%int_2147483648.loc27) [template = constants.%int_2147483648.8df]

@@ -28,7 +28,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [template]
-// CHECK:STDOUT:   %.b3a: type = impl_fn_type %Convert.type.1b6, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [template]
@@ -79,7 +79,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %int_0.loc12_32: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc12_33.1: %struct_type.a.b.c.1ee = struct_literal (%int_0.loc12_16, %n.ref, %int_0.loc12_32)
-// CHECK:STDOUT:   %impl.elem0.loc12_33.1: %.b3a = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc12_33.1: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc12_33.1: <bound method> = bound_method %int_0.loc12_16, %impl.elem0.loc12_33.1 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc12_33.1: <specific function> = specific_function %bound_method.loc12_33.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked.loc12_33.1: init %i32 = call %specific_fn.loc12_33.1(%int_0.loc12_16) [template = constants.%int_0.6a9]
@@ -88,7 +88,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %.loc12_33.4: init %i32 = initialize_from %.loc12_33.2 to %.loc12_33.3 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc12_33.5: ref %i32 = struct_access %return, element1
 // CHECK:STDOUT:   %.loc12_33.6: init %i32 = initialize_from %n.ref to %.loc12_33.5
-// CHECK:STDOUT:   %impl.elem0.loc12_33.2: %.b3a = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc12_33.2: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc12_33.2: <bound method> = bound_method %int_0.loc12_32, %impl.elem0.loc12_33.2 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc12_33.2: <specific function> = specific_function %bound_method.loc12_33.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked.loc12_33.2: init %i32 = call %specific_fn.loc12_33.2(%int_0.loc12_32) [template = constants.%int_0.6a9]

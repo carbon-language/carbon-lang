@@ -117,7 +117,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [template]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [template]
-// CHECK:STDOUT:   %.79f: type = impl_fn_type %Op.type.31b, %Add.facet [template]
+// CHECK:STDOUT:   %.a26: type = fn_type_with_self_type %Op.type.31b, %Add.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -219,7 +219,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [template = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.db7 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.79f = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.489]
+// CHECK:STDOUT:   %impl.elem0: %.a26 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.489]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%x.ref, %y.ref)

@@ -232,7 +232,7 @@ fn Call() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.742) [template]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [template]
-// CHECK:STDOUT:   %.92e: type = impl_fn_type %F.type.cf0, %I.facet [template]
+// CHECK:STDOUT:   %.076: type = fn_type_with_self_type %F.type.cf0, %I.facet [template]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -293,7 +293,7 @@ fn Call() {
 // CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc9
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.92e = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.a2e]
+// CHECK:STDOUT:   %impl.elem0: %.076 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.a2e]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

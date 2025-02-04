@@ -134,7 +134,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [template]
-// CHECK:STDOUT:   %.b3a: type = impl_fn_type %Convert.type.1b6, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [template]
@@ -192,7 +192,7 @@ fn CallF() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc10: <witness> = impl_witness (constants.%int_0.6a9) [template = constants.%impl_witness.6f4]
-// CHECK:STDOUT:   %impl.elem0: %.b3a = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method constants.%int_0.5c6, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(constants.%int_0.5c6) [template = constants.%int_0.6a9]
@@ -387,7 +387,7 @@ fn CallF() {
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_tuple> [template]
 // CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT:   %I.facet.b45: %I.type = facet_value %C, %impl_witness.85b [template]
-// CHECK:STDOUT:   %.2bf: type = impl_fn_type %Convert.type.56d, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.d4d: type = fn_type_with_self_type %Convert.type.56d, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %empty_tuple, %Convert.155 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -436,7 +436,7 @@ fn CallF() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85b]
-// CHECK:STDOUT:   %impl.elem0: %.2bf = impl_witness_access constants.%impl_witness.3db, element0 [template = constants.%Convert.155]
+// CHECK:STDOUT:   %impl.elem0: %.d4d = impl_witness_access constants.%impl_witness.3db, element0 [template = constants.%Convert.155]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method constants.%empty_tuple, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %.loc18_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %Convert.call: init %C = call %bound_method(constants.%empty_tuple) to %.loc18_13.1
@@ -550,7 +550,7 @@ fn CallF() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.c15) [template]
 // CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value Core.IntLiteral, %impl_witness [template]
-// CHECK:STDOUT:   %.b73: type = impl_fn_type %Op.type.e42, %Negate.facet [template]
+// CHECK:STDOUT:   %.45d: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [template]
 // CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.bba: %Op.type.1be = struct_value () [template]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_1, %Op.bba [template]
@@ -600,7 +600,7 @@ fn CallF() {
 // CHECK:STDOUT:     %.loc15_7.2: type = converted %.loc15_7.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: %I.type.dac = name_ref I, file.%I.decl [template = constants.%I.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %impl.elem0.loc15_14: %.b73 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.bba]
+// CHECK:STDOUT:     %impl.elem0.loc15_14: %.45d = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.bba]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_1, %impl.elem0.loc15_14 [template = constants.%Op.bound]
 // CHECK:STDOUT:     %int.snegate: init Core.IntLiteral = call %bound_method(%int_1) [template = constants.%int_-1]
 // CHECK:STDOUT:     %.loc15_16.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-1]

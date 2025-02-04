@@ -755,7 +755,7 @@ struct FunctionType {
 struct FunctionTypeWithSelfType {
   static constexpr auto Kind =
       InstKind::FunctionTypeWithSelfType.Define<Parse::NoneNodeId>(
-          {.ir_name = "impl_fn_type",
+          {.ir_name = "fn_type_with_self_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Conditional,
            .is_lowered = false});

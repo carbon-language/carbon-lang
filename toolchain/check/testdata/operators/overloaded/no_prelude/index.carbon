@@ -140,7 +140,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.414: type = impl_fn_type %At.type.082, %IndexWith.facet [template]
+// CHECK:STDOUT:   %.b91: type = fn_type_with_self_type %At.type.082, %IndexWith.facet [template]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %empty_tuple, %At.8ba [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -273,7 +273,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc15_11.2: %empty_tuple.type = converted %.loc15_11.1, %empty_tuple.loc15_11 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc15_14: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_15: %empty_tuple.type = converted %.loc15_14, %empty_tuple.loc15_14 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %.414 = impl_witness_access constants.%impl_witness, element0 [template = constants.%At.8ba]
+// CHECK:STDOUT:   %impl.elem0: %.b91 = impl_witness_access constants.%impl_witness, element0 [template = constants.%At.8ba]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_11.2, %impl.elem0 [template = constants.%At.bound]
 // CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %bound_method(%.loc15_11.2, %.loc15_15)
 // CHECK:STDOUT:   return

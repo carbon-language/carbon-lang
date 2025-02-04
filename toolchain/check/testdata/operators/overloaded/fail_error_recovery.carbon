@@ -43,7 +43,7 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %Op.type.210: type = fn_type @Op.2, @impl.14(%int_32) [template]
 // CHECK:STDOUT:   %Op.c82: %Op.type.210 = struct_value () [template]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %i32, %impl_witness.01d [template]
-// CHECK:STDOUT:   %.429: type = impl_fn_type %Op.type.545, %Add.facet [template]
+// CHECK:STDOUT:   %.ede: type = fn_type_with_self_type %Op.type.545, %Add.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -88,7 +88,7 @@ fn G(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %impl.elem0: %.429 = impl_witness_access constants.%impl_witness.01d, element0 [template = constants.%Op.c82]
+// CHECK:STDOUT:   %impl.elem0: %.ede = impl_witness_access constants.%impl_witness.01d, element0 [template = constants.%Op.c82]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

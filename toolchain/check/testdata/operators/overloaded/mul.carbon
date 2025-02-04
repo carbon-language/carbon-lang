@@ -54,10 +54,10 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %MulAssign.facet: %MulAssign.type = facet_value %C, %impl_witness.de9 [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
-// CHECK:STDOUT:   %.115: type = impl_fn_type %Op.type.3ae, %Mul.facet [template]
+// CHECK:STDOUT:   %.221: type = fn_type_with_self_type %Op.type.3ae, %Mul.facet [template]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
-// CHECK:STDOUT:   %.040: type = impl_fn_type %Op.type.340, %MulAssign.facet [template]
+// CHECK:STDOUT:   %.037: type = fn_type_with_self_type %Op.type.340, %MulAssign.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -202,7 +202,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.115 = impl_witness_access constants.%impl_witness.289, element0 [template = constants.%Op.550]
+// CHECK:STDOUT:   %impl.elem0: %.221 = impl_witness_access constants.%impl_witness.289, element0 [template = constants.%Op.550]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc26
@@ -214,7 +214,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.040 = impl_witness_access constants.%impl_witness.de9, element0 [template = constants.%Op.a8c]
+// CHECK:STDOUT:   %impl.elem0: %.037 = impl_witness_access constants.%impl_witness.de9, element0 [template = constants.%Op.a8c]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc31, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc31
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)

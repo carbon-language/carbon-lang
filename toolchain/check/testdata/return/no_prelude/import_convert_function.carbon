@@ -301,7 +301,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT:   %impl_witness.39c7: <witness> = impl_witness (imports.%Core.import_ref.f35) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.085: %ImplicitAs.type.61e = facet_value Core.IntLiteral, %impl_witness.39c7 [template]
-// CHECK:STDOUT:   %.118: type = impl_fn_type %Convert.type.059, %ImplicitAs.facet.085 [template]
+// CHECK:STDOUT:   %.624: type = fn_type_with_self_type %Convert.type.059, %ImplicitAs.facet.085 [template]
 // CHECK:STDOUT:   %Convert.type.49f: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.cb5: %Convert.type.49f = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.04a: <bound method> = bound_method %int_0.5c6, %Convert.cb5 [template]
@@ -427,7 +427,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound.04a]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_0) [template = constants.%int_0.a54]
 // CHECK:STDOUT:     %.loc10_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_0.a54]
@@ -442,7 +442,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound.92d]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_1) [template = constants.%int_1.f38]
 // CHECK:STDOUT:     %.loc11_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_1.f38]
@@ -457,7 +457,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.4 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_2, %impl.elem0 [template = constants.%Convert.bound.1b9]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_2) [template = constants.%int_2.5a1]
 // CHECK:STDOUT:     %.loc12_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_2.5a1]
@@ -472,7 +472,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.5 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1ba]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_3, %impl.elem0 [template = constants.%Convert.bound.b6b]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_3) [template = constants.%int_3.a0f]
 // CHECK:STDOUT:     %.loc13_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_3.a0f]
@@ -487,7 +487,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.6 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.0c1]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_4, %impl.elem0 [template = constants.%Convert.bound.626]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_4) [template = constants.%int_4.4f1]
 // CHECK:STDOUT:     %.loc14_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_4.4f1]
@@ -502,7 +502,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.7 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.64b]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_5, %impl.elem0 [template = constants.%Convert.bound.910]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_5) [template = constants.%int_5.967]
 // CHECK:STDOUT:     %.loc15_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_5.967]
@@ -517,7 +517,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.8 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_6: Core.IntLiteral = int_value 6 [template = constants.%int_6.462]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_6, %impl.elem0 [template = constants.%Convert.bound.e3a]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_6) [template = constants.%int_6.ec5]
 // CHECK:STDOUT:     %.loc16_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_6.ec5]
@@ -532,7 +532,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @impl.9 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7.29f]
-// CHECK:STDOUT:     %impl.elem0: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_7, %impl.elem0 [template = constants.%Convert.bound.06a]
 // CHECK:STDOUT:     %int.convert_checked: init %i32.builtin = call %bound_method(%int_7) [template = constants.%int_7.6ae]
 // CHECK:STDOUT:     %.loc17_9.1: %i32.builtin = value_of_initializer %int.convert_checked [template = constants.%int_7.6ae]
@@ -773,13 +773,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_0.loc8_31: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_0.loc8_39: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc8_40.1: %struct_type.n.m.819 = struct_literal (%int_0.loc8_31, %int_0.loc8_39)
-// CHECK:STDOUT:   %impl.elem0.loc8_40.1: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc8_40.1: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc8_40.1: <bound method> = bound_method %int_0.loc8_31, %impl.elem0.loc8_40.1 [template = constants.%Convert.bound.04a]
 // CHECK:STDOUT:   %int.convert_checked.loc8_40.1: init %i32.builtin = call %bound_method.loc8_40.1(%int_0.loc8_31) [template = constants.%int_0.a54]
 // CHECK:STDOUT:   %.loc8_40.2: init %i32.builtin = converted %int_0.loc8_31, %int.convert_checked.loc8_40.1 [template = constants.%int_0.a54]
 // CHECK:STDOUT:   %.loc8_40.3: ref %i32.builtin = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc8_40.4: init %i32.builtin = initialize_from %.loc8_40.2 to %.loc8_40.3 [template = constants.%int_0.a54]
-// CHECK:STDOUT:   %impl.elem0.loc8_40.2: %.118 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc8_40.2: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc8_40.2: <bound method> = bound_method %int_0.loc8_39, %impl.elem0.loc8_40.2 [template = constants.%Convert.bound.04a]
 // CHECK:STDOUT:   %int.convert_checked.loc8_40.2: init %i32.builtin = call %bound_method.loc8_40.2(%int_0.loc8_39) [template = constants.%int_0.a54]
 // CHECK:STDOUT:   %.loc8_40.5: init %i32.builtin = converted %int_0.loc8_39, %int.convert_checked.loc8_40.2 [template = constants.%int_0.a54]
@@ -1061,7 +1061,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT:   %impl_witness.39c: <witness> = impl_witness (imports.%Core.import_ref.f35) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.085: %ImplicitAs.type.61e = facet_value Core.IntLiteral, %impl_witness.39c [template]
-// CHECK:STDOUT:   %.118: type = impl_fn_type %Convert.type.059, %ImplicitAs.facet.085 [template]
+// CHECK:STDOUT:   %.624: type = fn_type_with_self_type %Convert.type.059, %ImplicitAs.facet.085 [template]
 // CHECK:STDOUT:   %Convert.type.49f: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.cb5: %Convert.type.49f = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.04a: <bound method> = bound_method %int_0.5c6, %Convert.cb5 [template]
@@ -1089,7 +1089,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.f0a: type = class_type @C, @C(%int_7.6ae) [template]
 // CHECK:STDOUT:   %impl_witness.368: <witness> = impl_witness (imports.%P.import_ref.5f3) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.fc3: %ImplicitAs.type.5f9 = facet_value %C.76d, %impl_witness.368 [template]
-// CHECK:STDOUT:   %.ace: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.fc3 [template]
+// CHECK:STDOUT:   %.a6f: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.fc3 [template]
 // CHECK:STDOUT:   %Convert.type.c72: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.4f5: %Convert.type.c72 = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
@@ -1097,7 +1097,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.val.172: %C.012 = struct_value () [template]
 // CHECK:STDOUT:   %impl_witness.29f: <witness> = impl_witness (imports.%P.import_ref.4da) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.5d2: %ImplicitAs.type.5f9 = facet_value %C.012, %impl_witness.29f [template]
-// CHECK:STDOUT:   %.e2c: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.5d2 [template]
+// CHECK:STDOUT:   %.a51: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.5d2 [template]
 // CHECK:STDOUT:   %Convert.type.d88: type = fn_type @Convert.4 [template]
 // CHECK:STDOUT:   %Convert.ecc: %Convert.type.d88 = struct_value () [template]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
@@ -1105,7 +1105,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.val.418: %C.3e6 = struct_value () [template]
 // CHECK:STDOUT:   %impl_witness.3ac: <witness> = impl_witness (imports.%P.import_ref.ebf) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.8f4: %ImplicitAs.type.5f9 = facet_value %C.3e6, %impl_witness.3ac [template]
-// CHECK:STDOUT:   %.ed9: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.8f4 [template]
+// CHECK:STDOUT:   %.d2a: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.8f4 [template]
 // CHECK:STDOUT:   %Convert.type.c17: type = fn_type @Convert.5 [template]
 // CHECK:STDOUT:   %Convert.c2b: %Convert.type.c17 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [template]
@@ -1113,7 +1113,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.val.bba: %C.4d9 = struct_value () [template]
 // CHECK:STDOUT:   %impl_witness.b40: <witness> = impl_witness (imports.%P.import_ref.f13) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.1e6: %ImplicitAs.type.5f9 = facet_value %C.4d9, %impl_witness.b40 [template]
-// CHECK:STDOUT:   %.b94: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.1e6 [template]
+// CHECK:STDOUT:   %.6c2: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.1e6 [template]
 // CHECK:STDOUT:   %Convert.type.70f: type = fn_type @Convert.6 [template]
 // CHECK:STDOUT:   %Convert.2b5: %Convert.type.70f = struct_value () [template]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [template]
@@ -1121,7 +1121,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.val.4b6: %C.a67 = struct_value () [template]
 // CHECK:STDOUT:   %impl_witness.20f: <witness> = impl_witness (imports.%P.import_ref.97a) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.686: %ImplicitAs.type.5f9 = facet_value %C.a67, %impl_witness.20f [template]
-// CHECK:STDOUT:   %.b00: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.686 [template]
+// CHECK:STDOUT:   %.e54: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.686 [template]
 // CHECK:STDOUT:   %Convert.type.782: type = fn_type @Convert.7 [template]
 // CHECK:STDOUT:   %Convert.625: %Convert.type.782 = struct_value () [template]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [template]
@@ -1129,7 +1129,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.val.75e: %C.65c = struct_value () [template]
 // CHECK:STDOUT:   %impl_witness.9b3: <witness> = impl_witness (imports.%P.import_ref.e04) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.585: %ImplicitAs.type.5f9 = facet_value %C.65c, %impl_witness.9b3 [template]
-// CHECK:STDOUT:   %.8c4: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.585 [template]
+// CHECK:STDOUT:   %.a23: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.585 [template]
 // CHECK:STDOUT:   %Convert.type.0e6: type = fn_type @Convert.8 [template]
 // CHECK:STDOUT:   %Convert.73d: %Convert.type.0e6 = struct_value () [template]
 // CHECK:STDOUT:   %int_6.462: Core.IntLiteral = int_value 6 [template]
@@ -1137,7 +1137,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.val.02a: %C.898 = struct_value () [template]
 // CHECK:STDOUT:   %impl_witness.b5b: <witness> = impl_witness (imports.%P.import_ref.6aa) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.6e7: %ImplicitAs.type.5f9 = facet_value %C.898, %impl_witness.b5b [template]
-// CHECK:STDOUT:   %.ecf: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.6e7 [template]
+// CHECK:STDOUT:   %.73d: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.6e7 [template]
 // CHECK:STDOUT:   %Convert.type.9e9: type = fn_type @Convert.9 [template]
 // CHECK:STDOUT:   %Convert.e8e: %Convert.type.9e9 = struct_value () [template]
 // CHECK:STDOUT:   %int_7.29f: Core.IntLiteral = int_value 7 [template]
@@ -1145,7 +1145,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.val.654: %C.f0a = struct_value () [template]
 // CHECK:STDOUT:   %impl_witness.dfb: <witness> = impl_witness (imports.%P.import_ref.243) [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.2de: %ImplicitAs.type.5f9 = facet_value %C.f0a, %impl_witness.dfb [template]
-// CHECK:STDOUT:   %.d45: type = impl_fn_type %Convert.type.334, %ImplicitAs.facet.2de [template]
+// CHECK:STDOUT:   %.e43: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.2de [template]
 // CHECK:STDOUT:   %Convert.type.fc1: type = fn_type @Convert.10 [template]
 // CHECK:STDOUT:   %Convert.430: %Convert.type.fc1 = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -1339,7 +1339,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc8: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc8: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc8_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc8_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc8_34: <bound method> = bound_method %int_0, %impl.elem0.loc8_34 [template = constants.%Convert.bound.04a]
 // CHECK:STDOUT:   %int.convert_checked.loc8: init %i32.builtin = call %bound_method.loc8_34(%int_0) [template = constants.%int_0.a54]
 // CHECK:STDOUT:   %.loc8_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc8 [template = constants.%int_0.a54]
@@ -1349,7 +1349,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc8_24.3: init %C.76d = class_init (), %.loc8_24.2 [template = constants.%C.val.3c3]
 // CHECK:STDOUT:   %.loc8_24.4: ref %C.76d = temporary %.loc8_24.2, %.loc8_24.3
 // CHECK:STDOUT:   %.loc8_26.1: ref %C.76d = converted %.loc8_24.1, %.loc8_24.4
-// CHECK:STDOUT:   %impl.elem0.loc8_35: %.ace = impl_witness_access constants.%impl_witness.368, element0 [template = constants.%Convert.4f5]
+// CHECK:STDOUT:   %impl.elem0.loc8_35: %.a6f = impl_witness_access constants.%impl_witness.368, element0 [template = constants.%Convert.4f5]
 // CHECK:STDOUT:   %bound_method.loc8_35: <bound method> = bound_method %.loc8_26.1, %impl.elem0.loc8_35
 // CHECK:STDOUT:   %.loc8_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc8_26.2: %C.76d = bind_value %.loc8_26.1
@@ -1366,7 +1366,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc9: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc9: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc9_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc9_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc9_34: <bound method> = bound_method %int_1, %impl.elem0.loc9_34 [template = constants.%Convert.bound.92d]
 // CHECK:STDOUT:   %int.convert_checked.loc9: init %i32.builtin = call %bound_method.loc9_34(%int_1) [template = constants.%int_1.f38]
 // CHECK:STDOUT:   %.loc9_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc9 [template = constants.%int_1.f38]
@@ -1376,7 +1376,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc9_24.3: init %C.012 = class_init (), %.loc9_24.2 [template = constants.%C.val.172]
 // CHECK:STDOUT:   %.loc9_24.4: ref %C.012 = temporary %.loc9_24.2, %.loc9_24.3
 // CHECK:STDOUT:   %.loc9_26.1: ref %C.012 = converted %.loc9_24.1, %.loc9_24.4
-// CHECK:STDOUT:   %impl.elem0.loc9_35: %.e2c = impl_witness_access constants.%impl_witness.29f, element0 [template = constants.%Convert.ecc]
+// CHECK:STDOUT:   %impl.elem0.loc9_35: %.a51 = impl_witness_access constants.%impl_witness.29f, element0 [template = constants.%Convert.ecc]
 // CHECK:STDOUT:   %bound_method.loc9_35: <bound method> = bound_method %.loc9_26.1, %impl.elem0.loc9_35
 // CHECK:STDOUT:   %.loc9_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc9_26.2: %C.012 = bind_value %.loc9_26.1
@@ -1393,7 +1393,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc10: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc10: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc10_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc10_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc10_34: <bound method> = bound_method %int_2, %impl.elem0.loc10_34 [template = constants.%Convert.bound.1b9]
 // CHECK:STDOUT:   %int.convert_checked.loc10: init %i32.builtin = call %bound_method.loc10_34(%int_2) [template = constants.%int_2.5a1]
 // CHECK:STDOUT:   %.loc10_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc10 [template = constants.%int_2.5a1]
@@ -1403,7 +1403,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10_24.3: init %C.3e6 = class_init (), %.loc10_24.2 [template = constants.%C.val.418]
 // CHECK:STDOUT:   %.loc10_24.4: ref %C.3e6 = temporary %.loc10_24.2, %.loc10_24.3
 // CHECK:STDOUT:   %.loc10_26.1: ref %C.3e6 = converted %.loc10_24.1, %.loc10_24.4
-// CHECK:STDOUT:   %impl.elem0.loc10_35: %.ed9 = impl_witness_access constants.%impl_witness.3ac, element0 [template = constants.%Convert.c2b]
+// CHECK:STDOUT:   %impl.elem0.loc10_35: %.d2a = impl_witness_access constants.%impl_witness.3ac, element0 [template = constants.%Convert.c2b]
 // CHECK:STDOUT:   %bound_method.loc10_35: <bound method> = bound_method %.loc10_26.1, %impl.elem0.loc10_35
 // CHECK:STDOUT:   %.loc10_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc10_26.2: %C.3e6 = bind_value %.loc10_26.1
@@ -1420,7 +1420,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc11: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc11: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1ba]
-// CHECK:STDOUT:   %impl.elem0.loc11_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc11_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc11_34: <bound method> = bound_method %int_3, %impl.elem0.loc11_34 [template = constants.%Convert.bound.b6b]
 // CHECK:STDOUT:   %int.convert_checked.loc11: init %i32.builtin = call %bound_method.loc11_34(%int_3) [template = constants.%int_3.a0f]
 // CHECK:STDOUT:   %.loc11_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc11 [template = constants.%int_3.a0f]
@@ -1430,7 +1430,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc11_24.3: init %C.4d9 = class_init (), %.loc11_24.2 [template = constants.%C.val.bba]
 // CHECK:STDOUT:   %.loc11_24.4: ref %C.4d9 = temporary %.loc11_24.2, %.loc11_24.3
 // CHECK:STDOUT:   %.loc11_26.1: ref %C.4d9 = converted %.loc11_24.1, %.loc11_24.4
-// CHECK:STDOUT:   %impl.elem0.loc11_35: %.b94 = impl_witness_access constants.%impl_witness.b40, element0 [template = constants.%Convert.2b5]
+// CHECK:STDOUT:   %impl.elem0.loc11_35: %.6c2 = impl_witness_access constants.%impl_witness.b40, element0 [template = constants.%Convert.2b5]
 // CHECK:STDOUT:   %bound_method.loc11_35: <bound method> = bound_method %.loc11_26.1, %impl.elem0.loc11_35
 // CHECK:STDOUT:   %.loc11_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc11_26.2: %C.4d9 = bind_value %.loc11_26.1
@@ -1447,7 +1447,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc12: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc12: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.0c1]
-// CHECK:STDOUT:   %impl.elem0.loc12_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc12_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc12_34: <bound method> = bound_method %int_4, %impl.elem0.loc12_34 [template = constants.%Convert.bound.626]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32.builtin = call %bound_method.loc12_34(%int_4) [template = constants.%int_4.4f1]
 // CHECK:STDOUT:   %.loc12_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc12 [template = constants.%int_4.4f1]
@@ -1457,7 +1457,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc12_24.3: init %C.a67 = class_init (), %.loc12_24.2 [template = constants.%C.val.4b6]
 // CHECK:STDOUT:   %.loc12_24.4: ref %C.a67 = temporary %.loc12_24.2, %.loc12_24.3
 // CHECK:STDOUT:   %.loc12_26.1: ref %C.a67 = converted %.loc12_24.1, %.loc12_24.4
-// CHECK:STDOUT:   %impl.elem0.loc12_35: %.b00 = impl_witness_access constants.%impl_witness.20f, element0 [template = constants.%Convert.625]
+// CHECK:STDOUT:   %impl.elem0.loc12_35: %.e54 = impl_witness_access constants.%impl_witness.20f, element0 [template = constants.%Convert.625]
 // CHECK:STDOUT:   %bound_method.loc12_35: <bound method> = bound_method %.loc12_26.1, %impl.elem0.loc12_35
 // CHECK:STDOUT:   %.loc12_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc12_26.2: %C.a67 = bind_value %.loc12_26.1
@@ -1474,7 +1474,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc13: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc13: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.64b]
-// CHECK:STDOUT:   %impl.elem0.loc13_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc13_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc13_34: <bound method> = bound_method %int_5, %impl.elem0.loc13_34 [template = constants.%Convert.bound.910]
 // CHECK:STDOUT:   %int.convert_checked.loc13: init %i32.builtin = call %bound_method.loc13_34(%int_5) [template = constants.%int_5.967]
 // CHECK:STDOUT:   %.loc13_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc13 [template = constants.%int_5.967]
@@ -1484,7 +1484,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc13_24.3: init %C.65c = class_init (), %.loc13_24.2 [template = constants.%C.val.75e]
 // CHECK:STDOUT:   %.loc13_24.4: ref %C.65c = temporary %.loc13_24.2, %.loc13_24.3
 // CHECK:STDOUT:   %.loc13_26.1: ref %C.65c = converted %.loc13_24.1, %.loc13_24.4
-// CHECK:STDOUT:   %impl.elem0.loc13_35: %.8c4 = impl_witness_access constants.%impl_witness.9b3, element0 [template = constants.%Convert.73d]
+// CHECK:STDOUT:   %impl.elem0.loc13_35: %.a23 = impl_witness_access constants.%impl_witness.9b3, element0 [template = constants.%Convert.73d]
 // CHECK:STDOUT:   %bound_method.loc13_35: <bound method> = bound_method %.loc13_26.1, %impl.elem0.loc13_35
 // CHECK:STDOUT:   %.loc13_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc13_26.2: %C.65c = bind_value %.loc13_26.1
@@ -1501,7 +1501,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc14: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc14: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template = constants.%int_6.462]
-// CHECK:STDOUT:   %impl.elem0.loc14_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc14_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc14_34: <bound method> = bound_method %int_6, %impl.elem0.loc14_34 [template = constants.%Convert.bound.e3a]
 // CHECK:STDOUT:   %int.convert_checked.loc14: init %i32.builtin = call %bound_method.loc14_34(%int_6) [template = constants.%int_6.ec5]
 // CHECK:STDOUT:   %.loc14_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc14 [template = constants.%int_6.ec5]
@@ -1511,7 +1511,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc14_24.3: init %C.898 = class_init (), %.loc14_24.2 [template = constants.%C.val.02a]
 // CHECK:STDOUT:   %.loc14_24.4: ref %C.898 = temporary %.loc14_24.2, %.loc14_24.3
 // CHECK:STDOUT:   %.loc14_26.1: ref %C.898 = converted %.loc14_24.1, %.loc14_24.4
-// CHECK:STDOUT:   %impl.elem0.loc14_35: %.ecf = impl_witness_access constants.%impl_witness.b5b, element0 [template = constants.%Convert.e8e]
+// CHECK:STDOUT:   %impl.elem0.loc14_35: %.73d = impl_witness_access constants.%impl_witness.b5b, element0 [template = constants.%Convert.e8e]
 // CHECK:STDOUT:   %bound_method.loc14_35: <bound method> = bound_method %.loc14_26.1, %impl.elem0.loc14_35
 // CHECK:STDOUT:   %.loc14_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc14_26.2: %C.898 = bind_value %.loc14_26.1
@@ -1528,7 +1528,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc15: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc15: %C.type = name_ref C, imports.%P.C [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7.29f]
-// CHECK:STDOUT:   %impl.elem0.loc15_34: %.118 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
+// CHECK:STDOUT:   %impl.elem0.loc15_34: %.624 = impl_witness_access constants.%impl_witness.39c, element0 [template = constants.%Convert.cb5]
 // CHECK:STDOUT:   %bound_method.loc15_34: <bound method> = bound_method %int_7, %impl.elem0.loc15_34 [template = constants.%Convert.bound.06a]
 // CHECK:STDOUT:   %int.convert_checked.loc15: init %i32.builtin = call %bound_method.loc15_34(%int_7) [template = constants.%int_7.6ae]
 // CHECK:STDOUT:   %.loc15_34.1: %i32.builtin = value_of_initializer %int.convert_checked.loc15 [template = constants.%int_7.6ae]
@@ -1538,7 +1538,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc15_24.3: init %C.f0a = class_init (), %.loc15_24.2 [template = constants.%C.val.654]
 // CHECK:STDOUT:   %.loc15_24.4: ref %C.f0a = temporary %.loc15_24.2, %.loc15_24.3
 // CHECK:STDOUT:   %.loc15_26.1: ref %C.f0a = converted %.loc15_24.1, %.loc15_24.4
-// CHECK:STDOUT:   %impl.elem0.loc15_35: %.d45 = impl_witness_access constants.%impl_witness.dfb, element0 [template = constants.%Convert.430]
+// CHECK:STDOUT:   %impl.elem0.loc15_35: %.e43 = impl_witness_access constants.%impl_witness.dfb, element0 [template = constants.%Convert.430]
 // CHECK:STDOUT:   %bound_method.loc15_35: <bound method> = bound_method %.loc15_26.1, %impl.elem0.loc15_35
 // CHECK:STDOUT:   %.loc15_35.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc15_26.2: %C.f0a = bind_value %.loc15_26.1
