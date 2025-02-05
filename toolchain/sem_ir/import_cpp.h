@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IMPORT_CPP_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IMPORT_CPP_H_
 
+#include "common/raw_string_ostream.h"
+#include "toolchain/sem_ir/typed_insts.h"
+
 namespace Carbon::SemIR {
 
 // Per `import Cpp` data.
