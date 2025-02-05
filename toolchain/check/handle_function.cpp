@@ -26,6 +26,14 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
     -> bool {
+  // Normally the `IdentifierNameBeforeParamsId` node starts these blocks, but a
+  // `fn` may or may not have an identifier or parameters or a return type. And
+  // the pattern stack needs to exist if there are either parameters or a return
+  // type.
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
+
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -185,6 +193,15 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   auto name = PopNameComponent(context, return_slot_pattern_id);
+  if (name.param_patterns_id.has_value() ||
+      !name.pattern_block_id.has_value()) {
+    // If there were parameters then pattern stack entries were added from the
+    // parameters, and we can drop the entries from the FunctionIntroducer. If
+    // there were no parameters, but the pattern block was not used for a return
+    // type, then we can also drop them.
+    context.pattern_block_stack().PopAndDiscard();
+    context.full_pattern_stack().PopFullPattern();
+  }
   if (!name.param_patterns_id.has_value()) {
     context.TODO(node_id, "function with positional parameters");
     name.param_patterns_id = SemIR::InstBlockId::Empty;
