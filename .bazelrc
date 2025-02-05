@@ -43,7 +43,7 @@ build --use_target_config_carbon_rules
 build --disk_cache=~/.cache/carbon-lang-build-cache
 # If you'd like a different disk cache size, override it by copying this
 # line to `user.bazelrc` in the repository root and modify the number there.
-build --experimental_disk_cache_gc_max_size 100G
+build --experimental_disk_cache_gc_max_size=100G
 
 # Enable some safety when using the build cache, likely to be defaulted in
 # future Bazel releases.
