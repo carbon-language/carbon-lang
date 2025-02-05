@@ -545,7 +545,7 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
     extra_content_label = "result";
   } else if (keyword != "[[@LSP") {
     return ErrorBuilder() << "Unrecognized @LSP keyword at `"
-                          << content_at_keyword.take_front(10) << "`";
+                          << keyword.take_front(10) << "`";
   }
 
   static constexpr llvm::StringLiteral LspEnd = "]]";
@@ -561,6 +561,7 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
   std::string json = llvm::formatv(R"({{"jsonrpc": "2.0", "{0}": "{1}")",
                                    method_or_id_label, method_or_id);
   if (use_call_id) {
+    // Omit quotes on the ID because we know it's an integer.
     json += llvm::formatv(R"(, "id": {0})", ++lsp_call_id);
   }
   if (!extra_content.empty()) {
