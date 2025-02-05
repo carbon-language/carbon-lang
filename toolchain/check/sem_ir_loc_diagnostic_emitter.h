@@ -21,10 +21,10 @@ class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
  public:
   explicit SemIRLocDiagnosticEmitter(
       DiagnosticConsumer* consumer,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters,
       const SemIR::File* sem_ir)
       : DiagnosticEmitter(consumer),
-        imported_trees_and_subtrees_(imported_trees_and_subtrees),
+        tree_and_subtree_getters_(tree_and_subtree_getters),
         sem_ir_(sem_ir) {}
 
   // If a byte offset is past the current last byte offset, advances forward.
@@ -59,7 +59,7 @@ class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
                         ContextFnT context_fn) const -> ConvertedDiagnosticLoc;
 
   // Converters for each SemIR.
-  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees_;
+  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters_;
 
   // The current SemIR being processed.
   const SemIR::File* sem_ir_;

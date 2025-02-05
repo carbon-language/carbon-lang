@@ -320,12 +320,12 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos;
-  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> all_trees_and_subtrees;
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters;
   unit_infos.reserve(units.size());
-  all_trees_and_subtrees.reserve(units.size());
+  tree_and_subtree_getters.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
     unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
-    all_trees_and_subtrees.push_back(unit.get_parse_tree_and_subtrees);
+    tree_and_subtree_getters.push_back(unit.get_parse_tree_and_subtrees);
   }
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -375,7 +375,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, all_trees_and_subtrees, fs, vlog_stream).Run();
+    CheckUnit(unit_info, tree_and_subtree_getters, fs, vlog_stream).Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -422,7 +422,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, all_trees_and_subtrees, fs, vlog_stream).Run();
+        CheckUnit(&unit_info, tree_and_subtree_getters, fs, vlog_stream).Run();
       }
     }
   }

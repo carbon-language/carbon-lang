@@ -341,7 +341,7 @@ class CompilationUnit {
 
   // Lower SemIR to LLVM IR.
   auto RunLower(std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-                    all_trees_and_subtrees_for_debug_info) -> void;
+                    tree_and_subtree_getters_for_debug_info) -> void;
 
   auto RunCodeGen() -> void;
 
@@ -573,15 +573,15 @@ auto CompilationUnit::PostCheck() -> void {
 
 auto CompilationUnit::RunLower(
     std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-        all_trees_and_subtrees_for_debug_info) -> void {
+        tree_and_subtree_getters_for_debug_info) -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
     llvm_context_ = std::make_unique<llvm::LLVMContext>();
     // TODO: Consider disabling instruction naming by default if we're not
     // producing textual LLVM IR.
     SemIR::InstNamer inst_namer(&*sem_ir_);
     module_ = Lower::LowerToLLVM(
-        *llvm_context_, all_trees_and_subtrees_for_debug_info, input_filename_,
-        *sem_ir_, &inst_namer, vlog_stream_);
+        *llvm_context_, tree_and_subtree_getters_for_debug_info,
+        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");
@@ -860,23 +860,23 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Lower.
-  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> all_trees_and_subtrees;
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters;
   std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-      all_trees_and_subtrees_for_debug_info;
+      tree_and_subtree_getters_for_debug_info;
   if (options_.include_debug_info) {
     // This size may not match due to units that are missing source, but that's
     // an error case and not worth extra work.
-    all_trees_and_subtrees.reserve(units.size());
+    tree_and_subtree_getters.reserve(units.size());
     for (auto& unit : units) {
       if (unit->has_source()) {
-        all_trees_and_subtrees.push_back(unit->get_trees_and_subtrees());
+        tree_and_subtree_getters.push_back(unit->get_trees_and_subtrees());
       }
     }
-    all_trees_and_subtrees_for_debug_info = {};
-    all_trees_and_subtrees_for_debug_info = all_trees_and_subtrees;
+    tree_and_subtree_getters_for_debug_info = {};
+    tree_and_subtree_getters_for_debug_info = tree_and_subtree_getters;
   }
   for (const auto& unit : units) {
-    unit->RunLower(all_trees_and_subtrees_for_debug_info);
+    unit->RunLower(tree_and_subtree_getters_for_debug_info);
   }
   if (options_.phase == CompileOptions::Phase::Lower) {
     return make_result();

@@ -123,7 +123,7 @@ class CheckUnit {
  public:
   explicit CheckUnit(
       UnitAndImports* unit_and_imports,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> all_trees_and_subtrees,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       llvm::raw_ostream* vlog_stream);
 

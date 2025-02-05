@@ -36,19 +36,19 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> all_trees_and_subtrees,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
-      total_ir_count_(all_trees_and_subtrees.size()),
+      total_ir_count_(tree_and_subtree_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
-      emitter_(&unit_and_imports_->err_tracker, all_trees_and_subtrees,
+      emitter_(&unit_and_imports_->err_tracker, tree_and_subtree_getters,
                unit_and_imports_->unit->sem_ir),
       context_(&emitter_, unit_and_imports_->unit->get_parse_tree_and_subtrees,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports),
-               all_trees_and_subtrees.size(), vlog_stream) {}
+               tree_and_subtree_getters.size(), vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");

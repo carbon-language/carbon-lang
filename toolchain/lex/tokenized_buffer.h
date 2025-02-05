@@ -210,7 +210,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   class SourcePointerDiagnosticEmitter : public DiagnosticEmitter<const char*> {
    public:
     explicit SourcePointerDiagnosticEmitter(DiagnosticConsumer* consumer,
-                                            Lex::TokenizedBuffer* tokens)
+                                            const TokenizedBuffer* tokens)
         : DiagnosticEmitter(consumer), tokens_(tokens) {}
 
    protected:
@@ -220,23 +220,23 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
 
    private:
-    Lex::TokenizedBuffer* tokens_;
+    const TokenizedBuffer* tokens_;
   };
 
-  class TokenDiagnosticEmitter : public DiagnosticEmitter<Lex::TokenIndex> {
+  class TokenDiagnosticEmitter : public DiagnosticEmitter<TokenIndex> {
    public:
     explicit TokenDiagnosticEmitter(DiagnosticConsumer* consumer,
-                                    Lex::TokenizedBuffer* tokens)
+                                    const TokenizedBuffer* tokens)
         : DiagnosticEmitter(consumer), tokens_(tokens) {}
 
    protected:
-    auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
+    auto ConvertLoc(TokenIndex token, ContextFnT /*context_fn*/) const
         -> ConvertedDiagnosticLoc override {
       return tokens_->TokenToDiagnosticLoc(token);
     }
 
    private:
-    Lex::TokenizedBuffer* tokens_;
+    const TokenizedBuffer* tokens_;
   };
 
   // Converts a pointer into the source to a diagnostic location.
