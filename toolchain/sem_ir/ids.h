@@ -388,6 +388,8 @@ struct ImportCppId : public IdBase<ImportCppId> {
   using IdBase::IdBase;
 };
 
+constexpr ImportCppId ImportCppId::None = ImportCppId(NoneIndex);
+
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
   static constexpr llvm::StringLiteral Label = "ir";
