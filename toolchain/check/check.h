@@ -23,7 +23,7 @@ struct Unit {
   Timings* timings;
 
   // Returns a lazily constructed TreeAndSubtrees.
-  Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees;
+  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter;
 
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;

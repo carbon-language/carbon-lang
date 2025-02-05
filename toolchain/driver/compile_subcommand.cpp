@@ -341,7 +341,7 @@ class CompilationUnit {
 
   // Lower SemIR to LLVM IR.
   auto RunLower(std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-                    tree_and_subtree_getters_for_debug_info) -> void;
+                    tree_and_subtrees_getters_for_debug_info) -> void;
 
   auto RunCodeGen() -> void;
 
@@ -357,7 +357,7 @@ class CompilationUnit {
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
   auto get_trees_and_subtrees() -> Parse::GetTreeAndSubtreesFn {
-    return *get_parse_tree_and_subtrees_;
+    return *tree_and_subtrees_getter_;
   }
 
  private:
@@ -410,7 +410,7 @@ class CompilationUnit {
   std::optional<Parse::Tree> parse_tree_;
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<const Parse::TreeAndSubtrees&()>>
-      get_parse_tree_and_subtrees_;
+      tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
@@ -500,7 +500,7 @@ auto CompilationUnit::GetCheckUnit(SemIR::CheckIRId check_ir_id)
   CARBON_CHECK(parse_tree_, "Must call RunParse first");
   CARBON_CHECK(!sem_ir_, "Called GetCheckUnit twice");
 
-  get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
+  tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
   sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
@@ -508,7 +508,7 @@ auto CompilationUnit::GetCheckUnit(SemIR::CheckIRId check_ir_id)
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
-          .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
+          .tree_and_subtrees_getter = *tree_and_subtrees_getter_,
           .sem_ir = &*sem_ir_};
 }
 
@@ -573,14 +573,14 @@ auto CompilationUnit::PostCheck() -> void {
 
 auto CompilationUnit::RunLower(
     std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-        tree_and_subtree_getters_for_debug_info) -> void {
+        tree_and_subtrees_getters_for_debug_info) -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
     llvm_context_ = std::make_unique<llvm::LLVMContext>();
     // TODO: Consider disabling instruction naming by default if we're not
     // producing textual LLVM IR.
     SemIR::InstNamer inst_namer(&*sem_ir_);
     module_ = Lower::LowerToLLVM(
-        *llvm_context_, tree_and_subtree_getters_for_debug_info,
+        *llvm_context_, tree_and_subtrees_getters_for_debug_info,
         input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
@@ -860,23 +860,23 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Lower.
-  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters;
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
   std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-      tree_and_subtree_getters_for_debug_info;
+      tree_and_subtrees_getters_for_debug_info;
   if (options_.include_debug_info) {
     // This size may not match due to units that are missing source, but that's
     // an error case and not worth extra work.
-    tree_and_subtree_getters.reserve(units.size());
+    tree_and_subtrees_getters.reserve(units.size());
     for (auto& unit : units) {
       if (unit->has_source()) {
-        tree_and_subtree_getters.push_back(unit->get_trees_and_subtrees());
+        tree_and_subtrees_getters.push_back(unit->get_trees_and_subtrees());
       }
     }
-    tree_and_subtree_getters_for_debug_info = {};
-    tree_and_subtree_getters_for_debug_info = tree_and_subtree_getters;
+    tree_and_subtrees_getters_for_debug_info = {};
+    tree_and_subtrees_getters_for_debug_info = tree_and_subtrees_getters;
   }
   for (const auto& unit : units) {
-    unit->RunLower(tree_and_subtree_getters_for_debug_info);
+    unit->RunLower(tree_and_subtrees_getters_for_debug_info);
   }
   if (options_.phase == CompileOptions::Phase::Lower) {
     return make_result();

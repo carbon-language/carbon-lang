@@ -51,28 +51,26 @@ struct UnitAndImports {
   class Emitter : public DiagnosticEmitter<Parse::NodeId> {
    public:
     explicit Emitter(DiagnosticConsumer* consumer,
-                     llvm::function_ref<const Parse::TreeAndSubtrees&()>
-                         get_parse_tree_and_subtrees)
+                     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter)
         : DiagnosticEmitter(consumer),
-          get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees) {}
+          tree_and_subtrees_getter_(tree_and_subtrees_getter) {}
 
    protected:
     auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
         -> ConvertedDiagnosticLoc override {
-      return get_parse_tree_and_subtrees_().NodeToDiagnosticLoc(
+      return tree_and_subtrees_getter_().NodeToDiagnosticLoc(
           node_id, /*token_only=*/false);
     }
 
    private:
-    llvm::function_ref<const Parse::TreeAndSubtrees&()>
-        get_parse_tree_and_subtrees_;
+    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
   };
 
   explicit UnitAndImports(SemIR::CheckIRId check_ir_id, Unit& unit)
       : check_ir_id(check_ir_id),
         unit(&unit),
         err_tracker(*unit.consumer),
-        emitter(&err_tracker, unit.get_parse_tree_and_subtrees) {}
+        emitter(&err_tracker, unit.tree_and_subtrees_getter) {}
 
   auto parse_tree() -> const Parse::Tree& { return unit->sem_ir->parse_tree(); }
   auto source() -> const SourceBuffer& {
@@ -123,7 +121,7 @@ class CheckUnit {
  public:
   explicit CheckUnit(
       UnitAndImports* unit_and_imports,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       llvm::raw_ostream* vlog_stream);
 

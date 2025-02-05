@@ -36,19 +36,19 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtree_getters,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
-      total_ir_count_(tree_and_subtree_getters.size()),
+      total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
-      emitter_(&unit_and_imports_->err_tracker, tree_and_subtree_getters,
+      emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(&emitter_, unit_and_imports_->unit->get_parse_tree_and_subtrees,
+      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports),
-               tree_and_subtree_getters.size(), vlog_stream) {}
+               tree_and_subtrees_getters.size(), vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -365,7 +365,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->get_parse_tree_and_subtrees();
+    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
