@@ -6,106 +6,106 @@
 # factored the stamping done by this to avoid excessive build performance impact
 # and so enable stamping with it by default. CI and systems especially dependent
 # on caching should explicitly use `--nostamp`.
-build --workspace_status_command=./scripts/workspace_status.py
-build --stamp
+common --workspace_status_command=./scripts/workspace_status.py
+common --stamp
 
 # Provide aliases for configuring the release and pre-release version being
 # built. For documentation of these flags, see //bazel/version/BUILD.
-build --flag_alias=release=//bazel/version:release
-build --flag_alias=pre_release=//bazel/version:pre_release
-build --flag_alias=rc_number=//bazel/version:rc_number
-build --flag_alias=nightly_date=//bazel/version:nightly_date
+common --flag_alias=release=//bazel/version:release
+common --flag_alias=pre_release=//bazel/version:pre_release
+common --flag_alias=rc_number=//bazel/version:rc_number
+common --flag_alias=nightly_date=//bazel/version:nightly_date
 
 # Support running clang-tidy with:
 #   bazel build --config=clang-tidy -k //...
 # See: https://github.com/erenon/bazel_clang_tidy
-build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
-build:clang-tidy --output_groups=report
-build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
-build:clang-tidy --action_env=PATH --host_action_env=PATH
+common:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
+common:clang-tidy --output_groups=report
+common:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
+common:clang-tidy --action_env=PATH --host_action_env=PATH
 
 # This warning seems to incorrectly fire in this build configuration, despite
 # not firing in our normal builds.
-build:clang-tidy --copt=-Wno-unknown-pragmas
+common:clang-tidy --copt=-Wno-unknown-pragmas
 
 # --config=non-fatal-checks makes CHECK failures not terminate compilation.
-build:non-fatal-checks --per_file_copt=common/check_internal.cpp@-DCARBON_NON_FATAL_CHECKS
+common:non-fatal-checks --per_file_copt=common/check_internal.cpp@-DCARBON_NON_FATAL_CHECKS
 
 # Provide an alias for controlling the `carbon_*` Bazel rules' configuration. We
 # enable use of the target config here to make our build and tests more
 # efficient, see the documentation in //bazel/carbon_rules/BUILD for details.
-build --flag_alias=use_target_config_carbon_rules=//bazel/carbon_rules:use_target_config_carbon_rules
+common --flag_alias=use_target_config_carbon_rules=//bazel/carbon_rules:use_target_config_carbon_rules
 build --use_target_config_carbon_rules
 
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
 # here can be overridden in the user configuration where needed.
-build --disk_cache=~/.cache/carbon-lang-build-cache
+common --disk_cache=~/.cache/carbon-lang-build-cache
 # If you'd like a different disk cache size, override it by copying this
 # line to `user.bazelrc` in the repository root and modify the number there.
-build --experimental_disk_cache_gc_max_size=100G
+common --experimental_disk_cache_gc_max_size=100G
 
 # Enable some safety when using the build cache, likely to be defaulted in
 # future Bazel releases.
-build --experimental_guard_against_concurrent_changes
+common --experimental_guard_against_concurrent_changes
 
 # Used by clang_configuration.bzl.
-build --action_env=CC --host_action_env=CC
-build --action_env=CMAKE_SYSROOT --host_action_env=CMAKE_SYSROOT
+common --action_env=CC --host_action_env=CC
+common --action_env=CMAKE_SYSROOT --host_action_env=CMAKE_SYSROOT
 
 # Disable warnings for all external compilations. These involve code that isn't
 # developed as part of Carbon and may be difficult or impossible to patch, so
 # warnings aren't likely to be actionable.
-build --per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
-build --host_per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
+common --per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
+common --host_per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 
 # Default dynamic linking to off. While this can help build performance in some
 # edge cases with very large linked executables and a slow linker, between using
 # fast linkers on all platforms (LLD and the Apple linker), as well as having
 # relatively few such executables, shared objects simply waste too much space in
 # our builds.
-build --dynamic_mode=off
+common --dynamic_mode=off
 
 # Always compile PIC code. There are few if any disadvantages on the platforms
 # and architectures we care about and it avoids the need to compile files twice.
-build --force_pic
+common --force_pic
 
 # Completely disable Bazel's automatic stripping of debug information. Removing
 # that information causes unhelpful backtraces from unittest failures and other
 # crashes. Optimized builds already avoid using debug information by default.
-build --strip=never
+common --strip=never
 
 # Enable Abseil for GoogleTest.
-build --define=absl=1
+common --define=absl=1
 
 # Enable TCMalloc on Linux in optimized builds.
-build --custom_malloc=//bazel/malloc:tcmalloc_if_linux_opt
+common --custom_malloc=//bazel/malloc:tcmalloc_if_linux_opt
 
 # Configuration for enabling Address Sanitizer. Note that this is enabled by
 # default for fastbuild. The config is provided to enable ASan even in
 # optimized or other build configurations. Note that ASan and TCMalloc are
 # incompatible so this explicitly forces the system malloc.
-build:asan --features=asan
-build:asan --custom_malloc=@bazel_tools//tools/cpp:malloc
+common:asan --features=asan
+common:asan --custom_malloc=@bazel_tools//tools/cpp:malloc
 
 # Configuration for enabling LibFuzzer (along with ASan).
-build:fuzzer --features=fuzzer
+common:fuzzer --features=fuzzer
 
 # Always allow tests to symbolize themselves with whatever `llvm-symbolize` is
 # in the users environment.
-build --test_env=ASAN_SYMBOLIZER_PATH
+common --test_env=ASAN_SYMBOLIZER_PATH
 
 # Force actions to have a UTF-8 language encoding.
 # TODO: Need to investigate what this should be on Windows, but at least for
 # Linux and macOS this seems strictly better than the Bazel default of just
 # `en_US`.
-build --action_env=LANG=en_US.UTF-8
+common --action_env=LANG=en_US.UTF-8
 
 # Allow per-platform configuration.
-build --enable_platform_specific_config
+common --enable_platform_specific_config
 
 # Enable libpfm for google_benchmark on Linux only.
-build:linux --define=pfm=1
+common:linux --define=pfm=1
 
 # Enable split debug info on Linux, which is significantly more space efficient
 # and should work well with modern debuggers. Note that this is Linux specific
@@ -119,7 +119,7 @@ build:linux --define=pfm=1
 # build:linux --fission=yes
 
 # Disables `actions.declare_symlink`. Done for cross-environment support.
-build --allow_unresolved_symlinks=false
+common --allow_unresolved_symlinks=false
 
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.
