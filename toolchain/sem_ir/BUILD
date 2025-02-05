@@ -195,9 +195,9 @@ cc_library(
 )
 
 cc_library(
-    name = "canonical_node_id",
-    srcs = ["canonical_node_id.cpp"],
-    hdrs = ["canonical_node_id.h"],
+    name = "absolute_node_id",
+    srcs = ["absolute_node_id.cpp"],
+    hdrs = ["absolute_node_id.h"],
     deps = [
         ":file",
         ":typed_insts",
