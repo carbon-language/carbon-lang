@@ -71,8 +71,8 @@ struct IdentifierId : public IdBase<IdentifierId> {
 };
 constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
 
-// The identity of a package, which is either an identifier ID or the special
-// `Core` package.
+// The name of a package, which is either an identifier or the special `Core`
+// package name.
 //
 // TODO: Consider also treating `Main` and `Cpp` as special package names.
 struct PackageId : public IdBase<PackageId> {
@@ -91,6 +91,18 @@ struct PackageId : public IdBase<PackageId> {
   // this is a special package name.
   auto AsIdentifierId() const -> IdentifierId {
     return index >= 0 ? IdentifierId(index) : IdentifierId::None;
+  }
+
+  // Returns the special package name corresponding to this PackageNameId, or an
+  // empty string if this is an identifier package name.
+  auto AsSpecialName() const -> llvm::StringLiteral {
+    if (*this == None) {
+      return "Main";
+    }
+    if (*this == Core) {
+      return "Core";
+    }
+    return "";
   }
 };
 constexpr PackageId PackageId::None(PackageId::NoneIndex);

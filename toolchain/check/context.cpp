@@ -694,12 +694,11 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
 // name lookup to find it.
 static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
                            llvm::StringRef name) -> SemIR::NameScopeId {
-  auto core_ident_id = context.identifiers().Add("Core");
   auto packaging = context.parse_tree().packaging_decl();
-  if (packaging && packaging->names.package_id == core_ident_id) {
+  if (packaging && packaging->names.package_id == PackageId::Core) {
     return SemIR::NameScopeId::Package;
   }
-  auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
+  auto core_name_id = SemIR::NameId::Core;
 
   // Look up `package.Core`.
   auto core_scope_result = context.LookupNameInExactScope(

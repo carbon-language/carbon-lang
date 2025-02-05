@@ -487,9 +487,9 @@ struct NameId : public IdBase<NameId> {
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId;
 
-  // Returns the NameId corresponding to a particular PackageId. This is the
+  // Returns the NameId corresponding to a particular PackageNameId. This is the
   // name that is declared when the package is imported.
-  static auto ForPackage(PackageId id) -> NameId;
+  static auto ForPackageName(PackageId id) -> NameId;
 
   using IdBase::IdBase;
 

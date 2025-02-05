@@ -87,7 +87,7 @@ auto NameId::ForIdentifier(IdentifierId id) -> NameId {
   }
 }
 
-auto NameId::ForPackage(PackageId id) -> NameId {
+auto NameId::ForPackageName(PackageId id) -> NameId {
   if (auto identifier_id = id.AsIdentifierId(); identifier_id.has_value()) {
     return ForIdentifier(identifier_id);
   } else if (id == PackageId::Core) {

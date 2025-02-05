@@ -32,17 +32,13 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       os << prefix;
     }
     if (name_scope_id == SemIR::NameScopeId::Package) {
-      if (auto package_id = sem_ir().package_id(); package_id.has_value()) {
-        if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
-          os << sem_ir().identifiers().Get(ident_id);
-        } else if (package_id == PackageId::Core) {
-          // For now, use a suffix of `..` to mean "member of Core".
-          os << ".";
-        } else {
-          CARBON_FATAL("Mangling unexpected package name {0}", package_id);
-        }
+      auto package_id = sem_ir().package_id();
+      if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+        os << sem_ir().identifiers().Get(ident_id);
       } else {
-        os << "Main";
+        // TODO: Handle name conflicts between special package names and raw
+        // identifier package names.
+        os << package_id.AsSpecialName();
       }
       continue;
     }
