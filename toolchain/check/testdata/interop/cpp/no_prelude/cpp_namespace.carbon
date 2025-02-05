@@ -60,21 +60,23 @@ class Cpp.C {};
 // CHECK:STDOUT: --- fail_duplicate_cpp_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_cpp = import_cpp
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "header.h" = loc_node4
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- cpp_in_inner_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -82,7 +84,9 @@ class Cpp.C {};
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_cpp = import_cpp
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "header.h" = loc_node4
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = %Cpp
 // CHECK:STDOUT:   }
@@ -92,7 +96,7 @@ class Cpp.C {};
 // CHECK:STDOUT: --- alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -100,7 +104,9 @@ class Cpp.C {};
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:     .MyCpp = %MyCpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_cpp = import_cpp
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "header.h" = loc_node4
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [template = imports.%Cpp]
 // CHECK:STDOUT:   %MyCpp: <namespace> = bind_alias MyCpp, imports.%Cpp [template = imports.%Cpp]
 // CHECK:STDOUT: }
@@ -114,7 +120,7 @@ class Cpp.C {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%import_cpp, [template] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -123,7 +129,9 @@ class Cpp.C {};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_cpp = import_cpp
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "header.h" = loc_node4
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

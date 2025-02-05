@@ -23,24 +23,26 @@ namespace Carbon::Check {
 
 // Generates C++ file contents to #include all requested imports.
 static auto GenerateCppIncludesHeaderCode(
-    llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports)
+    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> std::string {
   std::string code;
   llvm::raw_string_ostream code_stream(code);
-  for (const auto& [path, _] : imports) {
-    code_stream << "#include \"" << FormatEscaped(path) << "\"\n";
+  for (const Parse::Tree::PackagingNames& import : imports) {
+    code_stream << "#include \""
+                << FormatEscaped(
+                       context.string_literal_values().Get(import.library_id))
+                << "\"\n";
   }
   return code;
 }
 
-static auto GenerateAst(
-    Context& context, llvm::StringRef importing_file_path,
-    llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
+static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
+                        llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+                        llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
     -> std::optional<std::unique_ptr<clang::ASTUnit>> {
   // TODO: Use all import locations by referring each Clang diagnostic to the
   // relevant import.
-  SemIRLoc loc = imports.back().second;
+  SemIRLoc loc = imports.back().node_id;
 
   std::string diagnostics_str;
   llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
@@ -51,7 +53,7 @@ static auto GenerateAst(
                                                     diagnostic_options.get());
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
-      GenerateCppIncludesHeaderCode(imports), {},
+      GenerateCppIncludesHeaderCode(context, imports), {},
       (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
       std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
@@ -81,61 +83,53 @@ static auto GenerateAst(
 }
 
 static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
-                         SemIR::InstId first_import_decl_id) -> void {
+                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
+    -> void {
   // TODO: Extract and deudplicate common logic with import.cpp.
   auto name_id = SemIR::NameId::ForIdentifier(cpp_package_id);
-  SemIR::TypeId namespace_type_id =
-      context.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
 
-  auto [inserted, entry_id] =
-      context.name_scopes()
-          .Get(SemIR::NameScopeId::Package)
-          .LookupOrAdd(
-              name_id,
-              // This InstId is temporary and would be overridden if used.
-              first_import_decl_id, SemIR::AccessKind::Public);
-  CARBON_CHECK(inserted);
+  Parse::ImportDeclId first_import_node_id = imports.front().node_id;
 
-  auto import_loc_id = context.insts().GetLocId(first_import_decl_id);
+  SemIR::InstId import_cpp_id =
+      context.AddInst<SemIR::ImportCppDecl>(first_import_node_id, {});
 
-  auto namespace_inst =
-      SemIR::Namespace{.type_id = namespace_type_id,
-                       .name_scope_id = SemIR::NameScopeId::None,
-                       .import_id = first_import_decl_id};
+  auto& import_cpps = context.sem_ir().import_cpps();
+  import_cpps.Reserve(imports.size());
+  for (const Parse::Tree::PackagingNames& import : imports) {
+    import_cpps.Add(
+        {.node_id = import.node_id, .library_id = import.library_id});
+  }
+
+  auto namespace_inst = SemIR::Namespace{
+      .type_id =
+          context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
+      .name_scope_id = SemIR::NameScopeId::None,
+      .import_id = import_cpp_id};
 
   auto namespace_inst_and_loc =
-      import_loc_id.is_import_ir_inst_id()
-          ? context.MakeImportedLocAndInst(import_loc_id.import_ir_inst_id(),
-                                           namespace_inst)
-          // TODO: Check that this actually is an `AnyNamespaceId`.
-          : SemIR::LocIdAndInst(Parse::AnyNamespaceId(import_loc_id.node_id()),
-                                namespace_inst);
+      // TODO: Check that this actually is an `AnyNamespaceId`.
+      SemIR::LocIdAndInst(Parse::AnyNamespaceId(first_import_node_id),
+                          namespace_inst);
 
-  auto namespace_id =
+  SemIR::InstId namespace_id =
       context.AddPlaceholderInstInNoBlock(namespace_inst_and_loc);
-
   context.import_ref_ids().push_back(namespace_id);
+  context.name_scopes().AddRequiredName(SemIR::NameScopeId::Package, name_id,
+                                        namespace_id);
+
   namespace_inst.name_scope_id = context.name_scopes().Add(
       namespace_id, name_id, SemIR::NameScopeId::Package);
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
-  // Note we have to get the parent scope freshly, creating the imported
-  // namespace may invalidate any pointers into `name_scopes()`.
   context.name_scopes()
-      .Get(SemIR::NameScopeId::Package)
-      .GetEntry(entry_id)
-      .result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
-                                                    SemIR::AccessKind::Public);
-
-  auto& scope = context.name_scopes().Get(namespace_inst.name_scope_id);
-  scope.set_is_closed_import(true);
+      .Get(namespace_inst.name_scope_id)
+      .set_is_closed_import(true);
 }
 
-auto ImportCppFiles(
-    Context& context, llvm::StringRef importing_file_path,
-    IdentifierId cpp_package_id, SemIR::InstId first_import_decl_id,
-    llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) -> void {
+auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
+                    llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
+    -> void {
   size_t num_imports = imports.size();
   if (num_imports == 0) {
     return;
@@ -146,7 +140,12 @@ auto ImportCppFiles(
     return;
   }
 
-  AddNamespace(context, cpp_package_id, first_import_decl_id);
+  IdentifierId package_id = imports.front().package_id;
+  CARBON_CHECK(
+      llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
+        return import.package_id == package_id;
+      }));
+  AddNamespace(context, package_id, imports);
 }
 
 }  // namespace Carbon::Check

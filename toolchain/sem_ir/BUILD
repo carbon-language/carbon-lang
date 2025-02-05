@@ -93,6 +93,7 @@ cc_library(
         "function.h",
         "generic.h",
         "impl.h",
+        "import_cpp.h",
         "import_ir.h",
         "interface.h",
         "name.h",

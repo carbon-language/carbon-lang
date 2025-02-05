@@ -14,11 +14,9 @@ namespace Carbon::Check {
 // Generates a C++ header that includes the imported cpp files, parses it and
 // report errors and warnings.
 // If successful, adds a 'Cpp' namespace.
-auto ImportCppFiles(
-    Context& context, llvm::StringRef importing_file_path,
-    IdentifierId cpp_package_id, SemIR::InstId first_import_decl_id,
-    llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) -> void;
+auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
+                    llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) -> void;
 
 }  // namespace Carbon::Check
 
