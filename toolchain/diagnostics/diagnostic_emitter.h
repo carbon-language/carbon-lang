@@ -172,8 +172,8 @@ class DiagnosticEmitter {
   virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
       -> ConvertedDiagnosticLoc = 0;
 
-  // Converts arg types as needed. Not all uses require conversion, so the
-  // default returns the argument unchanged.
+  // Converts arg types as needed. Most children don't customize conversion, so
+  // the default returns the argument unchanged.
   virtual auto ConvertArg(llvm::Any arg) const -> llvm::Any { return arg; }
 
  private:
