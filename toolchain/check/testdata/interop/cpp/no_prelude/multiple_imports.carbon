@@ -34,8 +34,8 @@ import Cpp library "file2.h";
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "file1.h" = loc_node4
-// CHECK:STDOUT:     import Cpp "file2.h" = loc_node9
+// CHECK:STDOUT:     import Cpp "file1.h"
+// CHECK:STDOUT:     import Cpp "file2.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

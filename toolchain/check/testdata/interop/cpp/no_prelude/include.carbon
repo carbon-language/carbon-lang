@@ -33,7 +33,7 @@ import Cpp library "including_file.h";
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "including_file.h" = loc_node4
+// CHECK:STDOUT:     import Cpp "including_file.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

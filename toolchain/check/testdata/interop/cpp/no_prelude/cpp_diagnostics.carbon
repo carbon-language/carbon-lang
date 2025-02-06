@@ -238,7 +238,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "one_warning.h" = loc_node4
+// CHECK:STDOUT:     import Cpp "one_warning.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,7 +253,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "multiple_warnings.h" = loc_node4
+// CHECK:STDOUT:     import Cpp "multiple_warnings.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -280,8 +280,8 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "one_warning.h" = loc_node4
-// CHECK:STDOUT:     import Cpp "multiple_warnings.h" = loc_node9
+// CHECK:STDOUT:     import Cpp "one_warning.h"
+// CHECK:STDOUT:     import Cpp "multiple_warnings.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1093,7 +1093,7 @@ class FormatterImpl {
       out_ << "import Cpp \""
            << FormatEscaped(
                   sem_ir_->string_literal_values().Get(import_cpp.library_id))
-           << "\" = " << SemIR::LocId(import_cpp.node_id) << "\n";
+           << "\"\n";
     }
     CloseBrace();
   }
