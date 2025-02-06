@@ -18,6 +18,6 @@
 
 // CHECK:STDERR: warning: unexpected reply to request ID "1": null [LanguageServerUnexpectedReply]
 // CHECK:STDERR:
-// CHECK:STDERR: warning: unexpected reply to request ID "2": 3 [LanguageServerUnexpectedReply]
+// CHECK:STDERR: warning: unexpected reply to request ID "2": {"result":3} [LanguageServerUnexpectedReply]
 // CHECK:STDERR:
 // CHECK:STDOUT:

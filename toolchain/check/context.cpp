@@ -39,8 +39,7 @@
 namespace Carbon::Check {
 
 Context::Context(DiagnosticEmitter* emitter,
-                 llvm::function_ref<const Parse::TreeAndSubtrees&()>
-                     get_parse_tree_and_subtrees,
+                 Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees,
                  SemIR::File* sem_ir, int imported_ir_count, int total_ir_count,
                  llvm::raw_ostream* vlog_stream)
     : emitter_(emitter),
@@ -1291,7 +1290,8 @@ class TypeCompleter {
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::FacetAccessType,
-             SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
+             SemIR::FacetType, SemIR::FunctionType,
+             SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
              SemIR::GenericInterfaceType, SemIR::UnboundElementType,
              SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
@@ -1552,6 +1552,13 @@ auto Context::GetClassType(SemIR::ClassId class_id,
 auto Context::GetFunctionType(SemIR::FunctionId fn_id,
                               SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
+}
+
+auto Context::GetFunctionTypeWithSelfType(
+    SemIR::InstId interface_function_type_id, SemIR::InstId self_id)
+    -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::FunctionTypeWithSelfType>(
+      *this, interface_function_type_id, self_id);
 }
 
 auto Context::GetGenericClassType(SemIR::ClassId class_id,

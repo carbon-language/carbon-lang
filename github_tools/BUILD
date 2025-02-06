@@ -22,14 +22,12 @@ py_test(
     name = "github_helpers_test",
     size = "small",
     srcs = ["github_helpers_test.py"],
-    python_version = "PY3",
     deps = [":github_helpers"],
 )
 
 py_binary(
     name = "pr_comments",
     srcs = ["pr_comments.py"],
-    python_version = "PY3",
     deps = ["github_helpers"],
 )
 
@@ -37,6 +35,5 @@ py_test(
     name = "pr_comments_test",
     size = "small",
     srcs = ["pr_comments_test.py"],
-    python_version = "PY3",
     deps = [":pr_comments"],
 )

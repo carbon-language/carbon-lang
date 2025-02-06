@@ -45,6 +45,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [template]
+// CHECK:STDOUT:   %.f8b: type = fn_type_with_self_type %F.type.cf0, %I.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -158,9 +159,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %F.type.cf0 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.4c3]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %impl.elem0
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
+// CHECK:STDOUT:   %impl.elem0: %.f8b = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.4c3]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
+// CHECK:STDOUT:   %F.call: init %i32 = call %bound_method(%c.ref)
 // CHECK:STDOUT:   %.loc24_15.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc24_15.2: %i32 = converted %F.call, %.loc24_15.1
 // CHECK:STDOUT:   return %.loc24_15.2

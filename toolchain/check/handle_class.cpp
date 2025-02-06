@@ -718,11 +718,14 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
               context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
           const auto& override_fn =
               context.functions().Get(override_fn_decl.function_id);
-          // TODO: Validate that the overriding function's signature matches
-          // that of the overridden function.
           if (override_fn.virtual_modifier ==
                   SemIR::FunctionFields::VirtualModifier::Impl &&
               override_fn.name_id == fn.name_id) {
+            // TODO: Support generic base classes, rather than passing
+            // `SpecificId::None`.
+            CheckFunctionTypeMatches(context, override_fn, fn,
+                                     SemIR::SpecificId::None,
+                                     /*check_syntax=*/false);
             fn_decl_id = override_fn_decl_id;
           }
         }

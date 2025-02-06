@@ -42,7 +42,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %assoc0.68f673.2: %Empty.assoc_type.54c14f.2 = assoc_entity element0, @Empty.%A [symbolic]
 // CHECK:STDOUT:   %.Self.as_type.a75: type = facet_access_type %.Self.c95 [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.da4: <witness> = facet_access_witness %.Self.c95 [symbolic]
-// CHECK:STDOUT:   %Empty.facet.bea: %Empty.type.3e5fde.1 = facet_value %.Self.as_type.a75, %.Self.as_wit.da4 [symbolic]
+// CHECK:STDOUT:   %Empty.facet.bea: %Empty.type.3e5fde.2 = facet_value %.Self.as_type.a75, %.Self.as_wit.da4 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.41c: type = impl_witness_access %.Self.as_wit.da4, element0 [symbolic]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %Empty_where.type.4ed: type = facet_type <@Empty, @Empty(%T) where %impl.elem0.41c = %ptr.79f> [symbolic]
@@ -59,7 +59,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %assoc0.0c3: %Empty.assoc_type.a46 = assoc_entity element0, @Empty.%A [template]
 // CHECK:STDOUT:   %.Self.as_type.920: type = facet_access_type %.Self.e6e [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.581: <witness> = facet_access_witness %.Self.e6e [symbolic]
-// CHECK:STDOUT:   %Empty.facet.a44: %Empty.type.3e5fde.1 = facet_value %.Self.as_type.920, %.Self.as_wit.581 [symbolic]
+// CHECK:STDOUT:   %Empty.facet.933: %Empty.type.f0b = facet_value %.Self.as_type.920, %.Self.as_wit.581 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.797: type = impl_witness_access %.Self.as_wit.581, element0 [symbolic]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %Empty_where.type.a58: type = facet_type <@Empty, @Empty(%i32) where %impl.elem0.797 = %ptr.235> [template]
@@ -276,7 +276,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.0c3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%i32, constants.%Empty.facet.a44) {}
+// CHECK:STDOUT: specific @A(constants.%i32, constants.%Empty.facet.933) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%i32, bool) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%i32

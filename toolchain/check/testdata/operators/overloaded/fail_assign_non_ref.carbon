@@ -54,15 +54,19 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.73a: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.0c9: %Op.type.73a = struct_value () [template]
+// CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, %impl_witness.ec3 [template]
 // CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [template]
 // CHECK:STDOUT:   %Op.type.421: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %impl_witness.95d: <witness> = impl_witness (@impl.2.%Op.decl) [template]
 // CHECK:STDOUT:   %Op.type.0b8: type = fn_type @Op.4 [template]
 // CHECK:STDOUT:   %Op.d8e: %Op.type.0b8 = struct_value () [template]
+// CHECK:STDOUT:   %AddAssign.facet: %AddAssign.type = facet_value %C, %impl_witness.95d [template]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [template]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [template]
+// CHECK:STDOUT:   %.e6d: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [template]
+// CHECK:STDOUT:   %.499: type = fn_type_with_self_type %Op.type.421, %AddAssign.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -178,9 +182,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %Op.type.e3a = impl_witness_access constants.%impl_witness.ec3, element0 [template = constants.%Op.0c9]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(<error>)
+// CHECK:STDOUT:   %impl.elem0: %.e6d = impl_witness_access constants.%impl_witness.ec3, element0 [template = constants.%Op.0c9]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -188,9 +192,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %Op.type.421 = impl_witness_access constants.%impl_witness.95d, element0 [template = constants.%Op.d8e]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(<error>, %b.ref)
+// CHECK:STDOUT:   %impl.elem0: %.499 = impl_witness_access constants.%impl_witness.95d, element0 [template = constants.%Op.d8e]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(<error>, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

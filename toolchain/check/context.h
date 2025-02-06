@@ -73,8 +73,7 @@ class Context {
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
-                   llvm::function_ref<const Parse::TreeAndSubtrees&()>
-                       get_parse_tree_and_subtrees,
+                   Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
 
@@ -475,6 +474,11 @@ class Context {
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
       -> SemIR::TypeId;
 
+  // Gets the type of an associated function with the `Self` parameter bound to
+  // a particular value. The returned type will be complete.
+  auto GetFunctionTypeWithSelfType(SemIR::InstId interface_function_type_id,
+                                   SemIR::InstId self_id) -> SemIR::TypeId;
+
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
   // type will be complete.
@@ -743,8 +747,7 @@ class Context {
   DiagnosticEmitter* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
-  llvm::function_ref<const Parse::TreeAndSubtrees&()>
-      get_parse_tree_and_subtrees_;
+  Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees_;
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;

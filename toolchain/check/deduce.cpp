@@ -188,12 +188,13 @@ class DeductionWorklist {
 // State that is tracked throughout the deduction process.
 class DeductionContext {
  public:
-  // Preparse to perform deduction. If an enclosing specific is provided, adds
-  // the arguments from the given specific as known arguments that will not be
-  // deduced.
+  // Preparse to perform deduction. If an enclosing specific or self type
+  // are provided, adds the corresponding arguments as known arguments that will
+  // not be deduced.
   DeductionContext(Context& context, SemIR::LocId loc_id,
                    SemIR::GenericId generic_id,
-                   SemIR::SpecificId enclosing_specific_id, bool diagnose);
+                   SemIR::SpecificId enclosing_specific_id,
+                   SemIR::InstId self_type_id, bool diagnose);
 
   auto context() const -> Context& { return *context_; }
 
@@ -250,7 +251,7 @@ static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
 DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
                                    SemIR::GenericId generic_id,
                                    SemIR::SpecificId enclosing_specific_id,
-                                   bool diagnose)
+                                   SemIR::InstId self_type_id, bool diagnose)
     : context_(&context),
       loc_id_(loc_id),
       generic_id_(generic_id),
@@ -283,6 +284,16 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
            .replacement_id = context.constant_values().Get(subst_inst_id)});
     }
     first_deduced_index_ = SemIR::CompileTimeBindIndex(args.size());
+  }
+
+  if (self_type_id.has_value()) {
+    // Copy the provided `Self` type as the value of the next binding.
+    auto self_index = first_deduced_index_;
+    result_arg_ids_[self_index.index] = self_type_id;
+    substitutions_.push_back(
+        {.bind_id = SemIR::CompileTimeBindIndex(self_index),
+         .replacement_id = context.constant_values().Get(self_type_id)});
+    first_deduced_index_ = SemIR::CompileTimeBindIndex(self_index.index + 1);
   }
 
   non_deduced_indexes_.resize(result_arg_ids_.size() -
@@ -504,19 +515,17 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
 auto DeductionContext::MakeSpecific() -> SemIR::SpecificId {
   // TODO: Convert the deduced values to the types of the bindings.
 
-  return Check::MakeSpecific(
-      context(), loc_id_, generic_id_,
-      context().inst_blocks().AddCanonical(result_arg_ids_));
+  return Check::MakeSpecific(context(), loc_id_, generic_id_, result_arg_ids_);
 }
 
 auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
-    SemIR::SpecificId enclosing_specific_id,
+    SemIR::SpecificId enclosing_specific_id, SemIR::InstId self_type_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_params_id,
     SemIR::InstBlockId params_id, [[maybe_unused]] SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(context, loc_id, generic_id, enclosing_specific_id,
-                             /*diagnose=*/true);
+                             self_type_id, /*diagnose=*/true);
 
   // Prepare to perform deduction of the explicit parameters against their
   // arguments.
@@ -537,6 +546,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                          SemIR::ConstantId constraint_id) -> SemIR::SpecificId {
   DeductionContext deduction(context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
+                             /*self_type_id=*/SemIR::InstId::None,
                              /*diagnose=*/false);
 
   // Prepare to perform deduction of the type and interface.

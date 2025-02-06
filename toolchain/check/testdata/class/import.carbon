@@ -169,10 +169,13 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.c07: <witness> = complete_type_witness %struct_type.x.767 [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.x.c96: type = struct_type {.x: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %ImplicitAs.type.9ba: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.b97: <witness> = impl_witness (imports.%Core.import_ref.a86), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, %impl_witness.b97 [template]
+// CHECK:STDOUT:   %.39b: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound.43e: <bound method> = bound_method %int_1.5b8, %Convert.16d [template]
 // CHECK:STDOUT:   %Convert.specific_fn.c37: <specific function> = specific_function %Convert.bound.43e, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.47b: %i32 = int_value 1 [template]
@@ -209,11 +212,11 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.845 = import_ref Main//a, inst21 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4d2: %Field.elem = import_ref Main//a, loc8_8, loaded [template = %.d33]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst59 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst60 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.760: %F.type = import_ref Main//a, loc14_21, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Main.import_ref.26e: %G.type = import_ref Main//a, loc15_27, loaded [template = constants.%G]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//a, loc16_1, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst59 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst60 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.42a = import_ref Main//a, loc14_21, unloaded
 // CHECK:STDOUT:   %Main.import_ref.67a = import_ref Main//a, loc15_27, unloaded
 // CHECK:STDOUT: }
@@ -287,10 +290,10 @@ fn Run() {
 // CHECK:STDOUT:   %b.var: ref %Field = var b
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_25.1: %struct_type.x.c96 = struct_literal (%int_1)
-// CHECK:STDOUT:   %impl.elem0.loc9: %Convert.type.6da = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
-// CHECK:STDOUT:   %Convert.bound.loc9: <bound method> = bound_method %int_1, %impl.elem0.loc9 [template = constants.%Convert.bound.43e]
-// CHECK:STDOUT:   %Convert.specific_fn.loc9: <specific function> = specific_function %Convert.bound.loc9, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.c37]
-// CHECK:STDOUT:   %int.convert_checked.loc9: init %i32 = call %Convert.specific_fn.loc9(%int_1) [template = constants.%int_1.47b]
+// CHECK:STDOUT:   %impl.elem0.loc9: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %int_1, %impl.elem0.loc9 [template = constants.%Convert.bound.43e]
+// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %bound_method.loc9, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.c37]
+// CHECK:STDOUT:   %int.convert_checked.loc9: init %i32 = call %specific_fn.loc9(%int_1) [template = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.2: init %i32 = converted %int_1, %int.convert_checked.loc9 [template = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.3: ref %i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc9_25.4: init %i32 = initialize_from %.loc9_25.2 to %.loc9_25.3 [template = constants.%int_1.47b]
@@ -303,10 +306,10 @@ fn Run() {
 // CHECK:STDOUT:   %x.ref: %Field.elem = name_ref x, imports.%Main.import_ref.4d2 [template = imports.%.d33]
 // CHECK:STDOUT:   %.loc10_4: ref %i32 = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc10: %Convert.type.6da = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
-// CHECK:STDOUT:   %Convert.bound.loc10: <bound method> = bound_method %int_2, %impl.elem0.loc10 [template = constants.%Convert.bound.918]
-// CHECK:STDOUT:   %Convert.specific_fn.loc10: <specific function> = specific_function %Convert.bound.loc10, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.5a4]
-// CHECK:STDOUT:   %int.convert_checked.loc10: init %i32 = call %Convert.specific_fn.loc10(%int_2) [template = constants.%int_2.d0d]
+// CHECK:STDOUT:   %impl.elem0.loc10: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [template = constants.%Convert.16d]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_2, %impl.elem0.loc10 [template = constants.%Convert.bound.918]
+// CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %bound_method.loc10, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.5a4]
+// CHECK:STDOUT:   %int.convert_checked.loc10: init %i32 = call %specific_fn.loc10(%int_2) [template = constants.%int_2.d0d]
 // CHECK:STDOUT:   %.loc10_7: init %i32 = converted %int_2, %int.convert_checked.loc10 [template = constants.%int_2.d0d]
 // CHECK:STDOUT:   assign %.loc10_4, %.loc10_7
 // CHECK:STDOUT:   name_binding_decl {
@@ -358,5 +361,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.7b34f2.1]() [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst1076: %ptr.6cf]() [from "a.carbon"];
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst1129: %ptr.6cf]() [from "a.carbon"];
 // CHECK:STDOUT:

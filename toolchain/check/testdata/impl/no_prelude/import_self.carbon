@@ -117,6 +117,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [template]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [template]
+// CHECK:STDOUT:   %.a26: type = fn_type_with_self_type %Op.type.31b, %Add.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -124,6 +125,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//a, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.db7: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op: %Op.type.31b = import_ref Main//a, Op, loaded [template = constants.%Op.d59]
+// CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//a, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -197,7 +199,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%Self: %Add.type) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @Op.1(imports.%Main.import_ref.e5e: %Add.type) [from "a.carbon"] {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
@@ -217,10 +219,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [template = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.db7 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %Op.type.31b = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.489]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.ref, %impl.elem0
+// CHECK:STDOUT:   %impl.elem0: %.a26 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.489]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%x.ref, %y.ref)
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%x.ref, %y.ref)
 // CHECK:STDOUT:   %.loc11_22.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc11_22.2: ref %empty_tuple.type = temporary %.loc11_22.1, %Op.call
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]

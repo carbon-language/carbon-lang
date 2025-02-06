@@ -34,6 +34,7 @@ fn F() {
 // CHECK:STDOUT:   %G.type.c84: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.5a2: %G.type.c84 = struct_value () [template]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, %impl_witness [template]
+// CHECK:STDOUT:   %.fbf: type = fn_type_with_self_type %G.type.bff, %I.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -74,7 +75,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc18: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %G.type.bff = impl_witness_access constants.%impl_witness, element0 [template = constants.%G.5a2]
+// CHECK:STDOUT:   %impl.elem0: %.fbf = impl_witness_access constants.%impl_witness, element0 [template = constants.%G.5a2]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

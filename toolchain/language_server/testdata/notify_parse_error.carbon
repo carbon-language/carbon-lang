@@ -15,6 +15,6 @@
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: warning: -32602: in call to `textDocument/didOpen`, JSON parse failed: expected object [LanguageServerNotificationParseError]
+// CHECK:STDERR: warning: -32602: in call to `textDocument/didOpen`, JSON parse failed: missing value at (root).textDocument [LanguageServerNotificationParseError]
 // CHECK:STDERR:
 // CHECK:STDOUT:

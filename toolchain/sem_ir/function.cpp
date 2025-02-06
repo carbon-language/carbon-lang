@@ -14,6 +14,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::None,
                            .enclosing_specific_id = SpecificId::None,
                            .resolved_specific_id = SpecificId::None,
+                           .self_type_id = InstId::None,
                            .self_id = InstId::None,
                            .is_error = false};
 
@@ -28,19 +29,24 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
     callee_id = bound_method->function_decl_id;
   }
 
-  // Identify the function we're calling.
+  // Identify the function we're calling by its type.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
     return result;
   }
-  auto val_inst = sem_ir.insts().Get(val_id);
-  auto struct_val = val_inst.TryAs<StructValue>();
-  if (!struct_val) {
-    result.is_error = val_inst.type_id() == SemIR::ErrorInst::SingletonTypeId;
-    return result;
+  auto fn_type_inst =
+      sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
+
+  if (auto impl_fn_type = fn_type_inst.TryAs<FunctionTypeWithSelfType>()) {
+    // Combine the associated function's `Self` with the interface function
+    // data.
+    result.self_type_id = impl_fn_type->self_id;
+    fn_type_inst = sem_ir.insts().Get(impl_fn_type->interface_function_type_id);
   }
-  auto fn_type = sem_ir.types().TryGetAs<FunctionType>(struct_val->type_id);
+
+  auto fn_type = fn_type_inst.TryAs<FunctionType>();
   if (!fn_type) {
+    result.is_error = fn_type_inst.Is<SemIR::ErrorInst>();
     return result;
   }
 

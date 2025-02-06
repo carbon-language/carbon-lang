@@ -5,6 +5,7 @@
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 
 #include "common/raw_string_ostream.h"
+#include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/stringify_type.h"
 
 namespace Carbon::Check {
@@ -35,109 +36,34 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
 auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
                                               ContextFnT context_fn) const
     -> ConvertedDiagnosticLoc {
-  // Cursors for the current IR and instruction in that IR.
-  const auto* cursor_ir = sem_ir_;
-  auto cursor_inst_id = SemIR::InstId::None;
+  llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
+      loc.is_inst_id_ ? SemIR::GetAbsoluteNodeId(sem_ir_, loc.inst_id_)
+                      : SemIR::GetAbsoluteNodeId(sem_ir_, loc.loc_id_);
 
-  // Notes an import on the diagnostic and updates cursors to point at the
-  // imported IR.
-  auto follow_import_ref = [&](SemIR::ImportIRInstId import_ir_inst_id) {
-    auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
-    const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id);
-    CARBON_CHECK(import_ir.decl_id.has_value(),
-                 "If we get `None` locations here, we may need to more "
-                 "thoroughly track ImportDecls.");
-
-    ConvertedDiagnosticLoc in_import_loc;
-    auto import_loc_id = cursor_ir->insts().GetLocId(import_ir.decl_id);
-    if (import_loc_id.is_node_id()) {
-      // For imports in the current file, the location is simple.
-      in_import_loc = ConvertLocInFile(cursor_ir, import_loc_id.node_id(),
-                                       loc.token_only_, context_fn);
-    } else if (import_loc_id.is_import_ir_inst_id()) {
-      // For implicit imports, we need to unravel the location a little
-      // further.
-      auto implicit_import_ir_inst =
-          cursor_ir->import_ir_insts().Get(import_loc_id.import_ir_inst_id());
-      const auto& implicit_ir =
-          cursor_ir->import_irs().Get(implicit_import_ir_inst.ir_id);
-      auto implicit_loc_id =
-          implicit_ir.sem_ir->insts().GetLocId(implicit_import_ir_inst.inst_id);
-      CARBON_CHECK(implicit_loc_id.is_node_id(),
-                   "Should only be one layer of implicit imports");
-      in_import_loc =
-          ConvertLocInFile(implicit_ir.sem_ir, implicit_loc_id.node_id(),
-                           loc.token_only_, context_fn);
+  auto final_node_id = absolute_node_ids.pop_back_val();
+  for (const auto& absolute_node_id : absolute_node_ids) {
+    if (!absolute_node_id.node_id.has_value()) {
+      // TODO: Add an "In implicit import of prelude." note for the case where
+      // we don't have a location.
+      continue;
     }
-
-    // TODO: Add an "In implicit import of prelude." note for the case where we
-    // don't have a location.
-    if (import_loc_id.has_value()) {
-      // TODO: Include the name of the imported library in the diagnostic.
-      CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
-      context_fn(in_import_loc.loc, InImport);
-    }
-
-    cursor_ir = import_ir.sem_ir;
-    cursor_inst_id = import_ir_inst.inst_id;
-  };
-
-  // If the location is is an import, follows it and returns nullopt.
-  // Otherwise, it's a parse node, so return the final location.
-  auto handle_loc =
-      [&](SemIR::LocId loc_id) -> std::optional<ConvertedDiagnosticLoc> {
-    if (loc_id.is_import_ir_inst_id()) {
-      follow_import_ref(loc_id.import_ir_inst_id());
-      return std::nullopt;
-    } else {
-      // Parse nodes always refer to the current IR.
-      return ConvertLocInFile(cursor_ir, loc_id.node_id(), loc.token_only_,
-                              context_fn);
-    }
-  };
-
-  // Handle the base location.
-  if (loc.is_inst_id_) {
-    cursor_inst_id = loc.inst_id_;
-  } else {
-    if (auto diag_loc = handle_loc(loc.loc_id_)) {
-      return *diag_loc;
-    }
-    CARBON_CHECK(cursor_inst_id.has_value(), "Should have been set");
+    // TODO: Include the name of the imported library in the diagnostic.
+    auto diag_loc =
+        ConvertLocInFile(absolute_node_id, loc.token_only_, context_fn);
+    CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
+    context_fn(diag_loc.loc, InImport);
   }
 
-  while (true) {
-    if (cursor_inst_id.has_value()) {
-      auto cursor_inst = cursor_ir->insts().Get(cursor_inst_id);
-      if (auto bind_ref = cursor_inst.TryAs<SemIR::ExportDecl>();
-          bind_ref && bind_ref->value_id.has_value()) {
-        cursor_inst_id = bind_ref->value_id;
-        continue;
-      }
+  return ConvertLocInFile(final_node_id, loc.token_only_, context_fn);
+}
 
-      // If the parse node has a value, use it for the location.
-      if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-          loc_id.has_value()) {
-        if (auto diag_loc = handle_loc(loc_id)) {
-          return *diag_loc;
-        }
-        continue;
-      }
-
-      // If a namespace has an instruction for an import, switch to looking at
-      // it.
-      if (auto ns = cursor_inst.TryAs<SemIR::Namespace>()) {
-        if (ns->import_id.has_value()) {
-          cursor_inst_id = ns->import_id;
-          continue;
-        }
-      }
-    }
-
-    // `None` parse node but not an import; just nothing to point at.
-    return ConvertLocInFile(cursor_ir, Parse::NodeId::None, loc.token_only_,
-                            context_fn);
-  }
+auto SemIRDiagnosticConverter::ConvertLocInFile(
+    SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
+    ContextFnT /*context_fn*/) const -> ConvertedDiagnosticLoc {
+  const auto& tree_and_subtrees =
+      imported_trees_and_subtrees_[absolute_node_id.check_ir_id.index]();
+  return tree_and_subtrees.NodeToDiagnosticLoc(absolute_node_id.node_id,
+                                               token_only);
 }
 
 auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
@@ -193,16 +119,6 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
                         !sem_ir_->types().IsSignedInt(typed_int->type));
   }
   return DiagnosticConverter<SemIRLoc>::ConvertArg(arg);
-}
-
-auto SemIRDiagnosticConverter::ConvertLocInFile(const SemIR::File* sem_ir,
-                                                Parse::NodeId node_id,
-                                                bool token_only,
-                                                ContextFnT /*context_fn*/) const
-    -> ConvertedDiagnosticLoc {
-  const auto& tree_and_subtrees =
-      imported_trees_and_subtrees_[sem_ir->check_ir_id().index]();
-  return tree_and_subtrees.NodeToDiagnosticLoc(node_id, token_only);
 }
 
 }  // namespace Carbon::Check

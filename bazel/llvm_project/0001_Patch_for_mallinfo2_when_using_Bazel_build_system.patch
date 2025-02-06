@@ -11,13 +11,13 @@ glibc installs.
  1 file changed, 7 insertions(+)
 
 diff --git a/llvm/lib/Support/Unix/Process.inc b/llvm/lib/Support/Unix/Process.inc
-index d3d9fb7d7187..da3e721146f6 100644
+index 550b0de2e045..6d449489c450 100644
 --- a/llvm/lib/Support/Unix/Process.inc
 +++ b/llvm/lib/Support/Unix/Process.inc
-@@ -31,6 +31,13 @@
- #if HAVE_SIGNAL_H
+@@ -22,6 +22,13 @@
+ #include <sys/resource.h>
+ #include <sys/stat.h>
  #include <signal.h>
- #endif
 +// When glibc is in use, detect mallinfo2 to address mallinfo deprecation
 +// warnings.
 +#if !defined(HAVE_MALLINFO2) && defined(__GLIBC_PREREQ)
@@ -29,4 +29,4 @@ index d3d9fb7d7187..da3e721146f6 100644
  #include <malloc.h>
  #endif
 --
-2.36.1
+2.48.1

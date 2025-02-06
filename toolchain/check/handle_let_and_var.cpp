@@ -300,6 +300,9 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
     context.name_scopes()
         .Get(context.interfaces().Get(interface_id).scope_id)
         .set_has_error();
+    if (decl_info.init_id.has_value()) {
+      DiscardGenericDecl(context);
+    }
     context.inst_block_stack().Pop();
     return;
   }

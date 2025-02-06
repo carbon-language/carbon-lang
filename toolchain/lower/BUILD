@@ -18,6 +18,7 @@ cc_library(
     deps = [
         ":context",
         "//toolchain/check:sem_ir_diagnostic_converter",
+        "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
@@ -50,6 +51,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/check:sem_ir_diagnostic_converter",
+        "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst",

@@ -276,11 +276,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%At.decl) [template]
 // CHECK:STDOUT:   %At.type.486: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.7c4: %At.type.486 = struct_value () [template]
-// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.bd2 = facet_value %empty_tuple.type, %impl_witness [symbolic]
+// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.a51 = facet_value %empty_tuple.type, %impl_witness [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %assoc0.9bc: %IndexWith.assoc_type.349 = assoc_entity element0, imports.%Core.import_ref.981 [symbolic]
+// CHECK:STDOUT:   %.740: type = fn_type_with_self_type %At.type.969, %IndexWith.facet [template]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %empty_tuple, %At.7c4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,9 +291,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     import Core//core_wrong_arg_count
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.504 = import_ref Core//core_wrong_arg_count, IndexWith, loaded [template = constants.%IndexWith.generic]
+// CHECK:STDOUT:   %Core.import_ref.3b819a.1: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.68a = import_ref Core//core_wrong_arg_count, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.25c: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.349) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%assoc0 (constants.%assoc0.9bc)]
 // CHECK:STDOUT:   %Core.At: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, At, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
+// CHECK:STDOUT:   %Core.import_ref.3b819a.2: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst26 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Core.import_ref.e99: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,7 +319,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type) [from "core_wrong_arg_count.carbon"] {
+// CHECK:STDOUT: generic interface @IndexWith(imports.%Core.import_ref.3b819a.1: type) [from "core_wrong_arg_count.carbon"] {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:
@@ -364,7 +368,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @At.1(constants.%SubscriptType: type, constants.%Self: %IndexWith.type.bd2) [from "core_wrong_arg_count.carbon"] {
+// CHECK:STDOUT: generic fn @At.1(imports.%Core.import_ref.3b819a.2: type, imports.%Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2)) [from "core_wrong_arg_count.carbon"] {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.bd2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.bd2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
@@ -389,9 +393,9 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc12_11.2: %empty_tuple.type = converted %.loc12_11.1, %empty_tuple.loc12_11 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc12_14: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_15: %empty_tuple.type = converted %.loc12_14, %empty_tuple.loc12_14 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %At.type.969 = impl_witness_access constants.%impl_witness, element0 [template = constants.%At.7c4]
-// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %.loc12_11.2, %impl.elem0 [template = constants.%At.bound]
-// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %At.bound(%.loc12_11.2, %.loc12_15)
+// CHECK:STDOUT:   %impl.elem0: %.740 = impl_witness_access constants.%impl_witness, element0 [template = constants.%At.7c4]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_11.2, %impl.elem0 [template = constants.%At.bound]
+// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %bound_method(%.loc12_11.2, %.loc12_15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

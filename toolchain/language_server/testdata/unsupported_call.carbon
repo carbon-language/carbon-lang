@@ -10,18 +10,18 @@
 
 
 // --- STDIN
-[[@LSP:unknown-call]]
+[[@LSP-CALL:unknown-call]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 122{{\r}}
+// CHECK:STDOUT: Content-Length: 120{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "error": {
 // CHECK:STDOUT:     "code": -32601,
 // CHECK:STDOUT:     "message": "unsupported call `unknown-call`"
 // CHECK:STDOUT:   },
-// CHECK:STDOUT:   "id": "1",
+// CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0"
 // CHECK:STDOUT: }
