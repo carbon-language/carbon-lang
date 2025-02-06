@@ -8,15 +8,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtin_conversions/no_prelude/convert_class_type_to_facet_type.carbon
 
-interface Goat {}
+interface Animal {}
 
-class Ginger {}
-impl Ginger as Goat {}
+class Goat {}
+impl Goat as Animal {}
 
-fn WalkGoat(g:! Goat) {}
+fn WalkAnimal(A:! Animal) {}
 
 fn F() {
-  WalkGoat(Ginger);
+  WalkAnimal(Goat);
 }
 
 // CHECK:STDOUT: --- convert_class_type_to_facet_type.carbon
