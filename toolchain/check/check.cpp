@@ -26,10 +26,10 @@ using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 // Returns a key form of the package object. file_package_id is only used for
 // imports, not the main package declaration; as a consequence, it will be
 // `None` for the main package declaration.
-static auto GetImportKey(UnitAndImports& unit_info, PackageId file_package_id,
+static auto GetImportKey(UnitAndImports& unit_info, PackageNameId file_package_id,
                          Parse::Tree::PackagingNames names) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
-  PackageId package_id =
+  PackageNameId package_id =
       names.package_id.has_value() ? names.package_id : file_package_id;
   auto package_ident_id = package_id.AsIdentifierId();
   llvm::StringRef package_name =
@@ -69,8 +69,8 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     -> void {
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
-  PackageId file_package_id =
-      packaging ? packaging->names.package_id : PackageId::None;
+  PackageNameId file_package_id =
+      packaging ? packaging->names.package_id : PackageNameId::None;
   const auto import_key = GetImportKey(unit_info, file_package_id, import);
   const auto& [import_package_name, import_library_name] = import_key;
 
@@ -236,7 +236,7 @@ static auto BuildApiMapAndDiagnosePackaging(
     const auto& packaging = unit_info.parse_tree().packaging_decl();
     // An import key formed from the `package` or `library` declaration. Or, for
     // Main//default, a placeholder key.
-    auto import_key = packaging ? GetImportKey(unit_info, PackageId::None,
+    auto import_key = packaging ? GetImportKey(unit_info, PackageNameId::None,
                                                packaging->names)
                                 // Construct a boring key for Main//default.
                                 : ImportKey{"", ""};
@@ -340,7 +340,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
-      implicit_names.package_id = PackageId::None;
+      implicit_names.package_id = PackageNameId::None;
       TrackImport(api_map, nullptr, unit_info, implicit_names, fuzzing);
     }
 
@@ -349,12 +349,12 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
     if (prelude_import &&
-        !(packaging && packaging->names.package_id == PackageId::Core)) {
+        !(packaging && packaging->names.package_id == PackageNameId::Core)) {
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
       TrackImport(api_map, &explicit_import_map, unit_info,
                   {.node_id = Parse::NoneNodeId(),
-                   .package_id = PackageId::Core,
+                   .package_id = PackageNameId::Core,
                    .library_id = prelude_id},
                   fuzzing);
     }

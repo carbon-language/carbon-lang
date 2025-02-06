@@ -84,7 +84,7 @@ class Tree : public Printable<Tree> {
   // to the node for diagnostics.
   struct PackagingNames {
     ImportDeclId node_id;
-    PackageId package_id = PackageId::None;
+    PackageNameId package_id = PackageNameId::None;
     StringLiteralValueId library_id = StringLiteralValueId::None;
     // Whether an import is exported. This is on the file's packaging
     // declaration even though it doesn't apply, for consistency in structure.

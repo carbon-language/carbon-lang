@@ -55,10 +55,10 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
     auto package_name_position = *context.position();
     if (auto ident = context.ConsumeIf(Lex::TokenKind::Identifier)) {
       names.package_id =
-          PackageId::ForIdentifier(context.tokens().GetIdentifier(*ident));
+          PackageNameId::ForIdentifier(context.tokens().GetIdentifier(*ident));
       context.AddLeafNode(NodeKind::IdentifierPackageName, *ident);
     } else if (auto core = context.ConsumeIf(Lex::TokenKind::Core)) {
-      names.package_id = PackageId::Core;
+      names.package_id = PackageNameId::Core;
       context.AddLeafNode(NodeKind::CorePackageName, *core);
     } else {
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,

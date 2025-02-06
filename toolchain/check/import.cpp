@@ -451,7 +451,7 @@ auto ImportLibrariesFromCurrentPackage(
 auto ImportLibrariesFromOtherPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      SemIR::InstId import_decl_id,
-                                     PackageId package_id,
+                                     PackageNameId package_id,
                                      llvm::ArrayRef<SemIR::ImportIR> import_irs,
                                      bool has_load_error) -> void {
   CARBON_CHECK(has_load_error || !import_irs.empty(),

@@ -221,7 +221,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
                                      SemIR::TypeId namespace_type_id) -> void {
   // Add imports from the current package.
   auto import_map_lookup =
-      unit_and_imports_->package_imports_map.Lookup(PackageId::None);
+      unit_and_imports_->package_imports_map.Lookup(PackageNameId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
     context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
@@ -253,9 +253,9 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   // For packages imported by the API file, the PackageNameId is the package
   // name and the index is into the API's import list. Otherwise, the initial
   // {None, -1} state remains.
-  llvm::SmallVector<std::pair<PackageId, int32_t>> api_imports_list;
+  llvm::SmallVector<std::pair<PackageNameId, int32_t>> api_imports_list;
   api_imports_list.resize(unit_and_imports_->package_imports.size(),
-                          {PackageId::None, -1});
+                          {PackageNameId::None, -1});
 
   // When there's an API file, add the mapping to api_imports_list.
   if (unit_and_imports_->api_for_impl) {
@@ -275,7 +275,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
       auto impl_package_id = api_imports.package_id;
       if (auto package_identifier_id = impl_package_id.AsIdentifierId();
           package_identifier_id.has_value()) {
-        impl_package_id = PackageId::ForIdentifier(
+        impl_package_id = PackageNameId::ForIdentifier(
             impl_identifiers.Add(api_identifiers.Get(package_identifier_id)));
       }
 
@@ -294,7 +294,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   for (auto [i, api_imports_entry] : llvm::enumerate(api_imports_list)) {
     // These variables are updated after figuring out which imports are present.
     auto import_decl_id = SemIR::InstId::None;
-    PackageId package_id = PackageId::None;
+    PackageNameId package_id = PackageNameId::None;
     bool has_load_error = false;
 
     // Identify the local package imports if present.

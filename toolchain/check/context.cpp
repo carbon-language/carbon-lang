@@ -695,7 +695,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
 static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
                            llvm::StringRef name) -> SemIR::NameScopeId {
   auto packaging = context.parse_tree().packaging_decl();
-  if (packaging && packaging->names.package_id == PackageId::Core) {
+  if (packaging && packaging->names.package_id == PackageNameId::Core) {
     return SemIR::NameScopeId::Package;
   }
   auto core_name_id = SemIR::NameId::Core;

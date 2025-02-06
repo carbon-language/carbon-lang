@@ -75,14 +75,14 @@ constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
 // package name.
 //
 // TODO: Consider also treating `Main` and `Cpp` as special package names.
-struct PackageId : public IdBase<PackageId> {
+struct PackageNameId : public IdBase<PackageNameId> {
   static constexpr llvm::StringLiteral Label = "package";
-  static const PackageId None;
-  static const PackageId Core;
+  static const PackageNameId None;
+  static const PackageNameId Core;
 
   // Returns the PackageNameId corresponding to a particular IdentifierId.
-  static auto ForIdentifier(IdentifierId id) -> PackageId {
-    return PackageId(id.index);
+  static auto ForIdentifier(IdentifierId id) -> PackageNameId {
+    return PackageNameId(id.index);
   }
 
   using IdBase::IdBase;
@@ -105,8 +105,8 @@ struct PackageId : public IdBase<PackageId> {
     return "";
   }
 };
-constexpr PackageId PackageId::None(PackageId::NoneIndex);
-constexpr PackageId PackageId::Core(PackageId::NoneIndex - 1);
+constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);
+constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex - 1);
 
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
