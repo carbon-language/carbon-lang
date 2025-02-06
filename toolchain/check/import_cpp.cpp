@@ -18,6 +18,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
 
@@ -114,8 +115,12 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
   SemIR::InstId namespace_id =
       context.AddPlaceholderInstInNoBlock(namespace_inst_and_loc);
   context.import_ref_ids().push_back(namespace_id);
-  context.name_scopes().AddRequiredName(SemIR::NameScopeId::Package, name_id,
-                                        namespace_id);
+  SemIR::NameScope& package_name_scope =
+      context.name_scopes().Get(SemIR::NameScopeId::Package);
+  auto [added, entry_id] = package_name_scope.LookupOrAdd(
+      name_id, namespace_id, SemIR::AccessKind::Public);
+  CARBON_CHECK(added ||
+               !package_name_scope.GetEntry(entry_id).result.is_poisoned());
 
   namespace_inst.name_scope_id = context.name_scopes().Add(
       namespace_id, name_id, SemIR::NameScopeId::Package);
