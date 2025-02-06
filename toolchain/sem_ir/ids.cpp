@@ -111,10 +111,10 @@ auto NameId::Print(llvm::raw_ostream& out) const -> void {
     out << "Core";
   } else if (*this == PackageNamespace) {
     out << "PackageNamespace";
-  } else if (*this == ReturnSlot) {
-    out << "ReturnSlot";
   } else if (*this == PeriodSelf) {
     out << "PeriodSelf";
+  } else if (*this == ReturnSlot) {
+    out << "ReturnSlot";
   } else if (*this == SelfType) {
     out << "SelfType";
   } else if (*this == SelfValue) {

@@ -253,14 +253,10 @@ struct Worklist {
   auto Add(PackageNameId package_id) -> void {
     if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
       AddString(sem_ir->identifiers().Get(ident_id));
-    } else if (package_id == PackageNameId::None) {
-      AddString("Main");
-    } else if (package_id == PackageNameId::Core) {
+    } else {
       // TODO: May collide with a user package of the same name. Consider using
       // a different value.
-      AddString("Core");
-    } else {
-      CARBON_FATAL("Unexpected package ID {0}", package_id);
+      AddString(package_id.AsSpecialName());
     }
   }
 

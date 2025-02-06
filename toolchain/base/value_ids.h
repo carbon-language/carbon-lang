@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -93,8 +94,8 @@ struct PackageNameId : public IdBase<PackageNameId> {
     return index >= 0 ? IdentifierId(index) : IdentifierId::None;
   }
 
-  // Returns the special package name corresponding to this PackageNameId, or an
-  // empty string if this is an identifier package name.
+  // Returns the special package name corresponding to this PackageNameId.
+  // Requires that this name is not an identifier name.
   auto AsSpecialName() const -> llvm::StringLiteral {
     if (*this == None) {
       return "Main";
@@ -102,7 +103,7 @@ struct PackageNameId : public IdBase<PackageNameId> {
     if (*this == Core) {
       return "Core";
     }
-    return "";
+    CARBON_FATAL("Unknown special package name kind");
   }
 };
 constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);

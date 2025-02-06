@@ -32,13 +32,13 @@ static auto GetImportKey(UnitAndImports& unit_info,
   auto* stores = unit_info.unit->value_stores;
   PackageNameId package_id =
       names.package_id.has_value() ? names.package_id : file_package_id;
-  auto package_ident_id = package_id.AsIdentifierId();
-  llvm::StringRef package_name =
-      package_id.has_value()
-          ? (package_ident_id.has_value()
-                 ? stores->identifiers().Get(package_ident_id)
-                 : package_id.AsSpecialName())
-          : "";
+  llvm::StringRef package_name;
+  if (package_id.has_value()) {
+    auto package_ident_id = package_id.AsIdentifierId();
+    package_name = package_ident_id.has_value()
+                       ? stores->identifiers().Get(package_ident_id)
+                       : package_id.AsSpecialName();
+  }
   llvm::StringRef library_name =
       names.library_id.has_value()
           ? stores->string_literal_values().Get(names.library_id)
