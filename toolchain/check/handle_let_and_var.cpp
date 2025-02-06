@@ -386,6 +386,12 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
     }
     return true;
   }
+  if (context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+    CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
+                      "interfaces cannot have `var` members");
+    context.emitter().Emit(node_id, VarInInterfaceDecl);
+    return true;
+  }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   return true;
