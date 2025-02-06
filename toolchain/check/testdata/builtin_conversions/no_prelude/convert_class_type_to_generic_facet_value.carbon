@@ -59,7 +59,7 @@ fn H() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.17b: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.a56: %F.type.17b = struct_value () [template]
-// CHECK:STDOUT:   %Generic.facet.1e5: %Generic.type.91ccba.1 = facet_value %ImplsGeneric, %impl_witness [symbolic]
+// CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value %ImplsGeneric, %impl_witness [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type.91ccba.2: type = facet_type <@Generic, @Generic(%T)> [symbolic]
@@ -69,14 +69,13 @@ fn H() {
 // CHECK:STDOUT:   %CallGenericMethod: %CallGenericMethod.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic.facet.b0a: %Generic.type.769 = facet_value %ImplsGeneric, %impl_witness [template]
-// CHECK:STDOUT:   %CallGenericMethod.specific_fn.d8c: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet.b0a) [template]
+// CHECK:STDOUT:   %CallGenericMethod.specific_fn.d8c: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [template]
 // CHECK:STDOUT:   %PassThroughToGenericMethod.type: type = fn_type @PassThroughToGenericMethod [template]
 // CHECK:STDOUT:   %PassThroughToGenericMethod: %PassThroughToGenericMethod.type = struct_value () [template]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn.a24: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%T, %U) [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %PassThroughToGenericMethod.specific_fn: <specific function> = specific_function %PassThroughToGenericMethod, @PassThroughToGenericMethod(%GenericParam, %Generic.facet.b0a) [template]
+// CHECK:STDOUT:   %PassThroughToGenericMethod.specific_fn: <specific function> = specific_function %PassThroughToGenericMethod, @PassThroughToGenericMethod(%GenericParam, %Generic.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -218,8 +217,8 @@ fn H() {
 // CHECK:STDOUT:   %CallGenericMethod.ref: %CallGenericMethod.type = name_ref CallGenericMethod, file.%CallGenericMethod.decl [template = constants.%CallGenericMethod]
 // CHECK:STDOUT:   %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [template = constants.%GenericParam]
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [template = constants.%ImplsGeneric]
-// CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, constants.%impl_witness [template = constants.%Generic.facet.b0a]
-// CHECK:STDOUT:   %.loc25: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [template = constants.%Generic.facet.b0a]
+// CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, constants.%impl_witness [template = constants.%Generic.facet]
+// CHECK:STDOUT:   %.loc25: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [template = constants.%Generic.facet]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, %.loc25) [template = constants.%CallGenericMethod.specific_fn.d8c]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn()
 // CHECK:STDOUT:   return
@@ -251,8 +250,8 @@ fn H() {
 // CHECK:STDOUT:   %PassThroughToGenericMethod.ref: %PassThroughToGenericMethod.type = name_ref PassThroughToGenericMethod, file.%PassThroughToGenericMethod.decl [template = constants.%PassThroughToGenericMethod]
 // CHECK:STDOUT:   %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [template = constants.%GenericParam]
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [template = constants.%ImplsGeneric]
-// CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, constants.%impl_witness [template = constants.%Generic.facet.b0a]
-// CHECK:STDOUT:   %.loc33: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [template = constants.%Generic.facet.b0a]
+// CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, constants.%impl_witness [template = constants.%Generic.facet]
+// CHECK:STDOUT:   %.loc33: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [template = constants.%Generic.facet]
 // CHECK:STDOUT:   %PassThroughToGenericMethod.specific_fn: <specific function> = specific_function %PassThroughToGenericMethod.ref, @PassThroughToGenericMethod(constants.%GenericParam, %.loc33) [template = constants.%PassThroughToGenericMethod.specific_fn]
 // CHECK:STDOUT:   %PassThroughToGenericMethod.call: init %empty_tuple.type = call %PassThroughToGenericMethod.specific_fn()
 // CHECK:STDOUT:   return
@@ -280,7 +279,7 @@ fn H() {
 // CHECK:STDOUT:   %assoc0.loc12_9.2 => constants.%assoc0.9b7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%GenericParam, constants.%Generic.facet.1e5) {}
+// CHECK:STDOUT: specific @F.1(constants.%GenericParam, constants.%Generic.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
 // CHECK:STDOUT:   %Scalar.loc11_19.2 => constants.%T
@@ -303,18 +302,18 @@ fn H() {
 // CHECK:STDOUT:   %T.loc22_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc22_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc22_45.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc22_32.2 => constants.%Generic.facet.b0a
-// CHECK:STDOUT:   %U.patt.loc22_32.2 => constants.%Generic.facet.b0a
+// CHECK:STDOUT:   %U.loc22_32.2 => constants.%Generic.facet
+// CHECK:STDOUT:   %U.patt.loc22_32.2 => constants.%Generic.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet.b0a) {
+// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
 // CHECK:STDOUT:   %T.loc22_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc22_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc22_45.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc22_32.2 => constants.%Generic.facet.b0a
-// CHECK:STDOUT:   %U.patt.loc22_32.2 => constants.%Generic.facet.b0a
+// CHECK:STDOUT:   %U.loc22_32.2 => constants.%Generic.facet
+// CHECK:STDOUT:   %U.patt.loc22_32.2 => constants.%Generic.facet
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%T, constants.%U) {
@@ -333,18 +332,18 @@ fn H() {
 // CHECK:STDOUT:   %T.loc28_31.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc28_31.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc28_54.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc28_41.2 => constants.%Generic.facet.b0a
-// CHECK:STDOUT:   %U.patt.loc28_41.2 => constants.%Generic.facet.b0a
+// CHECK:STDOUT:   %U.loc28_41.2 => constants.%Generic.facet
+// CHECK:STDOUT:   %U.patt.loc28_41.2 => constants.%Generic.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn.loc29_3.2 => constants.%CallGenericMethod.specific_fn.d8c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%GenericParam, constants.%Generic.facet.b0a) {
+// CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
 // CHECK:STDOUT:   %T.loc28_31.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc28_31.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc28_54.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc28_41.2 => constants.%Generic.facet.b0a
-// CHECK:STDOUT:   %U.patt.loc28_41.2 => constants.%Generic.facet.b0a
+// CHECK:STDOUT:   %U.loc28_41.2 => constants.%Generic.facet
+// CHECK:STDOUT:   %U.patt.loc28_41.2 => constants.%Generic.facet
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
