@@ -250,7 +250,7 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 //   (state done)
 CARBON_PARSE_STATE(DeclNameAndParams)
 
-// Inside a declaration, conditionally starts regular parameter handling. Only
+// Inside a declaration, conditionally starts explicit parameter handling. Only
 // used after implicit parameters.
 //
 // name [ ... ] ( ... )
