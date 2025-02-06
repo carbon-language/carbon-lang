@@ -33,20 +33,18 @@ class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
     last_token_ = std::max(last_token_, token);
   }
 
+ protected:
+  // Implements argument conversions for supported check-phase arguments.
+  auto ConvertArg(llvm::Any arg) const -> llvm::Any override;
+
   // Implements `DiagnosticConverter::ConvertLoc`. Adds context for any imports
   // used in the current SemIR to get to the underlying code.
   //
   // For the last byte offset, this uses `last_token_` exclusively for imported
   // locations, or `loc` if it's in the same file and (for whatever reason)
   // later.
-  //
-  // TODO: Make this private after it's no longer used by lowering.
   auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
       -> ConvertedDiagnosticLoc override;
-
- protected:
-  // Implements argument conversions for supported check-phase arguments.
-  auto ConvertArg(llvm::Any arg) const -> llvm::Any override;
 
  private:
   // Implements `ConvertLoc`, but without `last_token_` applied.
