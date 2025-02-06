@@ -26,14 +26,6 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
     -> bool {
-  // Normally the `IdentifierNameBeforeParamsId` node starts these blocks, but a
-  // `fn` may or may not have an identifier or parameters or a return type. And
-  // the pattern stack needs to exist if there are either parameters or a return
-  // type.
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
-
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -51,6 +43,20 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
+
+  // If the previous node was `IdentifierNameBeforeParams`, then it would have
+  // caused these entries to be pushed to the pattern stacks. But it's possible
+  // to have a fn declaration without any parameters, in which case we find
+  // `IdentifierNameNotBeforeParams` on the node stack. Then these entries are
+  // not on the pattern stacks yet. They are only needed in that case if we have
+  // a return type, which we now know that we do.
+  if (context.node_stack().PeekNodeKind() ==
+      Parse::NodeKind::IdentifierNameNotBeforeParams) {
+    context.pattern_block_stack().Push();
+    context.full_pattern_stack().PushFullPattern(
+        FullPatternStack::Kind::ExplicitParamList);
+  }
+
   auto return_slot_pattern_id =
       context.AddPatternInst<SemIR::ReturnSlotPattern>(
           node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
@@ -193,15 +199,6 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   auto name = PopNameComponent(context, return_slot_pattern_id);
-  if (name.param_patterns_id.has_value() ||
-      !name.pattern_block_id.has_value()) {
-    // If there were parameters then pattern stack entries were added from the
-    // parameters, and we can drop the entries from the FunctionIntroducer. If
-    // there were no parameters, but the pattern block was not used for a return
-    // type, then we can also drop them.
-    context.pattern_block_stack().PopAndDiscard();
-    context.full_pattern_stack().PopFullPattern();
-  }
   if (!name.param_patterns_id.has_value()) {
     context.TODO(node_id, "function with positional parameters");
     name.param_patterns_id = SemIR::InstBlockId::Empty;
