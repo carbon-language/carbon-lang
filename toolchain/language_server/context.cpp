@@ -15,16 +15,13 @@
 
 namespace Carbon::LanguageServer {
 
-auto Context::File::SetText(Context& context, std::string text) -> void {
+auto Context::File::SetText(Context& context, llvm::StringRef text) -> void {
   // Clear state dependent on the source text.
   tree_and_subtrees_.reset();
   tree_.reset();
   tokens_.reset();
   value_stores_.reset();
   source_.reset();
-
-  // Update the SourceBuffer.
-  text_ = std::move(text);
 
   // TODO: Make the processing asynchronous, to better handle rapid text
   // updates.
@@ -33,11 +30,11 @@ auto Context::File::SetText(Context& context, std::string text) -> void {
   // TODO: Diagnostics should be passed to the LSP instead of dropped.
   auto& null_consumer = NullDiagnosticConsumer();
   std::optional source =
-      SourceBuffer::MakeFromStringRef(filename, text_, null_consumer);
+      SourceBuffer::MakeFromStringCopy(filename_, text, null_consumer);
   if (!source) {
     // It's rare that the StringRef should fail (for example, invalid text),
     // but provide stub data for recovery so that we can have a simple API.
-    source = SourceBuffer::MakeFromStringRef(filename, "", null_consumer);
+    source = SourceBuffer::MakeFromStringCopy(filename_, "", null_consumer);
     CARBON_CHECK(source, "Making an empty buffer should always succeed");
   }
   source_ = std::make_unique<SourceBuffer>(std::move(*source));

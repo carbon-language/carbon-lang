@@ -26,16 +26,20 @@ class Context {
   // Cached information for an open file.
   class File {
    public:
-    // Changes the file's text, clearing out dependent state.
-    auto SetText(Context& context, std::string text) -> void;
+    explicit File(std::string filename) : filename_(std::move(filename)) {}
+
+    // Changes the file's text, updating dependent state.
+    auto SetText(Context& context, llvm::StringRef text) -> void;
 
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
       return *tree_and_subtrees_;
     }
 
    private:
-    llvm::StringRef filename;
-    std::string text_;
+    // The filename, stable across instances.
+    std::string filename_;
+
+    // Current file content, and derivative values.
     std::unique_ptr<SourceBuffer> source_;
     std::unique_ptr<SharedValueStores> value_stores_;
     std::unique_ptr<Lex::TokenizedBuffer> tokens_;
@@ -53,7 +57,6 @@ class Context {
   // null.
   auto LookupFile(llvm::StringRef filename) -> File*;
 
-  auto consumer() -> DiagnosticConsumer& { return *consumer_; }
   auto file_emitter() -> FileDiagnosticEmitter& { return file_emitter_; }
   auto no_loc_emitter() -> NoLocDiagnosticEmitter& { return no_loc_emitter_; }
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
@@ -63,7 +66,6 @@ class Context {
  private:
   // Diagnostic and output streams.
   llvm::raw_ostream* vlog_stream_;
-  DiagnosticConsumer* consumer_;
   FileDiagnosticEmitter file_emitter_;
   NoLocDiagnosticEmitter no_loc_emitter_;
 

@@ -15,8 +15,8 @@ auto HandleDidOpenTextDocument(
     return;
   }
 
-  auto insert_result =
-      context.files().Insert(filename, [&] { return Context::File(); });
+  auto insert_result = context.files().Insert(
+      filename, [&] { return Context::File(filename.str()); });
   insert_result.value().SetText(context, params.textDocument.text);
   if (!insert_result.is_inserted()) {
     CARBON_DIAGNOSTIC(LanguageServerOpenDuplicateFile, Warning,
