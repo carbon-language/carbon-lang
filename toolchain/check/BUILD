@@ -272,8 +272,10 @@ cc_library(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_index",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:stringify_type",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )

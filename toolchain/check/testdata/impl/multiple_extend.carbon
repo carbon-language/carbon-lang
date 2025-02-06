@@ -189,6 +189,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
+// CHECK:STDOUT:   %.626: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [template]
+// CHECK:STDOUT:   %.790: type = fn_type_with_self_type %G.type.d27, %HasG.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -300,19 +302,19 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.992]
-// CHECK:STDOUT:   %impl.elem0.loc22: %F.type.b7b = impl_witness_access constants.%impl_witness.329, element0 [template = constants.%F.ad8]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.626 = impl_witness_access constants.%impl_witness.329, element0 [template = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %impl.elem0.loc22()
 // CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc23: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.992]
-// CHECK:STDOUT:   %impl.elem0.loc23: %F.type.b7b = impl_witness_access constants.%impl_witness.329, element0 [template = constants.%F.ad8]
+// CHECK:STDOUT:   %impl.elem0.loc23: %.626 = impl_witness_access constants.%impl_witness.329, element0 [template = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %impl.elem0.loc23()
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %HasG.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.58a]
-// CHECK:STDOUT:   %impl.elem0.loc24: %G.type.d27 = impl_witness_access constants.%impl_witness.42a, element0 [template = constants.%G.957]
+// CHECK:STDOUT:   %impl.elem0.loc24: %.790 = impl_witness_access constants.%impl_witness.42a, element0 [template = constants.%G.957]
 // CHECK:STDOUT:   %G.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %HasG.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.58a]
-// CHECK:STDOUT:   %impl.elem0.loc25: %G.type.d27 = impl_witness_access constants.%impl_witness.42a, element0 [template = constants.%G.957]
+// CHECK:STDOUT:   %impl.elem0.loc25: %.790 = impl_witness_access constants.%impl_witness.42a, element0 [template = constants.%G.957]
 // CHECK:STDOUT:   %G.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -502,6 +504,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base.0ff [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
+// CHECK:STDOUT:   %.83f: type = fn_type_with_self_type %I.type.9bd, %HasI.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -598,11 +601,11 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %I.ref.loc20: %HasI.assoc_type = name_ref I, @HasI.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc20: %I.type.9bd = impl_witness_access constants.%impl_witness, element0 [template = constants.%I.e74]
+// CHECK:STDOUT:   %impl.elem0.loc20: %.83f = impl_witness_access constants.%impl_witness, element0 [template = constants.%I.e74]
 // CHECK:STDOUT:   %I.call.loc20: init %empty_tuple.type = call %impl.elem0.loc20()
 // CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
 // CHECK:STDOUT:   %I.ref.loc21: %HasI.assoc_type = name_ref I, @HasI.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc21: %I.type.9bd = impl_witness_access constants.%impl_witness, element0 [template = constants.%I.e74]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.83f = impl_witness_access constants.%impl_witness, element0 [template = constants.%I.e74]
 // CHECK:STDOUT:   %I.call.loc21: init %empty_tuple.type = call %impl.elem0.loc21()
 // CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %J.ref.loc22: %J.type = name_ref J, @B.%J.decl [template = constants.%J]

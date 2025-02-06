@@ -156,6 +156,10 @@ class DeclNameStack {
       // The ID of an unresolved identifier.
       SemIR::NameId unresolved_name_id = SemIR::NameId::None;
     };
+
+    // When `state` is `Poisoned` (name is unresolved due to name poisoning),
+    // the poisoning location.
+    SemIR::LocId poisoning_loc_id = SemIR::LocId::None;
   };
 
   // Information about a declaration name that has been temporarily removed from

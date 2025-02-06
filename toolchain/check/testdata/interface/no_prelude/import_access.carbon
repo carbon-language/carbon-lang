@@ -101,11 +101,13 @@ fn F(i: Test.ForwardWithDef) {}
 
 impl package Test library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+5]]:9: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+7]]:9: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_forward.impl.carbon: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:9: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn F(i: Forward*) {}
+// CHECK:STDERR:         ^~~~~~~
 fn F(i: Forward*) {}
 
 // CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
@@ -427,7 +429,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:     %.loc9: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:     %.loc11: type = splice_block %ptr [template = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     }

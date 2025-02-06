@@ -5,17 +5,19 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_LOWER_H_
 #define CARBON_TOOLCHAIN_LOWER_LOWER_H_
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "toolchain/check/sem_ir_diagnostic_converter.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
 
 // Lowers SemIR to LLVM IR.
-auto LowerToLLVM(llvm::LLVMContext& llvm_context, bool include_debug_info,
-                 const Check::SemIRDiagnosticConverter& converter,
+auto LowerToLLVM(llvm::LLVMContext& llvm_context,
+                 std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+                     all_trees_and_subtrees_for_debug_info,
                  llvm::StringRef module_name, const SemIR::File& sem_ir,
                  const SemIR::InstNamer* inst_namer,
                  llvm::raw_ostream* vlog_stream)

@@ -9,15 +9,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/initialize.carbon
 
 // --- STDIN
-[[@LSP:initialize]]
+[[@LSP-CALL:initialize]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 148{{\r}}
+// CHECK:STDOUT: Content-Length: 146{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
-// CHECK:STDOUT:   "id": "1",
+// CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {

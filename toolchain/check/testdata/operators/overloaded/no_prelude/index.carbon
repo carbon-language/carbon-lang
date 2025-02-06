@@ -136,10 +136,11 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%At.decl) [template]
 // CHECK:STDOUT:   %At.type.8fc: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.8ba: %At.type.8fc = struct_value () [template]
-// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.518 = facet_value %empty_tuple.type, %impl_witness [symbolic]
+// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.4ab = facet_value %empty_tuple.type, %impl_witness [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.b91: type = fn_type_with_self_type %At.type.082, %IndexWith.facet [template]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %empty_tuple, %At.8ba [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -272,9 +273,9 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc15_11.2: %empty_tuple.type = converted %.loc15_11.1, %empty_tuple.loc15_11 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc15_14: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_15: %empty_tuple.type = converted %.loc15_14, %empty_tuple.loc15_14 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %At.type.082 = impl_witness_access constants.%impl_witness, element0 [template = constants.%At.8ba]
-// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %.loc15_11.2, %impl.elem0 [template = constants.%At.bound]
-// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %At.bound(%.loc15_11.2, %.loc15_15)
+// CHECK:STDOUT:   %impl.elem0: %.b91 = impl_witness_access constants.%impl_witness, element0 [template = constants.%At.8ba]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_11.2, %impl.elem0 [template = constants.%At.bound]
+// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %bound_method(%.loc15_11.2, %.loc15_15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -297,12 +297,15 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//import_generic, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Main.I: %I.type.dac = import_ref Main//import_generic, I, loaded [template = constants.%I.generic]
 // CHECK:STDOUT:   %Main.import_ref.003 = import_ref Main//import_generic, loc8_33, unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//import_generic, loc5_13, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//import_generic, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//import_generic, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//import_generic, loc8_14, loaded [symbolic = @impl.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.29aca8.1: type = import_ref Main//import_generic, loc8_24, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.4be: type = import_ref Main//import_generic, loc8_32, loaded [symbolic = @impl.1.%I.type (constants.%I.type.325)]
 // CHECK:STDOUT:   %Main.import_ref.4e1 = import_ref Main//import_generic, loc12_35, unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6b058.3: type = import_ref Main//import_generic, loc12_14, loaded [symbolic = @impl.2.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.29aca8.2: type = import_ref Main//import_generic, loc12_24, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.3e2: type = import_ref Main//import_generic, loc12_33, loaded [symbolic = @impl.2.%I.type (constants.%I.type.0e2)]
 // CHECK:STDOUT: }
@@ -366,7 +369,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %impl_witness.loc26: <witness> = impl_witness (), @impl.6(constants.%T) [symbolic = @impl.6.%impl_witness (constants.%impl_witness.46542c.3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @I(constants.%T: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.f6b058.1: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -381,7 +384,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.1(constants.%T: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic impl @impl.1(imports.%Main.import_ref.f6b058.2: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.325)]
@@ -396,7 +399,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.2(constants.%T: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic impl @impl.2(imports.%Main.import_ref.f6b058.3: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr: type = ptr_type @impl.2.%T (%T) [symbolic = %ptr (constants.%ptr)]
@@ -744,11 +747,14 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//import_generic_decl, D, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Main.J: %J.type.2b8 = import_ref Main//import_generic_decl, J, loaded [template = constants.%J.generic]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//import_generic_decl, loc5_13, loaded [symbolic = @J.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.ff5 = import_ref Main//import_generic_decl, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic_decl, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//import_generic_decl, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//import_generic_decl, loc11_14, loaded [symbolic = @impl.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.aa9f8a.1: type = import_ref Main//import_generic_decl, loc11_24, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.ded: type = import_ref Main//import_generic_decl, loc11_32, loaded [symbolic = @impl.1.%J.type (constants.%J.type.b72)]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.3: type = import_ref Main//import_generic_decl, loc17_14, loaded [symbolic = @impl.2.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.aa9f8a.2: type = import_ref Main//import_generic_decl, loc17_24, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.0d3: type = import_ref Main//import_generic_decl, loc17_33, loaded [symbolic = @impl.2.%J.type (constants.%J.type.628)]
 // CHECK:STDOUT: }
@@ -812,7 +818,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %impl_witness.loc26: <witness> = impl_witness (), @impl.6(constants.%T) [symbolic = @impl.6.%impl_witness (constants.%impl_witness.b80f53.3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @J(constants.%T: type) [from "fail_import_generic_decl.carbon"] {
+// CHECK:STDOUT: generic interface @J(imports.%Main.import_ref.f6b058.1: type) [from "fail_import_generic_decl.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -827,7 +833,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.1(constants.%T: type) [from "fail_import_generic_decl.carbon"] {
+// CHECK:STDOUT: generic impl @impl.1(imports.%Main.import_ref.f6b058.2: type) [from "fail_import_generic_decl.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T)> [symbolic = %J.type (constants.%J.type.b72)]
@@ -837,7 +843,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.aa9f8a.1 as imports.%Main.import_ref.ded;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.2(constants.%T: type) [from "fail_import_generic_decl.carbon"] {
+// CHECK:STDOUT: generic impl @impl.2(imports.%Main.import_ref.f6b058.3: type) [from "fail_import_generic_decl.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr: type = ptr_type @impl.2.%T (%T) [symbolic = %ptr (constants.%ptr)]

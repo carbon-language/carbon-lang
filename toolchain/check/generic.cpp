@@ -429,6 +429,12 @@ auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
   return specific_id;
 }
 
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
+                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId {
+  auto args_id = context.inst_blocks().AddCanonical(args);
+  return MakeSpecific(context, loc, generic_id, args_id);
+}
+
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId {
   if (!generic_id.has_value()) {

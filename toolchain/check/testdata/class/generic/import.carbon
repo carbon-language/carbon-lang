@@ -103,10 +103,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [template]
+// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [template]
@@ -207,10 +210,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.6a9]
+// CHECK:STDOUT:     %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %specific_fn(%int_0) [template = constants.%int_0.6a9]
 // CHECK:STDOUT:     %.loc8_27.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
 // CHECK:STDOUT:     %.loc8_27.2: %i32 = converted %int_0, %.loc8_27.1 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:     return %.loc8_27.2
@@ -274,10 +277,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.971: %F.type.0aa = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.n.44a: type = struct_type {.n: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %ImplicitAs.type.b9e: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.ea0: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.847: <witness> = impl_witness (imports.%Main.import_ref.773), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.e14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.4cb: %Convert.type.e14 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.b9e = facet_value Core.IntLiteral, %impl_witness.847 [template]
+// CHECK:STDOUT:   %.088: type = fn_type_with_self_type %Convert.type.ea0, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.4cb [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.47b: %i32 = int_value 1 [template]
@@ -292,10 +298,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//foo, loc4_13, loaded [symbolic = @Class.%T.1 (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.a68]
 // CHECK:STDOUT:   %Main.import_ref.3c0 = import_ref Main//foo, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.051 = import_ref Main//foo, loc7_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.570 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6b058.3: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -328,7 +337,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(constants.%T: type) {
+// CHECK:STDOUT: generic class @Class(imports.%Main.import_ref.f6b058.1: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -354,7 +363,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.f6b058.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -374,7 +383,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.f6b058.3: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32;
@@ -384,10 +393,10 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.44a = struct_literal (%int_1)
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.ea0 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.47b]
+// CHECK:STDOUT:   %impl.elem0: %.088 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(%int_1) [template = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_17.2: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_17.3: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc9_17.4: init %i32 = initialize_from %.loc9_17.2 to %.loc9_17.3 [template = constants.%int_1.47b]
@@ -466,10 +475,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   %Main.import_ref.3c0 = import_ref Main//foo, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e76: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = import_ref Main//foo, loc7_8, loaded [template = %.364]
 // CHECK:STDOUT:   %Main.import_ref.a52: @CompleteClass.%F.type (%F.type.14f) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.874)]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -503,7 +514,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.f6b058.1: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -551,7 +562,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return %.loc7_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.f6b058.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32;
@@ -654,10 +665,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.a68]
 // CHECK:STDOUT:   %Main.import_ref.3c0 = import_ref Main//foo, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.051 = import_ref Main//foo, loc7_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.570 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -673,7 +686,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.f6b058.1: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -716,7 +729,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.f6b058.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32;
@@ -783,6 +796,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.f6b: type = import_ref Main//foo, loc4_13, loaded [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -804,7 +818,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(constants.%T: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @Class(imports.%Main.import_ref.f6b: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

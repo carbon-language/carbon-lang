@@ -57,8 +57,11 @@ auto IncomingMessages::AddNotificationHandler(llvm::StringRef name,
       [name, handler](Context& context, llvm::json::Value raw_params) -> void {
     auto params = Parse<ParamsT>(name, raw_params);
     if (!params) {
-      // TODO: Maybe we should do something more with this error?
-      llvm::consumeError(params.takeError());
+      CARBON_DIAGNOSTIC(LanguageServerNotificationParseError, Warning, "{0}",
+                        std::string);
+      context.no_loc_emitter().Emit(LanguageServerNotificationParseError,
+                                    llvm::toString(params.takeError()));
+      return;
     }
     handler(context, *params);
   };

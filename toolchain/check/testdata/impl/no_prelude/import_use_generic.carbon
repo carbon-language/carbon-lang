@@ -198,6 +198,8 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %F.type.4a4: type = fn_type @F.1, @impl(%empty_struct_type) [template]
 // CHECK:STDOUT:   %F.9e6: %F.type.4a4 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.7a7, %impl_witness.02b [template]
+// CHECK:STDOUT:   %.c06: type = fn_type_with_self_type %F.type.cf0, %I.facet [template]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.9e6, @F.1(%empty_struct_type) [template]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [template]
@@ -206,15 +208,19 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: %C.type = import_ref Main//import_generic, C, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//import_generic, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//import_generic, loc4_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_20, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//import_generic, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//import_generic, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//import_generic, loc7_9, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//import_generic, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d91: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.bbe)]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.499: type = import_ref Main//import_generic, loc10_27, loaded [symbolic = @impl.%C (constants.%C.f2e)]
 // CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//import_generic, loc10_32, loaded [template = constants.%I.type]
 // CHECK:STDOUT:   %Main.import_ref.e2c: @impl.%F.type (%F.type.40c) = import_ref Main//import_generic, loc11_10, loaded [symbolic = @impl.%F (constants.%F.071)]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.3: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @impl.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//import_generic, inst31 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -244,9 +250,9 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     %c.ref: ref %C.7a7 = name_ref c, file.%c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [template = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0: %F.type.cf0 = impl_witness_access constants.%impl_witness.02b, element0 [template = constants.%F.9e6]
-// CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %impl.elem0, @F.1(constants.%empty_struct_type) [template = constants.%F.specific_fn]
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn()
+// CHECK:STDOUT:     %impl.elem0: %.c06 = impl_witness_access constants.%impl_witness.02b, element0 [template = constants.%F.9e6]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @F.1(constants.%empty_struct_type) [template = constants.%F.specific_fn]
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %specific_fn()
 // CHECK:STDOUT:     %.loc16_19.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:     %.loc16_19.2: ref %empty_tuple.type = temporary %.loc16_19.1, %F.call
 // CHECK:STDOUT:     %.loc16_19.3: type = converted %F.call, <error> [template = <error>]
@@ -262,7 +268,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(constants.%T: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic impl @impl(imports.%Main.import_ref.f6b058.2: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
@@ -278,7 +284,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.f6b058.1: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -292,13 +298,13 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.f6b058.3: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(constants.%Self: %I.type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic fn @F.2(imports.%Main.import_ref.5dd: %I.type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -14,6 +14,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -354,51 +355,57 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
-  auto member_type_id = context.insts().Get(member_id).type_id();
-  CARBON_KIND_SWITCH(context.types().GetAsInst(member_type_id)) {
-    case CARBON_KIND(SemIR::UnboundElementType unbound_element_type): {
-      // Convert the base to the type of the element if necessary.
-      base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
-                                          unbound_element_type.class_type_id);
-
-      // Find the specified element, which could be either a field or a base
-      // class, and build an element access expression.
-      auto element_id = context.constant_values().GetConstantInstId(member_id);
-      CARBON_CHECK(element_id.has_value(),
-                   "Non-constant value {0} of unbound element type",
-                   context.insts().Get(member_id));
-      auto index = GetClassElementIndex(context, element_id);
-      auto access_id = context.GetOrAddInst<SemIR::ClassElementAccess>(
-          loc_id, {.type_id = unbound_element_type.element_type_id,
-                   .base_id = base_id,
-                   .index = index});
-      if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
-              SemIR::ExprCategory::Value &&
-          SemIR::GetExprCategory(context.sem_ir(), access_id) !=
-              SemIR::ExprCategory::Value) {
-        // Class element access on a value expression produces an ephemeral
-        // reference if the class's value representation is a pointer to the
-        // object representation. Add a value binding in that case so that the
-        // expression category of the result matches the expression category of
-        // the base.
-        access_id = ConvertToValueExpr(context, access_id);
-      }
-      return access_id;
-    }
-    case CARBON_KIND(SemIR::FunctionType fn_type): {
-      if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
-        return context.GetOrAddInst<SemIR::BoundMethod>(
-            loc_id, {.type_id = context.GetSingletonType(
-                         SemIR::BoundMethodType::SingletonInstId),
-                     .object_id = base_id,
-                     .function_decl_id = member_id});
-      }
-      [[fallthrough]];
-    }
-    default:
-      // Not an instance member: no instance binding.
+  // If the member is a function, check whether it's an instance method.
+  if (auto callee = SemIR::GetCalleeFunction(context.sem_ir(), member_id);
+      callee.function_id.has_value()) {
+    if (!IsInstanceMethod(context.sem_ir(), callee.function_id) ||
+        callee.self_id.has_value()) {
+      // Found a static member function or an already-bound method.
       return member_id;
+    }
+
+    return context.GetOrAddInst<SemIR::BoundMethod>(
+        loc_id, {.type_id = context.GetSingletonType(
+                     SemIR::BoundMethodType::SingletonInstId),
+                 .object_id = base_id,
+                 .function_decl_id = member_id});
   }
+
+  // Otherwise, if it's a field, form a class element access.
+  if (auto unbound_element_type =
+          context.types().TryGetAs<SemIR::UnboundElementType>(
+              context.insts().Get(member_id).type_id())) {
+    // Convert the base to the type of the element if necessary.
+    base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
+                                        unbound_element_type->class_type_id);
+
+    // Find the specified element, which could be either a field or a base
+    // class, and build an element access expression.
+    auto element_id = context.constant_values().GetConstantInstId(member_id);
+    CARBON_CHECK(element_id.has_value(),
+                 "Non-constant value {0} of unbound element type",
+                 context.insts().Get(member_id));
+    auto index = GetClassElementIndex(context, element_id);
+    auto access_id = context.GetOrAddInst<SemIR::ClassElementAccess>(
+        loc_id, {.type_id = unbound_element_type->element_type_id,
+                 .base_id = base_id,
+                 .index = index});
+    if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
+            SemIR::ExprCategory::Value &&
+        SemIR::GetExprCategory(context.sem_ir(), access_id) !=
+            SemIR::ExprCategory::Value) {
+      // Class element access on a value expression produces an ephemeral
+      // reference if the class's value representation is a pointer to the
+      // object representation. Add a value binding in that case so that the
+      // expression category of the result matches the expression category
+      // of the base.
+      access_id = ConvertToValueExpr(context, access_id);
+    }
+    return access_id;
+  }
+
+  // Not an instance member: no instance binding.
+  return member_id;
 }
 
 // Validates that the index (required to be an IntValue) is valid within the
@@ -495,6 +502,14 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   auto member_id = LookupMemberNameInScope(context, loc_id, base_id, name_id,
                                            base_type_const_id, lookup_scopes,
                                            /*lookup_in_type_of_base=*/true);
+
+  // For name lookup into a facet, never perform instance binding.
+  // TODO: According to the design, this should be a "lookup in base" lookup,
+  // not a "lookup in type of base" lookup, and the facet itself should have
+  // member names that directly name members of the `impl`.
+  if (context.IsFacetType(base_type_id)) {
+    return member_id;
+  }
 
   // Perform instance binding if we found an instance member.
   member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);

@@ -75,21 +75,25 @@ class X(U:! type) {
 // CHECK:STDOUT:   %impl_witness.9bf: <witness> = impl_witness (@impl.1.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.94c: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.901: %F.type.94c = struct_value () [template]
-// CHECK:STDOUT:   %HasF.facet: %HasF.type.901 = facet_value %C, %impl_witness.9bf [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type.b18 = facet_value %C, %impl_witness.9bf [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.x.c96: type = struct_type {.x: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [template]
+// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.ecc, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %Param.val: %Param = struct_value (%int_2.ef8) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.da8: type = fn_type_with_self_type %F.type.7f1, %HasF.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -215,10 +219,10 @@ class X(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc15_21.1: %struct_type.x.c96 = struct_literal (%int_2)
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.ef8]
+// CHECK:STDOUT:   %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_2, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(%int_2) [template = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.2: init %i32 = converted %int_2, %int.convert_checked [template = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.3: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc15_21.4: init %i32 = initialize_from %.loc15_21.2 to %.loc15_21.3 [template = constants.%int_2.ef8]
@@ -235,7 +239,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc21_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [template = constants.%assoc0.a6b]
 // CHECK:STDOUT:   %F.ref.loc21: %HasF.assoc_type.dc4 = name_ref F, %.loc21_17 [template = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %impl.elem0.loc21: %F.type.7f1 = impl_witness_access constants.%impl_witness.9bf, element0 [template = constants.%F.901]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.da8 = impl_witness_access constants.%impl_witness.9bf, element0 [template = constants.%F.901]
 // CHECK:STDOUT:   %.loc21_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc21: init %Param = call %impl.elem0.loc21() to %.loc21_20.1
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
@@ -254,7 +258,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc22_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [template = constants.%assoc0.a6b]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type.dc4 = name_ref F, %.loc22_17 [template = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %impl.elem0.loc22: %F.type.7f1 = impl_witness_access constants.%impl_witness.9bf, element0 [template = constants.%F.901]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.da8 = impl_witness_access constants.%impl_witness.9bf, element0 [template = constants.%F.901]
 // CHECK:STDOUT:   %.loc22_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc22: init %Param = call %impl.elem0.loc22() to %.loc22_20.1
 // CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %F.call.loc22
@@ -326,7 +330,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(%U) [symbolic]
 // CHECK:STDOUT:   %F.type.e88: type = fn_type @F.2, @impl(%U) [symbolic]
 // CHECK:STDOUT:   %F.b02: %F.type.e88 = struct_value () [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type.325e65.1 = facet_value %X, %impl_witness [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.325e65.2 = facet_value %X, %impl_witness [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %require_complete.441: <witness> = require_complete_type %X [symbolic]
