@@ -10,6 +10,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -543,11 +544,20 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       auto converted_arg_id = ConvertToValueOfType(
           context(), loc_id_, deduced_arg_id, binding_type_id);
       // Replace the deduced arg with its value converted to the parameter
-      // type.
-      CARBON_CHECK(converted_arg_id == SemIR::ErrorInst::SingletonInstId ||
-                       converted_arg_id.has_value(),
-                   "Compile-time constant value converted to runtime value?");
-      deduced_arg_id = converted_arg_id;
+      // type. The conversion of the argument type must produce a constant value
+      // to be used in deduction.
+      if (context().constant_values().Get(converted_arg_id).is_constant()) {
+        deduced_arg_id = converted_arg_id;
+      } else {
+        CARBON_DIAGNOSTIC(RuntimeConversionDuringCompTimeDeduction, Error,
+                          "compile-time value requires runtime conversion, "
+                          "constructing value of type {0}",
+                          SemIR::TypeId);
+        auto diag = context().emitter().Build(
+            loc_id_, RuntimeConversionDuringCompTimeDeduction, binding_type_id);
+        NoteGenericHere(context(), generic_id_, diag);
+        diag.Emit();
+      }
     }
 
     substitutions_.push_back(
