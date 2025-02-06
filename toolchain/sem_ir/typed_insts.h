@@ -1372,10 +1372,7 @@ struct TemporaryStorage {
   TypeId type_id;
 };
 
-// Access to a tuple member. Versus `TupleIndex`, this handles access where
-// the index was inferred rather than being specified as an expression,
-// such as `var tuple: (i32, i32) = (0, 1)` needing to access the `i32` values
-// for assignment.
+// Access to a tuple member.
 struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(

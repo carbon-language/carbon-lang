@@ -1338,18 +1338,65 @@ class TypeCompleter {
     CARBON_FATAL("Type refers to non-type inst {0}", inst);
   }
 
+  auto LookThroughInstForValueRepr(SemIR::TupleAccess tuple_access) const
+      -> std::optional<SemIR::TypeId> {
+    auto tuple_inst = context_.insts().Get(tuple_access.tuple_id);
+    auto tuple_type = tuple_inst.type_id();
+    auto elements_id =
+        context_.types().GetAs<SemIR::TupleType>(tuple_type).elements_id;
+    auto types = context_.type_blocks().Get(elements_id);
+    return types[tuple_access.index.index];
+  }
+
+  auto LookThroughInstForValueRepr(SemIR::StructAccess struct_access) const
+      -> std::optional<SemIR::TypeId> {
+    auto struct_inst = context_.insts().Get(struct_access.struct_id);
+    auto struct_type = struct_inst.type_id();
+    auto fields_id =
+        context_.types().GetAs<SemIR::StructType>(struct_type).fields_id;
+    auto fields = context_.struct_type_fields().Get(fields_id);
+    auto field = fields[struct_access.index.index];
+    return field.type_id;
+  }
+
+  auto LookThroughInstForValueRepr(SemIR::ClassElementAccess /*class_access*/)
+      const -> std::optional<SemIR::TypeId> {
+    // See the fail_todo_class_access.carbon test in
+    // toolchain/check/testdata/builtin_conversions/no_prelude/value_with_type_through_access.carbon.
+    context_.TODO(
+        loc_,
+        "Can't yet build a comp-time class to access in a type position.");
+    return std::nullopt;
+  }
+
+  template <typename InstT>
+  auto LookThroughInstForValueRepr(InstT /*inst*/) const
+      -> std::optional<SemIR::TypeId> {
+    return std::nullopt;
+  }
+
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
+  // NOLINTNEXTLINE(readability-function-size)
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    // Use overload resolution to select the implementation, producing compile
-    // errors when BuildValueReprForInst isn't defined for a given instruction.
-    CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND(Name)                  \
-  case CARBON_KIND(SemIR::Name typed_inst): {          \
-    return BuildValueReprForInst(type_id, typed_inst); \
+    while (true) {
+      // Use overload resolution to select the implementation, producing compile
+      // errors when BuildValueReprForInst isn't defined for a given
+      // instruction.
+      CARBON_KIND_SWITCH(inst) {
+#define CARBON_SEM_IR_INST_KIND(Name)                                        \
+  case CARBON_KIND(SemIR::Name typed_inst): {                                \
+    if (auto indirected_type_id = LookThroughInstForValueRepr(typed_inst)) { \
+      type_id = *indirected_type_id;                                         \
+      inst = context_.types().GetAsInst(type_id);                            \
+      continue;                                                              \
+    } else {                                                                 \
+      return BuildValueReprForInst(type_id, typed_inst);                     \
+    }                                                                        \
   }
 #include "toolchain/sem_ir/inst_kind.def"
+      }
     }
   }
 
