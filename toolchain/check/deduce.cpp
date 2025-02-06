@@ -557,6 +557,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
             loc_id_, RuntimeConversionDuringCompTimeDeduction, binding_type_id);
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
+        deduced_arg_id = SemIR::ErrorInst::SingletonInstId;
       }
     }
 

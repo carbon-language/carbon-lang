@@ -196,7 +196,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT:   %.ff1: type = fn_type_with_self_type %Convert.type.50a, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %from, %Convert.e81 [symbolic]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%tuple, %from) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -419,7 +418,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %.loc30_19.2: init %RuntimeConvertTo = converted constants.%from, %Convert.call
 // CHECK:STDOUT:   %.loc30_19.3: ref %RuntimeConvertTo = temporary %.loc30_19.1, %.loc30_19.2
 // CHECK:STDOUT:   %.loc30_19.4: %RuntimeConvertTo = bind_value %.loc30_19.3
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, constants.%from) [symbolic = constants.%F.specific_fn]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, <error>) [template = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%holds_to.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -485,12 +484,12 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%tuple, constants.%from) {
+// CHECK:STDOUT: specific @F(constants.%tuple, <error>) {
 // CHECK:STDOUT:   %T.loc16_6.2 => constants.%tuple
 // CHECK:STDOUT:   %T.patt.loc16_6.2 => constants.%tuple
 // CHECK:STDOUT:   %tuple.elem0.loc16_25.2 => constants.%RuntimeConvertTo
-// CHECK:STDOUT:   %A.loc16_20.2 => constants.%from
-// CHECK:STDOUT:   %A.patt.loc16_20.2 => constants.%from
+// CHECK:STDOUT:   %A.loc16_20.2 => <error>
+// CHECK:STDOUT:   %A.patt.loc16_20.2 => <error>
 // CHECK:STDOUT:   %HoldsType.loc16_43.2 => constants.%HoldsType.066
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
