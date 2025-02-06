@@ -263,7 +263,8 @@ class Context {
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
   // Prints a diagnostic for a poisoned name when it's later declared.
-  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+  auto DiagnosePoisonedName(SemIR::NameId name_id,
+                            SemIR::LocId poisoning_loc_id,
                             SemIR::InstId decl_inst_id) -> void;
 
   // Prints a diagnostic for a missing name.

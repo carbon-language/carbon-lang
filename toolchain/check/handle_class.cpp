@@ -109,7 +109,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                                                 access_kind);
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
+    context.DiagnosePoisonedName(name_context.name_id_for_new_inst(),
+                                 lookup_result.poisoning_loc_id(),
                                  class_decl_id);
     return;
   }
