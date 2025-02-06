@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=check --dump-mem-usage %s
+// ARGS: --include-diagnostic-kind compile --phase=check --dump-mem-usage %s
 //
 // To test this file alone, run:
 //   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/dump_mem_usage.carbon

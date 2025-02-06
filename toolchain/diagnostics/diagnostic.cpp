@@ -10,6 +10,9 @@
 namespace Carbon {
 
 auto DiagnosticLoc::FormatLocation(llvm::raw_ostream& out) const -> void {
+  if (filename.empty()) {
+    return;
+  }
   out << filename;
   if (line_number > 0) {
     out << ":" << line_number;
@@ -17,6 +20,7 @@ auto DiagnosticLoc::FormatLocation(llvm::raw_ostream& out) const -> void {
       out << ":" << column_number;
     }
   }
+  out << ": ";
 }
 
 auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out, int indent) const

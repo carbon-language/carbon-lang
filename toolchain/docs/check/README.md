@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Subtopics](#subtopics)
 -   [Postorder processing](#postorder-processing)
 -   [Key IR concepts](#key-ir-concepts)
     -   [Instruction operands](#instruction-operands)
@@ -47,6 +48,12 @@ or SemIR. This will look closer to a series of instructions, in preparation for
 transformation to LLVM IR. Semantic analysis and type checking occurs during the
 production of SemIR. It also does any validation that requires context.
 
+## Subtopics
+
+Some particular topics have their own documentation:
+
+-   [Associated constants](associated_constant.md)
+
 ## Postorder processing
 
 The checking step is oriented on postorder processing on the `Parse::Tree` to
@@ -82,7 +89,7 @@ instruction, and `SemIR::PointerType` represents a pointer type instruction.
 Each instruction class has up to four public data members describing the
 instruction, as described in
 [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) (also see
-[adding features for Check](adding_features.md#check)):
+[adding features for Check](/toolchain/docs/adding_features.md#check)):
 
 -   An `InstKind kind;` member if the instruction has a `Kinds` constant making
     it a shorthand for multiple individual instructions.

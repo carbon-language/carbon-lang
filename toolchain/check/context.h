@@ -73,8 +73,7 @@ class Context {
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
-                   llvm::function_ref<const Parse::TreeAndSubtrees&()>
-                       get_parse_tree_and_subtrees,
+                   Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
 
@@ -215,9 +214,7 @@ class Context {
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration. If scope_id is `None`, performs lookup into the lexical scope
-  // specified by scope_index instead. If found, returns the referenced
-  // `InstId` and false. If poisoned, returns `InstId::None` and true.
-  // TODO: For poisoned names, return the poisoning `InstId`.
+  // specified by scope_index instead.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id, ScopeIndex scope_index)
       -> SemIR::ScopeLookupResult;
@@ -235,7 +232,7 @@ class Context {
   // poisoned name will be treated as if it is not declared. Otherwise, this is
   // a lookup for a name being declared, so the name will not be poisoned, but
   // poison will be returned if it's already been looked up.
-  auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+  auto LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
                               SemIR::NameScope& scope,
                               bool is_being_declared = false)
@@ -265,8 +262,9 @@ class Context {
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
-  // Prints a diagnostic for a poisoned name.
-  auto DiagnosePoisonedName(SemIRLoc loc) -> void;
+  // Prints a diagnostic for a poisoned name when it's later declared.
+  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+                            SemIR::InstId decl_inst_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
@@ -475,6 +473,11 @@ class Context {
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
       -> SemIR::TypeId;
+
+  // Gets the type of an associated function with the `Self` parameter bound to
+  // a particular value. The returned type will be complete.
+  auto GetFunctionTypeWithSelfType(SemIR::InstId interface_function_type_id,
+                                   SemIR::InstId self_id) -> SemIR::TypeId;
 
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
@@ -744,8 +747,7 @@ class Context {
   DiagnosticEmitter* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
-  llvm::function_ref<const Parse::TreeAndSubtrees&()>
-      get_parse_tree_and_subtrees_;
+  Parse::GetTreeAndSubtreesFn get_parse_tree_and_subtrees_;
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;

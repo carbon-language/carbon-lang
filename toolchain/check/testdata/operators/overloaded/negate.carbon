@@ -35,9 +35,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [template]
 // CHECK:STDOUT:   %Op.type.67d: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.64c: %Op.type.67d = struct_value () [template]
+// CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
+// CHECK:STDOUT:   %.362: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,10 +119,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %Op.type.e42 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.64c]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
+// CHECK:STDOUT:   %impl.elem0: %.362 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.64c]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref) to %.loc23
+// CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref) to %.loc23
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1512,6 +1512,10 @@ static auto MakeFacetTypeResult(Context& context,
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
+//
+// Tail call should not be diagnosed as recursion.
+// https://github.com/llvm/llvm-project/issues/125724
+// NOLINTNEXTLINE(misc-no-recursion): Tail call.
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -1588,6 +1592,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
+    case SemIR::FunctionTypeWithSelfType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst,
+          &SemIR::FunctionTypeWithSelfType::interface_function_type_id,
+          &SemIR::FunctionTypeWithSelfType::self_id);
     case SemIR::GenericClassType::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::GenericClassType::enclosing_specific_id);
@@ -1893,10 +1902,43 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return MakeConstantResult(eval_context.context(), bind, phase);
     }
 
-    // These semantic wrappers don't change the constant value.
+    // AsCompatible changes the type of the source instruction; its constant
+    // value, if there is one, needs to be modified to be of the same type.
     case CARBON_KIND(SemIR::AsCompatible inst): {
-      return eval_context.GetConstantValue(inst.source_id);
+      auto value = eval_context.GetConstantValue(inst.source_id);
+      if (!value.is_constant()) {
+        return value;
+      }
+
+      auto from_phase = Phase::Template;
+      auto value_inst_id =
+          GetConstantValue(eval_context, inst.source_id, &from_phase);
+
+      auto to_phase = Phase::Template;
+      auto type_id = GetConstantValue(eval_context, inst.type_id, &to_phase);
+
+      auto value_inst = eval_context.insts().Get(value_inst_id);
+      value_inst.SetType(type_id);
+
+      if (to_phase >= from_phase) {
+        // If moving from a template constant value to a symbolic type, the new
+        // constant value takes on the phase of the new type. We're adding the
+        // symbolic bit to the new constant value due to the presence of a
+        // symbolic type.
+        return MakeConstantResult(eval_context.context(), value_inst, to_phase);
+      } else {
+        // If moving from a symbolic constant value to a template type, the new
+        // constant value has a phase that depends on what is in the value. If
+        // there is anything symbolic within the value, then it's symbolic. We
+        // can't easily determine that here without evaluating a new constant
+        // value. See
+        // https://github.com/carbon-language/carbon-lang/pull/4881#discussion_r1939961372
+        [[clang::musttail]] return TryEvalInstInContext(
+            eval_context, SemIR::InstId::None, value_inst);
+      }
     }
+
+    // These semantic wrappers don't change the constant value.
     case CARBON_KIND(SemIR::BindAlias typed_inst): {
       return eval_context.GetConstantValue(typed_inst.value_id);
     }
@@ -2126,9 +2168,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
                           InstIdAsType);
-        if (loc.is_inst_id && !loc.inst_id.has_value()) {
-          return;
-        }
         builder.Note(loc, ResolvingSpecificHere,
                      GetInstForSpecific(context, specific_id));
       });

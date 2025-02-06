@@ -104,10 +104,6 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) -> ErrorOr<RunResult> {
-  if (component_ == "language_server" && !input_stream) {
-    return Error("language_server tests must provide STDIN");
-  }
-
   CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
   if (!is_no_prelude()) {
     for (const auto& file : prelude) {
@@ -147,14 +143,17 @@ auto ToolchainFileTest::Run(
 }
 
 auto ToolchainFileTest::GetDefaultArgs() -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> args = {"--include-diagnostic-kind"};
+
   if (component_ == "format") {
-    return {"format", "%s"};
+    args.insert(args.end(), {"format", "%s"});
+    return args;
   } else if (component_ == "language_server") {
-    return {"language-server"};
+    args.insert(args.end(), {"language-server"});
+    return args;
   }
 
-  llvm::SmallVector<std::string> args = {"compile", "--include-diagnostic-kind",
-                                         "--phase=" + component_.str()};
+  args.insert(args.end(), {"compile", "--phase=" + component_.str()});
 
   if (component_ == "lex") {
     args.insert(args.end(), {"--dump-tokens", "--omit-file-boundary-tokens"});

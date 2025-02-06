@@ -42,6 +42,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.626: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,11 +118,11 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc22: %F.type.b7b = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.ad8]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.626 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %impl.elem0.loc22()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc23: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc23: %F.type.b7b = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.ad8]
+// CHECK:STDOUT:   %impl.elem0.loc23: %.626 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %impl.elem0.loc23()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -7,10 +7,12 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/diagnostics/diagnostic_converter.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_index.h"
-#include "toolchain/parse/tree_node_diagnostic_converter.h"
+#include "toolchain/parse/tree_and_subtrees.h"
+#include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -18,9 +20,10 @@ namespace Carbon::Check {
 class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
  public:
   explicit SemIRDiagnosticConverter(
-      llvm::ArrayRef<Parse::NodeLocConverter*> node_converters,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees,
       const SemIR::File* sem_ir)
-      : node_converters_(node_converters), sem_ir_(sem_ir) {}
+      : imported_trees_and_subtrees_(imported_trees_and_subtrees),
+        sem_ir_(sem_ir) {}
 
   // Implements `DiagnosticConverter::ConvertLoc`. Adds context for any imports
   // used in the current SemIR to get to the underlying code.
@@ -47,12 +50,11 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
 
   // Converts a node_id corresponding to a specific sem_ir to a diagnostic
   // location.
-  auto ConvertLocInFile(const SemIR::File* sem_ir, Parse::NodeId node_id,
-                        bool token_only, ContextFnT context_fn) const
-      -> ConvertedDiagnosticLoc;
+  auto ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
+                        ContextFnT context_fn) const -> ConvertedDiagnosticLoc;
 
   // Converters for each SemIR.
-  llvm::ArrayRef<Parse::NodeLocConverter*> node_converters_;
+  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees_;
 
   // The current SemIR being processed.
   const SemIR::File* sem_ir_;

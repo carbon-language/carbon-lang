@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --dump-timings --phase=check %s
+// ARGS: --include-diagnostic-kind compile --dump-timings --phase=check %s
 //
 // SET-CHECK-SUBSET
 //

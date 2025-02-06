@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/language_server_subcommand.h"
 
+#include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/language_server/language_server.h"
 
 namespace Carbon {
@@ -20,18 +21,16 @@ LanguageServerSubcommand::LanguageServerSubcommand()
 
 auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!driver_env.input_stream) {
-    *driver_env.error_stream
-        << "error: language-server requires input_stream\n";
+    CARBON_DIAGNOSTIC(LanguageServerMissingInputStream, Error,
+                      "language-server requires input_stream");
+    driver_env.emitter.Emit(LanguageServerMissingInputStream);
     return {.success = false};
   }
 
-  auto err =
-      LanguageServer::Run(driver_env.input_stream, *driver_env.output_stream,
-                          *driver_env.error_stream);
-  if (!err.ok()) {
-    *driver_env.error_stream << "error: " << err.error() << "\n";
-  }
-  return {.success = err.ok()};
+  bool success = LanguageServer::Run(
+      driver_env.input_stream, *driver_env.output_stream,
+      *driver_env.error_stream, driver_env.vlog_stream, driver_env.consumer);
+  return {.success = success};
 }
 
 }  // namespace Carbon
