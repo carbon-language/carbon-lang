@@ -250,8 +250,7 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 //   (state done)
 CARBON_PARSE_STATE(DeclNameAndParams)
 
-// Handles regular parameters such as `(...)` for the general declaration case.
-// Only used after implicit parameters.
+// Handles implicit parameters such as `[...]` for the general declaration case.
 //
 // name [ ... ] ( ... )
 //             ^
