@@ -494,6 +494,8 @@ class NodeStack {
         case Parse::NodeKind::CodeBlock:
         case Parse::NodeKind::ContinueStatement:
         case Parse::NodeKind::ContinueStatementStart:
+        case Parse::NodeKind::CoreNameExpr:
+        case Parse::NodeKind::CorePackageName:
         case Parse::NodeKind::DefaultModifier:
         case Parse::NodeKind::DefaultSelfImplAs:
         case Parse::NodeKind::DesignatorExpr:
@@ -518,6 +520,7 @@ class NodeStack {
         case Parse::NodeKind::IdentifierNameNotBeforeParams:
         case Parse::NodeKind::IdentifierNameBeforeParams:
         case Parse::NodeKind::IdentifierNameExpr:
+        case Parse::NodeKind::IdentifierPackageName:
         case Parse::NodeKind::IfConditionStart:
         case Parse::NodeKind::IfExprElse:
         case Parse::NodeKind::IfStatement:
@@ -596,7 +599,6 @@ class NodeStack {
         case Parse::NodeKind::PackageDecl:
         case Parse::NodeKind::PackageExpr:
         case Parse::NodeKind::PackageIntroducer:
-        case Parse::NodeKind::PackageName:
         case Parse::NodeKind::ParenExpr:
         case Parse::NodeKind::ParenExprStart:
         case Parse::NodeKind::PatternListComma:

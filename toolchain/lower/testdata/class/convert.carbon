@@ -28,7 +28,7 @@ fn DoIt() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @IntWrapper.val.loc22_3.2 = internal constant { i32 } { i32 42 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %self) !dbg !4 {
+// CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.None"(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_48.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc16_48.2 = load i32, ptr %.loc16_48.1.n, align 4, !dbg !7
@@ -46,7 +46,7 @@ fn DoIt() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %w.var), !dbg !12
 // CHECK:STDOUT:   %.loc22_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc22_3.2, i64 4, i1 false), !dbg !12
-// CHECK:STDOUT:   %Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !14
+// CHECK:STDOUT:   %Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.None"(ptr %w.var), !dbg !14
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %Convert.call), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -67,7 +67,7 @@ fn DoIt() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "convert.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.Core", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.None", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 16, column: 44, scope: !4)

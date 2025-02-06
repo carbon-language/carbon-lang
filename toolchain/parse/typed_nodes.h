@@ -200,8 +200,16 @@ struct DeclName {
 using PackageExpr =
     LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
 
+// The `Core` keyword in an expression.
+using CoreNameExpr =
+    LeafNode<NodeKind::CoreNameExpr, Lex::CoreTokenIndex, NodeCategory::Expr>;
+
 // The name of a package or library for `package`, `import`, and `library`.
-using PackageName = LeafNode<NodeKind::PackageName, Lex::IdentifierTokenIndex>;
+using IdentifierPackageName =
+    LeafNode<NodeKind::IdentifierPackageName, Lex::IdentifierTokenIndex,
+             NodeCategory::PackageName>;
+using CorePackageName = LeafNode<NodeKind::CorePackageName, Lex::CoreTokenIndex,
+                                 NodeCategory::PackageName>;
 using LibraryName =
     LeafNode<NodeKind::LibraryName, Lex::StringLiteralTokenIndex>;
 using DefaultLibrary =
@@ -228,7 +236,7 @@ struct PackageDecl {
 
   PackageIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<PackageNameId> name;
+  std::optional<AnyPackageNameId> name;
   std::optional<LibrarySpecifierId> library;
   Lex::SemiTokenIndex token;
 };
@@ -242,7 +250,7 @@ struct ImportDecl {
 
   ImportIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<PackageNameId> name;
+  std::optional<AnyPackageNameId> name;
   std::optional<LibrarySpecifierId> library;
   Lex::SemiTokenIndex token;
 };

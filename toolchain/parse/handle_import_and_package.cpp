@@ -42,40 +42,44 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
   Tree::PackagingNames names{
       .node_id = ImportDeclId(NodeId(state.subtree_start)),
       .is_export = is_export};
-  if (declaration != NodeKind::LibraryDecl) {
-    // Consume a package name if one is present.
-    Lex::TokenIndex package_name_token = Lex::TokenIndex::None;
-    if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-      package_name_token = *identifier;
-      names.package_id = PackageId::ForIdentifier(
-          context.tokens().GetIdentifier(package_name_token));
+
+  // Parse the package name.
+  if (declaration == NodeKind::LibraryDecl ||
+      (declaration == NodeKind::ImportDecl &&
+       context.PositionIs(Lex::TokenKind::Library))) {
+    // This is either `library ...` or `import library ...`, so no package name
+    // is expected.
+  } else {
+    // We require a package name. This is either an identifier or the `Core`
+    // keyword.
+    auto package_name_position = *context.position();
+    if (auto ident = context.ConsumeIf(Lex::TokenKind::Identifier)) {
+      names.package_id =
+          PackageId::ForIdentifier(context.tokens().GetIdentifier(*ident));
+      context.AddLeafNode(NodeKind::IdentifierPackageName, *ident);
     } else if (auto core = context.ConsumeIf(Lex::TokenKind::Core)) {
-      package_name_token = *core;
       names.package_id = PackageId::Core;
-    }
-
-    if (package_name_token.has_value()) {
-      if (names.is_export) {
-        names.is_export = false;
-        state.has_error = true;
-
-        CARBON_DIAGNOSTIC(ExportImportPackage, Error,
-                          "`export` cannot be used when importing a package");
-        context.emitter().Emit(package_name_token, ExportImportPackage);
-      }
-      context.AddLeafNode(NodeKind::PackageName, package_name_token);
-    } else if (declaration == NodeKind::PackageDecl ||
-               !context.PositionIs(Lex::TokenKind::Library)) {
+      context.AddLeafNode(NodeKind::CorePackageName, *core);
+    } else {
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
                         "expected identifier after `package`");
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterImport, Error,
                         "expected identifier or `library` after `import`");
-      context.emitter().Emit(*context.position(),
+      context.emitter().Emit(package_name_position,
                              declaration == NodeKind::PackageDecl
                                  ? ExpectedIdentifierAfterPackage
                                  : ExpectedIdentifierAfterImport);
       on_parse_error();
       return;
+    }
+
+    if (names.is_export) {
+      names.is_export = false;
+      state.has_error = true;
+
+      CARBON_DIAGNOSTIC(ExportImportPackage, Error,
+                        "`export` cannot be used when importing a package");
+      context.emitter().Emit(package_name_position, ExportImportPackage);
     }
   }
 
