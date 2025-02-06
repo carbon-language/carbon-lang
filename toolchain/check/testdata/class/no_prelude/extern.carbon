@@ -133,7 +133,7 @@ extern class C;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: decl.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: decl.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+5]]:1: in import [InImport]
@@ -149,7 +149,7 @@ import library "decl";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_decl.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+5]]:1: in import [InImport]
@@ -165,7 +165,7 @@ import library "extern_decl";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: def.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: def.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+5]]:1: in import [InImport]
@@ -181,7 +181,7 @@ import library "def";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+18]]:1: in import [InImport]
-// CHECK:STDERR: decl.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: decl.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+14]]:1: in import [InImport]
@@ -190,7 +190,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: def.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: def.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
@@ -207,7 +207,7 @@ import library "def";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl_copy.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_decl_copy.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+5]]:1: in import [InImport]

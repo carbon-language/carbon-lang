@@ -81,7 +81,7 @@ extern library "extern_library_owner" fn F();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_library_collision.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_library_copy.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_library_copy.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_collision.carbon:[[@LINE+5]]:1: in import [InImport]

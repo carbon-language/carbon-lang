@@ -212,12 +212,13 @@ auto Context::ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
   CARBON_CHECK(old_const_id == new_const_id);
 }
 
-auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
-    -> void {
+auto Context::DiagnoseDuplicateName(SemIR::NameId name_id, SemIRLoc dup_def,
+                                    SemIRLoc prev_def) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
-                    "duplicate name being declared in the same scope");
+                    "duplicate name `{0}` being declared in the same scope",
+                    SemIR::NameId);
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
-  emitter_->Build(dup_def, NameDeclDuplicate)
+  emitter_->Build(dup_def, NameDeclDuplicate, name_id)
       .Note(prev_def, NameDeclPrevious)
       .Emit();
 }
@@ -309,7 +310,7 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
   if (auto existing =
           scope_stack().LookupOrAddName(name_id, target_id, scope_index);
       existing.has_value()) {
-    DiagnoseDuplicateName(target_id, existing);
+    DiagnoseDuplicateName(name_id, target_id, existing);
   }
 }
 

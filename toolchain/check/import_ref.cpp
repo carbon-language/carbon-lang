@@ -135,7 +135,8 @@ auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
   return GetCanonicalImportIRInst(context, &context.sem_ir(), inst_id);
 }
 
-auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
+auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
+                                     SemIR::InstId prev_id,
                                      SemIR::ImportIRInst prev_import_ir_inst,
                                      SemIR::ImportIRId new_ir_id,
                                      const SemIR::File* new_import_ir,
@@ -147,7 +148,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
   }
   auto conflict_id =
       AddImportRef(context, {.ir_id = new_ir_id, .inst_id = new_inst_id});
-  context.DiagnoseDuplicateName(conflict_id, prev_id);
+  context.DiagnoseDuplicateName(name_id, conflict_id, prev_id);
 }
 
 // Returns an instruction that has the specified constant value.

@@ -10,7 +10,7 @@
 
 fn F() {
   let a: i32 = 1;
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+7]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+7]]:7: error: duplicate name `a` being declared in the same scope [NameDeclDuplicate]
   // CHECK:STDERR:   let a: i32 = 2;
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: note: name is previously declared here [NameDeclPrevious]

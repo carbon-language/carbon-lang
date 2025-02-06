@@ -117,7 +117,7 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
         if (diagnose_duplicate_namespace) {
           auto import_id = make_import_id();
           CARBON_CHECK(import_id.has_value());
-          context.DiagnoseDuplicateName(import_id, prev_inst_id);
+          context.DiagnoseDuplicateName(name_id, import_id, prev_inst_id);
         }
         return {.name_scope_id = namespace_inst->name_scope_id,
                 .inst_id = prev_inst_id,
@@ -158,7 +158,8 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
   // may be overwriting a poisoned entry here.
   auto& result = parent_scope->GetEntry(entry_id).result;
   if (!result.is_poisoned() && !inserted) {
-    context.DiagnoseDuplicateName(namespace_id, result.target_inst_id());
+    context.DiagnoseDuplicateName(name_id, namespace_id,
+                                  result.target_inst_id());
   }
   result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
                                                SemIR::AccessKind::Public);
@@ -297,8 +298,8 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
 
   auto inst_id = entry.result.target_inst_id();
   auto prev_ir_inst = GetCanonicalImportIRInst(context, inst_id);
-  VerifySameCanonicalImportIRInst(context, inst_id, prev_ir_inst, ir_id,
-                                  &import_sem_ir, import_inst_id);
+  VerifySameCanonicalImportIRInst(context, name_id, inst_id, prev_ir_inst,
+                                  ir_id, &import_sem_ir, import_inst_id);
 }
 
 namespace {
@@ -615,9 +616,9 @@ auto ImportNameFromOtherPackage(
     if (!canonical_result_inst) {
       canonical_result_inst = GetCanonicalImportIRInst(context, result_id);
     }
-    VerifySameCanonicalImportIRInst(context, result_id, *canonical_result_inst,
-                                    import_ir_id, import_ir.sem_ir,
-                                    import_scope_inst_id);
+    VerifySameCanonicalImportIRInst(context, name_id, result_id,
+                                    *canonical_result_inst, import_ir_id,
+                                    import_ir.sem_ir, import_scope_inst_id);
   }
 
   return result_id;

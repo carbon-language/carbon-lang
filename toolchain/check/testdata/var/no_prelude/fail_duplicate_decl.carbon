@@ -11,7 +11,7 @@
 
 fn Main() {
   var x: () = ();
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+7]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+7]]:7: error: duplicate name `x` being declared in the same scope [NameDeclDuplicate]
   // CHECK:STDERR:   var x: () = ();
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: note: name is previously declared here [NameDeclPrevious]

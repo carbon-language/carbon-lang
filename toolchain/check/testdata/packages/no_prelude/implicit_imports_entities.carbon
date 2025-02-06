@@ -132,7 +132,7 @@ import Other library "o1";
 // --- fail_import_conflict.impl.carbon
 
 // CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+9]]:6: in import [InImport]
-// CHECK:STDERR: import_conflict.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: import_conflict.carbon:4:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+5]]:6: in import [InImport]
@@ -154,7 +154,7 @@ import library "local_other";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+9]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+9]]:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: in import [InImport]
