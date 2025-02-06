@@ -11,11 +11,11 @@
 // --- STDIN
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {"uri": "file:/test.carbon", "languageId": "carbon",
-                   "text": "test"}
+                   "text": "// Empty"}
 ]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {"uri": "file:/test.carbon", "languageId": "carbon",
-                   "text": "test"}
+                   "text": "// Empty"}
 ]]
 [[@LSP-NOTIFY:exit]]
 
@@ -23,4 +23,22 @@
 
 // CHECK:STDERR: /test.carbon: warning: duplicate open file request; updating content [LanguageServerOpenDuplicateFile]
 // CHECK:STDERR:
-// CHECK:STDOUT:
+// CHECK:STDOUT: Content-Length: 144{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
+// CHECK:STDOUT:   "params": {
+// CHECK:STDOUT:     "diagnostics": [],
+// CHECK:STDOUT:     "uri": "file:///test.carbon"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 144{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
+// CHECK:STDOUT:   "params": {
+// CHECK:STDOUT:     "diagnostics": [],
+// CHECK:STDOUT:     "uri": "file:///test.carbon"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }

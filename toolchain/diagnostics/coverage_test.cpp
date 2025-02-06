@@ -42,6 +42,10 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     DiagnosticKind::TooManyDigits,
+
+    // TODO: The LSP doesn't support checking multiple files, figure something
+    // out when it does (or, more strongly restrict diagnostic structure).
+    DiagnosticKind::LanguageServerDiagnosticInWrongFile,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

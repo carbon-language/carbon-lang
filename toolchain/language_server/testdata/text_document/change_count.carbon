@@ -11,7 +11,7 @@
 // --- STDIN
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {"uri": "file:/test.carbon", "languageId": "carbon",
-                   "text": "test"}
+                   "text": "// Empty"}
 ]]
 [[@LSP-NOTIFY:textDocument/didChange:
   "textDocument": {"uri": "file:/test.carbon"},
@@ -36,4 +36,13 @@
 // CHECK:STDERR:
 // CHECK:STDERR: /test.carbon: warning: received unsupported contentChanges count: 2 [LanguageServerUnsupportedChanges]
 // CHECK:STDERR:
-// CHECK:STDOUT:
+// CHECK:STDOUT: Content-Length: 144{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
+// CHECK:STDOUT:   "params": {
+// CHECK:STDOUT:     "diagnostics": [],
+// CHECK:STDOUT:     "uri": "file:///test.carbon"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
