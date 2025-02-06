@@ -26,7 +26,8 @@ using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 // Returns a key form of the package object. file_package_id is only used for
 // imports, not the main package declaration; as a consequence, it will be
 // `None` for the main package declaration.
-static auto GetImportKey(UnitAndImports& unit_info, PackageNameId file_package_id,
+static auto GetImportKey(UnitAndImports& unit_info,
+                         PackageNameId file_package_id,
                          Parse::Tree::PackagingNames names) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
   PackageNameId package_id =
