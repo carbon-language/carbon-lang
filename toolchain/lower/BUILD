@@ -51,6 +51,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/check:sem_ir_diagnostic_converter",
+        "//toolchain/check:sem_ir_loc_diagnostic_emitter",
         "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",

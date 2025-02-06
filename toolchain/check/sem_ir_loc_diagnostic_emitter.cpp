@@ -57,11 +57,11 @@ auto SemIRLocDiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
   return ConvertLocInFile(final_node_id, loc.token_only_, context_fn);
 }
 
-auto SemIRDiagnosticConverter::ConvertLocInFile(
+auto SemIRLocDiagnosticEmitter::ConvertLocInFile(
     SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
     ContextFnT /*context_fn*/) const -> ConvertedDiagnosticLoc {
   const auto& tree_and_subtrees =
-      imported_trees_and_subtrees_[absolute_node_id.check_ir_id.index]();
+      tree_and_subtrees_getters_[absolute_node_id.check_ir_id.index]();
   return tree_and_subtrees.NodeToDiagnosticLoc(absolute_node_id.node_id,
                                                token_only);
 }
