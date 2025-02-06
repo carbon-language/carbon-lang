@@ -36,6 +36,7 @@ static auto GenerateCppIncludesHeaderCode(
   return code;
 }
 
+// Returns an AST for the C++ imports, or null on error.
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
@@ -82,6 +83,7 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   return ast;
 }
 
+// Adds a namespace for the `Cpp` import.
 static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> void {
@@ -130,8 +132,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
     -> void {
-  size_t num_imports = imports.size();
-  if (num_imports == 0) {
+  if (imports.empty()) {
     return;
   }
 

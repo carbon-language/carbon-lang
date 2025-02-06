@@ -12,8 +12,7 @@
 namespace Carbon::Check {
 
 // Generates a C++ header that includes the imported cpp files, parses it and
-// report errors and warnings.
-// If successful, adds a 'Cpp' namespace.
+// report errors and warnings. If successful, adds a `Cpp` namespace.
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) -> void;
