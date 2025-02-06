@@ -32,8 +32,8 @@ auto Context::File::SetText(Context& context, llvm::StringRef text) -> void {
   std::optional source =
       SourceBuffer::MakeFromStringCopy(filename_, text, null_consumer);
   if (!source) {
-    // It's rare that the StringRef should fail (for example, invalid text),
-    // but provide stub data for recovery so that we can have a simple API.
+    // Failing here should be rare, but provide stub data for recovery so that
+    // we can have a simple API.
     source = SourceBuffer::MakeFromStringCopy(filename_, "", null_consumer);
     CARBON_CHECK(source, "Making an empty buffer should always succeed");
   }
