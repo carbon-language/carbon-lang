@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_in_interface.carbon
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: interfaces cannot have `var` members [VarInInterfaceDecl]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: `var` declaration in interface [VarInInterfaceDecl]
   // CHECK:STDERR:   var v: ();
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -35,7 +35,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .v = <unexpected>.inst20.loc12_7
+// CHECK:STDOUT:   .v = <unexpected>.inst20.loc16_7
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

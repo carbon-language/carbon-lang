@@ -388,7 +388,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   }
   if (context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
-                      "interfaces cannot have `var` members");
+                      "`var` declaration in interface");
     context.emitter().Emit(node_id, VarInInterfaceDecl);
     return true;
   }
