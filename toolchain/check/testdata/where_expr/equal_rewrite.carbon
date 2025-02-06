@@ -1235,7 +1235,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Main.import_ref.169 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.020 = import_ref Main//equal_constraint, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.P = import_ref Main//equal_constraint, P, unloaded
-// CHECK:STDOUT:   %Main.import_ref.bdf: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.bdf: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b61 = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.91a = import_ref Main//nested_rewrites, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.55d = import_ref Main//nested_rewrites, loc6_8, unloaded
@@ -1285,7 +1285,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(imports.%Main.import_ref.bdf: %N_where.type) [from "equal_constraint.carbon"] {
+// CHECK:STDOUT: generic fn @Equal.1(imports.%Main.import_ref.bdf: %N_where.type) [from "equal_constraint.carbon"] {
 // CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
