@@ -39,7 +39,7 @@ class Context {
     // The filename, stable across instances.
     std::string filename_;
 
-    // Current file content, and derivative values.
+    // Current file content, and derived values.
     std::unique_ptr<SourceBuffer> source_;
     std::unique_ptr<SharedValueStores> value_stores_;
     std::unique_ptr<Lex::TokenizedBuffer> tokens_;
