@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Write good change descriptions](#write-good-change-descriptions)
         -   [First line](#first-line)
         -   [Body](#body)
+        -   [Pull request labels](#pull-request-labels)
     -   [Make small changes](#make-small-changes)
     -   [Responding to review comments](#responding-to-review-comments)
         -   [Responding to questions or confusion](#responding-to-questions-or-confusion)
@@ -192,6 +193,22 @@ Try to anticipate what information the reviewer of your change will need to have
 in order to be effective. Also consider what information someone else will need
 a year in the future when doing archaeology on the codebase and they come across
 your change without any context.
+
+#### Pull request labels
+
+GitHub labels are used on PRs, such as
+[toolchain](https://github.com/carbon-language/carbon-lang/labels/toolchain).
+These are automatically added based on affected directories.
+
+We do not put labels in PR descriptions; for example, we would write
+`Implements type deduction` instead of `[feature] Type deduction`, or
+`Fix crash in function imports` instead of `[bug] Crash in function imports`.
+
+Given the current size and state of Carbon, we believe the `[feature]`-style PR
+labeling would add too much process for their benefit. Additionally, in contrast
+with LLVM's
+[`[NFC]` label policies](https://llvm.org/docs/DeveloperPolicy.html#obtaining-commit-access),
+Carbon changes are always reviewed prior to commit.
 
 ### Make small changes
 
