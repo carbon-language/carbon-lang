@@ -592,6 +592,8 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//two_file, D, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.11fba2.1: %C = import_ref Main//two_file, loc7_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.11fba2.2: %C = import_ref Main//two_file, loc8_11, loaded [symbolic = @Bar.%a.1 (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -628,7 +630,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.11fba2.1: %C) {
 // CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -643,7 +645,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Bar(constants.%a: %C) {
+// CHECK:STDOUT: generic class @Bar(imports.%Main.import_ref.11fba2.2: %C) {
 // CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -981,6 +983,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//alias_two_file, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.11f: %C = import_ref Main//alias_two_file, loc6_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1010,7 +1013,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.11f: %C) {
 // CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:

@@ -25,7 +25,8 @@ class IncomingMessages : public clang::clangd::Transport::MessageHandler {
   explicit IncomingMessages(clang::clangd::Transport* transport,
                             Context* context);
 
-  // Dispatches calls to the appropriate entry in `call_handlers_`.
+  // Dispatches calls to the appropriate entry in `call_handlers_`. Always
+  // returns true.
   auto onCall(llvm::StringRef name, llvm::json::Value params,
               llvm::json::Value id) -> bool override;
 
@@ -33,12 +34,9 @@ class IncomingMessages : public clang::clangd::Transport::MessageHandler {
   // `notification_handlers_`, except for `exit` which directly returns false.
   auto onNotify(llvm::StringRef name, llvm::json::Value value) -> bool override;
 
-  // Handles replies.
-  // TODO: Implement when needed.
+  // Handles replies. Always returns true.
   auto onReply(llvm::json::Value /*id*/,
-               llvm::Expected<llvm::json::Value> /*result*/) -> bool override {
-    return true;
-  }
+               llvm::Expected<llvm::json::Value> /*result*/) -> bool override;
 
  private:
   // These are the signatures expected for handlers.

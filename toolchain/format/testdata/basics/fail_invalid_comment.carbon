@@ -14,7 +14,7 @@
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: fail_test.carbon:2:3: error: whitespace is required after '//'
+// CHECK:STDERR: fail_test.carbon:2:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
 // CHECK:STDERR: //f
 // CHECK:STDERR:   ^
 // CHECK:STDERR:

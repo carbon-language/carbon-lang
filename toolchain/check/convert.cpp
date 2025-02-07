@@ -13,6 +13,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -985,6 +986,43 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
       return context.AddInst<SemIR::FacetAccessType>(
           loc_id, {.type_id = target.type_id, .facet_value_inst_id = value_id});
+    }
+  }
+
+  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+    if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+      // Conversion from a facet value (which has type `FacetType`) to a
+      // different facet value (which has type `FacetType`), if the value's
+      // `FacetType` satisfies the requirements of the target `FacetType`. The
+      // underlying type in the facet value will be preserved, just the
+      // `FacetType` will change.
+
+      // TODO: We need to do impl lookup for the FacetType, here, not for the
+      // FacetValue (so not using `context.constant_values().Get(value_id)` like
+      // we do for `TypeType`). The FacetType erased the type in the FacetValue,
+      // so using that here would be like an implicit cast back to the concrete
+      // type.
+      context.TODO(loc_id, "Facet value converting to facet value");
+    } else if (sem_ir.types().Is<SemIR::TypeType>(value_type_id)) {
+      // Conversion from a type value (which has type `type`) to a facet value
+      // (which has type `FacetType`), if the type satisfies the requirements of
+      // the target `FacetType`, as determined by finding an impl witness. This
+      // binds the value to the `FacetType` with a `FacetValue`.
+      auto witness_inst_id = LookupImplWitness(
+          context, loc_id,
+          // The value instruction evaluates to a type value (which has type
+          // `type`). This gets that type value if it's available at compile
+          // time, as a constant value.
+          context.constant_values().Get(value_id),
+          context.types().GetConstantId(target.type_id));
+      if (witness_inst_id != SemIR::InstId::None) {
+        return context.AddInst<SemIR::FacetValue>(
+            loc_id, {
+                        .type_id = target.type_id,
+                        .type_inst_id = value_id,
+                        .witness_inst_id = witness_inst_id,
+                    });
+      }
     }
   }
 

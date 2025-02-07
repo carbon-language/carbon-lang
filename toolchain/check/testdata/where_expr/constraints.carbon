@@ -603,8 +603,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
 // CHECK:STDOUT:   %Impls: %Impls.type = struct_value () [template]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where TODO> [template]
-// CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %V.patt: %J_where.type = symbolic_binding_pattern V, 0 [symbolic]
+// CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %Y: %J_where.type = bind_symbolic_name Y, 0 [symbolic]
 // CHECK:STDOUT:   %Y.patt: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic]
@@ -625,7 +625,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//state_constraints, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.81e: %J_where.type = import_ref Main//state_constraints, loc13_10, loaded [symbolic = @Impls.%V (constants.%V)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -671,7 +672,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J [from "state_constraints.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.8fd
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -696,7 +697,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Impls(constants.%V: %J_where.type) [from "state_constraints.carbon"] {
+// CHECK:STDOUT: generic fn @Impls(imports.%Main.import_ref.81e: %J_where.type) [from "state_constraints.carbon"] {
 // CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:   %V.patt: %J_where.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt (constants.%V.patt)]
 // CHECK:STDOUT:

@@ -10,7 +10,6 @@ package(default_visibility = ["//toolchain/install:__pkg__"])
 py_binary(
     name = "gen_tmpl",
     srcs = ["gen_tmpl.py"],
-    python_version = "PY3",
 )
 
 # Several flags are provided for customizing the exact version used for the

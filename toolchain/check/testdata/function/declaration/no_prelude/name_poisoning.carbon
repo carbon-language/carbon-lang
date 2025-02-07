@@ -31,7 +31,6 @@ namespace N;
 fn N.F1(x: C);
 
 // --- fail_poison_class_without_usage.carbon
-// CHECK:STDERR: fail_poison_class_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -39,6 +38,9 @@ class C {};
 
 namespace N;
 // Here we use C and poison N.C.
+// CHECK:STDERR: fail_poison_class_without_usage.carbon:[[@LINE+3]]:12: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F1(x: C);
+// CHECK:STDERR:            ^
 fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
@@ -50,7 +52,6 @@ fn N.F1(x: C);
 class N.C {}
 
 // --- fail_poison_interface_without_usage.carbon
-// CHECK:STDERR: fail_poison_interface_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -58,6 +59,9 @@ interface I {};
 
 namespace N;
 // Here we use I and poison N.I.
+// CHECK:STDERR: fail_poison_interface_without_usage.carbon:[[@LINE+3]]:12: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F1(x: I);
+// CHECK:STDERR:            ^
 fn N.F1(x: I);
 
 // Should fail here since I was poisoned for namespace N when it was used in N
@@ -69,7 +73,6 @@ fn N.F1(x: I);
 interface N.I {}
 
 // --- fail_poison_namespace_without_usage.carbon
-// CHECK:STDERR: fail_poison_namespace_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -77,6 +80,9 @@ class C {};
 
 namespace N;
 // Here we use C and poison N.C.
+// CHECK:STDERR: fail_poison_namespace_without_usage.carbon:[[@LINE+3]]:12: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F1(x: C);
+// CHECK:STDERR:            ^
 fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
@@ -88,7 +94,6 @@ fn N.F1(x: C);
 namespace N.C;
 
 // --- fail_poison_member_without_usage.carbon
-// CHECK:STDERR: fail_poison_member_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -96,6 +101,9 @@ class C1 {};
 
 class D {
   // Here we use C1 and poison D.C1.
+  // CHECK:STDERR: fail_poison_member_without_usage.carbon:[[@LINE+3]]:12: error: name used before it was declared [NameUseBeforeDecl]
+  // CHECK:STDERR:   fn F1(x: C1);
+  // CHECK:STDERR:            ^~
   fn F1(x: C1);
 
   class C2 {};
@@ -109,7 +117,6 @@ class D {
 }
 
 // --- fail_poison_function_without_usage.carbon
-// CHECK:STDERR: fail_poison_function_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -117,6 +124,9 @@ class C {};
 
 namespace N;
 // Here we use C and poison N.C.
+// CHECK:STDERR: fail_poison_function_without_usage.carbon:[[@LINE+3]]:12: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F1(x: C);
+// CHECK:STDERR:            ^
 fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
@@ -145,7 +155,6 @@ fn N.F1() -> C;
 fn N.F2() -> N.C;
 
 // --- fail_poison_with_usage.carbon
-// CHECK:STDERR: fail_poison_with_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -153,6 +162,9 @@ class C {};
 
 namespace N;
 // Here we use C and poison N.C.
+// CHECK:STDERR: fail_poison_with_usage.carbon:[[@LINE+3]]:12: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F1(x: C);
+// CHECK:STDERR:            ^
 fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
@@ -168,7 +180,6 @@ class N.C {}
 fn N.F2(x: C) { N.F1(x); }
 
 // --- fail_poison_multiple_scopes.carbon
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -187,42 +198,55 @@ class N1.N2.N3.D1 {
       // * N1.N2.N3.D1.C
       // * N1.N2.N3.D1.D2.C
       // * N1.N2.N3.D1.D2.D3.C
+      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:15: error: name used before it was declared [NameUseBeforeDecl]
+      // CHECK:STDERR:       fn F(x: C);
+      // CHECK:STDERR:               ^
       fn F(x: C);
 
-      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+5]]:7: note: declared here [NameUseBeforeDeclNote]
+      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:7: note: declared here [NameUseBeforeDeclNote]
       // CHECK:STDERR:       class C {}
       // CHECK:STDERR:       ^~~~~~~~~
       // CHECK:STDERR:
-      // CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
+      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-6]]:15: error: name used before it was declared [NameUseBeforeDecl]
+      // CHECK:STDERR:       fn F(x: C);
+      // CHECK:STDERR:               ^
       class C {}
     }
-    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+5]]:5: note: declared here [NameUseBeforeDeclNote]
+    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:5: note: declared here [NameUseBeforeDeclNote]
     // CHECK:STDERR:     class C {}
     // CHECK:STDERR:     ^~~~~~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
+    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-15]]:15: error: name used before it was declared [NameUseBeforeDecl]
+    // CHECK:STDERR:       fn F(x: C);
+    // CHECK:STDERR:               ^
     class C {}
   }
-  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+5]]:3: note: declared here [NameUseBeforeDeclNote]
+  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:3: note: declared here [NameUseBeforeDeclNote]
   // CHECK:STDERR:   class C {}
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
+  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-24]]:15: error: name used before it was declared [NameUseBeforeDecl]
+  // CHECK:STDERR:       fn F(x: C);
+  // CHECK:STDERR:               ^
   class C {}
 }
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N1.C {}
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-34]]:15: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR:       fn F(x: C);
+// CHECK:STDERR:               ^
 class N1.C {}
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface N1.N2.C {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-43]]:15: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR:       fn F(x: C);
+// CHECK:STDERR:               ^
 interface N1.N2.C {}
 
 // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
@@ -232,13 +256,15 @@ interface N1.N2.C {}
 class N1.N2.N3.C {}
 
 // --- fail_alias.carbon
-// CHECK:STDERR: fail_alias.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
 class C {}
 
 namespace N;
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:13: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: alias N.C = C;
+// CHECK:STDERR:             ^
 // CHECK:STDERR: fail_alias.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: alias N.C = C;
 // CHECK:STDERR:         ^
@@ -298,19 +324,23 @@ class X {
 library "[[@TEST_NAME]]";
 
 namespace N;
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+5]]:11: error: name `C` not found [NameNotFound]
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:11: error: name `C` not found [NameNotFound]
 // CHECK:STDERR: fn N.F(x: C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:11: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F(x: C);
+// CHECK:STDERR:           ^
 fn N.F(x: C);
 
 // TODO: We should ideally only produce one diagnostic here.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-7]]:11: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F(x: C);
+// CHECK:STDERR:           ^
 class C {}
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N.C {}
@@ -319,7 +349,6 @@ class C {}
 class N.C {}
 
 // --- fail_poison_with_lexical_result.carbon
-// CHECK:STDERR: fail_poison_with_lexical_result.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -327,6 +356,9 @@ fn F() {
   class A {}
 
   class B {
+    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+3]]:12: error: name used before it was declared [NameUseBeforeDecl]
+    // CHECK:STDERR:     var v: A;
+    // CHECK:STDERR:            ^
     var v: A;
 
     // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+4]]:5: note: declared here [NameUseBeforeDeclNote]
@@ -460,10 +492,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %C.decl.loc5
+// CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc5: type = class_decl @C.1 [template = constants.%C.f79] {} {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.1 [template = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
@@ -472,10 +504,10 @@ fn F() {
 // CHECK:STDOUT:     %x.param_patt: %C.f79 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %C.f79 = value_param runtime_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc5 [template = constants.%C.f79]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc4 [template = constants.%C.f79]
 // CHECK:STDOUT:     %x: %C.f79 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C.2 [template = constants.%C.9f4] {} {}
+// CHECK:STDOUT:   %C.decl.loc19: type = class_decl @C.2 [template = constants.%C.9f4] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.1 {
@@ -509,10 +541,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = %I.decl.loc5
+// CHECK:STDOUT:     .I = %I.decl.loc4
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl.loc5: type = interface_decl @I.1 [template = constants.%I.type.733] {} {}
+// CHECK:STDOUT:   %I.decl.loc4: type = interface_decl @I.1 [template = constants.%I.type.733] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
@@ -521,10 +553,10 @@ fn F() {
 // CHECK:STDOUT:     %x.param_patt: %I.type.733 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %I.type.733 = value_param runtime_param0
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl.loc5 [template = constants.%I.type.733]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl.loc4 [template = constants.%I.type.733]
 // CHECK:STDOUT:     %x: %I.type.733 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl.loc17: type = interface_decl @I.2 [template = constants.%I.type.4da] {} {}
+// CHECK:STDOUT:   %I.decl.loc19: type = interface_decl @I.2 [template = constants.%I.type.4da] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 {
@@ -627,9 +659,9 @@ fn F() {
 // CHECK:STDOUT:     %x: %C1 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
-// CHECK:STDOUT:   %.loc18_9: %D.elem = field_decl C1, element0 [template]
+// CHECK:STDOUT:   %.loc20_9: %D.elem = field_decl C1, element0 [template]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc18_3: %D.elem = var_pattern %.loc18_9
+// CHECK:STDOUT:     %.loc20_3: %D.elem = var_pattern %.loc20_9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %D.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.C1 [template = constants.%complete_type.ec1]
@@ -665,10 +697,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %C.decl.loc5
+// CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc5: type = class_decl @C.2 [template = constants.%C.f79] {} {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.2 [template = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
@@ -677,10 +709,10 @@ fn F() {
 // CHECK:STDOUT:     %x.param_patt: %C.f79 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %C.f79 = value_param runtime_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc5 [template = constants.%C.f79]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc4 [template = constants.%C.f79]
 // CHECK:STDOUT:     %x: %C.f79 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc17: %C.type = fn_decl @C.1 [template = constants.%C.3f2] {} {}
+// CHECK:STDOUT:   %C.decl.loc19: %C.type = fn_decl @C.1 [template = constants.%C.3f2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.2 {
@@ -764,10 +796,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %C.decl.loc5
+// CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc5: type = class_decl @C.1 [template = constants.%C.f79] {} {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.1 [template = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:     .F2 = %F2.decl
@@ -777,16 +809,16 @@ fn F() {
 // CHECK:STDOUT:     %x.param_patt: %C.f79 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %C.f79 = value_param runtime_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc5 [template = constants.%C.f79]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc4 [template = constants.%C.f79]
 // CHECK:STDOUT:     %x: %C.f79 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C.2 [template = constants.%C.9f4] {} {}
+// CHECK:STDOUT:   %C.decl.loc19: type = class_decl @C.2 [template = constants.%C.9f4] {} {}
 // CHECK:STDOUT:   %F2.decl: %F2.type = fn_decl @F2 [template = constants.%F2] {
 // CHECK:STDOUT:     %x.patt: %C.f79 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C.f79 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %C.f79 = value_param runtime_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc5 [template = constants.%C.f79]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc4 [template = constants.%C.f79]
 // CHECK:STDOUT:     %x: %C.f79 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -844,10 +876,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %C.decl.loc5
+// CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:     .N1 = %N1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc5: type = class_decl @C.1 [template = constants.%C.f79] {} {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.1 [template = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N1: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .N2 = %N2
 // CHECK:STDOUT:   }
@@ -858,9 +890,9 @@ fn F() {
 // CHECK:STDOUT:     .D1 = %D1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D1.decl: type = class_decl @D1 [template = constants.%D1] {} {}
-// CHECK:STDOUT:   %C.decl.loc49: type = class_decl @C.5 [template = constants.%C.0b8] {} {}
-// CHECK:STDOUT:   %C.decl.loc56: type = interface_decl @C.7 [template = constants.%C.type] {} {}
-// CHECK:STDOUT:   %C.decl.loc62: type = class_decl @C.6 [template = constants.%C.6f1] {} {}
+// CHECK:STDOUT:   %C.decl.loc59: type = class_decl @C.5 [template = constants.%C.0b8] {} {}
+// CHECK:STDOUT:   %C.decl.loc68: type = interface_decl @C.7 [template = constants.%C.type] {} {}
+// CHECK:STDOUT:   %C.decl.loc74: type = class_decl @C.6 [template = constants.%C.6f1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @D2 {
@@ -913,7 +945,7 @@ fn F() {
 // CHECK:STDOUT:       %x.param_patt: %C.f79 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: %C.f79 = value_param runtime_param0
-// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl.loc5 [template = constants.%C.f79]
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl.loc4 [template = constants.%C.f79]
 // CHECK:STDOUT:       %x: %C.f79 = bind_name x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %C.decl: type = class_decl @C.2 [template = constants.%C.fef] {} {}
@@ -1216,8 +1248,8 @@ fn F() {
 // CHECK:STDOUT:     %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc18: type = class_decl @C.1 [template = constants.%C.f79] {} {}
-// CHECK:STDOUT:   %C.decl.loc23: type = class_decl @C.2 [template = constants.%C.9f4] {} {}
+// CHECK:STDOUT:   %C.decl.loc22: type = class_decl @C.1 [template = constants.%C.f79] {} {}
+// CHECK:STDOUT:   %C.decl.loc27: type = class_decl @C.2 [template = constants.%C.9f4] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.1 {
@@ -1269,9 +1301,9 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc9_10: %B.elem = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc11_10: %B.elem = field_decl v, element0 [template]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc9_5: %B.elem = var_pattern %.loc9_10
+// CHECK:STDOUT:     %.loc11_5: %B.elem = var_pattern %.loc11_10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %B.elem = var <none>
 // CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [template = constants.%A.9b6] {} {}
@@ -1280,7 +1312,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .v = %.loc9_10
+// CHECK:STDOUT:   .v = %.loc11_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {

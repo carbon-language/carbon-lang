@@ -41,6 +41,7 @@ class C {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
+// CHECK:STDOUT:   %.eab: type = fn_type_with_self_type %F.type.0b5, %I.facet [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -103,7 +104,7 @@ class C {
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0: %F.type.0b5 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.eb2]
+// CHECK:STDOUT:     %impl.elem0: %.eab = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.eb2]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

@@ -50,6 +50,12 @@ TEST(ErrorTest, ErrorOrArrowOp) {
   EXPECT_EQ(err->val, 1);
 }
 
+TEST(ErrorTest, ErrorOrReference) {
+  Val val = {1};
+  ErrorOr<Val&> maybe_val(val);
+  EXPECT_EQ(maybe_val->val, 1);
+}
+
 auto IndirectErrorOrSuccessTest() -> ErrorOr<Success> { return Success(); }
 
 TEST(ErrorTest, IndirectErrorOrSuccess) {

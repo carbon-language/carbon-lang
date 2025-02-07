@@ -195,6 +195,18 @@ cc_library(
 )
 
 cc_library(
+    name = "absolute_node_id",
+    srcs = ["absolute_node_id.cpp"],
+    hdrs = ["absolute_node_id.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "dump",
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],

@@ -293,6 +293,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.f6b: type = import_ref Main//adapt_specific_type, loc4_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b5f: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.433)]
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//adapt_specific_type, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//adapt_specific_type, loc5_8, loaded [template = %.22b]
@@ -333,7 +334,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.feb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) [from "adapt_specific_type.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.f6b: type) [from "adapt_specific_type.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -660,6 +661,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.f6b: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b5f: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.433)]
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//extend_adapt_specific_type_library, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [template = %.22b]
@@ -701,7 +703,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   extend imports.%Main.import_ref.19d12e.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) [from "extend_adapt_specific_type_library.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.f6b: type) [from "extend_adapt_specific_type_library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -890,6 +892,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.f6b: type = import_ref Main//adapt_generic_type, loc4_15, loaded [symbolic = @Adapter.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fb3: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.f87)]
 // CHECK:STDOUT:   %Main.import_ref.9a3 = import_ref Main//adapt_generic_type, inst27 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -945,7 +948,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Adapter(constants.%T: type) [from "adapt_generic_type.carbon"] {
+// CHECK:STDOUT: generic class @Adapter(imports.%Main.import_ref.f6b: type) [from "adapt_generic_type.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

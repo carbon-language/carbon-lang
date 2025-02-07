@@ -44,7 +44,7 @@ The main components are:
        [Lex::TokenizedBuffer](/toolchain/lex/tokenized_buffer.h).
     3. [Parse](parse.md): Transform a TokenizedBuffer into a
        [Parse::Tree](/toolchain/parse/tree.h).
-    4. [Check](check.md): Transform a Tree to produce
+    4. [Check](check): Transform a Tree to produce
        [SemIR::File](/toolchain/sem_ir/file.h).
     5. [Lower](lower.md): Transform the SemIR to an
        [LLVM Module](https://llvm.org/doxygen/classllvm_1_1Module.html).

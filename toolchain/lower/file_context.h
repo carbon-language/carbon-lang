@@ -9,7 +9,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "toolchain/check/sem_ir_diagnostic_converter.h"
+#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
@@ -27,11 +27,12 @@ class FileContext {
     int32_t column_number;
   };
 
-  explicit FileContext(llvm::LLVMContext& llvm_context, bool include_debug_info,
-                       const Check::SemIRDiagnosticConverter& converter,
-                       llvm::StringRef module_name, const SemIR::File& sem_ir,
-                       const SemIR::InstNamer* inst_namer,
-                       llvm::raw_ostream* vlog_stream);
+  explicit FileContext(
+      llvm::LLVMContext& llvm_context,
+      std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+          tree_and_subtrees_getters_for_debug_info,
+      llvm::StringRef module_name, const SemIR::File& sem_ir,
+      const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
   // the main execution loop.
@@ -128,8 +129,9 @@ class FileContext {
   // The DICompileUnit, if any - null implies debug info is not being emitted.
   llvm::DICompileUnit* di_compile_unit_;
 
-  // The source location converter.
-  const Check::SemIRDiagnosticConverter& converter_;
+  // The trees are only provided when debug info should be emitted.
+  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+      tree_and_subtrees_getters_for_debug_info_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;

@@ -89,7 +89,6 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst",
@@ -140,7 +139,7 @@ cc_library(
         ":dump",
         ":impl",
         ":pointer_dereference",
-        ":sem_ir_diagnostic_converter",
+        ":sem_ir_loc_diagnostic_emitter",
         "//common:check",
         "//common:error",
         "//common:map",
@@ -158,7 +157,6 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst",
@@ -265,17 +263,19 @@ cc_library(
 )
 
 cc_library(
-    name = "sem_ir_diagnostic_converter",
-    srcs = ["sem_ir_diagnostic_converter.cpp"],
-    hdrs = ["sem_ir_diagnostic_converter.h"],
+    name = "sem_ir_loc_diagnostic_emitter",
+    srcs = ["sem_ir_loc_diagnostic_emitter.cpp"],
+    hdrs = ["sem_ir_loc_diagnostic_emitter.h"],
     deps = [
         ":context",
         "//common:raw_string_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_index",
-        "//toolchain/parse:tree_node_diagnostic_converter",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:stringify_type",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )

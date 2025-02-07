@@ -12,6 +12,7 @@
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
+#include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
@@ -22,20 +23,21 @@
 
 namespace Carbon::Lower {
 
-FileContext::FileContext(llvm::LLVMContext& llvm_context,
-                         bool include_debug_info,
-                         const Check::SemIRDiagnosticConverter& converter,
-                         llvm::StringRef module_name, const SemIR::File& sem_ir,
-                         const SemIR::InstNamer* inst_namer,
-                         llvm::raw_ostream* vlog_stream)
+FileContext::FileContext(
+    llvm::LLVMContext& llvm_context,
+    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+        tree_and_subtrees_getters_for_debug_info,
+    llvm::StringRef module_name, const SemIR::File& sem_ir,
+    const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       di_builder_(*llvm_module_),
       di_compile_unit_(
-          include_debug_info
+          tree_and_subtrees_getters_for_debug_info
               ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
               : nullptr),
-      converter_(converter),
+      tree_and_subtrees_getters_for_debug_info_(
+          tree_and_subtrees_getters_for_debug_info),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
@@ -569,11 +571,12 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 }
 
 template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<
-           SemIR::AssociatedEntityType, SemIR::FacetAccessType,
-           SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
-           SemIR::GenericInterfaceType, SemIR::UnboundElementType,
-           SemIR::WhereExpr>())
+  requires(
+      InstT::Kind.template IsAnyOf<
+          SemIR::AssociatedEntityType, SemIR::FacetAccessType, SemIR::FacetType,
+          SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
+          SemIR::GenericClassType, SemIR::GenericInterfaceType,
+          SemIR::UnboundElementType, SemIR::WhereExpr>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.
@@ -616,13 +619,22 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  auto converted = converter_.ConvertLoc(
-      inst_id, [&](DiagnosticLoc /*context_loc*/,
-                   const DiagnosticBase<>& /*context_diagnostic_base*/) {});
-  const auto& loc = converted.loc;
-  return {.filename = loc.filename,
-          .line_number = loc.line_number == -1 ? 0 : loc.line_number,
-          .column_number = loc.column_number == -1 ? 0 : loc.column_number};
+  SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
+  const auto& tree_and_subtrees =
+      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
+                                                       .index]();
+  const auto& tokens = tree_and_subtrees.tree().tokens();
+
+  if (resolved.node_id.has_value()) {
+    auto token = tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id).begin;
+    return {.filename = tokens.source().filename(),
+            .line_number = tokens.GetLineNumber(token),
+            .column_number = tokens.GetColumnNumber(token)};
+  } else {
+    return {.filename = tokens.source().filename(),
+            .line_number = 0,
+            .column_number = 0};
+  }
 }
 
 }  // namespace Carbon::Lower

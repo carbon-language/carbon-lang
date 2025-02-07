@@ -4,6 +4,8 @@
 
 #include "toolchain/language_server/incoming_messages.h"
 
+#include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "toolchain/language_server/handle.h"
 
 namespace Carbon::LanguageServer {
@@ -55,8 +57,11 @@ auto IncomingMessages::AddNotificationHandler(llvm::StringRef name,
       [name, handler](Context& context, llvm::json::Value raw_params) -> void {
     auto params = Parse<ParamsT>(name, raw_params);
     if (!params) {
-      // TODO: Maybe we should do something more with this error?
-      llvm::consumeError(params.takeError());
+      CARBON_DIAGNOSTIC(LanguageServerNotificationParseError, Warning, "{0}",
+                        std::string);
+      context.no_loc_emitter().Emit(LanguageServerNotificationParseError,
+                                    llvm::toString(params.takeError()));
+      return;
     }
     handler(context, *params);
   };
@@ -71,6 +76,7 @@ IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
   AddCallHandler("initialize", &HandleInitialize);
   AddNotificationHandler("textDocument/didChange",
                          &HandleDidChangeTextDocument);
+  AddNotificationHandler("textDocument/didClose", &HandleDidCloseTextDocument);
   AddNotificationHandler("textDocument/didOpen", &HandleDidOpenTextDocument);
 }
 
@@ -83,7 +89,7 @@ auto IncomingMessages::onCall(llvm::StringRef name, llvm::json::Value params,
                      });
   } else {
     transport_->reply(id, llvm::make_error<clang::clangd::LSPError>(
-                              llvm::formatv("call `{0}` not found", name),
+                              llvm::formatv("unsupported call `{0}`", name),
                               clang::clangd::ErrorCode::MethodNotFound));
   }
 
@@ -98,9 +104,31 @@ auto IncomingMessages::onNotify(llvm::StringRef name, llvm::json::Value value)
   if (auto result = notification_handlers_.Lookup(name)) {
     (result.value())(*context_, std::move(value));
   } else {
-    clang::clangd::log("notification `{0}` not found", name);
+    CARBON_DIAGNOSTIC(LanguageServerUnsupportedNotification, Warning,
+                      "unsupported notification `{0}`", std::string);
+    context_->no_loc_emitter().Emit(LanguageServerUnsupportedNotification,
+                                    name.str());
   }
 
+  return true;
+}
+
+auto IncomingMessages::onReply(llvm::json::Value id,
+                               llvm::Expected<llvm::json::Value> result)
+    -> bool {
+  RawStringOstream id_str;
+  id_str << id;
+  RawStringOstream result_str;
+  if (result) {
+    result_str << result.get();
+  } else {
+    result_str << result.takeError();
+  }
+  CARBON_DIAGNOSTIC(LanguageServerUnexpectedReply, Warning,
+                    "unexpected reply to request ID {0}: {1}", std::string,
+                    std::string);
+  context_->no_loc_emitter().Emit(LanguageServerUnexpectedReply,
+                                  id_str.TakeStr(), result_str.TakeStr());
   return true;
 }
 
