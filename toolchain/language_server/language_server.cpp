@@ -55,7 +55,7 @@ auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
       clang::clangd::newJSONTransport(input_stream, output_stream,
                                       /*InMirror=*/nullptr,
                                       /*Pretty=*/true));
-  Context context(&consumer);
+  Context context(vlog_stream, &consumer);
   // TODO: Use error_stream in IncomingMessages to report dropped errors.
   IncomingMessages incoming(transport.get(), &context);
   OutgoingMessages outgoing(transport.get());

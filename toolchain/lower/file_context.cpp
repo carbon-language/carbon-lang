@@ -26,18 +26,18 @@ namespace Carbon::Lower {
 FileContext::FileContext(
     llvm::LLVMContext& llvm_context,
     std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-        all_trees_and_subtrees_for_debug_info,
+        tree_and_subtrees_getters_for_debug_info,
     llvm::StringRef module_name, const SemIR::File& sem_ir,
     const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       di_builder_(*llvm_module_),
       di_compile_unit_(
-          all_trees_and_subtrees_for_debug_info
+          tree_and_subtrees_getters_for_debug_info
               ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
               : nullptr),
-      all_trees_and_subtrees_for_debug_info_(
-          all_trees_and_subtrees_for_debug_info),
+      tree_and_subtrees_getters_for_debug_info_(
+          tree_and_subtrees_getters_for_debug_info),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
@@ -621,7 +621,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
   const auto& tree_and_subtrees =
-      (*all_trees_and_subtrees_for_debug_info_)[resolved.check_ir_id.index]();
+      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
+                                                       .index]();
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
   if (resolved.node_id.has_value()) {

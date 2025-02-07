@@ -76,6 +76,7 @@ IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
   AddCallHandler("initialize", &HandleInitialize);
   AddNotificationHandler("textDocument/didChange",
                          &HandleDidChangeTextDocument);
+  AddNotificationHandler("textDocument/didClose", &HandleDidCloseTextDocument);
   AddNotificationHandler("textDocument/didOpen", &HandleDidOpenTextDocument);
 }
 

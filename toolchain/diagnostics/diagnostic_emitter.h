@@ -41,30 +41,6 @@ struct ConvertedDiagnosticLoc {
   int32_t last_byte_offset;
 };
 
-// An interface that can convert some representation of a location into a
-// diagnostic location.
-template <typename LocT>
-class DiagnosticConverter {
- public:
-  // Callback type used to report context messages from ConvertLoc.
-  // Note that the first parameter type is DiagnosticLoc rather than
-  // LocT, because ConvertLoc must not recurse.
-  using ContextFnT =
-      llvm::function_ref<void(DiagnosticLoc, const DiagnosticBase<>&)>;
-
-  virtual ~DiagnosticConverter() = default;
-
-  // Converts a LocT to a DiagnosticLoc and its `last_byte_offset` (see
-  // `DiagnosticMessage`). ConvertLoc may invoke context_fn to provide context
-  // messages.
-  virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
-      -> ConvertedDiagnosticLoc = 0;
-
-  // Converts arg types as needed. Not all uses require conversion, so the
-  // default returns the argument unchanged.
-  virtual auto ConvertArg(llvm::Any arg) const -> llvm::Any { return arg; }
-};
-
 // Used by types to indicate a diagnostic type conversion that results in the
 // provided StorageType. For example, to convert NameId to a std::string, we
 // write:
@@ -155,15 +131,11 @@ class DiagnosticEmitter {
     Diagnostic diagnostic_;
   };
 
-  // The `converter` and `consumer` are required to outlive the diagnostic
-  // emitter.
-  // TODO: Adjust construction to take stored arguments as pointers, and
-  // consider taking `converter` by value (move/copy) instead of reference.
-  explicit DiagnosticEmitter(DiagnosticConverter<LocT>& converter,
-                             DiagnosticConsumer& consumer)
-      : converter_(&converter), consumer_(&consumer) {}
+  // `consumer` is required to outlive the diagnostic emitter.
+  explicit DiagnosticEmitter(DiagnosticConsumer* consumer)
+      : consumer_(consumer) {}
 
-  ~DiagnosticEmitter() = default;
+  virtual ~DiagnosticEmitter() = default;
 
   // Emits an error.
   //
@@ -187,6 +159,23 @@ class DiagnosticEmitter {
   // be silently ignored.
   auto BuildSuppressed() -> DiagnosticBuilder { return DiagnosticBuilder(); }
 
+ protected:
+  // Callback type used to report context messages from ConvertLoc.
+  // Note that the first parameter type is DiagnosticLoc rather than
+  // LocT, because ConvertLoc must not recurse.
+  using ContextFnT =
+      llvm::function_ref<void(DiagnosticLoc, const DiagnosticBase<>&)>;
+
+  // Converts a LocT to a DiagnosticLoc and its `last_byte_offset` (see
+  // `DiagnosticMessage`). ConvertLoc may invoke context_fn to provide context
+  // messages.
+  virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
+      -> ConvertedDiagnosticLoc = 0;
+
+  // Converts arg types as needed. Most children don't customize conversion, so
+  // the default returns the argument unchanged.
+  virtual auto ConvertArg(llvm::Any arg) const -> llvm::Any { return arg; }
+
  private:
   // Converts an argument to llvm::Any for storage, handling input to storage
   // type conversion when needed.
@@ -196,7 +185,6 @@ class DiagnosticEmitter {
   template <typename OtherLocT, typename AnnotateFn>
   friend class DiagnosticAnnotationScope;
 
-  DiagnosticConverter<LocT>* converter_;
   DiagnosticConsumer* consumer_;
   llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
       annotate_fns_;
@@ -211,9 +199,7 @@ class DiagnosticEmitter {
 // up being more noise than it is worth.
 class NoLocDiagnosticEmitter : public DiagnosticEmitter<void*> {
  public:
-  // This constructor only applies to NoLocDiagnosticEmitter.
-  explicit NoLocDiagnosticEmitter(DiagnosticConsumer* consumer)
-      : DiagnosticEmitter(converter_, *consumer) {}
+  using DiagnosticEmitter::DiagnosticEmitter;
 
   // Emits an error. This specialization only applies to
   // `NoLocDiagnosticEmitter`.
@@ -223,14 +209,11 @@ class NoLocDiagnosticEmitter : public DiagnosticEmitter<void*> {
     DiagnosticEmitter::Emit(nullptr, diagnostic_base, args...);
   }
 
- private:
-  struct Converter : DiagnosticConverter<void*> {
-    auto ConvertLoc(void* /*loc*/, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
-      return {.loc = {.filename = ""}, .last_byte_offset = -1};
-    }
-  };
-  Converter converter_;
+ protected:
+  auto ConvertLoc(void* /*loc*/, ContextFnT /*context_fn*/) const
+      -> ConvertedDiagnosticLoc override {
+    return {.loc = {.filename = ""}, .last_byte_offset = -1};
+  }
 };
 
 // An RAII object that denotes a scope in which any diagnostic produced should
@@ -328,7 +311,7 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::AddMessage(
   if (!emitter_) {
     return;
   }
-  auto converted = emitter_->converter_->ConvertLoc(
+  auto converted = emitter_->ConvertLoc(
       loc, [&](DiagnosticLoc context_loc,
                const DiagnosticBase<>& context_diagnostic_base) {
         AddMessageWithDiagnosticLoc(context_loc, context_diagnostic_base, {});
@@ -397,7 +380,7 @@ auto DiagnosticEmitter<LocT>::Build(
 template <typename LocT>
 template <typename Arg>
 auto DiagnosticEmitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
-  llvm::Any converted = converter_->ConvertArg(arg);
+  llvm::Any converted = ConvertArg(arg);
   using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
   CARBON_CHECK(llvm::any_cast<Storage>(&converted),
                "Failed to convert argument of type {0} to its storage type {1}",
