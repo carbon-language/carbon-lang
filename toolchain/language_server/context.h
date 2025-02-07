@@ -30,7 +30,8 @@ class Context {
     explicit File(clang::clangd::URIForFile uri) : uri_(std::move(uri)) {}
 
     // Changes the file's text, updating dependent state.
-    auto SetText(Context& context, std::optional<int64_t> version, llvm::StringRef text) -> void;
+    auto SetText(Context& context, std::optional<int64_t> version,
+                 llvm::StringRef text) -> void;
 
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
       return *tree_and_subtrees_;

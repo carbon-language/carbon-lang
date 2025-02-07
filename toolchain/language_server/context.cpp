@@ -19,15 +19,18 @@
 
 namespace Carbon::LanguageServer {
 
+// A consumer for turning diagnostics into a `textDocument/publishDiagnostics`
+// notification.
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics
 class PublishDiagnosticConsumer : public DiagnosticConsumer {
  public:
+  // Initializes params with the target file information.
   explicit PublishDiagnosticConsumer(Context* context,
                                      const clang::clangd::URIForFile& uri,
                                      std::optional<int64_t> version)
       : context_(context), params_{.uri = uri, .version = version} {}
 
-  auto params() -> llvm::json::Value { return params_; }
-
+  // Turns a diagnostic into an LSP diagnostic.
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
     const auto& message = diagnostic.messages[0];
     if (message.loc.filename != params_.uri.file()) {
@@ -56,6 +59,9 @@ class PublishDiagnosticConsumer : public DiagnosticConsumer {
     });
     // TODO: Figure out constructing URIs for note locations.
   }
+
+  // Returns the constructed request.
+  auto params() -> llvm::json::Value { return params_; }
 
  private:
   // Returns the LSP range for a diagnostic. Note that Carbon uses 1-based
@@ -100,6 +106,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   value_stores_.reset();
   source_.reset();
 
+  // A consumer to gather diagnostics for the file.
   PublishDiagnosticConsumer consumer(&context, uri_, version);
 
   // TODO: Make the processing asynchronous, to better handle rapid text
@@ -141,6 +148,9 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   Check::CheckParseTrees(units, /*prelude_import=*/false, fs,
                          context.vlog_stream(), /*fuzzing=*/false);
 
+  // Note we need to publish diagnostics even when empty.
+  // TODO: Consider caching previously published diagnostics and only publishing
+  // when they change.
   context.outgoing().notify("textDocument/publishDiagnostics",
                             consumer.params());
 }

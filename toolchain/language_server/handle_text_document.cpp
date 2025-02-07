@@ -7,8 +7,8 @@
 namespace Carbon::LanguageServer {
 
 auto HandleDidOpenTextDocument(
-    Context& context,
-    const clang::clangd::DidOpenTextDocumentParams& params) -> void {
+    Context& context, const clang::clangd::DidOpenTextDocumentParams& params)
+    -> void {
   llvm::StringRef filename = params.textDocument.uri.file();
   if (!filename.ends_with(".carbon")) {
     // Ignore non-Carbon files.
@@ -27,8 +27,8 @@ auto HandleDidOpenTextDocument(
 }
 
 auto HandleDidChangeTextDocument(
-    Context& context,
-    const clang::clangd::DidChangeTextDocumentParams& params) -> void {
+    Context& context, const clang::clangd::DidChangeTextDocumentParams& params)
+    -> void {
   llvm::StringRef filename = params.textDocument.uri.file();
   if (!filename.ends_with(".carbon")) {
     // Ignore non-Carbon files.
@@ -50,8 +50,8 @@ auto HandleDidChangeTextDocument(
 }
 
 auto HandleDidCloseTextDocument(
-    Context& context,
-    const clang::clangd::DidCloseTextDocumentParams& params) -> void {
+    Context& context, const clang::clangd::DidCloseTextDocumentParams& params)
+    -> void {
   llvm::StringRef filename = params.textDocument.uri.file();
   if (!filename.ends_with(".carbon")) {
     // Ignore non-Carbon files.
