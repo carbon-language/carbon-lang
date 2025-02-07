@@ -84,21 +84,21 @@
 // CHECK:STDOUT:       "name": "F",
 // CHECK:STDOUT:       "range": {
 // CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 7,
+// CHECK:STDOUT:           "character": 9,
 // CHECK:STDOUT:           "line": 0
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {
-// CHECK:STDOUT:           "character": 7,
+// CHECK:STDOUT:           "character": 0,
 // CHECK:STDOUT:           "line": 0
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       },
 // CHECK:STDOUT:       "selectionRange": {
 // CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 7,
+// CHECK:STDOUT:           "character": 4,
 // CHECK:STDOUT:           "line": 0
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {
-// CHECK:STDOUT:           "character": 7,
+// CHECK:STDOUT:           "character": 3,
 // CHECK:STDOUT:           "line": 0
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
