@@ -98,7 +98,8 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
              context,
              context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
              SemIR::NameId::ForIdentifier(cpp_package_id),
-             SemIR::NameScopeId::Package, false,
+             SemIR::NameScopeId::Package,
+             /*diagnose_duplicate_namespace=*/false,
              [&]() {
                return context.AddInst<SemIR::ImportCppDecl>(
                    imports.front().node_id, {});
