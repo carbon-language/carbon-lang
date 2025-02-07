@@ -174,17 +174,14 @@ import Cpp library "header.h";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Cpp: <namespace> = import_ref Main//api_and_impl, Cpp, loaded
-// CHECK:STDOUT:   %Cpp.99e: <namespace> = namespace %Main.Cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace %Main.Cpp, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp.99e
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "header.h"
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

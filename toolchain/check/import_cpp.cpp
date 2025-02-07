@@ -16,6 +16,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/import.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -86,14 +87,6 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
 static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> SemIR::NameScopeId {
-  // TODO: Extract and deudplicate common logic with import.cpp.
-  auto name_id = SemIR::NameId::ForIdentifier(cpp_package_id);
-
-  Parse::ImportDeclId first_import_node_id = imports.front().node_id;
-
-  SemIR::InstId import_cpp_id =
-      context.AddInst<SemIR::ImportCppDecl>(first_import_node_id, {});
-
   auto& import_cpps = context.sem_ir().import_cpps();
   import_cpps.Reserve(imports.size());
   for (const Parse::Tree::PackagingNames& import : imports) {
@@ -101,36 +94,16 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
         {.node_id = import.node_id, .library_id = import.library_id});
   }
 
-  auto namespace_inst = SemIR::Namespace{
-      .type_id =
-          context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
-      .name_scope_id = SemIR::NameScopeId::None,
-      .import_id = import_cpp_id};
-
-  auto namespace_inst_and_loc =
-      // TODO: Check that this actually is an `AnyNamespaceId`.
-      SemIR::LocIdAndInst(Parse::AnyNamespaceId(first_import_node_id),
-                          namespace_inst);
-
-  SemIR::InstId namespace_id =
-      context.AddPlaceholderInstInNoBlock(namespace_inst_and_loc);
-  context.import_ref_ids().push_back(namespace_id);
-  SemIR::NameScope& package_name_scope =
-      context.name_scopes().Get(SemIR::NameScopeId::Package);
-  auto [added, entry_id] = package_name_scope.LookupOrAdd(
-      name_id, namespace_id, SemIR::AccessKind::Public);
-  CARBON_CHECK(added ||
-               !package_name_scope.GetEntry(entry_id).result.is_poisoned());
-
-  namespace_inst.name_scope_id = context.name_scopes().Add(
-      namespace_id, name_id, SemIR::NameScopeId::Package);
-  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
-
-  context.name_scopes()
-      .Get(namespace_inst.name_scope_id)
-      .set_is_closed_import(true);
-
-  return namespace_inst.name_scope_id;
+  return AddImportNamespace(
+             context,
+             context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
+             SemIR::NameId::ForIdentifier(cpp_package_id),
+             SemIR::NameScopeId::Package, false,
+             [&]() {
+               return context.AddInst<SemIR::ImportCppDecl>(
+                   imports.front().node_id, {});
+             })
+      .name_scope_id;
 }
 
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
@@ -150,9 +123,11 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
         return import.package_id == package_id;
       }));
   auto name_scope_id = AddNamespace(context, package_id, imports);
+  SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
+  name_scope.set_is_closed_import(true);
 
   if (ast_has_error) {
-    context.name_scopes().Get(name_scope_id).set_has_error();
+    name_scope.set_has_error();
   }
 }
 
