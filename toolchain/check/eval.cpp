@@ -1798,22 +1798,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
                                         &SemIR::ImplWitnessAccess::witness_id,
                                         &phase)) {
-        auto witness_id = access_inst.witness_id;
-
-        if (phase == Phase::Template) {
-          if (auto facet_access =
-                  eval_context.insts().TryGetAs<SemIR::FacetAccessWitness>(
-                      access_inst.witness_id)) {
-            auto facet_value = eval_context.constant_values().GetConstantInstId(
-                facet_access->facet_value_inst_id);
-            auto facet_value_inst =
-                eval_context.insts().GetAs<SemIR::FacetValue>(facet_value);
-            witness_id = facet_value_inst.witness_inst_id;
-          }
-        }
-
-        if (auto witness =
-                eval_context.insts().TryGetAs<SemIR::ImplWitness>(witness_id)) {
+        if (auto witness = eval_context.insts().TryGetAs<SemIR::ImplWitness>(
+                access_inst.witness_id)) {
           auto elements = eval_context.inst_blocks().Get(witness->elements_id);
           auto index = static_cast<size_t>(access_inst.index.index);
           CARBON_CHECK(index < elements.size(), "Access out of bounds.");
