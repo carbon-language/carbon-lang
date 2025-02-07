@@ -381,10 +381,10 @@ fn F() {
 fn F(x: bool);
 
 // CHECK:STDERR: fail_implicitly_poison_core.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: class Core {}
-// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR: class r#Core {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-class Core {}
+class r#Core {}
 
 // CHECK:STDOUT: --- no_poison.carbon
 // CHECK:STDOUT:
