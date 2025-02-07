@@ -41,7 +41,7 @@ static auto GenerateCppIncludesHeaderCode(
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
-    -> std::unique_ptr<clang::ASTUnit> {
+    -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   // TODO: Use all import locations by referring each Clang diagnostic to the
   // relevant import.
   SemIRLoc loc = imports.back().node_id;
@@ -79,7 +79,7 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
     context.emitter().Emit(loc, CppInteropParseWarning, num_warnings,
                            num_imports, diagnostics_str);
   }
-  return ast;
+  return {std::move(ast), !ast || num_errors > 0};
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
@@ -141,7 +141,8 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
     return;
   }
 
-  auto ast = GenerateAst(context, importing_file_path, imports, fs);
+  auto [ast, ast_has_error] =
+      GenerateAst(context, importing_file_path, imports, fs);
 
   IdentifierId package_id = imports.front().package_id;
   CARBON_CHECK(
@@ -150,7 +151,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
       }));
   auto name_scope_id = AddNamespace(context, package_id, imports);
 
-  if (!ast) {
+  if (ast_has_error) {
     context.name_scopes().Get(name_scope_id).set_has_error();
   }
 }

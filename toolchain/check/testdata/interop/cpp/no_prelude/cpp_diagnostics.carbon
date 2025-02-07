@@ -218,7 +218,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- fail_import_cpp_file_with_one_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -233,7 +235,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- fail_import_cpp_file_with_multiple_errors.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -278,7 +282,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- fail_import_cpp_file_with_one_error_and_one_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -293,7 +299,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -324,7 +332,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- fail_import_multiple_cpp_files_with_warnings_and_errors.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
