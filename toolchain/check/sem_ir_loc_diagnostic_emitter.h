@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_SEM_IR_DIAGNOSTIC_CONVERTER_H_
-#define CARBON_TOOLCHAIN_CHECK_SEM_IR_DIAGNOSTIC_CONVERTER_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_
+#define CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -17,13 +17,25 @@
 namespace Carbon::Check {
 
 // Handles the transformation of a SemIRLoc to a DiagnosticLoc.
-class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
+class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
  public:
-  explicit SemIRDiagnosticConverter(
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees,
+  explicit SemIRLocDiagnosticEmitter(
+      DiagnosticConsumer* consumer,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       const SemIR::File* sem_ir)
-      : imported_trees_and_subtrees_(imported_trees_and_subtrees),
+      : DiagnosticEmitter(consumer),
+        tree_and_subtrees_getters_(tree_and_subtrees_getters),
         sem_ir_(sem_ir) {}
+
+  // If a byte offset is past the current last byte offset, advances forward.
+  // Earlier offsets are ignored.
+  auto AdvanceToken(Lex::TokenIndex token) -> void {
+    last_token_ = std::max(last_token_, token);
+  }
+
+ protected:
+  // Implements argument conversions for supported check-phase arguments.
+  auto ConvertArg(llvm::Any arg) const -> llvm::Any override;
 
   // Implements `DiagnosticConverter::ConvertLoc`. Adds context for any imports
   // used in the current SemIR to get to the underlying code.
@@ -33,15 +45,6 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
   // later.
   auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
       -> ConvertedDiagnosticLoc override;
-
-  // Implements argument conversions for supported check-phase arguments.
-  auto ConvertArg(llvm::Any arg) const -> llvm::Any override;
-
-  // If a byte offset is past the current last byte offset, advances forward.
-  // Earlier offsets are ignored.
-  auto AdvanceToken(Lex::TokenIndex token) -> void {
-    last_token_ = std::max(last_token_, token);
-  }
 
  private:
   // Implements `ConvertLoc`, but without `last_token_` applied.
@@ -54,7 +57,7 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
                         ContextFnT context_fn) const -> ConvertedDiagnosticLoc;
 
   // Converters for each SemIR.
-  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> imported_trees_and_subtrees_;
+  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
 
   // The current SemIR being processed.
   const SemIR::File* sem_ir_;
@@ -65,4 +68,4 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_SEM_IR_DIAGNOSTIC_CONVERTER_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_

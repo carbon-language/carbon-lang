@@ -493,7 +493,8 @@ struct LetDecl {
 using VariableIntroducer =
     LeafNode<NodeKind::VariableIntroducer, Lex::VarTokenIndex>;
 using ReturnedModifier =
-    LeafNode<NodeKind::ReturnedModifier, Lex::ReturnedTokenIndex>;
+    LeafNode<NodeKind::ReturnedModifier, Lex::ReturnedTokenIndex,
+             NodeCategory::Modifier>;
 using VariableInitializer =
     LeafNode<NodeKind::VariableInitializer, Lex::EqualTokenIndex>;
 
@@ -580,8 +581,8 @@ struct ContinueStatement {
 
 using ReturnStatementStart =
     LeafNode<NodeKind::ReturnStatementStart, Lex::ReturnTokenIndex>;
-using ReturnVarModifier =
-    LeafNode<NodeKind::ReturnVarModifier, Lex::VarTokenIndex>;
+using ReturnVarModifier = LeafNode<NodeKind::ReturnVarModifier,
+                                   Lex::VarTokenIndex, NodeCategory::Modifier>;
 
 // A return statement: `return;` or `return expr;` or `return var;`.
 struct ReturnStatement {

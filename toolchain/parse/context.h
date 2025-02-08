@@ -33,6 +33,28 @@ enum class Lookahead : int32_t {
 // documentation.
 class Context {
  public:
+  // A token-based emitter for use during parse.
+  class Emitter : public DiagnosticEmitter<Lex::TokenIndex> {
+   public:
+    explicit Emitter(DiagnosticConsumer* consumer, Context* context)
+        : DiagnosticEmitter(consumer), context_(context) {}
+
+   protected:
+    // Applies the `position_` to the `last_byte_offset` returned by
+    // `TokenToDiagnosticLoc`.
+    auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
+        -> ConvertedDiagnosticLoc override {
+      auto converted = context_->tokens().TokenToDiagnosticLoc(token);
+      converted.last_byte_offset =
+          std::max(converted.last_byte_offset,
+                   context_->tokens().GetByteOffset(*context_->position()));
+      return converted;
+    }
+
+   private:
+    Context* context_;
+  };
+
   // Possible operator fixities for errors.
   enum class OperatorFixity : int8_t { Prefix, Infix, Postfix };
 
@@ -376,7 +398,7 @@ class Context {
 
   auto has_errors() const -> bool { return err_tracker_.seen_error(); }
 
-  auto emitter() -> Lex::TokenDiagnosticEmitter& { return emitter_; }
+  auto emitter() -> Emitter& { return emitter_; }
 
   auto position() -> Lex::TokenIterator& { return position_; }
   auto position() const -> Lex::TokenIterator { return position_; }
@@ -402,30 +424,6 @@ class Context {
   }
 
  private:
-  // Applies the `position_` to the `last_byte_offset` returned by
-  // `TokenToDiagnosticLoc`.
-  class TokenDiagnosticConverterForParse
-      : public DiagnosticConverter<Lex::TokenIndex> {
-   public:
-    explicit TokenDiagnosticConverterForParse(Lex::TokenizedBuffer* tokens,
-                                              Lex::TokenIterator* position)
-        : tokens_(tokens), position_(position) {}
-
-    auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
-      auto converted = tokens_->TokenToDiagnosticLoc(token);
-      converted.last_byte_offset = std::max(
-          converted.last_byte_offset, tokens_->GetByteOffset(**position_));
-      return converted;
-    }
-
-   private:
-    Lex::TokenizedBuffer* tokens_;
-
-    // The position in `Parse()`.
-    Lex::TokenIterator* position_;
-  };
-
   // Prints a single token for a stack dump. Used by PrintForStackDump.
   auto PrintTokenForStackDump(llvm::raw_ostream& output,
                               Lex::TokenIndex token) const -> void;
@@ -433,9 +431,8 @@ class Context {
   Tree* tree_;
   Lex::TokenizedBuffer* tokens_;
 
-  TokenDiagnosticConverterForParse converter_;
   ErrorTrackingDiagnosticConsumer err_tracker_;
-  Lex::TokenDiagnosticEmitter emitter_;
+  Emitter emitter_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

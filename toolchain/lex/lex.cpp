@@ -17,6 +17,7 @@
 #include "toolchain/lex/helpers.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
+#include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
@@ -83,10 +84,8 @@ class [[clang::internal_linkage]] Lexer {
         DiagnosticConsumer& consumer)
       : buffer_(value_stores, source),
         consumer_(consumer),
-        converter_(&buffer_),
-        emitter_(converter_, consumer_),
-        token_converter_(&buffer_),
-        token_emitter_(token_converter_, consumer_) {}
+        emitter_(&consumer_, &buffer_),
+        token_emitter_(&consumer_, &buffer_) {}
 
   // Find all line endings and create the line data structures.
   //
@@ -223,11 +222,9 @@ class [[clang::internal_linkage]] Lexer {
 
   ErrorTrackingDiagnosticConsumer consumer_;
 
-  TokenizedBuffer::SourceBufferDiagnosticConverter converter_;
-  LexerDiagnosticEmitter emitter_;
+  TokenizedBuffer::SourcePointerDiagnosticEmitter emitter_;
 
-  TokenDiagnosticConverter token_converter_;
-  TokenDiagnosticEmitter token_emitter_;
+  TokenizedBuffer::TokenDiagnosticEmitter token_emitter_;
 };
 
 #if CARBON_USE_SIMD
@@ -1529,7 +1526,7 @@ class Lexer::ErrorRecoveryBuffer {
 };
 
 // Issue an UnmatchedOpening diagnostic.
-static auto DiagnoseUnmatchedOpening(TokenDiagnosticEmitter& emitter,
+static auto DiagnoseUnmatchedOpening(DiagnosticEmitter<TokenIndex>& emitter,
                                      TokenIndex opening_token) -> void {
   CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
                     "opening symbol without a corresponding closing symbol");

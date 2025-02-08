@@ -28,11 +28,6 @@ CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
 CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
 CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
-CARBON_DIAGNOSTIC_KIND(LanguageServerMissingInputStream)
-CARBON_DIAGNOSTIC_KIND(LanguageServerNotificationParseError)
-CARBON_DIAGNOSTIC_KIND(LanguageServerTransportError)
-CARBON_DIAGNOSTIC_KIND(LanguageServerUnexpectedReply)
-CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
 
 // ============================================================================
 // SourceBuffer diagnostics
@@ -272,6 +267,7 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(VarInInterfaceDecl)
 
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
@@ -439,6 +435,24 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+
+// ============================================================================
+// Language server diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(LanguageServerFileUnknown)
+CARBON_DIAGNOSTIC_KIND(LanguageServerFileUnsupported)
+CARBON_DIAGNOSTIC_KIND(LanguageServerMissingInputStream)
+CARBON_DIAGNOSTIC_KIND(LanguageServerNotificationParseError)
+CARBON_DIAGNOSTIC_KIND(LanguageServerTransportError)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnexpectedReply)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
+
+// Document handling.
+CARBON_DIAGNOSTIC_KIND(LanguageServerOpenDuplicateFile)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedChanges)
+CARBON_DIAGNOSTIC_KIND(LanguageServerCloseUnknownFile)
+CARBON_DIAGNOSTIC_KIND(LanguageServerDiagnosticInWrongFile)
 
 // ============================================================================
 // Other diagnostics

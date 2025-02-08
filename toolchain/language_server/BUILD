@@ -28,10 +28,23 @@ cc_library(
 
 cc_library(
     name = "context",
+    srcs = ["context.cpp"],
     hdrs = ["context.h"],
     deps = [
+        "//common:check",
         "//common:map",
+        "//common:raw_string_ostream",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/check",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:file_diagnostics",
+        "//toolchain/lex",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:file",
+        "//toolchain/source:source_buffer",
+        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )
 
@@ -42,7 +55,6 @@ cc_library(
     deps = [
         ":context",
         "//toolchain/base:shared_value_stores",
-        "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",
         "//toolchain/parse",
         "//toolchain/parse:node_kind",

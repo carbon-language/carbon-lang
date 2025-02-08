@@ -79,6 +79,9 @@ struct DiagnosticLoc {
 // A message composing a diagnostic. This may be the main message, but can also
 // be notes providing more information.
 struct DiagnosticMessage {
+  // Helper for calling `format_fn`.
+  auto Format() const -> std::string { return format_fn(*this); }
+
   // The diagnostic's kind.
   DiagnosticKind kind;
 
