@@ -62,7 +62,7 @@ class SymbolStore {
   }
 
   auto Collect() -> std::vector<clang::clangd::DocumentSymbol> {
-    // Shouldn't happen in a valid tree but may aswell handle gracefully.
+    // Shouldn't happen in a valid tree but may as well handle gracefully.
     while (!open_symbols_.empty()) {
       EndSymbol();
     }
@@ -90,7 +90,7 @@ auto HandleDocumentSymbol(
   const auto& tokens = tree.tokens();
 
   SymbolStore symbols;
-  for (const auto node_id : tree.postorder()) {
+  for (const auto& node_id : tree.postorder()) {
     auto node_kind = tree.node_kind(node_id);
     clang::clangd::SymbolKind symbol_kind;
     bool is_leaf = false;
