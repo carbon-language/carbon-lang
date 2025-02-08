@@ -103,7 +103,7 @@ struct PackageNameId : public IdBase<PackageNameId> {
     if (*this == Core) {
       return "Core";
     }
-    CARBON_FATAL("Unknown special package name kind");
+    CARBON_FATAL("Unknown special package name kind {0}", *this);
   }
 };
 constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);
