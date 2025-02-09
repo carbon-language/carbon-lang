@@ -74,6 +74,7 @@ IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
     : transport_(transport), context_(context) {
   AddCallHandler("textDocument/documentSymbol", &HandleDocumentSymbol);
   AddCallHandler("initialize", &HandleInitialize);
+  AddCallHandler("shutdown", &HandleShutdown);
   AddNotificationHandler("textDocument/didChange",
                          &HandleDidChangeTextDocument);
   AddNotificationHandler("textDocument/didClose", &HandleDidCloseTextDocument);

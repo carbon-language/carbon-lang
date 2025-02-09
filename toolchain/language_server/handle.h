@@ -12,18 +12,18 @@ namespace Carbon::LanguageServer {
 
 // Stores the content of newly-opened documents.
 auto HandleDidChangeTextDocument(
-    Context& context, const clang::clangd::DidChangeTextDocumentParams& params)
-    -> void;
+    Context& context,
+    const clang::clangd::DidChangeTextDocumentParams& params) -> void;
 
 // Closes a document.
 auto HandleDidCloseTextDocument(
-    Context& context, const clang::clangd::DidCloseTextDocumentParams& params)
-    -> void;
+    Context& context,
+    const clang::clangd::DidCloseTextDocumentParams& params) -> void;
 
 // Updates the content of already-open documents.
 auto HandleDidOpenTextDocument(
-    Context& context, const clang::clangd::DidOpenTextDocumentParams& params)
-    -> void;
+    Context& context,
+    const clang::clangd::DidOpenTextDocumentParams& params) -> void;
 
 // Provides information about document symbols.
 auto HandleDocumentSymbol(
@@ -38,6 +38,12 @@ auto HandleInitialize(
     const clang::clangd::NoParams& /*client_capabilities*/,
     llvm::function_ref<void(llvm::Expected<llvm::json::Object>)> on_done)
     -> void;
+
+// Prepares LSP for shutdown.
+auto HandleShutdown(
+    Context& /*context*/,
+    const clang::clangd::NoParams& /*client_capabilities*/,
+    llvm::function_ref<void(llvm::Expected<std::nullptr_t>)> on_done) -> void;
 
 }  // namespace Carbon::LanguageServer
 
