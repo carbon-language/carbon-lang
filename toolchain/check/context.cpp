@@ -1326,9 +1326,7 @@ class TypeCompleter {
   }
 
   template <typename InstT>
-    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never /*&&
-             InstT::Kind.constant_kind() !=
-                 SemIR::InstConstantKind::SymbolicOnly*/)
+    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
       -> SemIR::ValueRepr {
     CARBON_FATAL("Type refers to non-type inst {0}", inst);
@@ -1336,12 +1334,10 @@ class TypeCompleter {
 
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
-  // NOLINTNEXTLINE(readability-function-size)
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     // Use overload resolution to select the implementation, producing compile
-    // errors when BuildValueReprForInst isn't defined for a given
-    // instruction.
+    // errors when BuildValueReprForInst isn't defined for a given instruction.
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)                  \
   case CARBON_KIND(SemIR::Name typed_inst): {          \
