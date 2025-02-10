@@ -501,6 +501,7 @@ struct ClassElementAccess {
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
           {.ir_name = "class_element_access",
+           .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -817,6 +818,7 @@ struct ImplDecl {
 struct ImplWitness {
   static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
       {.ir_name = "impl_witness",
+       .is_type = InstIsType::Never,
        .constant_kind = InstConstantKind::Conditional,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
        // constants.
@@ -833,7 +835,7 @@ struct ImplWitnessAccess {
   static constexpr auto Kind =
       InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
           {.ir_name = "impl_witness_access",
-           .is_type = InstIsType::Maybe,
+           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 
@@ -1303,6 +1305,7 @@ struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
       {.ir_name = "struct_access",
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -1377,6 +1380,7 @@ struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
       {.ir_name = "tuple_access",
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;

@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -450,6 +451,16 @@ static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
   CARBON_FATAL("Cannot use inst as type: {0}", inst);
 }
 
+template <typename InstT>
+  requires(InstT::Kind.constant_kind() ==
+               SemIR::InstConstantKind::SymbolicOnly &&
+           InstT::Kind.is_type() != SemIR::InstIsType::Never)
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  // Treat non-monomorphized symbolic types as opaque.
+  return llvm::StructType::get(context.llvm_context());
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> llvm::Type* {
   return llvm::ArrayType::get(
@@ -571,26 +582,16 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 }
 
 template <typename InstT>
-  requires(
-      InstT::Kind.template IsAnyOf<
-          SemIR::AssociatedEntityType, SemIR::FacetAccessType, SemIR::FacetType,
-          SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
-          SemIR::GenericClassType, SemIR::GenericInterfaceType,
-          SemIR::UnboundElementType, SemIR::WhereExpr>())
+  requires(InstT::Kind.template IsAnyOf<
+           SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
+           SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+           SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+           SemIR::WhereExpr>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.
   // TODO: Should we model an interface as a witness table, or an associated
   // entity as an index?
-  return llvm::StructType::get(context.llvm_context());
-}
-
-// Treat non-monomorphized symbolic types as opaque.
-template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
-                                        SemIR::ImplWitnessAccess>())
-static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
-    -> llvm::Type* {
   return llvm::StructType::get(context.llvm_context());
 }
 

@@ -1158,11 +1158,13 @@ class TypeCompleter {
   }
 
   template <typename InstT>
-    requires(InstT::Kind.template IsAnyOf<
-             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
-             SemIR::ErrorInst, SemIR::IntLiteralType, SemIR::LegacyFloatType,
-             SemIR::NamespaceType, SemIR::SpecificFunctionType, SemIR::TypeType,
-             SemIR::VtableType, SemIR::WitnessType>())
+    requires(
+        InstT::Kind.template IsAnyOf<
+            SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
+            SemIR::ErrorInst, SemIR::FloatType, SemIR::IntType,
+            SemIR::IntLiteralType, SemIR::LegacyFloatType, SemIR::NamespaceType,
+            SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
+            SemIR::VtableType, SemIR::WitnessType>())
   auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     return MakeCopyValueRepr(type_id);
@@ -1290,8 +1292,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FacetAccessType,
-             SemIR::FacetType, SemIR::FunctionType,
+             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
              SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
              SemIR::GenericInterfaceType, SemIR::UnboundElementType,
              SemIR::WhereExpr>())
@@ -1307,23 +1308,6 @@ class TypeCompleter {
     return MakeEmptyValueRepr();
   }
 
-  template <typename InstT>
-    requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
-                                          SemIR::ImplWitnessAccess>())
-  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
-      -> SemIR::ValueRepr {
-    // For symbolic types, we arbitrarily pick a copy representation.
-    return MakeCopyValueRepr(type_id);
-  }
-
-  template <typename InstT>
-    requires(InstT::Kind.template IsAnyOf<SemIR::FloatType, SemIR::IntType,
-                                          SemIR::PointerType>())
-  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
-      -> SemIR::ValueRepr {
-    return MakeCopyValueRepr(type_id);
-  }
-
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/,
                              SemIR::ConstType inst) const -> SemIR::ValueRepr {
     // The value representation of `const T` is the same as that of `T`.
@@ -1332,47 +1316,22 @@ class TypeCompleter {
   }
 
   template <typename InstT>
-    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
-  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
+    requires(InstT::Kind.constant_kind() ==
+                 SemIR::InstConstantKind::SymbolicOnly &&
+             InstT::Kind.is_type() != SemIR::InstIsType::Never)
+  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::ValueRepr {
-    CARBON_FATAL("Type refers to non-type inst {0}", inst);
-  }
-
-  auto LookThroughInstForValueRepr(SemIR::TupleAccess tuple_access) const
-      -> std::optional<SemIR::TypeId> {
-    auto tuple_inst = context_.insts().Get(tuple_access.tuple_id);
-    auto tuple_type = tuple_inst.type_id();
-    auto elements_id =
-        context_.types().GetAs<SemIR::TupleType>(tuple_type).elements_id;
-    auto types = context_.type_blocks().Get(elements_id);
-    return types[tuple_access.index.index];
-  }
-
-  auto LookThroughInstForValueRepr(SemIR::StructAccess struct_access) const
-      -> std::optional<SemIR::TypeId> {
-    auto struct_inst = context_.insts().Get(struct_access.struct_id);
-    auto struct_type = struct_inst.type_id();
-    auto fields_id =
-        context_.types().GetAs<SemIR::StructType>(struct_type).fields_id;
-    auto fields = context_.struct_type_fields().Get(fields_id);
-    auto field = fields[struct_access.index.index];
-    return field.type_id;
-  }
-
-  auto LookThroughInstForValueRepr(SemIR::ClassElementAccess /*class_access*/)
-      const -> std::optional<SemIR::TypeId> {
-    // See the fail_todo_class_access.carbon test in
-    // toolchain/check/testdata/builtin_conversions/no_prelude/value_with_type_through_access.carbon.
-    context_.TODO(
-        loc_,
-        "Can't yet build a comp-time class to access in a type position.");
-    return std::nullopt;
+    // For symbolic types, we arbitrarily pick a copy representation.
+    return MakeCopyValueRepr(type_id);
   }
 
   template <typename InstT>
-  auto LookThroughInstForValueRepr(InstT /*inst*/) const
-      -> std::optional<SemIR::TypeId> {
-    return std::nullopt;
+    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never /*&&
+             InstT::Kind.constant_kind() !=
+                 SemIR::InstConstantKind::SymbolicOnly*/)
+  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
+      -> SemIR::ValueRepr {
+    CARBON_FATAL("Type refers to non-type inst {0}", inst);
   }
 
   // Builds and returns the value representation for the given type. All nested
@@ -1380,23 +1339,15 @@ class TypeCompleter {
   // NOLINTNEXTLINE(readability-function-size)
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    while (true) {
-      // Use overload resolution to select the implementation, producing compile
-      // errors when BuildValueReprForInst isn't defined for a given
-      // instruction.
-      CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND(Name)                                        \
-  case CARBON_KIND(SemIR::Name typed_inst): {                                \
-    if (auto indirected_type_id = LookThroughInstForValueRepr(typed_inst)) { \
-      type_id = *indirected_type_id;                                         \
-      inst = context_.types().GetAsInst(type_id);                            \
-      continue;                                                              \
-    } else {                                                                 \
-      return BuildValueReprForInst(type_id, typed_inst);                     \
-    }                                                                        \
+    // Use overload resolution to select the implementation, producing compile
+    // errors when BuildValueReprForInst isn't defined for a given
+    // instruction.
+    CARBON_KIND_SWITCH(inst) {
+#define CARBON_SEM_IR_INST_KIND(Name)                  \
+  case CARBON_KIND(SemIR::Name typed_inst): {          \
+    return BuildValueReprForInst(type_id, typed_inst); \
   }
 #include "toolchain/sem_ir/inst_kind.def"
-      }
     }
   }
 
