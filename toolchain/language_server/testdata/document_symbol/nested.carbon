@@ -20,7 +20,16 @@
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 1494{{\r}}
+// CHECK:STDOUT: Content-Length: 145{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
+// CHECK:STDOUT:   "params": {
+// CHECK:STDOUT:     "diagnostics": [],
+// CHECK:STDOUT:     "uri": "file:///class.carbon"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 1494{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
