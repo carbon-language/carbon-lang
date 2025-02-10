@@ -271,7 +271,6 @@ CARBON_DIAGNOSTIC_KIND(VarInInterfaceDecl)
 
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
-CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedFunctionHere)
 CARBON_DIAGNOSTIC_KIND(ExtendImplForall)
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
@@ -435,7 +434,9 @@ CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 
 // Facet type resolution
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
+CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
 CARBON_DIAGNOSTIC_KIND(ResolveFacetTypeWithUndefinedInterface)
 
 // ============================================================================

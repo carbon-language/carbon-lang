@@ -220,7 +220,7 @@ interface IF { fn F(); }
 
 class CD { }
 
-// CHECK:STDERR: fail_where_rewrite_function.carbon:[[@LINE+4]]:12: error: semantics TODO: `non-AssociatedConstantDecl` [SemanticsTodo]
+// CHECK:STDERR: fail_where_rewrite_function.carbon:[[@LINE+4]]:12: error: rewrite specified for associated function F [RewriteForAssociatedFunction]
 // CHECK:STDERR: impl CD as IF where .F = 0 {
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~
 // CHECK:STDERR:

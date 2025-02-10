@@ -1638,7 +1638,17 @@ auto Context::ResolveFacetTypeImplWitness(
         }
       }
     } else {
-      TODO(facet_type_inst_id, "non-AssociatedConstantDecl");
+      if (decl_id != SemIR::ErrorInst::SingletonInstId) {
+        auto type_id = insts().Get(decl_id).type_id();
+        auto type_inst = types().GetAsInst(type_id);
+        auto fn_type = type_inst.As<SemIR::FunctionType>();
+        const auto& fn = functions().Get(fn_type.function_id);
+        CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
+                          "rewrite specified for associated function {0}",
+                          SemIR::NameId);
+        emitter().Emit(facet_type_inst_id, RewriteForAssociatedFunction,
+                       fn.name_id);
+      }
       continue;
     }
     table_entry = constant_values().GetInstId(rewrite_value);
