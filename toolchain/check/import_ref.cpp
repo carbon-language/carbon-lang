@@ -2035,8 +2035,7 @@ static auto MakeImplDeclaration(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, impl_decl_id, import_impl),
        {.self_id = SemIR::InstId::None,
         .constraint_id = SemIR::InstId::None,
-        .interface_id = SemIR::InterfaceId::None,
-        .specific_id = SemIR::SpecificId::None,
+        .interface = SemIR::SpecificInterface::None,
         .witness_id = witness_id}});
 
   // Write the impl ID into the ImplDecl.
@@ -2396,8 +2395,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_facet_types().Add(SemIR::FacetTypeInfo{
           .impls_constraints = impls_constraints,
           .rewrite_constraints = rewrite_constraints,
-          .other_requirements = facet_type_info.other_requirements,
-          .resolved_id = SemIR::ResolvedFacetTypeId::None});
+          .other_requirements = facet_type_info.other_requirements});
   return ResolveAs<SemIR::FacetType>(
       resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
                  .facet_type_id = facet_type_id});

@@ -230,6 +230,21 @@ class CC { }
 
 impl CC as NonType where .Y = {.a = {}} { }
 
+// --- interface_with_function.carbon
+library "[[@TEST_NAME]]";
+
+interface IF { fn F(); }
+
+// --- fail_where_rewrite_function.carbon
+library "[[@TEST_NAME]]";
+import library "interface_function";
+
+class CD { }
+
+fn G() { }
+
+impl CD as IF where .F = G { }
+
 // CHECK:STDOUT: --- interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

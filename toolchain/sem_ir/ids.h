@@ -25,7 +25,7 @@ struct ExprRegion;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
-struct ResolvedFacetType;
+struct CompleteFacetType;
 struct Specific;
 struct ImportIR;
 struct ImportIRInst;
@@ -288,18 +288,18 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 constexpr FacetTypeId FacetTypeId::None = FacetTypeId(NoneIndex);
 
 // The ID of an resolved faceet type value.
-struct ResolvedFacetTypeId : public IdBase<ResolvedFacetTypeId> {
-  static constexpr llvm::StringLiteral Label = "resolved_facet_type";
-  using ValueType = ResolvedFacetType;
+struct CompleteFacetTypeId : public IdBase<CompleteFacetTypeId> {
+  static constexpr llvm::StringLiteral Label = "complete_facet_type";
+  using ValueType = CompleteFacetType;
 
   // An ID with no value.
-  static const ResolvedFacetTypeId None;
+  static const CompleteFacetTypeId None;
 
   using IdBase::IdBase;
 };
 
-constexpr ResolvedFacetTypeId ResolvedFacetTypeId::None =
-    ResolvedFacetTypeId(NoneIndex);
+constexpr CompleteFacetTypeId CompleteFacetTypeId::None =
+    CompleteFacetTypeId(NoneIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase<ImplId> {

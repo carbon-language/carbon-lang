@@ -464,7 +464,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.rhs_const_id, phase);
   }
   // TODO: Process other requirements.
-  info.resolved_id = SemIR::ResolvedFacetTypeId::None;
+  info.ClearCachedState();
   return info;
 }
 
@@ -2001,15 +2001,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context.insts().Get(typed_inst.period_self_id).type_id();
       SemIR::Inst base_facet_inst =
           eval_context.GetConstantValueAsInst(base_facet_type_id);
-      SemIR::FacetTypeInfo info = {
-          .other_requirements = false,
-          .resolved_id = SemIR::ResolvedFacetTypeId::None};
+      SemIR::FacetTypeInfo info = {.other_requirements = false};
       // `where` provides that the base facet is an error, `type`, or a facet
       // type.
       if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
         info = GetConstantFacetTypeInfo(eval_context, facet_type->facet_type_id,
                                         &phase);
-        info.resolved_id = SemIR::ResolvedFacetTypeId::None;
       } else if (base_facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
         return SemIR::ErrorInst::SingletonConstantId;
       } else {

@@ -11,6 +11,29 @@
 
 namespace Carbon::SemIR {
 
+struct SpecificInterface {
+  InterfaceId interface_id;
+  SpecificId specific_id;
+
+  static const SpecificInterface None;
+
+  friend auto operator==(const SpecificInterface& lhs,
+                         const SpecificInterface& rhs) -> bool {
+    return lhs.interface_id == rhs.interface_id &&
+           lhs.specific_id == rhs.specific_id;
+  }
+  // Canonically ordered by the numerical ids.
+  friend auto operator<=>(const SpecificInterface& lhs,
+                          const SpecificInterface& rhs)
+      -> std::strong_ordering {
+    return std::tie(lhs.interface_id.index, lhs.specific_id.index) <=>
+           std::tie(rhs.interface_id.index, rhs.specific_id.index);
+  }
+};
+
+constexpr SpecificInterface SpecificInterface::None = {
+    .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
+
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
@@ -20,27 +43,11 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // `llvm::BumpPtrAllocator`.
 
   // `ImplsConstraint` holds the interfaces this facet type requires.
-  struct ImplsConstraint {
-    // TODO: extend this so it can represent named constraint requirements
-    // and requirements on members, not just `.Self`.
-    // TODO: Add whether this is a lookup context. Those that are should sort
-    // first for easy access. Right now, all are assumed to be lookup contexts.
-    InterfaceId interface_id;
-    SpecificId specific_id;
-
-    friend auto operator==(const ImplsConstraint& lhs,
-                           const ImplsConstraint& rhs) -> bool {
-      return lhs.interface_id == rhs.interface_id &&
-             lhs.specific_id == rhs.specific_id;
-    }
-    // Canonically ordered by the numerical ids.
-    friend auto operator<=>(const ImplsConstraint& lhs,
-                            const ImplsConstraint& rhs)
-        -> std::strong_ordering {
-      return std::tie(lhs.interface_id.index, lhs.specific_id.index) <=>
-             std::tie(rhs.interface_id.index, rhs.specific_id.index);
-    }
-  };
+  // TODO: extend this so it can represent named constraint requirements
+  // and requirements on members, not just `.Self`.
+  // TODO: Add whether this is a lookup context. Those that are should sort
+  // first for easy access. Right now, all are assumed to be lookup contexts.
+  using ImplsConstraint = SpecificInterface;
   llvm::SmallVector<ImplsConstraint> impls_constraints;
 
   // Rewrite constraints of the form `.T = U`
@@ -67,9 +74,11 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Remove once all requirements are supported.
   bool other_requirements;
 
-  // Optional resolved facet type. For facet types used in contexts that require
-  // them to be fully defined.
-  ResolvedFacetTypeId resolved_id;
+  // Optional complete facet type. For facet types used in contexts that require
+  // them to be fully defined. This is a private implementation detail of
+  // `RequireCompleteFacetType` and is not part of the value of the facet type.
+  // Reset to `None` by `ClearCachedState()`.
+  CompleteFacetTypeId complete_id = CompleteFacetTypeId::None;
 
   // Sorts and deduplicates constraints.
   auto Canonicalize() -> void;
@@ -87,6 +96,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return std::nullopt;
   }
 
+  // Call after modifying this value.
+  auto ClearCachedState() -> void { complete_id = CompleteFacetTypeId::None; }
+
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
     return lhs.impls_constraints == rhs.impls_constraints &&
@@ -95,13 +107,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   }
 };
 
-struct ResolvedFacetType {
-  struct RequiredInterface {
-    InterfaceId interface_id;
-    SpecificId specific_id;
-    // One per member of the interface designated by `interface_id`.
-    llvm::SmallVector<ConstantId> associated_consts;
-  };
+struct CompleteFacetType {
+  using RequiredInterface = SpecificInterface;
 
   // Interfaces mentioned explicitly in the facet type expression, or
   // transitively through a named constraint.
@@ -111,6 +118,8 @@ struct ResolvedFacetType {
   // type to the right of an `impl`...`as`. Invalid to use in that position
   // unless this value is 1.
   int num_to_impl;
+
+  // TODO: Which interfaces to perform name lookup into.
 };
 
 // See common/hashing.h.
@@ -120,7 +129,7 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   hasher.HashSizedBytes(llvm::ArrayRef(value.impls_constraints));
   hasher.HashSizedBytes(llvm::ArrayRef(value.rewrite_constraints));
   hasher.HashRaw(value.other_requirements);
-  // `resolved_id` is not part of the state to hash.
+  // `complete_id` is not part of the state to hash.
   return static_cast<HashCode>(hasher);
 }
 

@@ -99,9 +99,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
       llvm::errs() << "  - ";
       Dump(file, rewrite.rhs_const_id);
     }
-    if (facet_type.resolved_id.has_value()) {
-      llvm::errs() << "resolved: ";
-      Dump(file, facet_type.resolved_id);
+    if (facet_type.complete_id.has_value()) {
+      llvm::errs() << "complete: ";
+      Dump(file, facet_type.complete_id);
     }
   } else {
     llvm::errs() << '\n';
@@ -195,48 +195,24 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
   llvm::errs() << '\n';
 }
 
-// Helper for Dump() of ResolvedFacetTypeId.
-static auto DumpAssociatedEntityName(const File& file, InstId inst_id) {
-  if (auto assoc_const_decl =
-          file.insts().TryGetAs<AssociatedConstantDecl>(inst_id)) {
-    auto& assoc_const =
-        file.associated_constants().Get(assoc_const_decl->assoc_const_id);
-    llvm::errs() << "." << file.names().GetFormatted(assoc_const.name_id)
-                 << " = ";
-  }
-}
-
 LLVM_DUMP_METHOD auto Dump(const File& file,
-                           ResolvedFacetTypeId resolved_facet_type_id) -> void {
-  llvm::errs() << resolved_facet_type_id << "\n";
-  if (resolved_facet_type_id.has_value()) {
-    const auto& resolved_facet_type =
-        file.resolved_facet_types().Get(resolved_facet_type_id);
+                           CompleteFacetTypeId complete_facet_type_id) -> void {
+  llvm::errs() << complete_facet_type_id << "\n";
+  if (complete_facet_type_id.has_value()) {
+    const auto& complete_facet_type =
+        file.complete_facet_types().Get(complete_facet_type_id);
     for (auto [i, req_interface] :
-         llvm::enumerate(resolved_facet_type.required_interfaces)) {
+         llvm::enumerate(complete_facet_type.required_interfaces)) {
       llvm::errs() << "  - ";
       DumpNoNewline(file, req_interface.interface_id);
       if (req_interface.specific_id.has_value()) {
         llvm::errs() << "; ";
         DumpNoNewline(file, req_interface.specific_id);
       }
-      if (static_cast<int>(i) < resolved_facet_type.num_to_impl) {
+      if (static_cast<int>(i) < complete_facet_type.num_to_impl) {
         llvm::errs() << " (to impl)";
       }
       llvm::errs() << '\n';
-
-      const auto& interface = file.interfaces().Get(req_interface.interface_id);
-      auto entities = file.inst_blocks().Get(interface.associated_entities_id);
-      for (auto [j, const_id] :
-           llvm::enumerate(req_interface.associated_consts)) {
-        if (const_id.has_value()) {
-          llvm::errs() << "    [" << j << "]: ";
-          if (entities[j].has_value()) {
-            DumpAssociatedEntityName(file, entities[j]);
-          }
-          Dump(file, const_id);
-        }
-      }
     }
   }
 }
@@ -325,9 +301,9 @@ LLVM_DUMP_METHOD static auto MakeNameId(int id) -> NameId { return NameId(id); }
 LLVM_DUMP_METHOD static auto MakeNameScopeId(int id) -> NameScopeId {
   return NameScopeId(id);
 }
-LLVM_DUMP_METHOD static auto MakeResolvedFacetTypeId(int id)
-    -> ResolvedFacetTypeId {
-  return ResolvedFacetTypeId(id);
+LLVM_DUMP_METHOD static auto MakeCompleteFacetTypeId(int id)
+    -> CompleteFacetTypeId {
+  return CompleteFacetTypeId(id);
 }
 LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
   return SpecificId(id);

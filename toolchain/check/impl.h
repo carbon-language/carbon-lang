@@ -14,11 +14,6 @@ namespace Carbon::Check {
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId;
 
-auto AddConstantsToImplWitnessFromConstraint(
-    Context& context, const SemIR::Impl& impl,
-    const SemIR::ResolvedFacetType::RequiredInterface& required_interface,
-    SemIR::InstId witness_id) -> void;
-
 // Update `impl`'s witness at the start of a definition.
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
 

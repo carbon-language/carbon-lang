@@ -8,6 +8,7 @@
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -20,9 +21,15 @@ struct ImplFields {
   // The constraint that the impl implements.
   InstId constraint_id;
 
-  // The single interface & specific found from resolving `constraint_id`.
-  InterfaceId interface_id;
-  SpecificId specific_id;
+  // The single interface to implement from `constraint_id`.
+  // The members are `None` if `constraint_id` isn't complete or doesn't
+  // correspond to a single interface.
+  SemIR::SpecificInterface interface;
+
+  // The witness for the impl. This can be `BuiltinErrorInst` or an import
+  // reference. Note that the entries in the witness are updated at the end of
+  // the impl definition.
+  InstId witness_id = InstId::None;
 
   // The following members are set at the `{` of the impl definition.
 
@@ -31,10 +38,6 @@ struct ImplFields {
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::None;
-  // The witness for the impl. This can be `BuiltinErrorInst` or an import
-  // reference. Note that the entries in the witness are updated at the end of
-  // the impl definition.
-  InstId witness_id = InstId::None;
 
   // The following members are set at the `}` of the impl definition.
   bool defined = false;

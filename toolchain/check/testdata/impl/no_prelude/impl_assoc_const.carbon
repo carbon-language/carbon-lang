@@ -213,6 +213,17 @@ interface N {
 
 impl () as N where .Y = {.a = {}} { }
 
+// --- fail_where_rewrite_function.carbon
+library "[[@TEST_NAME]]";
+
+interface IF { fn F(); }
+
+class CD { }
+
+fn G() { }
+
+impl CD as IF where .F = G { }
+
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

@@ -13,7 +13,8 @@ static auto SortAndDeduplicate(VecT& vec) -> void {
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  CARBON_CHECK(!resolved_id.has_value());
+  CARBON_CHECK(!complete_id.has_value(),
+               "Call ClearCacheState() after modifying FacetTypeInfo");
   SortAndDeduplicate(impls_constraints);
   SortAndDeduplicate(rewrite_constraints);
 }
@@ -45,8 +46,8 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     out << outer_sep << "+ TODO requirements";
   }
 
-  if (resolved_id.has_value()) {
-    out << outer_sep << "resolved: " << resolved_id;
+  if (complete_id.has_value()) {
+    out << outer_sep << "complete: " << complete_id;
   }
   out << "}";
 }

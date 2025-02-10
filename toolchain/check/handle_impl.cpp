@@ -290,9 +290,9 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 }
 
 // On error, issues a diagnostic and returns nullptr.
-static auto ResolveFacetTypeToInterface(Context& context,
-                                        const SemIR::Impl& impl)
-    -> const SemIR::ResolvedFacetType::RequiredInterface* {
+static auto CompleteFacetTypeToInterface(Context& context,
+                                         const SemIR::Impl& impl)
+    -> const SemIR::CompleteFacetType::RequiredInterface* {
   auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
     return nullptr;
@@ -306,21 +306,21 @@ static auto ResolveFacetTypeToInterface(Context& context,
     return nullptr;
   }
 
-  auto resolved_id = context.ResolveFacetType(
+  auto complete_id = context.RequireCompleteFacetType(
       facet_type_id, context.insts().GetLocId(impl.constraint_id), *facet_type,
       Context::FacetTypeImpl);
-  if (!resolved_id.has_value()) {
+  if (!complete_id.has_value()) {
     return nullptr;
   }
-  const auto& resolved = context.resolved_facet_types().Get(resolved_id);
-  if (resolved.num_to_impl != 1) {
+  const auto& complete = context.complete_facet_types().Get(complete_id);
+  if (complete.num_to_impl != 1) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
     context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
-                           resolved.num_to_impl);
+                           complete.num_to_impl);
     return nullptr;
   }
-  return &resolved.required_interfaces.front();
+  return &complete.required_interfaces.front();
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the
@@ -366,17 +366,15 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                                /*is_extern=*/false, SemIR::LibraryNameId::None),
                            {.self_id = self_inst_id,
                             .constraint_id = constraint_inst_id,
-                            .interface_id = SemIR::InterfaceId::None,
-                            .specific_id = SemIR::SpecificId::None}};
+                            .interface = SemIR::SpecificInterface::None}};
 
-  const SemIR::ResolvedFacetType::RequiredInterface* required_interface =
-      ResolveFacetTypeToInterface(context, impl_info);
+  const SemIR::CompleteFacetType::RequiredInterface* required_interface =
+      CompleteFacetTypeToInterface(context, impl_info);
   if (required_interface) {
-    impl_info.interface_id = required_interface->interface_id;
-    impl_info.specific_id = required_interface->specific_id;
+    impl_info.interface = *required_interface;
   }
-  // TODO: Skip work below if facet type resolution fails, so we don't have a
-  // valid/non-error `interface_id` at all.
+  // FIXME: If we don't have a single complete interface, how should that be
+  // handled below?
 
   // Add the impl declaration.
   bool invalid_redeclaration = false;
@@ -401,8 +399,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     if (required_interface) {
       impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
-      AddConstantsToImplWitnessFromConstraint(
-          context, impl_info, *required_interface, impl_info.witness_id);
     } else {
       impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
     }

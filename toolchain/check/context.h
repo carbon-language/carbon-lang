@@ -412,11 +412,26 @@ class Context {
   // Like `RequireCompleteType`, but also require the facet type to be fully
   // defined with known members. If it uses some incomplete interface, diagnoses
   // the problem and returns Invalid.
-  enum ResolveFacetTypeContext { FacetTypeMemberAccess, FacetTypeImpl };
-  auto ResolveFacetType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                        const SemIR::FacetType& facet_type,
-                        ResolveFacetTypeContext context_for_diagnostics)
-      -> SemIR::ResolvedFacetTypeId;
+  enum FacetTypeContext { FacetTypeMemberAccess, FacetTypeImpl };
+  auto RequireCompleteFacetType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                                const SemIR::FacetType& facet_type,
+                                FacetTypeContext context_for_diagnostics)
+      -> SemIR::CompleteFacetTypeId;
+
+  // `self_type_inst_id` is the `Self` type of the facet type. For example, in
+  // `T:! X where ...`, we will bind the `.Self` of the `where` facet type to
+  // `T`, and in `(X where ...) where ...`, we will bind the inner `.Self` to
+  // the outer `.Self`.
+  //
+  // If the facet type contains a rewrite, we may have deferred converting the
+  // rewritten value to the type of the associated constant. That conversion
+  // will also be performed as part of resolution, and may depend on the
+  // `Self` type.
+  auto ResolveFacetTypeImplWitness(
+      SemIRLoc loc, const SemIR::FacetTypeInfo& facet_type_info,
+      SemIR::InstId self_type_inst_id,
+      const SemIR::SpecificInterface& interface_to_witness)
+      -> llvm::SmallVector<SemIR::InstId>;
 
   // Returns the type `type_id` if it is a complete type, or produces an
   // incomplete type error and returns an error type. This is a convenience
@@ -630,8 +645,8 @@ class Context {
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }
-  auto resolved_facet_types() -> ValueStore<SemIR::ResolvedFacetTypeId>& {
-    return sem_ir().resolved_facet_types();
+  auto complete_facet_types() -> ValueStore<SemIR::CompleteFacetTypeId>& {
+    return sem_ir().complete_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
