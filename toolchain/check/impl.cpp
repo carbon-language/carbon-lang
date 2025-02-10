@@ -81,14 +81,10 @@ static auto CheckAssociatedFunctionImplementation(
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
-  llvm::SmallVector<SemIR::InstId> table = context.ResolveFacetTypeImplWitness(
-      impl.constraint_id, facet_type_info, impl.self_id, impl.interface);
-  auto table_id = context.inst_blocks().Add(table);
-  return context.AddInst<SemIR::ImplWitness>(
-      context.insts().GetLocId(impl.latest_decl_id()),
-      {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
-       .elements_id = table_id,
-       .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
+  return context.ResolveFacetTypeImplWitness(
+      context.insts().GetLocId(impl.latest_decl_id()), impl.constraint_id,
+      impl.self_id, impl.interface,
+      context.generics().GetSelfSpecific(impl.generic_id));
 }
 
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {

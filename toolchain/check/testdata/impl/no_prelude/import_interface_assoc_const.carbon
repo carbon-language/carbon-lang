@@ -237,13 +237,17 @@ interface IF { fn F(); }
 
 // --- fail_where_rewrite_function.carbon
 library "[[@TEST_NAME]]";
-import library "interface_function";
+import library "interface_with_function";
 
 class CD { }
 
-fn G() { }
-
-impl CD as IF where .F = G { }
+// CHECK:STDERR: fail_where_rewrite_function.carbon:[[@LINE+4]]:12: error: semantics TODO: `non-AssociatedConstantDecl` [SemanticsTodo]
+// CHECK:STDERR: impl CD as IF where .F = 0 {
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl CD as IF where .F = 0 {
+  fn F() {}
+}
 
 // CHECK:STDOUT: --- interface.carbon
 // CHECK:STDOUT:
@@ -1850,4 +1854,134 @@ impl CD as IF where .F = G { }
 // CHECK:STDOUT: specific @Y(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%NonType.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- interface_with_function.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [template]
+// CHECK:STDOUT:   %Self: %IF.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type %IF.type [template]
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%F.decl [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .IF = %IF.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %IF.decl: type = interface_decl @IF [template = constants.%IF.type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @IF {
+// CHECK:STDOUT:   %Self: %IF.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .F = %assoc0
+// CHECK:STDOUT:   witness = (%F.decl)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(@IF.%Self: %IF.type) {
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_where_rewrite_function.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %CD: type = class_type @CD [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [template]
+// CHECK:STDOUT:   %Self: %IF.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %IF.type = bind_symbolic_name .Self [symbolic]
+// CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type %IF.type [template]
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, imports.%Main.import_ref.4b7 [template]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %F.type.496: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.1de: %F.type.496 = struct_value () [template]
+// CHECK:STDOUT:   %IF.facet.3a2: %IF.type = facet_value %.Self.as_type, %.Self.as_wit [symbolic]
+// CHECK:STDOUT:   %.99d: type = fn_type_with_self_type %F.type.496, %IF.facet.3a2 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.99d = impl_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %IF_where.type: type = facet_type <@IF where %impl.elem0 = %int_0> [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
+// CHECK:STDOUT:   %F.type.064: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.822: %F.type.064 = struct_value () [template]
+// CHECK:STDOUT:   %IF.facet.b37: %IF.type = facet_value %CD, %impl_witness [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.IF: type = import_ref Main//interface_with_function, IF, loaded [template = constants.%IF.type]
+// CHECK:STDOUT:   %Main.import_ref.a2a = import_ref Main//interface_with_function, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f61: %IF.assoc_type = import_ref Main//interface_with_function, loc3_22, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %Main.F: %F.type.496 = import_ref Main//interface_with_function, F, loaded [template = constants.%F.1de]
+// CHECK:STDOUT:   %Main.import_ref.f57: %IF.type = import_ref Main//interface_with_function, inst15 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .IF = imports.%Main.IF
+// CHECK:STDOUT:     .CD = %CD.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %CD.decl: type = class_decl @CD [template = constants.%CD] {} {}
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %CD.ref: type = name_ref CD, file.%CD.decl [template = constants.%CD]
+// CHECK:STDOUT:     %IF.ref: type = name_ref IF, imports.%Main.IF [template = constants.%IF.type]
+// CHECK:STDOUT:     %.Self: %IF.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %IF.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %F.ref: %IF.assoc_type = name_ref F, imports.%Main.import_ref.f61 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc10_21: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0: %.99d = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:     %.loc10_15: type = where_expr %.Self [template = constants.%IF_where.type] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %int_0
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @IF [from "interface_with_function.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a2a
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.f61
+// CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %CD.ref as %.loc10_15 {
+// CHECK:STDOUT:   %F.decl: %F.type.064 = fn_decl @F.2 [template = constants.%F.822] {} {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @CD {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%CD
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.f57: %IF.type) [from "interface_with_function.carbon"] {
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%IF.facet.b37) {}
 // CHECK:STDOUT:

@@ -1512,10 +1512,10 @@ static auto WitnessAccessMatchesInterface(
 }
 
 auto Context::ResolveFacetTypeImplWitness(
-    SemIRLoc loc, const SemIR::FacetTypeInfo& facet_type_info,
+    SemIR::LocId witness_loc_id, SemIR::InstId facet_type_inst_id,
     SemIR::InstId self_type_inst_id,
-    const SemIR::SpecificInterface& interface_to_witness)
-    -> llvm::SmallVector<SemIR::InstId> {
+    const SemIR::SpecificInterface& interface_to_witness,
+    SemIR::SpecificId self_specific_id) -> SemIR::InstId {
   // TODO: Finish facet type resolution. This code currently only handles
   // rewrite constraints that set associated constants to a concrete value.
 
@@ -1526,11 +1526,34 @@ auto Context::ResolveFacetTypeImplWitness(
 
   const auto& interface = interfaces().Get(interface_to_witness.interface_id);
   auto assoc_entities = inst_blocks().Get(interface.associated_entities_id);
+  // TODO: When this function is used for things other than just impls, may want
+  // to only load the specific associated entities that are mentioned in rewrite
+  // rules.
   for (auto decl_id : assoc_entities) {
     LoadImportRef(*this, decl_id);
   }
-  llvm::SmallVector<SemIR::InstId> table(assoc_entities.size(),
-                                         SemIR::InstId::None);
+
+  SemIR::InstId witness_inst_id = SemIR::InstId::None;
+  llvm::MutableArrayRef<SemIR::InstId> table;
+  {
+    llvm::SmallVector<SemIR::InstId> empty_table(assoc_entities.size(),
+                                                 SemIR::InstId::None);
+    auto table_id = inst_blocks().Add(empty_table);
+    table = inst_blocks().GetMutable(table_id);
+    witness_inst_id = AddInst<SemIR::ImplWitness>(
+        witness_loc_id,
+        {.type_id = GetSingletonType(SemIR::WitnessType::SingletonInstId),
+         .elements_id = table_id,
+         .specific_id = self_specific_id});
+  }
+
+  auto facet_type_id = GetTypeIdForTypeInst(facet_type_inst_id);
+  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
+  auto facet_type = types().GetAs<SemIR::FacetType>(facet_type_id);
+  // TODO: This is currently a copy because I'm not sure whether anything could
+  // cause the facet type store to resize before we are done with it.
+  auto facet_type_info = facet_types().Get(facet_type.facet_type_id);
+
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     auto inst_id = constant_values().GetInstId(rewrite.lhs_const_id);
     auto access = insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);
@@ -1572,7 +1595,8 @@ auto Context::ResolveFacetTypeImplWitness(
               entity_names().Get(import_ref.entity_name_id);
           name_id = entity_name.name_id;
         }
-        emitter().Emit(loc, AssociatedConstantWithDifferentValues, name_id);
+        emitter().Emit(facet_type_inst_id,
+                       AssociatedConstantWithDifferentValues, name_id);
       }
       continue;
     }
@@ -1587,14 +1611,14 @@ auto Context::ResolveFacetTypeImplWitness(
         // Get the type of the associated constant in this interface with this
         // value for `Self`.
         assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
-            *this, loc, interface_to_witness.specific_id, decl_id,
-            GetTypeIdForTypeInst(self_type_inst_id), witness_id);
+            *this, facet_type_inst_id, interface_to_witness.specific_id,
+            decl_id, GetTypeIdForTypeInst(self_type_inst_id), witness_inst_id);
         // Perform the conversion of the value to the type. We skipped this when
         // forming the facet type because the type of the associated constant
         // was symbolic.
         auto converted_inst_id = ConvertToValueOfType(
-            *this, loc, constant_values().GetInstId(rewrite_value),
-            assoc_const_type_id);
+            *this, insts().GetLocId(facet_type_inst_id),
+            constant_values().GetInstId(rewrite_value), assoc_const_type_id);
         rewrite_value = constant_values().Get(converted_inst_id);
         // The result of conversion can be non-constant even if the original
         // value was constant.
@@ -1607,17 +1631,19 @@ auto Context::ResolveFacetTypeImplWitness(
               "associated constant {0} given value that is not constant "
               "after conversion to {1}",
               SemIR::NameId, SemIR::TypeId);
-          emitter().Emit(loc, AssociatedConstantNotConstantAfterConversion,
+          emitter().Emit(facet_type_inst_id,
+                         AssociatedConstantNotConstantAfterConversion,
                          assoc_const.name_id, assoc_const_type_id);
           rewrite_value = SemIR::ErrorInst::SingletonConstantId;
         }
       }
     } else {
-      TODO(loc, "non-AssociatedConstantDecl");
+      TODO(facet_type_inst_id, "non-AssociatedConstantDecl");
       continue;
     }
     table_entry = constant_values().GetInstId(rewrite_value);
   }
+  return witness_inst_id;
 }
 
 auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)

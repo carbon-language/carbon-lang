@@ -418,6 +418,13 @@ class Context {
                                 FacetTypeContext context_for_diagnostics)
       -> SemIR::CompleteFacetTypeId;
 
+  // Adds and returns an `ImplWitness` instruction (created with location set to
+  // `witness_loc_id`) that "`Self` type" of type "facet type" implements
+  // interface `interface_to_witness`, which must be an interface required by
+  // "facet type" (as determined by `RequireCompleteFacetType`). This witness
+  // reflects the values assigned to associated constant members of that
+  // interface by rewrite constraints in the facet type.
+  //
   // `self_type_inst_id` is the `Self` type of the facet type. For example, in
   // `T:! X where ...`, we will bind the `.Self` of the `where` facet type to
   // `T`, and in `(X where ...) where ...`, we will bind the inner `.Self` to
@@ -428,10 +435,10 @@ class Context {
   // will also be performed as part of resolution, and may depend on the
   // `Self` type.
   auto ResolveFacetTypeImplWitness(
-      SemIRLoc loc, const SemIR::FacetTypeInfo& facet_type_info,
+      SemIR::LocId witness_loc_id, SemIR::InstId facet_type_inst_id,
       SemIR::InstId self_type_inst_id,
-      const SemIR::SpecificInterface& interface_to_witness)
-      -> llvm::SmallVector<SemIR::InstId>;
+      const SemIR::SpecificInterface& interface_to_witness,
+      SemIR::SpecificId self_specific_id) -> SemIR::InstId;
 
   // Returns the type `type_id` if it is a complete type, or produces an
   // incomplete type error and returns an error type. This is a convenience
