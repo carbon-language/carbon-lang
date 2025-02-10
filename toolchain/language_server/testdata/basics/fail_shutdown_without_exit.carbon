@@ -9,14 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/basics/fail_shutdown_without_exit.carbon
 
 // --- STDIN
-
 [[@LSP-CALL:initialize]]
 [[@LSP-CALL:shutdown]]
-
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: I[20:47:00.642] Warning: Missing Content-Length header, or zero-length message.
-// CHECK:STDERR: I[20:47:00.643] Warning: Missing Content-Length header, or zero-length message.
 // CHECK:STDERR: error: Input/output error [LanguageServerTransportError]
 // CHECK:STDERR:
 // CHECK:STDOUT: Content-Length: 146{{\r}}
