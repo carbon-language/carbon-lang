@@ -37,8 +37,8 @@ static auto GetSymbolIdentifier(const Parse::TreeAndSubtrees& tree_and_subtrees,
 
 // Constructs a Range from a closed interval of tokens [start, end].
 static auto GetTokenRange(const Lex::TokenizedBuffer& tokens,
-                          Lex::TokenIndex start,
-                          Lex::TokenIndex end) -> clang::clangd::Range {
+                          Lex::TokenIndex start, Lex::TokenIndex end)
+    -> clang::clangd::Range {
   auto start_line = tokens.GetLine(start);
   auto start_col = tokens.GetColumnNumber(start);
   auto [end_line, end_col] = tokens.GetEndLoc(end);
@@ -49,21 +49,21 @@ static auto GetTokenRange(const Lex::TokenizedBuffer& tokens,
   };
 }
 
-// Finds a spanning range for provided definition / declaration ast node.
-// In the case of a definition start, will include the body aswell.
+// Finds a spanning range for the provided definition / declaration ast node.
+// In the case of a definition start, will include the body as well.
 static auto GetSymbolRange(const Parse::TreeAndSubtrees& tree_and_subtrees,
                            const Parse::NodeId& ast_node)
     -> clang::clangd::Range {
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
-  // Left most node will always be first node in postorder traversal.
+  // The left-most node will always be the first node in postorder traversal.
   auto start_node = *tree_and_subtrees.postorder(ast_node).begin();
 
   auto start_token = tree_and_subtrees.tree().node_token(start_node);
   auto end_token = tree_and_subtrees.tree().node_token(ast_node);
   if (tokens.GetKind(end_token).is_opening_symbol()) {
-    // DefinitionStart nodes use a opening token, so find its closing token to
-    // span entire class/function body.
+    // DefinitionStart nodes use an opening token, so find its closing token to
+    // span the entire class/function body.
     return GetTokenRange(tokens, start_token,
                          tokens.GetMatchedClosingToken(end_token));
   } else {
