@@ -551,7 +551,6 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       auto param_type_const_id = SubstConstant(
           context(), binding_type_id.AsConstantId(), substitutions_);
       CARBON_CHECK(param_type_const_id.has_value());
-      CARBON_CHECK(!param_type_const_id.is_symbolic());
       binding_type_id = context().GetTypeIdForTypeConstant(param_type_const_id);
 
       // TODO: Suppress diagnostics here if `diagnose_` is false.
