@@ -19,7 +19,7 @@ class MockDiagnosticConsumer : public DiagnosticConsumer {
 // NOLINTNEXTLINE(modernize-use-trailing-return-type): From the macro.
 MATCHER_P(IsDiagnosticMessageString, matcher, "") {
   const DiagnosticMessage& message = arg;
-  return testing::ExplainMatchResult(matcher, message.format_fn(message),
+  return testing::ExplainMatchResult(matcher, message.Format(),
                                      result_listener);
 }
 

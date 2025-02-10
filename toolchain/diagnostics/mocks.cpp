@@ -11,8 +11,8 @@ void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
   PrintTo(diagnostic.level, os);
   for (const auto& message : diagnostic.messages) {
     *os << ", {" << message.loc.filename << ":" << message.loc.line_number
-        << ":" << message.loc.column_number << ", \""
-        << message.format_fn(message) << "}";
+        << ":" << message.loc.column_number << ", \"" << message.Format()
+        << "}";
   }
   *os << "\"}";
 }

@@ -389,13 +389,141 @@ class NodeStack {
     return result;
   }
 
+  // Translate a parse node kind to the enum ID kind it should always
+  // provide, for the cases where this is not known from the category.
+  static constexpr auto NodeKindToIdKindSpecialCases(Parse::NodeKind node_kind)
+      -> std::optional<Id::Kind> {
+    switch (node_kind) {
+      case Parse::NodeKind::Addr:
+      case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::CompileTimeBindingPattern:
+      case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::LetBindingPattern:
+      case Parse::NodeKind::ReturnType:
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+      case Parse::NodeKind::ShortCircuitOperandOr:
+      case Parse::NodeKind::StructLiteralField:
+      case Parse::NodeKind::VarBindingPattern:
+      case Parse::NodeKind::VariablePattern:
+      case Parse::NodeKind::WhereOperand:
+        return Id::KindFor<SemIR::InstId>();
+      case Parse::NodeKind::IfCondition:
+      case Parse::NodeKind::IfExprIf:
+      case Parse::NodeKind::ImplForall:
+      case Parse::NodeKind::ImplicitParamList:
+      case Parse::NodeKind::TuplePattern:
+      case Parse::NodeKind::WhileCondition:
+      case Parse::NodeKind::WhileConditionStart:
+        return Id::KindFor<SemIR::InstBlockId>();
+      case Parse::NodeKind::FunctionDefinitionStart:
+      case Parse::NodeKind::BuiltinFunctionDefinitionStart:
+        return Id::KindFor<SemIR::FunctionId>();
+      case Parse::NodeKind::ClassDefinitionStart:
+        return Id::KindFor<SemIR::ClassId>();
+      case Parse::NodeKind::InterfaceDefinitionStart:
+        return Id::KindFor<SemIR::InterfaceId>();
+      case Parse::NodeKind::ImplDefinitionStart:
+        return Id::KindFor<SemIR::ImplId>();
+      case Parse::NodeKind::SelfTypeName:
+      case Parse::NodeKind::SelfValueName:
+        return Id::KindFor<SemIR::NameId>();
+      case Parse::NodeKind::DefaultLibrary:
+      case Parse::NodeKind::LibraryName:
+        return Id::KindFor<SemIR::LibraryNameId>();
+      case Parse::NodeKind::ArrayExprSemi:
+      case Parse::NodeKind::BuiltinName:
+      case Parse::NodeKind::ClassIntroducer:
+      case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::FunctionIntroducer:
+      case Parse::NodeKind::IfStatementElse:
+      case Parse::NodeKind::ImplicitParamListStart:
+      case Parse::NodeKind::ImplIntroducer:
+      case Parse::NodeKind::InterfaceIntroducer:
+      case Parse::NodeKind::LetInitializer:
+      case Parse::NodeKind::LetIntroducer:
+      case Parse::NodeKind::ReturnStatementStart:
+      case Parse::NodeKind::StructLiteralStart:
+      case Parse::NodeKind::StructTypeLiteralField:
+      case Parse::NodeKind::StructTypeLiteralStart:
+      case Parse::NodeKind::TupleLiteralStart:
+      case Parse::NodeKind::TuplePatternStart:
+      case Parse::NodeKind::VariableInitializer:
+      case Parse::NodeKind::VariableIntroducer:
+        return Id::Kind::None;
+      case Parse::NodeKind::AdaptIntroducer:
+      case Parse::NodeKind::AliasInitializer:
+      case Parse::NodeKind::AliasIntroducer:
+      case Parse::NodeKind::ArrayExprStart:
+      case Parse::NodeKind::BaseColon:
+      case Parse::NodeKind::BaseIntroducer:
+      case Parse::NodeKind::BreakStatementStart:
+      case Parse::NodeKind::CallExprComma:
+      case Parse::NodeKind::ChoiceAlternativeListComma:
+      case Parse::NodeKind::ChoiceDefinitionStart:
+      case Parse::NodeKind::ChoiceIntroducer:
+      case Parse::NodeKind::CodeBlock:
+      case Parse::NodeKind::ContinueStatementStart:
+      case Parse::NodeKind::ExportIntroducer:
+      case Parse::NodeKind::FileEnd:
+      case Parse::NodeKind::FileStart:
+      case Parse::NodeKind::ForHeader:
+      case Parse::NodeKind::ForHeaderStart:
+      case Parse::NodeKind::ForIn:
+      case Parse::NodeKind::IfConditionStart:
+      case Parse::NodeKind::ImportIntroducer:
+      case Parse::NodeKind::IndexExprStart:
+      case Parse::NodeKind::InvalidParseStart:
+      case Parse::NodeKind::LibraryIntroducer:
+      case Parse::NodeKind::LibrarySpecifier:
+      case Parse::NodeKind::MatchCase:
+      case Parse::NodeKind::MatchCaseEqualGreater:
+      case Parse::NodeKind::MatchCaseGuard:
+      case Parse::NodeKind::MatchCaseGuardIntroducer:
+      case Parse::NodeKind::MatchCaseGuardStart:
+      case Parse::NodeKind::MatchCaseIntroducer:
+      case Parse::NodeKind::MatchCaseStart:
+      case Parse::NodeKind::MatchCondition:
+      case Parse::NodeKind::MatchConditionStart:
+      case Parse::NodeKind::MatchDefault:
+      case Parse::NodeKind::MatchDefaultEqualGreater:
+      case Parse::NodeKind::MatchDefaultIntroducer:
+      case Parse::NodeKind::MatchDefaultStart:
+      case Parse::NodeKind::MatchIntroducer:
+      case Parse::NodeKind::MatchStatementStart:
+      case Parse::NodeKind::NamedConstraintDefinitionStart:
+      case Parse::NodeKind::NamedConstraintIntroducer:
+      case Parse::NodeKind::NameQualifierWithParams:
+      case Parse::NodeKind::NameQualifierWithoutParams:
+      case Parse::NodeKind::NamespaceStart:
+      case Parse::NodeKind::PackageIntroducer:
+      case Parse::NodeKind::PackageName:
+      case Parse::NodeKind::ParenExprStart:
+      case Parse::NodeKind::PatternListComma:
+      case Parse::NodeKind::Placeholder:
+      case Parse::NodeKind::RequirementAnd:
+      case Parse::NodeKind::RequirementEqual:
+      case Parse::NodeKind::RequirementEqualEqual:
+      case Parse::NodeKind::RequirementImpls:
+      case Parse::NodeKind::StructLiteralComma:
+      case Parse::NodeKind::StructFieldDesignator:
+      case Parse::NodeKind::StructTypeLiteralComma:
+      case Parse::NodeKind::Template:
+      case Parse::NodeKind::TupleLiteralComma:
+        return Id::Kind::Invalid;
+      default:
+        // In this case, the kind must be determinable from the category, or we
+        // will produce a build error.
+        return std::nullopt;
+    }
+  }
+
   using IdKindTableType = std::array<Id::Kind, Parse::NodeKind::ValidCount>;
 
   // Lookup table to implement `NodeKindToIdKind`. Initialized to the
   // return value of `ComputeIdKindTable()`.
   static const IdKindTableType IdKindTable;
 
-  static constexpr auto ComputeIdKindTable() -> IdKindTableType {
+  static consteval auto ComputeIdKindTable() -> IdKindTableType {
     IdKindTableType table = {};
 
     auto to_id_kind =
@@ -404,244 +532,12 @@ class NodeStack {
               NodeCategoryToIdKind(node_kind.category(), true)) {
         return *from_category;
       }
-      switch (node_kind) {
-        case Parse::NodeKind::Addr:
-        case Parse::NodeKind::CallExprStart:
-        case Parse::NodeKind::CompileTimeBindingPattern:
-        case Parse::NodeKind::IfExprThen:
-        case Parse::NodeKind::LetBindingPattern:
-        case Parse::NodeKind::ReturnType:
-        case Parse::NodeKind::ShortCircuitOperandAnd:
-        case Parse::NodeKind::ShortCircuitOperandOr:
-        case Parse::NodeKind::StructLiteralField:
-        case Parse::NodeKind::VarBindingPattern:
-        case Parse::NodeKind::VariablePattern:
-        case Parse::NodeKind::WhereOperand:
-          return Id::KindFor<SemIR::InstId>();
-        case Parse::NodeKind::IfCondition:
-        case Parse::NodeKind::IfExprIf:
-        case Parse::NodeKind::ImplForall:
-        case Parse::NodeKind::ImplicitParamList:
-        case Parse::NodeKind::TuplePattern:
-        case Parse::NodeKind::WhileCondition:
-        case Parse::NodeKind::WhileConditionStart:
-          return Id::KindFor<SemIR::InstBlockId>();
-        case Parse::NodeKind::FunctionDefinitionStart:
-        case Parse::NodeKind::BuiltinFunctionDefinitionStart:
-          return Id::KindFor<SemIR::FunctionId>();
-        case Parse::NodeKind::ClassDefinitionStart:
-          return Id::KindFor<SemIR::ClassId>();
-        case Parse::NodeKind::InterfaceDefinitionStart:
-          return Id::KindFor<SemIR::InterfaceId>();
-        case Parse::NodeKind::ImplDefinitionStart:
-          return Id::KindFor<SemIR::ImplId>();
-        case Parse::NodeKind::SelfTypeName:
-        case Parse::NodeKind::SelfValueName:
-          return Id::KindFor<SemIR::NameId>();
-        case Parse::NodeKind::DefaultLibrary:
-        case Parse::NodeKind::LibraryName:
-          return Id::KindFor<SemIR::LibraryNameId>();
-        case Parse::NodeKind::ArrayExprSemi:
-        case Parse::NodeKind::BuiltinName:
-        case Parse::NodeKind::ClassIntroducer:
-        case Parse::NodeKind::CodeBlockStart:
-        case Parse::NodeKind::FunctionIntroducer:
-        case Parse::NodeKind::IfStatementElse:
-        case Parse::NodeKind::ImplicitParamListStart:
-        case Parse::NodeKind::ImplIntroducer:
-        case Parse::NodeKind::InterfaceIntroducer:
-        case Parse::NodeKind::LetInitializer:
-        case Parse::NodeKind::LetIntroducer:
-        case Parse::NodeKind::ReturnedModifier:
-        case Parse::NodeKind::ReturnStatementStart:
-        case Parse::NodeKind::ReturnVarModifier:
-        case Parse::NodeKind::StructLiteralStart:
-        case Parse::NodeKind::StructTypeLiteralField:
-        case Parse::NodeKind::StructTypeLiteralStart:
-        case Parse::NodeKind::TupleLiteralStart:
-        case Parse::NodeKind::TuplePatternStart:
-        case Parse::NodeKind::VariableInitializer:
-        case Parse::NodeKind::VariableIntroducer:
-          return Id::Kind::None;
-        case Parse::NodeKind::AbstractModifier:
-        case Parse::NodeKind::AdaptDecl:
-        case Parse::NodeKind::AdaptIntroducer:
-        case Parse::NodeKind::Alias:
-        case Parse::NodeKind::AliasInitializer:
-        case Parse::NodeKind::AliasIntroducer:
-        case Parse::NodeKind::ArrayExpr:
-        case Parse::NodeKind::ArrayExprStart:
-        case Parse::NodeKind::AutoTypeLiteral:
-        case Parse::NodeKind::BaseColon:
-        case Parse::NodeKind::BaseDecl:
-        case Parse::NodeKind::BaseIntroducer:
-        case Parse::NodeKind::BaseModifier:
-        case Parse::NodeKind::BaseName:
-        case Parse::NodeKind::BoolLiteralFalse:
-        case Parse::NodeKind::BoolLiteralTrue:
-        case Parse::NodeKind::BoolTypeLiteral:
-        case Parse::NodeKind::BreakStatement:
-        case Parse::NodeKind::BreakStatementStart:
-        case Parse::NodeKind::BuiltinFunctionDefinition:
-        case Parse::NodeKind::CallExpr:
-        case Parse::NodeKind::CallExprComma:
-        case Parse::NodeKind::ChoiceAlternativeListComma:
-        case Parse::NodeKind::ChoiceDefinition:
-        case Parse::NodeKind::ChoiceDefinitionStart:
-        case Parse::NodeKind::ChoiceIntroducer:
-        case Parse::NodeKind::ClassDecl:
-        case Parse::NodeKind::ClassDefinition:
-        case Parse::NodeKind::CodeBlock:
-        case Parse::NodeKind::ContinueStatement:
-        case Parse::NodeKind::ContinueStatementStart:
-        case Parse::NodeKind::DefaultModifier:
-        case Parse::NodeKind::DefaultSelfImplAs:
-        case Parse::NodeKind::DesignatorExpr:
-        case Parse::NodeKind::EmptyDecl:
-        case Parse::NodeKind::ExportDecl:
-        case Parse::NodeKind::ExportIntroducer:
-        case Parse::NodeKind::ExportModifier:
-        case Parse::NodeKind::ExprStatement:
-        case Parse::NodeKind::ExtendModifier:
-        case Parse::NodeKind::ExternModifier:
-        case Parse::NodeKind::ExternModifierWithLibrary:
-        case Parse::NodeKind::FileEnd:
-        case Parse::NodeKind::FileStart:
-        case Parse::NodeKind::FinalModifier:
-        case Parse::NodeKind::FloatTypeLiteral:
-        case Parse::NodeKind::ForHeader:
-        case Parse::NodeKind::ForHeaderStart:
-        case Parse::NodeKind::ForIn:
-        case Parse::NodeKind::ForStatement:
-        case Parse::NodeKind::FunctionDecl:
-        case Parse::NodeKind::FunctionDefinition:
-        case Parse::NodeKind::IdentifierNameNotBeforeParams:
-        case Parse::NodeKind::IdentifierNameBeforeParams:
-        case Parse::NodeKind::IdentifierNameExpr:
-        case Parse::NodeKind::IfConditionStart:
-        case Parse::NodeKind::IfExprElse:
-        case Parse::NodeKind::IfStatement:
-        case Parse::NodeKind::ImplDecl:
-        case Parse::NodeKind::ImplDefinition:
-        case Parse::NodeKind::ImplModifier:
-        case Parse::NodeKind::ImportDecl:
-        case Parse::NodeKind::ImportIntroducer:
-        case Parse::NodeKind::IndexExpr:
-        case Parse::NodeKind::IndexExprStart:
-        case Parse::NodeKind::InfixOperatorAmp:
-        case Parse::NodeKind::InfixOperatorAmpEqual:
-        case Parse::NodeKind::InfixOperatorAs:
-        case Parse::NodeKind::InfixOperatorCaret:
-        case Parse::NodeKind::InfixOperatorCaretEqual:
-        case Parse::NodeKind::InfixOperatorEqual:
-        case Parse::NodeKind::InfixOperatorEqualEqual:
-        case Parse::NodeKind::InfixOperatorExclaimEqual:
-        case Parse::NodeKind::InfixOperatorGreater:
-        case Parse::NodeKind::InfixOperatorGreaterEqual:
-        case Parse::NodeKind::InfixOperatorGreaterGreater:
-        case Parse::NodeKind::InfixOperatorGreaterGreaterEqual:
-        case Parse::NodeKind::InfixOperatorLess:
-        case Parse::NodeKind::InfixOperatorLessEqual:
-        case Parse::NodeKind::InfixOperatorLessEqualGreater:
-        case Parse::NodeKind::InfixOperatorLessLess:
-        case Parse::NodeKind::InfixOperatorLessLessEqual:
-        case Parse::NodeKind::InfixOperatorMinus:
-        case Parse::NodeKind::InfixOperatorMinusEqual:
-        case Parse::NodeKind::InfixOperatorPercent:
-        case Parse::NodeKind::InfixOperatorPercentEqual:
-        case Parse::NodeKind::InfixOperatorPipe:
-        case Parse::NodeKind::InfixOperatorPipeEqual:
-        case Parse::NodeKind::InfixOperatorPlus:
-        case Parse::NodeKind::InfixOperatorPlusEqual:
-        case Parse::NodeKind::InfixOperatorSlash:
-        case Parse::NodeKind::InfixOperatorSlashEqual:
-        case Parse::NodeKind::InfixOperatorStar:
-        case Parse::NodeKind::InfixOperatorStarEqual:
-        case Parse::NodeKind::InterfaceDecl:
-        case Parse::NodeKind::InterfaceDefinition:
-        case Parse::NodeKind::IntLiteral:
-        case Parse::NodeKind::IntTypeLiteral:
-        case Parse::NodeKind::InvalidParse:
-        case Parse::NodeKind::InvalidParseStart:
-        case Parse::NodeKind::InvalidParseSubtree:
-        case Parse::NodeKind::LetDecl:
-        case Parse::NodeKind::LibraryDecl:
-        case Parse::NodeKind::LibraryIntroducer:
-        case Parse::NodeKind::LibrarySpecifier:
-        case Parse::NodeKind::MatchCase:
-        case Parse::NodeKind::MatchCaseEqualGreater:
-        case Parse::NodeKind::MatchCaseGuard:
-        case Parse::NodeKind::MatchCaseGuardIntroducer:
-        case Parse::NodeKind::MatchCaseGuardStart:
-        case Parse::NodeKind::MatchCaseIntroducer:
-        case Parse::NodeKind::MatchCaseStart:
-        case Parse::NodeKind::MatchCondition:
-        case Parse::NodeKind::MatchConditionStart:
-        case Parse::NodeKind::MatchDefault:
-        case Parse::NodeKind::MatchDefaultEqualGreater:
-        case Parse::NodeKind::MatchDefaultIntroducer:
-        case Parse::NodeKind::MatchDefaultStart:
-        case Parse::NodeKind::MatchIntroducer:
-        case Parse::NodeKind::MatchStatement:
-        case Parse::NodeKind::MatchStatementStart:
-        case Parse::NodeKind::MemberAccessExpr:
-        case Parse::NodeKind::NamedConstraintDecl:
-        case Parse::NodeKind::NamedConstraintDefinition:
-        case Parse::NodeKind::NamedConstraintDefinitionStart:
-        case Parse::NodeKind::NamedConstraintIntroducer:
-        case Parse::NodeKind::NameQualifierWithParams:
-        case Parse::NodeKind::NameQualifierWithoutParams:
-        case Parse::NodeKind::Namespace:
-        case Parse::NodeKind::NamespaceStart:
-        case Parse::NodeKind::PackageDecl:
-        case Parse::NodeKind::PackageExpr:
-        case Parse::NodeKind::PackageIntroducer:
-        case Parse::NodeKind::PackageName:
-        case Parse::NodeKind::ParenExpr:
-        case Parse::NodeKind::ParenExprStart:
-        case Parse::NodeKind::PatternListComma:
-        case Parse::NodeKind::Placeholder:
-        case Parse::NodeKind::PointerMemberAccessExpr:
-        case Parse::NodeKind::PostfixOperatorStar:
-        case Parse::NodeKind::PrefixOperatorAmp:
-        case Parse::NodeKind::PrefixOperatorCaret:
-        case Parse::NodeKind::PrefixOperatorConst:
-        case Parse::NodeKind::PrefixOperatorMinus:
-        case Parse::NodeKind::PrefixOperatorMinusMinus:
-        case Parse::NodeKind::PrefixOperatorNot:
-        case Parse::NodeKind::PrefixOperatorPlusPlus:
-        case Parse::NodeKind::PrefixOperatorStar:
-        case Parse::NodeKind::PrivateModifier:
-        case Parse::NodeKind::ProtectedModifier:
-        case Parse::NodeKind::RealLiteral:
-        case Parse::NodeKind::RequirementAnd:
-        case Parse::NodeKind::RequirementEqual:
-        case Parse::NodeKind::RequirementEqualEqual:
-        case Parse::NodeKind::RequirementImpls:
-        case Parse::NodeKind::ReturnStatement:
-        case Parse::NodeKind::SelfTypeNameExpr:
-        case Parse::NodeKind::SelfValueNameExpr:
-        case Parse::NodeKind::ShortCircuitOperatorAnd:
-        case Parse::NodeKind::ShortCircuitOperatorOr:
-        case Parse::NodeKind::StringLiteral:
-        case Parse::NodeKind::StringTypeLiteral:
-        case Parse::NodeKind::StructLiteralComma:
-        case Parse::NodeKind::StructFieldDesignator:
-        case Parse::NodeKind::StructTypeLiteralComma:
-        case Parse::NodeKind::StructLiteral:
-        case Parse::NodeKind::StructTypeLiteral:
-        case Parse::NodeKind::Template:
-        case Parse::NodeKind::TupleLiteral:
-        case Parse::NodeKind::TupleLiteralComma:
-        case Parse::NodeKind::TypeImplAs:
-        case Parse::NodeKind::TypeTypeLiteral:
-        case Parse::NodeKind::UnsignedIntTypeLiteral:
-        case Parse::NodeKind::VariableDecl:
-        case Parse::NodeKind::VirtualModifier:
-        case Parse::NodeKind::WhereExpr:
-        case Parse::NodeKind::WhileStatement:
-          return Id::Kind::Invalid;
-      }
+      // Assume any node kind that doesn't have an ID kind from its category nor
+      // a special case can't appear on the stack just so we can build a table
+      // and avoid follow-on errors. We'll enforce at compile time that a value
+      // is actually specified in CheckIdKindTable.
+      return NodeKindToIdKindSpecialCases(node_kind).value_or(
+          Id::Kind::Invalid);
     };
 
 #define CARBON_PARSE_NODE_KIND(Name) \
@@ -650,6 +546,9 @@ class NodeStack {
 
     return table;
   }
+
+  // Check that an Id::Kind is specified for every node kind.
+  static auto CheckIdKindTable() -> void;
 
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto NodeKindToIdKind(Parse::NodeKind kind) -> Id::Kind {
