@@ -37,10 +37,14 @@ static auto GetIdentifierName(const Parse::TreeAndSubtrees& tree_and_subtrees,
   return std::nullopt;
 }
 
+// Helper class to collect all symbols during traversal of AST.
+// Symbols are "open" when their signature has been declared but their body is
+// still ongoing. New symbols are added to last open symbol, or top level list
+// if no symbols are open.
 class SymbolStore {
  public:
   // Adds a symbol with no children.
-  void AddSymbol(clang::clangd::DocumentSymbol symbol) {
+  auto AddSymbol(clang::clangd::DocumentSymbol symbol) -> void {
     if (open_symbols_.empty()) {
       top_level_symbols_.push_back(std::move(symbol));
     } else {
@@ -49,24 +53,21 @@ class SymbolStore {
   }
 
   // Starts a symbol potentially with children.
-  void StartSymbol(clang::clangd::DocumentSymbol symbol) {
+  auto StartSymbol(clang::clangd::DocumentSymbol symbol) -> void {
     open_symbols_.push_back(std::move(symbol));
   }
 
   auto HasOpenSymbol() const -> bool { return !open_symbols_.empty(); }
 
   // Completes a symbol, appending to parent list.
-  void EndSymbol() {
+  auto EndSymbol() -> void {
     CARBON_CHECK(HasOpenSymbol());
     AddSymbol(open_symbols_.pop_back_val());
   }
 
+  // Returns final top level symbols.
   auto Collect() -> std::vector<clang::clangd::DocumentSymbol> {
-    // Shouldn't happen in a valid tree but may as well handle gracefully.
-    while (!open_symbols_.empty()) {
-      EndSymbol();
-    }
-
+    CARBON_CHECK(!HasOpenSymbol());
     return std::move(top_level_symbols_);
   }
 
