@@ -9,13 +9,32 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/document_symbol/unknown.carbon
 
 // --- STDIN
+[[@LSP-CALL:initialize]]
 [[@LSP-CALL:textDocument/documentSymbol:
   "textDocument": {"uri": "file:/test.carbon"}
 ]]
+[[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: /test.carbon: warning: unknown file requested [LanguageServerFileUnknown]
 // CHECK:STDERR:
-// CHECK:STDOUT:
+// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 1,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": {
+// CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "documentSymbolProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 1
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 51{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 3,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": null
+// CHECK:STDOUT: }

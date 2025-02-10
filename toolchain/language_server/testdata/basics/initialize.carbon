@@ -10,6 +10,7 @@
 
 // --- STDIN
 [[@LSP-CALL:initialize]]
+[[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
@@ -25,4 +26,10 @@
 // CHECK:STDOUT:       "textDocumentSync": 1
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 51{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 2,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }
