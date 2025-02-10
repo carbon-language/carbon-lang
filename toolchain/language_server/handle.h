@@ -39,6 +39,12 @@ auto HandleInitialize(
     llvm::function_ref<void(llvm::Expected<llvm::json::Object>)> on_done)
     -> void;
 
+// Prepares LSP for shutdown.
+auto HandleShutdown(
+    Context& /*context*/,
+    const clang::clangd::NoParams& /*client_capabilities*/,
+    llvm::function_ref<void(llvm::Expected<std::nullptr_t>)> on_done) -> void;
+
 }  // namespace Carbon::LanguageServer
 
 #endif  // CARBON_TOOLCHAIN_LANGUAGE_SERVER_HANDLE_H_

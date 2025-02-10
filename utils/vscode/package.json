@@ -46,7 +46,13 @@
           "default": "./bazel-bin/toolchain/carbon"
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "command": "carbon.lsp.restart",
+        "title": "carbon: Restart language server"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

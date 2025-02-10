@@ -9,6 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/text_document/change_count.carbon
 
 // --- STDIN
+[[@LSP-CALL:initialize]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {"uri": "file:/test.carbon", "languageId": "carbon",
                    "text": "// Empty"}
@@ -28,6 +29,7 @@
      "text": "a"}
   ]
 ]]
+[[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
@@ -36,7 +38,18 @@
 // CHECK:STDERR:
 // CHECK:STDERR: /test.carbon: warning: received unsupported contentChanges count: 2 [LanguageServerUnsupportedChanges]
 // CHECK:STDERR:
-// CHECK:STDOUT: Content-Length: 144{{\r}}
+// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 1,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": {
+// CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "documentSymbolProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 1
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 144{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
@@ -45,4 +58,10 @@
 // CHECK:STDOUT:     "diagnostics": [],
 // CHECK:STDOUT:     "uri": "file:///test.carbon"
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 51{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 2,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }

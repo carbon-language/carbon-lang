@@ -4,21 +4,16 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/document_symbol/language.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/basics/fail_shutdown_without_exit.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/document_symbol/language.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/basics/fail_shutdown_without_exit.carbon
 
 // --- STDIN
 [[@LSP-CALL:initialize]]
-[[@LSP-CALL:textDocument/documentSymbol:
-  "textDocument": {"uri": "file:/test.cpp"}
-]]
 [[@LSP-CALL:shutdown]]
-[[@LSP-NOTIFY:exit]]
-
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: /test.cpp: warning: non-Carbon file requested [LanguageServerFileUnsupported]
+// CHECK:STDERR: error: Input/output error [LanguageServerTransportError]
 // CHECK:STDERR:
 // CHECK:STDOUT: Content-Length: 146{{\r}}
 // CHECK:STDOUT: {{\r}}
@@ -34,7 +29,7 @@
 // CHECK:STDOUT: }Content-Length: 51{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
-// CHECK:STDOUT:   "id": 3,
+// CHECK:STDOUT:   "id": 2,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }
