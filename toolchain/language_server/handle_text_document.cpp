@@ -16,8 +16,9 @@ auto HandleDidOpenTextDocument(
   }
 
   auto insert_result = context.files().Insert(
-      filename, [&] { return Context::File(filename.str()); });
-  insert_result.value().SetText(context, params.textDocument.text);
+      filename, [&] { return Context::File(params.textDocument.uri); });
+  insert_result.value().SetText(context, params.textDocument.version,
+                                params.textDocument.text);
   if (!insert_result.is_inserted()) {
     CARBON_DIAGNOSTIC(LanguageServerOpenDuplicateFile, Warning,
                       "duplicate open file request; updating content");
@@ -43,7 +44,8 @@ auto HandleDidChangeTextDocument(
     return;
   }
   if (auto* file = context.LookupFile(filename)) {
-    file->SetText(context, params.contentChanges[0].text);
+    file->SetText(context, params.textDocument.version,
+                  params.contentChanges[0].text);
   }
 }
 
