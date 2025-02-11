@@ -18,10 +18,7 @@ struct SpecificInterface {
   static const SpecificInterface None;
 
   friend auto operator==(const SpecificInterface& lhs,
-                         const SpecificInterface& rhs) -> bool {
-    return lhs.interface_id == rhs.interface_id &&
-           lhs.specific_id == rhs.specific_id;
-  }
+                         const SpecificInterface& rhs) -> bool = default;
   // Canonically ordered by the numerical ids.
   friend auto operator<=>(const SpecificInterface& lhs,
                           const SpecificInterface& rhs)
