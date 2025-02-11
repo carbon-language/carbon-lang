@@ -533,32 +533,6 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
-  // Marks the start of a region of insts in a pattern context that might
-  // represent an expression or a pattern. Typically this is called when
-  // handling a parse node that can immediately precede a subpattern (such
-  // as `let` or a `,` in a pattern list), and the handler for the subpattern
-  // node makes the matching `EndSubpatternAs*` call.
-  auto BeginSubpattern() -> void;
-
-  // Ends a region started by BeginSubpattern (in stack order), treating it as
-  // an expression with the given result, and returns the ID of the region. The
-  // region will not yet have any control-flow edges into or out of it.
-  auto EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::ExprRegionId;
-
-  // Ends a region started by BeginSubpattern (in stack order), asserting that
-  // it was empty.
-  auto EndSubpatternAsEmpty() -> void;
-
-  // TODO: Add EndSubpatternAsPattern, when needed.
-
-  // Inserts the given region into the current code block. If the region
-  // consists of a single block, this will be implemented as a `splice_block`
-  // inst. Otherwise, this will end the current block with a branch to the entry
-  // block of the region, and add future insts to a new block which is the
-  // immediate successor of the region's exit block. As a result, this cannot be
-  // called more than once for the same region.
-  auto InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId;
-
   auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
     return import_ref_ids_;
   }

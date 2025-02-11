@@ -12,6 +12,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/return.h"
+#include "toolchain/check/subpattern.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_kind.h"
@@ -82,7 +83,7 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   context.pattern_block_stack().Push();
   context.full_pattern_stack().PushFullPattern(
       FullPatternStack::Kind::NameBindingDecl);
-  context.BeginSubpattern();
+  BeginSubpattern(context);
   return true;
 }
 
@@ -256,7 +257,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
     // associated with an InstBlockId on the node stack rather than an InstId,
     // and leave behind an entry on the subpattern stack and one on the node
     // stack.
-    context.EndSubpatternAsExpr(SemIR::ErrorInst::SingletonInstId);
+    EndSubpatternAsExpr(context, SemIR::ErrorInst::SingletonInstId);
     context.node_stack().PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
     decl_info.pattern_id = SemIR::ErrorInst::SingletonInstId;
   } else {

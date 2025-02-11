@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/return.h"
+#include "toolchain/check/subpattern.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
@@ -24,7 +25,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // TODO: Handle `_` bindings.
 
   SemIR::ExprRegionId type_expr_region_id =
-      context.EndSubpatternAsExpr(cast_type_inst_id);
+      EndSubpatternAsExpr(context, cast_type_inst_id);
 
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
