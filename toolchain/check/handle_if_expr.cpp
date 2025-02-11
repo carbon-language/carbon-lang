@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/literal.h"
@@ -19,8 +20,8 @@ auto HandleParseNode(Context& context, Parse::IfExprIfId node_id) -> bool {
   cond_value_id = ConvertToBoolValue(context, if_node, cond_value_id);
   context.node_stack().Push(cond_node, cond_value_id);
   auto then_block_id =
-      context.AddDominatedBlockAndBranchIf(if_node, cond_value_id);
-  auto else_block_id = context.AddDominatedBlockAndBranch(if_node);
+      AddDominatedBlockAndBranchIf(context, if_node, cond_value_id);
+  auto else_block_id = AddDominatedBlockAndBranch(context, if_node);
 
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
@@ -85,10 +86,10 @@ auto HandleParseNode(Context& context, Parse::IfExprElseId node_id) -> bool {
       ConvertToValueOfType(context, else_node, else_value_id, result_type_id);
 
   // Create a resumption block and branches to it.
-  auto chosen_value_id = context.AddConvergenceBlockWithArgAndPush(
-      if_node, {else_value_id, then_value_id});
-  context.SetBlockArgResultBeforeConstantUse(chosen_value_id, cond_value_id,
-                                             then_value_id, else_value_id);
+  auto chosen_value_id = AddConvergenceBlockWithArgAndPush(
+      context, if_node, {else_value_id, then_value_id});
+  SetBlockArgResultBeforeConstantUse(context, chosen_value_id, cond_value_id,
+                                     then_value_id, else_value_id);
 
   // Push the result value.
   context.node_stack().Push(else_node, chosen_value_id);

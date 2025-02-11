@@ -4,6 +4,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -445,7 +446,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
-  if (context.is_current_position_reachable()) {
+  if (IsCurrentPositionReachable(context)) {
     if (context.functions()
             .Get(function_id)
             .return_slot_pattern_id.has_value()) {

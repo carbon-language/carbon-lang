@@ -314,57 +314,6 @@ class Context {
     return result;
   }
 
-  // Adds a `Branch` instruction branching to a new instruction block, and
-  // returns the ID of the new block. All paths to the branch target must go
-  // through the current block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::NodeId node_id) -> SemIR::InstBlockId;
-
-  // Adds a `Branch` instruction branching to a new instruction block with a
-  // value, and returns the ID of the new block. All paths to the branch target
-  // must go through the current block.
-  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
-                                         SemIR::InstId arg_id)
-      -> SemIR::InstBlockId;
-
-  // Adds a `BranchIf` instruction branching to a new instruction block, and
-  // returns the ID of the new block. All paths to the branch target must go
-  // through the current block.
-  auto AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
-                                    SemIR::InstId cond_id)
-      -> SemIR::InstBlockId;
-
-  // Handles recovergence of control flow. Adds branches from the top
-  // `num_blocks` on the instruction block stack to a new block, pops the
-  // existing blocks, pushes the new block onto the instruction block stack,
-  // and adds it to the most recently pushed region.
-  auto AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
-      -> void;
-
-  // Handles recovergence of control flow with a result value. Adds branches
-  // from the top few blocks on the instruction block stack to a new block, pops
-  // the existing blocks,  pushes the new block onto the instruction block
-  // stack, and adds it to the most recently pushed region. The number of blocks
-  // popped is the size of `block_args`, and the corresponding result values are
-  // the elements of `block_args`. Returns an instruction referring to the
-  // result value.
-  auto AddConvergenceBlockWithArgAndPush(
-      Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
-      -> SemIR::InstId;
-
-  // Sets the constant value of a block argument created as the result of a
-  // branch.  `select_id` should be a `BlockArg` that selects between two
-  // values. `cond_id` is the condition, `if_false` is the value to use if the
-  // condition is false, and `if_true` is the value to use if the condition is
-  // true.  We don't track enough information in the `BlockArg` inst for
-  // `TryEvalInst` to do this itself.
-  auto SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
-                                          SemIR::InstId cond_id,
-                                          SemIR::InstId if_true,
-                                          SemIR::InstId if_false) -> void;
-
-  // Returns whether the current position in the current block is reachable.
-  auto is_current_position_reachable() -> bool;
-
   // Returns the type ID for a constant of type `type`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
@@ -488,6 +437,8 @@ class Context {
   auto tokens() const -> const Lex::TokenizedBuffer& {
     return parse_tree().tokens();
   }
+
+  auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 

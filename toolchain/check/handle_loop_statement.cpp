@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 
@@ -16,7 +17,7 @@ auto HandleParseNode(Context& context, Parse::WhileConditionStartId node_id)
   // Branch to the loop header block. Note that we create a new block here even
   // if the current block is empty; this ensures that the loop always has a
   // preheader block.
-  auto loop_header_id = context.AddDominatedBlockAndBranch(node_id);
+  auto loop_header_id = AddDominatedBlockAndBranch(context, node_id);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop header block.
@@ -36,8 +37,8 @@ auto HandleParseNode(Context& context, Parse::WhileConditionId node_id)
 
   // Branch to either the loop body or the loop exit block.
   auto loop_body_id =
-      context.AddDominatedBlockAndBranchIf(node_id, cond_value_id);
-  auto loop_exit_id = context.AddDominatedBlockAndBranch(node_id);
+      AddDominatedBlockAndBranchIf(context, node_id, cond_value_id);
+  auto loop_exit_id = AddDominatedBlockAndBranch(context, node_id);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop body.
