@@ -4,6 +4,8 @@
 
 #include "toolchain/check/control_flow.h"
 
+#include "toolchain/sem_ir/typed_insts.h"
+
 namespace Carbon::Check {
 
 template <typename BranchNode, typename... Args>
