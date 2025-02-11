@@ -53,10 +53,12 @@ impl C as I {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [template]
+// CHECK:STDOUT:   %I.facet.b45: %I.type = facet_value %C, %impl_witness.85b [template]
+// CHECK:STDOUT:   %.575: type = fn_type_with_self_type %F.type.cf0, %I.facet.b45 [template]
 // CHECK:STDOUT:   %impl_witness.054: <witness> = impl_witness (@impl.2.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [template]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness.054 [template]
+// CHECK:STDOUT:   %I.facet.4ac: %I.type = facet_value %C, %impl_witness.054 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -136,7 +138,7 @@ impl C as I {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %F.type.cf0 = impl_witness_access constants.%impl_witness.85b, element0 [template = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.575 = impl_witness_access constants.%impl_witness.85b, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -147,5 +149,5 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%I.facet) {}
+// CHECK:STDOUT: specific @F.1(constants.%I.facet.4ac) {}
 // CHECK:STDOUT:

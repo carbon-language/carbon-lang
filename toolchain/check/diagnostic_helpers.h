@@ -7,17 +7,18 @@
 
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
-// Diagnostic locations produced by checking may be either a parse node
-// directly, or an inst ID which is later translated to a parse node.
-struct SemIRLoc {
+// Tracks a location for diagnostic use, which is either a parse node or an inst
+// ID which can be translated to a parse node. Used when code needs to support
+// multiple possible ways of reporting a diagnostic location.
+class SemIRLoc {
+ public:
   // NOLINTNEXTLINE(google-explicit-constructor)
   SemIRLoc(SemIR::InstId inst_id)
-      : inst_id(inst_id), is_inst_id(true), token_only(false) {}
+      : inst_id_(inst_id), is_inst_id_(true), token_only_(false) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   SemIRLoc(Parse::NodeId node_id) : SemIRLoc(node_id, false) {}
@@ -25,16 +26,22 @@ struct SemIRLoc {
   // NOLINTNEXTLINE(google-explicit-constructor)
   SemIRLoc(SemIR::LocId loc_id) : SemIRLoc(loc_id, false) {}
 
+  // If `token_only` is true, refers to the specific node; otherwise, refers to
+  // the node and its children.
   explicit SemIRLoc(SemIR::LocId loc_id, bool token_only)
-      : loc_id(loc_id), is_inst_id(false), token_only(token_only) {}
+      : loc_id_(loc_id), is_inst_id_(false), token_only_(token_only) {}
+
+ private:
+  // Only allow member access for diagnostics.
+  friend class SemIRLocDiagnosticEmitter;
 
   union {
-    SemIR::InstId inst_id;
-    SemIR::LocId loc_id;
+    SemIR::InstId inst_id_;
+    SemIR::LocId loc_id_;
   };
 
-  bool is_inst_id;
-  bool token_only;
+  bool is_inst_id_;
+  bool token_only_;
 };
 
 inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {

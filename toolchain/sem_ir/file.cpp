@@ -263,6 +263,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FloatLiteral::Kind:
       case FloatType::Kind:
       case FunctionType::Kind:
+      case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
       case ImplWitness::Kind:

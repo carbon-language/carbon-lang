@@ -38,19 +38,25 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %impl_witness.491: <witness> = impl_witness (@impl.1.%Convert.decl) [template]
 // CHECK:STDOUT:   %Convert.type.0e3: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.311: %Convert.type.0e3 = struct_value () [template]
+// CHECK:STDOUT:   %As.facet.e45: %As.type.602 = facet_value %i32, %impl_witness.491 [template]
 // CHECK:STDOUT:   %As.type.fd4: type = facet_type <@As, @As(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.1, @As(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.662: <witness> = impl_witness (@impl.2.%Convert.decl) [template]
 // CHECK:STDOUT:   %Convert.type.c23: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.8bb: %Convert.type.c23 = struct_value () [template]
+// CHECK:STDOUT:   %As.facet.831: %As.type.fd4 = facet_value %X, %impl_witness.662 [template]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.5(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.7, @impl.5(%int_32) [template]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [template]
+// CHECK:STDOUT:   %As.facet.5e2: %As.type.fd4 = facet_value Core.IntLiteral, %impl_witness.882 [template]
+// CHECK:STDOUT:   %.214: type = fn_type_with_self_type %Convert.type.99b, %As.facet.5e2 [template]
 // CHECK:STDOUT:   %Convert.bound.e80: <bound method> = bound_method %int_4.0c1, %Convert.197 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.e80, @Convert.7(%int_32) [template]
 // CHECK:STDOUT:   %int_4.940: %i32 = int_value 4 [template]
+// CHECK:STDOUT:   %.b22: type = fn_type_with_self_type %Convert.type.35b, %As.facet.e45 [template]
 // CHECK:STDOUT:   %Convert.bound.483: <bound method> = bound_method %int_4.940, %Convert.311 [template]
+// CHECK:STDOUT:   %.599: type = fn_type_with_self_type %Convert.type.99b, %As.facet.831 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -182,25 +188,25 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.0c1]
 // CHECK:STDOUT:   %int_32.loc23_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23_21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc23_18: %Convert.type.99b = impl_witness_access constants.%impl_witness.882, element0 [template = constants.%Convert.197]
-// CHECK:STDOUT:   %Convert.bound.loc23_18: <bound method> = bound_method %int_4, %impl.elem0.loc23_18 [template = constants.%Convert.bound.e80]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.loc23_18, @Convert.7(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_4) [template = constants.%int_4.940]
+// CHECK:STDOUT:   %impl.elem0.loc23_18: %.214 = impl_witness_access constants.%impl_witness.882, element0 [template = constants.%Convert.197]
+// CHECK:STDOUT:   %bound_method.loc23_18: <bound method> = bound_method %int_4, %impl.elem0.loc23_18 [template = constants.%Convert.bound.e80]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method.loc23_18, @Convert.7(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(%int_4) [template = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc23_18.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc23_18.2: %i32 = converted %int_4, %.loc23_18.1 [template = constants.%int_4.940]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %impl.elem0.loc23_26: %Convert.type.35b = impl_witness_access constants.%impl_witness.491, element0 [template = constants.%Convert.311]
-// CHECK:STDOUT:   %Convert.bound.loc23_26: <bound method> = bound_method %.loc23_18.2, %impl.elem0.loc23_26 [template = constants.%Convert.bound.483]
+// CHECK:STDOUT:   %impl.elem0.loc23_26: %.b22 = impl_witness_access constants.%impl_witness.491, element0 [template = constants.%Convert.311]
+// CHECK:STDOUT:   %bound_method.loc23_26: <bound method> = bound_method %.loc23_18.2, %impl.elem0.loc23_26 [template = constants.%Convert.bound.483]
 // CHECK:STDOUT:   %.loc23_26.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %Convert.bound.loc23_26(%.loc23_18.2) to %.loc23_26.1
+// CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %bound_method.loc23_26(%.loc23_18.2) to %.loc23_26.1
 // CHECK:STDOUT:   %.loc23_26.2: init %X = converted %.loc23_18.2, %Convert.call.loc23_26
 // CHECK:STDOUT:   %int_32.loc23_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23_35: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc23_32: %Convert.type.99b = impl_witness_access constants.%impl_witness.662, element0 [template = constants.%Convert.8bb]
-// CHECK:STDOUT:   %Convert.bound.loc23_32: <bound method> = bound_method %.loc23_26.2, %impl.elem0.loc23_32
+// CHECK:STDOUT:   %impl.elem0.loc23_32: %.599 = impl_witness_access constants.%impl_witness.662, element0 [template = constants.%Convert.8bb]
+// CHECK:STDOUT:   %bound_method.loc23_32: <bound method> = bound_method %.loc23_26.2, %impl.elem0.loc23_32
 // CHECK:STDOUT:   %.loc23_26.3: ref %X = temporary %.loc23_26.1, %.loc23_26.2
 // CHECK:STDOUT:   %.loc23_26.4: %X = bind_value %.loc23_26.3
-// CHECK:STDOUT:   %Convert.call.loc23_32: init %i32 = call %Convert.bound.loc23_32(%.loc23_26.4)
+// CHECK:STDOUT:   %Convert.call.loc23_32: init %i32 = call %bound_method.loc23_32(%.loc23_26.4)
 // CHECK:STDOUT:   %.loc23_32.1: %i32 = value_of_initializer %Convert.call.loc23_32
 // CHECK:STDOUT:   %.loc23_32.2: %i32 = converted %.loc23_26.2, %.loc23_32.1
 // CHECK:STDOUT:   return

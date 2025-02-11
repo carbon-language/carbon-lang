@@ -49,7 +49,7 @@ structures, but it may still be helpful for tools such as syntax highlighters or
 refactoring tools.
 
 In general, we favor doing the checking for whether something is allowed _in a
-particular context_ in [the check stage](check.md) instead of the parse stage,
+particular context_ in [the check stage](check) instead of the parse stage,
 unless the context is very local. This is for a few reasons:
 
 -   We anticipate that the parse stage will be used to operate on invalid code

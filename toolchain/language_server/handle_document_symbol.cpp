@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/language_server/handle.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/parse/node_kind.h"
@@ -13,20 +12,19 @@
 
 namespace Carbon::LanguageServer {
 
-// Returns the text of first child of kind IdentifierNameBeforeParams or
+// Returns the token of first child of kind IdentifierNameBeforeParams or
 // IdentifierNameNotBeforeParams.
-static auto GetIdentifierName(const SharedValueStores& value_stores,
-                              const Lex::TokenizedBuffer& tokens,
-                              const Parse::TreeAndSubtrees& tree_and_subtrees,
-                              Parse::NodeId node)
-    -> std::optional<llvm::StringRef> {
+static auto GetSymbolIdentifier(const Parse::TreeAndSubtrees& tree_and_subtrees,
+                                Parse::NodeId node)
+    -> std::optional<Lex::TokenIndex> {
+  const auto& tokens = tree_and_subtrees.tree().tokens();
   for (auto child : tree_and_subtrees.children(node)) {
     switch (tree_and_subtrees.tree().node_kind(child)) {
       case Parse::NodeKind::IdentifierNameBeforeParams:
       case Parse::NodeKind::IdentifierNameNotBeforeParams: {
         auto token = tree_and_subtrees.tree().node_token(child);
         if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
-          return value_stores.identifiers().Get(tokens.GetIdentifier(token));
+          return token;
         }
         break;
       }
@@ -37,27 +35,60 @@ static auto GetIdentifierName(const SharedValueStores& value_stores,
   return std::nullopt;
 }
 
+// Constructs a Range from a closed interval of tokens [start, end].
+static auto GetTokenRange(const Lex::TokenizedBuffer& tokens,
+                          Lex::TokenIndex start, Lex::TokenIndex end)
+    -> clang::clangd::Range {
+  auto start_line = tokens.GetLine(start);
+  auto start_col = tokens.GetColumnNumber(start);
+  auto [end_line, end_col] = tokens.GetEndLoc(end);
+
+  return clang::clangd::Range{
+      .start = {.line = start_line.index, .character = start_col - 1},
+      .end = {.line = end_line.index, .character = end_col - 1},
+  };
+}
+
+// Finds a spanning range for the provided definition / declaration ast node.
+// In the case of a definition start, will include the body as well.
+static auto GetSymbolRange(const Parse::TreeAndSubtrees& tree_and_subtrees,
+                           const Parse::NodeId& ast_node)
+    -> clang::clangd::Range {
+  const auto& tokens = tree_and_subtrees.tree().tokens();
+
+  // The left-most node will always be the first node in postorder traversal.
+  auto start_node = *tree_and_subtrees.postorder(ast_node).begin();
+
+  auto start_token = tree_and_subtrees.tree().node_token(start_node);
+  auto end_token = tree_and_subtrees.tree().node_token(ast_node);
+  if (tokens.GetKind(end_token).is_opening_symbol()) {
+    // DefinitionStart nodes use an opening token, so find its closing token to
+    // span the entire class/function body.
+    return GetTokenRange(tokens, start_token,
+                         tokens.GetMatchedClosingToken(end_token));
+  } else {
+    return GetTokenRange(tokens, start_token, end_token);
+  }
+}
+
 auto HandleDocumentSymbol(
     Context& context, const clang::clangd::DocumentSymbolParams& params,
     llvm::function_ref<
-        void(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)>
+        auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
         on_done) -> void {
-  SharedValueStores value_stores;
-  llvm::vfs::InMemoryFileSystem vfs;
-  auto lookup = context.files().Lookup(params.textDocument.uri.file());
-  CARBON_CHECK(lookup);
-  vfs.addFile(lookup.key(), /*mtime=*/0,
-              llvm::MemoryBuffer::getMemBufferCopy(lookup.value()));
+  auto* file = context.LookupFile(params.textDocument.uri.file());
+  if (!file) {
+    return;
+  }
 
-  auto source =
-      SourceBuffer::MakeFromFile(vfs, lookup.key(), NullDiagnosticConsumer());
-  auto tokens = Lex::Lex(value_stores, *source, NullDiagnosticConsumer());
-  auto tree = Parse::Parse(tokens, NullDiagnosticConsumer(), nullptr);
-  Parse::TreeAndSubtrees tree_and_subtrees(tokens, tree);
+  const auto& tree_and_subtrees = file->tree_and_subtrees();
+  const auto& tree = tree_and_subtrees.tree();
+  const auto& tokens = tree.tokens();
+
   std::vector<clang::clangd::DocumentSymbol> result;
-  for (const auto& node : tree.postorder()) {
+  for (const auto& node_id : tree.postorder()) {
     clang::clangd::SymbolKind symbol_kind;
-    switch (tree.node_kind(node)) {
+    switch (tree.node_kind(node_id)) {
       case Parse::NodeKind::FunctionDecl:
       case Parse::NodeKind::FunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
@@ -76,17 +107,12 @@ auto HandleDocumentSymbol(
         continue;
     }
 
-    if (auto name =
-            GetIdentifierName(value_stores, tokens, tree_and_subtrees, node)) {
-      auto token = tree.node_token(node);
-      clang::clangd::Position pos{tokens.GetLineNumber(token) - 1,
-                                  tokens.GetColumnNumber(token) - 1};
-
+    if (auto identifier = GetSymbolIdentifier(tree_and_subtrees, node_id)) {
       clang::clangd::DocumentSymbol symbol{
-          .name = std::string(*name),
+          .name = std::string(tokens.GetTokenText(*identifier)),
           .kind = symbol_kind,
-          .range = {.start = pos, .end = pos},
-          .selectionRange = {.start = pos, .end = pos},
+          .range = GetSymbolRange(tree_and_subtrees, node_id),
+          .selectionRange = GetTokenRange(tokens, *identifier, *identifier),
       };
 
       result.push_back(symbol);

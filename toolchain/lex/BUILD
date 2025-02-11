@@ -188,6 +188,7 @@ cc_library(
         ":helpers",
         ":numeric_literal",
         ":string_literal",
+        ":token_index",
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",

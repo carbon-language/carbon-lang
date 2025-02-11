@@ -143,6 +143,7 @@ cc_library(
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:value_store",
+        "//toolchain/lex:token_index",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
@@ -185,16 +186,6 @@ cc_fuzz_test(
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "tree_node_diagnostic_converter",
-    hdrs = ["tree_node_diagnostic_converter.h"],
-    deps = [
-        ":tree",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lex:tokenized_buffer",
     ],
 )
 

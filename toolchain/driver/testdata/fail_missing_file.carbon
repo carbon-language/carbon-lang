@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --include-diagnostic-kind not_file.carbon
+// ARGS: --include-diagnostic-kind compile not_file.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

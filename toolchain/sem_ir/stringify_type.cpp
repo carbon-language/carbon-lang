@@ -321,20 +321,40 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(FunctionType inst): {
-        auto fn_name_id = sem_ir.functions().Get(inst.function_id).name_id;
-        out << "<type of " << sem_ir.names().GetFormatted(fn_name_id) << ">";
+        const auto& fn = sem_ir.functions().Get(inst.function_id);
+        out << "<type of ";
+        step_stack.PushString(">");
+        step_stack.PushQualifiedName(fn.parent_scope_id, fn.name_id);
+        break;
+      }
+      case CARBON_KIND(FunctionTypeWithSelfType inst): {
+        out << "<type of ";
+        step_stack.PushString(">");
+        step_stack.PushInstId(inst.self_id);
+        step_stack.PushString(" in ");
+        if (auto fn_inst = sem_ir.insts().TryGetAs<FunctionType>(
+                inst.interface_function_type_id)) {
+          const auto& fn = sem_ir.functions().Get(fn_inst->function_id);
+          step_stack.PushQualifiedName(fn.parent_scope_id, fn.name_id);
+        } else {
+          step_stack.PushInstId(inst.interface_function_type_id);
+        }
         break;
       }
       case CARBON_KIND(GenericClassType inst): {
-        auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
-        out << "<type of " << sem_ir.names().GetFormatted(class_name_id) << ">";
+        const auto& class_info = sem_ir.classes().Get(inst.class_id);
+        out << "<type of ";
+        step_stack.PushString(">");
+        step_stack.PushQualifiedName(class_info.parent_scope_id,
+                                     class_info.name_id);
         break;
       }
       case CARBON_KIND(GenericInterfaceType inst): {
-        auto interface_name_id =
-            sem_ir.interfaces().Get(inst.interface_id).name_id;
-        out << "<type of " << sem_ir.names().GetFormatted(interface_name_id)
-            << ">";
+        const auto& interface = sem_ir.interfaces().Get(inst.interface_id);
+        out << "<type of ";
+        step_stack.PushString(">");
+        step_stack.PushQualifiedName(interface.parent_scope_id,
+                                     interface.name_id);
         break;
       }
       case CARBON_KIND(ImplWitnessAccess inst): {

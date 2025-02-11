@@ -52,24 +52,17 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
                              llvm::ArrayRef<SemIR::InstId> const_ids)
     -> SemIR::InstBlockId;
 
-// Builds a new specific, or finds an existing one if this generic has already
-// been referenced with these arguments. Performs substitution into the
-// declaration, but not the definition, of the generic.
-//
-// `args_id` should be a canonical instruction block referring to constants.
+// Builds a new specific with a given argument list, or finds an existing one if
+// this generic has already been referenced with these arguments. Performs
+// substitution into the declaration, but not the definition, of the generic.
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
+                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId;
+
+// Builds a new specific or finds an existing one in the case where the argument
+// list has already been converted into an instruction block. `args_id` should
+// be a canonical instruction block referring to constants.
 auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId;
-
-// Builds a new specific if the given generic is it has a value. Otherwise
-// returns `None`.
-inline auto MakeSpecificIfGeneric(Context& context, SemIRLoc loc,
-                                  SemIR::GenericId generic_id,
-                                  SemIR::InstBlockId args_id)
-    -> SemIR::SpecificId {
-  return generic_id.has_value()
-             ? MakeSpecific(context, loc, generic_id, args_id)
-             : SemIR::SpecificId::None;
-}
 
 // Builds the specific that describes how the generic should refer to itself.
 // For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If

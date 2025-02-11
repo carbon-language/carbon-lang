@@ -82,7 +82,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %assoc0.4ff: %Interface.assoc_type.44d = assoc_entity element0, @Interface.%X [template]
 // CHECK:STDOUT:   %I.as_type.ee6: type = facet_access_type %I.d08 [symbolic]
 // CHECK:STDOUT:   %I.as_wit.156: <witness> = facet_access_witness %I.d08 [symbolic]
-// CHECK:STDOUT:   %Interface.facet.a3f: %Interface.type.d32 = facet_value %I.as_type.ee6, %I.as_wit.156 [symbolic]
+// CHECK:STDOUT:   %Interface.facet.d35: %Interface.type.981 = facet_value %I.as_type.ee6, %I.as_wit.156 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.b00: %i32 = impl_witness_access %I.as_wit.156, element0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,7 +281,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.patt.loc12_19.2 => constants.%I.d08
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%i32, constants.%Interface.facet.a3f) {
+// CHECK:STDOUT: specific @X(constants.%i32, constants.%Interface.facet.d35) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT: }

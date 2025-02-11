@@ -195,7 +195,7 @@ struct LLVMHashBench : HashBenchBase {
 };
 
 template <typename Values, typename Hasher>
-void BM_LatencyHash(benchmark::State& state) {
+auto BM_LatencyHash(benchmark::State& state) -> void {
   uint64_t x = 13;
   Values v;
   Hasher h;

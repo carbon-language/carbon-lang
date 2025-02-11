@@ -73,13 +73,20 @@ interface O {
 fn WithInteger(Q:! O where .P = i32) {}
 
 fn WithBool(R:! O where .P = bool) {
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+17]]:3: error: semantics TODO: `Facet value converting to facet value` [SemanticsTodo]
+  // CHECK:STDERR:   WithInteger(R);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `O where .(O.P) = bool` to `O where .(O.P) = i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: note: type `O where .(O.P) = bool` does not implement interface `Core.ImplicitAs(O where .(O.P) = i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -98,13 +105,20 @@ interface S {
 fn WithT(V:! S where .T = ()) {}
 
 fn WithU(W:! S where .U = ()) {
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+17]]:3: error: semantics TODO: `Facet value converting to facet value` [SemanticsTodo]
+  // CHECK:STDERR:   WithT(W);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `S where .(S.U) = ()` to `S where .(S.T) = ()` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: note: type `S where .(S.U) = ()` does not implement interface `Core.ImplicitAs(S where .(S.T) = ())` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -993,7 +1007,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithInteger.ref: %WithInteger.type = name_ref WithInteger, file.%WithInteger.decl [template = constants.%WithInteger]
 // CHECK:STDOUT:     %R.ref: %O_where.type.0f2 = name_ref R, %R.loc10_13.1 [symbolic = %R.loc10_13.2 (constants.%R)]
-// CHECK:STDOUT:     %.loc21: %O_where.type.9eb = converted %R.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc28: %O_where.type.9eb = converted %R.ref, <error> [template = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1148,7 +1162,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithT.ref: %WithT.type = name_ref WithT, file.%WithT.decl [template = constants.%WithT]
 // CHECK:STDOUT:     %W.ref: %S_where.type.357 = name_ref W, %W.loc11_10.1 [symbolic = %W.loc11_10.2 (constants.%W)]
-// CHECK:STDOUT:     %.loc22: %S_where.type.e40 = converted %W.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc29: %S_where.type.e40 = converted %W.ref, <error> [template = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1177,16 +1191,16 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Calls.type: type = fn_type @Calls [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Calls: %Calls.type = struct_value () [template]
-// CHECK:STDOUT:   %Equal.type: type = fn_type @Equal [template]
-// CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [template]
+// CHECK:STDOUT:   %Equal.type.d73: type = fn_type @Equal.1 [template]
+// CHECK:STDOUT:   %Equal.517: %Equal.type.d73 = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [template]
 // CHECK:STDOUT:   %.Self.9aa: %N.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.cef: <witness> = facet_access_witness %.Self.9aa [symbolic]
 // CHECK:STDOUT:   %impl.elem0.51b: type = impl_witness_access %.Self.as_wit.cef, element0 [symbolic]
 // CHECK:STDOUT:   %N_where.type: type = facet_type <@N where %impl.elem0.51b = %empty_struct_type> [template]
-// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %NestedRewrite.type: type = fn_type @NestedRewrite [template]
@@ -1200,15 +1214,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.as_wit.a35: <witness> = facet_access_witness %.Self.e46 [symbolic]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %.Self.as_wit.a35, element1 [symbolic]
 // CHECK:STDOUT:   %A_where.type.791: type = facet_type <@A where %impl.elem1 = %empty_tuple.type and %impl.elem0.1d3 = bool> [template]
-// CHECK:STDOUT:   %D: %A_where.type.791 = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %D.patt: %A_where.type.791 = symbolic_binding_pattern D, 0 [symbolic]
+// CHECK:STDOUT:   %D: %A_where.type.791 = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.N = import_ref Main//equal_constraint, N, unloaded
-// CHECK:STDOUT:   %Main.Equal: %Equal.type = import_ref Main//equal_constraint, Equal, loaded [template = constants.%Equal]
+// CHECK:STDOUT:   %Main.Equal: %Equal.type.d73 = import_ref Main//equal_constraint, Equal, loaded [template = constants.%Equal.517]
 // CHECK:STDOUT:   %Main.A = import_ref Main//nested_rewrites, A, unloaded
 // CHECK:STDOUT:   %Main.NestedRewrite: %NestedRewrite.type = import_ref Main//nested_rewrites, NestedRewrite, loaded [template = constants.%NestedRewrite]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -1221,11 +1235,13 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Main.import_ref.169 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.020 = import_ref Main//equal_constraint, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.P = import_ref Main//equal_constraint, P, unloaded
+// CHECK:STDOUT:   %Main.import_ref.bdf: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b61 = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.91a = import_ref Main//nested_rewrites, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.55d = import_ref Main//nested_rewrites, loc6_8, unloaded
 // CHECK:STDOUT:   %Main.B = import_ref Main//nested_rewrites, B, unloaded
 // CHECK:STDOUT:   %Main.C = import_ref Main//nested_rewrites, C, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e0c: %A_where.type.791 = import_ref Main//nested_rewrites, loc9_18, loaded [symbolic = @NestedRewrite.%D (constants.%D)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1259,7 +1275,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Calls() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Equal.ref: %Equal.type = name_ref Equal, imports.%Main.Equal [template = constants.%Equal]
+// CHECK:STDOUT:   %Equal.ref: %Equal.type.d73 = name_ref Equal, imports.%Main.Equal [template = constants.%Equal.517]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc19: %N_where.type = converted %bool.make_type, <error> [template = <error>]
 // CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%Main.NestedRewrite [template = constants.%NestedRewrite]
@@ -1269,21 +1285,21 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(constants.%T: %N_where.type) [from "equal_constraint.carbon"] {
+// CHECK:STDOUT: generic fn @Equal.1(imports.%Main.import_ref.bdf: %N_where.type) [from "equal_constraint.carbon"] {
 // CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %N_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NestedRewrite(constants.%D: %A_where.type.791) [from "nested_rewrites.carbon"] {
+// CHECK:STDOUT: generic fn @NestedRewrite(imports.%Main.import_ref.e0c: %A_where.type.791) [from "nested_rewrites.carbon"] {
 // CHECK:STDOUT:   %D: %A_where.type.791 = bind_symbolic_name D, 0 [symbolic = %D (constants.%D)]
 // CHECK:STDOUT:   %D.patt: %A_where.type.791 = symbolic_binding_pattern D, 0 [symbolic = %D.patt (constants.%D.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%D.param_patt: %A_where.type.791);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal(constants.%T) {
+// CHECK:STDOUT: specific @Equal.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }

@@ -65,16 +65,15 @@ class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
+
   // A function that forms a diagnostic for some kind of problem. The
   // DiagnosticBuilder is returned rather than emitted so that the caller can
   // add contextual notes as appropriate.
-  using BuildDiagnosticFn =
-      llvm::function_ref<auto()->Context::DiagnosticBuilder>;
+  using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
-                   llvm::function_ref<const Parse::TreeAndSubtrees&()>
-                       get_parse_tree_and_subtrees,
+                   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
 
@@ -215,9 +214,7 @@ class Context {
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration. If scope_id is `None`, performs lookup into the lexical scope
-  // specified by scope_index instead. If found, returns the referenced
-  // `InstId` and false. If poisoned, returns `InstId::None` and true.
-  // TODO: For poisoned names, return the poisoning `InstId`.
+  // specified by scope_index instead.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id, ScopeIndex scope_index)
       -> SemIR::ScopeLookupResult;
@@ -235,7 +232,7 @@ class Context {
   // poisoned name will be treated as if it is not declared. Otherwise, this is
   // a lookup for a name being declared, so the name will not be poisoned, but
   // poison will be returned if it's already been looked up.
-  auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+  auto LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
                               SemIR::NameScope& scope,
                               bool is_being_declared = false)
@@ -265,8 +262,9 @@ class Context {
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
-  // Prints a diagnostic for a poisoned name.
-  auto DiagnosePoisonedName(SemIRLoc loc) -> void;
+  // Prints a diagnostic for a poisoned name when it's later declared.
+  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+                            SemIR::InstId decl_inst_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
@@ -376,71 +374,6 @@ class Context {
     return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
   }
 
-  // Attempts to complete the type `type_id`. Returns `true` if the type is
-  // complete, or `false` if it could not be completed. A complete type has
-  // known object and value representations. Returns `true` if the type is
-  // symbolic.
-  //
-  // Avoid calling this where possible, as it can lead to coherence issues.
-  // However, it's important that we use it during monomorphization, where we
-  // don't want to trigger a request for more monomorphization.
-  // TODO: Remove the other call to this function.
-  auto TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc,
-                         BuildDiagnosticFn diagnoser = nullptr) -> bool;
-
-  // Completes the type `type_id`. CHECK-fails if it can't be completed.
-  auto CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void;
-
-  // Like `TryToCompleteType`, but for cases where it is an error for the type
-  // to be incomplete.
-  //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
-  // if a `diagnoser` is provided. The builder it returns will be annotated to
-  // describe the reason why the type is not complete.
-  //
-  // `diagnoser` should build an error diagnostic. If `type_id` is dependent,
-  // the completeness of the type will be enforced during monomorphization, and
-  // `loc_id` is used as the location for a diagnostic produced at that time.
-  auto RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                           BuildDiagnosticFn diagnoser) -> bool;
-
-  // Like `RequireCompleteType`, but also require the type to not be an abstract
-  // class type. If it is, `abstract_diagnoser` is used to diagnose the problem,
-  // and this function returns false.
-  auto RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                           BuildDiagnosticFn diagnoser,
-                           BuildDiagnosticFn abstract_diagnoser) -> bool;
-
-  // Like `RequireCompleteType`, but also require the type to be defined. A
-  // defined type has known members. If the type is not defined, `diagnoser` is
-  // used to diagnose the problem, and this function returns false.
-  //
-  // This is the same as `RequireCompleteType` except for facet types, which are
-  // complete before they are fully defined.
-  auto RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                          BuildDiagnosticFn diagnoser) -> bool;
-
-  // Returns the type `type_id` if it is a complete type, or produces an
-  // incomplete type error and returns an error type. This is a convenience
-  // wrapper around `RequireCompleteType`.
-  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                      BuildDiagnosticFn diagnoser) -> SemIR::TypeId {
-    return RequireCompleteType(type_id, loc_id, diagnoser)
-               ? type_id
-               : SemIR::ErrorInst::SingletonTypeId;
-  }
-
-  // Returns the type `type_id` if it is a concrete type, or produces an
-  // incomplete or abstract type error and returns an error type. This is a
-  // convenience wrapper around `RequireConcreteType`.
-  auto AsConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                      BuildDiagnosticFn diagnoser,
-                      BuildDiagnosticFn abstract_diagnoser) -> SemIR::TypeId {
-    return RequireConcreteType(type_id, loc_id, diagnoser, abstract_diagnoser)
-               ? type_id
-               : SemIR::ErrorInst::SingletonTypeId;
-  }
-
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) -> bool {
     return type_id == SemIR::TypeType::SingletonTypeId ||
@@ -475,6 +408,11 @@ class Context {
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
       -> SemIR::TypeId;
+
+  // Gets the type of an associated function with the `Self` parameter bound to
+  // a particular value. The returned type will be complete.
+  auto GetFunctionTypeWithSelfType(SemIR::InstId interface_function_type_id,
+                                   SemIR::InstId self_id) -> SemIR::TypeId;
 
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
@@ -537,7 +475,7 @@ class Context {
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
-    return get_parse_tree_and_subtrees_();
+    return tree_and_subtrees_getter_();
   }
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
@@ -744,8 +682,7 @@ class Context {
   DiagnosticEmitter* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
-  llvm::function_ref<const Parse::TreeAndSubtrees&()>
-      get_parse_tree_and_subtrees_;
+  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;

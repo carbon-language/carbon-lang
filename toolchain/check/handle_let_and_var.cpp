@@ -300,6 +300,9 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
     context.name_scopes()
         .Get(context.interfaces().Get(interface_id).scope_id)
         .set_has_error();
+    if (decl_info.init_id.has_value()) {
+      DiscardGenericDecl(context);
+    }
     context.inst_block_stack().Pop();
     return;
   }
@@ -381,6 +384,12 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       // somewhere so that we can use it as a default.
       context.TODO(node_id, "Field initializer");
     }
+    return true;
+  }
+  if (context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+    CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
+                      "`var` declaration in interface");
+    context.emitter().Emit(node_id, VarInInterfaceDecl);
     return true;
   }
 

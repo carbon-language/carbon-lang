@@ -115,6 +115,13 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
     return specifics_.Get(specific_id);
   }
 
+  // Gets the arguments of the specified specific, or `Empty` if `None` is
+  // passed.
+  auto GetArgsOrEmpty(SpecificId specific_id) const -> InstBlockId {
+    return specific_id.has_value() ? Get(specific_id).args_id
+                                   : InstBlockId::Empty;
+  }
+
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return specifics_.OutputYaml();

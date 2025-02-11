@@ -273,7 +273,7 @@ auto FileTestBaseTest::Run(
 
   // Choose the test function based on filename.
   auto test_fn =
-      llvm::StringSwitch<std::function<ErrorOr<RunResult>(TestParams&)>>(
+      llvm::StringSwitch<std::function<auto(TestParams&)->ErrorOr<RunResult>>>(
           filename.string())
           .Case("alternating_files.carbon", &TestAlternatingFiles)
           .Case("capture_console_output.carbon", &TestCaptureConsoleOutput)

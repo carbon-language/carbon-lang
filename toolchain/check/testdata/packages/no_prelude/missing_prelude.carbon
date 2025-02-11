@@ -207,8 +207,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt.51ccc0.2: %T = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [template]
 // CHECK:STDOUT: }
@@ -218,6 +218,8 @@ var n: {} = i32;
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude_fake_int
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.f6b: type = import_ref Core//prelude_fake_int, loc4_8, loaded [symbolic = @Int.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.546: @Int.%T (%T) = import_ref Core//prelude_fake_int, loc4_18, loaded [symbolic = @Int.%N (constants.%N)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -238,7 +240,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(constants.%T: type, constants.%N: %T) [from "prelude_fake_int.carbon"] {
+// CHECK:STDOUT: generic fn @Int(imports.%Core.import_ref.f6b: type, imports.%Core.import_ref.546: @Int.%T (%T)) [from "prelude_fake_int.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]

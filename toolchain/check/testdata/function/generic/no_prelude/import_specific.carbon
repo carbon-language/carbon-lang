@@ -122,8 +122,8 @@ fn H() {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.04a: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -134,6 +134,8 @@ fn H() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Main.G: %G.type = import_ref Main//library, G, loaded [template = constants.%G]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//library, loc4_6, loaded [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//library, loc7_6, loaded [symbolic = @G.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -169,7 +171,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(constants.%T: type) [from "library.carbon"] {
+// CHECK:STDOUT: generic fn @F(imports.%Main.import_ref.f6b058.1: type) [from "library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -178,7 +180,7 @@ fn H() {
 // CHECK:STDOUT:   fn(%T.param_patt: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(constants.%T: type) [from "library.carbon"] {
+// CHECK:STDOUT: generic fn @G(imports.%Main.import_ref.f6b058.2: type) [from "library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

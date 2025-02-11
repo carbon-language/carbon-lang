@@ -14,6 +14,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -109,7 +110,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                                                 access_kind);
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(class_decl_id);
+    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
+                                 class_decl_id);
     return;
   }
 
@@ -389,8 +391,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto [adapted_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
-  adapted_type_id = context.AsConcreteType(
-      adapted_type_id, node_id,
+  adapted_type_id = AsConcreteType(
+      context, adapted_type_id, node_id,
       [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
                           "adapted type {0} is an incomplete type",
@@ -462,7 +464,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
   auto [base_type_inst_id, base_type_id] =
       ExprAsType(context, node_id, base_expr_id);
-  base_type_id = context.AsCompleteType(base_type_id, node_id, [&] {
+  base_type_id = AsCompleteType(context, base_type_id, node_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
                       "base {0} is an incomplete type", InstIdAsType);
     return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
@@ -717,11 +719,14 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
               context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
           const auto& override_fn =
               context.functions().Get(override_fn_decl.function_id);
-          // TODO: Validate that the overriding function's signature matches
-          // that of the overridden function.
           if (override_fn.virtual_modifier ==
                   SemIR::FunctionFields::VirtualModifier::Impl &&
               override_fn.name_id == fn.name_id) {
+            // TODO: Support generic base classes, rather than passing
+            // `SpecificId::None`.
+            CheckFunctionTypeMatches(context, override_fn, fn,
+                                     SemIR::SpecificId::None,
+                                     /*check_syntax=*/false);
             fn_decl_id = override_fn_decl_id;
           }
         }

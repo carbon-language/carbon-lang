@@ -41,6 +41,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 const SemIR::EntityWithParamsBase& entity,
                                 EntityKind entity_kind_for_diagnostic,
                                 SemIR::SpecificId enclosing_specific_id,
+                                SemIR::InstId self_type_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
@@ -70,7 +71,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   auto specific_id = SemIR::SpecificId::None;
   if (entity.generic_id.has_value()) {
     specific_id = DeduceGenericCallArguments(
-        context, loc_id, entity.generic_id, enclosing_specific_id,
+        context, loc_id, entity.generic_id, enclosing_specific_id, self_type_id,
         entity.implicit_param_patterns_id, entity.param_patterns_id, self_id,
         arg_ids);
     if (!specific_id.has_value()) {
@@ -91,6 +92,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, generic_class,
                           EntityKind::GenericClass, enclosing_specific_id,
+                          /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
@@ -111,6 +113,7 @@ static auto PerformCallToGenericInterface(
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, interface,
                           EntityKind::GenericInterface, enclosing_specific_id,
+                          /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
@@ -153,7 +156,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   auto callee_specific_id = ResolveCalleeInCall(
       context, loc_id, context.functions().Get(callee_function.function_id),
       EntityKind::Function, callee_function.enclosing_specific_id,
-      callee_function.self_id, arg_ids);
+      callee_function.self_type_id, callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
@@ -165,7 +168,12 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                 SemIR::SpecificFunctionType::SingletonInstId),
             .callee_id = callee_id,
             .specific_id = *callee_specific_id});
-    context.definitions_required().push_back(callee_id);
+    if (callee_function.self_type_id.has_value()) {
+      // This is an associated function, and will be required to be defined as
+      // part of checking that the impl is complete.
+    } else {
+      context.definitions_required().push_back(callee_id);
+    }
   }
 
   // If there is a return slot, build storage for the result.

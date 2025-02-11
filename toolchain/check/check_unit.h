@@ -9,7 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
 #include "toolchain/check/context.h"
-#include "toolchain/parse/tree_node_diagnostic_converter.h"
+#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -47,11 +47,30 @@ struct PackageImports {
 // Contains information accumulated while checking a `Unit` (primarily import
 // information), in addition to the `Unit` itself.
 struct UnitAndImports {
+  // Converts a `NodeId` to a diagnostic location for `UnitAndImports`.
+  class Emitter : public DiagnosticEmitter<Parse::NodeId> {
+   public:
+    explicit Emitter(DiagnosticConsumer* consumer,
+                     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter)
+        : DiagnosticEmitter(consumer),
+          tree_and_subtrees_getter_(tree_and_subtrees_getter) {}
+
+   protected:
+    auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
+        -> ConvertedDiagnosticLoc override {
+      return tree_and_subtrees_getter_().NodeToDiagnosticLoc(
+          node_id, /*token_only=*/false);
+    }
+
+   private:
+    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
+  };
+
   explicit UnitAndImports(SemIR::CheckIRId check_ir_id, Unit& unit)
       : check_ir_id(check_ir_id),
         unit(&unit),
         err_tracker(*unit.consumer),
-        emitter(*unit.node_converter, err_tracker) {}
+        emitter(&err_tracker, unit.tree_and_subtrees_getter) {}
 
   auto parse_tree() -> const Parse::Tree& { return unit->sem_ir->parse_tree(); }
   auto source() -> const SourceBuffer& {
@@ -63,7 +82,7 @@ struct UnitAndImports {
 
   // Emitter information.
   ErrorTrackingDiagnosticConsumer err_tracker;
-  DiagnosticEmitter<Parse::NodeLoc> emitter;
+  Emitter emitter;
 
   // List of the outgoing imports. If a package includes unavailable library
   // imports, it has an entry with has_load_error set. Invalid imports (for
@@ -100,9 +119,11 @@ struct UnitAndImports {
 // logic in check.cpp.
 class CheckUnit {
  public:
-  explicit CheckUnit(UnitAndImports* unit_and_imports, int total_ir_count,
-                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream);
+  explicit CheckUnit(
+      UnitAndImports* unit_and_imports,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+      llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;
@@ -149,7 +170,7 @@ class CheckUnit {
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::raw_ostream* vlog_stream_;
 
-  Context::DiagnosticEmitter emitter_;
+  SemIRLocDiagnosticEmitter emitter_;
   Context context_;
 };
 

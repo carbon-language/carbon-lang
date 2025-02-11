@@ -316,6 +316,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -353,7 +354,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -400,6 +401,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -453,7 +455,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -501,6 +503,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -543,7 +546,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -595,6 +598,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -649,7 +653,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -706,6 +710,9 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.T1 = import_ref Main//interface, T1, unloaded
 // CHECK:STDOUT:   %Main.T2 = import_ref Main//interface, T2, unloaded
 // CHECK:STDOUT:   %Main.T3 = import_ref Main//interface, T3, unloaded
+// CHECK:STDOUT:   %Main.import_ref.8a8474.1: %I3.type = import_ref Main//interface, inst23 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.8a8474.2: %I3.type = import_ref Main//interface, inst23 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.8a8474.3: %I3.type = import_ref Main//interface, inst23 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -794,15 +801,15 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T1, imports.%Main.T2, imports.%Main.T3)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T1(constants.%Self: %I3.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T1(imports.%Main.import_ref.8a8474.1: %I3.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T1:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T2(constants.%Self: %I3.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T2(imports.%Main.import_ref.8a8474.2: %I3.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T2:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T3(constants.%Self: %I3.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T3(imports.%Main.import_ref.8a8474.3: %I3.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T3:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -860,6 +867,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -902,7 +910,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -952,6 +960,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -998,7 +1007,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1044,6 +1053,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1088,7 +1098,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1133,6 +1143,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1177,7 +1188,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1222,6 +1233,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1265,7 +1277,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1312,6 +1324,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.585: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [template = %T]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1358,7 +1371,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(constants.%Self: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1408,6 +1421,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %Main.import_ref.8b7 = import_ref Main//interface, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.99f: %NonType.assoc_type = import_ref Main//interface, loc12_8, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Y: %struct_type.a.225 = import_ref Main//interface, Y, loaded [template = %Y]
+// CHECK:STDOUT:   %Main.import_ref.86c: %NonType.type = import_ref Main//interface, inst37 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1449,7 +1463,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (imports.%Main.Y)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Y(constants.%Self: %NonType.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @Y(imports.%Main.import_ref.86c: %NonType.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const Y:! %struct_type.a.225;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -104,6 +104,8 @@ struct CalleeFunction {
   SemIR::SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SemIR::SpecificId resolved_specific_id;
+  // The bound `Self` type. `None` if not a bound interface member.
+  SemIR::InstId self_type_id;
   // The bound `self` parameter. `None` if not a method.
   SemIR::InstId self_id;
   // True if an error instruction was found.

@@ -11,6 +11,7 @@
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
@@ -21,28 +22,6 @@
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
-
-auto operator<<(llvm::raw_ostream& out, CompileOptions::Phase phase)
-    -> llvm::raw_ostream& {
-  switch (phase) {
-    case CompileOptions::Phase::Lex:
-      out << "lex";
-      break;
-    case CompileOptions::Phase::Parse:
-      out << "parse";
-      break;
-    case CompileOptions::Phase::Check:
-      out << "check";
-      break;
-    case CompileOptions::Phase::Lower:
-      out << "lower";
-      break;
-    case CompileOptions::Phase::CodeGen:
-      out << "codegen";
-      break;
-  }
-  return out;
-}
 
 auto CompileOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
@@ -128,15 +107,6 @@ of a binary object file instead. Ignored for other `--output` values.
       },
       [&](auto& arg_b) { arg_b.Set(&force_obj_output); });
 
-  b.AddFlag(
-      {
-          .name = "include-diagnostic-kind",
-          .help = R"""(
-When printing diagnostics, include the diagnostic kind as part of output. This
-applies to each message that forms a diagnostic, not just the primary message.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
   b.AddFlag(
       {
           .name = "stream-errors",
@@ -296,30 +266,49 @@ can be written to standard output as these phases progress.
 
 CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
-// Returns an error for trying to dump a non-executed phase's output.
-static auto DumpPhaseError(llvm::StringLiteral requested_dump,
-                           CompileOptions::Phase phase) -> Error {
-  return Error(llvm::formatv(
-      "requested dumping {0} but compile phase is limited to `{1}`",
-      requested_dump, phase));
+// Returns a string for printing the phase in a diagnostic.
+static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
+  switch (phase) {
+    case CompileOptions::Phase::Lex:
+      return "lex";
+    case CompileOptions::Phase::Parse:
+      return "parse";
+    case CompileOptions::Phase::Check:
+      return "check";
+    case CompileOptions::Phase::Lower:
+      return "lower";
+    case CompileOptions::Phase::CodeGen:
+      return "codegen";
+  }
 }
 
-auto CompileSubcommand::ValidateOptions() const -> ErrorOr<Success> {
+auto CompileSubcommand::ValidateOptions(NoLocDiagnosticEmitter& emitter) const
+    -> bool {
+  CARBON_DIAGNOSTIC(
+      CompilePhaseFlagConflict, Error,
+      "requested dumping {0} but compile phase is limited to `{1}`",
+      std::string, std::string);
   using Phase = CompileOptions::Phase;
   switch (options_.phase) {
     case Phase::Lex:
       if (options_.dump_parse_tree) {
-        return DumpPhaseError("parse tree", options_.phase);
+        emitter.Emit(CompilePhaseFlagConflict, "parse tree",
+                     PhaseToString(options_.phase));
+        return false;
       }
       [[fallthrough]];
     case Phase::Parse:
       if (options_.dump_sem_ir) {
-        return DumpPhaseError("SemIR", options_.phase);
+        emitter.Emit(CompilePhaseFlagConflict, "SemIR",
+                     PhaseToString(options_.phase));
+        return false;
       }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
-        return DumpPhaseError("LLVM IR", options_.phase);
+        emitter.Emit(CompilePhaseFlagConflict, "LLVM IR",
+                     PhaseToString(options_.phase));
+        return false;
       }
       [[fallthrough]];
     case Phase::Lower:
@@ -327,7 +316,7 @@ auto CompileSubcommand::ValidateOptions() const -> ErrorOr<Success> {
       // Everything can be dumped in these phases.
       break;
   }
-  return Success();
+  return true;
 }
 
 namespace {
@@ -344,18 +333,15 @@ class CompilationUnit {
   // Parses tokens. Returns true on success.
   auto RunParse() -> void;
 
-  auto PreCheck() -> Parse::NodeLocConverter&;
-
   // Returns information needed to check this unit.
-  auto GetCheckUnit(SemIR::CheckIRId check_ir_id,
-                    llvm::ArrayRef<Parse::NodeLocConverter*> node_converters)
-      -> Check::Unit;
+  auto GetCheckUnit(SemIR::CheckIRId check_ir_id) -> Check::Unit;
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
   auto PostCheck() -> void;
 
   // Lower SemIR to LLVM IR.
-  auto RunLower() -> void;
+  auto RunLower(std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+                    tree_and_subtrees_getters_for_debug_info) -> void;
 
   auto RunCodeGen() -> void;
 
@@ -370,6 +356,9 @@ class CompilationUnit {
   auto input_filename() -> llvm::StringRef { return input_filename_; }
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
+  auto get_trees_and_subtrees() -> Parse::GetTreeAndSubtreesFn {
+    return *tree_and_subtrees_getter_;
+  }
 
  private:
   // Do codegen. Returns true on success.
@@ -383,8 +372,8 @@ class CompilationUnit {
   // with the actual function name, but marks timings with the appropriate
   // phase.
   auto LogCall(llvm::StringLiteral logging_label,
-               llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
-      -> void;
+               llvm::StringLiteral timing_label,
+               llvm::function_ref<auto()->void> fn) -> void;
 
   // Returns true if the current input file can be dumped.
   auto IncludeInDumps() const -> bool;
@@ -420,10 +409,8 @@ class CompilationUnit {
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
-  std::optional<std::function<const Parse::TreeAndSubtrees&()>>
-      get_parse_tree_and_subtrees_;
-  std::optional<Parse::NodeLocConverter> node_converter_;
-  std::optional<Check::SemIRDiagnosticConverter> sem_ir_converter_;
+  std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
+      tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
@@ -508,38 +495,25 @@ auto CompilationUnit::RunParse() -> void {
   }
 }
 
-auto CompilationUnit::PreCheck() -> Parse::NodeLocConverter& {
+auto CompilationUnit::GetCheckUnit(SemIR::CheckIRId check_ir_id)
+    -> Check::Unit {
   CARBON_CHECK(parse_tree_, "Must call RunParse first");
-  CARBON_CHECK(!node_converter_, "Called PreCheck twice");
+  CARBON_CHECK(!sem_ir_, "Called GetCheckUnit twice");
 
-  get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
+  tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  node_converter_.emplace(&*tokens_, source_->filename(),
-                          *get_parse_tree_and_subtrees_);
-  return *node_converter_;
-}
-
-auto CompilationUnit::GetCheckUnit(
-    SemIR::CheckIRId check_ir_id,
-    llvm::ArrayRef<Parse::NodeLocConverter*> node_converters) -> Check::Unit {
-  CARBON_CHECK(node_converter_, "Must call PreCheck first");
-  CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
-
   sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
-  sem_ir_converter_.emplace(node_converters, &*sem_ir_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
-          .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
-          .sem_ir = &*sem_ir_,
-          .node_converter = &*node_converter_,
-          .sem_ir_converter = &*sem_ir_converter_};
+          .tree_and_subtrees_getter = *tree_and_subtrees_getter_,
+          .sem_ir = &*sem_ir_};
 }
 
 auto CompilationUnit::PostCheck() -> void {
-  CARBON_CHECK(sem_ir_converter_, "Must call GetCheckUnit first");
+  CARBON_CHECK(sem_ir_, "Must call GetCheckUnit first");
 
   // We've finished all steps that can produce diagnostics. Emit the
   // diagnostics now, so that the developer sees them sooner and doesn't need
@@ -597,15 +571,17 @@ auto CompilationUnit::PostCheck() -> void {
   }
 }
 
-auto CompilationUnit::RunLower() -> void {
+auto CompilationUnit::RunLower(
+    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+        tree_and_subtrees_getters_for_debug_info) -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
     llvm_context_ = std::make_unique<llvm::LLVMContext>();
     // TODO: Consider disabling instruction naming by default if we're not
     // producing textual LLVM IR.
     SemIR::InstNamer inst_namer(&*sem_ir_);
-    module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
-                                 *sem_ir_converter_, input_filename_, *sem_ir_,
-                                 &inst_namer, vlog_stream_);
+    module_ = Lower::LowerToLLVM(
+        *llvm_context_, tree_and_subtrees_getters_for_debug_info,
+        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");
@@ -673,9 +649,13 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     if (output_filename.empty()) {
       if (!source_->is_regular_file()) {
         // Don't invent file names like `-.o` or `/dev/stdin.o`.
-        *driver_env_->error_stream
-            << "error: output file name must be specified for input `"
-            << input_filename_ << "` that is not a regular file\n";
+        // TODO: Consider rephrasing the diagnostic to use the file as the
+        // `Emit` location.
+        CARBON_DIAGNOSTIC(CompileInputNotRegularFile, Error,
+                          "output file name must be specified for input `{0}` "
+                          "that is not a regular file",
+                          std::string);
+        driver_env_->emitter.Emit(CompileInputNotRegularFile, input_filename_);
         return false;
       }
       output_filename = input_filename_;
@@ -694,9 +674,13 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     llvm::raw_fd_ostream output_file(output_filename, ec,
                                      llvm::sys::fs::OF_None);
     if (ec) {
-      *driver_env_->error_stream << "error: could not open output file '"
-                                 << output_filename << "': " << ec.message()
-                                 << "\n";
+      // TODO: Consider rephrasing the diagnostic to use the file as the `Emit`
+      // location.
+      CARBON_DIAGNOSTIC(CompileOutputFileOpenError, Error,
+                        "could not open output file `{0}`: {1}", std::string,
+                        std::string);
+      driver_env_->emitter.Emit(CompileOutputFileOpenError,
+                                output_filename.str().str(), ec.message());
       return false;
     }
     if (options_.asm_output) {
@@ -726,7 +710,7 @@ auto CompilationUnit::GetParseTreeAndSubtrees()
 
 auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
-                              llvm::function_ref<void()> fn) -> void {
+                              llvm::function_ref<auto()->void> fn) -> void {
   CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
   Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
   fn();
@@ -745,8 +729,7 @@ auto CompilationUnit::IncludeInDumps(llvm::StringRef filename) const -> bool {
 }  // namespace
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  if (auto validate = ValidateOptions(); !validate.ok()) {
-    *driver_env.error_stream << "error: " << validate.error() << "\n";
+  if (!ValidateOptions(driver_env.emitter)) {
     return {.success = false};
   }
 
@@ -759,27 +742,28 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
-      *driver_env.error_stream << "error: " << find.error() << "\n";
+      // TODO: Change ReadPreludeManifest to produce diagnostics.
+      CARBON_DIAGNOSTIC(CompilePreludeManifestError, Error, "{0}", std::string);
+      driver_env.emitter.Emit(CompilePreludeManifestError,
+                              PrintToString(find.error()));
       return {.success = false};
     }
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
-  StreamDiagnosticConsumer stream_consumer(*driver_env.error_stream,
-                                           options_.include_diagnostic_kind);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   units.reserve(prelude.size() + options_.input_filenames.size());
 
   // Add the prelude files.
   for (const auto& input_filename : prelude) {
     units.push_back(std::make_unique<CompilationUnit>(
-        driver_env, options_, &stream_consumer, input_filename));
+        driver_env, options_, &driver_env.consumer, input_filename));
   }
 
   // Add the input source files.
   for (const auto& input_filename : options_.input_filenames) {
     units.push_back(std::make_unique<CompilationUnit>(
-        driver_env, options_, &stream_consumer, input_filename));
+        driver_env, options_, &driver_env.consumer, input_filename));
   }
 
   auto on_exit = llvm::make_scope_exit([&]() {
@@ -789,7 +773,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       unit->PostCompile();
     }
 
-    stream_consumer.Flush();
+    driver_env.consumer.Flush();
   });
 
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
@@ -801,14 +785,14 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       out << "Flushing diagnostics\n";
     } else {
       out << "Pending diagnostics:\n";
-      stream_consumer.set_stream(&out);
+      driver_env.consumer.set_stream(&out);
     }
 
     for (auto& unit : units) {
       unit->FlushForStackTrace();
     }
-    stream_consumer.Flush();
-    stream_consumer.set_stream(driver_env.error_stream);
+    driver_env.consumer.Flush();
+    driver_env.consumer.set_stream(driver_env.error_stream);
   });
 
   // Returns a DriverResult object. Called whenever Compile returns.
@@ -843,24 +827,13 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return make_result();
   }
 
-  // Pre-check assigns IR IDs and constructs node converters.
-  llvm::SmallVector<Parse::NodeLocConverter*> node_converters;
-  // This size may not match due to units that are missing source, but that's an
-  // error case and not worth extra work.
-  node_converters.reserve(units.size());
-  for (auto& unit : units) {
-    if (unit->has_source()) {
-      node_converters.push_back(&unit->PreCheck());
-    }
-  }
-
   // Gather Check::Units.
   llvm::SmallVector<Check::Unit> check_units;
-  check_units.reserve(node_converters.size());
+  check_units.reserve(units.size());
   for (auto& unit : units) {
     if (unit->has_source()) {
       SemIR::CheckIRId check_ir_id(check_units.size());
-      check_units.push_back(unit->GetCheckUnit(check_ir_id, node_converters));
+      check_units.push_back(unit->GetCheckUnit(check_ir_id));
     }
   }
 
@@ -887,8 +860,23 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Lower.
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
+  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+      tree_and_subtrees_getters_for_debug_info;
+  if (options_.include_debug_info) {
+    // This size may not match due to units that are missing source, but that's
+    // an error case and not worth extra work.
+    tree_and_subtrees_getters.reserve(units.size());
+    for (auto& unit : units) {
+      if (unit->has_source()) {
+        tree_and_subtrees_getters.push_back(unit->get_trees_and_subtrees());
+      }
+    }
+    tree_and_subtrees_getters_for_debug_info = {};
+    tree_and_subtrees_getters_for_debug_info = tree_and_subtrees_getters;
+  }
   for (const auto& unit : units) {
-    unit->RunLower();
+    unit->RunLower(tree_and_subtrees_getters_for_debug_info);
   }
   if (options_.phase == CompileOptions::Phase::Lower) {
     return make_result();

@@ -37,8 +37,7 @@ class NumericLiteralTest : public ::testing::Test {
 
   auto Parse(llvm::StringRef text, bool can_form_real_literal = true)
       -> NumericLiteral::Value {
-    Testing::SingleTokenDiagnosticConverter converter(text);
-    DiagnosticEmitter<const char*> emitter(converter, error_tracker);
+    Testing::SingleTokenDiagnosticEmitter emitter(&error_tracker, text);
     return Lex(text, can_form_real_literal).ComputeValue(emitter);
   }
 

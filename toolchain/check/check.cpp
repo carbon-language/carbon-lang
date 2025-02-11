@@ -9,7 +9,7 @@
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/sem_ir_diagnostic_converter.h"
+#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
@@ -320,9 +320,12 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos;
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
   unit_infos.reserve(units.size());
+  tree_and_subtrees_getters.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
     unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
+    tree_and_subtrees_getters.push_back(unit.tree_and_subtrees_getter);
   }
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -372,7 +375,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, units.size(), fs, vlog_stream).Run();
+    CheckUnit(unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -419,7 +422,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, units.size(), fs, vlog_stream).Run();
+        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
       }
     }
   }

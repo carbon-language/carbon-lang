@@ -60,10 +60,13 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [template]
+// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound.d04: <bound method> = bound_method %int_0.5c6, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.d62: <specific function> = specific_function %Convert.bound.d04, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [template]
@@ -170,16 +173,16 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
 // CHECK:STDOUT:     %.loc9_28.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:     %impl.elem0.loc9_28.1: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:     %Convert.bound.loc9_28.1: <bound method> = bound_method %int_1, %impl.elem0.loc9_28.1 [template = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:     %Convert.specific_fn.loc9_28.1: <specific function> = specific_function %Convert.bound.loc9_28.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
-// CHECK:STDOUT:     %int.convert_checked.loc9_28.1: init %i32 = call %Convert.specific_fn.loc9_28.1(%int_1) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:     %impl.elem0.loc9_28.1: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:     %bound_method.loc9_28.1: <bound method> = bound_method %int_1, %impl.elem0.loc9_28.1 [template = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:     %specific_fn.loc9_28.1: <specific function> = specific_function %bound_method.loc9_28.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
+// CHECK:STDOUT:     %int.convert_checked.loc9_28.1: init %i32 = call %specific_fn.loc9_28.1(%int_1) [template = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc9_28.2: %i32 = value_of_initializer %int.convert_checked.loc9_28.1 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc9_28.3: %i32 = converted %int_1, %.loc9_28.2 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:     %impl.elem0.loc9_28.2: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:     %Convert.bound.loc9_28.2: <bound method> = bound_method %int_2, %impl.elem0.loc9_28.2 [template = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:     %Convert.specific_fn.loc9_28.2: <specific function> = specific_function %Convert.bound.loc9_28.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.787]
-// CHECK:STDOUT:     %int.convert_checked.loc9_28.2: init %i32 = call %Convert.specific_fn.loc9_28.2(%int_2) [template = constants.%int_2.ef8]
+// CHECK:STDOUT:     %impl.elem0.loc9_28.2: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:     %bound_method.loc9_28.2: <bound method> = bound_method %int_2, %impl.elem0.loc9_28.2 [template = constants.%Convert.bound.ef9]
+// CHECK:STDOUT:     %specific_fn.loc9_28.2: <specific function> = specific_function %bound_method.loc9_28.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.787]
+// CHECK:STDOUT:     %int.convert_checked.loc9_28.2: init %i32 = call %specific_fn.loc9_28.2(%int_2) [template = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc9_28.4: %i32 = value_of_initializer %int.convert_checked.loc9_28.2 [template = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc9_28.5: %i32 = converted %int_2, %.loc9_28.4 [template = constants.%int_2.ef8]
 // CHECK:STDOUT:     %struct: %struct_type.a.b.501 = struct_value (%.loc9_28.3, %.loc9_28.5) [template = constants.%struct.ed5]
@@ -211,10 +214,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0.loc4: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc4_31.1: %struct_type.a.a6c = struct_literal (%int_0.loc4)
-// CHECK:STDOUT:   %impl.elem0.loc4: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc4: <bound method> = bound_method %int_0.loc4, %impl.elem0.loc4 [template = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %Convert.specific_fn.loc4: <specific function> = specific_function %Convert.bound.loc4, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc4: init %i32 = call %Convert.specific_fn.loc4(%int_0.loc4) [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %impl.elem0.loc4: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc4: <bound method> = bound_method %int_0.loc4, %impl.elem0.loc4 [template = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc4: <specific function> = specific_function %bound_method.loc4, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
+// CHECK:STDOUT:   %int.convert_checked.loc4: init %i32 = call %specific_fn.loc4(%int_0.loc4) [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc4_31.2: init %i32 = converted %int_0.loc4, %int.convert_checked.loc4 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc4_31.3: init %struct_type.a.ba9 = struct_init (%.loc4_31.2) to file.%a_ref.var [template = constants.%struct.92d]
 // CHECK:STDOUT:   %.loc4_1: init %struct_type.a.ba9 = converted %.loc4_31.1, %.loc4_31.3 [template = constants.%struct.92d]
@@ -225,18 +228,18 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc6_29.1: %struct_type.b.c.9af = struct_literal (%int_0.loc6_17, %.loc6_28.1)
 // CHECK:STDOUT:   %int_0.loc6_37: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc6_38.1: %struct_type.a.d.b82 = struct_literal (%.loc6_29.1, %int_0.loc6_37)
-// CHECK:STDOUT:   %impl.elem0.loc6_29: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc6_29: <bound method> = bound_method %int_0.loc6_17, %impl.elem0.loc6_29 [template = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %Convert.specific_fn.loc6_29: <specific function> = specific_function %Convert.bound.loc6_29, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc6_29: init %i32 = call %Convert.specific_fn.loc6_29(%int_0.loc6_17) [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %impl.elem0.loc6_29: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc6_29: <bound method> = bound_method %int_0.loc6_17, %impl.elem0.loc6_29 [template = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc6_29: <specific function> = specific_function %bound_method.loc6_29, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
+// CHECK:STDOUT:   %int.convert_checked.loc6_29: init %i32 = call %specific_fn.loc6_29(%int_0.loc6_17) [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_29.2: init %i32 = converted %int_0.loc6_17, %int.convert_checked.loc6_29 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_38.2: ref %struct_type.b.c.929 = struct_access file.%b_ref.var, element0
 // CHECK:STDOUT:   %.loc6_29.3: ref %i32 = struct_access %.loc6_38.2, element0
 // CHECK:STDOUT:   %.loc6_29.4: init %i32 = initialize_from %.loc6_29.2 to %.loc6_29.3 [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %impl.elem0.loc6_28: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc6_28: <bound method> = bound_method %int_0.loc6_26, %impl.elem0.loc6_28 [template = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %Convert.specific_fn.loc6_28: <specific function> = specific_function %Convert.bound.loc6_28, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc6_28: init %i32 = call %Convert.specific_fn.loc6_28(%int_0.loc6_26) [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %impl.elem0.loc6_28: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc6_28: <bound method> = bound_method %int_0.loc6_26, %impl.elem0.loc6_28 [template = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc6_28: <specific function> = specific_function %bound_method.loc6_28, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
+// CHECK:STDOUT:   %int.convert_checked.loc6_28: init %i32 = call %specific_fn.loc6_28(%int_0.loc6_26) [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_28.2: init %i32 = converted %int_0.loc6_26, %int.convert_checked.loc6_28 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_29.5: ref %tuple.type.a1c = struct_access %.loc6_38.2, element1
 // CHECK:STDOUT:   %.loc6_28.3: init %tuple.type.a1c = tuple_init (%.loc6_28.2) to %.loc6_29.5 [template = constants.%tuple]
@@ -244,10 +247,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc6_29.7: init %tuple.type.a1c = initialize_from %.loc6_29.6 to %.loc6_29.5 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc6_29.8: init %struct_type.b.c.929 = struct_init (%.loc6_29.4, %.loc6_29.7) to %.loc6_38.2 [template = constants.%struct.381]
 // CHECK:STDOUT:   %.loc6_38.3: init %struct_type.b.c.929 = converted %.loc6_29.1, %.loc6_29.8 [template = constants.%struct.381]
-// CHECK:STDOUT:   %impl.elem0.loc6_38: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc6_38: <bound method> = bound_method %int_0.loc6_37, %impl.elem0.loc6_38 [template = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %Convert.specific_fn.loc6_38: <specific function> = specific_function %Convert.bound.loc6_38, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc6_38: init %i32 = call %Convert.specific_fn.loc6_38(%int_0.loc6_37) [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %impl.elem0.loc6_38: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc6_38: <bound method> = bound_method %int_0.loc6_37, %impl.elem0.loc6_38 [template = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc6_38: <specific function> = specific_function %bound_method.loc6_38, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d62]
+// CHECK:STDOUT:   %int.convert_checked.loc6_38: init %i32 = call %specific_fn.loc6_38(%int_0.loc6_37) [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_38.4: init %i32 = converted %int_0.loc6_37, %int.convert_checked.loc6_38 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_38.5: ref %i32 = struct_access file.%b_ref.var, element1
 // CHECK:STDOUT:   %.loc6_38.6: init %i32 = initialize_from %.loc6_38.4 to %.loc6_38.5 [template = constants.%int_0.6a9]
@@ -287,10 +290,13 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %ImplicitAs.type.b9e: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.ea0: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.847: <witness> = impl_witness (imports.%Implicit.import_ref.773), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.e14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.4cb: %Convert.type.e14 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.b9e = facet_value Core.IntLiteral, %impl_witness.847 [template]
+// CHECK:STDOUT:   %.088: type = fn_type_with_self_type %Convert.type.ea0, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound.dc5: <bound method> = bound_method %int_1.5b8, %Convert.4cb [template]
 // CHECK:STDOUT:   %Convert.specific_fn.51b: <specific function> = specific_function %Convert.bound.dc5, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.47b: %i32 = int_value 1 [template]
@@ -314,8 +320,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Implicit.import_ref.a11: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1073 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1126 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -371,16 +378,16 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
 // CHECK:STDOUT:     %.loc6_25.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:     %impl.elem0.loc6_25.1: %Convert.type.ea0 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
-// CHECK:STDOUT:     %Convert.bound.loc6_25.1: <bound method> = bound_method %int_1, %impl.elem0.loc6_25.1 [template = constants.%Convert.bound.dc5]
-// CHECK:STDOUT:     %Convert.specific_fn.loc6_25.1: <specific function> = specific_function %Convert.bound.loc6_25.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.51b]
-// CHECK:STDOUT:     %int.convert_checked.loc6_25.1: init %i32 = call %Convert.specific_fn.loc6_25.1(%int_1) [template = constants.%int_1.47b]
+// CHECK:STDOUT:     %impl.elem0.loc6_25.1: %.088 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
+// CHECK:STDOUT:     %bound_method.loc6_25.1: <bound method> = bound_method %int_1, %impl.elem0.loc6_25.1 [template = constants.%Convert.bound.dc5]
+// CHECK:STDOUT:     %specific_fn.loc6_25.1: <specific function> = specific_function %bound_method.loc6_25.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.51b]
+// CHECK:STDOUT:     %int.convert_checked.loc6_25.1: init %i32 = call %specific_fn.loc6_25.1(%int_1) [template = constants.%int_1.47b]
 // CHECK:STDOUT:     %.loc6_25.2: %i32 = value_of_initializer %int.convert_checked.loc6_25.1 [template = constants.%int_1.47b]
 // CHECK:STDOUT:     %.loc6_25.3: %i32 = converted %int_1, %.loc6_25.2 [template = constants.%int_1.47b]
-// CHECK:STDOUT:     %impl.elem0.loc6_25.2: %Convert.type.ea0 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
-// CHECK:STDOUT:     %Convert.bound.loc6_25.2: <bound method> = bound_method %int_2, %impl.elem0.loc6_25.2 [template = constants.%Convert.bound.30f]
-// CHECK:STDOUT:     %Convert.specific_fn.loc6_25.2: <specific function> = specific_function %Convert.bound.loc6_25.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.9b5]
-// CHECK:STDOUT:     %int.convert_checked.loc6_25.2: init %i32 = call %Convert.specific_fn.loc6_25.2(%int_2) [template = constants.%int_2.d0d]
+// CHECK:STDOUT:     %impl.elem0.loc6_25.2: %.088 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
+// CHECK:STDOUT:     %bound_method.loc6_25.2: <bound method> = bound_method %int_2, %impl.elem0.loc6_25.2 [template = constants.%Convert.bound.30f]
+// CHECK:STDOUT:     %specific_fn.loc6_25.2: <specific function> = specific_function %bound_method.loc6_25.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.9b5]
+// CHECK:STDOUT:     %int.convert_checked.loc6_25.2: init %i32 = call %specific_fn.loc6_25.2(%int_2) [template = constants.%int_2.d0d]
 // CHECK:STDOUT:     %.loc6_25.4: %i32 = value_of_initializer %int.convert_checked.loc6_25.2 [template = constants.%int_2.d0d]
 // CHECK:STDOUT:     %.loc6_25.5: %i32 = converted %int_2, %.loc6_25.4 [template = constants.%int_2.d0d]
 // CHECK:STDOUT:     %struct: %struct_type.a.b.5ca = struct_value (%.loc6_25.3, %.loc6_25.5) [template = constants.%struct]
@@ -390,7 +397,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c: ref %C.a8a = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.a11: %struct_type.a.b.5ca) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b.5ca = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
@@ -488,8 +495,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Implicit.import_ref.a11: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1073 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1126 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -518,7 +526,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: <error> = bind_name c_bad, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.a11: %struct_type.a.b) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
@@ -570,10 +578,13 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %ImplicitAs.type.b9e: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.ea0: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.847: <witness> = impl_witness (imports.%Implicit.import_ref.773), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.e14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.4cb: %Convert.type.e14 = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.b9e = facet_value Core.IntLiteral, %impl_witness.847 [template]
+// CHECK:STDOUT:   %.088: type = fn_type_with_self_type %Convert.type.ea0, %ImplicitAs.facet [template]
 // CHECK:STDOUT:   %Convert.bound.a00: <bound method> = bound_method %int_3.1ba, %Convert.4cb [template]
 // CHECK:STDOUT:   %Convert.specific_fn.dec: <specific function> = specific_function %Convert.bound.a00, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_3.d47: %i32 = int_value 3 [template]
@@ -600,8 +611,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Implicit.import_ref.a11: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1073 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1126 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -626,16 +638,16 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1ba]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.0c1]
 // CHECK:STDOUT:     %.loc10_29.1: %struct_type.a.b.cfd = struct_literal (%int_3, %int_4)
-// CHECK:STDOUT:     %impl.elem0.loc10_29.1: %Convert.type.ea0 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
-// CHECK:STDOUT:     %Convert.bound.loc10_29.1: <bound method> = bound_method %int_3, %impl.elem0.loc10_29.1 [template = constants.%Convert.bound.a00]
-// CHECK:STDOUT:     %Convert.specific_fn.loc10_29.1: <specific function> = specific_function %Convert.bound.loc10_29.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.dec]
-// CHECK:STDOUT:     %int.convert_checked.loc10_29.1: init %i32 = call %Convert.specific_fn.loc10_29.1(%int_3) [template = constants.%int_3.d47]
+// CHECK:STDOUT:     %impl.elem0.loc10_29.1: %.088 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
+// CHECK:STDOUT:     %bound_method.loc10_29.1: <bound method> = bound_method %int_3, %impl.elem0.loc10_29.1 [template = constants.%Convert.bound.a00]
+// CHECK:STDOUT:     %specific_fn.loc10_29.1: <specific function> = specific_function %bound_method.loc10_29.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.dec]
+// CHECK:STDOUT:     %int.convert_checked.loc10_29.1: init %i32 = call %specific_fn.loc10_29.1(%int_3) [template = constants.%int_3.d47]
 // CHECK:STDOUT:     %.loc10_29.2: %i32 = value_of_initializer %int.convert_checked.loc10_29.1 [template = constants.%int_3.d47]
 // CHECK:STDOUT:     %.loc10_29.3: %i32 = converted %int_3, %.loc10_29.2 [template = constants.%int_3.d47]
-// CHECK:STDOUT:     %impl.elem0.loc10_29.2: %Convert.type.ea0 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
-// CHECK:STDOUT:     %Convert.bound.loc10_29.2: <bound method> = bound_method %int_4, %impl.elem0.loc10_29.2 [template = constants.%Convert.bound.694]
-// CHECK:STDOUT:     %Convert.specific_fn.loc10_29.2: <specific function> = specific_function %Convert.bound.loc10_29.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.739]
-// CHECK:STDOUT:     %int.convert_checked.loc10_29.2: init %i32 = call %Convert.specific_fn.loc10_29.2(%int_4) [template = constants.%int_4.ea3]
+// CHECK:STDOUT:     %impl.elem0.loc10_29.2: %.088 = impl_witness_access constants.%impl_witness.847, element0 [template = constants.%Convert.4cb]
+// CHECK:STDOUT:     %bound_method.loc10_29.2: <bound method> = bound_method %int_4, %impl.elem0.loc10_29.2 [template = constants.%Convert.bound.694]
+// CHECK:STDOUT:     %specific_fn.loc10_29.2: <specific function> = specific_function %bound_method.loc10_29.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.739]
+// CHECK:STDOUT:     %int.convert_checked.loc10_29.2: init %i32 = call %specific_fn.loc10_29.2(%int_4) [template = constants.%int_4.ea3]
 // CHECK:STDOUT:     %.loc10_29.4: %i32 = value_of_initializer %int.convert_checked.loc10_29.2 [template = constants.%int_4.ea3]
 // CHECK:STDOUT:     %.loc10_29.5: %i32 = converted %int_4, %.loc10_29.4 [template = constants.%int_4.ea3]
 // CHECK:STDOUT:     %struct: %struct_type.a.b.5ca = struct_value (%.loc10_29.3, %.loc10_29.5) [template = constants.%struct.8e6]
@@ -645,7 +657,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: ref %C.5a7 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.a11: %struct_type.a.b.5ca) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b.5ca = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:

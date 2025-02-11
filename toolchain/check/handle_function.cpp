@@ -16,6 +16,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
@@ -43,6 +44,20 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
+
+  // If the previous node was `IdentifierNameBeforeParams`, then it would have
+  // caused these entries to be pushed to the pattern stacks. But it's possible
+  // to have a fn declaration without any parameters, in which case we find
+  // `IdentifierNameNotBeforeParams` on the node stack. Then these entries are
+  // not on the pattern stacks yet. They are only needed in that case if we have
+  // a return type, which we now know that we do.
+  if (context.node_stack().PeekNodeKind() ==
+      Parse::NodeKind::IdentifierNameNotBeforeParams) {
+    context.pattern_block_stack().Push();
+    context.full_pattern_stack().PushFullPattern(
+        FullPatternStack::Kind::ExplicitParamList);
+  }
+
   auto return_slot_pattern_id =
       context.AddPatternInst<SemIR::ReturnSlotPattern>(
           node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
@@ -255,7 +270,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    context.DiagnosePoisonedName(function_info.latest_decl_id());
+    context.DiagnosePoisonedName(name_context.poisoning_loc_id,
+                                 function_info.latest_decl_id());
   } else {
     TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
                    function_info, is_definition);
@@ -360,8 +376,8 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     }
 
     // The parameter types need to be complete.
-    context.RequireCompleteType(
-        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+    RequireCompleteType(
+        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
         context.insts().GetLocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,

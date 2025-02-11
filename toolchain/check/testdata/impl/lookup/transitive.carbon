@@ -112,6 +112,7 @@ fn Call() {
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//i, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1e0 = import_ref Main//i, loc4_21, unloaded
 // CHECK:STDOUT:   %Main.F: %F.type.cf0 = import_ref Main//i, F, loaded [template = constants.%F.bc6]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst17 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -153,7 +154,7 @@ fn Call() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "i.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5dd: %I.type) [from "i.carbon"] {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -230,6 +231,8 @@ fn Call() {
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.742) [template]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [template]
+// CHECK:STDOUT:   %.076: type = fn_type_with_self_type %F.type.cf0, %I.facet [template]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -249,6 +252,7 @@ fn Call() {
 // CHECK:STDOUT:   %Main.import_ref.e53: <witness> = import_ref Main//c, loc7_13, loaded [template = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//c, loc7_6, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.f50: type = import_ref Main//c, loc7_11, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst17 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -289,14 +293,14 @@ fn Call() {
 // CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc9
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [template = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %F.type.cf0 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.a2e]
+// CHECK:STDOUT:   %impl.elem0: %.076 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.a2e]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get() -> %C [from "get.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "i.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5dd: %I.type) [from "i.carbon"] {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

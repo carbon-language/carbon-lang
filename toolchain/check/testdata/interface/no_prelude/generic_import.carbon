@@ -116,14 +116,17 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.bc7 = facet_value %C, %impl_witness [symbolic]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.550 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.F: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be3)]
+// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst26 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -143,7 +146,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @AddWith(constants.%T: type) [from "a.carbon"] {
+// CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.f6b058.1: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -179,7 +182,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.bc7) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.f6b058.2: type, imports.%Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7)) [from "a.carbon"] {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
