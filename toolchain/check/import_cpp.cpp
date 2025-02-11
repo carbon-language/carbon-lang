@@ -38,7 +38,9 @@ static auto GenerateCppIncludesHeaderCode(
   return code;
 }
 
-// Returns an AST for the C++ imports.
+// Returns an AST for the C++ imports and a bool that represents whether
+// compilation errors where encountered or the generated AST is null due to an
+// error.
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
