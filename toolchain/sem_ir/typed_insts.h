@@ -121,8 +121,10 @@ struct AddrPattern {
 // An array indexing operation, such as `array[index]`.
 struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
-  static constexpr auto Kind =
-      InstKind::ArrayIndex.Define<Parse::NodeId>({.ir_name = "array_index"});
+  static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
+      {.ir_name = "array_index",
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::Conditional});
 
   TypeId type_id;
   InstId array_id;
@@ -835,7 +837,7 @@ struct ImplWitnessAccess {
   static constexpr auto Kind =
       InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
           {.ir_name = "impl_witness_access",
-           .is_type = InstIsType::Never,
+           .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 

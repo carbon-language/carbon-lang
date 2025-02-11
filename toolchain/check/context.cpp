@@ -1290,6 +1290,14 @@ class TypeCompleter {
         SemIR::ValueRepr::ObjectAggregate);
   }
 
+  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/,
+                             SemIR::ArrayIndex /*inst*/) const
+      -> SemIR::ValueRepr {
+    context_.TODO(loc_, "Add BuildValueReprForInst support for ArrayIndex");
+    // TODO: Get the value repr for the value in the array if it's not symbolic.
+    return MakeEmptyValueRepr();
+  }
+
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
@@ -1317,19 +1325,16 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.constant_kind() ==
-                 SemIR::InstConstantKind::SymbolicOnly &&
-             InstT::Kind.is_type() != SemIR::InstIsType::Never)
-  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
+                 SemIR::InstConstantKind::SymbolicOnly ||
+             InstT::Kind.is_type() == SemIR::InstIsType::Never)
+  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT inst) const
       -> SemIR::ValueRepr {
-    // For symbolic types, we arbitrarily pick a copy representation.
-    return MakeCopyValueRepr(type_id);
-  }
-
-  template <typename InstT>
-    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
-  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
-      -> SemIR::ValueRepr {
-    CARBON_FATAL("Type refers to non-type inst {0}", inst);
+    if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Never) {
+      CARBON_FATAL("Type refers to non-type inst {0}", inst);
+    } else {
+      // For symbolic types, we arbitrarily pick a copy representation.
+      return MakeCopyValueRepr(type_id);
+    }
   }
 
   // Builds and returns the value representation for the given type. All nested

@@ -468,6 +468,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
       *context.sem_ir().GetArrayBoundValue(inst.bound_id));
 }
 
+static auto BuildTypeForInst(FileContext& context, SemIR::ArrayIndex inst)
+    -> llvm::Type* {
+  return BuildTypeForInst(
+      context, context.sem_ir().insts().GetAs<SemIR::ArrayType>(inst.array_id));
+}
+
 static auto BuildTypeForInst(FileContext& /*context*/, SemIR::AutoType inst)
     -> llvm::Type* {
   CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);

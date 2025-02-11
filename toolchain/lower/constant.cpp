@@ -219,6 +219,11 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
   CARBON_FATAL("TODO: Add support: {0}", inst);
 }
 
+static auto EmitAsConstant(ConstantContext& /*context*/, SemIR::ArrayIndex inst)
+    -> llvm::Constant* {
+  CARBON_FATAL("TODO: Add support: {0}", inst);
+}
+
 // Tries to emit an LLVM constant value for this constant instruction. Centrally
 // handles some common cases and then dispatches to the relevant EmitAsConstant
 // overload based on the type of the instruction for the remaining cases.
