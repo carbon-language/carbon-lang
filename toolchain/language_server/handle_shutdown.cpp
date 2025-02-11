@@ -6,15 +6,17 @@
 
 namespace Carbon::LanguageServer {
 
-auto HandleInitialize(
+auto HandleShutdown(
     Context& /*context*/,
     const clang::clangd::NoParams& /*client_capabilities*/,
-    llvm::function_ref<auto(llvm::Expected<llvm::json::Object>)->void> on_done)
+    llvm::function_ref<auto(llvm::Expected<std::nullptr_t>)->void> on_done)
     -> void {
-  llvm::json::Object capabilities{{"documentSymbolProvider", true},
-                                  {"textDocumentSync", /*Full=*/1}};
-  llvm::json::Object reply{{"capabilities", std::move(capabilities)}};
-  on_done(reply);
+  // TODO: Track that `shutdown` was called, and:
+  // - Warn on duplicate calls.
+  // - Make `exit` return `1` if `shutdown` wasn't called.
+  //   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#exit
+  // - Error on other post-`shutdown` calls.
+  on_done(nullptr);
 }
 
 }  // namespace Carbon::LanguageServer

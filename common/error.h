@@ -21,7 +21,7 @@ namespace Carbon {
 // using `ErrorOr<Success>` and `return Success();` if no value needs to be
 // returned.
 struct Success : public Printable<Success> {
-  void Print(llvm::raw_ostream& out) const { out << "Success"; }
+  auto Print(llvm::raw_ostream& out) const -> void { out << "Success"; }
 };
 
 // Tracks an error message.
@@ -50,7 +50,7 @@ class [[nodiscard]] Error : public Printable<Error> {
   }
 
   // Prints the error string.
-  void Print(llvm::raw_ostream& out) const {
+  auto Print(llvm::raw_ostream& out) const -> void {
     if (!location().empty()) {
       out << location() << ": ";
     }

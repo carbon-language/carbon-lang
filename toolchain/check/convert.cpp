@@ -16,6 +16,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
@@ -617,7 +618,7 @@ static auto ComputeInheritancePath(Context& context, SemIRLoc loc,
   // We intend for NRVO to be applied to `result`. All `return` statements in
   // this function should `return result;`.
   std::optional<InheritancePath> result(std::in_place);
-  if (!context.TryToCompleteType(derived_id, loc)) {
+  if (!TryToCompleteType(context, derived_id, loc)) {
     // TODO: Should we give an error here? If we don't, and there is an
     // inheritance path when the class is defined, we may have a coherence
     // problem.
@@ -1078,8 +1079,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // We can only perform initialization for complete, non-abstract types.
-  if (!context.RequireConcreteType(
-          target.type_id, loc_id,
+  if (!RequireConcreteType(
+          context, target.type_id, loc_id,
           [&] {
             CARBON_CHECK(!target.is_initializer(),
                          "Initialization of incomplete types is expected to be "

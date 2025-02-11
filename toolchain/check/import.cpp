@@ -97,11 +97,10 @@ struct NamespaceResult {
 // conflict. diagnose_duplicate_namespace is used when handling a cross-package
 // import, where an existing namespace is in the current package and the new
 // namespace is a different package.
-static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
-                         SemIR::NameId name_id,
-                         SemIR::NameScopeId parent_scope_id,
-                         bool diagnose_duplicate_namespace,
-                         llvm::function_ref<SemIR::InstId()> make_import_id)
+static auto AddNamespace(
+    Context& context, SemIR::TypeId namespace_type_id, SemIR::NameId name_id,
+    SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
+    llvm::function_ref<auto()->SemIR::InstId> make_import_id)
     -> NamespaceResult {
   auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
   auto [inserted, entry_id] = parent_scope->LookupOrAdd(

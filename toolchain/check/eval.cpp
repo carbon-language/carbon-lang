@@ -8,6 +8,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -2078,8 +2079,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
       // If the type is a template constant, require it to be complete now.
       if (phase == Phase::Template) {
-        if (!eval_context.context().TryToCompleteType(
-                complete_type_id, eval_context.GetDiagnosticLoc(inst_id), [&] {
+        if (!TryToCompleteType(
+                eval_context.context(), complete_type_id,
+                eval_context.GetDiagnosticLoc(inst_id), [&] {
                   CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
                                     "{0} evaluates to incomplete type {1}",
                                     SemIR::TypeId, SemIR::TypeId);
