@@ -29,7 +29,7 @@
 // CHECK:STDOUT:     "diagnostics": [],
 // CHECK:STDOUT:     "uri": "file:///class.carbon"
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 1494{{\r}}
+// CHECK:STDOUT: }Content-Length: 1495{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -42,21 +42,21 @@
 // CHECK:STDOUT:           "name": "F",
 // CHECK:STDOUT:           "range": {
 // CHECK:STDOUT:             "end": {
-// CHECK:STDOUT:               "character": 8,
+// CHECK:STDOUT:               "character": 9,
 // CHECK:STDOUT:               "line": 1
 // CHECK:STDOUT:             },
 // CHECK:STDOUT:             "start": {
-// CHECK:STDOUT:               "character": 8,
+// CHECK:STDOUT:               "character": 2,
 // CHECK:STDOUT:               "line": 1
 // CHECK:STDOUT:             }
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "selectionRange": {
 // CHECK:STDOUT:             "end": {
-// CHECK:STDOUT:               "character": 8,
+// CHECK:STDOUT:               "character": 6,
 // CHECK:STDOUT:               "line": 1
 // CHECK:STDOUT:             },
 // CHECK:STDOUT:             "start": {
-// CHECK:STDOUT:               "character": 8,
+// CHECK:STDOUT:               "character": 5,
 // CHECK:STDOUT:               "line": 1
 // CHECK:STDOUT:             }
 // CHECK:STDOUT:           }
@@ -66,21 +66,21 @@
 // CHECK:STDOUT:           "name": "G",
 // CHECK:STDOUT:           "range": {
 // CHECK:STDOUT:             "end": {
-// CHECK:STDOUT:               "character": 9,
+// CHECK:STDOUT:               "character": 11,
 // CHECK:STDOUT:               "line": 2
 // CHECK:STDOUT:             },
 // CHECK:STDOUT:             "start": {
-// CHECK:STDOUT:               "character": 9,
+// CHECK:STDOUT:               "character": 2,
 // CHECK:STDOUT:               "line": 2
 // CHECK:STDOUT:             }
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "selectionRange": {
 // CHECK:STDOUT:             "end": {
-// CHECK:STDOUT:               "character": 9,
+// CHECK:STDOUT:               "character": 6,
 // CHECK:STDOUT:               "line": 2
 // CHECK:STDOUT:             },
 // CHECK:STDOUT:             "start": {
-// CHECK:STDOUT:               "character": 9,
+// CHECK:STDOUT:               "character": 5,
 // CHECK:STDOUT:               "line": 2
 // CHECK:STDOUT:             }
 // CHECK:STDOUT:           }
@@ -90,21 +90,21 @@
 // CHECK:STDOUT:       "name": "A",
 // CHECK:STDOUT:       "range": {
 // CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 8,
-// CHECK:STDOUT:           "line": 0
+// CHECK:STDOUT:           "character": 1,
+// CHECK:STDOUT:           "line": 3
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {
-// CHECK:STDOUT:           "character": 8,
+// CHECK:STDOUT:           "character": 0,
 // CHECK:STDOUT:           "line": 0
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       },
 // CHECK:STDOUT:       "selectionRange": {
 // CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 8,
+// CHECK:STDOUT:           "character": 7,
 // CHECK:STDOUT:           "line": 0
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {
-// CHECK:STDOUT:           "character": 8,
+// CHECK:STDOUT:           "character": 6,
 // CHECK:STDOUT:           "line": 0
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
