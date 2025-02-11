@@ -361,7 +361,6 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .is_type = InstIsType::Never,
           .constant_kind = InstConstantKind::SymbolicOnly,
           .is_lowered = false,
       });
@@ -546,7 +545,6 @@ struct CompleteTypeWitness {
   static constexpr auto Kind =
       InstKind::CompleteTypeWitness.Define<Parse::NodeId>(
           {.ir_name = "complete_type_witness",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::Always});
   // Always the builtin witness type.
   TypeId type_id;
@@ -635,7 +633,6 @@ struct FacetAccessWitness {
   static constexpr auto Kind =
       InstKind::FacetAccessWitness.Define<Parse::NodeId>(
           {.ir_name = "facet_access_witness",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 
@@ -661,9 +658,7 @@ struct FacetType {
 // witness that it satisfies the facet type.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
-      {.ir_name = "facet_value",
-       .is_type = InstIsType::Never,
-       .constant_kind = InstConstantKind::Always});
+      {.ir_name = "facet_value", .constant_kind = InstConstantKind::Always});
 
   // A `FacetType`.
   TypeId type_id;
@@ -820,7 +815,6 @@ struct ImplDecl {
 struct ImplWitness {
   static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
       {.ir_name = "impl_witness",
-       .is_type = InstIsType::Never,
        .constant_kind = InstConstantKind::Conditional,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
        // constants.
@@ -1112,7 +1106,6 @@ struct RequireCompleteType {
   static constexpr auto Kind =
       InstKind::RequireCompleteType.Define<Parse::NodeId>(
           {.ir_name = "require_complete_type",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
   // Always the builtin witness type.
