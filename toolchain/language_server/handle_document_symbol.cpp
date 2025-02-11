@@ -12,11 +12,11 @@
 
 namespace Carbon::LanguageServer {
 
-// Returns the text of first child of kind IdentifierNameBeforeParams or
+// Returns the token of first child of kind IdentifierNameBeforeParams or
 // IdentifierNameNotBeforeParams.
-static auto GetIdentifierName(const Parse::TreeAndSubtrees& tree_and_subtrees,
-                              Parse::NodeId node)
-    -> std::optional<llvm::StringRef> {
+static auto GetSymbolIdentifier(const Parse::TreeAndSubtrees& tree_and_subtrees,
+                                Parse::NodeId node)
+    -> std::optional<Lex::TokenIndex> {
   const auto& tokens = tree_and_subtrees.tree().tokens();
   for (auto child : tree_and_subtrees.children(node)) {
     switch (tree_and_subtrees.tree().node_kind(child)) {
@@ -24,7 +24,7 @@ static auto GetIdentifierName(const Parse::TreeAndSubtrees& tree_and_subtrees,
       case Parse::NodeKind::IdentifierNameNotBeforeParams: {
         auto token = tree_and_subtrees.tree().node_token(child);
         if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
-          return tokens.GetTokenText(token);
+          return token;
         }
         break;
       }
@@ -33,6 +33,42 @@ static auto GetIdentifierName(const Parse::TreeAndSubtrees& tree_and_subtrees,
     }
   }
   return std::nullopt;
+}
+
+// Constructs a Range from a closed interval of tokens [start, end].
+static auto GetTokenRange(const Lex::TokenizedBuffer& tokens,
+                          Lex::TokenIndex start, Lex::TokenIndex end)
+    -> clang::clangd::Range {
+  auto start_line = tokens.GetLine(start);
+  auto start_col = tokens.GetColumnNumber(start);
+  auto [end_line, end_col] = tokens.GetEndLoc(end);
+
+  return clang::clangd::Range{
+      .start = {.line = start_line.index, .character = start_col - 1},
+      .end = {.line = end_line.index, .character = end_col - 1},
+  };
+}
+
+// Finds a spanning range for the provided definition / declaration ast node.
+// In the case of a definition start, will include the body as well.
+static auto GetSymbolRange(const Parse::TreeAndSubtrees& tree_and_subtrees,
+                           const Parse::NodeId& ast_node)
+    -> clang::clangd::Range {
+  const auto& tokens = tree_and_subtrees.tree().tokens();
+
+  // The left-most node will always be the first node in postorder traversal.
+  auto start_node = *tree_and_subtrees.postorder(ast_node).begin();
+
+  auto start_token = tree_and_subtrees.tree().node_token(start_node);
+  auto end_token = tree_and_subtrees.tree().node_token(ast_node);
+  if (tokens.GetKind(end_token).is_opening_symbol()) {
+    // DefinitionStart nodes use an opening token, so find its closing token to
+    // span the entire class/function body.
+    return GetTokenRange(tokens, start_token,
+                         tokens.GetMatchedClosingToken(end_token));
+  } else {
+    return GetTokenRange(tokens, start_token, end_token);
+  }
 }
 
 auto HandleDocumentSymbol(
@@ -71,16 +107,12 @@ auto HandleDocumentSymbol(
         continue;
     }
 
-    if (auto name = GetIdentifierName(tree_and_subtrees, node_id)) {
-      auto token = tree.node_token(node_id);
-      clang::clangd::Position pos{tokens.GetLineNumber(token) - 1,
-                                  tokens.GetColumnNumber(token) - 1};
-
+    if (auto identifier = GetSymbolIdentifier(tree_and_subtrees, node_id)) {
       clang::clangd::DocumentSymbol symbol{
-          .name = std::string(*name),
+          .name = std::string(tokens.GetTokenText(*identifier)),
           .kind = symbol_kind,
-          .range = {.start = pos, .end = pos},
-          .selectionRange = {.start = pos, .end = pos},
+          .range = GetSymbolRange(tree_and_subtrees, node_id),
+          .selectionRange = GetTokenRange(tokens, *identifier, *identifier),
       };
 
       result.push_back(symbol);

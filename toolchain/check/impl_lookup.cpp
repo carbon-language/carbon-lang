@@ -130,10 +130,20 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  // TODO: Add a better impl lookup system. At the very least, we should only be
-  // considering impls that are for the same interface we're querying. We can
-  // also skip impls that mention any types that aren't part of our impl query.
   for (const auto& impl : context.impls().array_ref()) {
+    // If impl.constraint_id is not symbolic, and doesn't match the query, then
+    // we don't need to proceed.
+    auto impl_interface_const_id =
+        context.constant_values().Get(impl.constraint_id);
+    if (!impl_interface_const_id.is_symbolic() &&
+        interface_const_id != impl_interface_const_id) {
+      continue;
+    }
+
+    // TODO: If the interface id of the `impl` and the query are not the same,
+    // then we can skip this `impl`. (The interface id is the root of the
+    // constraint, the unique `interface` declaration.)
+
     auto specific_id = SemIR::SpecificId::None;
     if (impl.generic_id.has_value()) {
       specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,

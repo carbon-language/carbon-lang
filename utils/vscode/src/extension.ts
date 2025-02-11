@@ -8,7 +8,7 @@
  * This is the main launcher for the LSP extension.
  */
 
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, commands } from 'vscode';
 
 import {
   LanguageClient,
@@ -43,6 +43,12 @@ export function activate(context: ExtensionContext) {
     clientOptions
   );
   client.start();
+
+  context.subscriptions.push(
+    commands.registerCommand('carbon.lsp.restart', () => {
+      client.restart();
+    })
+  );
 }
 
 export function deactivate(): Thenable<void> | undefined {
