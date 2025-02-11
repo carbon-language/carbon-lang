@@ -6,6 +6,8 @@
 #define CARBON_TOOLCHAIN_CHECK_TYPE_COMPLETION_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 

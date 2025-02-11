@@ -4,6 +4,7 @@
 
 #include "toolchain/check/type_completion.h"
 
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic.h"
 
