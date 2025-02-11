@@ -226,7 +226,7 @@ class DeductionContext {
   auto MakeSpecific() -> SemIR::SpecificId;
 
  private:
-  void NoteInitializingParam(SemIR::InstId param_id, auto& builder) {
+  auto NoteInitializingParam(SemIR::InstId param_id, auto& builder) -> void {
     if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
             param_id)) {
       CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
@@ -335,6 +335,9 @@ auto DeductionContext::Deduce() -> bool {
       DiagnosticAnnotationScope annotate_diagnostics(
           &context().emitter(),
           [&](auto& builder) { NoteInitializingParam(param_id, builder); });
+      // TODO: The call logic should reuse the conversion here (if any) instead
+      // of doing the same conversion again. At the moment we throw away the
+      // converted arg_id.
       arg_id = ConvertToValueOfType(context(), loc_id_, arg_id, param_type_id);
       if (arg_id == SemIR::ErrorInst::SingletonInstId) {
         return false;
@@ -435,6 +438,20 @@ auto DeductionContext::Deduce() -> bool {
         // TODO: Match field name order between param and arg.
         break;
 
+      case SemIR::FacetAccessType::Kind:
+        // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`.
+        // `G` is a symbolic binding, whose type is a facet type, but `G as
+        // type` converts into a `FacetAccessType`.
+        //
+        // When we see a `FacetAccessType` parameter here, we want to deduce the
+        // facet type of `G`, not `G as type`, for the argument (so that the
+        // argument would be a facet value, whose type is the same facet type of
+        // `G`. So here we "undo" the `as type` operation that's built into the
+        // `g` parameter's type.
+        Add(param_inst.As<SemIR::FacetAccessType>().facet_value_inst_id, arg_id,
+            needs_substitution);
+        continue;
+
         // TODO: Handle more cases.
 
       default:
@@ -534,7 +551,6 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       auto param_type_const_id = SubstConstant(
           context(), binding_type_id.AsConstantId(), substitutions_);
       CARBON_CHECK(param_type_const_id.has_value());
-      CARBON_CHECK(!param_type_const_id.is_symbolic());
       binding_type_id = context().GetTypeIdForTypeConstant(param_type_const_id);
 
       // TODO: Suppress diagnostics here if `diagnose_` is false.

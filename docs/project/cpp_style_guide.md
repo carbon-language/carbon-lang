@@ -85,7 +85,8 @@ to pick a consistent option. Where possible,
 [`clang-format`](#suggested-clang-format-contents) should be used to enforce
 these.
 
--   Always use trailing return type syntax for functions and methods.
+-   Always use trailing return type syntax for functions and methods, including
+    `-> void`, for consistency with Carbon syntax.
 -   Place the pointer `*` adjacent to the type: `TypeName* variable_name`.
 -   Only declare one variable at a time (declaring multiple variables requires
     confusing repetition of part of the type).

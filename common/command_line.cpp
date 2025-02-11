@@ -108,13 +108,15 @@ class MetaPrinter {
   //
   // This adds meta subcommands or options to print both help and version
   // information for the command.
-  void RegisterWithCommand(const Command& command, CommandBuilder& builder);
+  auto RegisterWithCommand(const Command& command, CommandBuilder& builder)
+      -> void;
 
-  void PrintHelp(const Command& command) const;
-  void PrintHelpForSubcommandName(const Command& command,
-                                  llvm::StringRef subcommand_name) const;
-  void PrintVersion(const Command& command) const;
-  void PrintSubcommands(const Command& command) const;
+  auto PrintHelp(const Command& command) const -> void;
+  auto PrintHelpForSubcommandName(const Command& command,
+                                  llvm::StringRef subcommand_name) const
+      -> void;
+  auto PrintVersion(const Command& command) const -> void;
+  auto PrintSubcommands(const Command& command) const -> void;
 
  private:
   // The indent is calibrated to allow a short and long option after a two
@@ -193,33 +195,37 @@ Prints the version of this command.
   };
 
   // A general helper for rendering a text block.
-  void PrintTextBlock(llvm::StringRef indent, llvm::StringRef text) const;
+  auto PrintTextBlock(llvm::StringRef indent, llvm::StringRef text) const
+      -> void;
 
   // Helpers for version and build information printing.
-  void PrintRawVersion(const Command& command, llvm::StringRef indent) const;
-  void PrintRawBuildInfo(const Command& command, llvm::StringRef indent) const;
+  auto PrintRawVersion(const Command& command, llvm::StringRef indent) const
+      -> void;
+  auto PrintRawBuildInfo(const Command& command, llvm::StringRef indent) const
+      -> void;
 
   // Helpers for printing components of help and usage output for arguments,
   // including options and positional arguments.
-  void PrintArgValueUsage(const Arg& arg) const;
-  void PrintOptionUsage(const Arg& option) const;
-  void PrintOptionShortName(const Arg& arg) const;
-  void PrintArgShortValues(const Arg& arg) const;
-  void PrintArgLongValues(const Arg& arg, llvm::StringRef indent) const;
-  void PrintArgHelp(const Arg& arg, llvm::StringRef indent) const;
+  auto PrintArgValueUsage(const Arg& arg) const -> void;
+  auto PrintOptionUsage(const Arg& option) const -> void;
+  auto PrintOptionShortName(const Arg& arg) const -> void;
+  auto PrintArgShortValues(const Arg& arg) const -> void;
+  auto PrintArgLongValues(const Arg& arg, llvm::StringRef indent) const -> void;
+  auto PrintArgHelp(const Arg& arg, llvm::StringRef indent) const -> void;
 
   // Helpers for printing command usage summaries.
-  void PrintRawUsageCommandAndOptions(
+  auto PrintRawUsageCommandAndOptions(
       const Command& command,
-      int max_option_width = MaxLeafOptionUsageWidth) const;
-  void PrintRawUsage(const Command& command, llvm::StringRef indent) const;
-  void PrintUsage(const Command& command) const;
+      int max_option_width = MaxLeafOptionUsageWidth) const -> void;
+  auto PrintRawUsage(const Command& command, llvm::StringRef indent) const
+      -> void;
+  auto PrintUsage(const Command& command) const -> void;
 
   // Helpers to print various sections of `PrintHelp` that only occur within
   // that output.
-  void PrintHelpSubcommands(const Command& command) const;
-  void PrintHelpPositionalArgs(const Command& command) const;
-  void PrintHelpOptions(const Command& command) const;
+  auto PrintHelpSubcommands(const Command& command) const -> void;
+  auto PrintHelpPositionalArgs(const Command& command) const -> void;
+  auto PrintHelpOptions(const Command& command) const -> void;
 
   llvm::raw_ostream* out_;
 
@@ -231,8 +237,8 @@ Prints the version of this command.
   llvm::StringRef help_subcommand_;
 };
 
-void MetaPrinter::RegisterWithCommand(const Command& command,
-                                      CommandBuilder& builder) {
+auto MetaPrinter::RegisterWithCommand(const Command& command,
+                                      CommandBuilder& builder) -> void {
   bool is_subcommand = command.parent;
   bool has_subcommands = !command.subcommands.empty();
 
@@ -285,7 +291,7 @@ void MetaPrinter::RegisterWithCommand(const Command& command,
   }
 }
 
-void MetaPrinter::PrintHelp(const Command& command) const {
+auto MetaPrinter::PrintHelp(const Command& command) const -> void {
   // TODO: begin using the short setting to customize the output.
   (void)short_help_;
 
@@ -320,8 +326,8 @@ void MetaPrinter::PrintHelp(const Command& command) const {
   *out_ << "\n";
 }
 
-void MetaPrinter::PrintHelpForSubcommandName(
-    const Command& command, llvm::StringRef subcommand_name) const {
+auto MetaPrinter::PrintHelpForSubcommandName(
+    const Command& command, llvm::StringRef subcommand_name) const -> void {
   for (const auto& subcommand : command.subcommands) {
     if (subcommand->info.name == subcommand_name) {
       PrintHelp(*subcommand);
@@ -335,7 +341,7 @@ void MetaPrinter::PrintHelpForSubcommandName(
         << "'\n";
 }
 
-void MetaPrinter::PrintVersion(const Command& command) const {
+auto MetaPrinter::PrintVersion(const Command& command) const -> void {
   CARBON_CHECK(
       !command.info.version.empty(),
       "Printing should not be enabled without a version string configured.");
@@ -347,21 +353,21 @@ void MetaPrinter::PrintVersion(const Command& command) const {
   }
 }
 
-void MetaPrinter::PrintSubcommands(const Command& command) const {
+auto MetaPrinter::PrintSubcommands(const Command& command) const -> void {
   PrintListOfAlternatives(*out_, llvm::ArrayRef(command.subcommands),
                           [](const std::unique_ptr<Command>& subcommand) {
                             return subcommand->info.name;
                           });
 }
 
-void MetaPrinter::PrintRawVersion(const Command& command,
-                                  llvm::StringRef indent) const {
+auto MetaPrinter::PrintRawVersion(const Command& command,
+                                  llvm::StringRef indent) const -> void {
   // Newlines are trimmed from the version string an a closing newline added but
   // no other formatting is performed.
   *out_ << indent << command.info.version.trim('\n') << "\n";
 }
-void MetaPrinter::PrintRawBuildInfo(const Command& command,
-                                    llvm::StringRef indent) const {
+auto MetaPrinter::PrintRawBuildInfo(const Command& command,
+                                    llvm::StringRef indent) const -> void {
   // Print the build info line-by-line without any wrapping in case it
   // contains line-oriented formatted text, but drop leading and trailing blank
   // lines.
@@ -372,8 +378,8 @@ void MetaPrinter::PrintRawBuildInfo(const Command& command,
   }
 }
 
-void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
-                                 llvm::StringRef text) const {
+auto MetaPrinter::PrintTextBlock(llvm::StringRef indent,
+                                 llvm::StringRef text) const -> void {
   // Strip leading and trailing newlines to make it easy to use multiline raw
   // string literals that will naturally have those.
   text = text.trim('\n');
@@ -448,7 +454,7 @@ void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
   }
 }
 
-void MetaPrinter::PrintArgValueUsage(const Arg& arg) const {
+auto MetaPrinter::PrintArgValueUsage(const Arg& arg) const -> void {
   if (!arg.info.value_name.empty()) {
     *out_ << arg.info.value_name;
     return;
@@ -465,7 +471,7 @@ void MetaPrinter::PrintArgValueUsage(const Arg& arg) const {
   *out_ << "...";
 }
 
-void MetaPrinter::PrintOptionUsage(const Arg& option) const {
+auto MetaPrinter::PrintOptionUsage(const Arg& option) const -> void {
   if (option.kind == Arg::Kind::Flag) {
     *out_ << "--" << (option.default_flag ? "no-" : "") << option.info.name;
     return;
@@ -480,12 +486,12 @@ void MetaPrinter::PrintOptionUsage(const Arg& option) const {
   }
 }
 
-void MetaPrinter::PrintOptionShortName(const Arg& arg) const {
+auto MetaPrinter::PrintOptionShortName(const Arg& arg) const -> void {
   CARBON_CHECK(!arg.info.short_name.empty(), "No short name to use.");
   *out_ << "-" << arg.info.short_name;
 }
 
-void MetaPrinter::PrintArgShortValues(const Arg& arg) const {
+auto MetaPrinter::PrintArgShortValues(const Arg& arg) const -> void {
   CARBON_CHECK(
       arg.kind == Arg::Kind::OneOf,
       "Only one-of arguments have interesting value snippets to print.");
@@ -494,8 +500,8 @@ void MetaPrinter::PrintArgShortValues(const Arg& arg) const {
     *out_ << sep << value_string;
   }
 }
-void MetaPrinter::PrintArgLongValues(const Arg& arg,
-                                     llvm::StringRef indent) const {
+auto MetaPrinter::PrintArgLongValues(const Arg& arg,
+                                     llvm::StringRef indent) const -> void {
   *out_ << indent << "Possible values:\n";
   // TODO: It would be good to add help text for each value and then print it
   // here.
@@ -509,7 +515,8 @@ void MetaPrinter::PrintArgLongValues(const Arg& arg,
   }
 }
 
-void MetaPrinter::PrintArgHelp(const Arg& arg, llvm::StringRef indent) const {
+auto MetaPrinter::PrintArgHelp(const Arg& arg, llvm::StringRef indent) const
+    -> void {
   // Print out the main help text.
   PrintTextBlock(indent, arg.info.help);
 
@@ -540,8 +547,9 @@ void MetaPrinter::PrintArgHelp(const Arg& arg, llvm::StringRef indent) const {
   }
 }
 
-void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
-                                                 int max_option_width) const {
+auto MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
+                                                 int max_option_width) const
+    -> void {
   // Recursively print parent usage first with a compressed width.
   if (command.parent) {
     PrintRawUsageCommandAndOptions(*command.parent, MaxParentOptionUsageWidth);
@@ -597,8 +605,8 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
   }
 }
 
-void MetaPrinter::PrintRawUsage(const Command& command,
-                                llvm::StringRef indent) const {
+auto MetaPrinter::PrintRawUsage(const Command& command,
+                                llvm::StringRef indent) const -> void {
   if (!command.info.usage.empty()) {
     PrintTextBlock(indent, command.info.usage);
     return;
@@ -644,7 +652,7 @@ void MetaPrinter::PrintRawUsage(const Command& command,
   }
 }
 
-void MetaPrinter::PrintUsage(const Command& command) const {
+auto MetaPrinter::PrintUsage(const Command& command) const -> void {
   if (!command.parent) {
     *out_ << "Usage:\n";
   } else {
@@ -653,7 +661,7 @@ void MetaPrinter::PrintUsage(const Command& command) const {
   PrintRawUsage(command, "  ");
 }
 
-void MetaPrinter::PrintHelpSubcommands(const Command& command) const {
+auto MetaPrinter::PrintHelpSubcommands(const Command& command) const -> void {
   bool first_subcommand = true;
   for (const auto& subcommand : command.subcommands) {
     if (subcommand->is_help_hidden) {
@@ -673,7 +681,8 @@ void MetaPrinter::PrintHelpSubcommands(const Command& command) const {
   }
 }
 
-void MetaPrinter::PrintHelpPositionalArgs(const Command& command) const {
+auto MetaPrinter::PrintHelpPositionalArgs(const Command& command) const
+    -> void {
   bool first_positional_arg = true;
   for (const auto& positional_arg : command.positional_args) {
     if (positional_arg->is_help_hidden) {
@@ -694,7 +703,7 @@ void MetaPrinter::PrintHelpPositionalArgs(const Command& command) const {
   }
 }
 
-void MetaPrinter::PrintHelpOptions(const Command& command) const {
+auto MetaPrinter::PrintHelpOptions(const Command& command) const -> void {
   bool first_option = true;
   for (const auto& option : command.options) {
     if (option->is_help_hidden) {
@@ -729,7 +738,7 @@ class Parser {
  public:
   // `out` must not be null.
   explicit Parser(llvm::raw_ostream* out, CommandInfo command_info,
-                  llvm::function_ref<void(CommandBuilder&)> build);
+                  llvm::function_ref<auto(CommandBuilder&)->void> build);
 
   auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
       -> ErrorOr<ParseResult>;
@@ -750,9 +759,9 @@ class Parser {
   // character's numeric value makes for a convenient map.
   using ShortOptionTableT = std::array<OptionMapT::mapped_type*, 128>;
 
-  void PopulateMaps(const Command& command);
+  auto PopulateMaps(const Command& command) -> void;
 
-  void SetOptionDefault(const Arg& option);
+  auto SetOptionDefault(const Arg& option) -> void;
 
   auto ParseNegatedFlag(const Arg& flag, std::optional<llvm::StringRef> value)
       -> ErrorOr<Success>;
@@ -801,7 +810,7 @@ class Parser {
   ActionT arg_meta_action_;
 };
 
-void Parser::PopulateMaps(const Command& command) {
+auto Parser::PopulateMaps(const Command& command) -> void {
   option_map_.clear();
   for (const auto& option : command.options) {
     option_map_.insert({option->info.name, {option.get(), false}});
@@ -825,7 +834,7 @@ void Parser::PopulateMaps(const Command& command) {
   }
 }
 
-void Parser::SetOptionDefault(const Arg& option) {
+auto Parser::SetOptionDefault(const Arg& option) -> void {
   CARBON_CHECK(option.has_default, "No default value available!");
   switch (option.kind) {
     case Arg::Kind::Flag:
@@ -1235,7 +1244,7 @@ auto Parser::ParsePositionalSuffix(
 }
 
 Parser::Parser(llvm::raw_ostream* out, CommandInfo command_info,
-               llvm::function_ref<void(CommandBuilder&)> build)
+               llvm::function_ref<auto(CommandBuilder&)->void> build)
     : meta_printer_(out), root_command_(command_info) {
   // Run the command building lambda on a builder for the root command.
   CommandBuilder builder(&root_command_, &meta_printer_);
@@ -1305,48 +1314,50 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
   return FinalizeParse();
 }
 
-void ArgBuilder::Required(bool is_required) { arg_->is_required = is_required; }
+auto ArgBuilder::Required(bool is_required) -> void {
+  arg_->is_required = is_required;
+}
 
-void ArgBuilder::HelpHidden(bool is_help_hidden) {
+auto ArgBuilder::HelpHidden(bool is_help_hidden) -> void {
   arg_->is_help_hidden = is_help_hidden;
 }
 
 ArgBuilder::ArgBuilder(Arg* arg) : arg_(arg) {}
 
-void FlagBuilder::Default(bool flag_value) {
+auto FlagBuilder::Default(bool flag_value) -> void {
   arg()->has_default = true;
   arg()->default_flag = flag_value;
 }
 
-void FlagBuilder::Set(bool* flag) { arg()->flag_storage = flag; }
+auto FlagBuilder::Set(bool* flag) -> void { arg()->flag_storage = flag; }
 
-void IntegerArgBuilder::Default(int integer_value) {
+auto IntegerArgBuilder::Default(int integer_value) -> void {
   arg()->has_default = true;
   arg()->default_integer = integer_value;
 }
 
-void IntegerArgBuilder::Set(int* integer) {
+auto IntegerArgBuilder::Set(int* integer) -> void {
   arg()->is_append = false;
   arg()->integer_storage = integer;
 }
 
-void IntegerArgBuilder::Append(llvm::SmallVectorImpl<int>* sequence) {
+auto IntegerArgBuilder::Append(llvm::SmallVectorImpl<int>* sequence) -> void {
   arg()->is_append = true;
   arg()->integer_sequence = sequence;
 }
 
-void StringArgBuilder::Default(llvm::StringRef string_value) {
+auto StringArgBuilder::Default(llvm::StringRef string_value) -> void {
   arg()->has_default = true;
   arg()->default_string = string_value;
 }
 
-void StringArgBuilder::Set(llvm::StringRef* string) {
+auto StringArgBuilder::Set(llvm::StringRef* string) -> void {
   arg()->is_append = false;
   arg()->string_storage = string;
 }
 
-void StringArgBuilder::Append(
-    llvm::SmallVectorImpl<llvm::StringRef>* sequence) {
+auto StringArgBuilder::Append(llvm::SmallVectorImpl<llvm::StringRef>* sequence)
+    -> void {
   arg()->is_append = true;
   arg()->string_sequence = sequence;
 }
@@ -1371,8 +1382,9 @@ static auto IsValidName(llvm::StringRef name) -> bool {
   return !name.starts_with("no-");
 }
 
-void CommandBuilder::AddFlag(const ArgInfo& info,
-                             llvm::function_ref<void(FlagBuilder&)> build) {
+auto CommandBuilder::AddFlag(const ArgInfo& info,
+                             llvm::function_ref<auto(FlagBuilder&)->void> build)
+    -> void {
   FlagBuilder builder(AddArgImpl(info, Arg::Kind::Flag));
   // All boolean flags have an implicit default of `false`, although it can be
   // overridden in the build callback.
@@ -1380,56 +1392,64 @@ void CommandBuilder::AddFlag(const ArgInfo& info,
   build(builder);
 }
 
-void CommandBuilder::AddIntegerOption(
-    const ArgInfo& info, llvm::function_ref<void(IntegerArgBuilder&)> build) {
+auto CommandBuilder::AddIntegerOption(
+    const ArgInfo& info,
+    llvm::function_ref<auto(IntegerArgBuilder&)->void> build) -> void {
   IntegerArgBuilder builder(AddArgImpl(info, Arg::Kind::Integer));
   build(builder);
 }
 
-void CommandBuilder::AddStringOption(
-    const ArgInfo& info, llvm::function_ref<void(StringArgBuilder&)> build) {
+auto CommandBuilder::AddStringOption(
+    const ArgInfo& info,
+    llvm::function_ref<auto(StringArgBuilder&)->void> build) -> void {
   StringArgBuilder builder(AddArgImpl(info, Arg::Kind::String));
   build(builder);
 }
 
-void CommandBuilder::AddOneOfOption(
-    const ArgInfo& info, llvm::function_ref<void(OneOfArgBuilder&)> build) {
+auto CommandBuilder::AddOneOfOption(
+    const ArgInfo& info, llvm::function_ref<auto(OneOfArgBuilder&)->void> build)
+    -> void {
   OneOfArgBuilder builder(AddArgImpl(info, Arg::Kind::OneOf));
   build(builder);
 }
 
-void CommandBuilder::AddMetaActionOption(
-    const ArgInfo& info, llvm::function_ref<void(ArgBuilder&)> build) {
+auto CommandBuilder::AddMetaActionOption(
+    const ArgInfo& info, llvm::function_ref<auto(ArgBuilder&)->void> build)
+    -> void {
   ArgBuilder builder(AddArgImpl(info, Arg::Kind::MetaActionOnly));
   build(builder);
 }
 
-void CommandBuilder::AddIntegerPositionalArg(
-    const ArgInfo& info, llvm::function_ref<void(IntegerArgBuilder&)> build) {
+auto CommandBuilder::AddIntegerPositionalArg(
+    const ArgInfo& info,
+    llvm::function_ref<auto(IntegerArgBuilder&)->void> build) -> void {
   AddPositionalArgImpl(info, Arg::Kind::Integer, [build](Arg& arg) {
     IntegerArgBuilder builder(&arg);
     build(builder);
   });
 }
 
-void CommandBuilder::AddStringPositionalArg(
-    const ArgInfo& info, llvm::function_ref<void(StringArgBuilder&)> build) {
+auto CommandBuilder::AddStringPositionalArg(
+    const ArgInfo& info,
+    llvm::function_ref<auto(StringArgBuilder&)->void> build) -> void {
   AddPositionalArgImpl(info, Arg::Kind::String, [build](Arg& arg) {
     StringArgBuilder builder(&arg);
     build(builder);
   });
 }
 
-void CommandBuilder::AddOneOfPositionalArg(
-    const ArgInfo& info, llvm::function_ref<void(OneOfArgBuilder&)> build) {
+auto CommandBuilder::AddOneOfPositionalArg(
+    const ArgInfo& info, llvm::function_ref<auto(OneOfArgBuilder&)->void> build)
+    -> void {
   AddPositionalArgImpl(info, Arg::Kind::OneOf, [build](Arg& arg) {
     OneOfArgBuilder builder(&arg);
     build(builder);
   });
 }
 
-void CommandBuilder::AddSubcommand(
-    const CommandInfo& info, llvm::function_ref<void(CommandBuilder&)> build) {
+auto CommandBuilder::AddSubcommand(
+    const CommandInfo& info,
+    llvm::function_ref<auto(CommandBuilder&)->void> build) -> void {
   CARBON_CHECK(IsValidName(info.name), "Invalid subcommand name: {0}",
                info.name);
   CARBON_CHECK(subcommand_names_.insert(info.name).second,
@@ -1444,11 +1464,11 @@ void CommandBuilder::AddSubcommand(
   builder.Finalize();
 }
 
-void CommandBuilder::HelpHidden(bool is_help_hidden) {
+auto CommandBuilder::HelpHidden(bool is_help_hidden) -> void {
   command_->is_help_hidden = is_help_hidden;
 }
 
-void CommandBuilder::RequiresSubcommand() {
+auto CommandBuilder::RequiresSubcommand() -> void {
   CARBON_CHECK(!command_->subcommands.empty(),
                "Cannot require subcommands unless there are subcommands.");
   CARBON_CHECK(command_->positional_args.empty(),
@@ -1459,7 +1479,7 @@ void CommandBuilder::RequiresSubcommand() {
   command_->kind = Kind::RequiresSubcommand;
 }
 
-void CommandBuilder::Do(ActionT action) {
+auto CommandBuilder::Do(ActionT action) -> void {
   CARBON_CHECK(command_->kind == Kind::Invalid,
                "Already established the kind of this command as: {0}",
                command_->kind);
@@ -1467,7 +1487,7 @@ void CommandBuilder::Do(ActionT action) {
   command_->action = std::move(action);
 }
 
-void CommandBuilder::Meta(ActionT action) {
+auto CommandBuilder::Meta(ActionT action) -> void {
   CARBON_CHECK(command_->kind == Kind::Invalid,
                "Already established the kind of this command as: {0}",
                command_->kind);
@@ -1489,8 +1509,9 @@ auto CommandBuilder::AddArgImpl(const ArgInfo& info, Arg::Kind kind) -> Arg* {
   return arg;
 }
 
-void CommandBuilder::AddPositionalArgImpl(
-    const ArgInfo& info, Arg::Kind kind, llvm::function_ref<void(Arg&)> build) {
+auto CommandBuilder::AddPositionalArgImpl(
+    const ArgInfo& info, Arg::Kind kind,
+    llvm::function_ref<auto(Arg&)->void> build) -> void {
   CARBON_CHECK(IsValidName(info.name), "Invalid argument name: {0}", info.name);
   CARBON_CHECK(
       command_->subcommands.empty(),
@@ -1511,13 +1532,13 @@ void CommandBuilder::AddPositionalArgImpl(
   }
 }
 
-void CommandBuilder::Finalize() {
+auto CommandBuilder::Finalize() -> void {
   meta_printer_->RegisterWithCommand(*command_, *this);
 }
 
 auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
            llvm::raw_ostream& out, CommandInfo command_info,
-           llvm::function_ref<void(CommandBuilder&)> build)
+           llvm::function_ref<auto(CommandBuilder&)->void> build)
     -> ErrorOr<ParseResult> {
   // Build a parser, which includes building the command description provided by
   // the user.

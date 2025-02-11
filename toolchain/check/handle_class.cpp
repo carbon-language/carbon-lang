@@ -14,6 +14,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -390,8 +391,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto [adapted_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
-  adapted_type_id = context.AsConcreteType(
-      adapted_type_id, node_id,
+  adapted_type_id = AsConcreteType(
+      context, adapted_type_id, node_id,
       [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
                           "adapted type {0} is an incomplete type",
@@ -463,7 +464,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
   auto [base_type_inst_id, base_type_id] =
       ExprAsType(context, node_id, base_expr_id);
-  base_type_id = context.AsCompleteType(base_type_id, node_id, [&] {
+  base_type_id = AsCompleteType(context, base_type_id, node_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
                       "base {0} is an incomplete type", InstIdAsType);
     return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,

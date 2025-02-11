@@ -9,6 +9,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -255,7 +256,7 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       // constraints on the generic rather than properties of the type. For now,
       // require the transformed type to be complete if the original was.
       if (context.types().IsComplete(inst.type_id())) {
-        context.CompleteTypeOrCheckFail(type_id);
+        CompleteTypeOrCheckFail(context, type_id);
       }
       inst.SetType(type_id);
       context.sem_ir().insts().Set(inst_id, inst);

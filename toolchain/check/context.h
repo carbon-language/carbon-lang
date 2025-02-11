@@ -65,11 +65,11 @@ class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
+
   // A function that forms a diagnostic for some kind of problem. The
   // DiagnosticBuilder is returned rather than emitted so that the caller can
   // add contextual notes as appropriate.
-  using BuildDiagnosticFn =
-      llvm::function_ref<auto()->Context::DiagnosticBuilder>;
+  using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
@@ -372,71 +372,6 @@ class Context {
   // `type`.
   auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
     return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
-  }
-
-  // Attempts to complete the type `type_id`. Returns `true` if the type is
-  // complete, or `false` if it could not be completed. A complete type has
-  // known object and value representations. Returns `true` if the type is
-  // symbolic.
-  //
-  // Avoid calling this where possible, as it can lead to coherence issues.
-  // However, it's important that we use it during monomorphization, where we
-  // don't want to trigger a request for more monomorphization.
-  // TODO: Remove the other call to this function.
-  auto TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc,
-                         BuildDiagnosticFn diagnoser = nullptr) -> bool;
-
-  // Completes the type `type_id`. CHECK-fails if it can't be completed.
-  auto CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void;
-
-  // Like `TryToCompleteType`, but for cases where it is an error for the type
-  // to be incomplete.
-  //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
-  // if a `diagnoser` is provided. The builder it returns will be annotated to
-  // describe the reason why the type is not complete.
-  //
-  // `diagnoser` should build an error diagnostic. If `type_id` is dependent,
-  // the completeness of the type will be enforced during monomorphization, and
-  // `loc_id` is used as the location for a diagnostic produced at that time.
-  auto RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                           BuildDiagnosticFn diagnoser) -> bool;
-
-  // Like `RequireCompleteType`, but also require the type to not be an abstract
-  // class type. If it is, `abstract_diagnoser` is used to diagnose the problem,
-  // and this function returns false.
-  auto RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                           BuildDiagnosticFn diagnoser,
-                           BuildDiagnosticFn abstract_diagnoser) -> bool;
-
-  // Like `RequireCompleteType`, but also require the type to be defined. A
-  // defined type has known members. If the type is not defined, `diagnoser` is
-  // used to diagnose the problem, and this function returns false.
-  //
-  // This is the same as `RequireCompleteType` except for facet types, which are
-  // complete before they are fully defined.
-  auto RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                          BuildDiagnosticFn diagnoser) -> bool;
-
-  // Returns the type `type_id` if it is a complete type, or produces an
-  // incomplete type error and returns an error type. This is a convenience
-  // wrapper around `RequireCompleteType`.
-  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                      BuildDiagnosticFn diagnoser) -> SemIR::TypeId {
-    return RequireCompleteType(type_id, loc_id, diagnoser)
-               ? type_id
-               : SemIR::ErrorInst::SingletonTypeId;
-  }
-
-  // Returns the type `type_id` if it is a concrete type, or produces an
-  // incomplete or abstract type error and returns an error type. This is a
-  // convenience wrapper around `RequireConcreteType`.
-  auto AsConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                      BuildDiagnosticFn diagnoser,
-                      BuildDiagnosticFn abstract_diagnoser) -> SemIR::TypeId {
-    return RequireConcreteType(type_id, loc_id, diagnoser, abstract_diagnoser)
-               ? type_id
-               : SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Returns whether `type_id` represents a facet type.

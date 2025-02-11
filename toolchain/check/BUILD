@@ -39,6 +39,7 @@ cc_library(
         "pattern_match.cpp",
         "return.cpp",
         "subst.cpp",
+        "type_completion.cpp",
     ],
     hdrs = [
         "call.h",
@@ -70,6 +71,7 @@ cc_library(
         "pending_block.h",
         "return.h",
         "subst.h",
+        "type_completion.h",
     ],
     deps = [
         ":node_stack",

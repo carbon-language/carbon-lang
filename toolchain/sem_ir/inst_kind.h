@@ -145,7 +145,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 
   // Compute a fingerprint for this instruction kind, allowing its use as part
   // of the key in a `FoldingSet`.
-  void Profile(llvm::FoldingSetNodeID& id) { id.AddInteger(AsInt()); }
+  auto Profile(llvm::FoldingSetNodeID& id) -> void { id.AddInteger(AsInt()); }
 
  private:
   // Returns the DefinitionInfo for the kind.

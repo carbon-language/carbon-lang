@@ -13,14 +13,15 @@ namespace Carbon {
 
 class PrettyStackTraceFunction : public llvm::PrettyStackTraceEntry {
  public:
-  explicit PrettyStackTraceFunction(std::function<void(llvm::raw_ostream&)> fn)
+  explicit PrettyStackTraceFunction(
+      std::function<auto(llvm::raw_ostream&)->void> fn)
       : fn_(std::move(fn)) {}
   ~PrettyStackTraceFunction() override = default;
 
   auto print(llvm::raw_ostream& output) const -> void override { fn_(output); }
 
  private:
-  const std::function<void(llvm::raw_ostream&)> fn_;
+  const std::function<auto(llvm::raw_ostream&)->void> fn_;
 };
 
 }  // namespace Carbon

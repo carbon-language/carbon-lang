@@ -9,7 +9,8 @@ namespace Carbon::LanguageServer {
 auto HandleShutdown(
     Context& /*context*/,
     const clang::clangd::NoParams& /*client_capabilities*/,
-    llvm::function_ref<void(llvm::Expected<std::nullptr_t>)> on_done) -> void {
+    llvm::function_ref<auto(llvm::Expected<std::nullptr_t>)->void> on_done)
+    -> void {
   // TODO: Track that `shutdown` was called, and:
   // - Warn on duplicate calls.
   // - Make `exit` return `1` if `shutdown` wasn't called.

@@ -16,6 +16,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
@@ -375,8 +376,8 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     }
 
     // The parameter types need to be complete.
-    context.RequireCompleteType(
-        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+    RequireCompleteType(
+        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
         context.insts().GetLocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,

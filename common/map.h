@@ -114,7 +114,7 @@ class MapView
 
   // Run the provided callback for every key and value in the map.
   template <typename CallbackT>
-  void ForEach(CallbackT callback)
+  auto ForEach(CallbackT callback) -> void
     requires(std::invocable<CallbackT, KeyT&, ValueT&>);
 
   // This routine is relatively inefficient and only intended for use in
@@ -224,7 +224,7 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  void ForEach(CallbackT callback) const
+  auto ForEach(CallbackT callback) const -> void
     requires(std::invocable<CallbackT, KeyT&, ValueT&>)
   {
     return ViewT(*this).ForEach(callback);
@@ -345,7 +345,7 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 
   // Clear all key/value pairs from the map but leave the underlying hashtable
   // allocated and in place.
-  void Clear();
+  auto Clear() -> void;
 
  protected:
   using ImplT::ImplT;
@@ -390,7 +390,7 @@ class Map : public RawHashtable::TableImpl<
 
   // Reset the entire state of the hashtable to as it was when constructed,
   // throwing away any intervening allocations.
-  void Reset();
+  auto Reset() -> void;
 };
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -418,8 +418,8 @@ auto MapView<InputKeyT, InputValueT, InputKeyContextT>::operator[](
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename CallbackT>
-void MapView<InputKeyT, InputValueT, InputKeyContextT>::ForEach(
-    CallbackT callback)
+auto MapView<InputKeyT, InputValueT, InputKeyContextT>::ForEach(
+    CallbackT callback) -> void
   requires(std::invocable<CallbackT, KeyT&, ValueT&>)
 {
   this->ForEachEntry(
@@ -551,14 +551,14 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-void MapBase<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSize(
-    ssize_t target_alloc_size, KeyContextT key_context) {
+auto MapBase<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSize(
+    ssize_t target_alloc_size, KeyContextT key_context) -> void {
   this->GrowToAllocSizeImpl(target_alloc_size, key_context);
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-void MapBase<InputKeyT, InputValueT, InputKeyContextT>::GrowForInsertCount(
-    ssize_t count, KeyContextT key_context) {
+auto MapBase<InputKeyT, InputValueT, InputKeyContextT>::GrowForInsertCount(
+    ssize_t count, KeyContextT key_context) -> void {
   this->GrowForInsertCountImpl(count, key_context);
 }
 
@@ -570,13 +570,13 @@ auto MapBase<InputKeyT, InputValueT, InputKeyContextT>::Erase(
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-void MapBase<InputKeyT, InputValueT, InputKeyContextT>::Clear() {
+auto MapBase<InputKeyT, InputValueT, InputKeyContextT>::Clear() -> void {
   this->ClearImpl();
 }
 
 template <typename InputKeyT, typename InputValueT, ssize_t SmallSize,
           typename InputKeyContextT>
-void Map<InputKeyT, InputValueT, SmallSize, InputKeyContextT>::Reset() {
+auto Map<InputKeyT, InputValueT, SmallSize, InputKeyContextT>::Reset() -> void {
   this->ResetImpl();
 }
 

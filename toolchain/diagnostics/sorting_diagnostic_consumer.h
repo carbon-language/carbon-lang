@@ -39,7 +39,7 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   }
 
   // Sorts and flushes buffered diagnostics.
-  void Flush() override {
+  auto Flush() -> void override {
     llvm::stable_sort(diagnostics_,
                       [](const Diagnostic& lhs, const Diagnostic& rhs) {
                         return lhs.last_byte_offset < rhs.last_byte_offset;

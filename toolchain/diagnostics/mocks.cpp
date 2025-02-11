@@ -6,7 +6,7 @@
 
 namespace Carbon {
 
-void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
+auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void {
   *os << "Diagnostic{";
   PrintTo(diagnostic.level, os);
   for (const auto& message : diagnostic.messages) {
@@ -17,7 +17,7 @@ void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
   *os << "\"}";
 }
 
-void PrintTo(DiagnosticLevel level, std::ostream* os) {
+auto PrintTo(DiagnosticLevel level, std::ostream* os) -> void {
   switch (level) {
     case DiagnosticLevel::LocationInfo:
       *os << "LocationInfo";

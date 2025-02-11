@@ -164,7 +164,7 @@ class DiagnosticEmitter {
   // Note that the first parameter type is DiagnosticLoc rather than
   // LocT, because ConvertLoc must not recurse.
   using ContextFnT =
-      llvm::function_ref<void(DiagnosticLoc, const DiagnosticBase<>&)>;
+      llvm::function_ref<auto(DiagnosticLoc, const DiagnosticBase<>&)->void>;
 
   // Converts a LocT to a DiagnosticLoc and its `last_byte_offset` (see
   // `DiagnosticMessage`). ConvertLoc may invoke context_fn to provide context
