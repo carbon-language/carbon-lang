@@ -1518,11 +1518,8 @@ auto Context::ResolveFacetTypeImplWitness(
     SemIR::SpecificId self_specific_id) -> SemIR::InstId {
   // TODO: Finish facet type resolution. This code currently only handles
   // rewrite constraints that set associated constants to a concrete value.
-
-  // TODO: Update this to follow
-  // https://discord.com/channels/655572317891461132/655578254970716160/1338217759439458304
-  // 1) convert (symbolically if necessary), 2) reject duplicates that are not
-  // identical, 3) find fixed point.
+  // Need logic to topologically sort rewrites to respect dependencies, and
+  // afterwards reject duplicates that are not identical.
 
   const auto& interface = interfaces().Get(interface_to_witness.interface_id);
   auto assoc_entities = inst_blocks().Get(interface.associated_entities_id);
