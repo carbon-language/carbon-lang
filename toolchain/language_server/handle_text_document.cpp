@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "common/check.h"
 #include "toolchain/language_server/handle.h"
 
 namespace Carbon::LanguageServer {
@@ -35,17 +36,9 @@ auto HandleDidChangeTextDocument(
     return;
   }
 
-  // Full text is sent if full sync is specified in capabilities.
-  if (params.contentChanges.size() != 1) {
-    CARBON_DIAGNOSTIC(LanguageServerUnsupportedChanges, Warning,
-                      "received unsupported contentChanges count: {0}", int);
-    context.file_emitter().Emit(filename, LanguageServerUnsupportedChanges,
-                                params.contentChanges.size());
-    return;
-  }
   if (auto* file = context.LookupFile(filename)) {
-    file->SetText(context, params.textDocument.version,
-                  params.contentChanges[0].text);
+    file->ApplyChanges(
+        context, params.textDocument.version, params.contentChanges);
   }
 }
 

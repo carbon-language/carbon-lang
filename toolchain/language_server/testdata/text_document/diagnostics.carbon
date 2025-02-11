@@ -34,7 +34,7 @@
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
 // CHECK:STDOUT:       "documentSymbolProvider": true,
-// CHECK:STDOUT:       "textDocumentSync": 1
+// CHECK:STDOUT:       "textDocumentSync": 2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 1164{{\r}}

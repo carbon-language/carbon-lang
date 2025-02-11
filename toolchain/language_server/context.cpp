@@ -155,6 +155,53 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                             consumer.params());
 }
 
+auto Context::File::PositionToIndex(const clang::clangd::Position &position) -> size_t {
+  return PositionToIndex(source_->text().data(), position);
+}
+
+auto Context::File::PositionToIndex(const std::string& contents, const clang::clangd::Position& position)
+    -> size_t {
+  size_t result = 0;
+
+  for (int row = 0; row < position.line; row++) {
+    const size_t newline_index = contents.find('\n', result);
+
+    CARBON_CHECK(newline_index != std::string::npos,
+                 "Line number greater than number of lines in the file");
+
+    result = newline_index + 1;
+  }
+
+  result += position.character;
+
+  CARBON_CHECK(result <= contents.size(),
+               "Position greater than source code size");
+
+  return result;
+}
+
+auto Context::File::ApplyChanges(
+    Context& context, std::optional<int64_t> version,
+    const std::vector<clang::clangd::TextDocumentContentChangeEvent>&
+        content_changes) -> void {
+  std::string contents = source_->text().data();
+
+  for (const auto& change : content_changes) {
+    // if range is not present, then we copy entire text
+    if (!change.range) {
+      contents = change.text;
+      continue;
+    }
+
+    auto start_idx = PositionToIndex(contents, change.range->start);
+    auto end_idx = PositionToIndex(contents, change.range->end);
+
+    contents.replace(start_idx, end_idx - start_idx, change.text);
+  }
+
+  SetText(context, version, contents);
+}
+
 auto Context::LookupFile(llvm::StringRef filename) -> File* {
   if (!filename.ends_with(".carbon")) {
     CARBON_DIAGNOSTIC(LanguageServerFileUnsupported, Warning,
