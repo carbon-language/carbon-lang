@@ -12,6 +12,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -107,15 +108,16 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
       context.interfaces().Get(interface_type->interface_id);
 
   // TODO: This should be done as part of facet type resolution.
-  if (!context.RequireDefinedType(
-          facet_type_id, context.insts().GetLocId(impl.latest_decl_id()), [&] {
-            CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
-                              "implementation of undefined interface {0}",
-                              SemIR::NameId);
-            return context.emitter().Build(impl.latest_decl_id(),
-                                           ImplOfUndefinedInterface,
-                                           interface.name_id);
-          })) {
+  if (!RequireDefinedType(context, facet_type_id,
+                          context.insts().GetLocId(impl.latest_decl_id()), [&] {
+                            CARBON_DIAGNOSTIC(
+                                ImplOfUndefinedInterface, Error,
+                                "implementation of undefined interface {0}",
+                                SemIR::NameId);
+                            return context.emitter().Build(
+                                impl.latest_decl_id(), ImplOfUndefinedInterface,
+                                interface.name_id);
+                          })) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
