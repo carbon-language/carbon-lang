@@ -17,6 +17,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
+#include "toolchain/check/region_stack.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
@@ -291,27 +292,6 @@ class Context {
   template <typename InstT>
   auto GetCurrentScopeAs() -> std::optional<InstT> {
     return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
-  }
-
-  // Mark the start of a new single-entry region with the given entry block.
-  auto PushRegion(SemIR::InstBlockId entry_block_id) -> void {
-    region_stack_.PushArray();
-    region_stack_.AppendToTop(entry_block_id);
-  }
-
-  // Add `block_id` to the most recently pushed single-entry region. To preserve
-  // the single-entry property, `block_id` must not be directly reachable from
-  // any block outside the region. To ensure the region's blocks are in lexical
-  // order, this should be called when the first parse node associated with this
-  // block is handled, or as close as possible.
-  auto AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id) -> void;
-
-  // Complete creation of the most recently pushed single-entry region, and
-  // return a list of its blocks.
-  auto PopRegion() -> llvm::SmallVector<SemIR::InstBlockId> {
-    llvm::SmallVector<SemIR::InstBlockId> result(region_stack_.PeekArray());
-    region_stack_.PopArray();
-    return result;
   }
 
   // Returns the type ID for a constant of type `type`.
@@ -602,6 +582,8 @@ class Context {
     return var_storage_map_;
   }
 
+  auto region_stack() -> RegionStack& { return region_stack_; }
+
   auto full_pattern_stack() -> FullPatternStack& {
     return scope_stack_.full_pattern_stack();
   }
@@ -728,7 +710,7 @@ class Context {
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
   // Stack of single-entry regions being built.
-  ArrayStack<SemIR::InstBlockId> region_stack_;
+  RegionStack region_stack_;
 };
 
 }  // namespace Carbon::Check

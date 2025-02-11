@@ -26,7 +26,7 @@ auto HandleParseNode(Context& context, Parse::IfExprIfId node_id) -> bool {
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
-  context.AddToRegion(then_block_id, node_id);
+  context.region_stack().AddToRegion(then_block_id, node_id);
 
   context.node_stack().Push(if_node, else_block_id);
   return true;
@@ -57,7 +57,7 @@ auto HandleParseNode(Context& context, Parse::IfExprThenId node_id) -> bool {
 
   // Start emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
-  context.AddToRegion(else_block_id, node_id);
+  context.region_stack().AddToRegion(else_block_id, node_id);
 
   context.node_stack().Push(node_id, then_value_id);
   return true;
