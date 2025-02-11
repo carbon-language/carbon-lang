@@ -568,10 +568,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.29a: type = import_ref PackageA//default, loc11_6, loaded [template = constants.%C]
 // CHECK:STDOUT:   %PackageA.import_ref.e8c: type = import_ref PackageA//default, loc11_11, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %PackageB.import_ref.fa0 = import_ref PackageB//default, loc13_25, unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.5d8 = import_ref PackageB//default, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.ed7 = import_ref PackageB//default, loc7_9, unloaded
 // CHECK:STDOUT:   %PackageB.G = import_ref PackageB//default, G, unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.fa0 = import_ref PackageB//default, loc13_25, unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.dfb: type = import_ref PackageB//default, loc13_14, loaded [template = constants.%C]
 // CHECK:STDOUT:   %PackageB.import_ref.cee586.1: type = import_ref PackageB//default, loc13_20, loaded [template = constants.%HasG.type]
 // CHECK:STDOUT:   %PackageB.import_ref.f2f: <witness> = import_ref PackageB//default, loc18_25, loaded [template = constants.%impl_witness]
@@ -710,10 +710,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageB.import_ref.5d8 = import_ref PackageB//default, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.604: %HasG.assoc_type = import_ref PackageB//default, loc7_9, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %PackageB.G = import_ref PackageB//default, G, unloaded
-// CHECK:STDOUT:   %PackageA.import_ref.0e8 = import_ref PackageA//default, loc11_16, unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.28c = import_ref PackageA//default, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.a2a = import_ref PackageA//default, loc5_9, unloaded
 // CHECK:STDOUT:   %PackageA.F = import_ref PackageA//default, F, unloaded
+// CHECK:STDOUT:   %PackageA.import_ref.0e8 = import_ref PackageA//default, loc11_16, unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.29a: type = import_ref PackageA//default, loc11_6, loaded [template = constants.%C]
 // CHECK:STDOUT:   %PackageA.import_ref.e8c: type = import_ref PackageA//default, loc11_11, loaded [template = constants.%HasF.type]
 // CHECK:STDOUT:   %PackageB.import_ref.5d9: <witness> = import_ref PackageB//default, loc13_25, loaded [template = constants.%impl_witness]
@@ -859,10 +859,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageB.import_ref.6a9 = import_ref PackageB//default, inst36 [indirect], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.dfb: type = import_ref PackageB//default, loc13_14, loaded [template = constants.%C]
 // CHECK:STDOUT:   %PackageB.import_ref.cee586.1: type = import_ref PackageB//default, loc13_20, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %PackageB.import_ref.7db = import_ref PackageB//default, loc18_25, unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.96f = import_ref PackageB//default, inst53 [indirect], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.b30 = import_ref PackageB//default, inst54 [indirect], unloaded
 // CHECK:STDOUT:   %PackageB.F = import_ref PackageB//default, F, unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.7db = import_ref PackageB//default, loc18_25, unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.aa9f8a.1: type = import_ref PackageB//default, loc18_6, loaded [template = constants.%D]
 // CHECK:STDOUT:   %PackageB.import_ref.831: type = import_ref PackageB//default, loc18_19, loaded [template = constants.%HasF.type]
 // CHECK:STDOUT:   %PackageB.import_ref.240: <witness> = import_ref PackageB//default, loc23_16, loaded [template = constants.%impl_witness]
