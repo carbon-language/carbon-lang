@@ -12,6 +12,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -377,9 +378,9 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
           CARBON_FATAL("Unexpected type: {0}", type_inst);
         }
         auto& fn = context.functions().Get(fn_type->function_id);
-        auto lookup_result = context.LookupNameInExactScope(
-            context.insts().GetLocId(decl_id), fn.name_id, impl.scope_id,
-            impl_scope);
+        auto lookup_result =
+            LookupNameInExactScope(context, context.insts().GetLocId(decl_id),
+                                   fn.name_id, impl.scope_id, impl_scope);
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_block[index] = CheckAssociatedFunctionImplementation(

@@ -10,6 +10,7 @@
 #include "toolchain/check/impl.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
@@ -65,7 +66,7 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  context.AddNameToLookup(SemIR::NameId::SelfType, self_id);
+  AddNameToLookup(context, SemIR::NameId::SelfType, self_id);
   return true;
 }
 

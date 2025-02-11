@@ -6,6 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -224,7 +225,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           break;
       }
       if (had_error) {
-        context.AddNameToLookup(name_id, SemIR::ErrorInst::SingletonInstId);
+        AddNameToLookup(context, name_id, SemIR::ErrorInst::SingletonInstId);
         // Replace the parameter with `ErrorInst` so that we don't try
         // constructing a generic based on it.
         param_pattern_id = SemIR::ErrorInst::SingletonInstId;
