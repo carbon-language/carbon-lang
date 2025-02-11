@@ -365,7 +365,7 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Returns the type ID for a constant is a type value, i.e. it is a value of
+  // Returns the type ID for a constant that is a type value, i.e. it is a value of
   // type `TypeType`.
   //
   // Facet values are also types, but can not be passed here. They should be
