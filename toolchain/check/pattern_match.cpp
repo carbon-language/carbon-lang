@@ -12,6 +12,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -328,6 +329,68 @@ auto MatchContext::EmitPatternMatch(Context& context,
       if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
         context.global_init().Suspend();
       }
+      break;
+    }
+    case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+      auto subpattern_ids =
+          context.inst_blocks().Get(tuple_pattern.elements_id);
+      auto add_all_subscrutinees =
+          [&](llvm::ArrayRef<SemIR::InstId> subscrutinee_ids) {
+            for (auto [subpattern_id, subscrutinee_id] :
+                 llvm::reverse(llvm::zip(subpattern_ids, subscrutinee_ids))) {
+              AddWork({.pattern_id = subpattern_id,
+                       .scrutinee_id = subscrutinee_id});
+            }
+          };
+      if (!entry.scrutinee_id.has_value()) {
+        CARBON_CHECK(kind_ == MatchKind::Callee);
+        context.TODO(pattern.loc_id,
+                     "Support patterns besides bindings in parameter list");
+        break;
+      }
+      auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
+      if (auto scrutinee_literal =
+              scrutinee.inst.TryAs<SemIR::TupleLiteral>()) {
+        auto subscrutinee_ids =
+            context.inst_blocks().Get(scrutinee_literal->elements_id);
+        if (subscrutinee_ids.size() != subpattern_ids.size()) {
+          CARBON_DIAGNOSTIC(TuplePatternSizeDoesntMatchLiteral, Error,
+                            "tuple pattern expects {0} element{0:s}, but tuple "
+                            "literal has {1}",
+                            IntAsSelect, IntAsSelect);
+          context.emitter()
+              .Build(pattern.loc_id, TuplePatternSizeDoesntMatchLiteral,
+                     subpattern_ids.size(), subscrutinee_ids.size())
+              .Emit();
+          break;
+        }
+        add_all_subscrutinees(subscrutinee_ids);
+        break;
+      }
+
+      auto converted_scrutinee = ConvertToValueOrRefOfType(
+          context, pattern.loc_id, entry.scrutinee_id, tuple_pattern.type_id);
+      if (auto scrutinee_value = context.insts().TryGetAs<SemIR::TupleValue>(
+              converted_scrutinee)) {
+        add_all_subscrutinees(
+            context.inst_blocks().Get(scrutinee_value->elements_id));
+        break;
+      }
+
+      if (tuple_pattern.type_id == SemIR::ErrorInst::SingletonTypeId) {
+        break;
+      }
+      auto tuple_type =
+          context.types().GetAs<SemIR::TupleType>(tuple_pattern.type_id);
+      auto element_type_ids = context.type_blocks().Get(tuple_type.elements_id);
+      llvm::SmallVector<SemIR::InstId> subscrutinee_ids;
+      for (auto [i, element_type_id] : llvm::enumerate(element_type_ids)) {
+        subscrutinee_ids.push_back(context.AddInst<SemIR::TupleAccess>(
+            scrutinee.loc_id, {.type_id = element_type_id,
+                               .tuple_id = entry.scrutinee_id,
+                               .index = SemIR::ElementIndex(i)}));
+      }
+      add_all_subscrutinees(subscrutinee_ids);
       break;
     }
     default: {

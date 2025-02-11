@@ -249,6 +249,7 @@ CARBON_DIAGNOSTIC_KIND(ClassForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
 
 // Deduction.
@@ -436,6 +437,9 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+
+// Pattern matching diagnostics
+CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
 // ============================================================================
 // Language server diagnostics

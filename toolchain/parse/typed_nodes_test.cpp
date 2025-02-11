@@ -257,7 +257,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
                                  R"Trace(Aggregate [^:]*: begin
 Aggregate [^:]*: begin
 Optional [^:]*: begin
-NodeIdForKind: TuplePattern consumed
+NodeIdForKind: ExplicitParamList consumed
 Optional [^:]*: found
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitParamList

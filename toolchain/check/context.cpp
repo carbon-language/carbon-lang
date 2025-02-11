@@ -888,11 +888,13 @@ auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
       {.block_ids = PopRegion(), .result_id = result_id});
 }
 
-auto Context::EndSubpatternAsEmpty() -> void {
+auto Context::EndSubpatternAsNonExpr() -> void {
   auto block_id = inst_block_stack().Pop();
   CARBON_CHECK(block_id == region_stack_.PeekArray().back());
   CARBON_CHECK(region_stack_.PeekArray().size() == 1);
-  CARBON_CHECK(inst_blocks().Get(block_id).empty());
+  // TODO: Add `CARBON_CHECK(inst_blocks().Get(block_id).empty())`.
+  // Currently that can fail when ending a tuple pattern in a name binding
+  // decl in a class or interface.
   region_stack_.PopArray();
 }
 

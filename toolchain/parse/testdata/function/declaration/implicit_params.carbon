@@ -24,8 +24,8 @@ fn foo[a: i32, b: i32]();
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

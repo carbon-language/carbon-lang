@@ -680,10 +680,8 @@ class Context {
   auto EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::ExprRegionId;
 
   // Ends a region started by BeginSubpattern (in stack order), asserting that
-  // it was empty.
-  auto EndSubpatternAsEmpty() -> void;
-
-  // TODO: Add EndSubpatternAsPattern, when needed.
+  // it had no expression content.
+  auto EndSubpatternAsNonExpr() -> void;
 
   // Inserts the given region into the current code block. If the region
   // consists of a single block, this will be implemented as a `splice_block`

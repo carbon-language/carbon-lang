@@ -618,6 +618,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case TupleAccess::Kind:
       case TupleInit::Kind:
       case TupleLiteral::Kind:
+      case TuplePattern::Kind:
       case UnaryOperatorNot::Kind:
       case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:

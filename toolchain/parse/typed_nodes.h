@@ -169,7 +169,7 @@ struct NameQualifierWithParams {
 
   IdentifierNameBeforeParamsId name;
   std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
 };
 
@@ -190,7 +190,7 @@ struct DeclName {
       qualifiers;
   AnyNonExprIdentifierNameId name;
   std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  std::optional<ExplicitParamListId> params;
 };
 
 // Library, package, import, export
@@ -349,13 +349,26 @@ using TuplePatternStart =
 using PatternListComma =
     LeafNode<NodeKind::PatternListComma, Lex::CommaTokenIndex>;
 
-// A parameter list or tuple pattern: `(a: i32, b: i32)`.
+// A tuple pattern that isn't an explicit parameter list: `(a: i32, b: i32)`.
 struct TuplePattern {
   static constexpr auto Kind =
       NodeKind::TuplePattern.Define({.category = NodeCategory::Pattern,
                                      .bracketed_by = TuplePatternStart::Kind});
 
   TuplePatternStartId left_paren;
+  CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
+  Lex::CloseParenTokenIndex token;
+};
+
+using ExplicitParamListStart =
+    LeafNode<NodeKind::ExplicitParamListStart, Lex::OpenParenTokenIndex>;
+
+// An explicit parameter list: `(a: i32, b: i32)`.
+struct ExplicitParamList {
+  static constexpr auto Kind = NodeKind::ExplicitParamList.Define(
+      {.bracketed_by = ExplicitParamListStart::Kind});
+
+  ExplicitParamListStartId left_paren;
   CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
   Lex::CloseParenTokenIndex token;
 };
