@@ -226,7 +226,7 @@ class DeductionContext {
   auto MakeSpecific() -> SemIR::SpecificId;
 
  private:
-  void NoteInitializingParam(SemIR::InstId param_id, auto& builder) {
+  auto NoteInitializingParam(SemIR::InstId param_id, auto& builder) -> void {
     if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
             param_id)) {
       CARBON_DIAGNOSTIC(InitializingGenericParam, Note,

@@ -104,7 +104,7 @@ struct DiagnosticMessage {
   llvm::SmallVector<llvm::Any> format_args;
 
   // Returns the formatted string. By default, this uses llvm::formatv.
-  std::function<std::string(const DiagnosticMessage&)> format_fn;
+  std::function<auto(const DiagnosticMessage&)->std::string> format_fn;
 };
 
 // An instance of a single error or warning.  Information about the diagnostic

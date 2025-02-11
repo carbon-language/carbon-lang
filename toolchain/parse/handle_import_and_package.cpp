@@ -37,7 +37,7 @@ static auto HasModifier(Context& context, Context::StateStackEntry state,
 static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
                               NodeKind declaration, bool is_export,
                               bool is_impl,
-                              llvm::function_ref<void()> on_parse_error)
+                              llvm::function_ref<auto()->void> on_parse_error)
     -> void {
   Tree::PackagingNames names{
       .node_id = ImportDeclId(NodeId(state.subtree_start)),

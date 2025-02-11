@@ -74,7 +74,7 @@ static auto GetSymbolRange(const Parse::TreeAndSubtrees& tree_and_subtrees,
 auto HandleDocumentSymbol(
     Context& context, const clang::clangd::DocumentSymbolParams& params,
     llvm::function_ref<
-        void(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)>
+        auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
         on_done) -> void {
   auto* file = context.LookupFile(params.textDocument.uri.file());
   if (!file) {

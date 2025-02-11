@@ -24,8 +24,8 @@ class VLogger {
     }
   }
 
-  void VLog() { CARBON_VLOG("Test\n"); }
-  void VLogFormatArgs() { CARBON_VLOG("Test {0} {1} {2}\n", 1, 2, 3); }
+  auto VLog() { CARBON_VLOG("Test\n")->void; }
+  auto VLogFormatArgs() { CARBON_VLOG("Test {0} {1} {2}\n", 1, 2, 3)->void; }
 
   auto TakeStr() -> std::string { return buffer_.TakeStr(); }
 

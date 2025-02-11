@@ -691,7 +691,7 @@ class ProbeSequence {
 #endif
   }
 
-  void Next() {
+  auto Next() -> void {
     step_ += GroupSize;
     p_ = (p_ + step_) & mask_;
 #ifndef NDEBUG

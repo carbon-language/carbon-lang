@@ -372,8 +372,8 @@ class CompilationUnit {
   // with the actual function name, but marks timings with the appropriate
   // phase.
   auto LogCall(llvm::StringLiteral logging_label,
-               llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
-      -> void;
+               llvm::StringLiteral timing_label,
+               llvm::function_ref<auto()->void> fn) -> void;
 
   // Returns true if the current input file can be dumped.
   auto IncludeInDumps() const -> bool;
@@ -409,7 +409,7 @@ class CompilationUnit {
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
-  std::optional<std::function<const Parse::TreeAndSubtrees&()>>
+  std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
@@ -710,7 +710,7 @@ auto CompilationUnit::GetParseTreeAndSubtrees()
 
 auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
-                              llvm::function_ref<void()> fn) -> void {
+                              llvm::function_ref<auto()->void> fn) -> void {
   CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
   Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
   fn();
