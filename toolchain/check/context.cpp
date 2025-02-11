@@ -1290,14 +1290,6 @@ class TypeCompleter {
         SemIR::ValueRepr::ObjectAggregate);
   }
 
-  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/,
-                             SemIR::ArrayIndex /*inst*/) const
-      -> SemIR::ValueRepr {
-    context_.TODO(loc_, "Add BuildValueReprForInst support for ArrayIndex");
-    // TODO: Get the value repr for the value in the array if it's not symbolic.
-    return MakeEmptyValueRepr();
-  }
-
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,

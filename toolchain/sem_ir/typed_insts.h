@@ -124,7 +124,7 @@ struct ArrayIndex {
   static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
       {.ir_name = "array_index",
        .is_type = InstIsType::Maybe,
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId array_id;
