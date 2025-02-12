@@ -37,8 +37,8 @@ auto HandleDidChangeTextDocument(
   }
 
   if (auto* file = context.LookupFile(filename)) {
-    file->ApplyChanges(
-        context, params.textDocument.version, params.contentChanges);
+    file->ApplyChanges(context, params.textDocument.version,
+                       params.contentChanges);
   }
 }
 

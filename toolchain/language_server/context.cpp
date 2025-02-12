@@ -155,11 +155,13 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                             consumer.params());
 }
 
-auto Context::File::PositionToIndex(const clang::clangd::Position &position) -> size_t {
+auto Context::File::PositionToIndex(const clang::clangd::Position& position)
+    -> size_t {
   return PositionToIndex(source_->text().data(), position);
 }
 
-auto Context::File::PositionToIndex(const std::string& contents, const clang::clangd::Position& position)
+auto Context::File::PositionToIndex(const std::string& contents,
+                                    const clang::clangd::Position& position)
     -> size_t {
   size_t result = 0;
 
