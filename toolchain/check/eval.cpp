@@ -201,7 +201,7 @@ namespace {
 // with UnknownDueToError phase.
 enum class Phase : uint8_t {
   // Value could be entirely and concretely computed.
-  Template,
+  Concrete,
   // Evaluation phase is symbolic because the expression involves specifically a
   // reference to `.Self`.
   PeriodSelfSymbolic,
@@ -224,8 +224,8 @@ static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
     return Phase::Runtime;
   } else if (constant_id == SemIR::ErrorInst::SingletonConstantId) {
     return Phase::UnknownDueToError;
-  } else if (constant_id.is_template()) {
-    return Phase::Template;
+  } else if (constant_id.is_concrete()) {
+    return Phase::Concrete;
   } else if (eval_context.constant_values().DependsOnGenericParameter(
                  constant_id)) {
     return Phase::Symbolic;
@@ -242,15 +242,15 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
 }
 
 // `where` expressions using `.Self` should not be considered symbolic
-// - `Interface where .Self impls I and .A = bool` -> template
+// - `Interface where .Self impls I and .A = bool` -> concrete
 // - `T:! type` ... `Interface where .A = T` -> symbolic, since uses `T` which
 //   is symbolic and not due to `.Self`.
 static auto UpdatePhaseIgnorePeriodSelf(EvalContext& eval_context,
                                         SemIR::ConstantId constant_id,
                                         Phase* phase) {
   Phase constant_phase = GetPhase(eval_context, constant_id);
-  // Since LatestPhase(x, Phase::Template) == x, this is equivalent to replacing
-  // Phase::PeriodSelfSymbolic with Phase::Template.
+  // Since LatestPhase(x, Phase::Concrete) == x, this is equivalent to replacing
+  // Phase::PeriodSelfSymbolic with Phase::Concrete.
   if (constant_phase != Phase::PeriodSelfSymbolic) {
     *phase = LatestPhase(*phase, constant_phase);
   }
@@ -260,9 +260,9 @@ static auto UpdatePhaseIgnorePeriodSelf(EvalContext& eval_context,
 static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
     -> SemIR::ConstantId {
   switch (phase) {
-    case Phase::Template:
+    case Phase::Concrete:
       return context.constants().GetOrAdd(inst,
-                                          SemIR::ConstantStore::IsTemplate);
+                                          SemIR::ConstantStore::IsConcrete);
     case Phase::PeriodSelfSymbolic:
       return context.constants().GetOrAdd(
           inst, SemIR::ConstantStore::IsPeriodSelfSymbolic);
@@ -290,7 +290,7 @@ static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
       context,
       SemIR::BoolLiteral{.type_id = bool_type_id,
                          .value = SemIR::BoolValue::From(result)},
-      Phase::Template);
+      Phase::Concrete);
 }
 
 // Converts an APInt value into a ConstantId.
@@ -302,7 +302,7 @@ static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
                           : context.ints().AddUnsigned(std::move(value));
   return MakeConstantResult(
       context, SemIR::IntValue{.type_id = type_id, .int_id = result},
-      Phase::Template);
+      Phase::Concrete);
 }
 
 // Converts an APFloat value into a ConstantId.
@@ -311,7 +311,7 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
   auto result = context.floats().Add(std::move(value));
   return MakeConstantResult(
       context, SemIR::FloatLiteral{.type_id = type_id, .float_id = result},
-      Phase::Template);
+      Phase::Concrete);
 }
 
 // `GetConstantValue` checks to see whether the provided ID describes a value
@@ -503,7 +503,7 @@ static auto RebuildIfFieldsAreConstantImpl(
   // Build a constant instruction by replacing each non-constant operand with
   // its constant value.
   auto typed_inst = inst.As<InstT>();
-  Phase phase = Phase::Template;
+  Phase phase = Phase::Concrete;
   if ((ReplaceFieldWithConstantValue(eval_context, &typed_inst, each_field_id,
                                      &phase) &&
        ...)) {
@@ -567,7 +567,7 @@ static auto RebuildInitAsValue(EvalContext& eval_context, SemIR::Inst inst,
 static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto access_inst = inst.As<SemIR::AnyAggregateAccess>();
-  Phase phase = Phase::Template;
+  Phase phase = Phase::Concrete;
   if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
                                     &SemIR::AnyAggregateAccess::aggregate_id,
                                     &phase)) {
@@ -577,12 +577,12 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
       auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
       auto index = static_cast<size_t>(access_inst.index.index);
       CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-      // `Phase` is not used here. If this element is a template constant, then
+      // `Phase` is not used here. If this element is a concrete constant, then
       // so is the result of indexing, even if the aggregate also contains a
       // symbolic context.
       return eval_context.GetConstantValue(elements[index]);
     } else {
-      CARBON_CHECK(phase != Phase::Template,
+      CARBON_CHECK(phase != Phase::Concrete,
                    "Failed to evaluate template constant {0} arg0: {1}", inst,
                    eval_context.insts().Get(access_inst.aggregate_id));
     }
@@ -595,7 +595,7 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
 // element.
 static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
     -> SemIR::ConstantId {
-  Phase phase = Phase::Template;
+  Phase phase = Phase::Concrete;
   auto index_id = GetConstantValue(eval_context, inst.index_id, &phase);
 
   if (!index_id.has_value()) {
@@ -603,8 +603,8 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   }
   auto index = eval_context.insts().TryGetAs<SemIR::IntValue>(index_id);
   if (!index) {
-    CARBON_CHECK(phase != Phase::Template,
-                 "Template constant integer should be a literal");
+    CARBON_CHECK(phase != Phase::Concrete,
+                 "Concrete constant integer should be a literal");
     return MakeNonConstantResult(phase);
   }
 
@@ -641,7 +641,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   auto aggregate =
       eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
   if (!aggregate) {
-    CARBON_CHECK(phase != Phase::Template,
+    CARBON_CHECK(phase != Phase::Concrete,
                  "Unexpected representation for template constant aggregate");
     return MakeNonConstantResult(phase);
   }
@@ -780,7 +780,7 @@ static auto PerformCheckedIntConvert(Context& context, SemIRLoc loc,
 
   return MakeConstantResult(
       context, SemIR::IntValue{.type_id = dest_type_id, .int_id = arg.int_id},
-      Phase::Template);
+      Phase::Concrete);
 }
 
 // Issues a diagnostic for a compile-time division by zero.
@@ -1291,7 +1291,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
 
     case SemIR::BuiltinFunctionKind::FloatMakeType: {
       // TODO: Support a symbolic constant width.
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       if (!ValidateFloatBitWidth(context, loc, arg_ids[0])) {
@@ -1323,7 +1323,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::IntSNegate:
     case SemIR::BuiltinFunctionKind::IntUNegate:
     case SemIR::BuiltinFunctionKind::IntComplement: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       return PerformBuiltinUnaryIntOp(context, loc, builtin_kind, arg_ids[0]);
@@ -1343,7 +1343,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::IntAnd:
     case SemIR::BuiltinFunctionKind::IntOr:
     case SemIR::BuiltinFunctionKind::IntXor: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       return PerformBuiltinBinaryIntOp(context, loc, builtin_kind, arg_ids[0],
@@ -1353,7 +1353,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     // Bit shift operations.
     case SemIR::BuiltinFunctionKind::IntLeftShift:
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       return PerformBuiltinIntShiftOp(context, loc, builtin_kind, arg_ids[0],
@@ -1367,7 +1367,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::IntLessEq:
     case SemIR::BuiltinFunctionKind::IntGreater:
     case SemIR::BuiltinFunctionKind::IntGreaterEq: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       return PerformBuiltinIntComparison(context, builtin_kind, arg_ids[0],
@@ -1376,7 +1376,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
 
     // Unary float -> float operations.
     case SemIR::BuiltinFunctionKind::FloatNegate: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
 
@@ -1388,7 +1388,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::FloatSub:
     case SemIR::BuiltinFunctionKind::FloatMul:
     case SemIR::BuiltinFunctionKind::FloatDiv: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       return PerformBuiltinBinaryFloatOp(context, builtin_kind, arg_ids[0],
@@ -1402,7 +1402,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::FloatLessEq:
     case SemIR::BuiltinFunctionKind::FloatGreater:
     case SemIR::BuiltinFunctionKind::FloatGreaterEq: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       return PerformBuiltinFloatComparison(context, builtin_kind, arg_ids[0],
@@ -1412,7 +1412,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     // Bool comparisons.
     case SemIR::BuiltinFunctionKind::BoolEq:
     case SemIR::BuiltinFunctionKind::BoolNeq: {
-      if (phase != Phase::Template) {
+      if (phase != Phase::Concrete) {
         break;
       }
       return PerformBuiltinBoolComparison(context, builtin_kind, arg_ids[0],
@@ -1426,7 +1426,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
 // Makes a constant for a call instruction.
 static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
                                 SemIR::Call call) -> SemIR::ConstantId {
-  Phase phase = Phase::Template;
+  Phase phase = Phase::Concrete;
 
   // A call with an invalid argument list is used to represent an erroneous
   // call.
@@ -1689,8 +1689,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::TypeType::Kind:
     case SemIR::VtableType::Kind:
     case SemIR::WitnessType::Kind:
-      // Builtins are always template constants.
-      return MakeConstantResult(eval_context.context(), inst, Phase::Template);
+      // Builtins are always concrete constants.
+      return MakeConstantResult(eval_context.context(), inst, Phase::Concrete);
 
     case CARBON_KIND(SemIR::FunctionDecl fn_decl): {
       return TransformIfFieldsAreConstant(
@@ -1721,11 +1721,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                            .class_id = class_decl.class_id,
                            .specific_id = SemIR::SpecificId::None},
-          Phase::Template);
+          Phase::Concrete);
     }
 
     case CARBON_KIND(SemIR::FacetType facet_type): {
-      Phase phase = Phase::Template;
+      Phase phase = Phase::Concrete;
       SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
           eval_context, facet_type.facet_type_id, &phase);
       info.Canonicalize();
@@ -1753,7 +1753,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context.context(),
           eval_context.context().FacetTypeFromInterface(
               interface_decl.interface_id, SemIR::SpecificId::None),
-          Phase::Template);
+          Phase::Concrete);
     }
 
     case CARBON_KIND(SemIR::SpecificConstant specific): {
@@ -1773,7 +1773,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::FieldDecl::Kind:
     case SemIR::ImplDecl::Kind:
     case SemIR::Namespace::Kind:
-      return SemIR::ConstantId::ForTemplateConstant(inst_id);
+      return SemIR::ConstantId::ForConcreteConstant(inst_id);
 
     case SemIR::BoolLiteral::Kind:
     case SemIR::FloatLiteral::Kind:
@@ -1785,7 +1785,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // by `APInt`s with different bit widths.
       // TODO: Can the type of an IntValue or FloatLiteral be symbolic? If so,
       // we may need to rebuild.
-      return MakeConstantResult(eval_context.context(), inst, Phase::Template);
+      return MakeConstantResult(eval_context.context(), inst, Phase::Concrete);
 
     // The elements of a constant aggregate can be accessed.
     case SemIR::ClassElementAccess::Kind:
@@ -1795,7 +1795,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
     case CARBON_KIND(SemIR::ImplWitnessAccess access_inst): {
       // This is PerformAggregateAccess followed by GetConstantInSpecific.
-      Phase phase = Phase::Template;
+      Phase phase = Phase::Concrete;
       if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
                                         &SemIR::ImplWitnessAccess::witness_id,
                                         &phase)) {
@@ -1804,7 +1804,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           auto elements = eval_context.inst_blocks().Get(witness->elements_id);
           auto index = static_cast<size_t>(access_inst.index.index);
           CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-          // `Phase` is not used here. If this element is a template constant,
+          // `Phase` is not used here. If this element is a concrete constant,
           // then so is the result of indexing, even if the aggregate also
           // contains a symbolic context.
 
@@ -1823,7 +1823,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           return GetConstantValueInSpecific(eval_context.sem_ir(),
                                             witness->specific_id, element);
         } else {
-          CARBON_CHECK(phase != Phase::Template,
+          CARBON_CHECK(phase != Phase::Concrete,
                        "Failed to evaluate template constant {0} arg0: {1}",
                        inst, eval_context.insts().Get(access_inst.witness_id));
         }
@@ -1911,24 +1911,24 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         return value;
       }
 
-      auto from_phase = Phase::Template;
+      auto from_phase = Phase::Concrete;
       auto value_inst_id =
           GetConstantValue(eval_context, inst.source_id, &from_phase);
 
-      auto to_phase = Phase::Template;
+      auto to_phase = Phase::Concrete;
       auto type_id = GetConstantValue(eval_context, inst.type_id, &to_phase);
 
       auto value_inst = eval_context.insts().Get(value_inst_id);
       value_inst.SetType(type_id);
 
       if (to_phase >= from_phase) {
-        // If moving from a template constant value to a symbolic type, the new
+        // If moving from a concrete constant value to a symbolic type, the new
         // constant value takes on the phase of the new type. We're adding the
         // symbolic bit to the new constant value due to the presence of a
         // symbolic type.
         return MakeConstantResult(eval_context.context(), value_inst, to_phase);
       } else {
-        // If moving from a symbolic constant value to a template type, the new
+        // If moving from a symbolic constant value to a concrete type, the new
         // constant value has a phase that depends on what is in the value. If
         // there is anything symbolic within the value, then it's symbolic. We
         // can't easily determine that here without evaluating a new constant
@@ -1967,7 +1967,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return eval_context.GetConstantValue(typed_inst.init_id);
     }
     case CARBON_KIND(SemIR::FacetAccessType typed_inst): {
-      Phase phase = Phase::Template;
+      Phase phase = Phase::Concrete;
       if (ReplaceFieldWithConstantValue(
               eval_context, &typed_inst,
               &SemIR::FacetAccessType::facet_value_inst_id, &phase)) {
@@ -1981,7 +1981,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       }
     }
     case CARBON_KIND(SemIR::FacetAccessWitness typed_inst): {
-      Phase phase = Phase::Template;
+      Phase phase = Phase::Concrete;
       if (ReplaceFieldWithConstantValue(
               eval_context, &typed_inst,
               &SemIR::FacetAccessWitness::facet_value_inst_id, &phase)) {
@@ -1996,7 +1996,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       }
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
-      Phase phase = Phase::Template;
+      Phase phase = Phase::Concrete;
       SemIR::TypeId base_facet_type_id =
           eval_context.insts().Get(typed_inst.period_self_id).type_id();
       SemIR::Inst base_facet_inst =
@@ -2045,7 +2045,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case CARBON_KIND(SemIR::UnaryOperatorNot typed_inst): {
       auto const_id = eval_context.GetConstantValue(typed_inst.operand_id);
       auto phase = GetPhase(eval_context, const_id);
-      if (phase == Phase::Template) {
+      if (phase == Phase::Concrete) {
         auto value = eval_context.insts().GetAs<SemIR::BoolLiteral>(
             eval_context.constant_values().GetInstId(const_id));
         return MakeBoolResult(eval_context.context(), value.type_id,
@@ -2060,7 +2060,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // `const (const T)` evaluates to `const T`. Otherwise, `const T` evaluates
     // to itself.
     case CARBON_KIND(SemIR::ConstType typed_inst): {
-      auto phase = Phase::Template;
+      auto phase = Phase::Concrete;
       auto inner_id =
           GetConstantValue(eval_context, typed_inst.inner_id, &phase);
       if (eval_context.context().types().Is<SemIR::ConstType>(inner_id)) {
@@ -2071,14 +2071,14 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
 
     case CARBON_KIND(SemIR::RequireCompleteType require_complete): {
-      auto phase = Phase::Template;
+      auto phase = Phase::Concrete;
       auto witness_type_id = eval_context.context().GetSingletonType(
           SemIR::WitnessType::SingletonInstId);
       auto complete_type_id = GetConstantValue(
           eval_context, require_complete.complete_type_id, &phase);
 
-      // If the type is a template constant, require it to be complete now.
-      if (phase == Phase::Template) {
+      // If the type is a concrete constant, require it to be complete now.
+      if (phase == Phase::Concrete) {
         if (!TryToCompleteType(
                 eval_context.context(), complete_type_id,
                 eval_context.GetDiagnosticLoc(inst_id), [&] {
@@ -2101,7 +2101,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
             phase);
       }
 
-      // If it's not a template constant, require it to be complete once it
+      // If it's not a concrete constant, require it to be complete once it
       // becomes one.
       return MakeConstantResult(
           eval_context.context(),

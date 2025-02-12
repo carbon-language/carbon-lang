@@ -20,11 +20,11 @@ var a: [1; 1];
 // CHECK:STDOUT: --- fail_invalid_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -32,7 +32,7 @@ var a: [1; 1];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
@@ -42,11 +42,11 @@ var a: [1; 1];
 // CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc18_13: type = splice_block %array_type [template = <error>] {
-// CHECK:STDOUT:     %int_1.loc18_9: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %int_1.loc18_12: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %.loc18_9: type = converted %int_1.loc18_9, <error> [template = <error>]
-// CHECK:STDOUT:     %array_type: type = array_type %int_1.loc18_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_13: type = splice_block %array_type [concrete = <error>] {
+// CHECK:STDOUT:     %int_1.loc18_9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:     %int_1.loc18_12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:     %.loc18_9: type = converted %int_1.loc18_9, <error> [concrete = <error>]
+// CHECK:STDOUT:     %array_type: type = array_type %int_1.loc18_12, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT: }

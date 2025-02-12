@@ -15,25 +15,25 @@ interface UseSelf {
 // CHECK:STDOUT: --- self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %UseSelf.type: type = facet_type <@UseSelf> [template]
+// CHECK:STDOUT:   %UseSelf.type: type = facet_type <@UseSelf> [concrete]
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %UseSelf.assoc_type: type = assoc_entity_type %UseSelf.type [template]
-// CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, @UseSelf.%F.decl [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %UseSelf.assoc_type: type = assoc_entity_type %UseSelf.type [concrete]
+// CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, @UseSelf.%F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .UseSelf = %UseSelf.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %UseSelf.decl: type = interface_decl @UseSelf [template = constants.%UseSelf.type] {} {}
+// CHECK:STDOUT:   %UseSelf.decl: type = interface_decl @UseSelf [concrete = constants.%UseSelf.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = return_slot_pattern
@@ -52,7 +52,7 @@ interface UseSelf {
 // CHECK:STDOUT:     %return.param: ref @F.%Self.as_type.loc12_14.1 (%Self.as_type) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.%Self.as_type.loc12_14.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

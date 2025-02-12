@@ -583,7 +583,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   };
   // Diagnose a non-constant index prior to conversion to IntLiteral, because
   // the conversion will fail if the index is not constant.
-  if (!context.constant_values().Get(index_inst_id).is_template()) {
+  if (!context.constant_values().Get(index_inst_id).is_concrete()) {
     return diag_non_constant_index();
   }
 
@@ -595,7 +595,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::ErrorInst::SingletonInstId;
-  } else if (!index_const_id.is_template()) {
+  } else if (!index_const_id.is_concrete()) {
     return diag_non_constant_index();
   }
 

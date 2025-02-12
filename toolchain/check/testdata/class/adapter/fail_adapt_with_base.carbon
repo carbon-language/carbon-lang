@@ -23,34 +23,34 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: --- fail_adapt_with_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Simple: type = class_type @Simple [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %AdaptWithVirtual: type = class_type @AdaptWithVirtual [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %Simple: type = class_type @Simple [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %AdaptWithVirtual: type = class_type @AdaptWithVirtual [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:     .AdaptWithVirtual = %AdaptWithVirtual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Simple.decl: type = class_decl @Simple [template = constants.%Simple] {} {}
-// CHECK:STDOUT:   %AdaptWithVirtual.decl: type = class_decl @AdaptWithVirtual [template = constants.%AdaptWithVirtual] {} {}
+// CHECK:STDOUT:   %Simple.decl: type = class_decl @Simple [concrete = constants.%Simple] {} {}
+// CHECK:STDOUT:   %AdaptWithVirtual.decl: type = class_decl @AdaptWithVirtual [concrete = constants.%AdaptWithVirtual] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Simple {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -58,9 +58,9 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithVirtual {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
-// CHECK:STDOUT:   adapt_decl %Simple.ref [template]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple]
+// CHECK:STDOUT:   adapt_decl %Simple.ref [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

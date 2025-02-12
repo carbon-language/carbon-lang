@@ -54,8 +54,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.96f: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.96f = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type.96f: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.96f = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.07f: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.07f = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
@@ -66,10 +66,10 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [template = constants.%ImplicitAs.generic] {
+// CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc4_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc4_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc4_22.1, runtime_param<none> [symbolic = %Dest.patt.loc4_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
@@ -147,19 +147,19 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: --- fail_deduction_uses_runtime_type_conversion.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %T: %tuple.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %tuple.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %HoldsType.type: type = generic_class_type @HoldsType [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %HoldsType.generic: %HoldsType.type = struct_value () [template]
+// CHECK:STDOUT:   %HoldsType.type: type = generic_class_type @HoldsType [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %HoldsType.generic: %HoldsType.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HoldsType.cc9: type = class_type @HoldsType, @HoldsType(%T) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %RuntimeConvertFrom: type = class_type @RuntimeConvertFrom [template]
-// CHECK:STDOUT:   %RuntimeConvertTo: type = class_type @RuntimeConvertTo [template]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %RuntimeConvertFrom: type = class_type @RuntimeConvertFrom [concrete]
+// CHECK:STDOUT:   %RuntimeConvertTo: type = class_type @RuntimeConvertTo [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
@@ -169,41 +169,41 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
 // CHECK:STDOUT:   %assoc0.02f: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.580: type = facet_type <@ImplicitAs, @ImplicitAs(%RuntimeConvertTo)> [template]
-// CHECK:STDOUT:   %Convert.type.50a: type = fn_type @Convert.1, @ImplicitAs(%RuntimeConvertTo) [template]
-// CHECK:STDOUT:   %Convert.993: %Convert.type.50a = struct_value () [template]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.46b: type = assoc_entity_type %ImplicitAs.type.580 [template]
-// CHECK:STDOUT:   %assoc0.322: %ImplicitAs.assoc_type.46b = assoc_entity element0, imports.%Core.import_ref.1c7 [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [template]
-// CHECK:STDOUT:   %Convert.type.e8b: type = fn_type @Convert.2 [template]
-// CHECK:STDOUT:   %Convert.e81: %Convert.type.e8b = struct_value () [template]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.580 = facet_value %RuntimeConvertFrom, %impl_witness [template]
-// CHECK:STDOUT:   %RuntimeConvertTo.val: %RuntimeConvertTo = struct_value () [template]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %ImplicitAs.type.580: type = facet_type <@ImplicitAs, @ImplicitAs(%RuntimeConvertTo)> [concrete]
+// CHECK:STDOUT:   %Convert.type.50a: type = fn_type @Convert.1, @ImplicitAs(%RuntimeConvertTo) [concrete]
+// CHECK:STDOUT:   %Convert.993: %Convert.type.50a = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.46b: type = assoc_entity_type %ImplicitAs.type.580 [concrete]
+// CHECK:STDOUT:   %assoc0.322: %ImplicitAs.assoc_type.46b = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %Convert.type.e8b: type = fn_type @Convert.2 [concrete]
+// CHECK:STDOUT:   %Convert.e81: %Convert.type.e8b = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.580 = facet_value %RuntimeConvertFrom, %impl_witness [concrete]
+// CHECK:STDOUT:   %RuntimeConvertTo.val: %RuntimeConvertTo = struct_value () [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.elem0: type = tuple_access %T, element0 [symbolic]
 // CHECK:STDOUT:   %A: %tuple.elem0 = bind_symbolic_name A, 1 [symbolic]
 // CHECK:STDOUT:   %A.patt: %tuple.elem0 = symbolic_binding_pattern A, 1 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.cc9 [symbolic]
-// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%RuntimeConvertTo) [template]
-// CHECK:STDOUT:   %HoldsType.066: type = class_type @HoldsType, @HoldsType(%tuple) [template]
-// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%RuntimeConvertTo) [concrete]
+// CHECK:STDOUT:   %HoldsType.066: type = class_type @HoldsType, @HoldsType(%tuple) [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %from: %RuntimeConvertFrom = bind_symbolic_name from, 0 [symbolic]
 // CHECK:STDOUT:   %from.patt: %RuntimeConvertFrom = symbolic_binding_pattern from, 0 [symbolic]
-// CHECK:STDOUT:   %RuntimeConvertFrom.val: %RuntimeConvertFrom = struct_value () [template]
+// CHECK:STDOUT:   %RuntimeConvertFrom.val: %RuntimeConvertFrom = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
-// CHECK:STDOUT:   %.ff1: type = fn_type_with_self_type %Convert.type.50a, %ImplicitAs.facet [template]
+// CHECK:STDOUT:   %.ff1: type = fn_type_with_self_type %Convert.type.50a, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %from, %Convert.e81 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//default, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//default, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.ffd566.1: type = import_ref Core//default, loc4_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc5_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
@@ -214,7 +214,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .HoldsType = %HoldsType.decl
 // CHECK:STDOUT:     .RuntimeConvertFrom = %RuntimeConvertFrom.decl
@@ -223,28 +223,28 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %HoldsType.decl: %HoldsType.type = class_decl @HoldsType [template = constants.%HoldsType.generic] {
+// CHECK:STDOUT:   %HoldsType.decl: %HoldsType.type = class_decl @HoldsType [concrete = constants.%HoldsType.generic] {
 // CHECK:STDOUT:     %T.patt.loc6_17.1: %tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: %tuple.type = value_param_pattern %T.patt.loc6_17.1, runtime_param<none> [symbolic = %T.patt.loc6_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %tuple.type = value_param runtime_param<none>
-// CHECK:STDOUT:     %.loc6_28.1: type = splice_block %.loc6_28.3 [template = constants.%tuple.type] {
+// CHECK:STDOUT:     %.loc6_28.1: type = splice_block %.loc6_28.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.loc6_28.2: %tuple.type = tuple_literal (type)
-// CHECK:STDOUT:       %.loc6_28.3: type = converted %.loc6_28.2, constants.%tuple.type [template = constants.%tuple.type]
+// CHECK:STDOUT:       %.loc6_28.3: type = converted %.loc6_28.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_17.1: %tuple.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_17.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %RuntimeConvertFrom.decl: type = class_decl @RuntimeConvertFrom [template = constants.%RuntimeConvertFrom] {} {}
-// CHECK:STDOUT:   %RuntimeConvertTo.decl: type = class_decl @RuntimeConvertTo [template = constants.%RuntimeConvertTo] {} {}
-// CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %RuntimeConvertFrom.ref: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [template = constants.%RuntimeConvertFrom]
-// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [template = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [template = constants.%RuntimeConvertTo]
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo)> [template = constants.%ImplicitAs.type.580]
+// CHECK:STDOUT:   %RuntimeConvertFrom.decl: type = class_decl @RuntimeConvertFrom [concrete = constants.%RuntimeConvertFrom] {} {}
+// CHECK:STDOUT:   %RuntimeConvertTo.decl: type = class_decl @RuntimeConvertTo [concrete = constants.%RuntimeConvertTo] {} {}
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %RuntimeConvertFrom.ref: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [concrete = constants.%RuntimeConvertFrom]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
+// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo)> [concrete = constants.%ImplicitAs.type.580]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [template = constants.%impl_witness]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc16_6.1: %tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: %tuple.type = value_param_pattern %T.patt.loc16_6.1, runtime_param<none> [symbolic = %T.patt.loc16_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %A.patt.loc16_20.1: @F.%tuple.elem0.loc16_25.2 (%tuple.elem0) = symbolic_binding_pattern A, 1 [symbolic = %A.patt.loc16_20.2 (constants.%A.patt)]
@@ -253,38 +253,38 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:     %x.param_patt: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %tuple.type = value_param runtime_param<none>
-// CHECK:STDOUT:     %.loc16_17.1: type = splice_block %.loc16_17.3 [template = constants.%tuple.type] {
+// CHECK:STDOUT:     %.loc16_17.1: type = splice_block %.loc16_17.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.loc16_17.2: %tuple.type = tuple_literal (type)
-// CHECK:STDOUT:       %.loc16_17.3: type = converted %.loc16_17.2, constants.%tuple.type [template = constants.%tuple.type]
+// CHECK:STDOUT:       %.loc16_17.3: type = converted %.loc16_17.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc16_6.1: %tuple.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc16_6.2 (constants.%T)]
 // CHECK:STDOUT:     %A.param: @F.%tuple.elem0.loc16_25.2 (%tuple.elem0) = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc16_25: type = splice_block %tuple.elem0.loc16_25.1 [symbolic = %tuple.elem0.loc16_25.2 (constants.%tuple.elem0)] {
 // CHECK:STDOUT:       %T.ref.loc16_24: %tuple.type = name_ref T, %T.loc16_6.1 [symbolic = %T.loc16_6.2 (constants.%T)]
-// CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:       %tuple.elem0.loc16_25.1: type = tuple_access %T.ref.loc16_24, element0 [symbolic = %tuple.elem0.loc16_25.2 (constants.%tuple.elem0)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc16_20.1: @F.%tuple.elem0.loc16_25.2 (%tuple.elem0) = bind_symbolic_name A, 1, %A.param [symbolic = %A.loc16_20.2 (constants.%A)]
 // CHECK:STDOUT:     %x.param: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc16_43: type = splice_block %HoldsType.loc16_43.1 [symbolic = %HoldsType.loc16_43.2 (constants.%HoldsType.cc9)] {
-// CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [template = constants.%HoldsType.generic]
+// CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
 // CHECK:STDOUT:       %T.ref.loc16_42: %tuple.type = name_ref T, %T.loc16_6.1 [symbolic = %T.loc16_6.2 (constants.%T)]
 // CHECK:STDOUT:       %HoldsType.loc16_43.1: type = class_type @HoldsType, @HoldsType(constants.%T) [symbolic = %HoldsType.loc16_43.2 (constants.%HoldsType.cc9)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %holds_to.patt: %HoldsType.066 = binding_pattern holds_to
 // CHECK:STDOUT:     %holds_to.param_patt: %HoldsType.066 = value_param_pattern %holds_to.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %holds_to.param: %HoldsType.066 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc18_46.1: type = splice_block %HoldsType [template = constants.%HoldsType.066] {
-// CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [template = constants.%HoldsType.generic]
-// CHECK:STDOUT:       %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [template = constants.%RuntimeConvertTo]
+// CHECK:STDOUT:     %.loc18_46.1: type = splice_block %HoldsType [concrete = constants.%HoldsType.066] {
+// CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
+// CHECK:STDOUT:       %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:       %.loc18_45: %tuple.type = tuple_literal (%RuntimeConvertTo.ref)
-// CHECK:STDOUT:       %tuple: %tuple.type = tuple_value (%RuntimeConvertTo.ref) [template = constants.%tuple]
-// CHECK:STDOUT:       %.loc18_46.2: %tuple.type = converted %.loc18_45, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:       %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%tuple) [template = constants.%HoldsType.066]
+// CHECK:STDOUT:       %tuple: %tuple.type = tuple_value (%RuntimeConvertTo.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:       %.loc18_46.2: %tuple.type = converted %.loc18_45, %tuple [concrete = constants.%tuple]
+// CHECK:STDOUT:       %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%tuple) [concrete = constants.%HoldsType.066]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %holds_to: %HoldsType.066 = bind_name holds_to, %holds_to.param
 // CHECK:STDOUT:   }
@@ -311,15 +311,15 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %RuntimeConvertFrom.ref as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.e8b = fn_decl @Convert.2 [template = constants.%Convert.e81] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.e8b = fn_decl @Convert.2 [concrete = constants.%Convert.e81] {
 // CHECK:STDOUT:     %self.patt: %RuntimeConvertFrom = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %RuntimeConvertFrom = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %RuntimeConvertTo = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %RuntimeConvertTo = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [template = constants.%RuntimeConvertTo]
+// CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:     %self.param: %RuntimeConvertFrom = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%RuntimeConvertFrom.ref [template = constants.%RuntimeConvertFrom]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:     %self: %RuntimeConvertFrom = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %RuntimeConvertTo = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %RuntimeConvertTo = return_slot %return.param
@@ -337,7 +337,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -346,7 +346,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @RuntimeConvertFrom {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -354,7 +354,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @RuntimeConvertTo {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -373,8 +373,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %RuntimeConvertFrom]() -> %return.param_patt: %RuntimeConvertTo {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13_58.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc13_58.2: init %RuntimeConvertTo = class_init (), %return [template = constants.%RuntimeConvertTo.val]
-// CHECK:STDOUT:   %.loc13_59: init %RuntimeConvertTo = converted %.loc13_58.1, %.loc13_58.2 [template = constants.%RuntimeConvertTo.val]
+// CHECK:STDOUT:   %.loc13_58.2: init %RuntimeConvertTo = class_init (), %return [concrete = constants.%RuntimeConvertTo.val]
+// CHECK:STDOUT:   %.loc13_59: init %RuntimeConvertTo = converted %.loc13_58.1, %.loc13_58.2 [concrete = constants.%RuntimeConvertTo.val]
 // CHECK:STDOUT:   return %.loc13_59 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -401,24 +401,24 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:     %from.patt: %RuntimeConvertFrom = symbolic_binding_pattern from, 0 [symbolic = constants.%from.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_36.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %RuntimeConvertFrom.ref.loc19_41: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [template = constants.%RuntimeConvertFrom]
+// CHECK:STDOUT:   %RuntimeConvertFrom.ref.loc19_41: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:   %.loc19_36.2: ref %RuntimeConvertFrom = temporary_storage
-// CHECK:STDOUT:   %.loc19_36.3: init %RuntimeConvertFrom = class_init (), %.loc19_36.2 [template = constants.%RuntimeConvertFrom.val]
+// CHECK:STDOUT:   %.loc19_36.3: init %RuntimeConvertFrom = class_init (), %.loc19_36.2 [concrete = constants.%RuntimeConvertFrom.val]
 // CHECK:STDOUT:   %.loc19_36.4: ref %RuntimeConvertFrom = temporary %.loc19_36.2, %.loc19_36.3
 // CHECK:STDOUT:   %.loc19_38: ref %RuntimeConvertFrom = converted %.loc19_36.1, %.loc19_36.4
-// CHECK:STDOUT:   %RuntimeConvertFrom.ref.loc19_14: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [template = constants.%RuntimeConvertFrom]
+// CHECK:STDOUT:   %RuntimeConvertFrom.ref.loc19_14: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:   %from: %RuntimeConvertFrom = bind_symbolic_name from, 0, %.loc19_38 [symbolic = constants.%from]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %from.ref: %RuntimeConvertFrom = name_ref from, %from [symbolic = constants.%from]
 // CHECK:STDOUT:   %holds_to.ref: %HoldsType.066 = name_ref holds_to, %holds_to
-// CHECK:STDOUT:   %impl.elem0: %.ff1 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Convert.e81]
+// CHECK:STDOUT:   %impl.elem0: %.ff1 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Convert.e81]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method constants.%from, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %.loc30_19.1: ref %RuntimeConvertTo = temporary_storage
 // CHECK:STDOUT:   %Convert.call: init %RuntimeConvertTo = call %bound_method(constants.%from) to %.loc30_19.1
 // CHECK:STDOUT:   %.loc30_19.2: init %RuntimeConvertTo = converted constants.%from, %Convert.call
 // CHECK:STDOUT:   %.loc30_19.3: ref %RuntimeConvertTo = temporary %.loc30_19.1, %.loc30_19.2
 // CHECK:STDOUT:   %.loc30_19.4: %RuntimeConvertTo = bind_value %.loc30_19.3
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, <error>) [template = <error>]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, <error>) [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%holds_to.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

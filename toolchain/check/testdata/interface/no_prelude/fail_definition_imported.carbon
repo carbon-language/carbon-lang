@@ -32,14 +32,14 @@ interface I {}
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
@@ -47,21 +47,21 @@ interface I {}
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
-// CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %.type: type = facet_type <@.1> [concrete]
 // CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}
+// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [concrete = constants.%.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "a.carbon"];

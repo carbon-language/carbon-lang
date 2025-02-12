@@ -47,14 +47,14 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .b_ref = %b_ref
@@ -67,15 +67,15 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %.loc8: <error> = var_pattern %a_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var a_ref
-// CHECK:STDOUT:   %x.ref.loc8: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %x.ref.loc8: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %a_ref: <error> = bind_name a_ref, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ref.patt: <error> = binding_pattern b_ref
 // CHECK:STDOUT:     %.loc13_1: <error> = var_pattern %b_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref.var: ref <error> = var b_ref
-// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
-// CHECK:STDOUT:     %x.ref.loc13: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:     %x.ref.loc13: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc13_19: <error> = struct_literal (%x.ref.loc13)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref: <error> = bind_name b_ref, <error>
@@ -84,8 +84,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %c_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ref.var: ref <error> = var c_ref
-// CHECK:STDOUT:   %.2: <error> = splice_block <error> [template = <error>] {
-// CHECK:STDOUT:     %x.ref.loc18: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:     %x.ref.loc18: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc18_15: <error> = tuple_literal (%x.ref.loc18)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ref: <error> = bind_name c_ref, <error>
@@ -94,9 +94,9 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %.loc23_1: <error> = var_pattern %d_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref.var: ref <error> = var d_ref
-// CHECK:STDOUT:   %.loc23_13: type = splice_block %ptr [template = <error>] {
-// CHECK:STDOUT:     %x.ref.loc23: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_13: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %x.ref.loc23: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref: <error> = bind_name d_ref, <error>
 // CHECK:STDOUT: }
@@ -104,8 +104,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -113,7 +113,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %Implicit.b_ref: <error> = import_ref Implicit//default, b_ref, loaded
 // CHECK:STDOUT:   %Implicit.c_ref: <error> = import_ref Implicit//default, c_ref, loaded
 // CHECK:STDOUT:   %Implicit.d_ref: <error> = import_ref Implicit//default, d_ref, loaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -121,7 +121,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .a_ref = imports.%Implicit.a_ref
 // CHECK:STDOUT:     .b_ref = imports.%Implicit.b_ref
 // CHECK:STDOUT:     .c_ref = imports.%Implicit.c_ref
@@ -140,9 +140,9 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %.loc6_1: %i32 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
-// CHECK:STDOUT:   %.loc6_8: type = splice_block %i32.loc6 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc6_8: type = splice_block %i32.loc6 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -150,9 +150,9 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %.loc7_1: %i32 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
-// CHECK:STDOUT:   %.loc7_8: type = splice_block %i32.loc7 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_8: type = splice_block %i32.loc7 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -160,9 +160,9 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %.loc8_1: %i32 = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %i32 = var c
-// CHECK:STDOUT:   %.loc8_8: type = splice_block %i32.loc8 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -170,9 +170,9 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %.loc9_1: %i32 = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
-// CHECK:STDOUT:   %.loc9_8: type = splice_block %i32.loc9 [template = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_8: type = splice_block %i32.loc9 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }

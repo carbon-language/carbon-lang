@@ -96,26 +96,26 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6, runtime_param<none> [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %return.patt: %ptr = return_slot_pattern
@@ -128,7 +128,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = out_param runtime_param0
 // CHECK:STDOUT:     %return.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = return_slot %return.param.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc6: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl.loc6: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6, runtime_param<none> [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %return.patt: %ptr = return_slot_pattern
@@ -154,7 +154,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> %ptr {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %F.specific_fn.loc7_10.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init @F.%ptr.loc4_20.2 (%ptr) = call %F.specific_fn.loc7_10.1()
@@ -184,28 +184,28 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b51: type = ptr_type %U [symbolic]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
+// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.b51 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc4_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_6.1, runtime_param<none> [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc4_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt)]
@@ -222,7 +222,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc4_30.2 (%ptr.79f) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
 // CHECK:STDOUT:     %T.patt.loc13_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc13_6.1, runtime_param<none> [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc13_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc13_16.2 (constants.%U.patt)]
@@ -263,7 +263,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: type) -> @.1.%ptr.loc13_30.2 (%ptr.b51) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
@@ -293,32 +293,32 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.336: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt.7a9: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T.8b3 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %U.8b3: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt.e01: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %T.336: type = bind_symbolic_name T, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt.7a9: type = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.b51: type = ptr_type %T.336 [symbolic]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
+// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.b51 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc4_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_6.1, runtime_param<none> [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:     %U.patt.loc4_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
@@ -335,7 +335,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc4_30.2 (%ptr.79f) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
 // CHECK:STDOUT:     %U.patt.loc13_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc13_6.1, runtime_param<none> [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:     %T.patt.loc13_16.1: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc13_16.2 (constants.%T.patt.7a9)]
@@ -376,7 +376,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: type, %T.param_patt: type) -> @.1.%ptr.loc13_30.2 (%ptr.b51) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc21: type = name_ref T, %T.loc13_16.1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
@@ -406,32 +406,32 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.336: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt.7a9: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.79f131.1: type = ptr_type %T.8b3 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %U.8b3: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt.e01: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %T.336: type = bind_symbolic_name T, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt.7a9: type = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.79f131.2: type = ptr_type %U.8b3 [symbolic]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
+// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.79f131.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc4_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_6.1, runtime_param<none> [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:     %U.patt.loc4_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
@@ -448,7 +448,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f131.1) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc4_30.2 (%ptr.79f131.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
 // CHECK:STDOUT:     %U.patt.loc13_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc13_6.1, runtime_param<none> [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:     %T.patt.loc13_16.1: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc13_16.2 (constants.%T.patt.7a9)]
@@ -489,7 +489,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: type, %T.param_patt: type) -> @.1.%ptr.loc13_30.2 (%ptr.79f131.2) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_16.1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }

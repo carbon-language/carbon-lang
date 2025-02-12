@@ -58,11 +58,11 @@ fn B() {
 // CHECK:STDOUT:     inst16:          {kind: StructValue, arg0: inst_block_empty, type: type(inst14)}
 // CHECK:STDOUT:     inst17:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst12:          template_constant(inst12)
-// CHECK:STDOUT:     inst13:          template_constant(inst16)
-// CHECK:STDOUT:     inst14:          template_constant(inst14)
-// CHECK:STDOUT:     inst15:          template_constant(inst15)
-// CHECK:STDOUT:     inst16:          template_constant(inst16)
+// CHECK:STDOUT:     inst12:          concrete_constant(inst12)
+// CHECK:STDOUT:     inst13:          concrete_constant(inst16)
+// CHECK:STDOUT:     inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:     inst15:          concrete_constant(inst15)
+// CHECK:STDOUT:     inst16:          concrete_constant(inst16)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
@@ -125,18 +125,18 @@ fn B() {
 // CHECK:STDOUT:     inst25:          {kind: Call, arg0: inst24, arg1: inst_block_empty, type: type(inst17)}
 // CHECK:STDOUT:     inst26:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst12:          template_constant(inst12)
-// CHECK:STDOUT:     inst14:          template_constant(inst14)
-// CHECK:STDOUT:     inst15:          template_constant(inst18)
-// CHECK:STDOUT:     inst16:          template_constant(inst16)
-// CHECK:STDOUT:     inst17:          template_constant(inst17)
-// CHECK:STDOUT:     inst18:          template_constant(inst18)
-// CHECK:STDOUT:     inst19:          template_constant(inst14)
-// CHECK:STDOUT:     inst20:          template_constant(inst23)
-// CHECK:STDOUT:     inst21:          template_constant(inst23)
-// CHECK:STDOUT:     inst22:          template_constant(inst22)
-// CHECK:STDOUT:     inst23:          template_constant(inst23)
-// CHECK:STDOUT:     inst24:          template_constant(inst23)
+// CHECK:STDOUT:     inst12:          concrete_constant(inst12)
+// CHECK:STDOUT:     inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:     inst15:          concrete_constant(inst18)
+// CHECK:STDOUT:     inst16:          concrete_constant(inst16)
+// CHECK:STDOUT:     inst17:          concrete_constant(inst17)
+// CHECK:STDOUT:     inst18:          concrete_constant(inst18)
+// CHECK:STDOUT:     inst19:          concrete_constant(inst14)
+// CHECK:STDOUT:     inst20:          concrete_constant(inst23)
+// CHECK:STDOUT:     inst21:          concrete_constant(inst23)
+// CHECK:STDOUT:     inst22:          concrete_constant(inst22)
+// CHECK:STDOUT:     inst23:          concrete_constant(inst23)
+// CHECK:STDOUT:     inst24:          concrete_constant(inst23)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}

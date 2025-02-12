@@ -29,23 +29,23 @@ alias UseOther = I.other;
 // CHECK:STDOUT: --- fail_assoc_const_not_constant.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .UseA = %UseA
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.ref.loc24: type = name_ref I, %I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
+// CHECK:STDOUT:   %I.ref.loc24: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <unexpected>.inst19.loc20_7
 // CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <unexpected>.inst19.loc20_7
-// CHECK:STDOUT:   %I.ref.loc27: type = name_ref I, %I.decl [template = constants.%I.type]
-// CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [template = <error>]
-// CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [template = <error>]
+// CHECK:STDOUT:   %I.ref.loc27: type = name_ref I, %I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [concrete = <error>]
+// CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

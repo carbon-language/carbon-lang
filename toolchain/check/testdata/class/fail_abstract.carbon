@@ -192,32 +192,32 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- fail_abstract_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Contains: type = class_type @Contains [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Contains = %Contains.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %Contains.decl: type = class_decl @Contains [template = constants.%Contains] {} {}
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Contains.decl: type = class_decl @Contains [concrete = constants.%Contains] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -225,12 +225,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc15_8: <error> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc15_8: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc15_3: <error> = var_pattern %.loc15_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref <error> = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -241,33 +241,33 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- fail_abstract_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Var.type: type = fn_type @Var [template]
-// CHECK:STDOUT:   %Var: %Var.type = struct_value () [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Var.type: type = fn_type @Var [concrete]
+// CHECK:STDOUT:   %Var: %Var.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Var = %Var.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %Var.decl: %Var.type = fn_decl @Var [template = constants.%Var] {} {}
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Var.decl: %Var.type = fn_decl @Var [concrete = constants.%Var] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -281,7 +281,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %.loc15: <error> = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -289,40 +289,40 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %Abstract = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %Abstract = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
-// CHECK:STDOUT:     %Abstract.ref.loc7: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc7: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -335,7 +335,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %l.patt: %Abstract = binding_pattern l
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %Abstract.ref.loc8: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref.loc8: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = bind_name l, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -343,32 +343,32 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- fail_abstract_adapter.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Adapter: type = class_type @Adapter [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Adapter: type = class_type @Adapter [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Adapter = %Adapter.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [template = constants.%Adapter] {} {}
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -376,9 +376,9 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter {
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   adapt_decl <error> [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:   adapt_decl <error> [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -388,52 +388,52 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- define_and_call_abstract_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Param.type: type = fn_type @Param [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %Param: %Param.type = struct_value () [template]
-// CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
-// CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Param.type: type = fn_type @Param [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Param: %Param.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Call.type: type = fn_type @Call [concrete]
+// CHECK:STDOUT:   %Call: %Call.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Param = %Param.decl
 // CHECK:STDOUT:     .Call = %Call.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %Param.decl: %Param.type = fn_decl @Param [template = constants.%Param] {
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Param.decl: %Param.type = fn_decl @Param [concrete = constants.%Param] {
 // CHECK:STDOUT:     %a.patt: %Abstract = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %Abstract = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
-// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
+// CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %p.patt: %Abstract = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %Abstract = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %Abstract = value_param runtime_param0
-// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %p: %Abstract = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -444,7 +444,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%p.param_patt: %Abstract) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Param.ref: %Param.type = name_ref Param, file.%Param.decl [template = constants.%Param]
+// CHECK:STDOUT:   %Param.ref: %Param.type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
 // CHECK:STDOUT:   %p.ref: %Abstract = name_ref p, %p
 // CHECK:STDOUT:   %Param.call: init %empty_tuple.type = call %Param.ref(<error>)
 // CHECK:STDOUT:   return
@@ -453,26 +453,26 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- fail_todo_return_nonabstract_derived.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %Derived.elem.513: type = unbound_element_type %Derived, %Abstract [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Derived.elem.344: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.d.c44: type = struct_type {.base: %Abstract, .d: %i32} [template]
-// CHECK:STDOUT:   %complete_type.32a: <witness> = complete_type_witness %struct_type.base.d.c44 [template]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [template]
-// CHECK:STDOUT:   %struct_type.base.d.9c6: type = struct_type {.base: %struct_type.a, .d: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %Derived.elem.513: type = unbound_element_type %Derived, %Abstract [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Derived.elem.344: type = unbound_element_type %Derived, %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.base.d.c44: type = struct_type {.base: %Abstract, .d: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.32a: <witness> = complete_type_witness %struct_type.base.d.c44 [concrete]
+// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
+// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete]
+// CHECK:STDOUT:   %struct_type.base.d.9c6: type = struct_type {.base: %struct_type.a, .d: Core.IntLiteral} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -480,27 +480,27 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Make = %Make.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %Derived = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Derived = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %return.param: ref %Derived = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -508,14 +508,14 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %Derived.elem.513 = base_decl %Abstract.ref, element0 [template]
-// CHECK:STDOUT:   %.loc10_8: %Derived.elem.344 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:   %.loc8: %Derived.elem.513 = base_decl %Abstract.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc10_8: %Derived.elem.344 = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.344 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c44 [template = constants.%complete_type.32a]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c44 [concrete = constants.%complete_type.32a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -527,9 +527,9 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc22_26: %struct_type.a = struct_literal (%int_1)
-// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7]
+// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
 // CHECK:STDOUT:   %.loc22_35: %struct_type.base.d.9c6 = struct_literal (%.loc22_26, %int_7)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
@@ -537,22 +537,22 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- fail_return_abstract.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %Derived.elem.513: type = unbound_element_type %Derived, %Abstract [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Derived.elem.344: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %i32} [template]
-// CHECK:STDOUT:   %complete_type.32a: <witness> = complete_type_witness %struct_type.base.d [template]
-// CHECK:STDOUT:   %Return.type: type = fn_type @Return [template]
-// CHECK:STDOUT:   %Return: %Return.type = struct_value () [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %Derived.elem.513: type = unbound_element_type %Derived, %Abstract [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Derived.elem.344: type = unbound_element_type %Derived, %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.32a: <witness> = complete_type_witness %struct_type.base.d [concrete]
+// CHECK:STDOUT:   %Return.type: type = fn_type @Return [concrete]
+// CHECK:STDOUT:   %Return: %Return.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -560,24 +560,24 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Return = %Return.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
-// CHECK:STDOUT:   %Return.decl: %Return.type = fn_decl @Return [template = constants.%Return] {
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Return.decl: %Return.type = fn_decl @Return [concrete = constants.%Return] {
 // CHECK:STDOUT:     %a.patt: %Abstract = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %Abstract = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %Abstract = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Abstract = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Abstract.ref.loc13_27: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc13_27: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
-// CHECK:STDOUT:     %Abstract.ref.loc13_14: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc13_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
@@ -585,7 +585,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -593,14 +593,14 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %Derived.elem.513 = base_decl %Abstract.ref, element0 [template]
-// CHECK:STDOUT:   %.loc10_8: %Derived.elem.344 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:   %.loc8: %Derived.elem.513 = base_decl %Abstract.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc10_8: %Derived.elem.344 = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.344 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [template = constants.%complete_type.32a]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [concrete = constants.%complete_type.32a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -619,23 +619,23 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- access_abstract_subobject.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Abstract.elem: type = unbound_element_type %Abstract, %i32 [template]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
-// CHECK:STDOUT:   %complete_type.fd7: <witness> = complete_type_witness %struct_type.a [template]
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %Derived.elem.513: type = unbound_element_type %Derived, %Abstract [template]
-// CHECK:STDOUT:   %Derived.elem.344: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.d.c44: type = struct_type {.base: %Abstract, .d: %i32} [template]
-// CHECK:STDOUT:   %complete_type.32a: <witness> = complete_type_witness %struct_type.base.d.c44 [template]
-// CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
-// CHECK:STDOUT:   %Access: %Access.type = struct_value () [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Abstract.elem: type = unbound_element_type %Abstract, %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.fd7: <witness> = complete_type_witness %struct_type.a [concrete]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %Derived.elem.513: type = unbound_element_type %Derived, %Abstract [concrete]
+// CHECK:STDOUT:   %Derived.elem.344: type = unbound_element_type %Derived, %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.base.d.c44: type = struct_type {.base: %Abstract, .d: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.32a: <witness> = complete_type_witness %struct_type.base.d.c44 [concrete]
+// CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
+// CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -643,25 +643,25 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Access = %Access.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
-// CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
 // CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -669,12 +669,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5_8: %Abstract.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %Abstract.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %Abstract.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Abstract.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.fd7]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -683,14 +683,14 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc9: %Derived.elem.513 = base_decl %Abstract.ref, element0 [template]
-// CHECK:STDOUT:   %.loc11_8: %Derived.elem.344 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:   %.loc9: %Derived.elem.513 = base_decl %Abstract.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc11_8: %Derived.elem.344 = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc11_3: %Derived.elem.344 = var_pattern %.loc11_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c44 [template = constants.%complete_type.32a]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c44 [concrete = constants.%complete_type.32a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -703,42 +703,42 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %base.ref: %Derived.elem.513 = name_ref base, @Derived.%.loc9 [template = @Derived.%.loc9]
+// CHECK:STDOUT:   %base.ref: %Derived.elem.513 = name_ref base, @Derived.%.loc9 [concrete = @Derived.%.loc9]
 // CHECK:STDOUT:   %.loc15: ref %Abstract = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let_temporary.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -751,7 +751,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %l.patt: %Abstract = binding_pattern l
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = bind_name l, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -759,44 +759,44 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: --- fail_call_abstract_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %ReturnAbstract.type: type = fn_type @ReturnAbstract [template]
-// CHECK:STDOUT:   %ReturnAbstract: %ReturnAbstract.type = struct_value () [template]
-// CHECK:STDOUT:   %CallReturnAbstract.type: type = fn_type @CallReturnAbstract [template]
-// CHECK:STDOUT:   %CallReturnAbstract: %CallReturnAbstract.type = struct_value () [template]
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %ReturnAbstract.type: type = fn_type @ReturnAbstract [concrete]
+// CHECK:STDOUT:   %ReturnAbstract: %ReturnAbstract.type = struct_value () [concrete]
+// CHECK:STDOUT:   %CallReturnAbstract.type: type = fn_type @CallReturnAbstract [concrete]
+// CHECK:STDOUT:   %CallReturnAbstract: %CallReturnAbstract.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .ReturnAbstract = %ReturnAbstract.decl
 // CHECK:STDOUT:     .CallReturnAbstract = %CallReturnAbstract.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %ReturnAbstract.decl: %ReturnAbstract.type = fn_decl @ReturnAbstract [template = constants.%ReturnAbstract] {
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %ReturnAbstract.decl: %ReturnAbstract.type = fn_decl @ReturnAbstract [concrete = constants.%ReturnAbstract] {
 // CHECK:STDOUT:     %return.patt: %Abstract = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Abstract = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CallReturnAbstract.decl: %CallReturnAbstract.type = fn_decl @CallReturnAbstract [template = constants.%CallReturnAbstract] {} {}
+// CHECK:STDOUT:   %CallReturnAbstract.decl: %CallReturnAbstract.type = fn_decl @CallReturnAbstract [concrete = constants.%CallReturnAbstract] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -807,7 +807,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReturnAbstract.ref: %ReturnAbstract.type = name_ref ReturnAbstract, file.%ReturnAbstract.decl [template = constants.%ReturnAbstract]
+// CHECK:STDOUT:   %ReturnAbstract.ref: %ReturnAbstract.type = name_ref ReturnAbstract, file.%ReturnAbstract.decl [concrete = constants.%ReturnAbstract]
 // CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -43,14 +43,14 @@ enum class InstValueKind : int8_t {
 enum class InstConstantKind : int8_t {
   // This instruction never defines a constant value. For example,
   // `UnaryOperatorNot` never defines a constant value; if its operand is a
-  // template constant, its constant value will instead be a `BoolLiteral`. This
+  // concrete constant, its constant value will instead be a `BoolLiteral`. This
   // is also used for instructions that don't produce a value at all.
   Never,
   // This instruction may be a symbolic constant, depending on its operands, but
-  // is never a template constant. For example, a `Call` instruction can be a
-  // symbolic constant but never a template constant.
+  // is never a concrete constant. For example, a `Call` instruction can be a
+  // symbolic constant but never a concrete constant.
   SymbolicOnly,
-  // This instruction can define a symbolic or template constant, but might not
+  // This instruction can define a symbolic or concrete constant, but might not
   // have a constant value, depending on its operands. For example, a
   // `TupleValue` can define a constant if its operands are constants.
   Conditional,

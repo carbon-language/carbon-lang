@@ -24,26 +24,26 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: --- fail_nested_incomplete.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Incomplete} [template]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template]
+// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Incomplete} [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:     .s = %s
 // CHECK:STDOUT:     .p = %p
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: <error> = binding_pattern s
 // CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %s.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref <error> = var s
-// CHECK:STDOUT:   %.loc20_23: type = splice_block %struct_type.a [template = constants.%struct_type.a] {
-// CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [template = constants.%struct_type.a]
+// CHECK:STDOUT:   %.loc20_23: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: <error> = bind_name s, <error>
 // CHECK:STDOUT:   name_binding_decl {
@@ -51,9 +51,9 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %.loc22_1: %ptr = var_pattern %p.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
-// CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [template = constants.%ptr] {
-// CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete [template = constants.%ptr]
+// CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT: }
@@ -63,8 +63,8 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: <error> = name_ref s, file.%s
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
-// CHECK:STDOUT:   %addr: <error> = addr_of %a.ref [template = <error>]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr: <error> = addr_of %a.ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

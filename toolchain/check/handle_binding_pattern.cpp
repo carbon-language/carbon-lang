@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/return.h"
+#include "toolchain/check/subpattern.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
@@ -24,7 +25,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // TODO: Handle `_` bindings.
 
   SemIR::ExprRegionId type_expr_region_id =
-      context.EndSubpatternAsExpr(cast_type_inst_id);
+      EndSubpatternAsExpr(context, cast_type_inst_id);
 
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
@@ -110,7 +111,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   // A `var` binding in a class scope declares a field, not a true binding,
   // so we handle it separately.
-  if (auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  if (auto parent_class_decl =
+          context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
       parent_class_decl.has_value() &&
       node_kind == Parse::NodeKind::VarBindingPattern) {
     cast_type_id = AsConcreteType(
@@ -151,7 +153,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // A binding in an interface scope declares an associated constant, not a
   // true binding, so we handle it separately.
   if (auto parent_interface_decl =
-          context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
+          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
       parent_interface_decl.has_value() && is_generic) {
     cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedDecl, Error,

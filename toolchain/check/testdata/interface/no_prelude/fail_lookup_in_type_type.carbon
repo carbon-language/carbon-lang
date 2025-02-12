@@ -31,11 +31,11 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT: --- fail_lookup_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
@@ -54,24 +54,24 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .U = %U
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %U.patt: <error> = binding_pattern U
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [concrete = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, type
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [template = <error>]
+// CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U: <error> = bind_name U, <error>
 // CHECK:STDOUT: }

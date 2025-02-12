@@ -750,7 +750,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         // a block. Constants that refer to them need to be separately
         // named.
         auto const_id = sem_ir_->constant_values().Get(inst_id);
-        if (const_id.has_value() && const_id.is_template()) {
+        if (const_id.has_value() && const_id.is_concrete()) {
           auto const_inst_id = sem_ir_->constant_values().GetInstId(const_id);
           if (!insts_[const_inst_id.index].second) {
             queue_block_insts(ScopeId::ImportRefs,

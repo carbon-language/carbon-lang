@@ -56,7 +56,7 @@ struct AutoType {
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
   static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForTemplateConstant(SingletonInstId));
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
 
   TypeId type_id;
 };
@@ -596,7 +596,7 @@ struct ErrorInst {
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
   static constexpr auto SingletonConstantId =
-      ConstantId::ForTemplateConstant(SingletonInstId);
+      ConstantId::ForConcreteConstant(SingletonInstId);
   static constexpr auto SingletonTypeId =
       TypeId::ForTypeConstant(SingletonConstantId);
 
@@ -1442,7 +1442,7 @@ struct TypeType {
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
   static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForTemplateConstant(SingletonInstId));
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
 
   TypeId type_id;
 };

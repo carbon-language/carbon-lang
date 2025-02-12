@@ -94,6 +94,11 @@ class File : public Printable<File> {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
+  // Returns true if this file is an `impl`.
+  auto is_impl() -> bool {
+    return import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir != nullptr;
+  }
+
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
   auto package_id() const -> PackageNameId { return package_id_; }
   auto library_id() const -> SemIR::LibraryNameId { return library_id_; }

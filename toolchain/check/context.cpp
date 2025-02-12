@@ -52,7 +52,7 @@ Context::Context(DiagnosticEmitter* emitter,
       param_and_arg_refs_stack_(*sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
-      scope_stack_(sem_ir_->identifiers()),
+      scope_stack_(sem_ir_),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       global_init_(this),
       region_stack_(
@@ -65,10 +65,10 @@ Context::Context(DiagnosticEmitter* emitter,
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::ErrorInst::SingletonInstId),
+      SemIR::ConstantId::ForConcreteConstant(SemIR::ErrorInst::SingletonInstId),
       SemIR::ErrorInst::SingletonTypeId);
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::TypeType::SingletonInstId),
+      SemIR::ConstantId::ForConcreteConstant(SemIR::TypeType::SingletonInstId),
       SemIR::TypeType::SingletonTypeId);
 
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
@@ -225,14 +225,14 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
 }
 
 auto Context::DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
-                                   SemIR::InstId decl_inst_id) -> void {
+                                   SemIR::LocId decl_name_loc_id) -> void {
   CARBON_CHECK(poisoning_loc_id.has_value(),
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name used before it was declared");
   CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
   emitter_->Build(poisoning_loc_id, NameUseBeforeDecl)
-      .Note(decl_inst_id, NameUseBeforeDeclNote)
+      .Note(decl_name_loc_id, NameUseBeforeDeclNote)
       .Emit();
 }
 
@@ -745,78 +745,6 @@ auto Context::LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
 
   // Look through import_refs and aliases.
   return constant_values().GetConstantInstId(scope_result.target_inst_id());
-}
-
-auto Context::BeginSubpattern() -> void {
-  inst_block_stack().Push();
-  region_stack_.PushRegion(inst_block_stack().PeekOrAdd());
-}
-
-auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
-    -> SemIR::ExprRegionId {
-  if (region_stack_.PeekRegion().size() > 1) {
-    // End the exit block with a branch to a successor block, whose contents
-    // will be determined later.
-    AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
-        {.target_id = inst_blocks().AddDefaultValue()}));
-  } else {
-    // This single-block region will be inserted as a SpliceBlock, so we don't
-    // need control flow out of it.
-  }
-  auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region_stack_.PeekRegion().back());
-
-  // TODO: Is it possible to validate that this region is genuinely
-  // single-entry, single-exit?
-  return sem_ir().expr_regions().Add(
-      {.block_ids = region_stack_.PopRegion(), .result_id = result_id});
-}
-
-auto Context::EndSubpatternAsEmpty() -> void {
-  auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region_stack_.PeekRegion().back());
-  CARBON_CHECK(region_stack_.PeekRegion().size() == 1);
-  CARBON_CHECK(inst_blocks().Get(block_id).empty());
-  region_stack_.PopAndDiscardRegion();
-}
-
-auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
-  auto region = sem_ir_->expr_regions().Get(region_id);
-  auto loc_id = insts().GetLocId(region.result_id);
-  auto exit_block = inst_blocks().Get(region.block_ids.back());
-  if (region.block_ids.size() == 1) {
-    // TODO: Is it possible to avoid leaving an "orphan" block in the IR in the
-    // first two cases?
-    if (exit_block.empty()) {
-      return region.result_id;
-    }
-    if (exit_block.size() == 1) {
-      inst_block_stack_.AddInstId(exit_block.front());
-      return region.result_id;
-    }
-    return AddInst<SemIR::SpliceBlock>(
-        loc_id, {.type_id = insts().Get(region.result_id).type_id(),
-                 .block_id = region.block_ids.front(),
-                 .result_id = region.result_id});
-  }
-  if (region_stack_.empty()) {
-    TODO(loc_id,
-         "Control flow expressions are currently only supported inside "
-         "functions.");
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-  AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
-      {.target_id = region.block_ids.front()}));
-  inst_block_stack_.Pop();
-  // TODO: this will cumulatively cost O(MN) running time for M blocks
-  // at the Nth level of the stack. Figure out how to do better.
-  region_stack_.AddToRegion(region.block_ids);
-  auto resume_with_block_id =
-      insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
-  CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
-  inst_block_stack_.Push(resume_with_block_id);
-  region_stack_.AddToRegion(resume_with_block_id, loc_id);
-  return region.result_id;
 }
 
 auto Context::Finalize() -> void {
