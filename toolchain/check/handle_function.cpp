@@ -258,24 +258,30 @@ static auto BuildFunctionDecl(Context& context,
   auto decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, function_decl));
 
+  // Find self parameter pattern.
+  // TODO: Do this during initial traversal of implicit params.
+  auto self_param_id = SemIR::InstId::None;
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(name.implicit_param_patterns_id);
+  if (auto i = llvm::find_if(implicit_param_patterns,
+                             [&](auto implicit_param_id) {
+                               return SemIR::Function::GetNameFromPatternId(
+                                          context.sem_ir(),
+                                          implicit_param_id) ==
+                                      SemIR::NameId::SelfValue;
+                             });
+      i != implicit_param_patterns.end()) {
+    self_param_id = *i;
+  }
+
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
                       {.return_slot_pattern_id = name.return_slot_pattern_id,
-                       .virtual_modifier = virtual_modifier}};
-  // Find self parameter pattern.
-  // TODO: Do this during initial traversal of implicit params.
-  for (auto implicit_param_id : context.inst_blocks().GetOrEmpty(
-           function_info.implicit_param_patterns_id)) {
-    if (SemIR::Function::GetNameFromPatternId(
-            context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
-      CARBON_CHECK(!function_info.self_param_id.has_value());
-      function_info.self_param_id = implicit_param_id;
-    }
-  }
-
+                       .virtual_modifier = virtual_modifier,
+                       .self_param_id = self_param_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
