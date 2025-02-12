@@ -67,19 +67,17 @@ library "[[@TEST_NAME]]";
 interface A {
   fn B();
 }
+interface C {
+}
 
 class X {
   impl as A {
     fn B() {}
-    // CHECK:STDERR: fail_impl_as_other_interface.carbon:[[@LINE+8]]:10: error: `impl as` can only be used in a class [ImplAsOutsideClass]
-    // CHECK:STDERR:     impl as B {}
+    // CHECK:STDERR: fail_impl_as_other_interface.carbon:[[@LINE+4]]:10: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+    // CHECK:STDERR:     impl as C {}
     // CHECK:STDERR:          ^~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_impl_as_other_interface.carbon:[[@LINE+4]]:13: error: expression cannot be used as a value [UseOfNonExprAsValue]
-    // CHECK:STDERR:     impl as B {}
-    // CHECK:STDERR:             ^
-    // CHECK:STDERR:
-    impl as B {}
+    impl as C {}
   }
 }
 
@@ -293,11 +291,13 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.31d: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %B.type.1c3: type = fn_type @B.1 [template]
 // CHECK:STDOUT:   %B.b08: %B.type.1c3 = struct_value () [template]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [template]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [template]
+// CHECK:STDOUT:   %C.type: type = facet_type <@C> [template]
+// CHECK:STDOUT:   %Self.02e: %C.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%B.decl) [template]
 // CHECK:STDOUT:   %B.type.d47: type = fn_type @B.2 [template]
@@ -310,14 +310,16 @@ class X {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%A.type] {} {}
+// CHECK:STDOUT:   %C.decl: type = interface_decl @C [template = constants.%C.type] {} {}
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.31d]
 // CHECK:STDOUT:   %B.decl: %B.type.1c3 = fn_decl @B.1 [template = constants.%B.b08] {} {}
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %B.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
@@ -327,11 +329,19 @@ class X {
 // CHECK:STDOUT:   witness = (%B.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: interface @C {
+// CHECK:STDOUT:   %Self: %C.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.02e]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %A.ref {
 // CHECK:STDOUT:   %B.decl: %B.type.d47 = fn_decl @B.2 [template = constants.%B.4af] {} {}
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, <error> [template = <error>]
-// CHECK:STDOUT:     %B.ref: %B.type.d47 = name_ref B, @impl.1.%B.decl [template = constants.%B.4af]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -339,7 +349,7 @@ class X {
 // CHECK:STDOUT:   witness = @X.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %Self.ref as <error> {
+// CHECK:STDOUT: impl @impl.2: %Self.ref as %C.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -366,7 +376,7 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.1(constants.%Self) {}
+// CHECK:STDOUT: specific @B.1(constants.%Self.31d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.1(constants.%A.facet) {}
 // CHECK:STDOUT:
