@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -70,6 +71,43 @@ struct IdentifierId : public IdBase<IdentifierId> {
   using IdBase::IdBase;
 };
 constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
+
+// The name of a package, which is either an identifier or the special `Core`
+// package name.
+//
+// TODO: Consider also treating `Main` and `Cpp` as special package names.
+struct PackageNameId : public IdBase<PackageNameId> {
+  static constexpr llvm::StringLiteral Label = "package";
+  static const PackageNameId None;
+  static const PackageNameId Core;
+
+  // Returns the PackageNameId corresponding to a particular IdentifierId.
+  static auto ForIdentifier(IdentifierId id) -> PackageNameId {
+    return PackageNameId(id.index);
+  }
+
+  using IdBase::IdBase;
+
+  // Returns the IdentifierId corresponding to this PackageNameId, or `None` if
+  // this is a special package name.
+  auto AsIdentifierId() const -> IdentifierId {
+    return index >= 0 ? IdentifierId(index) : IdentifierId::None;
+  }
+
+  // Returns the special package name corresponding to this PackageNameId.
+  // Requires that this name is not an identifier name.
+  auto AsSpecialName() const -> llvm::StringLiteral {
+    if (*this == None) {
+      return "Main";
+    }
+    if (*this == Core) {
+      return "Core";
+    }
+    CARBON_FATAL("Unknown special package name kind {0}", *this);
+  }
+};
+constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);
+constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex - 1);
 
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {

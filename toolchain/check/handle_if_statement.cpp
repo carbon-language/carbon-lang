@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 
@@ -22,13 +23,13 @@ auto HandleParseNode(Context& context, Parse::IfConditionId node_id) -> bool {
   // there is no `else`, the then block will terminate with a branch to the
   // else block, which will be reused as the resumption block.
   auto then_block_id =
-      context.AddDominatedBlockAndBranchIf(node_id, cond_value_id);
-  auto else_block_id = context.AddDominatedBlockAndBranch(node_id);
+      AddDominatedBlockAndBranchIf(context, node_id, cond_value_id);
+  auto else_block_id = AddDominatedBlockAndBranch(context, node_id);
 
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
-  context.AddToRegion(then_block_id, node_id);
+  context.region_stack().AddToRegion(then_block_id, node_id);
 
   context.node_stack().Push(node_id, else_block_id);
   return true;
@@ -40,7 +41,7 @@ auto HandleParseNode(Context& context, Parse::IfStatementElseId node_id)
 
   // Switch to emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
-  context.AddToRegion(else_block_id, node_id);
+  context.region_stack().AddToRegion(else_block_id, node_id);
 
   context.node_stack().Push(node_id);
   return true;
@@ -56,7 +57,7 @@ auto HandleParseNode(Context& context, Parse::IfStatementId node_id) -> bool {
       context.AddInst<SemIR::Branch>(node_id, {.target_id = else_block_id});
       context.inst_block_stack().Pop();
       context.inst_block_stack().Push(else_block_id);
-      context.AddToRegion(else_block_id, node_id);
+      context.region_stack().AddToRegion(else_block_id, node_id);
       break;
     }
 
@@ -64,7 +65,7 @@ auto HandleParseNode(Context& context, Parse::IfStatementId node_id) -> bool {
       // Branch from the then and else blocks to a new resumption block.
       context.node_stack()
           .PopAndDiscardSoloNodeId<Parse::NodeKind::IfStatementElse>();
-      context.AddConvergenceBlockAndPush(node_id, /*num_blocks=*/2);
+      AddConvergenceBlockAndPush(context, node_id, /*num_blocks=*/2);
       break;
     }
 

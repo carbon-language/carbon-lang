@@ -80,11 +80,13 @@ class TypeCompleter {
       -> SemIR::ValueRepr;
 
   template <typename InstT>
-    requires(InstT::Kind.template IsAnyOf<
-             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
-             SemIR::ErrorInst, SemIR::IntLiteralType, SemIR::LegacyFloatType,
-             SemIR::NamespaceType, SemIR::SpecificFunctionType, SemIR::TypeType,
-             SemIR::VtableType, SemIR::WitnessType>())
+    requires(
+        InstT::Kind.template IsAnyOf<
+            SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
+            SemIR::ErrorInst, SemIR::FloatType, SemIR::IntType,
+            SemIR::IntLiteralType, SemIR::LegacyFloatType, SemIR::NamespaceType,
+            SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
+            SemIR::VtableType, SemIR::WitnessType>())
   auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     return MakeCopyValueRepr(type_id);
@@ -116,8 +118,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FacetAccessType,
-             SemIR::FacetType, SemIR::FunctionType,
+             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
              SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
              SemIR::GenericInterfaceType, SemIR::UnboundElementType,
              SemIR::WhereExpr>())
@@ -133,31 +134,21 @@ class TypeCompleter {
     return MakeEmptyValueRepr();
   }
 
-  template <typename InstT>
-    requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
-                                          SemIR::ImplWitnessAccess>())
-  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
-      -> SemIR::ValueRepr {
-    // For symbolic types, we arbitrarily pick a copy representation.
-    return MakeCopyValueRepr(type_id);
-  }
-
-  template <typename InstT>
-    requires(InstT::Kind.template IsAnyOf<SemIR::FloatType, SemIR::IntType,
-                                          SemIR::PointerType>())
-  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
-      -> SemIR::ValueRepr {
-    return MakeCopyValueRepr(type_id);
-  }
-
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/,
                              SemIR::ConstType inst) const -> SemIR::ValueRepr;
 
   template <typename InstT>
-    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
-  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
+    requires(InstT::Kind.constant_kind() ==
+                 SemIR::InstConstantKind::SymbolicOnly ||
+             InstT::Kind.is_type() == SemIR::InstIsType::Never)
+  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT inst) const
       -> SemIR::ValueRepr {
-    CARBON_FATAL("Type refers to non-type inst {0}", inst);
+    if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Never) {
+      CARBON_FATAL("Type refers to non-type inst {0}", inst);
+    } else {
+      // For symbolic types, we arbitrarily pick a copy representation.
+      return MakeCopyValueRepr(type_id);
+    }
   }
 
   // Builds and returns the value representation for the given type. All nested

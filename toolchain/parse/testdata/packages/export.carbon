@@ -147,7 +147,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
@@ -158,7 +158,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
@@ -171,7 +171,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
@@ -182,7 +182,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
@@ -193,7 +193,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},
@@ -204,7 +204,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
@@ -215,7 +215,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
@@ -226,7 +226,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
@@ -239,7 +239,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '.', has_error: yes},
@@ -250,7 +250,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
@@ -264,7 +264,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
@@ -286,7 +286,7 @@ export Foo;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},

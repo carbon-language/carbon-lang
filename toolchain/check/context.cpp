@@ -54,7 +54,9 @@ Context::Context(DiagnosticEmitter* emitter,
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
-      global_init_(this) {
+      global_init_(this),
+      region_stack_(
+          [this](SemIRLoc loc, std::string label) { TODO(loc, label); }) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
@@ -695,12 +697,11 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
 // name lookup to find it.
 static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
                            llvm::StringRef name) -> SemIR::NameScopeId {
-  auto core_ident_id = context.identifiers().Add("Core");
   auto packaging = context.parse_tree().packaging_decl();
-  if (packaging && packaging->names.package_id == core_ident_id) {
+  if (packaging && packaging->names.package_id == PackageNameId::Core) {
     return SemIR::NameScopeId::Package;
   }
-  auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
+  auto core_name_id = SemIR::NameId::Core;
 
   // Look up `package.Core`.
   auto core_scope_result = context.LookupNameInExactScope(
@@ -746,133 +747,14 @@ auto Context::LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
   return constant_values().GetConstantInstId(scope_result.target_inst_id());
 }
 
-template <typename BranchNode, typename... Args>
-static auto AddDominatedBlockAndBranchImpl(Context& context,
-                                           Parse::NodeId node_id, Args... args)
-    -> SemIR::InstBlockId {
-  if (!context.inst_block_stack().is_current_block_reachable()) {
-    return SemIR::InstBlockId::Unreachable;
-  }
-  auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddInst<BranchNode>(node_id, {block_id, args...});
-  return block_id;
-}
-
-auto Context::AddDominatedBlockAndBranch(Parse::NodeId node_id)
-    -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, node_id);
-}
-
-auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
-                                                SemIR::InstId arg_id)
-    -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, node_id,
-                                                              arg_id);
-}
-
-auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
-                                           SemIR::InstId cond_id)
-    -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, node_id,
-                                                         cond_id);
-}
-
-auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
-    -> void {
-  CARBON_CHECK(num_blocks >= 2, "no convergence");
-
-  SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
-  for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
-    if (inst_block_stack().is_current_block_reachable()) {
-      if (new_block_id == SemIR::InstBlockId::Unreachable) {
-        new_block_id = inst_blocks().AddDefaultValue();
-      }
-      CARBON_CHECK(node_id.has_value());
-      AddInst<SemIR::Branch>(node_id, {.target_id = new_block_id});
-    }
-    inst_block_stack().Pop();
-  }
-  inst_block_stack().Push(new_block_id);
-  AddToRegion(new_block_id, node_id);
-}
-
-auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
-    -> SemIR::InstId {
-  CARBON_CHECK(block_args.size() >= 2, "no convergence");
-
-  SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
-  for (auto arg_id : block_args) {
-    if (inst_block_stack().is_current_block_reachable()) {
-      if (new_block_id == SemIR::InstBlockId::Unreachable) {
-        new_block_id = inst_blocks().AddDefaultValue();
-      }
-      AddInst<SemIR::BranchWithArg>(
-          node_id, {.target_id = new_block_id, .arg_id = arg_id});
-    }
-    inst_block_stack().Pop();
-  }
-  inst_block_stack().Push(new_block_id);
-  AddToRegion(new_block_id, node_id);
-
-  // Acquire the result value.
-  SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddInst<SemIR::BlockArg>(
-      node_id, {.type_id = result_type_id, .block_id = new_block_id});
-}
-
-auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
-                                                 SemIR::InstId cond_id,
-                                                 SemIR::InstId if_true,
-                                                 SemIR::InstId if_false)
-    -> void {
-  CARBON_CHECK(insts().Is<SemIR::BlockArg>(select_id));
-
-  // Determine the constant result based on the condition value.
-  SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
-  auto cond_const_id = constant_values().Get(cond_id);
-  if (!cond_const_id.is_template()) {
-    // Symbolic or non-constant condition means a non-constant result.
-  } else if (auto literal = insts().TryGetAs<SemIR::BoolLiteral>(
-                 constant_values().GetInstId(cond_const_id))) {
-    const_id = constant_values().Get(literal.value().value.ToBool() ? if_true
-                                                                    : if_false);
-  } else {
-    CARBON_CHECK(cond_const_id == SemIR::ErrorInst::SingletonConstantId,
-                 "Unexpected constant branch condition.");
-    const_id = SemIR::ErrorInst::SingletonConstantId;
-  }
-
-  if (const_id.is_constant()) {
-    CARBON_VLOG("Constant: {0} -> {1}\n", insts().Get(select_id),
-                constant_values().GetInstId(const_id));
-    constant_values().Set(select_id, const_id);
-  }
-}
-
-auto Context::AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id)
-    -> void {
-  if (region_stack_.empty()) {
-    TODO(loc_id,
-         "Control flow expressions are currently only supported inside "
-         "functions.");
-    return;
-  }
-  if (block_id == SemIR::InstBlockId::Unreachable) {
-    return;
-  }
-
-  region_stack_.AppendToTop(block_id);
-}
-
 auto Context::BeginSubpattern() -> void {
   inst_block_stack().Push();
-  PushRegion(inst_block_stack().PeekOrAdd());
+  region_stack_.PushRegion(inst_block_stack().PeekOrAdd());
 }
 
 auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
     -> SemIR::ExprRegionId {
-  if (region_stack_.PeekArray().size() > 1) {
+  if (region_stack_.PeekRegion().size() > 1) {
     // End the exit block with a branch to a successor block, whose contents
     // will be determined later.
     AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
@@ -882,20 +764,20 @@ auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
     // need control flow out of it.
   }
   auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
+  CARBON_CHECK(block_id == region_stack_.PeekRegion().back());
 
   // TODO: Is it possible to validate that this region is genuinely
   // single-entry, single-exit?
   return sem_ir().expr_regions().Add(
-      {.block_ids = PopRegion(), .result_id = result_id});
+      {.block_ids = region_stack_.PopRegion(), .result_id = result_id});
 }
 
 auto Context::EndSubpatternAsEmpty() -> void {
   auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
-  CARBON_CHECK(region_stack_.PeekArray().size() == 1);
+  CARBON_CHECK(block_id == region_stack_.PeekRegion().back());
+  CARBON_CHECK(region_stack_.PeekRegion().size() == 1);
   CARBON_CHECK(inst_blocks().Get(block_id).empty());
-  region_stack_.PopArray();
+  region_stack_.PopAndDiscardRegion();
 }
 
 auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
@@ -928,29 +810,13 @@ auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
   inst_block_stack_.Pop();
   // TODO: this will cumulatively cost O(MN) running time for M blocks
   // at the Nth level of the stack. Figure out how to do better.
-  region_stack_.AppendToTop(region.block_ids);
+  region_stack_.AddToRegion(region.block_ids);
   auto resume_with_block_id =
       insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
   CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
   inst_block_stack_.Push(resume_with_block_id);
-  AddToRegion(resume_with_block_id, loc_id);
+  region_stack_.AddToRegion(resume_with_block_id, loc_id);
   return region.result_id;
-}
-
-auto Context::is_current_position_reachable() -> bool {
-  if (!inst_block_stack().is_current_block_reachable()) {
-    return false;
-  }
-
-  // Our current position is at the end of a reachable block. That position is
-  // reachable unless the previous instruction is a terminator instruction.
-  auto block_contents = inst_block_stack().PeekCurrentBlockContents();
-  if (block_contents.empty()) {
-    return true;
-  }
-  const auto& last_inst = insts().Get(block_contents.back());
-  return last_inst.kind().terminator_kind() !=
-         SemIR::TerminatorKind::Terminator;
 }
 
 auto Context::Finalize() -> void {

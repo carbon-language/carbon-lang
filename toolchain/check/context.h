@@ -17,6 +17,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
+#include "toolchain/check/region_stack.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
@@ -293,78 +294,6 @@ class Context {
     return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
   }
 
-  // Mark the start of a new single-entry region with the given entry block.
-  auto PushRegion(SemIR::InstBlockId entry_block_id) -> void {
-    region_stack_.PushArray();
-    region_stack_.AppendToTop(entry_block_id);
-  }
-
-  // Add `block_id` to the most recently pushed single-entry region. To preserve
-  // the single-entry property, `block_id` must not be directly reachable from
-  // any block outside the region. To ensure the region's blocks are in lexical
-  // order, this should be called when the first parse node associated with this
-  // block is handled, or as close as possible.
-  auto AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id) -> void;
-
-  // Complete creation of the most recently pushed single-entry region, and
-  // return a list of its blocks.
-  auto PopRegion() -> llvm::SmallVector<SemIR::InstBlockId> {
-    llvm::SmallVector<SemIR::InstBlockId> result(region_stack_.PeekArray());
-    region_stack_.PopArray();
-    return result;
-  }
-
-  // Adds a `Branch` instruction branching to a new instruction block, and
-  // returns the ID of the new block. All paths to the branch target must go
-  // through the current block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::NodeId node_id) -> SemIR::InstBlockId;
-
-  // Adds a `Branch` instruction branching to a new instruction block with a
-  // value, and returns the ID of the new block. All paths to the branch target
-  // must go through the current block.
-  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
-                                         SemIR::InstId arg_id)
-      -> SemIR::InstBlockId;
-
-  // Adds a `BranchIf` instruction branching to a new instruction block, and
-  // returns the ID of the new block. All paths to the branch target must go
-  // through the current block.
-  auto AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
-                                    SemIR::InstId cond_id)
-      -> SemIR::InstBlockId;
-
-  // Handles recovergence of control flow. Adds branches from the top
-  // `num_blocks` on the instruction block stack to a new block, pops the
-  // existing blocks, pushes the new block onto the instruction block stack,
-  // and adds it to the most recently pushed region.
-  auto AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
-      -> void;
-
-  // Handles recovergence of control flow with a result value. Adds branches
-  // from the top few blocks on the instruction block stack to a new block, pops
-  // the existing blocks,  pushes the new block onto the instruction block
-  // stack, and adds it to the most recently pushed region. The number of blocks
-  // popped is the size of `block_args`, and the corresponding result values are
-  // the elements of `block_args`. Returns an instruction referring to the
-  // result value.
-  auto AddConvergenceBlockWithArgAndPush(
-      Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
-      -> SemIR::InstId;
-
-  // Sets the constant value of a block argument created as the result of a
-  // branch.  `select_id` should be a `BlockArg` that selects between two
-  // values. `cond_id` is the condition, `if_false` is the value to use if the
-  // condition is false, and `if_true` is the value to use if the condition is
-  // true.  We don't track enough information in the `BlockArg` inst for
-  // `TryEvalInst` to do this itself.
-  auto SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
-                                          SemIR::InstId cond_id,
-                                          SemIR::InstId if_true,
-                                          SemIR::InstId if_false) -> void;
-
-  // Returns whether the current position in the current block is reachable.
-  auto is_current_position_reachable() -> bool;
-
   // Returns the type ID for a constant of type `type`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
@@ -450,11 +379,6 @@ class Context {
 
   auto Finalize() -> void;
 
-  // Returns the imported IR ID for an IR, or `None` if not imported.
-  auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
-    return check_ir_map_[sem_ir.check_ir_id().index];
-  }
-
   // True if the current file is an impl file.
   auto IsImplFile() -> bool {
     return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
@@ -488,6 +412,8 @@ class Context {
   auto tokens() const -> const Lex::TokenizedBuffer& {
     return parse_tree().tokens();
   }
+
+  auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
@@ -532,6 +458,10 @@ class Context {
   }
 
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
+  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+    return check_ir_map_;
+  }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
@@ -650,6 +580,8 @@ class Context {
   auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
     return var_storage_map_;
   }
+
+  auto region_stack() -> RegionStack& { return region_stack_; }
 
   auto full_pattern_stack() -> FullPatternStack& {
     return scope_stack_.full_pattern_stack();
@@ -777,7 +709,7 @@ class Context {
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
   // Stack of single-entry regions being built.
-  ArrayStack<SemIR::InstBlockId> region_stack_;
+  RegionStack region_stack_;
 };
 
 }  // namespace Carbon::Check

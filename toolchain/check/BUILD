@@ -17,6 +17,7 @@ cc_library(
     srcs = [
         "call.cpp",
         "context.cpp",
+        "control_flow.cpp",
         "convert.cpp",
         "decl_name_stack.cpp",
         "deduce.cpp",
@@ -44,6 +45,7 @@ cc_library(
     hdrs = [
         "call.h",
         "context.h",
+        "control_flow.h",
         "convert.h",
         "decl_introducer_state.h",
         "decl_name_stack.h",
@@ -69,6 +71,7 @@ cc_library(
         "param_and_arg_refs_stack.h",
         "pattern_match.h",
         "pending_block.h",
+        "region_stack.h",
         "return.h",
         "subst.h",
         "type_completion.h",

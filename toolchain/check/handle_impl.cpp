@@ -125,6 +125,14 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   return true;
 }
 
+static auto DiagnoseExtendImplOutsideClass(Context& context,
+                                           Parse::AnyImplDeclId node_id)
+    -> void {
+  CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
+                    "`extend impl` can only be used in a class");
+  context.emitter().Emit(node_id, ExtendImplOutsideClass);
+}
+
 // Process an `extend impl` declaration by extending the impl scope with the
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
@@ -134,13 +142,15 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        SemIR::InstId constraint_inst_id,
                        SemIR::TypeId constraint_id) -> void {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
+  if (!parent_scope_id.has_value()) {
+    DiagnoseExtendImplOutsideClass(context, node_id);
+    return;
+  }
   auto& parent_scope = context.name_scopes().Get(parent_scope_id);
 
   // TODO: This is also valid in a mixin.
   if (!TryAsClassScope(context, parent_scope_id)) {
-    CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
-                      "`extend impl` can only be used in a class");
-    context.emitter().Emit(node_id, ExtendImplOutsideClass);
+    DiagnoseExtendImplOutsideClass(context, node_id);
     return;
   }
 

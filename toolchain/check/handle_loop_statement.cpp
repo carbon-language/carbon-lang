@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 
@@ -16,12 +17,12 @@ auto HandleParseNode(Context& context, Parse::WhileConditionStartId node_id)
   // Branch to the loop header block. Note that we create a new block here even
   // if the current block is empty; this ensures that the loop always has a
   // preheader block.
-  auto loop_header_id = context.AddDominatedBlockAndBranch(node_id);
+  auto loop_header_id = AddDominatedBlockAndBranch(context, node_id);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop header block.
   context.inst_block_stack().Push(loop_header_id);
-  context.AddToRegion(loop_header_id, node_id);
+  context.region_stack().AddToRegion(loop_header_id, node_id);
 
   context.node_stack().Push(node_id, loop_header_id);
   return true;
@@ -36,13 +37,13 @@ auto HandleParseNode(Context& context, Parse::WhileConditionId node_id)
 
   // Branch to either the loop body or the loop exit block.
   auto loop_body_id =
-      context.AddDominatedBlockAndBranchIf(node_id, cond_value_id);
-  auto loop_exit_id = context.AddDominatedBlockAndBranch(node_id);
+      AddDominatedBlockAndBranchIf(context, node_id, cond_value_id);
+  auto loop_exit_id = AddDominatedBlockAndBranch(context, node_id);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop body.
   context.inst_block_stack().Push(loop_body_id);
-  context.AddToRegion(loop_body_id, node_id);
+  context.region_stack().AddToRegion(loop_body_id, node_id);
   context.break_continue_stack().push_back(
       {.break_target = loop_exit_id, .continue_target = loop_header_id});
 
@@ -64,7 +65,7 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 
   // Start emitting the loop exit block.
   context.inst_block_stack().Push(loop_exit_id);
-  context.AddToRegion(loop_exit_id, node_id);
+  context.region_stack().AddToRegion(loop_exit_id, node_id);
   return true;
 }
 

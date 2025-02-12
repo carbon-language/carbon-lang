@@ -121,8 +121,10 @@ struct AddrPattern {
 // An array indexing operation, such as `array[index]`.
 struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
-  static constexpr auto Kind =
-      InstKind::ArrayIndex.Define<Parse::NodeId>({.ir_name = "array_index"});
+  static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
+      {.ir_name = "array_index",
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId array_id;
@@ -359,7 +361,6 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .is_type = InstIsType::Never,
           .constant_kind = InstConstantKind::SymbolicOnly,
           .is_lowered = false,
       });
@@ -501,6 +502,7 @@ struct ClassElementAccess {
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
           {.ir_name = "class_element_access",
+           .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -543,7 +545,6 @@ struct CompleteTypeWitness {
   static constexpr auto Kind =
       InstKind::CompleteTypeWitness.Define<Parse::NodeId>(
           {.ir_name = "complete_type_witness",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::Always});
   // Always the builtin witness type.
   TypeId type_id;
@@ -632,7 +633,6 @@ struct FacetAccessWitness {
   static constexpr auto Kind =
       InstKind::FacetAccessWitness.Define<Parse::NodeId>(
           {.ir_name = "facet_access_witness",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 
@@ -658,9 +658,7 @@ struct FacetType {
 // witness that it satisfies the facet type.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
-      {.ir_name = "facet_value",
-       .is_type = InstIsType::Never,
-       .constant_kind = InstConstantKind::Always});
+      {.ir_name = "facet_value", .constant_kind = InstConstantKind::Always});
 
   // A `FacetType`.
   TypeId type_id;
@@ -840,6 +838,13 @@ struct ImplWitnessAccess {
   TypeId type_id;
   InstId witness_id;
   ElementIndex index;
+};
+
+// An `import Cpp` declaration.
+struct ImportCppDecl {
+  static constexpr auto Kind =
+      InstKind::ImportCppDecl.Define<Parse::ImportDeclId>(
+          {.ir_name = "import_cpp", .is_lowered = false});
 };
 
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
@@ -1108,7 +1113,6 @@ struct RequireCompleteType {
   static constexpr auto Kind =
       InstKind::RequireCompleteType.Define<Parse::NodeId>(
           {.ir_name = "require_complete_type",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
   // Always the builtin witness type.
@@ -1303,6 +1307,7 @@ struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
       {.ir_name = "struct_access",
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -1372,14 +1377,12 @@ struct TemporaryStorage {
   TypeId type_id;
 };
 
-// Access to a tuple member. Versus `TupleIndex`, this handles access where
-// the index was inferred rather than being specified as an expression,
-// such as `var tuple: (i32, i32) = (0, 1)` needing to access the `i32` values
-// for assignment.
+// Access to a tuple member.
 struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
       {.ir_name = "tuple_access",
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;

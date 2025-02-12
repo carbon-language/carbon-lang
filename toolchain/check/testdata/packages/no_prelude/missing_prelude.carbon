@@ -60,13 +60,24 @@ fn Int[T:! type](N:! T) -> () { return (); }
 
 var n: () = i32;
 
-// --- prelude_as_namespace.carbon
+// --- fail_prelude_as_namespace.carbon
 
 library "[[@TEST_NAME]]";
 
-// TODO: Decide whether we want to accept this.
+// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+8]]:11: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: namespace Core;
+// CHECK:STDERR:           ^~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+4]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: namespace Core;
+// CHECK:STDERR:           ^~~~
+// CHECK:STDERR:
 namespace Core;
 
+// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fn Core.Int[T:! type](N:! T) -> {} { return {}; }
+// CHECK:STDERR:    ^~~~
+// CHECK:STDERR:
 fn Core.Int[T:! type](N:! T) -> {} { return {}; }
 
 var n: {} = i32;
@@ -75,15 +86,18 @@ var n: {} = i32;
 
 library "[[@TEST_NAME]]";
 
-// TODO: Decide whether we want to accept this.
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+8]]:7: error: `class` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: class Core {
+// CHECK:STDERR:       ^~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: class Core {
+// CHECK:STDERR:       ^~~~
+// CHECK:STDERR:
 class Core {
   fn Int[T:! type](N:! T) -> {} { return {}; }
 }
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:13: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
-// CHECK:STDERR: var n: {} = i32;
-// CHECK:STDERR:             ^~~
-// CHECK:STDERR:
 var n: {} = i32;
 
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
@@ -368,190 +382,11 @@ var n: {} = i32;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_as_namespace.carbon
+// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
-// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .n = %n
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Int = %Int.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {
-// CHECK:STDOUT:     %T.patt.loc7_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_13.1, runtime_param<none> [symbolic = %T.patt.loc7_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %N.patt.loc7_23.1: @Int.%T.loc7_13.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc7_23.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: @Int.%T.loc7_13.2 (%T) = value_param_pattern %N.patt.loc7_23.1, runtime_param<none> [symbolic = %N.patt.loc7_23.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc7_34.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc7_34.2: type = converted %.loc7_34.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc7_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_13.2 (constants.%T)]
-// CHECK:STDOUT:     %N.param: @Int.%T.loc7_13.2 (%T) = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_13.1 [symbolic = %T.loc7_13.2 (constants.%T)]
-// CHECK:STDOUT:     %N.loc7_23.1: @Int.%T.loc7_13.2 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc7_23.2 (constants.%N)]
-// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %empty_struct_type = binding_pattern n
-// CHECK:STDOUT:     %.loc9_1: %empty_struct_type = var_pattern %n.patt
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
-// CHECK:STDOUT:   %.loc9_9.1: type = splice_block %.loc9_9.3 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc9_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc9_9.3: type = converted %.loc9_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(%T.loc7_13.1: type, %N.loc7_23.1: @Int.%T.loc7_13.2 (%T)) {
-// CHECK:STDOUT:   %T.loc7_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_13.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc7_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %N.loc7_23.2: %T = bind_symbolic_name N, 1 [symbolic = %N.loc7_23.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc7_23.2: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc7_23.2 (constants.%N.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc7_13.2 (%T)) -> %empty_struct_type {
-// CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc7_46: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc7_47: %empty_struct_type = converted %.loc7_46, %empty_struct [template = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc7_47
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [template = constants.%Int.specific_fn]
-// CHECK:STDOUT:   %Int.call: init %empty_struct_type = call %Int.specific_fn()
-// CHECK:STDOUT:   assign file.%n.var, %Int.call
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
-// CHECK:STDOUT:   %T.loc7_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_13.2 => constants.%T
-// CHECK:STDOUT:   %N.loc7_23.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc7_23.2 => constants.%N
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
-// CHECK:STDOUT:   %T.loc7_13.2 => Core.IntLiteral
-// CHECK:STDOUT:   %T.patt.loc7_13.2 => Core.IntLiteral
-// CHECK:STDOUT:   %N.loc7_23.2 => constants.%int_32
-// CHECK:STDOUT:   %N.patt.loc7_23.2 => constants.%int_32
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_prelude_as_class.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Core: type = class_type @Core [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
-// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core.decl
-// CHECK:STDOUT:     .n = %n
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.decl: type = class_decl @Core [template = constants.%Core] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %empty_struct_type = binding_pattern n
-// CHECK:STDOUT:     %.loc13_1: %empty_struct_type = var_pattern %n.patt
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
-// CHECK:STDOUT:   %.loc13_9.1: type = splice_block %.loc13_9.3 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc13_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc13_9.3: type = converted %.loc13_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Core {
-// CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {
-// CHECK:STDOUT:     %T.patt.loc6_10.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6_10.2, runtime_param<none> [symbolic = %T.patt.loc6_10.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %N.patt.loc6_20.2: @Int.%T.loc6_10.1 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_20.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: @Int.%T.loc6_10.1 (%T) = value_param_pattern %N.patt.loc6_20.2, runtime_param<none> [symbolic = %N.patt.loc6_20.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_31.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc6_31.2: type = converted %.loc6_31.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc6_10.2: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_10.1 (constants.%T)]
-// CHECK:STDOUT:     %N.param: @Int.%T.loc6_10.1 (%T) = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_10.2 [symbolic = %T.loc6_10.1 (constants.%T)]
-// CHECK:STDOUT:     %N.loc6_20.2: @Int.%T.loc6_10.1 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc6_20.1 (constants.%N)]
-// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Core
-// CHECK:STDOUT:   .Int = %Int.decl
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(%T.loc6_10.2: type, %N.loc6_20.2: @Int.%T.loc6_10.1 (%T)) {
-// CHECK:STDOUT:   %T.loc6_10.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_10.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc6_10.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.1 (constants.%T.patt)]
-// CHECK:STDOUT:   %N.loc6_20.1: %T = bind_symbolic_name N, 1 [symbolic = %N.loc6_20.1 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc6_20.1: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_20.1 (constants.%N.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc6_10.1 (%T)) -> %empty_struct_type {
-// CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc6_43: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc6_44: %empty_struct_type = converted %.loc6_43, %empty_struct [template = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc6_44
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   assign file.%n.var, <error>
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
-// CHECK:STDOUT:   %T.loc6_10.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_10.1 => constants.%T
-// CHECK:STDOUT:   %N.loc6_20.1 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc6_20.1 => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

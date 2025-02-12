@@ -24,7 +24,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
     : parse_tree_(parse_tree),
       check_ir_id_(check_ir_id),
       package_id_(packaging_decl ? packaging_decl->names.package_id
-                                 : IdentifierId::None),
+                                 : PackageNameId::None),
       library_id_(packaging_decl ? LibraryNameId::ForStringLiteralValueId(
                                        packaging_decl->names.library_id)
                                  : LibraryNameId::Default),
@@ -268,6 +268,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case GenericInterfaceType::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
+      case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case IntLiteralType::Kind:
       case IntType::Kind:
