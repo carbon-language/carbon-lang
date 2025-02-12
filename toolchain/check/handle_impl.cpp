@@ -41,6 +41,7 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
+  // Push a pattern block for the signature of the `forall`.
   context.pattern_block_stack().Push();
   context.full_pattern_stack().PushFullPattern(
       FullPatternStack::Kind::ImplicitParamList);
