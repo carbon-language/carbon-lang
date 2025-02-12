@@ -242,7 +242,7 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
 }
 
 // `where` expressions using `.Self` should not be considered symbolic
-// - `Interface where .Self impls I and .A = bool` -> template
+// - `Interface where .Self impls I and .A = bool` -> concrete
 // - `T:! type` ... `Interface where .A = T` -> symbolic, since uses `T` which
 //   is symbolic and not due to `.Self`.
 static auto UpdatePhaseIgnorePeriodSelf(EvalContext& eval_context,
@@ -577,7 +577,7 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
       auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
       auto index = static_cast<size_t>(access_inst.index.index);
       CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-      // `Phase` is not used here. If this element is a template constant, then
+      // `Phase` is not used here. If this element is a concrete constant, then
       // so is the result of indexing, even if the aggregate also contains a
       // symbolic context.
       return eval_context.GetConstantValue(elements[index]);
@@ -1689,7 +1689,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::TypeType::Kind:
     case SemIR::VtableType::Kind:
     case SemIR::WitnessType::Kind:
-      // Builtins are always template constants.
+      // Builtins are always concrete constants.
       return MakeConstantResult(eval_context.context(), inst, Phase::Concrete);
 
     case CARBON_KIND(SemIR::FunctionDecl fn_decl): {
@@ -1804,7 +1804,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           auto elements = eval_context.inst_blocks().Get(witness->elements_id);
           auto index = static_cast<size_t>(access_inst.index.index);
           CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-          // `Phase` is not used here. If this element is a template constant,
+          // `Phase` is not used here. If this element is a concrete constant,
           // then so is the result of indexing, even if the aggregate also
           // contains a symbolic context.
 
@@ -1922,13 +1922,13 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       value_inst.SetType(type_id);
 
       if (to_phase >= from_phase) {
-        // If moving from a template constant value to a symbolic type, the new
+        // If moving from a concrete constant value to a symbolic type, the new
         // constant value takes on the phase of the new type. We're adding the
         // symbolic bit to the new constant value due to the presence of a
         // symbolic type.
         return MakeConstantResult(eval_context.context(), value_inst, to_phase);
       } else {
-        // If moving from a symbolic constant value to a template type, the new
+        // If moving from a symbolic constant value to a concrete type, the new
         // constant value has a phase that depends on what is in the value. If
         // there is anything symbolic within the value, then it's symbolic. We
         // can't easily determine that here without evaluating a new constant
@@ -2077,7 +2077,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       auto complete_type_id = GetConstantValue(
           eval_context, require_complete.complete_type_id, &phase);
 
-      // If the type is a template constant, require it to be complete now.
+      // If the type is a concrete constant, require it to be complete now.
       if (phase == Phase::Concrete) {
         if (!TryToCompleteType(
                 eval_context.context(), complete_type_id,
@@ -2101,7 +2101,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
             phase);
       }
 
-      // If it's not a template constant, require it to be complete once it
+      // If it's not a concrete constant, require it to be complete once it
       // becomes one.
       return MakeConstantResult(
           eval_context.context(),

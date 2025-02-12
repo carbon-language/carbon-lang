@@ -158,7 +158,7 @@ static auto GetInstWithConstantValue(const SemIR::File& file,
     return SemIR::InstId::None;
   }
 
-  // For template constants, the corresponding instruction has the desired
+  // For concrete constants, the corresponding instruction has the desired
   // constant value.
   if (!const_id.is_symbolic()) {
     return file.constant_values().GetInstId(const_id);
