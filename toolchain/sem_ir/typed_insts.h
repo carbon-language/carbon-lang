@@ -840,6 +840,13 @@ struct ImplWitnessAccess {
   ElementIndex index;
 };
 
+// An `import Cpp` declaration.
+struct ImportCppDecl {
+  static constexpr auto Kind =
+      InstKind::ImportCppDecl.Define<Parse::ImportDeclId>(
+          {.ir_name = "import_cpp", .is_lowered = false});
+};
+
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {

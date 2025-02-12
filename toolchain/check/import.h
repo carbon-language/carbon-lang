@@ -11,6 +11,23 @@
 
 namespace Carbon::Check {
 
+struct AddImportNamespaceResult {
+  SemIR::NameScopeId name_scope_id;
+  SemIR::InstId inst_id;
+  bool is_duplicate_of_namespace_in_current_package;
+};
+
+// Adds a namespace to the IR. The bool on return is true if there was a name
+// conflict. diagnose_duplicate_namespace is used when handling a cross-package
+// import, where an existing namespace is in the current package and the new
+// namespace is a different package.
+auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
+                        SemIR::NameId name_id,
+                        SemIR::NameScopeId parent_scope_id,
+                        bool diagnose_duplicate_namespace,
+                        llvm::function_ref<SemIR::InstId()> make_import_id)
+    -> AddImportNamespaceResult;
+
 // Imports the API file's name lookup information into a corresponding
 // implementation file. Only information for the current package will be copied;
 // information for other packages should be handled through

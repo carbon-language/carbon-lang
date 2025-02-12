@@ -766,8 +766,7 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
                "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
       insts().Get(constant_values().GetInstId(constant_id)).type_id();
-  // TODO: For now, we allow values of facet type to be used as types.
-  CARBON_CHECK(IsFacetType(type_id) ||
+  CARBON_CHECK(type_id == SemIR::TypeType::SingletonTypeId ||
                    constant_id == SemIR::ErrorInst::SingletonConstantId,
                "Forming type ID for non-type constant of type {0}",
                types().GetAsInst(type_id));

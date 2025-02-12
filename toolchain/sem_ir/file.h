@@ -24,6 +24,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/import_cpp.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/interface.h"
@@ -166,6 +167,10 @@ class File : public Printable<File> {
   auto import_ir_insts() const -> const ValueStore<ImportIRInstId>& {
     return import_ir_insts_;
   }
+  auto import_cpps() -> ValueStore<ImportCppId>& { return import_cpps_; }
+  auto import_cpps() const -> const ValueStore<ImportCppId>& {
+    return import_cpps_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -274,6 +279,9 @@ class File : public Printable<File> {
   // Related IR instructions. These are created for LocIds for instructions
   // that are import-related.
   ValueStore<ImportIRInstId> import_ir_insts_;
+
+  // List of Cpp imports.
+  ValueStore<ImportCppId> import_cpps_;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.

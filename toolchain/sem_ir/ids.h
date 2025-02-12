@@ -26,6 +26,7 @@ struct FacetTypeInfo;
 struct Function;
 struct Generic;
 struct Specific;
+struct ImportCpp;
 struct ImportIR;
 struct ImportIRInst;
 struct Impl;
@@ -376,6 +377,18 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
 
 constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
+
+struct ImportCppId : public IdBase<ImportCppId> {
+  static constexpr llvm::StringLiteral Label = "import_cpp";
+  using ValueType = ImportCpp;
+
+  // An ID with no value.
+  static const ImportCppId None;
+
+  using IdBase::IdBase;
+};
+
+constexpr ImportCppId ImportCppId::None = ImportCppId(NoneIndex);
 
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase<ImportIRId> {

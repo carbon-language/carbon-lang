@@ -294,11 +294,22 @@ class Context {
     return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
   }
 
-  // Returns the type ID for a constant of type `type`.
+  // Returns the type ID for a constant that is a type value, i.e. it is a value
+  // of type `TypeType`.
+  //
+  // Facet values are of the same typishness as types, but are not themselves
+  // types, so they can not be passed here. They should be converted to a type
+  // through an `as type` conversion, that is, to a value of type `TypeType`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
-  // Returns the type ID for an instruction whose constant value is of type
-  // `type`.
+  // Returns the type ID for an instruction whose constant value is a type
+  // value, i.e. it is a value of type `TypeType`.
+  //
+  // Instructions whose values are facet values (see `FacetValue`) produce a
+  // value of the same typishness as types, but which are themselves not types,
+  // so they can not be passed here. They should be converted to a type through
+  // an `as type` conversion, such as to a `FacetAccessType` instruction whose
+  // value is of type `TypeType`.
   auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
     return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
   }
@@ -379,11 +390,6 @@ class Context {
 
   auto Finalize() -> void;
 
-  // Returns the imported IR ID for an IR, or `None` if not imported.
-  auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
-    return check_ir_map_[sem_ir.check_ir_id().index];
-  }
-
   // True if the current file is an impl file.
   auto IsImplFile() -> bool {
     return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
@@ -463,6 +469,10 @@ class Context {
   }
 
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
+  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+    return check_ir_map_;
+  }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
