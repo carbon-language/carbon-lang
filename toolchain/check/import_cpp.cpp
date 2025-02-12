@@ -87,7 +87,7 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
-static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
+static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> SemIR::NameScopeId {
   auto& import_cpps = context.sem_ir().import_cpps();
@@ -100,7 +100,7 @@ static auto AddNamespace(Context& context, IdentifierId cpp_package_id,
   return AddImportNamespace(
              context,
              context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
-             SemIR::NameId::ForIdentifier(cpp_package_id),
+             SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
              [&]() {
@@ -121,7 +121,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   auto [ast, ast_has_error] =
       GenerateAst(context, importing_file_path, imports, fs);
 
-  IdentifierId package_id = imports.front().package_id;
+  PackageNameId package_id = imports.front().package_id;
   CARBON_CHECK(
       llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
         return import.package_id == package_id;
