@@ -17,7 +17,7 @@
 [[@LSP-NOTIFY:textDocument/didChange:
   "textDocument": {"uri": "file:/test.carbon"},
   "contentChanges": [
-    { "range": { "end": { "character": 4, "line": 0 },
+    {"range": {"end": {"character": 4, "line": 0},
                  "start": { "character": 3, "line": 0 }},
       "text": "G" }
   ]

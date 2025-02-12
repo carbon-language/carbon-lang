@@ -165,7 +165,7 @@ auto Context::File::PositionToIndex(const std::string& contents,
     -> size_t {
   size_t result = 0;
 
-  for (int row = 0; row < position.line; row++) {
+  for ([[maybe_unused]] auto _ : llvm::seq(position.line)) {
     const size_t newline_index = contents.find('\n', result);
 
     CARBON_CHECK(newline_index != std::string::npos,
@@ -189,7 +189,7 @@ auto Context::File::ApplyChanges(
   std::string contents = source_->text().data();
 
   for (const auto& change : content_changes) {
-    // if range is not present, then we copy entire text
+    // If range is not present, then we copy entire text.
     if (!change.range) {
       contents = change.text;
       continue;

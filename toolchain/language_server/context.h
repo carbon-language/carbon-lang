@@ -53,7 +53,7 @@ class Context {
     std::unique_ptr<Parse::Tree> tree_;
     std::unique_ptr<Parse::TreeAndSubtrees> tree_and_subtrees_;
 
-    // converts (line, row) position in source code to index
+    // Converts (line, row) position in source code to index.
     auto PositionToIndex(const clang::clangd::Position& position) -> size_t;
     auto PositionToIndex(const std::string& contents,
                          const clang::clangd::Position& position) -> size_t;
