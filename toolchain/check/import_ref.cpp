@@ -978,9 +978,6 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
 // LoadLocalPatternConstantIds(param_patterns_id) has completed without adding
 // any new work to work_stack_.
 //
-// `self_param_id` is an optional out parameter, populated with the InstId in
-// the resulting parameter patterns that represents the Self parameter.
-//
 // TODO: This is inconsistent with the rest of this class, which expects
 // the relevant constants to be explicitly passed in. That makes it
 // easier to statically detect when an input isn't loaded, but makes it
@@ -988,6 +985,9 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
 // take a holistic look at how to balance those concerns. For example,
 // could the same function be used to load the constants and use them, with
 // a parameter to select between the two?
+//
+// `self_param_id` is an optional out parameter, populated with the InstId in
+// the resulting parameter patterns that represents the Self parameter.
 static auto GetLocalParamPatternsId(ImportContext& context,
                                     SemIR::InstBlockId param_patterns_id,
                                     SemIR::InstId* self_param_id = nullptr)
