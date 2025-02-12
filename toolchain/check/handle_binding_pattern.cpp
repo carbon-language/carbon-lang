@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/return.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -112,8 +113,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   if (auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       parent_class_decl.has_value() &&
       node_kind == Parse::NodeKind::VarBindingPattern) {
-    cast_type_id = context.AsConcreteType(
-        cast_type_id, type_node,
+    cast_type_id = AsConcreteType(
+        context, cast_type_id, type_node,
         [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Error,
                             "field has incomplete type {0}", SemIR::TypeId);
@@ -152,7 +153,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   if (auto parent_interface_decl =
           context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
       parent_interface_decl.has_value() && is_generic) {
-    cast_type_id = context.AsCompleteType(cast_type_id, type_node, [&] {
+    cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedDecl, Error,
                         "associated constant has incomplete type {0}",
                         SemIR::TypeId);
@@ -252,8 +253,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                        cast_type_inst_id);
       };
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
-        cast_type_id = context.AsConcreteType(
-            cast_type_id, type_node, incomplete_diagnoser, [&] {
+        cast_type_id = AsConcreteType(
+            context, cast_type_id, type_node, incomplete_diagnoser, [&] {
               CARBON_DIAGNOSTIC(
                   AbstractTypeInVarPattern, Error,
                   "binding pattern has abstract type {0} in `var` "
@@ -263,8 +264,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                   type_node, AbstractTypeInVarPattern, cast_type_id);
             });
       } else {
-        cast_type_id = context.AsCompleteType(cast_type_id, type_node,
-                                              incomplete_diagnoser);
+        cast_type_id = AsCompleteType(context, cast_type_id, type_node,
+                                      incomplete_diagnoser);
       }
       auto binding_pattern_id = make_binding_pattern();
       if (node_kind == Parse::NodeKind::VarBindingPattern) {

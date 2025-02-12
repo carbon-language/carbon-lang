@@ -5,6 +5,7 @@
 #include "toolchain/check/function.h"
 
 #include "toolchain/check/merge.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -96,9 +97,9 @@ auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
-    if (context.RequireConcreteType(return_info.type_id, loc_id,
-                                    diagnose_incomplete_return_type,
-                                    diagnose_abstract_return_type)) {
+    if (RequireConcreteType(context, return_info.type_id, loc_id,
+                            diagnose_incomplete_return_type,
+                            diagnose_abstract_return_type)) {
       return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
                                                        function, specific_id);
     }

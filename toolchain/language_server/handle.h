@@ -29,21 +29,22 @@ auto HandleDidOpenTextDocument(
 auto HandleDocumentSymbol(
     Context& context, const clang::clangd::DocumentSymbolParams& params,
     llvm::function_ref<
-        void(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)>
+        auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
         on_done) -> void;
 
 // Tells the client what features are supported.
 auto HandleInitialize(
     Context& /*context*/,
     const clang::clangd::NoParams& /*client_capabilities*/,
-    llvm::function_ref<void(llvm::Expected<llvm::json::Object>)> on_done)
+    llvm::function_ref<auto(llvm::Expected<llvm::json::Object>)->void> on_done)
     -> void;
 
 // Prepares LSP for shutdown.
 auto HandleShutdown(
     Context& /*context*/,
     const clang::clangd::NoParams& /*client_capabilities*/,
-    llvm::function_ref<void(llvm::Expected<std::nullptr_t>)> on_done) -> void;
+    llvm::function_ref<auto(llvm::Expected<std::nullptr_t>)->void> on_done)
+    -> void;
 
 }  // namespace Carbon::LanguageServer
 

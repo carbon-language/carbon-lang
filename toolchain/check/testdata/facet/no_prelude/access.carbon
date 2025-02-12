@@ -246,10 +246,9 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:     %impl.elem0.loc9_11.1: @Use.%.loc9_11.2 (%.aaf) = impl_witness_access %T.as_wit.loc9_11.1, element0 [symbolic = %impl.elem0.loc9_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_fn.loc9_11.1: <specific function> = specific_function %impl.elem0.loc9_11.1, @Make(constants.%I.facet) [symbolic = %specific_fn.loc9_11.2 (constants.%specific_fn)]
 // CHECK:STDOUT:     %Make.call: init @Use.%T.as_type.loc8_18.2 (%T.as_type) = call %specific_fn.loc9_11.1()
-// CHECK:STDOUT:     %.loc9_17.1: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = temporary_storage
-// CHECK:STDOUT:     %.loc9_17.2: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = temporary %.loc9_17.1, %Make.call
-// CHECK:STDOUT:     %.loc9_17.3: @Use.%T.as_type.loc8_18.2 (%T.as_type) = bind_value %.loc9_17.2
-// CHECK:STDOUT:     return %.loc9_17.3
+// CHECK:STDOUT:     %.loc9_18.1: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_of_initializer %Make.call
+// CHECK:STDOUT:     %.loc9_18.2: @Use.%T.as_type.loc8_18.2 (%T.as_type) = converted %Make.call, %.loc9_18.1
+// CHECK:STDOUT:     return %.loc9_18.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -497,10 +496,9 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %x.ref, %impl.elem0.loc9_14.1
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %bound_method, @Copy(constants.%I.facet)
 // CHECK:STDOUT:     %Copy.call: init @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = call %specific_fn(%x.ref)
-// CHECK:STDOUT:     %.loc9_21.1: ref @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = temporary_storage
-// CHECK:STDOUT:     %.loc9_21.2: ref @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = temporary %.loc9_21.1, %Copy.call
-// CHECK:STDOUT:     %.loc9_21.3: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = bind_value %.loc9_21.2
-// CHECK:STDOUT:     return %.loc9_21.3
+// CHECK:STDOUT:     %.loc9_22.1: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = value_of_initializer %Copy.call
+// CHECK:STDOUT:     %.loc9_22.2: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = converted %Copy.call, %.loc9_22.1
+// CHECK:STDOUT:     return %.loc9_22.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

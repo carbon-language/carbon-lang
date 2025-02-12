@@ -13,6 +13,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -445,8 +446,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  if (!context.RequireCompleteType(
-          base_type_id, context.insts().GetLocId(base_id), [&] {
+  if (!RequireCompleteType(
+          context, base_type_id, context.insts().GetLocId(base_id), [&] {
             CARBON_DIAGNOSTIC(
                 IncompleteTypeInMemberAccess, Error,
                 "member access into object of incomplete type {0}",

@@ -705,6 +705,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         add_inst_name(out.TakeStr());
         continue;
       }
+      case ImportCppDecl::Kind: {
+        add_inst_name("Cpp.import_cpp");
+        continue;
+      }
       case CARBON_KIND(ImportDecl inst): {
         if (inst.package_id.has_value()) {
           add_inst_name_id(inst.package_id, ".import");
@@ -723,10 +727,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             sem_ir_->import_ir_insts().Get(inst.import_ir_inst_id);
         const auto& import_ir =
             *sem_ir_->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-        if (import_ir.package_id().has_value()) {
-          out << import_ir.identifiers().Get(import_ir.package_id());
+        auto package_id = import_ir.package_id();
+        if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+          out << import_ir.identifiers().Get(ident_id);
         } else {
-          out << "Main";
+          out << package_id.AsSpecialName();
         }
         out << ".";
 

@@ -18,7 +18,7 @@ import Geometry library Shapes;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Geometry'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: 'Shapes', has_error: yes},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},

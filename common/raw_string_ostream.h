@@ -51,7 +51,7 @@ class RawStringOstream : public llvm::raw_pwrite_stream {
     str_.append(ptr, size);
   }
 
-  void reserveExtraSpace(uint64_t extra_size) override {
+  auto reserveExtraSpace(uint64_t extra_size) -> void override {
     str_.reserve(str_.size() + extra_size);
   }
 

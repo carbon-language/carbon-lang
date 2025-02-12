@@ -4,6 +4,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -16,6 +17,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
@@ -375,8 +377,8 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     }
 
     // The parameter types need to be complete.
-    context.RequireCompleteType(
-        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+    RequireCompleteType(
+        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
         context.insts().GetLocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,
@@ -399,7 +401,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
-  context.PushRegion(context.inst_block_stack().PeekOrAdd());
+  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
 
@@ -444,7 +446,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
-  if (context.is_current_position_reachable()) {
+  if (IsCurrentPositionReachable(context)) {
     if (context.functions()
             .Get(function_id)
             .return_slot_pattern_id.has_value()) {
@@ -463,7 +465,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   context.decl_name_stack().PopScope();
 
   auto& function = context.functions().Get(function_id);
-  function.body_block_ids = context.PopRegion();
+  function.body_block_ids = context.region_stack().PopRegion();
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
