@@ -52,7 +52,7 @@ Context::Context(DiagnosticEmitter* emitter,
       param_and_arg_refs_stack_(*sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
-      scope_stack_(sem_ir_->identifiers()),
+      scope_stack_(sem_ir_),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       global_init_(this),
       region_stack_(

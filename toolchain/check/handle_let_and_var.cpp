@@ -87,7 +87,7 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::LetIntroducerId node_id) -> bool {
-  if (context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     StartAssociatedConstant(context);
   }
 
@@ -153,7 +153,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
 // Handle the end of the full-pattern of a let/var declaration (before the
 // start of the initializer, if any).
 static auto EndFullPattern(Context& context) -> void {
-  if (context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     // Don't emit NameBindingDecl for an associated constant, because it will
     // always be empty.
     context.pattern_block_stack().PopAndDiscard();
@@ -189,7 +189,8 @@ static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
-  if (auto interface_decl = context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+  if (auto interface_decl =
+          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
 
     // Start building the definition region of the constant.
@@ -238,7 +239,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
     // now. We will have done this at the `=` if there was an initializer.
     if (IntroducerTokenKind == Lex::TokenKind::Let) {
       if (auto interface_decl =
-              context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+              context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
         EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
       }
     }
@@ -346,7 +347,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   // At interface scope, we are forming an associated constant, which has
   // different rules.
   if (auto interface_scope =
-          context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     FinishAssociatedConstant(context, node_id, interface_scope->interface_id,
                              decl_info);
     return true;
@@ -378,7 +379,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
 
-  if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
+  if (context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>()) {
     if (decl_info.init_id.has_value()) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
@@ -386,7 +387,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
     }
     return true;
   }
-  if (context.GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
                       "`var` declaration in interface");
     context.emitter().Emit(node_id, VarInInterfaceDecl);
