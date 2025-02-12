@@ -14,16 +14,9 @@ library "[[@TEST_NAME]]";
 interface Z {
   fn Zero();
 
-  // CHECK:STDERR: fail_impl_self_interface.carbon:[[@LINE+11]]:8: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+  // CHECK:STDERR: fail_impl_self_interface.carbon:[[@LINE+4]]:8: error: `impl as` can only be used in a class [ImplAsOutsideClass]
   // CHECK:STDERR:   impl as Z {
   // CHECK:STDERR:        ^~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_self_interface.carbon:[[@LINE+7]]:3: error: implementation of undefined interface Z [ImplOfUndefinedInterface]
-  // CHECK:STDERR:   impl as Z {
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_self_interface.carbon:[[@LINE-10]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
   impl as Z {
     fn Zero() {}
@@ -149,12 +142,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc31_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc24_5.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Point.ref: type = name_ref Point, file.%Point.decl [template = constants.%Point]
-// CHECK:STDOUT:   %.loc31_5.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc31_5.3: init %Point = class_init (), %.loc31_5.2 [template = constants.%Point.val]
-// CHECK:STDOUT:   %.loc31_5.4: ref %Point = temporary %.loc31_5.2, %.loc31_5.3
-// CHECK:STDOUT:   %.loc31_7: ref %Point = converted %.loc31_5.1, %.loc31_5.4
+// CHECK:STDOUT:   %.loc24_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc24_5.3: init %Point = class_init (), %.loc24_5.2 [template = constants.%Point.val]
+// CHECK:STDOUT:   %.loc24_5.4: ref %Point = temporary %.loc24_5.2, %.loc24_5.3
+// CHECK:STDOUT:   %.loc24_7: ref %Point = converted %.loc24_5.1, %.loc24_5.4
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [template = constants.%Z.type]
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.c37 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Zero.dec]

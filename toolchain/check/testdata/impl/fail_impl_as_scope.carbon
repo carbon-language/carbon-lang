@@ -51,7 +51,6 @@ fn Function() {
 // CHECK:STDOUT:   %F.df8: %F.type.e2e = struct_value () [template]
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type %Simple.type [template]
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.%F.decl [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.fe5: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.32d: %F.type.fe5 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -74,7 +73,6 @@ fn Function() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
@@ -93,7 +91,7 @@ fn Function() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %Simple.type) {
@@ -107,8 +105,6 @@ fn Function() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(<error>) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -120,7 +116,6 @@ fn Function() {
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.%F.decl [template]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [template]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.bc7: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.0a2: %F.type.bc7 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -159,7 +154,7 @@ fn Function() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = @Function.%impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %Simple.type) {
@@ -172,7 +167,6 @@ fn Function() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,6 +176,4 @@ fn Function() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(<error>) {}
 // CHECK:STDOUT:
