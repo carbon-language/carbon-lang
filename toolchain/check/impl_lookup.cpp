@@ -4,6 +4,7 @@
 
 #include "toolchain/check/impl_lookup.h"
 
+#include "llvm/ADT/ScopeExit.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
@@ -129,6 +130,38 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       ImportImpl(context, import_ir, SemIR::ImplId(impl_index));
     }
   }
+
+  auto& stack = context.impl_lookup_stack();
+  // Deduction of the interface parameters can do further impl lookups, and we
+  // need to ensure we terminate.
+  //
+  // https://docs.carbon-lang.dev/docs/design/generics/details.html#acyclic-rule
+  // - We look for violations of the acyclic rule by seeing if a previous lookup
+  //   had all the same type inputs.
+  // - The `interface_const_id` encodes the entire facet type being looked up,
+  //   including any specific parameters for a generic interface.
+  //
+  // TODO: Implement the termination rule, which requires looking at the
+  // complexity of the types on the top of (or throughout?) the stack:
+  // https://docs.carbon-lang.dev/docs/design/generics/details.html#termination-rule
+  for (auto entry : stack) {
+    if (entry.type_const_id == type_const_id &&
+        entry.interface_const_id == interface_const_id) {
+      CARBON_DIAGNOSTIC(ImplLookupCycle, Error,
+                        "cycle found in lookup of interface {0} for type {1}",
+                        std::string, SemIR::TypeId);
+      context.emitter()
+          .Build(loc_id, ImplLookupCycle, "<TODO: interface name>",
+                 context.GetTypeIdForTypeConstant(type_const_id))
+          .Emit();
+      return SemIR::ErrorInst::SingletonInstId;
+    }
+  }
+  stack.push_back(Context::ImplLookupStackEntry{
+      .type_const_id = type_const_id,
+      .interface_const_id = interface_const_id,
+  });
+  auto pop_stack = llvm::make_scope_exit([&] { stack.pop_back(); });
 
   for (const auto& impl : context.impls().array_ref()) {
     // If impl.constraint_id is not symbolic, and doesn't match the query, then
