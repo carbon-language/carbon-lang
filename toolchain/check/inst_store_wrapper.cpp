@@ -24,7 +24,8 @@ auto InstStoreWrapper::Add(SemIR::LocIdAndInst loc_id_and_inst)
 auto InstStoreWrapper::AddInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = context_->sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG_TO(context_->vlog_stream(), "Add: {0}\n", loc_id_and_inst.inst);
+  CARBON_VLOG_TO(context_->vlog_stream(), "insts.Add: {0}\n",
+                 loc_id_and_inst.inst);
   Finish(inst_id, loc_id_and_inst.inst);
   return inst_id;
 }
@@ -42,7 +43,7 @@ auto InstStoreWrapper::GetOrAdd(SemIR::LocIdAndInst loc_id_and_inst)
     auto const_id =
         TryEvalInst(*context_, SemIR::InstId::None, loc_id_and_inst.inst);
     if (const_id.has_value()) {
-      CARBON_VLOG_TO(context_->vlog_stream(), "GetOrAdd: constant: {0}\n",
+      CARBON_VLOG_TO(context_->vlog_stream(), "insts.GetOrAdd: constant: {0}\n",
                      loc_id_and_inst.inst);
       return context_->constant_values().GetInstId(const_id);
     }
@@ -54,7 +55,7 @@ auto InstStoreWrapper::GetOrAdd(SemIR::LocIdAndInst loc_id_and_inst)
 auto InstStoreWrapper::AddPlaceholderInNoBlock(
     SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
   auto inst_id = context_->sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG_TO(context_->vlog_stream(), "AddPlaceholder: {0}\n",
+  CARBON_VLOG_TO(context_->vlog_stream(), "insts.AddPlaceholder: {0}\n",
                  loc_id_and_inst.inst);
   context_->constant_values().Set(inst_id, SemIR::ConstantId::None);
   return inst_id;
@@ -70,16 +71,16 @@ auto InstStoreWrapper::AddPlaceholder(SemIR::LocIdAndInst loc_id_and_inst)
 auto InstStoreWrapper::ReplaceLocIdAndInstBeforeConstantUse(
     SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
   context_->sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
-  CARBON_VLOG_TO(context_->vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
-                 loc_id_and_inst.inst);
+  CARBON_VLOG_TO(context_->vlog_stream(), "insts.Replace: {0} -> {1}\n",
+                 inst_id, loc_id_and_inst.inst);
   Finish(inst_id, loc_id_and_inst.inst);
 }
 
 auto InstStoreWrapper::ReplaceBeforeConstantUse(SemIR::InstId inst_id,
                                                 SemIR::Inst inst) -> void {
   context_->sem_ir().insts().Set(inst_id, inst);
-  CARBON_VLOG_TO(context_->vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
-                 inst);
+  CARBON_VLOG_TO(context_->vlog_stream(), "insts.Replace: {0} -> {1}\n",
+                 inst_id, inst);
   Finish(inst_id, inst);
 }
 
@@ -88,8 +89,8 @@ auto InstStoreWrapper::ReplacePreservingConstantValue(SemIR::InstId inst_id,
     -> void {
   auto old_const_id = context_->constant_values().Get(inst_id);
   context_->sem_ir().insts().Set(inst_id, inst);
-  CARBON_VLOG_TO(context_->vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
-                 inst);
+  CARBON_VLOG_TO(context_->vlog_stream(), "insts.Replace: {0} -> {1}\n",
+                 inst_id, inst);
   auto new_const_id = TryEvalInst(*context_, inst_id, inst);
   CARBON_CHECK(old_const_id == new_const_id);
 }
