@@ -399,11 +399,6 @@ class Context {
 
   auto Finalize() -> void;
 
-  // Returns the imported IR ID for an IR, or `None` if not imported.
-  auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
-    return check_ir_map_[sem_ir.check_ir_id().index];
-  }
-
   // True if the current file is an impl file.
   auto IsImplFile() -> bool {
     return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
@@ -483,6 +478,10 @@ class Context {
   }
 
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
+  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+    return check_ir_map_;
+  }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
