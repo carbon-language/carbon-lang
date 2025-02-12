@@ -334,7 +334,8 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
 static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
                                              Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
-  auto class_scope = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  auto class_scope =
+      context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
     DiagnoseClassSpecificDeclOutsideClass(context, loc, tok);
   }

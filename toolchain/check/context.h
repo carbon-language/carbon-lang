@@ -287,13 +287,6 @@ class Context {
   auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                               DiagnosticBuilder& builder) -> void;
 
-  // Returns the current scope, if it is of the specified kind. Otherwise,
-  // returns nullopt.
-  template <typename InstT>
-  auto GetCurrentScopeAs() -> std::optional<InstT> {
-    return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
-  }
-
   // Returns the type ID for a constant that is a type value, i.e. it is a value
   // of type `TypeType`.
   //
