@@ -104,7 +104,6 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
     self_type_id = SemIR::ErrorInst::SingletonTypeId;
-    return false;
   }
 
   // Build the implicit access to the enclosing `Self`.
@@ -146,13 +145,13 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     DiagnoseExtendImplOutsideClass(context, node_id);
     return false;
   }
-  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-
   // TODO: This is also valid in a mixin.
   if (!TryAsClassScope(context, parent_scope_id)) {
     DiagnoseExtendImplOutsideClass(context, node_id);
     return false;
   }
+
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
 
   if (params_node.has_value()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
@@ -387,7 +386,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   context.ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
+      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
