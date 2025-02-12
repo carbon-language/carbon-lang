@@ -1468,6 +1468,7 @@ static auto RequireCompleteFacetTypeImpl(
   }
   // TODO: Sort and deduplicate result.required_interfaces. For now, we have at
   // most one.
+  CARBON_CHECK(result.required_interfaces.size() <= 1);
 
   // TODO: Distinguish interfaces that are required but would not be
   // implemented, such as those from `where .Self impls I`.
