@@ -20,8 +20,10 @@ namespace Carbon::Check {
 // checking within.
 class ScopeStack {
  public:
-  explicit ScopeStack(const CanonicalValueStore<IdentifierId>& identifiers)
-      : lexical_lookup_(identifiers), full_pattern_stack_(&lexical_lookup_) {}
+  explicit ScopeStack(const SemIR::File* sem_ir)
+      : sem_ir_(sem_ir),
+        lexical_lookup_(sem_ir->identifiers()),
+        full_pattern_stack_(&lexical_lookup_) {}
 
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
@@ -99,12 +101,12 @@ class ScopeStack {
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
-  auto GetCurrentScopeAs(const SemIR::File& sem_ir) -> std::optional<InstT> {
+  auto GetCurrentScopeAs() -> std::optional<InstT> {
     auto inst_id = PeekInstId();
     if (!inst_id.has_value()) {
       return std::nullopt;
     }
-    return sem_ir.insts().TryGetAs<InstT>(inst_id);
+    return sem_ir_->insts().TryGetAs<InstT>(inst_id);
   }
 
   // If there is no `returned var` in scope, sets the given instruction to be
@@ -224,6 +226,9 @@ class ScopeStack {
   // significant changes.
   auto VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
                                       const ScopeStackEntry& scope) -> void;
+
+  // The current file.
+  const SemIR::File* sem_ir_;
 
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;

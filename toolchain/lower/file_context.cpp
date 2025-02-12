@@ -119,7 +119,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   auto inst = sem_ir().insts().Get(inst_id);
 
   auto const_id = sem_ir().constant_values().Get(inst_id);
-  if (const_id.is_template()) {
+  if (const_id.is_concrete()) {
     auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
 
     // For value expressions and initializing expressions, the value produced by

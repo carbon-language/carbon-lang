@@ -10,6 +10,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
@@ -111,7 +112,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
     context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 class_decl_id);
+                                 name_context.loc_id);
     return;
   }
 
@@ -265,7 +266,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                          .specific_id = specific_id}));
   }
 
-  if (!is_definition && context.IsImplFile() && !is_extern) {
+  if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required().push_back(class_decl_id);
   }
 
@@ -333,7 +334,8 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
 static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
                                              Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
-  auto class_scope = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  auto class_scope =
+      context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
     DiagnoseClassSpecificDeclOutsideClass(context, loc, tok);
   }

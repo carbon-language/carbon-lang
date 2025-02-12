@@ -17,24 +17,24 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT: --- fail_unknown.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %UnknownBuiltin.type: type = fn_type @UnknownBuiltin [template]
-// CHECK:STDOUT:   %UnknownBuiltin: %UnknownBuiltin.type = struct_value () [template]
+// CHECK:STDOUT:   %UnknownBuiltin.type: type = fn_type @UnknownBuiltin [concrete]
+// CHECK:STDOUT:   %UnknownBuiltin: %UnknownBuiltin.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .UnknownBuiltin = %UnknownBuiltin.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %UnknownBuiltin.decl: %UnknownBuiltin.type = fn_decl @UnknownBuiltin [template = constants.%UnknownBuiltin] {} {}
+// CHECK:STDOUT:   %UnknownBuiltin.decl: %UnknownBuiltin.type = fn_decl @UnknownBuiltin [concrete = constants.%UnknownBuiltin] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UnknownBuiltin();

@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/inst.h"
@@ -102,7 +103,7 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
 // lookup.
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> SemIR::InstId {
-  auto result = context.LookupUnqualifiedName(node_id, name_id);
+  auto result = LookupUnqualifiedName(context, node_id, name_id);
   SemIR::InstId inst_id = result.scope_result.target_inst_id();
   auto value = context.insts().Get(inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,

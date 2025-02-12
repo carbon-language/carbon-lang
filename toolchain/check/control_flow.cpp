@@ -93,7 +93,7 @@ auto SetBlockArgResultBeforeConstantUse(Context& context,
   // Determine the constant result based on the condition value.
   SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
   auto cond_const_id = context.constant_values().Get(cond_id);
-  if (!cond_const_id.is_template()) {
+  if (!cond_const_id.is_concrete()) {
     // Symbolic or non-constant condition means a non-constant result.
   } else if (auto literal = context.insts().TryGetAs<SemIR::BoolLiteral>(
                  context.constant_values().GetInstId(cond_const_id))) {

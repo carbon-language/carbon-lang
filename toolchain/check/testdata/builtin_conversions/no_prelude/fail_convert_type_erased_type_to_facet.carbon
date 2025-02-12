@@ -53,8 +53,8 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %As.type.b51: type = generic_interface_type @As [template]
-// CHECK:STDOUT:   %As.generic: %As.type.b51 = struct_value () [template]
+// CHECK:STDOUT:   %As.type.b51: type = generic_interface_type @As [concrete]
+// CHECK:STDOUT:   %As.generic: %As.type.b51 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.type.8ba: type = facet_type <@As, @As(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.b4e: %As.type.8ba = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.7f0: type = facet_access_type %Self.b4e [symbolic]
@@ -62,8 +62,8 @@ fn F() {
 // CHECK:STDOUT:   %Convert.0ed: %Convert.type.ad1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %As.assoc_type: type = assoc_entity_type %As.type.8ba [symbolic]
 // CHECK:STDOUT:   %assoc0.ac5: %As.assoc_type = assoc_entity element0, @As.%Convert.decl [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.96f: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.96f = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type.96f: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.96f = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.07f: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.0f3: %ImplicitAs.type.07f = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.419: type = facet_access_type %Self.0f3 [symbolic]
@@ -74,18 +74,18 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .As = %As.decl
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [template = constants.%As.generic] {
+// CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc4_14.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc4_14.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc4_14.1, runtime_param<none> [symbolic = %Dest.patt.loc4_14.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Dest.loc4_14.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc4_14.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [template = constants.%ImplicitAs.generic] {
+// CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc8_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc8_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc8_22.1, runtime_param<none> [symbolic = %Dest.patt.loc8_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
@@ -229,18 +229,18 @@ fn F() {
 // CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [template]
+// CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.fd4: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Goat: type = class_type @Goat [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template]
+// CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
 // CHECK:STDOUT:   %a: %Animal.type = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %Animal.type = symbolic_binding_pattern a, 0 [symbolic]
-// CHECK:STDOUT:   %WalkAnimal.type: type = fn_type @WalkAnimal [template]
-// CHECK:STDOUT:   %WalkAnimal: %WalkAnimal.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %WalkAnimal.type: type = fn_type @WalkAnimal [concrete]
+// CHECK:STDOUT:   %WalkAnimal: %WalkAnimal.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %x: type = bind_symbolic_name x, 0 [symbolic]
 // CHECK:STDOUT:   %x.patt: type = symbolic_binding_pattern x, 0 [symbolic]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -252,16 +252,16 @@ fn F() {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.519 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
 // CHECK:STDOUT:   %assoc0.43db8b.1: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.ec2: type = facet_type <@ImplicitAs, @ImplicitAs(%Animal.type)> [template]
-// CHECK:STDOUT:   %Convert.type.69d: type = fn_type @Convert, @ImplicitAs(%Animal.type) [template]
-// CHECK:STDOUT:   %Convert.0e1: %Convert.type.69d = struct_value () [template]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.a8b: type = assoc_entity_type %ImplicitAs.type.ec2 [template]
-// CHECK:STDOUT:   %assoc0.65b: %ImplicitAs.assoc_type.a8b = assoc_entity element0, imports.%Core.import_ref.207961.1 [template]
+// CHECK:STDOUT:   %ImplicitAs.type.ec2: type = facet_type <@ImplicitAs, @ImplicitAs(%Animal.type)> [concrete]
+// CHECK:STDOUT:   %Convert.type.69d: type = fn_type @Convert, @ImplicitAs(%Animal.type) [concrete]
+// CHECK:STDOUT:   %Convert.0e1: %Convert.type.69d = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.a8b: type = assoc_entity_type %ImplicitAs.type.ec2 [concrete]
+// CHECK:STDOUT:   %assoc0.65b: %ImplicitAs.assoc_type.a8b = assoc_entity element0, imports.%Core.import_ref.207961.1 [concrete]
 // CHECK:STDOUT:   %assoc0.43db8b.2: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207961.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
@@ -275,7 +275,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Animal = %Animal.decl
 // CHECK:STDOUT:     .Goat = %Goat.decl
@@ -283,22 +283,22 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [template = constants.%Animal.type] {} {}
-// CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [template = constants.%Goat] {} {}
-// CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [template = constants.%Goat]
-// CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [template = constants.%Animal.type]
+// CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
+// CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
+// CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
-// CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [template = constants.%WalkAnimal] {
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
 // CHECK:STDOUT:     %a.patt.loc11_15.1: %Animal.type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc11_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %Animal.type = value_param_pattern %a.patt.loc11_15.1, runtime_param<none> [symbolic = %a.patt.loc11_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Animal.type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [template = constants.%Animal.type]
+// CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %a.loc11_15.1: %Animal.type = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc11_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
@@ -335,7 +335,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -359,11 +359,11 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: type = symbolic_binding_pattern x, 0 [symbolic = constants.%x.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [template = constants.%Goat]
+// CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %x: type = bind_symbolic_name x, 0, %Goat.ref [symbolic = constants.%x]
-// CHECK:STDOUT:   %WalkAnimal.ref: %WalkAnimal.type = name_ref WalkAnimal, file.%WalkAnimal.decl [template = constants.%WalkAnimal]
+// CHECK:STDOUT:   %WalkAnimal.ref: %WalkAnimal.type = name_ref WalkAnimal, file.%WalkAnimal.decl [concrete = constants.%WalkAnimal]
 // CHECK:STDOUT:   %x.ref: type = name_ref x, %x [symbolic = constants.%x]
-// CHECK:STDOUT:   %.loc25: %Animal.type = converted %x.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc25: %Animal.type = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

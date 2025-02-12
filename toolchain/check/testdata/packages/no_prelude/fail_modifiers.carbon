@@ -103,55 +103,55 @@ private import PrivateImport;
 // CHECK:STDOUT: --- fail_export_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_virtual_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_private_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_library.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %ImplImport: <namespace> = namespace file.%ImplImport.import, [template] {
+// CHECK:STDOUT:   %ImplImport: <namespace> = namespace file.%ImplImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace file.%ExtendImport.import, [template] {
+// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace file.%ExtendImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace file.%VirtualImport.import, [template] {
+// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace file.%VirtualImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %BaseImport: <namespace> = namespace file.%BaseImport.import, [template] {
+// CHECK:STDOUT:   %BaseImport: <namespace> = namespace file.%BaseImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace file.%PrivateImport.import, [template] {
+// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace file.%PrivateImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .ImplImport = imports.%ImplImport
 // CHECK:STDOUT:     .ExtendImport = imports.%ExtendImport
 // CHECK:STDOUT:     .VirtualImport = imports.%VirtualImport

@@ -320,8 +320,8 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   // Applies the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
-    if (context_.constant_values().Get(inst_id).is_template()) {
-      // This instruction is a template constant, so can't contain any
+    if (context_.constant_values().Get(inst_id).is_concrete()) {
+      // This instruction is a concrete constant, so can't contain any
       // bindings that need to be substituted.
       return true;
     }
@@ -380,7 +380,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
   }
 
   if (!const_id.is_symbolic()) {
-    // A template constant can't contain a reference to a symbolic binding.
+    // A concrete constant can't contain a reference to a symbolic binding.
     return const_id;
   }
 

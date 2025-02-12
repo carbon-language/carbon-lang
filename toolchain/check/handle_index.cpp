@@ -9,6 +9,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/inst.h"
@@ -31,7 +32,7 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
 static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
                              SemIR::TypeId self_id)
     -> std::optional<llvm::ArrayRef<SemIR::InstId>> {
-  auto index_with_inst_id = context.LookupNameInCore(node_id, "IndexWith");
+  auto index_with_inst_id = LookupNameInCore(context, node_id, "IndexWith");
   // If the `IndexWith` interface doesn't have generic arguments then return an
   // empty reference.
   if (context.insts().Is<SemIR::FacetType>(index_with_inst_id)) {

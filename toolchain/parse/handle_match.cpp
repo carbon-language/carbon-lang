@@ -7,15 +7,6 @@
 
 namespace Carbon::Parse {
 
-// TODO: Some handling is producing erroneous nodes, but wasn't diagnosing and
-// needed to. A more specific diagnostic could be added, but we should probably
-// have a larger look at this code and how it produces parse errors. This may be
-// good to re-examine when someone is working on implementing match checking.
-static auto DiagnoseMatchParseTODO(Context& context) -> void {
-  CARBON_DIAGNOSTIC(MatchParseTODO, Error, "TODO: improve match parsing");
-  context.emitter().Emit(*context.position(), MatchParseTODO);
-}
-
 static auto HandleStatementsBlockStart(Context& context, State finish,
                                        NodeKind equal_greater, NodeKind starter,
                                        NodeKind complete) -> void {
@@ -171,11 +162,14 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
       context.PushState(State::Expr);
     } else {
       if (!state.has_error) {
-        DiagnoseMatchParseTODO(context);
+        CARBON_DIAGNOSTIC(ExpectedMatchCaseGuardOpenParen, Error,
+                          "expected `(` after `if`");
+        context.emitter().Emit(*context.position(),
+                               ExpectedMatchCaseGuardOpenParen);
       }
 
       context.AddLeafNode(NodeKind::MatchCaseGuardStart, *context.position(),
-                          true);
+                          /*has_error=*/true);
       context.AddInvalidParse(*context.position());
       state = context.PopState();
       context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
@@ -199,7 +193,10 @@ auto HandleMatchCaseGuardFinish(Context& context) -> void {
     context.AddNode(NodeKind::MatchCaseGuard, *close_paren, state.has_error);
   } else {
     if (!state.has_error) {
-      DiagnoseMatchParseTODO(context);
+      CARBON_DIAGNOSTIC(ExpectedMatchCaseGuardCloseParen, Error,
+                        "expected `)`");
+      context.emitter().Emit(*context.position(),
+                             ExpectedMatchCaseGuardCloseParen);
     }
 
     context.AddNode(NodeKind::MatchCaseGuard, *context.position(),

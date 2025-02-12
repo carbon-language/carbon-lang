@@ -48,7 +48,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
     auto inst_id =
         insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
     constant_values_.Set(inst_id,
-                         SemIR::ConstantId::ForTemplateConstant(inst_id));
+                         SemIR::ConstantId::ForConcreteConstant(inst_id));
   }
 }
 

@@ -804,7 +804,7 @@ class FormatterImpl {
     }
     out_ << '[';
     if (pending_constant_value_.has_value()) {
-      out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
+      out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "concrete");
       if (!pending_constant_value_is_self_) {
         out_ << " = ";
         FormatConstant(pending_constant_value_);
