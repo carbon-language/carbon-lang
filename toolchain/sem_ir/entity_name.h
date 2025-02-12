@@ -58,6 +58,16 @@ inline auto CarbonHashValue(const EntityName& value, uint64_t seed)
 // functionality, this can provide optional canonical IDs for EntityNames.
 struct EntityNameStore : public ValueStore<EntityNameId> {
  public:
+  // Adds an entity name for a symbolic binding.
+  auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
+                              CompileTimeBindIndex bind_index, bool is_template)
+      -> EntityNameId {
+    return Add({.name_id = name_id,
+                .parent_scope_id = parent_scope_id,
+                .bind_index_value = bind_index.index,
+                .is_template = is_template});
+  }
+
   // Convert an ID to a canonical ID. All calls to this with equivalent
   // `EntityName`s will return the same `EntityNameId`.
   auto MakeCanonical(EntityNameId id) -> EntityNameId;

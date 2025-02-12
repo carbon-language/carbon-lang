@@ -33,6 +33,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   auto is_template =
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
+  // A non-generic template binding is diagnosed by the parser.
+  is_template &= is_generic;
 
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
@@ -45,15 +47,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     auto binding_pattern_id = SemIR::InstId::None;
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto entity_name_id = context.entity_names().Add(
-        {.name_id = name_id,
-         .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-         .bind_index_value =
-             (is_generic ? context.scope_stack().AddCompileTimeBinding()
-                         : SemIR::CompileTimeBindIndex::None)
-                 .index,
-         // A non-generic template binding is diagnosed by the parser.
-         .is_template = is_generic && is_template});
+    auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+        name_id, context.scope_stack().PeekNameScopeId(),
+        is_generic ? context.scope_stack().AddCompileTimeBinding()
+                   : SemIR::CompileTimeBindIndex::None,
+        is_template);
     if (is_generic) {
       bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
           name_node, SemIR::BindSymbolicName{.type_id = cast_type_id,

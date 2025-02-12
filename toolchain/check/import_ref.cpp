@@ -1529,11 +1529,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
   // TODO: Use the same `EntityName` for the `SymbolicBindingPattern` and the
   // `BindSymbolicName`.
-  auto entity_name_id = resolver.local_entity_names().Add(
-      {.name_id = name_id,
-       .parent_scope_id = SemIR::NameScopeId::None,
-       .bind_index_value = import_entity_name.bind_index_value,
-       .is_template = import_entity_name.is_template});
+  auto entity_name_id = resolver.local_entity_names().AddSymbolicBindingName(
+      name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
+      import_entity_name.is_template);
   return ResolveAs<SemIR::BindSymbolicName>(
       resolver,
       {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
@@ -1554,11 +1552,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
   // TODO: Use the same `EntityName` for the `SymbolicBindingPattern` and the
   // `BindSymbolicName`.
-  auto entity_name_id = resolver.local_entity_names().Add(
-      {.name_id = name_id,
-       .parent_scope_id = SemIR::NameScopeId::None,
-       .bind_index_value = import_entity_name.bind_index_value,
-       .is_template = import_entity_name.is_template});
+  auto entity_name_id = resolver.local_entity_names().AddSymbolicBindingName(
+      name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
+      import_entity_name.is_template);
   return ResolveAs<SemIR::SymbolicBindingPattern>(
       resolver,
       {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
