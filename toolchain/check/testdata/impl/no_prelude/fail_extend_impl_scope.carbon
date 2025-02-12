@@ -32,6 +32,38 @@ fn F() {
   extend impl {} as J {}
 }
 
+// --- fail_extend_impl_self_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  fn Zero() -> Self;
+
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+4]]:15: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+  // CHECK:STDERR:   extend impl as Z {
+  // CHECK:STDERR:               ^~
+  // CHECK:STDERR:
+  extend impl as Z {
+    fn Zero() -> Self {
+      return {};
+    }
+  }
+}
+
+class Point {
+  extend impl as Z {
+    fn Zero() -> Self {
+      return {};
+    }
+  }
+}
+
+fn F() {
+  // Even if the `extend impl` is diagnosed above, we must not add the impl of
+  // the interface to itself in a way that allows it to be used during impl
+  // lookup, or we end up with infinite impl lookup recursion here.
+  ({} as Point).Zero();
+}
+
 // CHECK:STDOUT: --- fail_extend_impl_file_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -64,7 +96,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc9_14.2 as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_impl_function_scope.carbon
@@ -97,7 +129,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc10_16.2 as %J.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = @F.%impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -109,5 +141,34 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_extend_impl_self_interface.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [template]
+// CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Z {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = <unexpected>.inst15
+// CHECK:STDOUT:   .Zero = <unexpected>.inst32.loc4_20
+// CHECK:STDOUT:   witness = invalid
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Zero(<unexpected>.inst15: %Z.type) {
+// CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> @Zero.%Self.as_type (%Self.as_type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Zero(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
