@@ -54,7 +54,9 @@ Context::Context(DiagnosticEmitter* emitter,
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
-      global_init_(this) {
+      global_init_(this),
+      region_stack_(
+          [this](SemIRLoc loc, std::string label) { TODO(loc, label); }) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
@@ -282,29 +284,14 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
   }
 }
 
-auto Context::AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id)
-    -> void {
-  if (region_stack_.empty()) {
-    TODO(loc_id,
-         "Control flow expressions are currently only supported inside "
-         "functions.");
-    return;
-  }
-  if (block_id == SemIR::InstBlockId::Unreachable) {
-    return;
-  }
-
-  region_stack_.AppendToTop(block_id);
-}
-
 auto Context::BeginSubpattern() -> void {
   inst_block_stack().Push();
-  PushRegion(inst_block_stack().PeekOrAdd());
+  region_stack_.PushRegion(inst_block_stack().PeekOrAdd());
 }
 
 auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
     -> SemIR::ExprRegionId {
-  if (region_stack_.PeekArray().size() > 1) {
+  if (region_stack_.PeekRegion().size() > 1) {
     // End the exit block with a branch to a successor block, whose contents
     // will be determined later.
     AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
@@ -314,20 +301,20 @@ auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
     // need control flow out of it.
   }
   auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
+  CARBON_CHECK(block_id == region_stack_.PeekRegion().back());
 
   // TODO: Is it possible to validate that this region is genuinely
   // single-entry, single-exit?
   return sem_ir().expr_regions().Add(
-      {.block_ids = PopRegion(), .result_id = result_id});
+      {.block_ids = region_stack_.PopRegion(), .result_id = result_id});
 }
 
 auto Context::EndSubpatternAsEmpty() -> void {
   auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
-  CARBON_CHECK(region_stack_.PeekArray().size() == 1);
+  CARBON_CHECK(block_id == region_stack_.PeekRegion().back());
+  CARBON_CHECK(region_stack_.PeekRegion().size() == 1);
   CARBON_CHECK(inst_blocks().Get(block_id).empty());
-  region_stack_.PopArray();
+  region_stack_.PopAndDiscardRegion();
 }
 
 auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
@@ -360,12 +347,12 @@ auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
   inst_block_stack_.Pop();
   // TODO: this will cumulatively cost O(MN) running time for M blocks
   // at the Nth level of the stack. Figure out how to do better.
-  region_stack_.AppendToTop(region.block_ids);
+  region_stack_.AddToRegion(region.block_ids);
   auto resume_with_block_id =
       insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
   CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
   inst_block_stack_.Push(resume_with_block_id);
-  AddToRegion(resume_with_block_id, loc_id);
+  region_stack_.AddToRegion(resume_with_block_id, loc_id);
   return region.result_id;
 }
 
@@ -388,8 +375,7 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
                "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
       insts().Get(constant_values().GetInstId(constant_id)).type_id();
-  // TODO: For now, we allow values of facet type to be used as types.
-  CARBON_CHECK(IsFacetType(type_id) ||
+  CARBON_CHECK(type_id == SemIR::TypeType::SingletonTypeId ||
                    constant_id == SemIR::ErrorInst::SingletonConstantId,
                "Forming type ID for non-type constant of type {0}",
                types().GetAsInst(type_id));

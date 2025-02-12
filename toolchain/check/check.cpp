@@ -89,7 +89,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
       unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
       return;
     }
-    unit_info.cpp_imports.push_back(import);
+    unit_info.cpp_import_names.push_back(import);
     return;
   }
 

@@ -268,6 +268,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case GenericInterfaceType::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
+      case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case IntLiteralType::Kind:
       case IntType::Kind:

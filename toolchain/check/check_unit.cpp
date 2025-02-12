@@ -131,7 +131,6 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
         package_imports.node_id, {.package_id = SemIR::NameId::ForPackageName(
                                       package_imports.package_id)});
   }
-
   // Process the imports.
   if (unit_and_imports_->api_for_impl) {
     ImportApiFile(context_, namespace_type_id,
@@ -140,7 +139,8 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   ImportCurrentPackage(package_inst_id, namespace_type_id);
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
-  ImportCppPackages();
+  ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
+                 unit_and_imports_->cpp_import_names, fs_);
 }
 
 auto CheckUnit::CollectDirectImports(
@@ -340,25 +340,6 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
         CollectTransitiveImports(import_decl_id, local_imports, api_imports),
         has_load_error);
   }
-}
-
-auto CheckUnit::ImportCppPackages() -> void {
-  const auto& imports = unit_and_imports_->cpp_imports;
-  if (imports.empty()) {
-    return;
-  }
-
-  llvm::SmallVector<std::pair<llvm::StringRef, SemIRLoc>> import_pairs;
-  import_pairs.reserve(imports.size());
-  for (const auto& import : imports) {
-    import_pairs.push_back(
-        {unit_and_imports_->unit->value_stores->string_literal_values().Get(
-             import.library_id),
-         import.node_id});
-  }
-
-  ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                 import_pairs, fs_);
 }
 
 // Loops over all nodes in the tree. On some errors, this may return early,

@@ -22,7 +22,7 @@ auto HandleParseNode(Context& context, Parse::WhileConditionStartId node_id)
 
   // Start emitting the loop header block.
   context.inst_block_stack().Push(loop_header_id);
-  context.AddToRegion(loop_header_id, node_id);
+  context.region_stack().AddToRegion(loop_header_id, node_id);
 
   context.node_stack().Push(node_id, loop_header_id);
   return true;
@@ -43,7 +43,7 @@ auto HandleParseNode(Context& context, Parse::WhileConditionId node_id)
 
   // Start emitting the loop body.
   context.inst_block_stack().Push(loop_body_id);
-  context.AddToRegion(loop_body_id, node_id);
+  context.region_stack().AddToRegion(loop_body_id, node_id);
   context.break_continue_stack().push_back(
       {.break_target = loop_exit_id, .continue_target = loop_header_id});
 
@@ -65,7 +65,7 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 
   // Start emitting the loop exit block.
   context.inst_block_stack().Push(loop_exit_id);
-  context.AddToRegion(loop_exit_id, node_id);
+  context.region_stack().AddToRegion(loop_exit_id, node_id);
   return true;
 }
 

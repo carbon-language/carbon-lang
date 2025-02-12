@@ -73,6 +73,7 @@ cc_library(
         "param_and_arg_refs_stack.h",
         "pattern_match.h",
         "pending_block.h",
+        "region_stack.h",
         "return.h",
         "subst.h",
         "type_completion.h",
