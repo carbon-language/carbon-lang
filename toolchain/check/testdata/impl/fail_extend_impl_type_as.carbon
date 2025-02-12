@@ -92,7 +92,7 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %i32 as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = @C.%impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %D.ref as %I.ref;
