@@ -991,24 +991,24 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   }
 
   if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
-    auto lookup_inst = value_id;
+    auto lookup_inst_id = value_id;
 
     // `FacetAccessType` wraps an instruction that evaluates to a facet value
     // (of type `FacetType`). If the `FacetType` matches the target
     // `FacetType` then we don't need to do impl lookup. Otherwise, we want to
     // try convert the result of the instruction in the `FacetAccessType`.
     if (auto facet_access_type_value =
-            context.insts().TryGetAs<SemIR::FacetAccessType>(lookup_inst)) {
+            context.insts().TryGetAs<SemIR::FacetAccessType>(lookup_inst_id)) {
       auto facet_value_inst_id = facet_access_type_value->facet_value_inst_id;
       if (context.insts().Get(facet_value_inst_id).type_id() ==
           target.type_id) {
         return facet_value_inst_id;
       }
-      lookup_inst = facet_access_type_value->facet_value_inst_id;
+      lookup_inst_id = facet_access_type_value->facet_value_inst_id;
     }
 
     if (sem_ir.types().Is<SemIR::FacetType>(
-            sem_ir.insts().Get(lookup_inst).type_id())) {
+            sem_ir.insts().Get(lookup_inst_id).type_id())) {
       // Conversion from a facet value (which has type `FacetType`) to a
       // different facet value (which has type `FacetType`), if the value's
       // `FacetType` satisfies the requirements of the target `FacetType`. The
@@ -1025,7 +1025,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
 
     if (sem_ir.types().Is<SemIR::TypeType>(
-            sem_ir.insts().Get(lookup_inst).type_id())) {
+            sem_ir.insts().Get(lookup_inst_id).type_id())) {
       // Conversion from a type value (which has type `type`) to a facet value
       // (which has type `FacetType`), if the type satisfies the requirements of
       // the target `FacetType`, as determined by finding an impl witness. This
@@ -1036,13 +1036,13 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           // The value instruction evaluates to a type value (which has type
           // `type`). This gets that type value if it's available at compile
           // time, as a constant value.
-          context.constant_values().Get(lookup_inst),
+          context.constant_values().Get(lookup_inst_id),
           context.types().GetConstantId(target.type_id));
       if (witness_inst_id != SemIR::InstId::None) {
         return context.AddInst<SemIR::FacetValue>(
             loc_id, {
                         .type_id = target.type_id,
-                        .type_inst_id = lookup_inst,
+                        .type_inst_id = lookup_inst_id,
                         .witness_inst_id = witness_inst_id,
                     });
       }
