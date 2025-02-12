@@ -265,7 +265,7 @@ class Context {
 
   // Prints a diagnostic for a poisoned name when it's later declared.
   auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
-                            SemIR::InstId decl_inst_id) -> void;
+                            SemIR::LocId decl_name_loc_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;

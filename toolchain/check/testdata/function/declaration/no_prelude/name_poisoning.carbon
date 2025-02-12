@@ -45,9 +45,9 @@ fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_class_without_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_class_without_usage.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N.C {}
-// CHECK:STDERR: ^~~~~~~~~~~
+// CHECK:STDERR:         ^
 // CHECK:STDERR:
 class N.C {}
 
@@ -66,9 +66,9 @@ fn N.F1(x: I);
 
 // Should fail here since I was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_interface_without_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_interface_without_usage.carbon:[[@LINE+4]]:13: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface N.I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:             ^
 // CHECK:STDERR:
 interface N.I {}
 
@@ -87,9 +87,9 @@ fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_namespace_without_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_namespace_without_usage.carbon:[[@LINE+4]]:13: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: namespace N.C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:             ^
 // CHECK:STDERR:
 namespace N.C;
 
@@ -131,9 +131,9 @@ fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_function_without_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_function_without_usage.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: fn N.C();
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:      ^
 // CHECK:STDERR:
 fn N.C();
 
@@ -169,9 +169,9 @@ fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_with_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_with_usage.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N.C {}
-// CHECK:STDERR: ^~~~~~~~~~~
+// CHECK:STDERR:         ^
 // CHECK:STDERR:
 class N.C {}
 
@@ -203,27 +203,27 @@ class N1.N2.N3.D1 {
       // CHECK:STDERR:               ^
       fn F(x: C);
 
-      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:7: note: declared here [NameUseBeforeDeclNote]
+      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:13: note: declared here [NameUseBeforeDeclNote]
       // CHECK:STDERR:       class C {}
-      // CHECK:STDERR:       ^~~~~~~~~
+      // CHECK:STDERR:             ^
       // CHECK:STDERR:
       // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-6]]:15: error: name used before it was declared [NameUseBeforeDecl]
       // CHECK:STDERR:       fn F(x: C);
       // CHECK:STDERR:               ^
       class C {}
     }
-    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:5: note: declared here [NameUseBeforeDeclNote]
+    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:11: note: declared here [NameUseBeforeDeclNote]
     // CHECK:STDERR:     class C {}
-    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR:           ^
     // CHECK:STDERR:
     // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-15]]:15: error: name used before it was declared [NameUseBeforeDecl]
     // CHECK:STDERR:       fn F(x: C);
     // CHECK:STDERR:               ^
     class C {}
   }
-  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:3: note: declared here [NameUseBeforeDeclNote]
+  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:9: note: declared here [NameUseBeforeDeclNote]
   // CHECK:STDERR:   class C {}
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:         ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-24]]:15: error: name used before it was declared [NameUseBeforeDecl]
   // CHECK:STDERR:       fn F(x: C);
@@ -231,27 +231,27 @@ class N1.N2.N3.D1 {
   class C {}
 }
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:10: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N1.C {}
-// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:          ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-34]]:15: error: name used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR:       fn F(x: C);
 // CHECK:STDERR:               ^
 class N1.C {}
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:17: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface N1.N2.C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                 ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-43]]:15: error: name used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR:       fn F(x: C);
 // CHECK:STDERR:               ^
 interface N1.N2.C {}
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:16: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N1.N2.N3.C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                ^
 // CHECK:STDERR:
 class N1.N2.N3.C {}
 
@@ -334,17 +334,17 @@ namespace N;
 fn N.F(x: C);
 
 // TODO: We should ideally only produce one diagnostic here.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:7: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:       ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-7]]:11: error: name used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F(x: C);
 // CHECK:STDERR:           ^
 class C {}
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N.C {}
-// CHECK:STDERR: ^~~~~~~~~~~
+// CHECK:STDERR:         ^
 // CHECK:STDERR:
 class N.C {}
 
@@ -361,9 +361,9 @@ fn F() {
     // CHECK:STDERR:            ^
     var v: A;
 
-    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+4]]:5: note: declared here [NameUseBeforeDeclNote]
+    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+4]]:11: note: declared here [NameUseBeforeDeclNote]
     // CHECK:STDERR:     class A {}
-    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR:           ^
     // CHECK:STDERR:
     class A {}
   }

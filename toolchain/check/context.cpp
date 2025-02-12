@@ -225,14 +225,14 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
 }
 
 auto Context::DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
-                                   SemIR::InstId decl_inst_id) -> void {
+                                   SemIR::LocId decl_name_loc_id) -> void {
   CARBON_CHECK(poisoning_loc_id.has_value(),
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name used before it was declared");
   CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
   emitter_->Build(poisoning_loc_id, NameUseBeforeDecl)
-      .Note(decl_inst_id, NameUseBeforeDeclNote)
+      .Note(decl_name_loc_id, NameUseBeforeDeclNote)
       .Emit();
 }
 

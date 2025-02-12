@@ -110,9 +110,9 @@ impl package Test library "[[@TEST_NAME]]";
 // CHECK:STDERR:         ^~~~~~~
 fn F(i: Forward*) {}
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:11: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface Forward {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
 interface Forward {}
 
