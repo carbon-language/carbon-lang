@@ -65,7 +65,10 @@ auto NameScope::LookupOrAdd(NameId name_id, InstId inst_id,
 }
 
 auto NameScope::LookupOrPoison(NameId name_id) -> std::optional<EntryId> {
-  CARBON_CHECK(name_id != NameId::SelfType);
+  if (!name_id.AsIdentifierId().has_value()) {
+    return Lookup(name_id);
+  }
+
   auto insert_result = name_map_.Insert(name_id, EntryId(names_.size()));
   if (insert_result.is_inserted()) {
     names_.push_back(

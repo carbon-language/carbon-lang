@@ -158,9 +158,8 @@ class NameScope : public Printable<NameScope> {
 
   // Searches for the given name. If found, including if a poisoned entry is
   // found, returns the corresponding EntryId. Otherwise, returns nullopt and
-  // poisons the name so it can't be declared later.
-  //
-  // This cannot be used to lookup `SelfType`; use `Lookup` instead.
+  // poisons the name so it can't be declared later. Names that are not
+  // identifiers would not be poisoned.
   auto LookupOrPoison(NameId name_id) -> std::optional<EntryId>;
 
   auto extended_scopes() const -> llvm::ArrayRef<InstId> {

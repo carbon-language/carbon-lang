@@ -426,9 +426,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScope& scope,
                                      bool is_being_declared)
     -> SemIR::ScopeLookupResult {
-  if (auto entry_id = is_being_declared || name_id == SemIR::NameId::SelfType
-                          ? scope.Lookup(name_id)
-                          : scope.LookupOrPoison(name_id)) {
+  if (auto entry_id = is_being_declared ? scope.Lookup(name_id)
+                                        : scope.LookupOrPoison(name_id)) {
     auto lookup_result = scope.GetEntry(*entry_id).result;
     if (!lookup_result.is_poisoned()) {
       LoadImportRef(*this, lookup_result.target_inst_id());

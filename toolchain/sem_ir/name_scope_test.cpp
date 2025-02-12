@@ -144,8 +144,9 @@ TEST(NameScope, Lookup) {
   EXPECT_EQ(name_scope.GetEntry(*lookup), entry3);
 
   NameId unknown_name_id(++id);
-  lookup = name_scope.Lookup(unknown_name_id);
-  EXPECT_EQ(lookup, std::nullopt);
+  EXPECT_EQ(name_scope.Lookup(unknown_name_id), std::nullopt);
+  // Check that this is different from LookupOrPoison() - doesn't get poisoned.
+  EXPECT_EQ(name_scope.Lookup(unknown_name_id), std::nullopt);
 }
 
 TEST(NameScope, LookupOrPoison) {
@@ -186,11 +187,15 @@ TEST(NameScope, LookupOrPoison) {
   EXPECT_EQ(name_scope.GetEntry(*lookup), entry3);
 
   NameId unknown_name_id(++id);
-  lookup = name_scope.LookupOrPoison(unknown_name_id);
-  EXPECT_EQ(lookup, std::nullopt);
+  EXPECT_EQ(name_scope.LookupOrPoison(unknown_name_id), std::nullopt);
+  // Check that this is different from Lookup() - does get poisoned.
+  lookup = name_scope.Lookup(unknown_name_id);
+  ASSERT_NE(lookup, std::nullopt);
+  EXPECT_EQ(name_scope.GetEntry(*lookup).result,
+            ScopeLookupResult::MakePoisoned());
 }
 
-TEST(NameScope, LookupOrPoisonSelfType) {
+TEST(NameScope, LookupOrPoisonNotIdentifier) {
   int id = 0;
 
   InstId scope_inst_id(++id);
@@ -198,7 +203,10 @@ TEST(NameScope, LookupOrPoisonSelfType) {
   NameScopeId parent_scope_id(++id);
   NameScope name_scope(scope_inst_id, scope_name_id, parent_scope_id);
 
-  EXPECT_DEATH(name_scope.LookupOrPoison(NameId::SelfType), "SelfType");
+  EXPECT_EQ(name_scope.LookupOrPoison(NameId::SelfType), std::nullopt);
+  // Check that this is different from the identifier use case - doesn't get
+  // poisoned.
+  EXPECT_EQ(name_scope.Lookup(NameId::SelfType), std::nullopt);
 }
 
 TEST(NameScope, LookupOrAdd) {

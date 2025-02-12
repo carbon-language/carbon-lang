@@ -236,7 +236,7 @@ class Context {
   // a lookup for a name being declared, so the name will not be poisoned, but
   // poison will be returned if it's already been looked up.
   //
-  // If `name_id` is `NameId::SelfType`, the name will not be poisoned.
+  // If `name_id` is not an identifier, the name will not be poisoned.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
                               SemIR::NameScope& scope,
