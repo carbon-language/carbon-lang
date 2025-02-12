@@ -90,7 +90,7 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst14, name0: inst15}}
 // CHECK:STDOUT:     name_scope1:     {inst: inst14, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst20}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<none>}
+// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: -1, is_template: 0}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [inst_block5]}
 // CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1}

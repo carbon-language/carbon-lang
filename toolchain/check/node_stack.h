@@ -445,6 +445,7 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
       case Parse::NodeKind::StructTypeLiteralStart:
+      case Parse::NodeKind::TemplateBindingName:
       case Parse::NodeKind::TupleLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
@@ -508,7 +509,6 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
-      case Parse::NodeKind::Template:
       case Parse::NodeKind::TupleLiteralComma:
         return Id::Kind::Invalid;
       default:

@@ -342,7 +342,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
     // TODO: Consider building a hash map for substitutions. We might have a
     // lot of them.
     for (auto [bind_index, replacement_id] : substitutions_) {
-      if (context_.entity_names().Get(entity_name_id).bind_index ==
+      if (context_.entity_names().Get(entity_name_id).bind_index() ==
           bind_index) {
         // This is the binding we're replacing. Perform substitution.
         inst_id = context_.constant_values().GetInstId(replacement_id);

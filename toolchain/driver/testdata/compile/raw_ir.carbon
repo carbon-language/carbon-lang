@@ -25,8 +25,8 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst36}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: comp_time_bind0}
-// CHECK:STDOUT:     entity_name1:    {name: name2, parent_scope: name_scope<none>, index: comp_time_bind<none>}
+// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name1:    {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_slot_pattern: inst31, body: [inst_block16]}
 // CHECK:STDOUT:   classes:         {}

@@ -15,7 +15,8 @@ namespace Carbon::SemIR {
 struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
-        << ", index: " << bind_index << "}";
+        << ", index: " << bind_index_value << ", is_template: " << is_template
+        << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
@@ -23,14 +24,26 @@ struct EntityName : public Printable<EntityName> {
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
+  // The index for a compile-time binding. Invalid for a runtime binding, or
+  // for a symbolic binding, like `.Self`, that does not correspond to a generic
+  // parameter (and therefore has no index).
+  auto bind_index() const -> CompileTimeBindIndex {
+    return CompileTimeBindIndex(bind_index_value);
+  }
+
   // The name.
   NameId name_id;
   // The parent scope.
   NameScopeId parent_scope_id;
-  // The index for a compile-time binding. Invalid for a runtime binding, or
-  // for a symbolic binding, like `.Self`, that does not correspond to a generic
-  // parameter (and therefore has no index).
-  CompileTimeBindIndex bind_index;
+
+  // TODO: The following two fields are only meaningful for a symbolic binding.
+  // Consider splitting them off into a separate type so that we don't store
+  // them for other kinds of `EntityName`.
+
+  // The bind_index() value, unwrapped so it can be stored in a bit-field.
+  int32_t bind_index_value : 31 = CompileTimeBindIndex::None.index;
+  // Whether this binding is a template parameter.
+  bool is_template : 1 = false;
 };
 
 // Hashing for EntityName. See common/hashing.h.

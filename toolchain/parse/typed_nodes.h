@@ -322,12 +322,22 @@ struct VarBindingPattern {
   AnyExprId type;
 };
 
+// A template binding name: `template T`.
+struct TemplateBindingName {
+  static constexpr auto Kind =
+      NodeKind::TemplateBindingName.Define({.child_count = 1});
+
+  Lex::TemplateTokenIndex token;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+};
+
 // `name:! Type`
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, TemplateBindingName>
+      name;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };
@@ -338,17 +348,6 @@ struct Addr {
       {.category = NodeCategory::Pattern, .child_count = 1});
 
   Lex::AddrTokenIndex token;
-  AnyPatternId inner;
-};
-
-// A template binding: `template T:! type`.
-struct Template {
-  static constexpr auto Kind = NodeKind::Template.Define(
-      {.category = NodeCategory::Pattern, .child_count = 1});
-
-  Lex::TemplateTokenIndex token;
-  // This is a CompileTimeBindingPatternId in any valid program.
-  // TODO: Should the parser enforce that?
   AnyPatternId inner;
 };
 

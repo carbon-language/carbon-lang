@@ -1862,7 +1862,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // argument of that specific, its constant value is the corresponding
       // argument value.
       if (auto value =
-              eval_context.GetCompileTimeBindValue(bind_name.bind_index);
+              eval_context.GetCompileTimeBindValue(bind_name.bind_index());
           value.has_value()) {
         return value;
       }
@@ -1871,6 +1871,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // original, with no equivalent value.
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+      // TODO: Propagate the `is_template` flag into the phase.
       return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
     }
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
@@ -1885,10 +1886,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         // argument of that specific, its constant value is the corresponding
         // argument value.
         if (auto value =
-                eval_context.GetCompileTimeBindValue(bind_name.bind_index);
+                eval_context.GetCompileTimeBindValue(bind_name.bind_index());
             value.has_value()) {
           return value;
         }
+        // TODO: Propagate the `is_template` flag into the phase.
         phase = Phase::Symbolic;
       }
       // The constant form of a symbolic binding is an idealized form of the

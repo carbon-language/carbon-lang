@@ -179,9 +179,7 @@ static auto CopySingleNameScopeFromImportIR(
   // Produce the namespace for the entry.
   auto make_import_id = [&]() {
     auto entity_name_id = context.entity_names().Add(
-        {.name_id = name_id,
-         .parent_scope_id = parent_scope_id,
-         .bind_index = SemIR::CompileTimeBindIndex::None});
+        {.name_id = name_id, .parent_scope_id = parent_scope_id});
     auto import_ir_inst_id = context.import_ir_insts().Add(
         {.ir_id = ir_id, .inst_id = import_inst_id});
     auto inst_id = context.AddInstInNoBlock(
@@ -273,9 +271,7 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
   auto& entry = parent_scope.GetEntry(entry_id);
   if (inserted) {
     auto entity_name_id = context.entity_names().Add(
-        {.name_id = name_id,
-         .parent_scope_id = parent_scope_id,
-         .bind_index = SemIR::CompileTimeBindIndex::None});
+        {.name_id = name_id, .parent_scope_id = parent_scope_id});
     entry.result = SemIR::ScopeLookupResult::MakeFound(
         AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
                      entity_name_id),
@@ -313,9 +309,7 @@ static auto AddScopedImportRef(Context& context,
                                SemIR::AccessKind access_kind) -> SemIR::InstId {
   // Add an ImportRef for other instructions.
   auto impl_entity_name_id = context.entity_names().Add(
-      {.name_id = name_id,
-       .parent_scope_id = parent_scope_id,
-       .bind_index = SemIR::CompileTimeBindIndex::None});
+      {.name_id = name_id, .parent_scope_id = parent_scope_id});
   auto import_ref_id = AddImportRef(context, import_inst, impl_entity_name_id);
   parent_scope.AddRequired({.name_id = name_id,
                             .result = SemIR::ScopeLookupResult::MakeFound(

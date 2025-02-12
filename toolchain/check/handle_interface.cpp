@@ -172,7 +172,8 @@ auto HandleParseNode(Context& context,
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::SelfType,
        .parent_scope_id = interface_info.scope_id,
-       .bind_index = context.scope_stack().AddCompileTimeBinding()});
+       .bind_index_value = context.scope_stack().AddCompileTimeBinding().index,
+       .is_template = false});
   interface_info.self_param_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,

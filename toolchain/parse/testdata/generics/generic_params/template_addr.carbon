@@ -8,7 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/generic_params/template_addr.carbon
 
+// CHECK:STDERR: template_addr.carbon:[[@LINE+4]]:17: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fn foo(template addr a:! i32);
+// CHECK:STDERR:                 ^~~~
+// CHECK:STDERR:
 fn foo(template addr a:! i32);
+
+fn bar(addr template b:! i32);
 
 // CHECK:STDOUT: - filename: template_addr.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -16,11 +22,19 @@ fn foo(template addr a:! i32);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'Addr', text: 'addr', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'Template', text: 'template', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'addr', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'addr', has_error: yes},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'template', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'bar'},
+// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
+// CHECK:STDOUT:             {kind: 'TemplateBindingName', text: 'template', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'Addr', text: 'addr', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
