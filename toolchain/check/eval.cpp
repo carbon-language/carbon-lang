@@ -2119,6 +2119,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
+    case SemIR::ImportCppDecl::Kind:
     case SemIR::ImportDecl::Kind:
     case SemIR::NameBindingDecl::Kind:
     case SemIR::OutParam::Kind:

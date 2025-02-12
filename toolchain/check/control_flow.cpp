@@ -54,7 +54,7 @@ auto AddConvergenceBlockAndPush(Context& context, Parse::NodeId node_id,
     context.inst_block_stack().Pop();
   }
   context.inst_block_stack().Push(new_block_id);
-  context.AddToRegion(new_block_id, node_id);
+  context.region_stack().AddToRegion(new_block_id, node_id);
 }
 
 auto AddConvergenceBlockWithArgAndPush(
@@ -74,7 +74,7 @@ auto AddConvergenceBlockWithArgAndPush(
     context.inst_block_stack().Pop();
   }
   context.inst_block_stack().Push(new_block_id);
-  context.AddToRegion(new_block_id, node_id);
+  context.region_stack().AddToRegion(new_block_id, node_id);
 
   // Acquire the result value.
   SemIR::TypeId result_type_id =

@@ -846,6 +846,12 @@ class FormatterImpl {
     }
   }
 
+  // Format ImportCppDecl name.
+  auto FormatInstLHS(InstId inst_id, ImportCppDecl /*inst*/) -> void {
+    FormatName(inst_id);
+    out_ << " = ";
+  }
+
   // Format ImportDecl with its name.
   auto FormatInstLHS(InstId inst_id, ImportDecl /*inst*/) -> void {
     FormatName(inst_id);
@@ -1076,6 +1082,20 @@ class FormatterImpl {
     llvm::SmallVector<char, 16> buffer;
     sem_ir_->floats().Get(inst.float_id).toString(buffer);
     out_ << " " << buffer;
+  }
+
+  // Format the metadata in File for `import Cpp`.
+  auto FormatInstRHS(ImportCppDecl /*inst*/) -> void {
+    out_ << " ";
+    OpenBrace();
+    for (ImportCpp import_cpp : sem_ir_->import_cpps().array_ref()) {
+      Indent();
+      out_ << "import Cpp \""
+           << FormatEscaped(
+                  sem_ir_->string_literal_values().Get(import_cpp.library_id))
+           << "\"\n";
+    }
+    CloseBrace();
   }
 
   auto FormatImportRefRHS(ImportIRInstId import_ir_inst_id,

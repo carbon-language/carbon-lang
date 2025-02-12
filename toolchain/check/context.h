@@ -17,6 +17,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
+#include "toolchain/check/region_stack.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
@@ -293,32 +294,22 @@ class Context {
     return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
   }
 
-  // Mark the start of a new single-entry region with the given entry block.
-  auto PushRegion(SemIR::InstBlockId entry_block_id) -> void {
-    region_stack_.PushArray();
-    region_stack_.AppendToTop(entry_block_id);
-  }
-
-  // Add `block_id` to the most recently pushed single-entry region. To preserve
-  // the single-entry property, `block_id` must not be directly reachable from
-  // any block outside the region. To ensure the region's blocks are in lexical
-  // order, this should be called when the first parse node associated with this
-  // block is handled, or as close as possible.
-  auto AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id) -> void;
-
-  // Complete creation of the most recently pushed single-entry region, and
-  // return a list of its blocks.
-  auto PopRegion() -> llvm::SmallVector<SemIR::InstBlockId> {
-    llvm::SmallVector<SemIR::InstBlockId> result(region_stack_.PeekArray());
-    region_stack_.PopArray();
-    return result;
-  }
-
-  // Returns the type ID for a constant of type `type`.
+  // Returns the type ID for a constant that is a type value, i.e. it is a value
+  // of type `TypeType`.
+  //
+  // Facet values are of the same typishness as types, but are not themselves
+  // types, so they can not be passed here. They should be converted to a type
+  // through an `as type` conversion, that is, to a value of type `TypeType`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
-  // Returns the type ID for an instruction whose constant value is of type
-  // `type`.
+  // Returns the type ID for an instruction whose constant value is a type
+  // value, i.e. it is a value of type `TypeType`.
+  //
+  // Instructions whose values are facet values (see `FacetValue`) produce a
+  // value of the same typishness as types, but which are themselves not types,
+  // so they can not be passed here. They should be converted to a type through
+  // an `as type` conversion, such as to a `FacetAccessType` instruction whose
+  // value is of type `TypeType`.
   auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
     return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
   }
@@ -399,11 +390,6 @@ class Context {
 
   auto Finalize() -> void;
 
-  // Returns the imported IR ID for an IR, or `None` if not imported.
-  auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
-    return check_ir_map_[sem_ir.check_ir_id().index];
-  }
-
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -477,6 +463,10 @@ class Context {
   }
 
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
+  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+    return check_ir_map_;
+  }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
@@ -595,6 +585,8 @@ class Context {
   auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
     return var_storage_map_;
   }
+
+  auto region_stack() -> RegionStack& { return region_stack_; }
 
   auto full_pattern_stack() -> FullPatternStack& {
     return scope_stack_.full_pattern_stack();
@@ -722,7 +714,7 @@ class Context {
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
   // Stack of single-entry regions being built.
-  ArrayStack<SemIR::InstBlockId> region_stack_;
+  RegionStack region_stack_;
 };
 
 }  // namespace Carbon::Check

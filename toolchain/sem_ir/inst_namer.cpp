@@ -705,6 +705,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         add_inst_name(out.TakeStr());
         continue;
       }
+      case ImportCppDecl::Kind: {
+        add_inst_name("Cpp.import_cpp");
+        continue;
+      }
       case CARBON_KIND(ImportDecl inst): {
         if (inst.package_id.has_value()) {
           add_inst_name_id(inst.package_id, ".import");
