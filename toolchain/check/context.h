@@ -404,12 +404,6 @@ class Context {
     return check_ir_map_[sem_ir.check_ir_id().index];
   }
 
-  // True if the current file is an impl file.
-  auto IsImplFile() -> bool {
-    return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
-           nullptr;
-  }
-
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 

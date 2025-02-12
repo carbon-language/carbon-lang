@@ -11,6 +11,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/literal.h"
@@ -280,7 +281,7 @@ static auto BuildFunctionDecl(Context& context,
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.has_value()) {
-    if (function_info.is_extern && context.IsImplFile()) {
+    if (function_info.is_extern && context.sem_ir().is_impl()) {
       DiagnoseExternRequiresDeclInApiFile(context, node_id);
     }
     function_info.generic_id = BuildGenericDecl(context, decl_id);
@@ -343,7 +344,7 @@ static auto BuildFunctionDecl(Context& context,
     }
   }
 
-  if (!is_definition && context.IsImplFile() && !is_extern) {
+  if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required().push_back(decl_id);
   }
 
