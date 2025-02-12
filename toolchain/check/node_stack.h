@@ -409,7 +409,6 @@ class NodeStack {
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
-      case Parse::NodeKind::ImplForall:
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::TuplePattern:
       case Parse::NodeKind::WhileCondition:
@@ -466,6 +465,7 @@ class NodeStack {
       case Parse::NodeKind::ExportIntroducer:
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
+      case Parse::NodeKind::Forall:
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::ForIn:

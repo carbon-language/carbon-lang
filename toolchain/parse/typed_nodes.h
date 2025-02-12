@@ -1333,11 +1333,12 @@ struct InterfaceDefinition {
 // `impl`
 using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer, Lex::ImplTokenIndex>;
 
+// `forall`
+using Forall = LeafNode<NodeKind::Forall, Lex::ForallTokenIndex>;
+
 // `forall [...]`
 struct ImplForall {
-  static constexpr auto Kind = NodeKind::ImplForall.Define({.child_count = 1});
-
-  Lex::ForallTokenIndex token;
+  ForallId forall;
   ImplicitParamListId params;
 };
 
@@ -1363,7 +1364,7 @@ struct ImplSignature {
 
   ImplIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<ImplForallId> forall;
+  std::optional<ImplForall> forall;
   AnyImplAsId as;
   AnyExprId interface;
   TokenKind token;
