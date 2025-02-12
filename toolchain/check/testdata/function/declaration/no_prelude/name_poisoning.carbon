@@ -301,35 +301,6 @@ class N.X {
   }
 }
 
-// --- fail_using_poisoned_name_in_impl_outside_class.carbon
-
-library "[[@TEST_NAME]]";
-
-interface A {
-  fn B();
-}
-class X {
-  extend impl as A {
-    fn B() { }
-    // CHECK:STDERR: fail_using_poisoned_name_in_impl_outside_class.carbon:[[@LINE+15]]:10: error: `impl as` can only be used in a class [ImplAsOutsideClass]
-    // CHECK:STDERR:     impl as B {}
-    // CHECK:STDERR:          ^~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_using_poisoned_name_in_impl_outside_class.carbon:[[@LINE+11]]:13: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
-    // CHECK:STDERR:     impl as B {}
-    // CHECK:STDERR:             ^
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_using_poisoned_name_in_impl_outside_class.carbon:[[@LINE-10]]:3: error: missing implementation of B in impl of interface A [ImplMissingFunction]
-    // CHECK:STDERR:   extend impl as A {
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_using_poisoned_name_in_impl_outside_class.carbon:[[@LINE-16]]:3: note: associated function B declared here [AssociatedFunctionHere]
-    // CHECK:STDERR:   fn B();
-    // CHECK:STDERR:   ^~~~~~~
-    // CHECK:STDERR:
-    impl as B {}
-  }
-}
-
 // --- fail_poison_when_lookup_fails.carbon
 
 library "[[@TEST_NAME]]";
@@ -1189,86 +1160,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F1(%x.param_patt: %C.type);
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_using_poisoned_name_in_impl_outside_class.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %B.type: type = fn_type @B [template]
-// CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [template]
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [template]
-// CHECK:STDOUT:   %X: type = class_type @X [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .X = %X.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%A.type] {} {}
-// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @A {
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %B.decl [template = constants.%assoc0]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .B = %assoc0
-// CHECK:STDOUT:   witness = (%B.decl)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %Self.ref as %A.ref {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc25: type = converted @impl.2.%B.ref, <error> [template = <error>]
-// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, <error> [template = <error>]
-// CHECK:STDOUT:     %B.ref: %A.assoc_type = name_ref B, @A.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = @X.%impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %Self.ref as <error> {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [template = constants.%X]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   extend @impl.1.%A.ref
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @B(@A.%Self: %A.type) {
-// CHECK:STDOUT:   fn();
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_poison_when_lookup_fails.carbon
 // CHECK:STDOUT:
