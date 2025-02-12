@@ -411,7 +411,7 @@ class Context {
 
   // Like `RequireCompleteType`, but also require the facet type to be fully
   // defined with known members. If it uses some incomplete interface, diagnoses
-  // the problem and returns Invalid.
+  // the problem and returns None.
   enum FacetTypeContext { FacetTypeMemberAccess, FacetTypeImpl };
   auto RequireCompleteFacetType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                                 const SemIR::FacetType& facet_type,
