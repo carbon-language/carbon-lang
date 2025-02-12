@@ -54,8 +54,11 @@ cc_library(
     hdrs = ["handle.h"],
     deps = [
         ":context",
+        "//common:check",
         "//toolchain/base:shared_value_stores",
         "//toolchain/lex",
+        "//toolchain/lex:token_index",
+        "//toolchain/lex:token_kind",
         "//toolchain/parse",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",

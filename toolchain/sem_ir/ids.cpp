@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/ids.h"
 
+#include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -86,24 +87,40 @@ auto NameId::ForIdentifier(IdentifierId id) -> NameId {
   }
 }
 
+auto NameId::ForPackageName(PackageNameId id) -> NameId {
+  if (auto identifier_id = id.AsIdentifierId(); identifier_id.has_value()) {
+    return ForIdentifier(identifier_id);
+  } else if (id == PackageNameId::Core) {
+    return NameId::Core;
+  } else if (!id.has_value()) {
+    return NameId::None;
+  } else {
+    CARBON_FATAL("Unexpected package ID {0}", id);
+  }
+}
+
 auto NameId::Print(llvm::raw_ostream& out) const -> void {
   if (!has_value() || index >= 0) {
     IdBase::Print(out);
     return;
   }
   out << Label << "(";
-  if (*this == SelfValue) {
-    out << "SelfValue";
-  } else if (*this == SelfType) {
-    out << "SelfType";
+  if (*this == Base) {
+    out << "Base";
+  } else if (*this == Core) {
+    out << "Core";
+  } else if (*this == PackageNamespace) {
+    out << "PackageNamespace";
   } else if (*this == PeriodSelf) {
     out << "PeriodSelf";
   } else if (*this == ReturnSlot) {
     out << "ReturnSlot";
-  } else if (*this == PackageNamespace) {
-    out << "PackageNamespace";
-  } else if (*this == Base) {
-    out << "Base";
+  } else if (*this == SelfType) {
+    out << "SelfType";
+  } else if (*this == SelfValue) {
+    out << "SelfValue";
+  } else if (*this == Vptr) {
+    out << "Vptr";
   } else {
     CARBON_FATAL("Unknown index {0}", index);
     IdBase::Print(out);

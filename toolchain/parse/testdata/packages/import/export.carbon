@@ -69,11 +69,11 @@ export import library "lib";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Bar'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Bar'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -81,7 +81,7 @@ export import library "lib";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
@@ -94,7 +94,7 @@ export import library "lib";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
@@ -107,7 +107,7 @@ export import library "lib";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
@@ -137,7 +137,7 @@ export import library "lib";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},

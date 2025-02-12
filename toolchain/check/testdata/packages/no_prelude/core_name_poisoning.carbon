@@ -10,19 +10,12 @@
 
 // --- fail_implicitly_poison_core.carbon
 
-// CHECK:STDERR: fail_implicitly_poison_core.carbon:[[@LINE+7]]:9: error: `Core.Bool` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_implicitly_poison_core.carbon:[[@LINE+4]]:9: error: `Core.Bool` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn F(x: bool);
 // CHECK:STDERR:         ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_implicitly_poison_core.carbon:[[@LINE+3]]:9: error: name used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: fn F(x: bool);
-// CHECK:STDERR:         ^~~~
 fn F(x: bool);
 
-// CHECK:STDERR: fail_implicitly_poison_core.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: class r#Core {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR:
 class r#Core {}
 
 // CHECK:STDOUT: --- fail_implicitly_poison_core.carbon
@@ -38,6 +31,7 @@ class r#Core {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .r#Core = %Core.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x

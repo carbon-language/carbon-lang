@@ -2,13 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/base/shared_value_stores.h"
+#include <optional>
+
+#include "common/check.h"
 #include "toolchain/language_server/handle.h"
-#include "toolchain/lex/lex.h"
+#include "toolchain/lex/token_index.h"
+#include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/parse/parse.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LanguageServer {
 
@@ -34,6 +36,45 @@ static auto GetSymbolIdentifier(const Parse::TreeAndSubtrees& tree_and_subtrees,
   }
   return std::nullopt;
 }
+
+// Helper class to collect all symbols during traversal of AST.
+// Symbols are "open" when their signature has been declared but their body is
+// still ongoing. New symbols are added to last open symbol, or top level list
+// if no symbols are open.
+class SymbolStore {
+ public:
+  // Adds a symbol with no children.
+  auto AddSymbol(clang::clangd::DocumentSymbol symbol) -> void {
+    if (open_symbols_.empty()) {
+      top_level_symbols_.push_back(std::move(symbol));
+    } else {
+      open_symbols_.back().children.push_back(symbol);
+    }
+  }
+
+  // Starts a symbol potentially with children.
+  auto StartSymbol(clang::clangd::DocumentSymbol symbol) -> void {
+    open_symbols_.push_back(std::move(symbol));
+  }
+
+  auto HasOpenSymbol() const -> bool { return !open_symbols_.empty(); }
+
+  // Completes a symbol, appending to parent list.
+  auto EndSymbol() -> void {
+    CARBON_CHECK(HasOpenSymbol());
+    AddSymbol(open_symbols_.pop_back_val());
+  }
+
+  // Returns final top level symbols.
+  auto Collect() -> std::vector<clang::clangd::DocumentSymbol> {
+    CARBON_CHECK(!HasOpenSymbol());
+    return std::move(top_level_symbols_);
+  }
+
+ private:
+  std::vector<clang::clangd::DocumentSymbol> top_level_symbols_;
+  llvm::SmallVector<clang::clangd::DocumentSymbol> open_symbols_;
+};
 
 // Constructs a Range from a closed interval of tokens [start, end].
 static auto GetTokenRange(const Lex::TokenizedBuffer& tokens,
@@ -85,11 +126,16 @@ auto HandleDocumentSymbol(
   const auto& tree = tree_and_subtrees.tree();
   const auto& tokens = tree.tokens();
 
-  std::vector<clang::clangd::DocumentSymbol> result;
+  SymbolStore symbols;
   for (const auto& node_id : tree.postorder()) {
+    auto node_kind = tree.node_kind(node_id);
     clang::clangd::SymbolKind symbol_kind;
-    switch (tree.node_kind(node_id)) {
+    bool is_leaf = false;
+    switch (node_kind) {
       case Parse::NodeKind::FunctionDecl:
+        is_leaf = true;
+        symbol_kind = clang::clangd::SymbolKind::Function;
+        break;
       case Parse::NodeKind::FunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;
@@ -100,9 +146,26 @@ auto HandleDocumentSymbol(
       case Parse::NodeKind::NamedConstraintDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Interface;
         break;
+      case Parse::NodeKind::ClassDecl:
+        is_leaf = true;
+        symbol_kind = clang::clangd::SymbolKind::Class;
+        break;
       case Parse::NodeKind::ClassDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Class;
         break;
+
+      case Parse::NodeKind::FunctionDefinition:
+      case Parse::NodeKind::NamedConstraintDefinition:
+      case Parse::NodeKind::InterfaceDefinition:
+      case Parse::NodeKind::ClassDefinition: {
+        if (symbols.HasOpenSymbol()) {
+          // Symbols definition has completed, pop it from stack and add to
+          // parent/root.
+          symbols.EndSymbol();
+        }
+        continue;
+      }
+
       default:
         continue;
     }
@@ -115,10 +178,15 @@ auto HandleDocumentSymbol(
           .selectionRange = GetTokenRange(tokens, *identifier, *identifier),
       };
 
-      result.push_back(symbol);
+      if (is_leaf) {
+        symbols.AddSymbol(std::move(symbol));
+      } else {
+        symbols.StartSymbol(std::move(symbol));
+      }
     }
   }
-  on_done(result);
+
+  on_done(symbols.Collect());
 }
 
 }  // namespace Carbon::LanguageServer

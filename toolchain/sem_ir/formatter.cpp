@@ -1365,10 +1365,11 @@ class FormatterImpl {
     const auto& import_ir = *sem_ir_->import_irs().Get(id).sem_ir;
     CARBON_CHECK(import_ir.library_id().has_value());
 
+    auto package_id = import_ir.package_id();
     llvm::StringRef package_name =
-        import_ir.package_id().has_value()
-            ? import_ir.identifiers().Get(import_ir.package_id())
-            : "Main";
+        package_id.AsIdentifierId().has_value()
+            ? import_ir.identifiers().Get(package_id.AsIdentifierId())
+            : package_id.AsSpecialName();
     llvm::StringRef library_name =
         (import_ir.library_id() != LibraryNameId::Default)
             ? import_ir.string_literal_values().Get(

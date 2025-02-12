@@ -27,11 +27,11 @@ struct PackageImports {
 
   // Use the constructor so that the SmallVector is only constructed
   // as-needed.
-  explicit PackageImports(IdentifierId package_id, Parse::ImportDeclId node_id)
+  explicit PackageImports(PackageNameId package_id, Parse::ImportDeclId node_id)
       : package_id(package_id), node_id(node_id) {}
 
   // The identifier of the imported package.
-  IdentifierId package_id;
+  PackageNameId package_id;
   // The first `import` declaration in the file, which declared the package's
   // identifier (even if the import failed). Used for associating diagnostics
   // not specific to a single import.
@@ -91,7 +91,7 @@ struct UnitAndImports {
   llvm::SmallVector<PackageImports> package_imports;
 
   // A map of the package names to the outgoing imports above.
-  Map<IdentifierId, int32_t> package_imports_map;
+  Map<PackageNameId, int32_t> package_imports_map;
 
   // List of the `import Cpp` imports.
   llvm::SmallVector<Parse::Tree::PackagingNames> cpp_imports;

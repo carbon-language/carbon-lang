@@ -91,9 +91,7 @@ auto NameScopeStore::IsCorePackage(NameScopeId scope_id) const -> bool {
   if (!IsPackage(scope_id)) {
     return false;
   }
-  auto scope_name =
-      file_->names().GetAsStringIfIdentifier(Get(scope_id).name_id());
-  return scope_name == "Core";
+  return Get(scope_id).name_id() == NameId::Core;
 }
 
 }  // namespace Carbon::SemIR

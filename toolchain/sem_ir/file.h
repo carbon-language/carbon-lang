@@ -94,7 +94,7 @@ class File : public Printable<File> {
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
-  auto package_id() const -> IdentifierId { return package_id_; }
+  auto package_id() const -> PackageNameId { return package_id_; }
   auto library_id() const -> SemIR::LibraryNameId { return library_id_; }
 
   // Directly expose SharedValueStores members.
@@ -226,7 +226,7 @@ class File : public Printable<File> {
   CheckIRId check_ir_id_;
 
   // The file's package.
-  IdentifierId package_id_ = IdentifierId::None;
+  PackageNameId package_id_ = PackageNameId::None;
 
   // The file's library.
   LibraryNameId library_id_ = LibraryNameId::None;

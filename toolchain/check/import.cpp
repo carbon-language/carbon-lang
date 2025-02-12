@@ -450,13 +450,13 @@ auto ImportLibrariesFromCurrentPackage(
 auto ImportLibrariesFromOtherPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      SemIR::InstId import_decl_id,
-                                     IdentifierId package_id,
+                                     PackageNameId package_id,
                                      llvm::ArrayRef<SemIR::ImportIR> import_irs,
                                      bool has_load_error) -> void {
   CARBON_CHECK(has_load_error || !import_irs.empty(),
                "There should be either a load error or at least one IR.");
 
-  auto name_id = SemIR::NameId::ForIdentifier(package_id);
+  auto name_id = SemIR::NameId::ForPackageName(package_id);
 
   NamespaceResult result = AddNamespace(
       context, namespace_type_id, name_id, SemIR::NameScopeId::Package,

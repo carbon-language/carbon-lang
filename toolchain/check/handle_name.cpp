@@ -244,4 +244,12 @@ auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::CoreNameExprId node_id) -> bool {
+  // TODO: Unqualified lookup will never find anything; perform lookup directly
+  // into file scope.
+  context.node_stack().Push(
+      node_id, HandleNameAsExpr(context, node_id, SemIR::NameId::Core));
+  return true;
+}
+
 }  // namespace Carbon::Check

@@ -463,18 +463,20 @@ struct NameId : public IdBase<NameId> {
 
   // An ID with no value.
   static const NameId None;
-  // The name of `self`.
-  static const NameId SelfValue;
-  // The name of `Self`.
-  static const NameId SelfType;
+  // The name of `base`.
+  static const NameId Base;
+  // The name of the package `Core`.
+  static const NameId Core;
+  // The name of `package`.
+  static const NameId PackageNamespace;
   // The name of `.Self`.
   static const NameId PeriodSelf;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
-  // The name of `package`.
-  static const NameId PackageNamespace;
-  // The name of `base`.
-  static const NameId Base;
+  // The name of `Self`.
+  static const NameId SelfType;
+  // The name of `self`.
+  static const NameId SelfValue;
   // The name of `vptr`.
   static const NameId Vptr;
 
@@ -484,6 +486,10 @@ struct NameId : public IdBase<NameId> {
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId;
+
+  // Returns the NameId corresponding to a particular PackageNameId. This is the
+  // name that is declared when the package is imported.
+  static auto ForPackageName(PackageNameId id) -> NameId;
 
   using IdBase::IdBase;
 
@@ -497,14 +503,15 @@ struct NameId : public IdBase<NameId> {
 };
 
 constexpr NameId NameId::None = NameId(NoneIndex);
-constexpr NameId NameId::SelfValue = NameId(NoneIndex - 1);
-constexpr NameId NameId::SelfType = NameId(NoneIndex - 2);
-constexpr NameId NameId::PeriodSelf = NameId(NoneIndex - 3);
-constexpr NameId NameId::ReturnSlot = NameId(NoneIndex - 4);
-constexpr NameId NameId::PackageNamespace = NameId(NoneIndex - 5);
-constexpr NameId NameId::Base = NameId(NoneIndex - 6);
-constexpr NameId NameId::Vptr = NameId(NoneIndex - 7);
-constexpr int NameId::NonIndexValueCount = 8;
+constexpr NameId NameId::Base = NameId(NoneIndex - 1);
+constexpr NameId NameId::Core = NameId(NoneIndex - 2);
+constexpr NameId NameId::PackageNamespace = NameId(NoneIndex - 3);
+constexpr NameId NameId::PeriodSelf = NameId(NoneIndex - 4);
+constexpr NameId NameId::ReturnSlot = NameId(NoneIndex - 5);
+constexpr NameId NameId::SelfType = NameId(NoneIndex - 6);
+constexpr NameId NameId::SelfValue = NameId(NoneIndex - 7);
+constexpr NameId NameId::Vptr = NameId(NoneIndex - 8);
+constexpr int NameId::NonIndexValueCount = 9;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Vptr.index);
 
