@@ -69,21 +69,21 @@ var or_val: bool = true or true;
 // CHECK:STDOUT: --- fail_and_or_not_in_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %true: bool = bool_literal true [template]
-// CHECK:STDOUT:   %false: bool = bool_literal false [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
+// CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .Float = %Core.Float
@@ -93,7 +93,7 @@ var or_val: bool = true or true;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .and_ = %and_
@@ -102,17 +102,17 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:     .or_val = %or_val
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %.loc12_9.1: type = splice_block %.loc12_9.3 [template = bool] {
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc12_9.2: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:       %.loc12_9.3: type = converted %bool.make_type, %.loc12_9.2 [template = bool]
+// CHECK:STDOUT:     %.loc12_9.1: type = splice_block %.loc12_9.3 [concrete = bool] {
+// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc12_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc12_9.3: type = converted %bool.make_type, %.loc12_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
@@ -129,10 +129,10 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:     %.loc41_1: bool = var_pattern %and_val.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %and_val.var: ref bool = var and_val
-// CHECK:STDOUT:   %.loc41_14.1: type = splice_block %.loc41_14.3 [template = bool] {
-// CHECK:STDOUT:     %bool.make_type.loc41: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc41_14.2: type = value_of_initializer %bool.make_type.loc41 [template = bool]
-// CHECK:STDOUT:     %.loc41_14.3: type = converted %bool.make_type.loc41, %.loc41_14.2 [template = bool]
+// CHECK:STDOUT:   %.loc41_14.1: type = splice_block %.loc41_14.3 [concrete = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc41: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc41_14.2: type = value_of_initializer %bool.make_type.loc41 [concrete = bool]
+// CHECK:STDOUT:     %.loc41_14.3: type = converted %bool.make_type.loc41, %.loc41_14.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %and_val: ref bool = bind_name and_val, %and_val.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -146,10 +146,10 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:     %.loc67_1: bool = var_pattern %or_val.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %or_val.var: ref bool = var or_val
-// CHECK:STDOUT:   %.loc67_13.1: type = splice_block %.loc67_13.3 [template = bool] {
-// CHECK:STDOUT:     %bool.make_type.loc67: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc67_13.2: type = value_of_initializer %bool.make_type.loc67 [template = bool]
-// CHECK:STDOUT:     %.loc67_13.3: type = converted %bool.make_type.loc67, %.loc67_13.2 [template = bool]
+// CHECK:STDOUT:   %.loc67_13.1: type = splice_block %.loc67_13.3 [concrete = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc67: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc67_13.2: type = value_of_initializer %bool.make_type.loc67 [concrete = bool]
+// CHECK:STDOUT:     %.loc67_13.3: type = converted %bool.make_type.loc67, %.loc67_13.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %or_val: ref bool = bind_name or_val, %or_val.var
 // CHECK:STDOUT: }
@@ -160,15 +160,15 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   br !if.expr.result(%i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
-// CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:   %.loc13_24.2: type = converted %float.make_type, %.loc13_24.1 [template = f64]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:   %.loc13_24.2: type = converted %float.make_type, %.loc13_24.1 [concrete = f64]
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
@@ -178,8 +178,8 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
-// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   if %true br !and.rhs else br !and.result(%false)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

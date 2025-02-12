@@ -45,11 +45,11 @@ abstract var e: ();
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .b [protected] = %b
 // CHECK:STDOUT:     .c [private] = %c
 // CHECK:STDOUT:     .d [protected] = %d
@@ -60,9 +60,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc15_11: %empty_tuple.type = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
-// CHECK:STDOUT:   %.loc15_19.1: type = splice_block %.loc15_19.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:   %.loc15_19.1: type = splice_block %.loc15_19.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc15_19.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_19.3: type = converted %.loc15_19.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_19.3: type = converted %.loc15_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -70,9 +70,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc24_19: %empty_tuple.type = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
-// CHECK:STDOUT:   %.loc24_27.1: type = splice_block %.loc24_27.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:   %.loc24_27.1: type = splice_block %.loc24_27.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc24_27.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc24_27.3: type = converted %.loc24_27.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc24_27.3: type = converted %.loc24_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -80,9 +80,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc37_21: %empty_tuple.type = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
-// CHECK:STDOUT:   %.loc37_29.1: type = splice_block %.loc37_29.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:   %.loc37_29.1: type = splice_block %.loc37_29.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc37_29.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc37_29.3: type = converted %.loc37_29.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc37_29.3: type = converted %.loc37_29.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -90,9 +90,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc43_10: %empty_tuple.type = var_pattern %e.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
-// CHECK:STDOUT:   %.loc43_18.1: type = splice_block %.loc43_18.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:   %.loc43_18.1: type = splice_block %.loc43_18.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc43_18.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc43_18.3: type = converted %.loc43_18.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc43_18.3: type = converted %.loc43_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }

@@ -28,33 +28,33 @@ fn Test() {
 // CHECK:STDOUT: --- fail_address_of_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
-// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
+// CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Test = %Test.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {} {}
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [concrete = constants.%Test] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc16: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %addr.loc16: <error> = addr_of %undeclared.ref.loc16 [template = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc25: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %addr.loc25_5: <error> = addr_of %undeclared.ref.loc25 [template = <error>]
-// CHECK:STDOUT:   %addr.loc25_3: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc16: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc16: <error> = addr_of %undeclared.ref.loc16 [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc25: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc25_5: <error> = addr_of %undeclared.ref.loc25 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc25_3: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

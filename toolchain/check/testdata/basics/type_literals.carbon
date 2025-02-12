@@ -129,16 +129,16 @@ var test_f128: f128;
 // CHECK:STDOUT: --- iN.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template]
-// CHECK:STDOUT:   %i8: type = class_type @Int, @Int(%int_8) [template]
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template]
-// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [template]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [template]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
+// CHECK:STDOUT:   %i8: type = class_type @Int, @Int(%int_8) [concrete]
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -146,7 +146,7 @@ var test_f128: f128;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .test_i8 = %test_i8
 // CHECK:STDOUT:     .test_i16 = %test_i16
@@ -158,9 +158,9 @@ var test_f128: f128;
 // CHECK:STDOUT:     %.loc3_1: %i8 = var_pattern %test_i8.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i8.var: ref %i8 = var test_i8
-// CHECK:STDOUT:   %.loc3_14: type = splice_block %i8 [template = constants.%i8] {
-// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
-// CHECK:STDOUT:     %i8: type = class_type @Int, @Int(constants.%int_8) [template = constants.%i8]
+// CHECK:STDOUT:   %.loc3_14: type = splice_block %i8 [concrete = constants.%i8] {
+// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
+// CHECK:STDOUT:     %i8: type = class_type @Int, @Int(constants.%int_8) [concrete = constants.%i8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i8: ref %i8 = bind_name test_i8, %test_i8.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -168,9 +168,9 @@ var test_f128: f128;
 // CHECK:STDOUT:     %.loc4_1: %i16 = var_pattern %test_i16.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16.var: ref %i16 = var test_i16
-// CHECK:STDOUT:   %.loc4_15: type = splice_block %i16 [template = constants.%i16] {
-// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
+// CHECK:STDOUT:   %.loc4_15: type = splice_block %i16 [concrete = constants.%i16] {
+// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16: ref %i16 = bind_name test_i16, %test_i16.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -178,9 +178,9 @@ var test_f128: f128;
 // CHECK:STDOUT:     %.loc5_1: %i64 = var_pattern %test_i64.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64.var: ref %i64 = var test_i64
-// CHECK:STDOUT:   %.loc5_15: type = splice_block %i64 [template = constants.%i64] {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
+// CHECK:STDOUT:   %.loc5_15: type = splice_block %i64 [concrete = constants.%i64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64: ref %i64 = bind_name test_i64, %test_i64.var
 // CHECK:STDOUT: }
@@ -195,16 +195,16 @@ var test_f128: f128;
 // CHECK:STDOUT: --- uN.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template]
-// CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [template]
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template]
-// CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(%int_16) [template]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [template]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
+// CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(%int_16) [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .UInt = %Core.UInt
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -212,7 +212,7 @@ var test_f128: f128;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .test_u8 = %test_u8
 // CHECK:STDOUT:     .test_u16 = %test_u16
@@ -224,9 +224,9 @@ var test_f128: f128;
 // CHECK:STDOUT:     %.loc3_1: %u8 = var_pattern %test_u8.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u8.var: ref %u8 = var test_u8
-// CHECK:STDOUT:   %.loc3_14: type = splice_block %u8 [template = constants.%u8] {
-// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
-// CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [template = constants.%u8]
+// CHECK:STDOUT:   %.loc3_14: type = splice_block %u8 [concrete = constants.%u8] {
+// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
+// CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u8: ref %u8 = bind_name test_u8, %test_u8.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -234,9 +234,9 @@ var test_f128: f128;
 // CHECK:STDOUT:     %.loc4_1: %u16 = var_pattern %test_u16.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16.var: ref %u16 = var test_u16
-// CHECK:STDOUT:   %.loc4_15: type = splice_block %u16 [template = constants.%u16] {
-// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
+// CHECK:STDOUT:   %.loc4_15: type = splice_block %u16 [concrete = constants.%u16] {
+// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [concrete = constants.%u16]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16: ref %u16 = bind_name test_u16, %test_u16.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -244,9 +244,9 @@ var test_f128: f128;
 // CHECK:STDOUT:     %.loc5_1: %u64 = var_pattern %test_u64.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64.var: ref %u64 = var test_u64
-// CHECK:STDOUT:   %.loc5_15: type = splice_block %u64 [template = constants.%u64] {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:     %u64: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
+// CHECK:STDOUT:   %.loc5_15: type = splice_block %u64 [concrete = constants.%u64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %u64: type = class_type @UInt, @UInt(constants.%int_64) [concrete = constants.%u64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64: ref %u64 = bind_name test_u64, %test_u64.var
 // CHECK:STDOUT: }

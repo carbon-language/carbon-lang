@@ -94,24 +94,24 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %WrongOrder.type: type = fn_type @WrongOrder [template]
-// CHECK:STDOUT:   %WrongOrder: %WrongOrder.type = struct_value () [template]
-// CHECK:STDOUT:   %DuplicateVirtual.type: type = fn_type @DuplicateVirtual [template]
-// CHECK:STDOUT:   %DuplicateVirtual: %DuplicateVirtual.type = struct_value () [template]
-// CHECK:STDOUT:   %TwoAccess.type: type = fn_type @TwoAccess [template]
-// CHECK:STDOUT:   %TwoAccess: %TwoAccess.type = struct_value () [template]
-// CHECK:STDOUT:   %ModifiersConflict.type: type = fn_type @ModifiersConflict [template]
-// CHECK:STDOUT:   %ModifiersConflict: %ModifiersConflict.type = struct_value () [template]
-// CHECK:STDOUT:   %InvalidModifier.type: type = fn_type @InvalidModifier [template]
-// CHECK:STDOUT:   %InvalidModifier: %InvalidModifier.type = struct_value () [template]
-// CHECK:STDOUT:   %ModifiersConflict2.type: type = fn_type @ModifiersConflict2 [template]
-// CHECK:STDOUT:   %ModifiersConflict2: %ModifiersConflict2.type = struct_value () [template]
-// CHECK:STDOUT:   %ExternOrderAndConflict.type: type = fn_type @ExternOrderAndConflict [template]
-// CHECK:STDOUT:   %ExternOrderAndConflict: %ExternOrderAndConflict.type = struct_value () [template]
+// CHECK:STDOUT:   %WrongOrder.type: type = fn_type @WrongOrder [concrete]
+// CHECK:STDOUT:   %WrongOrder: %WrongOrder.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DuplicateVirtual.type: type = fn_type @DuplicateVirtual [concrete]
+// CHECK:STDOUT:   %DuplicateVirtual: %DuplicateVirtual.type = struct_value () [concrete]
+// CHECK:STDOUT:   %TwoAccess.type: type = fn_type @TwoAccess [concrete]
+// CHECK:STDOUT:   %TwoAccess: %TwoAccess.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ModifiersConflict.type: type = fn_type @ModifiersConflict [concrete]
+// CHECK:STDOUT:   %ModifiersConflict: %ModifiersConflict.type = struct_value () [concrete]
+// CHECK:STDOUT:   %InvalidModifier.type: type = fn_type @InvalidModifier [concrete]
+// CHECK:STDOUT:   %InvalidModifier: %InvalidModifier.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ModifiersConflict2.type: type = fn_type @ModifiersConflict2 [concrete]
+// CHECK:STDOUT:   %ModifiersConflict2: %ModifiersConflict2.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ExternOrderAndConflict.type: type = fn_type @ExternOrderAndConflict [concrete]
+// CHECK:STDOUT:   %ExternOrderAndConflict: %ExternOrderAndConflict.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl
 // CHECK:STDOUT:     .DuplicateVirtual = %DuplicateVirtual.decl
 // CHECK:STDOUT:     .TwoAccess [private] = %TwoAccess.decl
@@ -120,13 +120,13 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:     .ModifiersConflict2 = %ModifiersConflict2.decl
 // CHECK:STDOUT:     .ExternOrderAndConflict = %ExternOrderAndConflict.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %WrongOrder.decl: %WrongOrder.type = fn_decl @WrongOrder [template = constants.%WrongOrder] {} {}
-// CHECK:STDOUT:   %DuplicateVirtual.decl: %DuplicateVirtual.type = fn_decl @DuplicateVirtual [template = constants.%DuplicateVirtual] {} {}
-// CHECK:STDOUT:   %TwoAccess.decl: %TwoAccess.type = fn_decl @TwoAccess [template = constants.%TwoAccess] {} {}
-// CHECK:STDOUT:   %ModifiersConflict.decl: %ModifiersConflict.type = fn_decl @ModifiersConflict [template = constants.%ModifiersConflict] {} {}
-// CHECK:STDOUT:   %InvalidModifier.decl: %InvalidModifier.type = fn_decl @InvalidModifier [template = constants.%InvalidModifier] {} {}
-// CHECK:STDOUT:   %ModifiersConflict2.decl: %ModifiersConflict2.type = fn_decl @ModifiersConflict2 [template = constants.%ModifiersConflict2] {} {}
-// CHECK:STDOUT:   %ExternOrderAndConflict.decl: %ExternOrderAndConflict.type = fn_decl @ExternOrderAndConflict [template = constants.%ExternOrderAndConflict] {} {}
+// CHECK:STDOUT:   %WrongOrder.decl: %WrongOrder.type = fn_decl @WrongOrder [concrete = constants.%WrongOrder] {} {}
+// CHECK:STDOUT:   %DuplicateVirtual.decl: %DuplicateVirtual.type = fn_decl @DuplicateVirtual [concrete = constants.%DuplicateVirtual] {} {}
+// CHECK:STDOUT:   %TwoAccess.decl: %TwoAccess.type = fn_decl @TwoAccess [concrete = constants.%TwoAccess] {} {}
+// CHECK:STDOUT:   %ModifiersConflict.decl: %ModifiersConflict.type = fn_decl @ModifiersConflict [concrete = constants.%ModifiersConflict] {} {}
+// CHECK:STDOUT:   %InvalidModifier.decl: %InvalidModifier.type = fn_decl @InvalidModifier [concrete = constants.%InvalidModifier] {} {}
+// CHECK:STDOUT:   %ModifiersConflict2.decl: %ModifiersConflict2.type = fn_decl @ModifiersConflict2 [concrete = constants.%ModifiersConflict2] {} {}
+// CHECK:STDOUT:   %ExternOrderAndConflict.decl: %ExternOrderAndConflict.type = fn_decl @ExternOrderAndConflict [concrete = constants.%ExternOrderAndConflict] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongOrder();

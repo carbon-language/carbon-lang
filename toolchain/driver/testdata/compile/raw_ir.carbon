@@ -112,7 +112,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst61:          {kind: RequireCompleteType, arg0: type(symbolic_constant5), type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst62:          {kind: RequireCompleteType, arg0: type(symbolic_constant3), type: type(inst(WitnessType))}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst12:          template_constant(inst12)
+// CHECK:STDOUT:     inst12:          concrete_constant(inst12)
 // CHECK:STDOUT:     inst13:          symbolic_constant3
 // CHECK:STDOUT:     inst14:          symbolic_constant0
 // CHECK:STDOUT:     inst15:          symbolic_constant4
@@ -120,17 +120,17 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst17:          symbolic_constant4
 // CHECK:STDOUT:     inst18:          symbolic_constant3
 // CHECK:STDOUT:     inst22:          symbolic_constant3
-// CHECK:STDOUT:     inst23:          template_constant(inst23)
-// CHECK:STDOUT:     inst25:          template_constant(inst25)
-// CHECK:STDOUT:     inst27:          template_constant(inst23)
+// CHECK:STDOUT:     inst23:          concrete_constant(inst23)
+// CHECK:STDOUT:     inst25:          concrete_constant(inst25)
+// CHECK:STDOUT:     inst27:          concrete_constant(inst23)
 // CHECK:STDOUT:     inst28:          symbolic_constant2
 // CHECK:STDOUT:     inst29:          symbolic_constant5
-// CHECK:STDOUT:     inst36:          template_constant(inst41)
+// CHECK:STDOUT:     inst36:          concrete_constant(inst41)
 // CHECK:STDOUT:     inst37:          symbolic_constant3
 // CHECK:STDOUT:     inst38:          symbolic_constant4
 // CHECK:STDOUT:     inst39:          symbolic_constant5
-// CHECK:STDOUT:     inst40:          template_constant(inst40)
-// CHECK:STDOUT:     inst41:          template_constant(inst41)
+// CHECK:STDOUT:     inst40:          concrete_constant(inst40)
+// CHECK:STDOUT:     inst41:          concrete_constant(inst41)
 // CHECK:STDOUT:     inst42:          symbolic_constant6
 // CHECK:STDOUT:     inst43:          symbolic_constant9
 // CHECK:STDOUT:     inst44:          symbolic_constant7
@@ -138,9 +138,9 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst46:          symbolic_constant8
 // CHECK:STDOUT:     inst50:          symbolic_constant9
 // CHECK:STDOUT:     inst52:          symbolic_constant10
-// CHECK:STDOUT:     inst55:          template_constant(inst56)
-// CHECK:STDOUT:     inst56:          template_constant(inst56)
-// CHECK:STDOUT:     inst57:          template_constant(inst56)
+// CHECK:STDOUT:     inst55:          concrete_constant(inst56)
+// CHECK:STDOUT:     inst56:          concrete_constant(inst56)
+// CHECK:STDOUT:     inst57:          concrete_constant(inst56)
 // CHECK:STDOUT:     inst61:          symbolic_constant9
 // CHECK:STDOUT:     inst62:          symbolic_constant10
 // CHECK:STDOUT:   symbolic_constants:

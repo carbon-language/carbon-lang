@@ -65,10 +65,10 @@ Context::Context(DiagnosticEmitter* emitter,
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::ErrorInst::SingletonInstId),
+      SemIR::ConstantId::ForConcreteConstant(SemIR::ErrorInst::SingletonInstId),
       SemIR::ErrorInst::SingletonTypeId);
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::TypeType::SingletonInstId),
+      SemIR::ConstantId::ForConcreteConstant(SemIR::TypeType::SingletonInstId),
       SemIR::TypeType::SingletonTypeId);
 
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
