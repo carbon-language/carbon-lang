@@ -36,9 +36,10 @@ class NodeCategory : public Printable<NodeCategory> {
     IntConst = 1 << 8,
     Requirement = 1 << 9,
     NonExprIdentifierName = 1 << 10,
+    PackageName = 1 << 11,
     None = 0,
 
-    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/NonExprIdentifierName)
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/PackageName)
   };
 
   // Support implicit conversion so that the difference with the member enum is

@@ -47,7 +47,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
                                                 SemIR::AccessKind::Public);
   if (lookup_result.is_poisoned()) {
     context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 namespace_id);
+                                 name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_inst_id = lookup_result.target_inst_id();
     if (auto existing =

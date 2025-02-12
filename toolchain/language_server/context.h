@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 
+#include "clang-tools-extra/clangd/LSPBinder.h"
 #include "common/map.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
@@ -26,10 +27,11 @@ class Context {
   // Cached information for an open file.
   class File {
    public:
-    explicit File(std::string filename) : filename_(std::move(filename)) {}
+    explicit File(clang::clangd::URIForFile uri) : uri_(std::move(uri)) {}
 
     // Changes the file's text, updating dependent state.
-    auto SetText(Context& context, llvm::StringRef text) -> void;
+    auto SetText(Context& context, std::optional<int64_t> version,
+                 llvm::StringRef text) -> void;
 
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
       return *tree_and_subtrees_;
@@ -37,7 +39,7 @@ class Context {
 
    private:
     // The filename, stable across instances.
-    std::string filename_;
+    clang::clangd::URIForFile uri_;
 
     // Current file content, and derived values.
     std::unique_ptr<SourceBuffer> source_;
@@ -47,19 +49,24 @@ class Context {
     std::unique_ptr<Parse::TreeAndSubtrees> tree_and_subtrees_;
   };
 
-  // `consumer` and `emitter` are required. `vlog_stream` is optional.
-  explicit Context(llvm::raw_ostream* vlog_stream, DiagnosticConsumer* consumer)
+  // `vlog_stream` is optional; other parameters are required.
+  explicit Context(llvm::raw_ostream* vlog_stream, DiagnosticConsumer* consumer,
+                   clang::clangd::LSPBinder::RawOutgoing* outgoing)
       : vlog_stream_(vlog_stream),
         file_emitter_(consumer),
-        no_loc_emitter_(consumer) {}
+        no_loc_emitter_(consumer),
+        outgoing_(outgoing) {}
 
   // Returns a reference to the file if it's known, or diagnoses and returns
   // null.
   auto LookupFile(llvm::StringRef filename) -> File*;
 
+  auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
   auto file_emitter() -> FileDiagnosticEmitter& { return file_emitter_; }
   auto no_loc_emitter() -> NoLocDiagnosticEmitter& { return no_loc_emitter_; }
-  auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
+  auto outgoing() -> clang::clangd::LSPBinder::RawOutgoing& {
+    return *outgoing_;
+  }
 
   auto files() -> Map<std::string, File>& { return files_; }
 
@@ -68,6 +75,7 @@ class Context {
   llvm::raw_ostream* vlog_stream_;
   FileDiagnosticEmitter file_emitter_;
   NoLocDiagnosticEmitter no_loc_emitter_;
+  clang::clangd::LSPBinder::RawOutgoing* outgoing_;
 
   // Content of files managed by the language client.
   Map<std::string, File> files_;

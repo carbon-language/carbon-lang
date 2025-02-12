@@ -35,48 +35,48 @@ fn D.C.F() {}
 // CHECK:STDOUT: --- fail_base_method_define.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %F.type.8c6: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.92a: %F.type.8c6 = struct_value () [template]
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %F.type.b77: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.a5f: %F.type.b77 = struct_value () [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %D.elem: type = unbound_element_type %D, %B [template]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [template]
-// CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base [template]
-// CHECK:STDOUT:   %F.type.319: type = fn_type @F.3 [template]
-// CHECK:STDOUT:   %F.34b: %F.type.319 = struct_value () [template]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.0e9: %.type = struct_value () [template]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %F.type.8c6: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.92a: %F.type.8c6 = struct_value () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %F.type.b77: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.a5f: %F.type.b77 = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %D: type = class_type @D [concrete]
+// CHECK:STDOUT:   %D.elem: type = unbound_element_type %D, %B [concrete]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [concrete]
+// CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base [concrete]
+// CHECK:STDOUT:   %F.type.319: type = fn_type @F.3 [concrete]
+// CHECK:STDOUT:   %F.34b: %F.type.319 = struct_value () [concrete]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
+// CHECK:STDOUT:   %.0e9: %.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.319 = fn_decl @F.3 [template = constants.%F.34b] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.0e9] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.319 = fn_decl @F.3 [concrete = constants.%F.34b] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.0e9] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %F.decl: %F.type.8c6 = fn_decl @F.1 [template = constants.%F.92a] {} {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   %F.decl: %F.type.8c6 = fn_decl @F.1 [concrete = constants.%F.92a] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -86,8 +86,8 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F.decl: %F.type.b77 = fn_decl @F.2 [template = constants.%F.a5f] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   %F.decl: %F.type.b77 = fn_decl @F.2 [concrete = constants.%F.a5f] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -96,9 +96,9 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc20: %D.elem = base_decl %B.ref, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.98e]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc20: %D.elem = base_decl %B.ref, element0 [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

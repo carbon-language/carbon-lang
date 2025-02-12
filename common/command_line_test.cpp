@@ -437,9 +437,9 @@ TEST(ArgParserTest, PositionalAppending) {
   EXPECT_THAT(strings3, ElementsAre(StrEq("e"), StrEq("f")));
 }
 
-static auto ParseOneOfOption(llvm::ArrayRef<llvm::StringRef> args,
-                             llvm::raw_ostream& s,
-                             llvm::function_ref<void(OneOfArgBuilder&)> build)
+static auto ParseOneOfOption(
+    llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s,
+    llvm::function_ref<auto(OneOfArgBuilder&)->void> build)
     -> ErrorOr<ParseResult> {
   return Parse(args, s, TestCommandInfo, [&](auto& b) {
     b.AddOneOfOption({.name = "option"}, build);

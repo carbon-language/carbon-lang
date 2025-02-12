@@ -29,7 +29,7 @@ import Bar;
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Bar'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Bar'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

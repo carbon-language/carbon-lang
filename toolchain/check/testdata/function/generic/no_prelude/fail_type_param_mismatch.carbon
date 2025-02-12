@@ -24,18 +24,18 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %require_complete.6e5: <witness> = require_complete_type %ptr [symbolic]
 // CHECK:STDOUT:   %require_complete.b54: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc11_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_6.1, runtime_param<none> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc11_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc11_16.2 (constants.%U.patt)]
@@ -78,7 +78,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %.loc17_15: @F.%ptr.loc12_11.2 (%ptr) = bind_value %p.ref
 // CHECK:STDOUT:     %.loc17_14.1: ref @F.%T.loc11_6.2 (%T) = deref %.loc17_15
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc11_16.1 [symbolic = %U.loc11_16.2 (constants.%U)]
-// CHECK:STDOUT:     %.loc17_14.2: @F.%U.loc11_16.2 (%U) = converted %.loc17_14.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc17_14.2: @F.%U.loc11_16.2 (%U) = converted %.loc17_14.1, <error> [concrete = <error>]
 // CHECK:STDOUT:     %n: @F.%U.loc11_16.2 (%U) = bind_name n, <error>
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

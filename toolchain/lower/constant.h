@@ -12,7 +12,7 @@ namespace Carbon::Lower {
 
 // Forms LLVM constant values for all constants used in the file described by
 // `file_context`. The indexes in the `constants` array corresponding to
-// template constant instructions are populated with corresponding constant
+// concrete constant instructions are populated with corresponding constant
 // values.
 auto LowerConstants(FileContext& file_context,
                     llvm::MutableArrayRef<llvm::Constant*> constants) -> void;

@@ -22,7 +22,7 @@ static auto DumpNoNewline(const File& file, ConstantId const_id) -> void {
   if (const_id.is_symbolic()) {
     llvm::errs() << ": "
                  << file.constant_values().GetSymbolicConstant(const_id);
-  } else if (const_id.is_template()) {
+  } else if (const_id.is_concrete()) {
     llvm::errs() << ": "
                  << file.insts().Get(
                         file.constant_values().GetInstId(const_id));

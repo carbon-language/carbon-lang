@@ -13,6 +13,8 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -59,9 +61,8 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::ScopeLookupResult lookup_result =
-      context
-          .LookupUnqualifiedName(loc_id.node_id(), SemIR::NameId::SelfType,
-                                 /*required=*/false)
+      LookupUnqualifiedName(context, loc_id.node_id(), SemIR::NameId::SelfType,
+                            /*required=*/false)
           .scope_result;
   CARBON_CHECK(!lookup_result.is_poisoned());
   if (!lookup_result.is_found()) {
@@ -240,8 +241,8 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
   };
   LookupResult result =
-      context.LookupQualifiedName(loc_id, name_id, lookup_scopes,
-                                  /*required=*/true, access_info);
+      LookupQualifiedName(context, loc_id, name_id, lookup_scopes,
+                          /*required=*/true, access_info);
 
   if (!result.scope_result.is_found()) {
     return SemIR::ErrorInst::SingletonInstId;
@@ -435,8 +436,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
-    if (context.AppendLookupScopesForConstant(loc_id, base_const_id,
-                                              &lookup_scopes)) {
+    if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
+                                      &lookup_scopes)) {
       return LookupMemberNameInScope(context, loc_id, base_id, name_id,
                                      base_const_id, lookup_scopes,
                                      /*lookup_in_type_of_base=*/false);
@@ -445,8 +446,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  if (!context.RequireCompleteType(
-          base_type_id, context.insts().GetLocId(base_id), [&] {
+  if (!RequireCompleteType(
+          context, base_type_id, context.insts().GetLocId(base_id), [&] {
             CARBON_DIAGNOSTIC(
                 IncompleteTypeInMemberAccess, Error,
                 "member access into object of incomplete type {0}",
@@ -464,8 +465,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // Find the scope corresponding to the base type.
   llvm::SmallVector<LookupScope> lookup_scopes;
-  if (!context.AppendLookupScopesForConstant(loc_id, base_type_const_id,
-                                             &lookup_scopes)) {
+  if (!AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
+                                     &lookup_scopes)) {
     // The base type is not a name scope. Try some fallback options.
     if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
             context.constant_values().GetInstId(base_type_const_id))) {
@@ -582,7 +583,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   };
   // Diagnose a non-constant index prior to conversion to IntLiteral, because
   // the conversion will fail if the index is not constant.
-  if (!context.constant_values().Get(index_inst_id).is_template()) {
+  if (!context.constant_values().Get(index_inst_id).is_concrete()) {
     return diag_non_constant_index();
   }
 
@@ -594,7 +595,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::ErrorInst::SingletonInstId;
-  } else if (!index_const_id.is_template()) {
+  } else if (!index_const_id.is_concrete()) {
     return diag_non_constant_index();
   }
 

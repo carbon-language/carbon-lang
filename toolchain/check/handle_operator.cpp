@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/operator.h"
@@ -349,9 +350,9 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
 
   // Create a block for the right-hand side and for the continuation.
   auto rhs_block_id =
-      context.AddDominatedBlockAndBranchIf(node_id, branch_value_id);
-  auto end_block_id = context.AddDominatedBlockAndBranchWithArg(
-      node_id, short_circuit_result_id);
+      AddDominatedBlockAndBranchIf(context, node_id, branch_value_id);
+  auto end_block_id = AddDominatedBlockAndBranchWithArg(
+      context, node_id, short_circuit_result_id);
 
   // Push the branch condition and result for use when handling the complete
   // expression.
@@ -363,7 +364,7 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(end_block_id);
   context.inst_block_stack().Push(rhs_block_id);
-  context.AddToRegion(rhs_block_id, node_id);
+  context.region_stack().AddToRegion(rhs_block_id, node_id);
 
   // HandleShortCircuitOperator will follow, and doesn't need the operand on the
   // node stack.
@@ -404,14 +405,14 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   context.AddInst<SemIR::BranchWithArg>(
       node_id, {.target_id = resume_block_id, .arg_id = rhs_id});
   context.inst_block_stack().Pop();
-  context.AddToRegion(resume_block_id, node_id);
+  context.region_stack().AddToRegion(resume_block_id, node_id);
 
   // Collect the result from either the first or second operand.
   auto result_id = context.AddInst<SemIR::BlockArg>(
       node_id, {.type_id = context.insts().Get(rhs_id).type_id(),
                 .block_id = resume_block_id});
-  context.SetBlockArgResultBeforeConstantUse(result_id, branch_value_id, rhs_id,
-                                             short_circuit_result_id);
+  SetBlockArgResultBeforeConstantUse(context, result_id, branch_value_id,
+                                     rhs_id, short_circuit_result_id);
   context.node_stack().Push(node_id, result_id);
   return true;
 }

@@ -153,8 +153,9 @@ and the language:
     Carbon (and eventually C++ code as well) into standard executable code. This
     is where most of our current implementation efforts are directed.
 
-If you're interested in contributing, we're currently focused on
-[developing the Carbon toolchain until it can support Carbon ↔ C++ interop](/docs/project/roadmap.md#objective-for-2024-a-working-toolchain-that-supports-c-interop).
+If you're interested in contributing, we're currently focused on developing the
+Carbon toolchain until it can
+[support Carbon ↔ C++ interop](/docs/project/roadmap.md#access-most-non-template-c-apis-in-carbon).
 Beyond that, we plan to continue developing the design and toolchain until we
 can ship the
 [0.1 language](/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation)

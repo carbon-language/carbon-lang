@@ -10,6 +10,7 @@
 #include "toolchain/check/impl.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
@@ -65,7 +66,7 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  context.AddNameToLookup(SemIR::NameId::SelfType, self_id);
+  AddNameToLookup(context, SemIR::NameId::SelfType, self_id);
   return true;
 }
 
@@ -125,6 +126,14 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   return true;
 }
 
+static auto DiagnoseExtendImplOutsideClass(Context& context,
+                                           Parse::AnyImplDeclId node_id)
+    -> void {
+  CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
+                    "`extend impl` can only be used in a class");
+  context.emitter().Emit(node_id, ExtendImplOutsideClass);
+}
+
 // Process an `extend impl` declaration by extending the impl scope with the
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
@@ -132,16 +141,18 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node,
                        SemIR::InstId constraint_inst_id,
-                       SemIR::TypeId constraint_id) -> void {
+                       SemIR::TypeId constraint_id) -> bool {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
+  if (!parent_scope_id.has_value()) {
+    DiagnoseExtendImplOutsideClass(context, node_id);
+    return false;
+  }
   auto& parent_scope = context.name_scopes().Get(parent_scope_id);
 
   // TODO: This is also valid in a mixin.
   if (!TryAsClassScope(context, parent_scope_id)) {
-    CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
-                      "`extend impl` can only be used in a class");
-    context.emitter().Emit(node_id, ExtendImplOutsideClass);
-    return;
+    DiagnoseExtendImplOutsideClass(context, node_id);
+    return false;
   }
 
   if (params_node.has_value()) {
@@ -149,7 +160,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                       "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
     parent_scope.set_has_error();
-    return;
+    return false;
   }
 
   if (context.parse_tree().node_kind(self_type_node) ==
@@ -162,7 +173,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     if (self_type_id != GetDefaultSelfType(context)) {
       diag.Emit();
       parent_scope.set_has_error();
-      return;
+      return false;
     }
 
     // The explicit self type is the same as the default self type, so suggest
@@ -180,7 +191,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
     context.TODO(node_id, "extending non-facet-type constraint");
     parent_scope.set_has_error();
-    return;
+    return false;
   }
   const auto& impl = context.impls().Get(impl_id);
   if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
@@ -188,6 +199,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   }
 
   parent_scope.AddExtendedScope(constraint_inst_id);
+  return true;
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no
@@ -425,9 +437,13 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
            .specific_id =
                context.generics().GetSelfSpecific(impl_info.generic_id)});
     }
-    ExtendImpl(context, extend_node, node_id, impl_decl.impl_id, self_type_node,
-               self_type_id, name.implicit_params_loc_id, constraint_inst_id,
-               constraint_type_id);
+    if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
+                    self_type_node, self_type_id, name.implicit_params_loc_id,
+                    constraint_inst_id, constraint_type_id)) {
+      // Don't allow the invalid impl to be used.
+      context.impls().Get(impl_decl.impl_id).witness_id =
+          SemIR::ErrorInst::SingletonInstId;
+    }
   }
 
   // Impl definitions are required in the same file as the declaration. We skip

@@ -12,6 +12,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/subpattern.h"
 
 namespace Carbon::Check {
 
@@ -124,6 +125,52 @@ auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
   return block_id;
 }
 
+// Inserts the given region into the current code block. If the region
+// consists of a single block, this will be implemented as a `splice_block`
+// inst. Otherwise, this will end the current block with a branch to the entry
+// block of the region, and add future insts to a new block which is the
+// immediate successor of the region's exit block. As a result, this cannot be
+// called more than once for the same region.
+static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
+    -> SemIR::InstId {
+  auto region = context.sem_ir().expr_regions().Get(region_id);
+  auto loc_id = context.insts().GetLocId(region.result_id);
+  auto exit_block = context.inst_blocks().Get(region.block_ids.back());
+  if (region.block_ids.size() == 1) {
+    // TODO: Is it possible to avoid leaving an "orphan" block in the IR in the
+    // first two cases?
+    if (exit_block.empty()) {
+      return region.result_id;
+    }
+    if (exit_block.size() == 1) {
+      context.inst_block_stack().AddInstId(exit_block.front());
+      return region.result_id;
+    }
+    return context.AddInst<SemIR::SpliceBlock>(
+        loc_id, {.type_id = context.insts().Get(region.result_id).type_id(),
+                 .block_id = region.block_ids.front(),
+                 .result_id = region.result_id});
+  }
+  if (context.region_stack().empty()) {
+    context.TODO(loc_id,
+                 "Control flow expressions are currently only supported inside "
+                 "functions.");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+      {.target_id = region.block_ids.front()}));
+  context.inst_block_stack().Pop();
+  // TODO: this will cumulatively cost O(MN) running time for M blocks
+  // at the Nth level of the stack. Figure out how to do better.
+  context.region_stack().AddToRegion(region.block_ids);
+  auto resume_with_block_id =
+      context.insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
+  CARBON_CHECK(context.inst_blocks().GetOrEmpty(resume_with_block_id).empty());
+  context.inst_block_stack().Push(resume_with_block_id);
+  context.region_stack().AddToRegion(resume_with_block_id, loc_id);
+  return region.result_id;
+}
+
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::ErrorInst::SingletonInstId) {
@@ -149,7 +196,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           context.bind_name_map().Lookup(entry.pattern_id).value(),
           {.bind_name_id = SemIR::InstId::None,
            .type_expr_region_id = SemIR::ExprRegionId::None});
-      context.InsertHere(type_expr_region_id);
+      InsertHere(context, type_expr_region_id);
       auto value_id = entry.scrutinee_id;
       switch (kind_) {
         case MatchKind::Local: {
