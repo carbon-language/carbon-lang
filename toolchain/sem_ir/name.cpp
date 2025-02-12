@@ -13,18 +13,20 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
   switch (name_id.index) {
     case NameId::None.index:
       return for_ir ? "" : "<none>";
-    case NameId::SelfValue.index:
-      return "self";
-    case NameId::SelfType.index:
-      return "Self";
+    case NameId::Base.index:
+      return "base";
+    case NameId::Core.index:
+      return "Core";
     case NameId::PeriodSelf.index:
       return ".Self";
     case NameId::ReturnSlot.index:
       return for_ir ? "return" : "<return slot>";
     case NameId::PackageNamespace.index:
       return "package";
-    case NameId::Base.index:
-      return "base";
+    case NameId::SelfType.index:
+      return "Self";
+    case NameId::SelfValue.index:
+      return "self";
     case NameId::Vptr.index:
       return for_ir ? "vptr" : "<vptr>";
     default:
