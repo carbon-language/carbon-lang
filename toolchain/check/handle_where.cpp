@@ -35,7 +35,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
        // `None` because this is not the parameter of a generic.
        .bind_index = SemIR::CompileTimeBindIndex::None});
   auto inst_id =
-      context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+      context.insts().Add(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
            .entity_name_id = entity_name_id,
            // `None` because there is no equivalent non-symbolic value.
@@ -81,7 +81,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
-      context.AddInstInNoBlock<SemIR::RequirementRewrite>(
+      context.insts().AddInNoBlock<SemIR::RequirementRewrite>(
           node_id, {.lhs_id = lhs, .rhs_id = rhs_id}));
   return true;
 }
@@ -95,7 +95,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
-      context.AddInstInNoBlock<SemIR::RequirementEquivalent>(
+      context.insts().AddInNoBlock<SemIR::RequirementEquivalent>(
           node_id, {.lhs_id = lhs, .rhs_id = rhs}));
   return true;
 }
@@ -120,7 +120,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
-      context.AddInstInNoBlock<SemIR::RequirementImpls>(
+      context.insts().AddInNoBlock<SemIR::RequirementImpls>(
           node_id,
           {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
   return true;
@@ -139,7 +139,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   SemIR::InstId period_self_id =
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
-  context.AddInstAndPush<SemIR::WhereExpr>(
+  context.insts().AddAndPush<SemIR::WhereExpr>(
       node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
                 .period_self_id = period_self_id,
                 .requirements_id = requirements_id});

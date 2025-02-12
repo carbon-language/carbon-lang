@@ -124,17 +124,17 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                        .import_id = import_id};
   auto namespace_inst_and_loc =
       import_loc_id.is_import_ir_inst_id()
-          ? context.MakeImportedLocAndInst(import_loc_id.import_ir_inst_id(),
-                                           namespace_inst)
+          ? context.insts().MakeImportedLocIdAndInst(
+                import_loc_id.import_ir_inst_id(), namespace_inst)
           // TODO: Check that this actually is an `AnyNamespaceId`.
           : SemIR::LocIdAndInst(Parse::AnyNamespaceId(import_loc_id.node_id()),
                                 namespace_inst);
   auto namespace_id =
-      context.AddPlaceholderInstInNoBlock(namespace_inst_and_loc);
+      context.insts().AddPlaceholderInNoBlock(namespace_inst_and_loc);
   context.import_ref_ids().push_back(namespace_id);
   namespace_inst.name_scope_id =
       context.name_scopes().Add(namespace_id, name_id, parent_scope_id);
-  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
+  context.insts().ReplaceBeforeConstantUse(namespace_id, namespace_inst);
 
   // Note we have to get the parent scope freshly, creating the imported
   // namespace may invalidate the pointer above.
@@ -184,8 +184,8 @@ static auto CopySingleNameScopeFromImportIR(
          .bind_index = SemIR::CompileTimeBindIndex::None});
     auto import_ir_inst_id = context.import_ir_insts().Add(
         {.ir_id = ir_id, .inst_id = import_inst_id});
-    auto inst_id = context.AddInstInNoBlock(
-        context.MakeImportedLocAndInst<SemIR::ImportRefLoaded>(
+    auto inst_id = context.insts().AddInNoBlock(
+        context.insts().MakeImportedLocIdAndInst<SemIR::ImportRefLoaded>(
             import_ir_inst_id, {.type_id = namespace_type_id,
                                 .import_ir_inst_id = import_ir_inst_id,
                                 .entity_name_id = entity_name_id}));

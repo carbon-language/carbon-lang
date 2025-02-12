@@ -126,7 +126,7 @@ auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
     diag.Emit();
   }
 
-  context.AddInst<SemIR::Return>(node_id, {});
+  context.insts().Add<SemIR::Return>(node_id, {});
 }
 
 auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
@@ -167,7 +167,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
         ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);
   }
 
-  context.AddInst<SemIR::ReturnExpr>(
+  context.insts().Add<SemIR::ReturnExpr>(
       node_id, {.expr_id = expr_id, .dest_id = return_slot_id});
 }
 
@@ -192,7 +192,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     return_slot_id = SemIR::InstId::None;
   }
 
-  context.AddInst<SemIR::ReturnExpr>(
+  context.insts().Add<SemIR::ReturnExpr>(
       node_id, {.expr_id = returned_var_id, .dest_id = return_slot_id});
 }
 

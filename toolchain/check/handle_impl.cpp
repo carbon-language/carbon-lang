@@ -113,7 +113,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // is a class and found its `Self`, so additionally performing an unqualified
   // name lookup would be redundant work, but would avoid duplicating the
   // handling of the `Self` expression.
-  auto self_inst_id = context.AddInst(
+  auto self_inst_id = context.insts().Add(
       node_id,
       SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
                      .name_id = SemIR::NameId::SelfType,
@@ -343,7 +343,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
   auto impl_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, impl_decl));
+      context.insts().AddPlaceholder(SemIR::LocIdAndInst(node_id, impl_decl));
 
   SemIR::Impl impl_info = {
       name_context.MakeEntityWithParamsBase(name, impl_decl_id,
@@ -384,14 +384,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Write the impl ID into the ImplDecl.
-  context.ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
+  context.insts().ReplaceBeforeConstantUse(impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
-      constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
+      constraint_inst_id = context.insts().Add<SemIR::SpecificConstant>(
           context.insts().GetLocId(constraint_inst_id),
           {.type_id = type_id,
            .inst_id = constraint_inst_id,

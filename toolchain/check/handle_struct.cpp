@@ -144,7 +144,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
     auto type_id = context.GetStructType(
         context.struct_type_fields().AddCanonical(fields));
 
-    auto value_id = context.AddInst<SemIR::StructLiteral>(
+    auto value_id = context.insts().Add<SemIR::StructLiteral>(
         node_id, {.type_id = type_id, .elements_id = elements_id});
     context.node_stack().Push(node_id, value_id);
   }
@@ -168,7 +168,7 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
     context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
   } else {
     auto fields_id = context.struct_type_fields().AddCanonical(fields);
-    context.AddInstAndPush<SemIR::StructType>(
+    context.insts().AddAndPush<SemIR::StructType>(
         node_id,
         {.type_id = SemIR::TypeType::SingletonTypeId, .fields_id = fields_id});
   }

@@ -13,7 +13,7 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
-  context.AddInstAndPush<SemIR::BoolLiteral>(
+  context.insts().AddAndPush<SemIR::BoolLiteral>(
       node_id,
       {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::False});
@@ -22,7 +22,7 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
-  context.AddInstAndPush<SemIR::BoolLiteral>(
+  context.insts().AddAndPush<SemIR::BoolLiteral>(
       node_id,
       {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::True});
@@ -74,7 +74,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                                real_value.exponent.getSExtValue());
 
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
-  context.AddInstAndPush<SemIR::FloatLiteral>(
+  context.insts().AddAndPush<SemIR::FloatLiteral>(
       node_id, {.type_id = context.GetSingletonType(
                     SemIR::LegacyFloatType::SingletonInstId),
                 .float_id = float_id});
@@ -82,7 +82,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
-  context.AddInstAndPush<SemIR::StringLiteral>(
+  context.insts().AddAndPush<SemIR::StringLiteral>(
       node_id,
       {.type_id = context.GetSingletonType(SemIR::StringType::SingletonInstId),
        .string_literal_id = context.tokens().GetStringLiteralValue(

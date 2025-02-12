@@ -29,7 +29,7 @@ auto GlobalInit::Finalize() -> void {
   }
 
   Resume();
-  context_->AddInst<SemIR::Return>(Parse::NodeId::None, {});
+  context_->insts().Add<SemIR::Return>(Parse::NodeId::None, {});
   // Pop the GlobalInit block here to finalize it.
   context_->inst_block_stack().Pop();
 

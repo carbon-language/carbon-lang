@@ -39,8 +39,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto namespace_inst = SemIR::Namespace{
       context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
       SemIR::NameScopeId::None, SemIR::InstId::None};
-  auto namespace_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
+  auto namespace_id = context.insts().AddPlaceholder(
+      SemIR::LocIdAndInst(node_id, namespace_inst));
 
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
@@ -73,7 +73,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
                  !context.insts().GetLocId(existing_inst_id).has_value()) {
         // When the name conflict is an imported namespace, fill the location ID
         // so that future diagnostics point at this declaration.
-        context.SetNamespaceNodeId(existing_inst_id, node_id);
+        context.insts().SetNamespaceNodeId(existing_inst_id, node_id);
       }
     } else {
       context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
@@ -94,7 +94,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     }
   }
 
-  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
+  context.insts().ReplaceBeforeConstantUse(namespace_id, namespace_inst);
 
   context.decl_name_stack().PopScope();
   return true;

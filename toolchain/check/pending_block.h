@@ -41,8 +41,8 @@ class PendingBlock {
   };
 
   template <typename InstT, typename LocT>
-  auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
-    auto inst_id = context_.AddInstInNoBlock(loc_id, inst);
+  auto Add(LocT loc_id, InstT inst) -> SemIR::InstId {
+    auto inst_id = context_.insts().AddInNoBlock(loc_id, inst);
     insts_.push_back(inst_id);
     return inst_id;
   }
@@ -65,7 +65,7 @@ class PendingBlock {
     if (insts_.empty()) {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
-      context_.ReplaceLocIdAndInstBeforeConstantUse(
+      context_.insts().ReplaceLocIdAndInstBeforeConstantUse(
           target_id,
           SemIR::LocIdAndInst(
               value.loc_id,
@@ -75,10 +75,10 @@ class PendingBlock {
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the instruction
       // referred to by `value_id`. This is intended to be the common case.
-      context_.ReplaceLocIdAndInstBeforeConstantUse(target_id, value);
+      context_.insts().ReplaceLocIdAndInstBeforeConstantUse(target_id, value);
     } else {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
-      context_.ReplaceLocIdAndInstBeforeConstantUse(
+      context_.insts().ReplaceLocIdAndInstBeforeConstantUse(
           target_id,
           SemIR::LocIdAndInst(
               value.loc_id,

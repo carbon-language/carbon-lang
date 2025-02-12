@@ -68,7 +68,7 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
     return true;
   }
 
-  auto export_id = context.AddInst<SemIR::ExportDecl>(
+  auto export_id = context.insts().Add<SemIR::ExportDecl>(
       node_id, {.type_id = import_ref->type_id,
                 .entity_name_id = import_ref->entity_name_id,
                 .value_id = inst_id});

@@ -61,12 +61,13 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   }
 
   auto return_slot_pattern_id =
-      context.AddPatternInst<SemIR::ReturnSlotPattern>(
+      context.insts().AddInPatternBlock<SemIR::ReturnSlotPattern>(
           node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
-  auto param_pattern_id = context.AddPatternInst<SemIR::OutParamPattern>(
-      node_id, {.type_id = type_id,
-                .subpattern_id = return_slot_pattern_id,
-                .runtime_index = SemIR::RuntimeParamIndex::Unknown});
+  auto param_pattern_id =
+      context.insts().AddInPatternBlock<SemIR::OutParamPattern>(
+          node_id, {.type_id = type_id,
+                    .subpattern_id = return_slot_pattern_id,
+                    .runtime_index = SemIR::RuntimeParamIndex::Unknown});
   context.node_stack().Push(node_id, param_pattern_id);
   return true;
 }
@@ -254,8 +255,8 @@ static auto BuildFunctionDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
-  auto decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, function_decl));
+  auto decl_id = context.insts().AddPlaceholder(
+      SemIR::LocIdAndInst(node_id, function_decl));
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
@@ -294,7 +295,7 @@ static auto BuildFunctionDecl(Context& context,
       function_decl.function_id, context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
+  context.insts().ReplaceBeforeConstantUse(decl_id, function_decl);
 
   // Diagnose 'definition of `abstract` function' using the canonical Function's
   // modifiers.
@@ -456,7 +457,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
           "missing `return` at end of function with declared return type");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      context.AddInst<SemIR::Return>(node_id, {});
+      context.insts().Add<SemIR::Return>(node_id, {});
     }
   }
 

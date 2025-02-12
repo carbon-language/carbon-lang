@@ -35,7 +35,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
   auto type_id = context.GetAssociatedEntityType(self_type_id);
-  return context.AddInst<SemIR::AssociatedEntity>(
+  return context.insts().Add<SemIR::AssociatedEntity>(
       context.insts().GetLocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});
 }

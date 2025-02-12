@@ -59,7 +59,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     alias_type_id = SemIR::ErrorInst::SingletonTypeId;
     alias_value_id = SemIR::ErrorInst::SingletonInstId;
   }
-  auto alias_id = context.AddInst<SemIR::BindAlias>(
+  auto alias_id = context.insts().Add<SemIR::BindAlias>(
       name_context.loc_id, {.type_id = alias_type_id,
                             .entity_name_id = entity_name_id,
                             .value_id = alias_value_id});

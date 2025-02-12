@@ -124,7 +124,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
     name_id =
         context.entity_names().Get(binding_pattern->entity_name_id).name_id;
   }
-  return context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
+  return context.insts().Add(SemIR::LocIdAndInst::UncheckedLoc(
       pattern.loc_id, SemIR::VarStorage{.type_id = pattern.inst.type_id(),
                                         .pretty_name_id = name_id}));
 }
@@ -145,7 +145,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
   }
   auto type_id = context.insts().Get(subpattern_id).type_id();
 
-  auto pattern_id = context.AddPatternInst<SemIR::VarPattern>(
+  auto pattern_id = context.insts().AddInPatternBlock<SemIR::VarPattern>(
       node_id, {.type_id = type_id, .subpattern_id = subpattern_id});
   context.node_stack().Push(node_id, pattern_id);
   return true;
@@ -161,7 +161,7 @@ static auto EndFullPattern(Context& context) -> void {
     return;
   }
   auto pattern_block_id = context.pattern_block_stack().Pop();
-  context.AddInst<SemIR::NameBindingDecl>(
+  context.insts().Add<SemIR::NameBindingDecl>(
       context.node_stack().PeekNodeId(),
       {.pattern_block_id = pattern_block_id});
 
@@ -331,7 +331,7 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
 
   // Store the decl block on the declaration.
   decl->decl_block_id = context.inst_block_stack().Pop();
-  context.ReplaceInstPreservingConstantValue(decl_info.pattern_id, *decl);
+  context.insts().ReplacePreservingConstantValue(decl_info.pattern_id, *decl);
 
   context.inst_block_stack().AddInstId(decl_info.pattern_id);
 }

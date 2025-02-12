@@ -142,12 +142,12 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       if (array_cat == SemIR::ExprCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
-        operand_inst_id = context.AddInst<SemIR::ValueAsRef>(
+        operand_inst_id = context.insts().Add<SemIR::ValueAsRef>(
             node_id, {.type_id = operand_type_id, .value_id = operand_inst_id});
       }
       // Constant evaluation will perform a bounds check on this array indexing
       // if the index is constant.
-      auto elem_id = context.AddInst<SemIR::ArrayIndex>(
+      auto elem_id = context.insts().Add<SemIR::ArrayIndex>(
           node_id, {.type_id = array_type.element_type_id,
                     .array_id = operand_inst_id,
                     .index_id = cast_index_id});

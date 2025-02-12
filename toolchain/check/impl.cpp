@@ -130,7 +130,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
   llvm::SmallVector<SemIR::InstId> table(assoc_entities.size(),
                                          SemIR::InstId::None);
   auto table_id = context.inst_blocks().Add(table);
-  return context.AddInst<SemIR::ImplWitness>(
+  return context.insts().Add<SemIR::ImplWitness>(
       context.insts().GetLocId(impl.latest_decl_id()),
       {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
        .elements_id = table_id,

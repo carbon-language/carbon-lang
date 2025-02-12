@@ -32,7 +32,7 @@ auto PerformPointerDereference(
   } else if (type_id != SemIR::ErrorInst::SingletonTypeId) {
     diagnose_not_pointer(type_id);
   }
-  return context.AddInst<SemIR::Deref>(
+  return context.insts().Add<SemIR::Deref>(
       node_id, {.type_id = result_type_id, .pointer_id = base_id});
 }
 

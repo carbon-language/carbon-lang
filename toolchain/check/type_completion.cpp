@@ -487,7 +487,7 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   // specific type to be complete.
   if (type_id.AsConstantId().is_symbolic()) {
     // TODO: Deduplicate these.
-    context.AddInstInNoBlock(SemIR::LocIdAndInst(
+    context.insts().AddInNoBlock(SemIR::LocIdAndInst(
         loc_id,
         SemIR::RequireCompleteType{.type_id = context.GetSingletonType(
                                        SemIR::WitnessType::SingletonInstId),

@@ -113,13 +113,13 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
   // store the specific too.
   if (result.specific_id.has_value() &&
       context.constant_values().Get(inst_id).is_symbolic()) {
-    inst_id = context.AddInst<SemIR::SpecificConstant>(
+    inst_id = context.insts().Add<SemIR::SpecificConstant>(
         node_id, {.type_id = type_id,
                   .inst_id = inst_id,
                   .specific_id = result.specific_id});
   }
 
-  return context.AddInst<SemIR::NameRef>(
+  return context.insts().Add<SemIR::NameRef>(
       node_id, {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
 }
 
@@ -236,7 +236,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {
-  context.AddInstAndPush<SemIR::NameRef>(
+  context.insts().AddAndPush<SemIR::NameRef>(
       node_id, {.type_id = context.GetSingletonType(
                     SemIR::NamespaceType::SingletonInstId),
                 .name_id = SemIR::NameId::PackageNamespace,

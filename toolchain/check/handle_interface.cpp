@@ -51,8 +51,8 @@ static auto BuildInterfaceDecl(Context& context,
   auto interface_decl =
       SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
                            SemIR::InterfaceId::None, decl_block_id};
-  auto interface_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
+  auto interface_decl_id = context.insts().AddPlaceholder(
+      SemIR::LocIdAndInst(node_id, interface_decl));
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,
@@ -125,7 +125,7 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
+  context.insts().ReplaceBeforeConstantUse(interface_decl_id, interface_decl);
 
   return {interface_decl.interface_id, interface_decl_id};
 }
@@ -174,7 +174,7 @@ auto HandleParseNode(Context& context,
        .parent_scope_id = interface_info.scope_id,
        .bind_index = context.scope_stack().AddCompileTimeBinding()});
   interface_info.self_param_id =
-      context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+      context.insts().Add(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
            .entity_name_id = entity_name_id,
            .value_id = SemIR::InstId::None}));
