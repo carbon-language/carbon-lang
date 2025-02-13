@@ -38,22 +38,14 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 
   // This might be a generic impl.
   StartGenericDecl(context);
-
-  // Push a pattern block for the signature of the `forall` (if any).
-  // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
-  // and only push a pattern block in `forall` case.
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
-  auto params_id =
-      context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
-  context.node_stack().Push(node_id, params_id);
+auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
+  // Push a pattern block for the signature of the `forall`.
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 
@@ -208,9 +200,12 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
     -> NameComponent {
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
-      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
+      context.node_stack()
+          .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
 
   if (implicit_param_patterns_id) {
+    context.node_stack()
+        .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
     auto call_params_id =
@@ -243,7 +238,9 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       .param_patterns_id = SemIR::InstBlockId::None,
       .call_params_id = SemIR::InstBlockId::None,
       .return_slot_pattern_id = SemIR::InstId::None,
-      .pattern_block_id = context.pattern_block_stack().Pop(),
+      .pattern_block_id = implicit_param_patterns_id
+                              ? context.pattern_block_stack().Pop()
+                              : SemIR::InstBlockId::None,
   };
 }
 

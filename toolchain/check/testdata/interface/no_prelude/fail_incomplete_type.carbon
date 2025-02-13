@@ -11,7 +11,7 @@
 class C;
 
 interface I {
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `C` [IncompleteTypeInAssociatedDecl]
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `C` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let T:! C;
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]

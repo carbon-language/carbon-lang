@@ -1188,8 +1188,11 @@ class FormatterImpl {
   auto FormatArg(EntityNameId id) -> void {
     const auto& info = sem_ir_->entity_names().Get(id);
     FormatName(info.name_id);
-    if (info.bind_index.has_value()) {
-      out_ << ", " << info.bind_index.index;
+    if (info.bind_index().has_value()) {
+      out_ << ", " << info.bind_index().index;
+    }
+    if (info.is_template) {
+      out_ << ", template";
     }
   }
 

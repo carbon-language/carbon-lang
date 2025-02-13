@@ -28,22 +28,16 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   SemIR::ExprRegionId type_expr_region_id =
       EndSubpatternAsExpr(context, cast_type_inst_id);
 
+  // The name in a template binding may be wrapped in `template`.
+  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
+  auto is_template =
+      context.node_stack()
+          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
+  // A non-generic template binding is diagnosed by the parser.
+  is_template &= is_generic;
+
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
-
-  // Determine whether we're handling an associated constant. These share the
-  // syntax for a compile-time binding, but don't behave like other compile-time
-  // bindings.
-  // TODO: Consider using a different parse node kind to make this easier.
-  bool is_associated_constant = false;
-  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
-  if (is_generic) {
-    auto inst_id = context.scope_stack().PeekInstId();
-    is_associated_constant = inst_id.has_value() &&
-                             context.insts().Is<SemIR::InterfaceDecl>(inst_id);
-  }
-
-  bool needs_compile_time_binding = is_generic && !is_associated_constant;
 
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
@@ -53,16 +47,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     auto binding_pattern_id = SemIR::InstId::None;
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto entity_name_id = context.entity_names().Add(
-        {.name_id = name_id,
-         .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-         // TODO: Don't allocate a compile-time binding index for an associated
-         // constant declaration.
-         .bind_index = needs_compile_time_binding
-                           ? context.scope_stack().AddCompileTimeBinding()
-                           : SemIR::CompileTimeBindIndex::None});
+    auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+        name_id, context.scope_stack().PeekNameScopeId(),
+        is_generic ? context.scope_stack().AddCompileTimeBinding()
+                   : SemIR::CompileTimeBindIndex::None,
+        is_template);
     if (is_generic) {
-      // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
           name_node, SemIR::BindSymbolicName{.type_id = cast_type_id,
                                              .entity_name_id = entity_name_id,
@@ -83,7 +73,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
     // Add name to lookup immediately, so it can be used in the rest of the
     // enclosing pattern.
-    if (needs_compile_time_binding) {
+    if (is_generic) {
       context.scope_stack().PushCompileTimeBinding(bind_id);
     }
     auto name_context =
@@ -114,7 +104,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // so we handle it separately.
   if (auto parent_class_decl =
           context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
-      parent_class_decl.has_value() &&
+      parent_class_decl.has_value() && !is_generic &&
       node_kind == Parse::NodeKind::VarBindingPattern) {
     cast_type_id = AsConcreteType(
         context, cast_type_id, type_node,
@@ -131,9 +121,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                          cast_type_id);
         });
     auto binding_id =
-        is_generic
-            ? Parse::NodeId::None
-            : context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
+        context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
     auto field_type_id =
         context.GetUnboundElementType(class_info.self_type_id, cast_type_id);
@@ -157,12 +145,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
       parent_interface_decl.has_value() && is_generic) {
     cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
-      CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedDecl, Error,
+      CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedConstantDecl, Error,
                         "associated constant has incomplete type {0}",
                         SemIR::TypeId);
-      return context.emitter().Build(type_node, IncompleteTypeInAssociatedDecl,
-                                     cast_type_id);
+      return context.emitter().Build(
+          type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
     });
+    if (is_template) {
+      CARBON_DIAGNOSTIC(TemplateBindingInAssociatedConstantDecl, Error,
+                        "associated constant has `template` binding");
+      context.emitter().Emit(type_node,
+                             TemplateBindingInAssociatedConstantDecl);
+    }
 
     SemIR::AssociatedConstantDecl assoc_const_decl = {
         .type_id = cast_type_id,
@@ -357,8 +351,10 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::TemplateId node_id) -> bool {
-  return context.TODO(node_id, "HandleTemplate");
+auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
+    -> bool {
+  context.node_stack().Push(node_id);
+  return true;
 }
 
 }  // namespace Carbon::Check

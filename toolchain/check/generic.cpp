@@ -115,7 +115,8 @@ class RebuildGenericConstantInEvalBlockCallbacks final
             context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
       if (context_.entity_names()
               .Get(binding->entity_name_id)
-              .bind_index.has_value()) {
+              .bind_index()
+              .has_value()) {
         inst_id = Rebuild(inst_id, *binding);
         return true;
       }
