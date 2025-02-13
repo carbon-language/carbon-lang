@@ -37,27 +37,27 @@ export C.n;
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [template]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [concrete]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -68,21 +68,21 @@ export C.n;
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Foo.C: type = import_ref Foo//a, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %Foo.import_ref.9fc: <witness> = import_ref Foo//a, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %Foo.C: type = import_ref Foo//a, C, loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Foo.import_ref.9fc: <witness> = import_ref Foo//a, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Foo.import_ref.2c4 = import_ref Foo//a, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %Foo.import_ref.4cb = import_ref Foo//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = imports.%Foo.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>

@@ -37,56 +37,56 @@ fn Other.Nested.F();
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Nested = %Nested
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Nested: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Nested: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
 // CHECK:STDOUT:     .Nested = %Nested
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.Nested: <namespace> = import_ref Other//default, Nested, loaded
-// CHECK:STDOUT:   %Nested: <namespace> = namespace %Other.Nested, [template] {
+// CHECK:STDOUT:   %Nested: <namespace> = namespace %Other.Nested, [concrete] {
 // CHECK:STDOUT:     .F = file.%F.decl
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Other: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Nested = imports.%Nested
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

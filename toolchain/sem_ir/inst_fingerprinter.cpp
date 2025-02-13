@@ -73,11 +73,14 @@ struct Worklist {
       return;
     }
     const auto& entity_name = sem_ir->entity_names().Get(entity_name_id);
-    if (entity_name.bind_index.has_value()) {
-      Add(entity_name.bind_index);
+    if (entity_name.bind_index().has_value()) {
+      Add(entity_name.bind_index());
       // Don't include the name. While it is part of the canonical identity of a
       // compile-time binding, renaming it (and its uses) is a compatible change
       // that we would like to not affect the fingerprint.
+      //
+      // Also don't include the `is_template` flag. Changing that flag should
+      // also be a compatible change from the perspective of users of a generic.
     } else {
       Add(entity_name.name_id);
     }
@@ -248,6 +251,16 @@ struct Worklist {
 
   auto Add(FloatId float_id) -> void {
     Add(sem_ir->floats().Get(float_id).bitcastToAPInt());
+  }
+
+  auto Add(PackageNameId package_id) -> void {
+    if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+      AddString(sem_ir->identifiers().Get(ident_id));
+    } else {
+      // TODO: May collide with a user package of the same name. Consider using
+      // a different value.
+      AddString(package_id.AsSpecialName());
+    }
   }
 
   auto Add(LibraryNameId lib_name_id) -> void {

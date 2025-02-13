@@ -19,7 +19,7 @@ class MockDiagnosticConsumer : public DiagnosticConsumer {
 // NOLINTNEXTLINE(modernize-use-trailing-return-type): From the macro.
 MATCHER_P(IsDiagnosticMessageString, matcher, "") {
   const DiagnosticMessage& message = arg;
-  return testing::ExplainMatchResult(matcher, message.format_fn(message),
+  return testing::ExplainMatchResult(matcher, message.Format(),
                                      result_listener);
 }
 
@@ -66,8 +66,8 @@ inline auto IsSingleDiagnostic(testing::Matcher<DiagnosticKind> kind,
 namespace Carbon {
 
 // Printing helpers for tests.
-void PrintTo(const Diagnostic& diagnostic, std::ostream* os);
-void PrintTo(DiagnosticLevel level, std::ostream* os);
+auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void;
+auto PrintTo(DiagnosticLevel level, std::ostream* os) -> void;
 
 }  // namespace Carbon
 

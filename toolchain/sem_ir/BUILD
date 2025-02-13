@@ -93,6 +93,7 @@ cc_library(
         "function.h",
         "generic.h",
         "impl.h",
+        "import_cpp.h",
         "import_ir.h",
         "interface.h",
         "name.h",
@@ -190,6 +191,18 @@ cc_library(
     hdrs = ["entry_point.h"],
     deps = [
         ":file",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "absolute_node_id",
+    srcs = ["absolute_node_id.cpp"],
+    hdrs = ["absolute_node_id.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
     ],
 )

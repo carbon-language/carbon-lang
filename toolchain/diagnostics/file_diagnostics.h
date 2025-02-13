@@ -17,19 +17,14 @@ namespace Carbon {
 // specific emitters must be used for that.
 class FileDiagnosticEmitter : public DiagnosticEmitter<llvm::StringRef> {
  public:
-  explicit FileDiagnosticEmitter(DiagnosticConsumer* consumer)
-      : DiagnosticEmitter<llvm::StringRef>(converter_, *consumer) {}
+  using DiagnosticEmitter::DiagnosticEmitter;
 
- private:
+ protected:
   // Converts a filename directly to the diagnostic location.
-  struct FileDiagnosticConverter : DiagnosticConverter<llvm::StringRef> {
-    auto ConvertLoc(llvm::StringRef filename, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
-      return {.loc = {.filename = filename}, .last_byte_offset = -1};
-    }
-  };
-
-  FileDiagnosticConverter converter_;
+  auto ConvertLoc(llvm::StringRef filename, ContextFnT /*context_fn*/) const
+      -> ConvertedDiagnosticLoc override {
+    return {.loc = {.filename = filename}, .last_byte_offset = -1};
+  }
 };
 
 }  // namespace Carbon

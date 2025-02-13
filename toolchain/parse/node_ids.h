@@ -81,6 +81,7 @@ using AnyStatementId =
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
 using AnyNonExprIdentifierNameId =
     NodeIdInCategory<NodeCategory::NonExprIdentifierName>;
+using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 
 // NodeId with kind that matches one of the `T::Kind`s.
 template <typename... T>

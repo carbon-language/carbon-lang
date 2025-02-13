@@ -9,6 +9,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -114,7 +115,8 @@ class RebuildGenericConstantInEvalBlockCallbacks final
             context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
       if (context_.entity_names()
               .Get(binding->entity_name_id)
-              .bind_index.has_value()) {
+              .bind_index()
+              .has_value()) {
         inst_id = Rebuild(inst_id, *binding);
         return true;
       }
@@ -255,7 +257,7 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       // constraints on the generic rather than properties of the type. For now,
       // require the transformed type to be complete if the original was.
       if (context.types().IsComplete(inst.type_id())) {
-        context.CompleteTypeOrCheckFail(type_id);
+        CompleteTypeOrCheckFail(context, type_id);
       }
       inst.SetType(type_id);
       context.sem_ir().insts().Set(inst_id, inst);
@@ -427,6 +429,12 @@ auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
   auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
   ResolveSpecificDeclaration(context, loc, specific_id);
   return specific_id;
+}
+
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
+                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId {
+  auto args_id = context.inst_blocks().AddCanonical(args);
+  return MakeSpecific(context, loc, generic_id, args_id);
 }
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)

@@ -51,50 +51,50 @@ fn NS();
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.type.b6a92a.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.d852be.1: %.type.b6a92a.1 = struct_value () [template]
-// CHECK:STDOUT:   %.type.b6a92a.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.d852be.2: %.type.b6a92a.2 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.1: type = fn_type @.1 [concrete]
+// CHECK:STDOUT:   %.d852be.1: %.type.b6a92a.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %.type.b6a92a.2: type = fn_type @.2 [concrete]
+// CHECK:STDOUT:   %.d852be.2: %.type.b6a92a.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Example.NS: <namespace> = import_ref Example//namespace, NS, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %Example.NS, [template] {}
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %NS: <namespace> = namespace %Example.NS, [concrete] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc18: %.type.b6a92a.1 = fn_decl @.1 [template = constants.%.d852be.1] {} {}
-// CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc32: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
+// CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %.decl.loc18: %.type.b6a92a.1 = fn_decl @.1 [concrete = constants.%.d852be.1] {} {}
+// CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %.decl.loc32: %.type.b6a92a.2 = fn_decl @.2 [concrete = constants.%.d852be.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

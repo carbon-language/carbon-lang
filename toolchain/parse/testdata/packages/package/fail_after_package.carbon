@@ -22,7 +22,7 @@ package B;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'A'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'A'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},

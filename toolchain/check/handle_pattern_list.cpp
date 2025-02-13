@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/subpattern.h"
 
 namespace Carbon::Check {
 
@@ -11,7 +12,7 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
-  context.BeginSubpattern();
+  BeginSubpattern(context);
   return true;
 }
 
@@ -20,7 +21,7 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
   if (context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
-    context.EndSubpatternAsEmpty();
+    EndSubpatternAsEmpty(context);
   }
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
@@ -36,7 +37,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
-  context.BeginSubpattern();
+  BeginSubpattern(context);
   // TODO: Remove this branch once the parse tree differentiates between
   // tuple patterns and param patterns.
   if (context.full_pattern_stack().CurrentKind() ==
@@ -49,7 +50,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
-  context.BeginSubpattern();
+  BeginSubpattern(context);
   return true;
 }
 
@@ -57,7 +58,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
-    context.EndSubpatternAsEmpty();
+    EndSubpatternAsEmpty(context);
   }
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.

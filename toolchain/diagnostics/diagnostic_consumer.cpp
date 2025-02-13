@@ -31,7 +31,7 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
       case DiagnosticLevel::LocationInfo:
         break;
     }
-    *stream_ << message.format_fn(message);
+    *stream_ << message.Format();
     if (include_diagnostic_kind_) {
       *stream_ << " [" << message.kind << "]";
     }

@@ -333,21 +333,15 @@ class CompilationUnit {
   // Parses tokens. Returns true on success.
   auto RunParse() -> void;
 
-  // Prepares per-IR lazy fetch functions which may come up in cross-IR
-  // diagnostics.
-  auto PreCheck() -> llvm::function_ref<const Parse::TreeAndSubtrees&()>;
-
   // Returns information needed to check this unit.
-  auto GetCheckUnit(
-      SemIR::CheckIRId check_ir_id,
-      llvm::ArrayRef<llvm::function_ref<const Parse::TreeAndSubtrees&()>>
-          all_trees_and_subtrees) -> Check::Unit;
+  auto GetCheckUnit(SemIR::CheckIRId check_ir_id) -> Check::Unit;
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
   auto PostCheck() -> void;
 
   // Lower SemIR to LLVM IR.
-  auto RunLower() -> void;
+  auto RunLower(std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+                    tree_and_subtrees_getters_for_debug_info) -> void;
 
   auto RunCodeGen() -> void;
 
@@ -362,6 +356,9 @@ class CompilationUnit {
   auto input_filename() -> llvm::StringRef { return input_filename_; }
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
+  auto get_trees_and_subtrees() -> Parse::GetTreeAndSubtreesFn {
+    return *tree_and_subtrees_getter_;
+  }
 
  private:
   // Do codegen. Returns true on success.
@@ -375,8 +372,8 @@ class CompilationUnit {
   // with the actual function name, but marks timings with the appropriate
   // phase.
   auto LogCall(llvm::StringLiteral logging_label,
-               llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
-      -> void;
+               llvm::StringLiteral timing_label,
+               llvm::function_ref<auto()->void> fn) -> void;
 
   // Returns true if the current input file can be dumped.
   auto IncludeInDumps() const -> bool;
@@ -412,9 +409,8 @@ class CompilationUnit {
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
-  std::optional<std::function<const Parse::TreeAndSubtrees&()>>
-      get_parse_tree_and_subtrees_;
-  std::optional<Check::SemIRDiagnosticConverter> sem_ir_converter_;
+  std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
+      tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
@@ -499,37 +495,25 @@ auto CompilationUnit::RunParse() -> void {
   }
 }
 
-auto CompilationUnit::PreCheck()
-    -> llvm::function_ref<const Parse::TreeAndSubtrees&()> {
+auto CompilationUnit::GetCheckUnit(SemIR::CheckIRId check_ir_id)
+    -> Check::Unit {
   CARBON_CHECK(parse_tree_, "Must call RunParse first");
-  CARBON_CHECK(!get_parse_tree_and_subtrees_, "Called PreCheck twice");
+  CARBON_CHECK(!sem_ir_, "Called GetCheckUnit twice");
 
-  get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
+  tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  return *get_parse_tree_and_subtrees_;
-}
-
-auto CompilationUnit::GetCheckUnit(
-    SemIR::CheckIRId check_ir_id,
-    llvm::ArrayRef<llvm::function_ref<const Parse::TreeAndSubtrees&()>>
-        all_trees_and_subtrees) -> Check::Unit {
-  CARBON_CHECK(get_parse_tree_and_subtrees_, "Must call PreCheck first");
-  CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
-
   sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
-  sem_ir_converter_.emplace(all_trees_and_subtrees, &*sem_ir_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
-          .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
-          .sem_ir = &*sem_ir_,
-          .sem_ir_converter = &*sem_ir_converter_};
+          .tree_and_subtrees_getter = *tree_and_subtrees_getter_,
+          .sem_ir = &*sem_ir_};
 }
 
 auto CompilationUnit::PostCheck() -> void {
-  CARBON_CHECK(sem_ir_converter_, "Must call GetCheckUnit first");
+  CARBON_CHECK(sem_ir_, "Must call GetCheckUnit first");
 
   // We've finished all steps that can produce diagnostics. Emit the
   // diagnostics now, so that the developer sees them sooner and doesn't need
@@ -587,15 +571,17 @@ auto CompilationUnit::PostCheck() -> void {
   }
 }
 
-auto CompilationUnit::RunLower() -> void {
+auto CompilationUnit::RunLower(
+    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+        tree_and_subtrees_getters_for_debug_info) -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
     llvm_context_ = std::make_unique<llvm::LLVMContext>();
     // TODO: Consider disabling instruction naming by default if we're not
     // producing textual LLVM IR.
     SemIR::InstNamer inst_namer(&*sem_ir_);
-    module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
-                                 *sem_ir_converter_, input_filename_, *sem_ir_,
-                                 &inst_namer, vlog_stream_);
+    module_ = Lower::LowerToLLVM(
+        *llvm_context_, tree_and_subtrees_getters_for_debug_info,
+        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");
@@ -724,7 +710,7 @@ auto CompilationUnit::GetParseTreeAndSubtrees()
 
 auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
-                              llvm::function_ref<void()> fn) -> void {
+                              llvm::function_ref<auto()->void> fn) -> void {
   CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
   Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
   fn();
@@ -841,26 +827,13 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return make_result();
   }
 
-  // Pre-check assigns IR IDs and constructs node converters.
-  llvm::SmallVector<llvm::function_ref<const Parse::TreeAndSubtrees&()>>
-      all_trees_and_subtrees;
-  // This size may not match due to units that are missing source, but that's an
-  // error case and not worth extra work.
-  all_trees_and_subtrees.reserve(units.size());
-  for (auto& unit : units) {
-    if (unit->has_source()) {
-      all_trees_and_subtrees.push_back(unit->PreCheck());
-    }
-  }
-
   // Gather Check::Units.
   llvm::SmallVector<Check::Unit> check_units;
-  check_units.reserve(all_trees_and_subtrees.size());
+  check_units.reserve(units.size());
   for (auto& unit : units) {
     if (unit->has_source()) {
       SemIR::CheckIRId check_ir_id(check_units.size());
-      check_units.push_back(
-          unit->GetCheckUnit(check_ir_id, all_trees_and_subtrees));
+      check_units.push_back(unit->GetCheckUnit(check_ir_id));
     }
   }
 
@@ -887,8 +860,23 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Lower.
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
+  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+      tree_and_subtrees_getters_for_debug_info;
+  if (options_.include_debug_info) {
+    // This size may not match due to units that are missing source, but that's
+    // an error case and not worth extra work.
+    tree_and_subtrees_getters.reserve(units.size());
+    for (auto& unit : units) {
+      if (unit->has_source()) {
+        tree_and_subtrees_getters.push_back(unit->get_trees_and_subtrees());
+      }
+    }
+    tree_and_subtrees_getters_for_debug_info = {};
+    tree_and_subtrees_getters_for_debug_info = tree_and_subtrees_getters;
+  }
   for (const auto& unit : units) {
-    unit->RunLower();
+    unit->RunLower(tree_and_subtrees_getters_for_debug_info);
   }
   if (options_.phase == CompileOptions::Phase::Lower) {
     return make_result();

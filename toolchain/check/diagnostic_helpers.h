@@ -33,7 +33,7 @@ class SemIRLoc {
 
  private:
   // Only allow member access for diagnostics.
-  friend class SemIRDiagnosticConverter;
+  friend class SemIRLocDiagnosticEmitter;
 
   union {
     SemIR::InstId inst_id_;

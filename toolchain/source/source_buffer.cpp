@@ -51,6 +51,15 @@ auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
       filename, is_regular_file, consumer);
 }
 
+auto SourceBuffer::MakeFromStringCopy(llvm::StringRef filename,
+                                      llvm::StringRef text,
+                                      DiagnosticConsumer& consumer)
+    -> std::optional<SourceBuffer> {
+  return MakeFromMemoryBuffer(
+      llvm::MemoryBuffer::getMemBufferCopy(text, filename), filename,
+      /*is_regular_file=*/true, consumer);
+}
+
 auto SourceBuffer::MakeFromMemoryBuffer(
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
     llvm::StringRef filename, bool is_regular_file,
