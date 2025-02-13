@@ -263,13 +263,13 @@ static auto BuildFunctionDecl(Context& context,
   auto self_param_id = SemIR::InstId::None;
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(name.implicit_param_patterns_id);
-  if (auto i = llvm::find_if(implicit_param_patterns,
-                             [&](auto implicit_param_id) {
-                               return SemIR::Function::GetNameFromPatternId(
-                                          context.sem_ir(),
-                                          implicit_param_id) ==
-                                      SemIR::NameId::SelfValue;
-                             });
+  if (const auto* i =
+          llvm::find_if(implicit_param_patterns,
+                        [&](auto implicit_param_id) {
+                          return SemIR::Function::GetNameFromPatternId(
+                                     context.sem_ir(), implicit_param_id) ==
+                                 SemIR::NameId::SelfValue;
+                        });
       i != implicit_param_patterns.end()) {
     self_param_id = *i;
   }
