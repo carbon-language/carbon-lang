@@ -206,8 +206,7 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
 
   auto entity_name_id = context.entity_names().Add(
       {.name_id = binding.name_component.name_id,
-       .parent_scope_id = choice_info.name_scope_id,
-       .bind_index = SemIR::CompileTimeBindIndex::None});
+       .parent_scope_id = choice_info.name_scope_id});
   auto bind_name_id = context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
       binding.node_id, SemIR::BindName{
                            .type_id = choice_info.self_type_id,
