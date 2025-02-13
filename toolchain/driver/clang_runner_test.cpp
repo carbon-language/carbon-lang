@@ -181,5 +181,38 @@ TEST(ClangRunnerTest, DashC) {
   EXPECT_THAT(err, StrEq(""));
 }
 
+TEST(ClangRunnerTest, BuitinHeaders) {
+  std::filesystem::path test_file = WriteTestFile("test.c", R"cpp(
+#include <stdalign.h>
+
+#ifndef alignas
+#error included the wrong header
+#endif
+  )cpp");
+  std::filesystem::path test_output = WriteTestFile("test.o", "");
+
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
+  RawStringOstream verbose_out;
+  std::string target = llvm::sys::getDefaultTargetTriple();
+  auto vfs = llvm::vfs::getRealFileSystem();
+  ClangRunner runner(&install_paths, target, vfs, &verbose_out);
+  std::string out;
+  std::string err;
+  EXPECT_TRUE(RunWithCapturedOutput(out, err,
+                                    [&] {
+                                      return runner.Run(
+                                          {"-c", test_file.string(), "-o",
+                                           test_output.string()});
+                                    }))
+      << "Verbose output from runner:\n"
+      << verbose_out.TakeStr() << "\n";
+  verbose_out.clear();
+
+  // No output should be produced.
+  EXPECT_THAT(out, StrEq(""));
+  EXPECT_THAT(err, StrEq(""));
+}
+
 }  // namespace
 }  // namespace Carbon
