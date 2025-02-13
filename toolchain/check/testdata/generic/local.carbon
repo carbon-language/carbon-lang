@@ -25,9 +25,9 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   // TODO: Decide on what behavior we want here. We don't reject the corresponding case outside of a function.
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+7]]:3: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+7]]:9: error: duplicate name being declared in the same scope [NameDeclDuplicate]
   // CHECK:STDERR:   class C(C:! type) {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:         ^
   // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+4]]:11: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:   class C(C:! type) {
   // CHECK:STDERR:           ^

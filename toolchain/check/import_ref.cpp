@@ -147,6 +147,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
   }
   auto conflict_id =
       AddImportRef(context, {.ir_id = new_ir_id, .inst_id = new_inst_id});
+  // TODO: Pass the imported name location instead of the conflict id.
   context.DiagnoseDuplicateName(conflict_id, prev_id);
 }
 

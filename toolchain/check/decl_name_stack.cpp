@@ -179,7 +179,7 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
     context_->DiagnosePoisonedName(name_context.poisoning_loc_id,
                                    name_context.loc_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
-    context_->DiagnoseDuplicateName(target_id, id);
+    context_->DiagnoseDuplicateName(name_context.loc_id, id);
   } else {
     AddName(name_context, target_id, access_kind);
   }
