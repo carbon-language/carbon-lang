@@ -13,6 +13,7 @@
 
 #ifndef CARBON_SEM_IR_INST_KIND
 #error "Must define the x-macro to use this file."
+#define CARBON_SEM_IR_INST_KIND(Name)
 #endif
 
 // For each instruction kind declared here there is a matching definition in
