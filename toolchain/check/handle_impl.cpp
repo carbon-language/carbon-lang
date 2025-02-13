@@ -12,6 +12,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -318,9 +319,9 @@ static auto CompleteFacetTypeToInterface(Context& context,
     return nullptr;
   }
 
-  auto complete_id = context.RequireCompleteFacetType(
-      facet_type_id, context.insts().GetLocId(impl.constraint_id), *facet_type,
-      Context::FacetTypeImpl);
+  auto complete_id = RequireCompleteFacetType(
+      context, facet_type_id, context.insts().GetLocId(impl.constraint_id),
+      *facet_type, FacetTypeImpl);
   if (!complete_id.has_value()) {
     return nullptr;
   }

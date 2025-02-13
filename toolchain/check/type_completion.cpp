@@ -7,6 +7,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -527,46 +528,68 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-auto RequireDefinedType(Context& context, SemIR::TypeId type_id,
-                        SemIR::LocId loc_id,
-                        Context::BuildDiagnosticFn diagnoser) -> bool {
-  if (!RequireCompleteType(context, type_id, loc_id, diagnoser)) {
-    return false;
-  }
-
-  if (auto facet_type = context.types().TryGetAs<SemIR::FacetType>(type_id)) {
-    const auto& facet_type_info =
-        context.facet_types().Get(facet_type->facet_type_id);
-    for (auto interface : facet_type_info.impls_constraints) {
-      auto interface_id = interface.interface_id;
-      if (!context.interfaces().Get(interface_id).is_defined()) {
-        auto builder = diagnoser();
-        context.NoteUndefinedInterface(interface_id, builder);
-        builder.Emit();
-        return false;
-      }
-
-      if (interface.specific_id.has_value()) {
-        ResolveSpecificDefinition(context, loc_id, interface.specific_id);
-      }
+static auto RequireCompleteFacetTypeImpl(
+    Context& context, SemIR::LocId loc_id,
+    const SemIR::FacetTypeInfo& facet_type_info,
+    FacetTypeContext context_for_diagnostics) -> SemIR::CompleteFacetTypeId {
+  SemIR::CompleteFacetType result;
+  result.required_interfaces.reserve(facet_type_info.impls_constraints.size());
+  // Every mentioned interface needs to be defined.
+  for (auto impl_interface : facet_type_info.impls_constraints) {
+    // TODO: expand named constraints
+    auto interface_id = impl_interface.interface_id;
+    const auto& interface = context.interfaces().Get(interface_id);
+    if (!interface.is_defined()) {
+      CARBON_DIAGNOSTIC(
+          ResolveFacetTypeWithUndefinedInterface, Error,
+          "{0:=0:member access into|=1:impl of} undefined interface {1}",
+          IntAsSelect, SemIR::NameId);
+      auto builder = context.emitter().Build(
+          loc_id, ResolveFacetTypeWithUndefinedInterface,
+          static_cast<int>(context_for_diagnostics), interface.name_id);
+      context.NoteUndefinedInterface(interface_id, builder);
+      builder.Emit();
+      return SemIR::CompleteFacetTypeId::None;
     }
-    // TODO: Finish facet type resolution.
-    //
-    // Note that we will need Self to be passed into facet type resolution.
-    // The `.Self` of a facet type created by `where` will then be bound to the
-    // provided self type.
-    //
-    // For example, in `T:! X where ...`, we will bind the `.Self` of the
-    // `where` facet type to `T`, and in `(X where ...) where ...`, we will bind
-    // the inner `.Self` to the outer `.Self`.
-    //
-    // If the facet type contains a rewrite, we may have deferred converting the
-    // rewritten value to the type of the associated constant. That conversion
-    // should also be performed as part of resolution, and may depend on the
-    // Self type.
+
+    if (impl_interface.specific_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, impl_interface.specific_id);
+    }
+    result.required_interfaces.push_back(
+        {.interface_id = interface_id,
+         .specific_id = impl_interface.specific_id});
+  }
+  // TODO: Sort and deduplicate result.required_interfaces. For now, we have at
+  // most one.
+  CARBON_CHECK(result.required_interfaces.size() <= 1);
+
+  // TODO: Distinguish interfaces that are required but would not be
+  // implemented, such as those from `where .Self impls I`.
+  result.num_to_impl = result.required_interfaces.size();
+  return context.complete_facet_types().Add(result);
+}
+
+// TODO: RequireCompleteType should do these checks, this should just return
+// additional information.
+auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
+                              SemIR::LocId loc_id,
+                              const SemIR::FacetType& facet_type,
+                              FacetTypeContext context_for_diagnostics)
+    -> SemIR::CompleteFacetTypeId {
+  if (!RequireCompleteType(
+          context, type_id, loc_id, [&]() -> Context::DiagnosticBuilder {
+            CARBON_FATAL("Unreachable, facet types are always complete.");
+          })) {
+    return SemIR::CompleteFacetTypeId::None;
   }
 
-  return true;
+  auto& facet_type_info =
+      context.facet_types().GetMutable(facet_type.facet_type_id);
+  if (!facet_type_info.complete_id.has_value()) {
+    facet_type_info.complete_id = RequireCompleteFacetTypeImpl(
+        context, loc_id, facet_type_info, context_for_diagnostics);
+  }
+  return facet_type_info.complete_id;
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,

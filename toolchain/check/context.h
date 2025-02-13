@@ -232,6 +232,28 @@ class Context {
                               SemIR::SpecificId specific_id)
       -> SemIR::FacetType;
 
+  // Adds and returns an `ImplWitness` instruction (created with location set to
+  // `witness_loc_id`) that "`Self` type" of type "facet type" implements
+  // interface `interface_to_witness`, which must be an interface required by
+  // "facet type" (as determined by `RequireCompleteFacetType`). This witness
+  // reflects the values assigned to associated constant members of that
+  // interface by rewrite constraints in the facet type.
+  //
+  // `self_type_inst_id` is the `Self` type of the facet type. For example, in
+  // `T:! X where ...`, we will bind the `.Self` of the `where` facet type to
+  // `T`, and in `(X where ...) where ...`, we will bind the inner `.Self` to
+  // the outer `.Self`.
+  //
+  // If the facet type contains a rewrite, we may have deferred converting the
+  // rewritten value to the type of the associated constant. That conversion
+  // will also be performed as part of resolution, and may depend on the
+  // `Self` type.
+  auto ResolveFacetTypeImplWitness(
+      SemIR::LocId witness_loc_id, SemIR::InstId facet_type_inst_id,
+      SemIR::InstId self_type_inst_id,
+      const SemIR::SpecificInterface& interface_to_witness,
+      SemIR::SpecificId self_specific_id) -> SemIR::InstId;
+
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
   // Gets the type to use for an unbound associated entity declared in this

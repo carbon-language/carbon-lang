@@ -699,25 +699,25 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: --- fail_mismatch_mismatch_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I5.type: type = facet_type <@I5> [template]
+// CHECK:STDOUT:   %I5.type: type = facet_type <@I5> [concrete]
 // CHECK:STDOUT:   %Self: %I5.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I5.assoc_type: type = assoc_entity_type %I5.type [template]
-// CHECK:STDOUT:   %assoc0: %I5.assoc_type = assoc_entity element0, @I5.%T7 [template]
-// CHECK:STDOUT:   %assoc1: %I5.assoc_type = assoc_entity element1, @I5.%T8 [template]
-// CHECK:STDOUT:   %assoc2: %I5.assoc_type = assoc_entity element2, @I5.%T9 [template]
-// CHECK:STDOUT:   %B1: type = class_type @B1 [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %B2: type = class_type @B2 [template]
-// CHECK:STDOUT:   %B3: type = class_type @B3 [template]
-// CHECK:STDOUT:   %B4: type = class_type @B4 [template]
-// CHECK:STDOUT:   %B5: type = class_type @B5 [template]
-// CHECK:STDOUT:   %B6: type = class_type @B6 [template]
-// CHECK:STDOUT:   %B7: type = class_type @B7 [template]
-// CHECK:STDOUT:   %B8: type = class_type @B8 [template]
-// CHECK:STDOUT:   %G1: type = class_type @G1 [template]
-// CHECK:STDOUT:   %G2: type = class_type @G2 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %I5.assoc_type: type = assoc_entity_type %I5.type [concrete]
+// CHECK:STDOUT:   %assoc0: %I5.assoc_type = assoc_entity element0, @I5.%T7 [concrete]
+// CHECK:STDOUT:   %assoc1: %I5.assoc_type = assoc_entity element1, @I5.%T8 [concrete]
+// CHECK:STDOUT:   %assoc2: %I5.assoc_type = assoc_entity element2, @I5.%T9 [concrete]
+// CHECK:STDOUT:   %B1: type = class_type @B1 [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %B2: type = class_type @B2 [concrete]
+// CHECK:STDOUT:   %B3: type = class_type @B3 [concrete]
+// CHECK:STDOUT:   %B4: type = class_type @B4 [concrete]
+// CHECK:STDOUT:   %B5: type = class_type @B5 [concrete]
+// CHECK:STDOUT:   %B6: type = class_type @B6 [concrete]
+// CHECK:STDOUT:   %B7: type = class_type @B7 [concrete]
+// CHECK:STDOUT:   %B8: type = class_type @B8 [concrete]
+// CHECK:STDOUT:   %G1: type = class_type @G1 [concrete]
+// CHECK:STDOUT:   %G2: type = class_type @G2 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %I5.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
@@ -725,14 +725,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %.Self.as_wit, element1 [symbolic]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %.Self.as_wit, element2 [symbolic]
-// CHECK:STDOUT:   %I5_where.type.43c: type = facet_type <@I5 where %impl.elem2 = %B3 and %impl.elem2 = %B4 and %impl.elem1 = %G1 and %impl.elem0 = %B1 and %impl.elem0 = %B2> [template]
-// CHECK:STDOUT:   %impl_witness.f46: <witness> = impl_witness (<error>, %G1, <error>) [template]
-// CHECK:STDOUT:   %I5_where.type.006: type = facet_type <@I5 where %impl.elem2 = %B7 and %impl.elem2 = %B8 and %impl.elem1 = %B5 and %impl.elem1 = %B6 and %impl.elem0 = %G2> [template]
-// CHECK:STDOUT:   %impl_witness.4de: <witness> = impl_witness (%G2, <error>, <error>) [template]
+// CHECK:STDOUT:   %I5_where.type.43c: type = facet_type <@I5 where %impl.elem2 = %B3 and %impl.elem2 = %B4 and %impl.elem1 = %G1 and %impl.elem0 = %B1 and %impl.elem0 = %B2> [concrete]
+// CHECK:STDOUT:   %impl_witness.f46: <witness> = impl_witness (<error>, %G1, <error>) [concrete]
+// CHECK:STDOUT:   %I5_where.type.006: type = facet_type <@I5 where %impl.elem2 = %B7 and %impl.elem2 = %B8 and %impl.elem1 = %B5 and %impl.elem1 = %B6 and %impl.elem0 = %G2> [concrete]
+// CHECK:STDOUT:   %impl_witness.4de: <witness> = impl_witness (%G2, <error>, <error>) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I5 = %I5.decl
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
@@ -745,58 +745,58 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     .G1 = %G1.decl
 // CHECK:STDOUT:     .G2 = %G2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I5.decl: type = interface_decl @I5 [template = constants.%I5.type] {} {}
-// CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [template = constants.%B1] {} {}
-// CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {} {}
-// CHECK:STDOUT:   %B3.decl: type = class_decl @B3 [template = constants.%B3] {} {}
-// CHECK:STDOUT:   %B4.decl: type = class_decl @B4 [template = constants.%B4] {} {}
-// CHECK:STDOUT:   %B5.decl: type = class_decl @B5 [template = constants.%B5] {} {}
-// CHECK:STDOUT:   %B6.decl: type = class_decl @B6 [template = constants.%B6] {} {}
-// CHECK:STDOUT:   %B7.decl: type = class_decl @B7 [template = constants.%B7] {} {}
-// CHECK:STDOUT:   %B8.decl: type = class_decl @B8 [template = constants.%B8] {} {}
-// CHECK:STDOUT:   %G1.decl: type = class_decl @G1 [template = constants.%G1] {} {}
-// CHECK:STDOUT:   %G2.decl: type = class_decl @G2 [template = constants.%G2] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:   %I5.decl: type = interface_decl @I5 [concrete = constants.%I5.type] {} {}
+// CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [concrete = constants.%B1] {} {}
+// CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [concrete = constants.%B2] {} {}
+// CHECK:STDOUT:   %B3.decl: type = class_decl @B3 [concrete = constants.%B3] {} {}
+// CHECK:STDOUT:   %B4.decl: type = class_decl @B4 [concrete = constants.%B4] {} {}
+// CHECK:STDOUT:   %B5.decl: type = class_decl @B5 [concrete = constants.%B5] {} {}
+// CHECK:STDOUT:   %B6.decl: type = class_decl @B6 [concrete = constants.%B6] {} {}
+// CHECK:STDOUT:   %B7.decl: type = class_decl @B7 [concrete = constants.%B7] {} {}
+// CHECK:STDOUT:   %B8.decl: type = class_decl @B8 [concrete = constants.%B8] {} {}
+// CHECK:STDOUT:   %G1.decl: type = class_decl @G1 [concrete = constants.%G1] {} {}
+// CHECK:STDOUT:   %G2.decl: type = class_decl @G2 [concrete = constants.%G2] {} {}
+// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
 // CHECK:STDOUT:     %.loc34_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc34_7.2: type = converted %.loc34_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %I5.ref: type = name_ref I5, file.%I5.decl [template = constants.%I5.type]
+// CHECK:STDOUT:     %.loc34_7.2: type = converted %.loc34_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %I5.ref: type = name_ref I5, file.%I5.decl [concrete = constants.%I5.type]
 // CHECK:STDOUT:     %.Self: %I5.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc34_21: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T7.ref.loc34_21: %I5.assoc_type = name_ref T7, @T7.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %T7.ref.loc34_21: %I5.assoc_type = name_ref T7, @T7.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_type.loc34_21: type = facet_access_type %.Self.ref.loc34_21 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc34_21: type = converted %.Self.ref.loc34_21, %.Self.as_type.loc34_21 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc34_21: <witness> = facet_access_witness %.Self.ref.loc34_21 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc34_21: type = impl_witness_access %.Self.as_wit.loc34_21, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
+// CHECK:STDOUT:     %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:     %.Self.ref.loc34_34: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T7.ref.loc34_34: %I5.assoc_type = name_ref T7, @T7.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %T7.ref.loc34_34: %I5.assoc_type = name_ref T7, @T7.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_type.loc34_34: type = facet_access_type %.Self.ref.loc34_34 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc34_34: type = converted %.Self.ref.loc34_34, %.Self.as_type.loc34_34 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc34_34: <witness> = facet_access_witness %.Self.ref.loc34_34 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc34_34: type = impl_witness_access %.Self.as_wit.loc34_34, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
+// CHECK:STDOUT:     %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
 // CHECK:STDOUT:     %.Self.ref.loc34_47: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T8.ref: %I5.assoc_type = name_ref T8, @T8.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:     %T8.ref: %I5.assoc_type = name_ref T8, @T8.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %.Self.as_type.loc34_47: type = facet_access_type %.Self.ref.loc34_47 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc34_47: type = converted %.Self.ref.loc34_47, %.Self.as_type.loc34_47 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc34_47: <witness> = facet_access_witness %.Self.ref.loc34_47 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem1: type = impl_witness_access %.Self.as_wit.loc34_47, element1 [symbolic = constants.%impl.elem1]
-// CHECK:STDOUT:     %G1.ref: type = name_ref G1, file.%G1.decl [template = constants.%G1]
+// CHECK:STDOUT:     %G1.ref: type = name_ref G1, file.%G1.decl [concrete = constants.%G1]
 // CHECK:STDOUT:     %.Self.ref.loc34_60: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T9.ref.loc34_60: %I5.assoc_type = name_ref T9, @T9.%assoc2 [template = constants.%assoc2]
+// CHECK:STDOUT:     %T9.ref.loc34_60: %I5.assoc_type = name_ref T9, @T9.%assoc2 [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %.Self.as_type.loc34_60: type = facet_access_type %.Self.ref.loc34_60 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc34_60: type = converted %.Self.ref.loc34_60, %.Self.as_type.loc34_60 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc34_60: <witness> = facet_access_witness %.Self.ref.loc34_60 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem2.loc34_60: type = impl_witness_access %.Self.as_wit.loc34_60, element2 [symbolic = constants.%impl.elem2]
-// CHECK:STDOUT:     %B3.ref: type = name_ref B3, file.%B3.decl [template = constants.%B3]
+// CHECK:STDOUT:     %B3.ref: type = name_ref B3, file.%B3.decl [concrete = constants.%B3]
 // CHECK:STDOUT:     %.Self.ref.loc34_73: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T9.ref.loc34_73: %I5.assoc_type = name_ref T9, @T9.%assoc2 [template = constants.%assoc2]
+// CHECK:STDOUT:     %T9.ref.loc34_73: %I5.assoc_type = name_ref T9, @T9.%assoc2 [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %.Self.as_type.loc34_73: type = facet_access_type %.Self.ref.loc34_73 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc34_73: type = converted %.Self.ref.loc34_73, %.Self.as_type.loc34_73 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc34_73: <witness> = facet_access_witness %.Self.ref.loc34_73 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem2.loc34_73: type = impl_witness_access %.Self.as_wit.loc34_73, element2 [symbolic = constants.%impl.elem2]
-// CHECK:STDOUT:     %B4.ref: type = name_ref B4, file.%B4.decl [template = constants.%B4]
-// CHECK:STDOUT:     %.loc34_15: type = where_expr %.Self [template = constants.%I5_where.type.43c] {
+// CHECK:STDOUT:     %B4.ref: type = name_ref B4, file.%B4.decl [concrete = constants.%B4]
+// CHECK:STDOUT:     %.loc34_15: type = where_expr %.Self [concrete = constants.%I5_where.type.43c] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc34_21, %B1.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc34_34, %B2.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1, %G1.ref
@@ -804,48 +804,48 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2.loc34_73, %B4.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc34: <witness> = impl_witness (<error>, constants.%G1, <error>) [template = constants.%impl_witness.f46]
-// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
+// CHECK:STDOUT:   %impl_witness.loc34: <witness> = impl_witness (<error>, constants.%G1, <error>) [concrete = constants.%impl_witness.f46]
+// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
 // CHECK:STDOUT:     %.loc48_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc48_7.2: type = converted %.loc48_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %I5.ref: type = name_ref I5, file.%I5.decl [template = constants.%I5.type]
+// CHECK:STDOUT:     %.loc48_7.2: type = converted %.loc48_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %I5.ref: type = name_ref I5, file.%I5.decl [concrete = constants.%I5.type]
 // CHECK:STDOUT:     %.Self: %I5.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc48_21: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T7.ref: %I5.assoc_type = name_ref T7, @T7.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %T7.ref: %I5.assoc_type = name_ref T7, @T7.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_type.loc48_21: type = facet_access_type %.Self.ref.loc48_21 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc48_21: type = converted %.Self.ref.loc48_21, %.Self.as_type.loc48_21 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc48_21: <witness> = facet_access_witness %.Self.ref.loc48_21 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit.loc48_21, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %G2.ref: type = name_ref G2, file.%G2.decl [template = constants.%G2]
+// CHECK:STDOUT:     %G2.ref: type = name_ref G2, file.%G2.decl [concrete = constants.%G2]
 // CHECK:STDOUT:     %.Self.ref.loc48_34: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T8.ref.loc48_34: %I5.assoc_type = name_ref T8, @T8.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:     %T8.ref.loc48_34: %I5.assoc_type = name_ref T8, @T8.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %.Self.as_type.loc48_34: type = facet_access_type %.Self.ref.loc48_34 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc48_34: type = converted %.Self.ref.loc48_34, %.Self.as_type.loc48_34 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc48_34: <witness> = facet_access_witness %.Self.ref.loc48_34 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem1.loc48_34: type = impl_witness_access %.Self.as_wit.loc48_34, element1 [symbolic = constants.%impl.elem1]
-// CHECK:STDOUT:     %B5.ref: type = name_ref B5, file.%B5.decl [template = constants.%B5]
+// CHECK:STDOUT:     %B5.ref: type = name_ref B5, file.%B5.decl [concrete = constants.%B5]
 // CHECK:STDOUT:     %.Self.ref.loc48_47: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T8.ref.loc48_47: %I5.assoc_type = name_ref T8, @T8.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:     %T8.ref.loc48_47: %I5.assoc_type = name_ref T8, @T8.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %.Self.as_type.loc48_47: type = facet_access_type %.Self.ref.loc48_47 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc48_47: type = converted %.Self.ref.loc48_47, %.Self.as_type.loc48_47 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc48_47: <witness> = facet_access_witness %.Self.ref.loc48_47 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem1.loc48_47: type = impl_witness_access %.Self.as_wit.loc48_47, element1 [symbolic = constants.%impl.elem1]
-// CHECK:STDOUT:     %B6.ref: type = name_ref B6, file.%B6.decl [template = constants.%B6]
+// CHECK:STDOUT:     %B6.ref: type = name_ref B6, file.%B6.decl [concrete = constants.%B6]
 // CHECK:STDOUT:     %.Self.ref.loc48_60: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T9.ref.loc48_60: %I5.assoc_type = name_ref T9, @T9.%assoc2 [template = constants.%assoc2]
+// CHECK:STDOUT:     %T9.ref.loc48_60: %I5.assoc_type = name_ref T9, @T9.%assoc2 [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %.Self.as_type.loc48_60: type = facet_access_type %.Self.ref.loc48_60 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc48_60: type = converted %.Self.ref.loc48_60, %.Self.as_type.loc48_60 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc48_60: <witness> = facet_access_witness %.Self.ref.loc48_60 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem2.loc48_60: type = impl_witness_access %.Self.as_wit.loc48_60, element2 [symbolic = constants.%impl.elem2]
-// CHECK:STDOUT:     %B7.ref: type = name_ref B7, file.%B7.decl [template = constants.%B7]
+// CHECK:STDOUT:     %B7.ref: type = name_ref B7, file.%B7.decl [concrete = constants.%B7]
 // CHECK:STDOUT:     %.Self.ref.loc48_73: %I5.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T9.ref.loc48_73: %I5.assoc_type = name_ref T9, @T9.%assoc2 [template = constants.%assoc2]
+// CHECK:STDOUT:     %T9.ref.loc48_73: %I5.assoc_type = name_ref T9, @T9.%assoc2 [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %.Self.as_type.loc48_73: type = facet_access_type %.Self.ref.loc48_73 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc48_73: type = converted %.Self.ref.loc48_73, %.Self.as_type.loc48_73 [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit.loc48_73: <witness> = facet_access_witness %.Self.ref.loc48_73 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem2.loc48_73: type = impl_witness_access %.Self.as_wit.loc48_73, element2 [symbolic = constants.%impl.elem2]
-// CHECK:STDOUT:     %B8.ref: type = name_ref B8, file.%B8.decl [template = constants.%B8]
-// CHECK:STDOUT:     %.loc48_15: type = where_expr %.Self [template = constants.%I5_where.type.006] {
+// CHECK:STDOUT:     %B8.ref: type = name_ref B8, file.%B8.decl [concrete = constants.%B8]
+// CHECK:STDOUT:     %.loc48_15: type = where_expr %.Self [concrete = constants.%I5_where.type.006] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %G2.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc48_34, %B5.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc48_47, %B6.ref
@@ -853,19 +853,19 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2.loc48_73, %B8.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc48: <witness> = impl_witness (constants.%G2, <error>, <error>) [template = constants.%impl_witness.4de]
+// CHECK:STDOUT:   %impl_witness.loc48: <witness> = impl_witness (constants.%G2, <error>, <error>) [concrete = constants.%impl_witness.4de]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I5 {
 // CHECK:STDOUT:   %Self: %I5.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T7: type = assoc_const_decl @T7 [template] {
-// CHECK:STDOUT:     %assoc0: %I5.assoc_type = assoc_entity element0, @I5.%T7 [template = constants.%assoc0]
+// CHECK:STDOUT:   %T7: type = assoc_const_decl @T7 [concrete] {
+// CHECK:STDOUT:     %assoc0: %I5.assoc_type = assoc_entity element0, @I5.%T7 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T8: type = assoc_const_decl @T8 [template] {
-// CHECK:STDOUT:     %assoc1: %I5.assoc_type = assoc_entity element1, @I5.%T8 [template = constants.%assoc1]
+// CHECK:STDOUT:   %T8: type = assoc_const_decl @T8 [concrete] {
+// CHECK:STDOUT:     %assoc1: %I5.assoc_type = assoc_entity element1, @I5.%T8 [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T9: type = assoc_const_decl @T9 [template] {
-// CHECK:STDOUT:     %assoc2: %I5.assoc_type = assoc_entity element2, @I5.%T9 [template = constants.%assoc2]
+// CHECK:STDOUT:   %T9: type = assoc_const_decl @T9 [concrete] {
+// CHECK:STDOUT:     %assoc2: %I5.assoc_type = assoc_entity element2, @I5.%T9 [concrete = constants.%assoc2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -896,7 +896,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -904,7 +904,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -912,7 +912,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B3 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -920,7 +920,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B4 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -928,7 +928,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B5 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -936,7 +936,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B6 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -944,7 +944,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B7 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -952,7 +952,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B8 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -960,7 +960,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @G1 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -968,7 +968,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @G2 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1079,7 +1079,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %L_where.type: type = facet_type <@L where %impl.elem0 = %empty_tuple.type and %impl.elem0 = %empty_struct_type> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1113,7 +1113,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc9_32, %.loc9_38.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_tuple.type) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [concrete = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L {
@@ -1512,58 +1512,58 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: --- fail_where_rewrite_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [template]
+// CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [concrete]
 // CHECK:STDOUT:   %Self: %IF.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.496: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.1de: %F.type.496 = struct_value () [template]
-// CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type %IF.type [template]
-// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%F.decl [template]
-// CHECK:STDOUT:   %CD: type = class_type @CD [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %F.type.496: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.1de: %F.type.496 = struct_value () [concrete]
+// CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type %IF.type [concrete]
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%F.decl [concrete]
+// CHECK:STDOUT:   %CD: type = class_type @CD [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %.Self: %IF.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %IF.facet.3a2: %IF.type = facet_value %.Self.as_type, %.Self.as_wit [symbolic]
 // CHECK:STDOUT:   %.99d: type = fn_type_with_self_type %F.type.496, %IF.facet.3a2 [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.99d = impl_witness_access %.Self.as_wit, element0 [symbolic]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %IF_where.type: type = facet_type <@IF where %impl.elem0 = %int_0> [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
-// CHECK:STDOUT:   %F.type.064: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.822: %F.type.064 = struct_value () [template]
-// CHECK:STDOUT:   %IF.facet.b37: %IF.type = facet_value %CD, %impl_witness [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %IF_where.type: type = facet_type <@IF where %impl.elem0 = %int_0> [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
+// CHECK:STDOUT:   %F.type.064: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.822: %F.type.064 = struct_value () [concrete]
+// CHECK:STDOUT:   %IF.facet.b37: %IF.type = facet_value %CD, %impl_witness [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .IF = %IF.decl
 // CHECK:STDOUT:     .CD = %CD.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IF.decl: type = interface_decl @IF [template = constants.%IF.type] {} {}
-// CHECK:STDOUT:   %CD.decl: type = class_decl @CD [template = constants.%CD] {} {}
-// CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %CD.ref: type = name_ref CD, file.%CD.decl [template = constants.%CD]
-// CHECK:STDOUT:     %IF.ref: type = name_ref IF, file.%IF.decl [template = constants.%IF.type]
+// CHECK:STDOUT:   %IF.decl: type = interface_decl @IF [concrete = constants.%IF.type] {} {}
+// CHECK:STDOUT:   %CD.decl: type = class_decl @CD [concrete = constants.%CD] {} {}
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %CD.ref: type = name_ref CD, file.%CD.decl [concrete = constants.%CD]
+// CHECK:STDOUT:     %IF.ref: type = name_ref IF, file.%IF.decl [concrete = constants.%IF.type]
 // CHECK:STDOUT:     %.Self: %IF.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %IF.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %F.ref: %IF.assoc_type = name_ref F, @IF.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %F.ref: %IF.assoc_type = name_ref F, @IF.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc11_21: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: %.99d = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:     %.loc11_15: type = where_expr %.Self [template = constants.%IF_where.type] {
+// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:     %.loc11_15: type = where_expr %.Self [concrete = constants.%IF_where.type] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %int_0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @IF {
 // CHECK:STDOUT:   %Self: %IF.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.496 = fn_decl @F.1 [template = constants.%F.1de] {} {}
-// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
+// CHECK:STDOUT:   %F.decl: %F.type.496 = fn_decl @F.1 [concrete = constants.%F.1de] {} {}
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1572,7 +1572,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %CD.ref as %.loc11_15 {
-// CHECK:STDOUT:   %F.decl: %F.type.064 = fn_decl @F.2 [template = constants.%F.822] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.064 = fn_decl @F.2 [concrete = constants.%F.822] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -1580,7 +1580,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @CD {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

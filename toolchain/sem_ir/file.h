@@ -275,7 +275,7 @@ class File : public Printable<File> {
   // Storage for facet types.
   CanonicalValueStore<FacetTypeId> facet_types_;
 
-  // Storage for resolved facet types.
+  // Storage for complete facet types.
   ValueStore<CompleteFacetTypeId> complete_facet_types_;
 
   // Storage for impls.
