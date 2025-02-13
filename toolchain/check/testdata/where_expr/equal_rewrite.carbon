@@ -73,20 +73,13 @@ interface O {
 fn WithInteger(Q:! O where .P = i32) {}
 
 fn WithBool(R:! O where .P = bool) {
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+17]]:3: error: semantics TODO: `Facet value converting to facet value` [SemanticsTodo]
-  // CHECK:STDERR:   WithInteger(R);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `O where .(O.P) = bool` to `O where .(O.P) = i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: note: type `O where .(O.P) = bool` does not implement interface `Core.ImplicitAs(O where .(O.P) = i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -105,20 +98,13 @@ interface S {
 fn WithT(V:! S where .T = ()) {}
 
 fn WithU(W:! S where .U = ()) {
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+17]]:3: error: semantics TODO: `Facet value converting to facet value` [SemanticsTodo]
-  // CHECK:STDERR:   WithT(W);
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `S where .(S.U) = ()` to `S where .(S.T) = ()` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: note: type `S where .(S.U) = ()` does not implement interface `Core.ImplicitAs(S where .(S.T) = ())` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -1007,7 +993,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithInteger.ref: %WithInteger.type = name_ref WithInteger, file.%WithInteger.decl [concrete = constants.%WithInteger]
 // CHECK:STDOUT:     %R.ref: %O_where.type.0f2 = name_ref R, %R.loc10_13.1 [symbolic = %R.loc10_13.2 (constants.%R)]
-// CHECK:STDOUT:     %.loc28: %O_where.type.9eb = converted %R.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc21: %O_where.type.9eb = converted %R.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1162,7 +1148,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithT.ref: %WithT.type = name_ref WithT, file.%WithT.decl [concrete = constants.%WithT]
 // CHECK:STDOUT:     %W.ref: %S_where.type.357 = name_ref W, %W.loc11_10.1 [symbolic = %W.loc11_10.2 (constants.%W)]
-// CHECK:STDOUT:     %.loc29: %S_where.type.e40 = converted %W.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc22: %S_where.type.e40 = converted %W.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

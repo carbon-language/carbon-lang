@@ -152,6 +152,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                         std::string, SemIR::TypeId);
       context.emitter()
           .Build(loc_id, ImplLookupCycle, "<TODO: interface name>",
+                 // FIXME: Invalid for facet values??? Write a test where cycle
+                 // will print a BindSymbolicName?
                  context.GetTypeIdForTypeConstant(type_const_id))
           .Emit();
       return SemIR::ErrorInst::SingletonInstId;
@@ -191,10 +193,23 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         continue;
       }
     }
+    auto specific_self_const_id = SemIR::GetConstantValueInSpecific(
+        context.sem_ir(), specific_id, impl.self_id);
+    // A FacetAccessType's constant value is itself, but the `type_const_id`
+    // will need to match based on the FacetType of its facet value instruction.
+    //
+    // TODO: For now we still just require them to be equal, but facet values
+    // (really, their FacetTypes) can be compatible if any subset of the
+    // `type_const_id`'s FacetType is equal to all of the FacetType of the facet
+    // value instruction.
+    if (auto facet_access_type_id =
+            context.insts().TryGetAs<SemIR::FacetAccessType>(
+                context.constant_values().GetInstId(specific_self_const_id))) {
+      specific_self_const_id = context.constant_values().Get(
+          facet_access_type_id->facet_value_inst_id);
+    }
     if (!context.constant_values().AreEqualAcrossDeclarations(
-            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              impl.self_id),
-            type_const_id)) {
+            specific_self_const_id, type_const_id)) {
       continue;
     }
     if (!context.constant_values().AreEqualAcrossDeclarations(
