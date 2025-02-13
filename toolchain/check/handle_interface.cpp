@@ -10,6 +10,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -116,8 +117,9 @@ static auto BuildInterfaceDecl(Context& context,
     interface_info.generic_id = BuildGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
-      interface_decl.type_id = context.GetGenericInterfaceType(
-          interface_decl.interface_id, context.scope_stack().PeekSpecificId());
+      interface_decl.type_id =
+          GetGenericInterfaceType(context, interface_decl.interface_id,
+                                  context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(
@@ -163,8 +165,8 @@ auto HandleParseNode(Context& context,
 
   // Declare and introduce `Self`.
   SemIR::FacetType facet_type =
-      context.FacetTypeFromInterface(interface_id, self_specific_id);
-  SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
+      FacetTypeFromInterface(context, interface_id, self_specific_id);
+  SemIR::TypeId self_type_id = context.types().GetTypeIdForTypeConstantId(
       TryEvalInst(context, SemIR::InstId::None, facet_type));
 
   // We model `Self` as a symbolic binding whose type is the interface.

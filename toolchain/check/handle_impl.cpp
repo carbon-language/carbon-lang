@@ -12,6 +12,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -307,7 +308,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
-  auto self_type_id = context.GetTypeIdForTypeInst(self_inst_id);
+  auto self_type_id = context.types().GetTypeIdForTypeInstId(self_inst_id);
   // Pop the `impl` introducer and any `forall` parameters as a "name".
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();

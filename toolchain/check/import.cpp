@@ -11,6 +11,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -508,7 +509,7 @@ static auto AddNamespaceFromOtherPackage(Context& context,
                                          SemIR::NameId name_id)
     -> SemIR::InstId {
   auto namespace_type_id =
-      context.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context, SemIR::NamespaceType::SingletonInstId);
   AddImportNamespaceResult result = CopySingleNameScopeFromImportIR(
       context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
       import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);

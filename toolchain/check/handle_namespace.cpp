@@ -8,6 +8,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -38,7 +39,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   auto namespace_inst = SemIR::Namespace{
-      context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
+      GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
       SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));

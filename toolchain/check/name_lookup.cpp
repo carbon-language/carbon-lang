@@ -240,7 +240,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
     RequireDefinedType(
-        context, context.GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
+        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
+        loc_id, [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                             "member access into incomplete class {0}",
                             InstIdAsType);
@@ -254,7 +255,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
     RequireDefinedType(
-        context, context.GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
+        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
+        loc_id, [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
                             "member access into undefined interface {0}",
                             InstIdAsType);

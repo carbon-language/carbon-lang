@@ -16,6 +16,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
@@ -159,8 +160,8 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
     auto index_id = block.template AddInst<SemIR::IntValue>(
-        loc_id, {.type_id = context.GetSingletonType(
-                     SemIR::IntLiteralType::SingletonInstId),
+        loc_id, {.type_id = GetSingletonType(
+                     context, SemIR::IntLiteralType::SingletonInstId),
                  .int_id = context.ints().Add(static_cast<int64_t>(i))});
     return block.template AddInst<AccessInstT>(
         loc_id, {elem_type_id, aggregate_id, index_id});
@@ -964,7 +965,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, loc_id, tuple_inst_id).type_id);
       }
-      auto tuple_type_id = context.GetTupleType(type_ids);
+      auto tuple_type_id = GetTupleType(context, type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
     }
 
@@ -1298,7 +1299,7 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, loc_id, value_id,
-      context.GetSingletonType(SemIR::BoolType::SingletonInstId));
+      GetSingletonType(context, SemIR::BoolType::SingletonInstId));
 }
 
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
@@ -1361,7 +1362,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
   }
 
   return {.inst_id = type_inst_id,
-          .type_id = context.GetTypeIdForTypeConstant(type_const_id)};
+          .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
 }  // namespace Carbon::Check

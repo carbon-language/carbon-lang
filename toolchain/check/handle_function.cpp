@@ -19,6 +19,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -309,8 +310,9 @@ static auto BuildFunctionDecl(Context& context,
     FinishGenericRedecl(context, decl_id, function_info.generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
-  function_decl.type_id = context.GetFunctionType(
-      function_decl.function_id, context.scope_stack().PeekSpecificId());
+  function_decl.type_id =
+      GetFunctionType(context, function_decl.function_id,
+                      context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
@@ -351,7 +353,7 @@ static auto BuildFunctionDecl(Context& context,
         !function_info.param_patterns_id.has_value() ||
         !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.has_value() &&
-         return_type_id != context.GetTupleType({}) &&
+         return_type_id != GetTupleType(context, {}) &&
          // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
          // have an interface for this.
          return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
@@ -548,7 +550,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   // Get the return type. This is `()` if none was specified.
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
   if (!return_type_id.has_value()) {
-    return_type_id = context.GetTupleType({});
+    return_type_id = GetTupleType(context, {});
   }
 
   return builtin_kind.IsValidType(context.sem_ir(), param_type_ids,

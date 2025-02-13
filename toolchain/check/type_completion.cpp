@@ -7,6 +7,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -290,7 +291,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
 }
 
 auto TypeCompleter::MakeEmptyValueRepr() const -> SemIR::ValueRepr {
-  return {.kind = SemIR::ValueRepr::None, .type_id = context_.GetTupleType({})};
+  return {.kind = SemIR::ValueRepr::None,
+          .type_id = GetTupleType(context_, {})};
 }
 
 auto TypeCompleter::MakeCopyValueRepr(
@@ -307,7 +309,7 @@ auto TypeCompleter::MakePointerValueRepr(
   // TODO: Should we add `const` qualification to `pointee_id`?
   return {.kind = SemIR::ValueRepr::Pointer,
           .aggregate_kind = aggregate_kind,
-          .type_id = context_.GetPointerType(pointee_id)};
+          .type_id = GetPointerType(context_, pointee_id)};
 }
 
 auto TypeCompleter::GetNestedValueRepr(SemIR::TypeId nested_type_id) const
@@ -375,8 +377,8 @@ auto TypeCompleter::BuildValueReprForInst(SemIR::TypeId type_id,
   auto value_rep =
       same_as_object_rep
           ? type_id
-          : context_.GetStructType(
-                context_.struct_type_fields().AddCanonical(value_rep_fields));
+          : GetStructType(context_, context_.struct_type_fields().AddCanonical(
+                                        value_rep_fields));
   return BuildStructOrTupleValueRepr(fields.size(), value_rep,
                                      same_as_object_rep);
 }
@@ -405,7 +407,7 @@ auto TypeCompleter::BuildValueReprForInst(SemIR::TypeId type_id,
   }
 
   auto value_rep =
-      same_as_object_rep ? type_id : context_.GetTupleType(value_rep_elements);
+      same_as_object_rep ? type_id : GetTupleType(context_, value_rep_elements);
   return BuildStructOrTupleValueRepr(elements.size(), value_rep,
                                      same_as_object_rep);
 }
@@ -488,10 +490,10 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   if (type_id.AsConstantId().is_symbolic()) {
     // TODO: Deduplicate these.
     context.AddInstInNoBlock(SemIR::LocIdAndInst(
-        loc_id,
-        SemIR::RequireCompleteType{.type_id = context.GetSingletonType(
-                                       SemIR::WitnessType::SingletonInstId),
-                                   .complete_type_id = type_id}));
+        loc_id, SemIR::RequireCompleteType{
+                    .type_id = GetSingletonType(
+                        context, SemIR::WitnessType::SingletonInstId),
+                    .complete_type_id = type_id}));
   }
 
   return true;
