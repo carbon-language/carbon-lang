@@ -102,6 +102,8 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .HasF = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend @impl.%HasF.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

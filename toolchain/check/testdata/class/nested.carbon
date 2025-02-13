@@ -128,6 +128,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Inner = %Inner.decl
+// CHECK:STDOUT:   .Outer = <poisoned>
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   .po = %.loc36_9
 // CHECK:STDOUT:   .qo = %.loc37_9
@@ -157,7 +158,9 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .pi = %.loc19_11
+// CHECK:STDOUT:   .Outer = <poisoned>
 // CHECK:STDOUT:   .po = %.loc20_11
+// CHECK:STDOUT:   .Inner = <poisoned>
 // CHECK:STDOUT:   .qi = %.loc21_11
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }

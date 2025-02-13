@@ -59,6 +59,7 @@ interface I {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .C = %C.decl
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,6 +84,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.6b4
+// CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     extend %.loc24
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }

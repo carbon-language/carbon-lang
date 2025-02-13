@@ -484,6 +484,7 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
 // CHECK:STDOUT:   witness = file.%impl_witness.loc10
 // CHECK:STDOUT: }
@@ -639,6 +640,7 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .V = @V.%assoc0
 // CHECK:STDOUT:     witness = (%V)
 // CHECK:STDOUT:   }

@@ -231,6 +231,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .b = %.loc17_8
 // CHECK:STDOUT:   extend %A.ref
@@ -249,6 +250,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .c = %.loc22_8
 // CHECK:STDOUT:   extend %B.ref

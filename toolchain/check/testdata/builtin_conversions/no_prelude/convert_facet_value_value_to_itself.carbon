@@ -100,6 +100,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Dest = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc5_35.1
 // CHECK:STDOUT:     witness = (%Convert.decl)
 // CHECK:STDOUT:   }

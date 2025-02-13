@@ -714,6 +714,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .Local = %Local
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>

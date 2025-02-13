@@ -87,6 +87,7 @@ class Class {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .Class = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {

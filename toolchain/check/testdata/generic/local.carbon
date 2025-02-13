@@ -120,6 +120,7 @@ class C(C:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f06
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc6_10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -179,6 +179,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -207,7 +208,10 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
+// CHECK:STDOUT:   .Param = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   .x = <poisoned>
 // CHECK:STDOUT:   extend %Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -326,6 +330,7 @@ fn H() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.f6c
 // CHECK:STDOUT:   .base = imports.%Main.import_ref.d24
+// CHECK:STDOUT:   .x = <poisoned>
 // CHECK:STDOUT:   extend imports.%Main.import_ref.77a301.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -449,7 +454,9 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .base = %.loc9
+// CHECK:STDOUT:     .G = <poisoned>
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -588,6 +595,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%X.75b6d8.1
+// CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -614,7 +622,10 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
+// CHECK:STDOUT:     .X = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .base = %.loc9
+// CHECK:STDOUT:     .G = <poisoned>
 // CHECK:STDOUT:     extend %X.loc9_19.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -829,6 +840,7 @@ fn H() {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.4c0
 // CHECK:STDOUT:     .base = imports.%Main.import_ref.65d
+// CHECK:STDOUT:     .G = <poisoned>
 // CHECK:STDOUT:     extend imports.%Main.import_ref.561eb2.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

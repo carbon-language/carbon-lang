@@ -599,6 +599,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
+// CHECK:STDOUT:     .F = <poisoned>
 // CHECK:STDOUT:     import Other//other_fn_use
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

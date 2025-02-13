@@ -56,6 +56,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .VarScope = %VarScope.decl
+// CHECK:STDOUT:     .n = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %VarScope.decl: %VarScope.type = fn_decl @VarScope [concrete = constants.%VarScope] {

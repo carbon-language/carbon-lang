@@ -220,6 +220,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc10_14.1
 // CHECK:STDOUT:     witness = (%F.decl)
 // CHECK:STDOUT:   }
@@ -250,6 +251,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   witness = @C.%impl_witness.loc15
 // CHECK:STDOUT: }
@@ -282,6 +284,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .Simple = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .WithAssocFn = <poisoned>
+// CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@WithAssocFn.%T.loc8_23.1: type, @WithAssocFn.%Self.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.ce6)) {

@@ -126,6 +126,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
+// CHECK:STDOUT:   .SomeClass = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @StructAdapter {
@@ -200,6 +201,8 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptNotExtend
+// CHECK:STDOUT:   .Adapted = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();

@@ -86,6 +86,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Member = %Member.decl
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .field = %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
