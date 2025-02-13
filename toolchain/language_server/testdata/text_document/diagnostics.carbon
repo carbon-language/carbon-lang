@@ -119,6 +119,15 @@
 // CHECK:STDOUT:     "uri": "file:///test.carbon",
 // CHECK:STDOUT:     "version": 2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 144{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
+// CHECK:STDOUT:   "params": {
+// CHECK:STDOUT:     "diagnostics": [],
+// CHECK:STDOUT:     "uri": "file:///test.carbon"
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 51{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {

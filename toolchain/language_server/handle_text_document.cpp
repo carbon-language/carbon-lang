@@ -58,7 +58,11 @@ auto HandleDidCloseTextDocument(
     return;
   }
 
-  if (!context.files().Erase(filename)) {
+  if (context.files().Erase(filename)) {
+    // Clear diagnostics when the document closes. Otherwise, any diagnostics
+    // will linger.
+    context.PublishDiagnostics({.uri = params.textDocument.uri});
+  } else {
     CARBON_DIAGNOSTIC(LanguageServerCloseUnknownFile, Warning,
                       "tried closing unknown file; ignoring request");
     context.file_emitter().Emit(filename, LanguageServerCloseUnknownFile);

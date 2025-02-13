@@ -61,12 +61,15 @@ class Context {
   // null.
   auto LookupFile(llvm::StringRef filename) -> File*;
 
+  // Wrapper for LSP notification.
+  auto PublishDiagnostics(clang::clangd::PublishDiagnosticsParams params)
+      -> void {
+    outgoing_->notify("textDocument/publishDiagnostics", params);
+  }
+
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
   auto file_emitter() -> FileDiagnosticEmitter& { return file_emitter_; }
   auto no_loc_emitter() -> NoLocDiagnosticEmitter& { return no_loc_emitter_; }
-  auto outgoing() -> clang::clangd::LSPBinder::RawOutgoing& {
-    return *outgoing_;
-  }
 
   auto files() -> Map<std::string, File>& { return files_; }
 
