@@ -97,6 +97,18 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
                       llvm::StringRef name) -> SemIR::InstId;
 
+// Prints a diagnostic for a duplicate name.
+auto DiagnoseDuplicateName(Context& context, SemIRLoc dup_def,
+                           SemIRLoc prev_def) -> void;
+
+// Prints a diagnostic for a poisoned name when it's later declared.
+auto DiagnosePoisonedName(Context& context, SemIR::LocId poisoning_loc_id,
+                          SemIR::LocId decl_name_loc_id) -> void;
+
+// Prints a diagnostic for a missing name.
+auto DiagnoseNameNotFound(Context& context, SemIRLoc loc, SemIR::NameId name_id)
+    -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_NAME_LOOKUP_H_

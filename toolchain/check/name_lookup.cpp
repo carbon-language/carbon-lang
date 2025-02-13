@@ -17,7 +17,7 @@ auto AddNameToLookup(Context& context, SemIR::NameId name_id,
   if (auto existing = context.scope_stack().LookupOrAddName(name_id, target_id,
                                                             scope_index);
       existing.has_value()) {
-    context.DiagnoseDuplicateName(target_id, existing);
+    DiagnoseDuplicateName(context, target_id, existing);
   }
 }
 
@@ -120,7 +120,7 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
 
   // We didn't find anything at all.
   if (required) {
-    context.DiagnoseNameNotFound(node_id, name_id);
+    DiagnoseNameNotFound(context, node_id, name_id);
   }
 
   return {.specific_id = SemIR::SpecificId::None,
@@ -478,6 +478,36 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
   // Look through import_refs and aliases.
   return context.constant_values().GetConstantInstId(
       scope_result.target_inst_id());
+}
+
+auto DiagnoseDuplicateName(Context& context, SemIRLoc dup_def,
+                           SemIRLoc prev_def) -> void {
+  CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
+                    "duplicate name being declared in the same scope");
+  CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
+  context.emitter()
+      .Build(dup_def, NameDeclDuplicate)
+      .Note(prev_def, NameDeclPrevious)
+      .Emit();
+}
+
+auto DiagnosePoisonedName(Context& context, SemIR::LocId poisoning_loc_id,
+                          SemIR::LocId decl_name_loc_id) -> void {
+  CARBON_CHECK(poisoning_loc_id.has_value(),
+               "Trying to diagnose poisoned name with no poisoning location");
+  CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
+                    "name used before it was declared");
+  CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
+  context.emitter()
+      .Build(poisoning_loc_id, NameUseBeforeDecl)
+      .Note(decl_name_loc_id, NameUseBeforeDeclNote)
+      .Emit();
+}
+
+auto DiagnoseNameNotFound(Context& context, SemIRLoc loc, SemIR::NameId name_id)
+    -> void {
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "name `{0}` not found", SemIR::NameId);
+  context.emitter().Emit(loc, NameNotFound, name_id);
 }
 
 }  // namespace Carbon::Check

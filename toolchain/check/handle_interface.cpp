@@ -10,6 +10,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -66,8 +67,8 @@ static auto BuildInterfaceDecl(Context& context,
           introducer.modifier_set.GetAccessKind());
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, lookup_result.poisoning_loc_id(),
+                         name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_id = lookup_result.target_inst_id();
     if (auto existing_interface_decl =
@@ -103,7 +104,7 @@ static auto BuildInterfaceDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a interface.
-      context.DiagnoseDuplicateName(interface_decl_id, existing_id);
+      DiagnoseDuplicateName(context, interface_decl_id, existing_id);
     }
   }
 
