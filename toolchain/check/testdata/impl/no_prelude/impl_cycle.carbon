@@ -143,33 +143,6 @@ fn F() {
   ({} as Wraps(C)) as (Wraps(C) as ComparableTo(Wraps(D)));
 }
 
-interface ComparableWith(T:! type) {}
-
-impl forall [U:! type] U as ComparableWith(U) {}
-impl forall [U:! type, T:! ComparableTo(U)] U as ComparableWith(T) {}
-impl forall [U:! type, T:! ComparableTo(U)] T as ComparableWith(U) {}
-
-fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
-
-fn G() {
-  Compare({} as C, {} as C);
-  Compare({} as C, {} as D);
-  // CHECK:STDERR: impl_recurse_with_simpler_type_in_generic_param_no_cycle.carbon:[[@LINE+13]]:3: error: cannot implicitly convert from `type` to `ComparableTo(C)` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   Compare({} as D, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: impl_recurse_with_simpler_type_in_generic_param_no_cycle.carbon:[[@LINE+10]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableTo(C))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Compare({} as D, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: impl_recurse_with_simpler_type_in_generic_param_no_cycle.carbon:[[@LINE-14]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: impl forall [U:! type, T:! ComparableTo(U)] U as ComparableWith(T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: impl_recurse_with_simpler_type_in_generic_param_no_cycle.carbon:[[@LINE-14]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  Compare({} as D, {} as C);
-}
-
 // --- fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
 library "[[@TEST_NAME]]";
 
@@ -1221,27 +1194,26 @@ fn F() {
 // CHECK:STDOUT: --- impl_recurse_with_simpler_type_in_generic_param_no_cycle.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.e01: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Wraps.type: type = generic_class_type @Wraps [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Wraps.generic: %Wraps.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Wraps.487: type = class_type @Wraps, @Wraps(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %Wraps.487: type = class_type @Wraps, @Wraps(%T) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ComparableTo.type.706: type = generic_interface_type @ComparableTo [concrete]
 // CHECK:STDOUT:   %ComparableTo.generic: %ComparableTo.type.706 = struct_value () [concrete]
-// CHECK:STDOUT:   %ComparableTo.type.4eeb0e.1: type = facet_type <@ComparableTo, @ComparableTo(%T.8b3)> [symbolic]
-// CHECK:STDOUT:   %Self.b15: %ComparableTo.type.4eeb0e.1 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %U.b15: %ComparableTo.type.4eeb0e.1 = bind_symbolic_name U, 1 [symbolic]
-// CHECK:STDOUT:   %U.patt.16f: %ComparableTo.type.4eeb0e.1 = symbolic_binding_pattern U, 1 [symbolic]
-// CHECK:STDOUT:   %U.as_type.b21: type = facet_access_type %U.b15 [symbolic]
+// CHECK:STDOUT:   %ComparableTo.type.4ee: type = facet_type <@ComparableTo, @ComparableTo(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %ComparableTo.type.4ee = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %U: %ComparableTo.type.4ee = bind_symbolic_name U, 1 [symbolic]
+// CHECK:STDOUT:   %U.patt: %ComparableTo.type.4ee = symbolic_binding_pattern U, 1 [symbolic]
+// CHECK:STDOUT:   %U.as_type: type = facet_access_type %U [symbolic]
 // CHECK:STDOUT:   %ComparableTo.type.040: type = facet_type <@ComparableTo, @ComparableTo(%Wraps.487)> [symbolic]
 // CHECK:STDOUT:   %require_complete.066: <witness> = require_complete_type %ComparableTo.type.040 [symbolic]
-// CHECK:STDOUT:   %impl_witness.206: <witness> = impl_witness (), @impl.1(%T.8b3, %U.b15) [symbolic]
-// CHECK:STDOUT:   %Wraps.b9a: type = class_type @Wraps, @Wraps(%U.as_type.b21) [symbolic]
-// CHECK:STDOUT:   %require_complete.084: <witness> = require_complete_type %ComparableTo.type.4eeb0e.1 [symbolic]
-// CHECK:STDOUT:   %impl_witness.96c: <witness> = impl_witness (), @impl.2(%T.8b3, %U.b15) [symbolic]
+// CHECK:STDOUT:   %impl_witness.206: <witness> = impl_witness (), @impl.1(%T, %U) [symbolic]
+// CHECK:STDOUT:   %Wraps.b9a: type = class_type @Wraps, @Wraps(%U.as_type) [symbolic]
+// CHECK:STDOUT:   %require_complete.084: <witness> = require_complete_type %ComparableTo.type.4ee [symbolic]
+// CHECK:STDOUT:   %impl_witness.96c: <witness> = impl_witness (), @impl.2(%T, %U) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %ComparableTo.type.4f3: type = facet_type <@ComparableTo, @ComparableTo(%D)> [concrete]
@@ -1262,80 +1234,12 @@ fn F() {
 // CHECK:STDOUT:   %ComparableTo.facet.c6f: %ComparableTo.type.4f3 = facet_value %Wraps.299, %impl_witness.951 [concrete]
 // CHECK:STDOUT:   %impl_witness.098: <witness> = impl_witness (), @impl.1(%D, %ComparableTo.facet.c6f) [concrete]
 // CHECK:STDOUT:   %ComparableTo.facet.6db: %ComparableTo.type.237 = facet_value %Wraps.299, %impl_witness.098 [concrete]
-// CHECK:STDOUT:   %ComparableWith.type.dbb: type = generic_interface_type @ComparableWith [concrete]
-// CHECK:STDOUT:   %ComparableWith.generic: %ComparableWith.type.dbb = struct_value () [concrete]
-// CHECK:STDOUT:   %ComparableWith.type.bb0721.1: type = facet_type <@ComparableWith, @ComparableWith(%T.8b3)> [symbolic]
-// CHECK:STDOUT:   %Self.d53: %ComparableWith.type.bb0721.1 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %U.8b3: type = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %U.patt.e01: type = symbolic_binding_pattern U, 0 [symbolic]
-// CHECK:STDOUT:   %ComparableWith.type.bb0721.2: type = facet_type <@ComparableWith, @ComparableWith(%U.8b3)> [symbolic]
-// CHECK:STDOUT:   %require_complete.17f: <witness> = require_complete_type %ComparableWith.type.bb0721.2 [symbolic]
-// CHECK:STDOUT:   %impl_witness.497: <witness> = impl_witness (), @impl.4(%U.8b3) [symbolic]
-// CHECK:STDOUT:   %ComparableTo.type.4eeb0e.2: type = facet_type <@ComparableTo, @ComparableTo(%U.8b3)> [symbolic]
-// CHECK:STDOUT:   %T.b15: %ComparableTo.type.4eeb0e.2 = bind_symbolic_name T, 1 [symbolic]
-// CHECK:STDOUT:   %T.patt.16f: %ComparableTo.type.4eeb0e.2 = symbolic_binding_pattern T, 1 [symbolic]
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.b15 [symbolic]
-// CHECK:STDOUT:   %ComparableWith.type.73a: type = facet_type <@ComparableWith, @ComparableWith(%T.as_type)> [symbolic]
-// CHECK:STDOUT:   %require_complete.86a: <witness> = require_complete_type %ComparableWith.type.73a [symbolic]
-// CHECK:STDOUT:   %impl_witness.595: <witness> = impl_witness (), @impl.5(%U.8b3, %T.b15) [symbolic]
-// CHECK:STDOUT:   %impl_witness.c25: <witness> = impl_witness (), @impl.6(%U.8b3, %T.b15) [symbolic]
-// CHECK:STDOUT:   %U.d53: %ComparableWith.type.bb0721.1 = bind_symbolic_name U, 1 [symbolic]
-// CHECK:STDOUT:   %U.patt.761: %ComparableWith.type.bb0721.1 = symbolic_binding_pattern U, 1 [symbolic]
-// CHECK:STDOUT:   %U.as_type.2d1: type = facet_access_type %U.d53 [symbolic]
-// CHECK:STDOUT:   %Compare.type: type = fn_type @Compare [concrete]
-// CHECK:STDOUT:   %Compare: %Compare.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T.8b3 [symbolic]
-// CHECK:STDOUT:   %require_complete.9df: <witness> = require_complete_type %U.as_type.2d1 [symbolic]
-// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
-// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ComparableWith.type.68c: type = facet_type <@ComparableWith, @ComparableWith(%C)> [concrete]
-// CHECK:STDOUT:   %complete_type.aa9: <witness> = complete_type_witness %ComparableWith.type.68c [concrete]
-// CHECK:STDOUT:   %impl_witness.887: <witness> = impl_witness (), @impl.4(%C) [concrete]
-// CHECK:STDOUT:   %ComparableWith.facet.17d: %ComparableWith.type.68c = facet_value %C, %impl_witness.887 [concrete]
-// CHECK:STDOUT:   %Compare.specific_fn.041: <specific function> = specific_function %Compare, @Compare(%C, %ComparableWith.facet.17d) [concrete]
-// CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.228: <witness> = impl_witness (), @impl.5(%D, %ComparableTo.facet.3c8) [concrete]
-// CHECK:STDOUT:   %ComparableWith.facet.aa3: %ComparableWith.type.68c = facet_value %D, %impl_witness.228 [concrete]
-// CHECK:STDOUT:   %Compare.specific_fn.94d: <specific function> = specific_function %Compare, @Compare(%C, %ComparableWith.facet.aa3) [concrete]
-// CHECK:STDOUT:   %ComparableWith.type.c33: type = facet_type <@ComparableWith, @ComparableWith(%D)> [concrete]
-// CHECK:STDOUT:   %ComparableTo.type.406: type = facet_type <@ComparableTo, @ComparableTo(%C)> [concrete]
-// CHECK:STDOUT:   %complete_type.9db: <witness> = complete_type_witness %ComparableWith.type.c33 [concrete]
-// CHECK:STDOUT:   %impl_witness.126: <witness> = impl_witness (), @impl.4(%D) [concrete]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.519 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
-// CHECK:STDOUT:   %assoc0.43db8b.1: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.632: type = facet_type <@ImplicitAs, @ImplicitAs(%ComparableTo.type.406)> [concrete]
-// CHECK:STDOUT:   %Convert.type.cd0: type = fn_type @Convert, @ImplicitAs(%ComparableTo.type.406) [concrete]
-// CHECK:STDOUT:   %Convert.088: %Convert.type.cd0 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.38f: type = assoc_entity_type %ImplicitAs.type.632 [concrete]
-// CHECK:STDOUT:   %assoc0.dca: %ImplicitAs.assoc_type.38f = assoc_entity element0, imports.%Core.import_ref.207961.1 [concrete]
-// CHECK:STDOUT:   %assoc0.43db8b.2: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207961.2 [symbolic]
-// CHECK:STDOUT:   %ComparableWith.type.7aa: type = facet_type <@ComparableWith, @ComparableWith(type)> [concrete]
-// CHECK:STDOUT:   %complete_type.3dc: <witness> = complete_type_witness %ComparableWith.type.7aa [concrete]
-// CHECK:STDOUT:   %impl_witness.2ae: <witness> = impl_witness (), @impl.4(type) [concrete]
-// CHECK:STDOUT:   %impl_witness.d37: <witness> = impl_witness (), @impl.6(%D, %ComparableTo.facet.3c8) [concrete]
-// CHECK:STDOUT:   %ComparableWith.facet.7c0: %ComparableWith.type.c33 = facet_value %C, %impl_witness.d37 [concrete]
-// CHECK:STDOUT:   %Compare.specific_fn.f4d: <specific function> = specific_function %Compare, @Compare(%D, %ComparableWith.facet.7c0) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.ffd566.1: type = import_ref Core//default, loc7_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst69 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc8_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43db8b.2)]
-// CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.ffd566.2: type = import_ref Core//default, loc7_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst69 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc8_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1346,75 +1250,72 @@ fn F() {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .ComparableWith = %ComparableWith.decl
-// CHECK:STDOUT:     .Compare = %Compare.decl
-// CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Wraps.decl: %Wraps.type = class_decl @Wraps [concrete = constants.%Wraps.generic] {
-// CHECK:STDOUT:     %T.patt.loc5_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_13.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc5_13.1, runtime_param<none> [symbolic = %T.patt.loc5_13.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:     %T.patt.loc5_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc5_13.1, runtime_param<none> [symbolic = %T.patt.loc5_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc5_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc5_13.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc5_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc5_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ComparableTo.decl: %ComparableTo.type.706 = interface_decl @ComparableTo [concrete = constants.%ComparableTo.generic] {
-// CHECK:STDOUT:     %T.patt.loc7_24.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_24.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_24.1, runtime_param<none> [symbolic = %T.patt.loc7_24.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:     %T.patt.loc7_24.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_24.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_24.1, runtime_param<none> [symbolic = %T.patt.loc7_24.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc7_24.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_24.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc7_24.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_24.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.1 [concrete] {
-// CHECK:STDOUT:     %T.patt.loc10_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc10_14.1, runtime_param<none> [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %U.patt.loc10_24.1: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4eeb0e.1) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_24.2 (constants.%U.patt.16f)]
-// CHECK:STDOUT:     %U.param_patt: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4eeb0e.1) = value_param_pattern %U.patt.loc10_24.1, runtime_param<none> [symbolic = %U.patt.loc10_24.2 (constants.%U.patt.16f)]
+// CHECK:STDOUT:     %T.patt.loc10_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc10_14.1, runtime_param<none> [symbolic = %T.patt.loc10_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %U.patt.loc10_24.1: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4ee) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_24.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4ee) = value_param_pattern %U.patt.loc10_24.1, runtime_param<none> [symbolic = %U.patt.loc10_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4eeb0e.1) = name_ref U, %U.loc10_24.1 [symbolic = %U.loc10_24.2 (constants.%U.b15)]
-// CHECK:STDOUT:     %U.as_type.loc10_45.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc10_45.2 (constants.%U.as_type.b21)]
-// CHECK:STDOUT:     %.loc10_45: type = converted %U.ref, %U.as_type.loc10_45.1 [symbolic = %U.as_type.loc10_45.2 (constants.%U.as_type.b21)]
+// CHECK:STDOUT:     %U.ref: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4ee) = name_ref U, %U.loc10_24.1 [symbolic = %U.loc10_24.2 (constants.%U)]
+// CHECK:STDOUT:     %U.as_type.loc10_45.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc10_45.2 (constants.%U.as_type)]
+// CHECK:STDOUT:     %.loc10_45: type = converted %U.ref, %U.as_type.loc10_45.1 [symbolic = %U.as_type.loc10_45.2 (constants.%U.as_type)]
 // CHECK:STDOUT:     %ComparableTo.ref.loc10_50: %ComparableTo.type.706 = name_ref ComparableTo, file.%ComparableTo.decl [concrete = constants.%ComparableTo.generic]
 // CHECK:STDOUT:     %Wraps.ref: %Wraps.type = name_ref Wraps, file.%Wraps.decl [concrete = constants.%Wraps.generic]
-// CHECK:STDOUT:     %T.ref.loc10_69: type = name_ref T, %T.loc10_14.1 [symbolic = %T.loc10_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %Wraps.loc10_70.1: type = class_type @Wraps, @Wraps(constants.%T.8b3) [symbolic = %Wraps.loc10_70.2 (constants.%Wraps.487)]
+// CHECK:STDOUT:     %T.ref.loc10_69: type = name_ref T, %T.loc10_14.1 [symbolic = %T.loc10_14.2 (constants.%T)]
+// CHECK:STDOUT:     %Wraps.loc10_70.1: type = class_type @Wraps, @Wraps(constants.%T) [symbolic = %Wraps.loc10_70.2 (constants.%Wraps.487)]
 // CHECK:STDOUT:     %ComparableTo.type.loc10_71.1: type = facet_type <@ComparableTo, @ComparableTo(constants.%Wraps.487)> [symbolic = %ComparableTo.type.loc10_71.2 (constants.%ComparableTo.type.040)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc10_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %U.param: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4eeb0e.1) = value_param runtime_param<none>
-// CHECK:STDOUT:     %.loc10_42: type = splice_block %ComparableTo.type.loc10_42.1 [symbolic = %ComparableTo.type.loc10_42.2 (constants.%ComparableTo.type.4eeb0e.1)] {
+// CHECK:STDOUT:     %T.loc10_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_14.2 (constants.%T)]
+// CHECK:STDOUT:     %U.param: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4ee) = value_param runtime_param<none>
+// CHECK:STDOUT:     %.loc10_42: type = splice_block %ComparableTo.type.loc10_42.1 [symbolic = %ComparableTo.type.loc10_42.2 (constants.%ComparableTo.type.4ee)] {
 // CHECK:STDOUT:       %ComparableTo.ref.loc10_28: %ComparableTo.type.706 = name_ref ComparableTo, file.%ComparableTo.decl [concrete = constants.%ComparableTo.generic]
-// CHECK:STDOUT:       %T.ref.loc10_41: type = name_ref T, %T.loc10_14.1 [symbolic = %T.loc10_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:       %ComparableTo.type.loc10_42.1: type = facet_type <@ComparableTo, @ComparableTo(constants.%T.8b3)> [symbolic = %ComparableTo.type.loc10_42.2 (constants.%ComparableTo.type.4eeb0e.1)]
+// CHECK:STDOUT:       %T.ref.loc10_41: type = name_ref T, %T.loc10_14.1 [symbolic = %T.loc10_14.2 (constants.%T)]
+// CHECK:STDOUT:       %ComparableTo.type.loc10_42.1: type = facet_type <@ComparableTo, @ComparableTo(constants.%T)> [symbolic = %ComparableTo.type.loc10_42.2 (constants.%ComparableTo.type.4ee)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc10_24.1: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4eeb0e.1) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc10_24.2 (constants.%U.b15)]
+// CHECK:STDOUT:     %U.loc10_24.1: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4ee) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc10_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc10: <witness> = impl_witness (), @impl.1(constants.%T.8b3, constants.%U.b15) [symbolic = @impl.1.%impl_witness (constants.%impl_witness.206)]
+// CHECK:STDOUT:   %impl_witness.loc10: <witness> = impl_witness (), @impl.1(constants.%T, constants.%U) [symbolic = @impl.1.%impl_witness (constants.%impl_witness.206)]
 // CHECK:STDOUT:   impl_decl @impl.2 [concrete] {
-// CHECK:STDOUT:     %T.patt.loc12_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_14.1, runtime_param<none> [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %U.patt.loc12_24.1: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4eeb0e.1) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_24.2 (constants.%U.patt.16f)]
-// CHECK:STDOUT:     %U.param_patt: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4eeb0e.1) = value_param_pattern %U.patt.loc12_24.1, runtime_param<none> [symbolic = %U.patt.loc12_24.2 (constants.%U.patt.16f)]
+// CHECK:STDOUT:     %T.patt.loc12_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_14.1, runtime_param<none> [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %U.patt.loc12_24.1: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4ee) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_24.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4ee) = value_param_pattern %U.patt.loc12_24.1, runtime_param<none> [symbolic = %U.patt.loc12_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Wraps.ref: %Wraps.type = name_ref Wraps, file.%Wraps.decl [concrete = constants.%Wraps.generic]
-// CHECK:STDOUT:     %U.ref: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4eeb0e.1) = name_ref U, %U.loc12_24.1 [symbolic = %U.loc12_24.2 (constants.%U.b15)]
-// CHECK:STDOUT:     %U.as_type.loc12_52.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc12_52.2 (constants.%U.as_type.b21)]
-// CHECK:STDOUT:     %.loc12_52: type = converted %U.ref, %U.as_type.loc12_52.1 [symbolic = %U.as_type.loc12_52.2 (constants.%U.as_type.b21)]
-// CHECK:STDOUT:     %Wraps.loc12_52.1: type = class_type @Wraps, @Wraps(constants.%U.as_type.b21) [symbolic = %Wraps.loc12_52.2 (constants.%Wraps.b9a)]
+// CHECK:STDOUT:     %U.ref: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4ee) = name_ref U, %U.loc12_24.1 [symbolic = %U.loc12_24.2 (constants.%U)]
+// CHECK:STDOUT:     %U.as_type.loc12_52.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc12_52.2 (constants.%U.as_type)]
+// CHECK:STDOUT:     %.loc12_52: type = converted %U.ref, %U.as_type.loc12_52.1 [symbolic = %U.as_type.loc12_52.2 (constants.%U.as_type)]
+// CHECK:STDOUT:     %Wraps.loc12_52.1: type = class_type @Wraps, @Wraps(constants.%U.as_type) [symbolic = %Wraps.loc12_52.2 (constants.%Wraps.b9a)]
 // CHECK:STDOUT:     %ComparableTo.ref.loc12_57: %ComparableTo.type.706 = name_ref ComparableTo, file.%ComparableTo.decl [concrete = constants.%ComparableTo.generic]
-// CHECK:STDOUT:     %T.ref.loc12_70: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %ComparableTo.type.loc12_71: type = facet_type <@ComparableTo, @ComparableTo(constants.%T.8b3)> [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4eeb0e.1)]
+// CHECK:STDOUT:     %T.ref.loc12_70: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %ComparableTo.type.loc12_71: type = facet_type <@ComparableTo, @ComparableTo(constants.%T)> [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4ee)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc12_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %U.param: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4eeb0e.1) = value_param runtime_param<none>
-// CHECK:STDOUT:     %.loc12_42: type = splice_block %ComparableTo.type.loc12_42.1 [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4eeb0e.1)] {
+// CHECK:STDOUT:     %T.loc12_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %U.param: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4ee) = value_param runtime_param<none>
+// CHECK:STDOUT:     %.loc12_42: type = splice_block %ComparableTo.type.loc12_42.1 [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4ee)] {
 // CHECK:STDOUT:       %ComparableTo.ref.loc12_28: %ComparableTo.type.706 = name_ref ComparableTo, file.%ComparableTo.decl [concrete = constants.%ComparableTo.generic]
-// CHECK:STDOUT:       %T.ref.loc12_41: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:       %ComparableTo.type.loc12_42.1: type = facet_type <@ComparableTo, @ComparableTo(constants.%T.8b3)> [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4eeb0e.1)]
+// CHECK:STDOUT:       %T.ref.loc12_41: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:       %ComparableTo.type.loc12_42.1: type = facet_type <@ComparableTo, @ComparableTo(constants.%T)> [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4ee)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc12_24.1: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4eeb0e.1) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc12_24.2 (constants.%U.b15)]
+// CHECK:STDOUT:     %U.loc12_24.1: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4ee) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc12_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness (), @impl.2(constants.%T.8b3, constants.%U.b15) [symbolic = @impl.2.%impl_witness (constants.%impl_witness.96c)]
+// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness (), @impl.2(constants.%T, constants.%U) [symbolic = @impl.2.%impl_witness (constants.%impl_witness.96c)]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   impl_decl @impl.3 [concrete] {} {
@@ -1425,114 +1326,18 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness () [concrete = constants.%impl_witness.1bc]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %ComparableWith.decl: %ComparableWith.type.dbb = interface_decl @ComparableWith [concrete = constants.%ComparableWith.generic] {
-// CHECK:STDOUT:     %T.patt.loc25_26.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_26.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc25_26.1, runtime_param<none> [symbolic = %T.patt.loc25_26.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc25_26.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc25_26.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.4 [concrete] {
-// CHECK:STDOUT:     %U.patt.loc27_14.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc27_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc27_14.1, runtime_param<none> [symbolic = %U.patt.loc27_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref.loc27_24: type = name_ref U, %U.loc27_14.1 [symbolic = %U.loc27_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:     %ComparableWith.ref: %ComparableWith.type.dbb = name_ref ComparableWith, file.%ComparableWith.decl [concrete = constants.%ComparableWith.generic]
-// CHECK:STDOUT:     %U.ref.loc27_44: type = name_ref U, %U.loc27_14.1 [symbolic = %U.loc27_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:     %ComparableWith.type.loc27_45.1: type = facet_type <@ComparableWith, @ComparableWith(constants.%U.8b3)> [symbolic = %ComparableWith.type.loc27_45.2 (constants.%ComparableWith.type.bb0721.2)]
-// CHECK:STDOUT:     %U.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %U.loc27_14.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc27_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc27: <witness> = impl_witness (), @impl.4(constants.%U.8b3) [symbolic = @impl.4.%impl_witness (constants.%impl_witness.497)]
-// CHECK:STDOUT:   impl_decl @impl.5 [concrete] {
-// CHECK:STDOUT:     %U.patt.loc28_14.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc28_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc28_14.1, runtime_param<none> [symbolic = %U.patt.loc28_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:     %T.patt.loc28_24.1: @impl.5.%ComparableTo.type.loc28_42.2 (%ComparableTo.type.4eeb0e.2) = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc28_24.2 (constants.%T.patt.16f)]
-// CHECK:STDOUT:     %T.param_patt: @impl.5.%ComparableTo.type.loc28_42.2 (%ComparableTo.type.4eeb0e.2) = value_param_pattern %T.patt.loc28_24.1, runtime_param<none> [symbolic = %T.patt.loc28_24.2 (constants.%T.patt.16f)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref.loc28_45: type = name_ref U, %U.loc28_14.1 [symbolic = %U.loc28_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:     %ComparableWith.ref: %ComparableWith.type.dbb = name_ref ComparableWith, file.%ComparableWith.decl [concrete = constants.%ComparableWith.generic]
-// CHECK:STDOUT:     %T.ref: @impl.5.%ComparableTo.type.loc28_42.2 (%ComparableTo.type.4eeb0e.2) = name_ref T, %T.loc28_24.1 [symbolic = %T.loc28_24.2 (constants.%T.b15)]
-// CHECK:STDOUT:     %T.as_type.loc28_66.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc28_66.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc28_66: type = converted %T.ref, %T.as_type.loc28_66.1 [symbolic = %T.as_type.loc28_66.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %ComparableWith.type.loc28_66.1: type = facet_type <@ComparableWith, @ComparableWith(constants.%T.as_type)> [symbolic = %ComparableWith.type.loc28_66.2 (constants.%ComparableWith.type.73a)]
-// CHECK:STDOUT:     %U.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %U.loc28_14.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc28_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:     %T.param: @impl.5.%ComparableTo.type.loc28_42.2 (%ComparableTo.type.4eeb0e.2) = value_param runtime_param<none>
-// CHECK:STDOUT:     %.loc28_42: type = splice_block %ComparableTo.type.loc28_42.1 [symbolic = %ComparableTo.type.loc28_42.2 (constants.%ComparableTo.type.4eeb0e.2)] {
-// CHECK:STDOUT:       %ComparableTo.ref: %ComparableTo.type.706 = name_ref ComparableTo, file.%ComparableTo.decl [concrete = constants.%ComparableTo.generic]
-// CHECK:STDOUT:       %U.ref.loc28_41: type = name_ref U, %U.loc28_14.1 [symbolic = %U.loc28_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:       %ComparableTo.type.loc28_42.1: type = facet_type <@ComparableTo, @ComparableTo(constants.%U.8b3)> [symbolic = %ComparableTo.type.loc28_42.2 (constants.%ComparableTo.type.4eeb0e.2)]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc28_24.1: @impl.5.%ComparableTo.type.loc28_42.2 (%ComparableTo.type.4eeb0e.2) = bind_symbolic_name T, 1, %T.param [symbolic = %T.loc28_24.2 (constants.%T.b15)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc28: <witness> = impl_witness (), @impl.5(constants.%U.8b3, constants.%T.b15) [symbolic = @impl.5.%impl_witness (constants.%impl_witness.595)]
-// CHECK:STDOUT:   impl_decl @impl.6 [concrete] {
-// CHECK:STDOUT:     %U.patt.loc29_14.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc29_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc29_14.1, runtime_param<none> [symbolic = %U.patt.loc29_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:     %T.patt.loc29_24.1: @impl.6.%ComparableTo.type.loc29_42.2 (%ComparableTo.type.4eeb0e.2) = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc29_24.2 (constants.%T.patt.16f)]
-// CHECK:STDOUT:     %T.param_patt: @impl.6.%ComparableTo.type.loc29_42.2 (%ComparableTo.type.4eeb0e.2) = value_param_pattern %T.patt.loc29_24.1, runtime_param<none> [symbolic = %T.patt.loc29_24.2 (constants.%T.patt.16f)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: @impl.6.%ComparableTo.type.loc29_42.2 (%ComparableTo.type.4eeb0e.2) = name_ref T, %T.loc29_24.1 [symbolic = %T.loc29_24.2 (constants.%T.b15)]
-// CHECK:STDOUT:     %T.as_type.loc29_45.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc29_45.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc29_45: type = converted %T.ref, %T.as_type.loc29_45.1 [symbolic = %T.as_type.loc29_45.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %ComparableWith.ref: %ComparableWith.type.dbb = name_ref ComparableWith, file.%ComparableWith.decl [concrete = constants.%ComparableWith.generic]
-// CHECK:STDOUT:     %U.ref.loc29_65: type = name_ref U, %U.loc29_14.1 [symbolic = %U.loc29_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:     %ComparableWith.type.loc29_66.1: type = facet_type <@ComparableWith, @ComparableWith(constants.%U.8b3)> [symbolic = %ComparableWith.type.loc29_66.2 (constants.%ComparableWith.type.bb0721.2)]
-// CHECK:STDOUT:     %U.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %U.loc29_14.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc29_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:     %T.param: @impl.6.%ComparableTo.type.loc29_42.2 (%ComparableTo.type.4eeb0e.2) = value_param runtime_param<none>
-// CHECK:STDOUT:     %.loc29_42: type = splice_block %ComparableTo.type.loc29_42.1 [symbolic = %ComparableTo.type.loc29_42.2 (constants.%ComparableTo.type.4eeb0e.2)] {
-// CHECK:STDOUT:       %ComparableTo.ref: %ComparableTo.type.706 = name_ref ComparableTo, file.%ComparableTo.decl [concrete = constants.%ComparableTo.generic]
-// CHECK:STDOUT:       %U.ref.loc29_41: type = name_ref U, %U.loc29_14.1 [symbolic = %U.loc29_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:       %ComparableTo.type.loc29_42.1: type = facet_type <@ComparableTo, @ComparableTo(constants.%U.8b3)> [symbolic = %ComparableTo.type.loc29_42.2 (constants.%ComparableTo.type.4eeb0e.2)]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc29_24.1: @impl.6.%ComparableTo.type.loc29_42.2 (%ComparableTo.type.4eeb0e.2) = bind_symbolic_name T, 1, %T.param [symbolic = %T.loc29_24.2 (constants.%T.b15)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc29: <witness> = impl_witness (), @impl.6(constants.%U.8b3, constants.%T.b15) [symbolic = @impl.6.%impl_witness (constants.%impl_witness.c25)]
-// CHECK:STDOUT:   %Compare.decl: %Compare.type = fn_decl @Compare [concrete = constants.%Compare] {
-// CHECK:STDOUT:     %T.patt.loc31_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc31_12.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc31_12.1, runtime_param<none> [symbolic = %T.patt.loc31_12.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %U.patt.loc31_22.1: @Compare.%ComparableWith.type.loc31_42.2 (%ComparableWith.type.bb0721.1) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc31_22.2 (constants.%U.patt.761)]
-// CHECK:STDOUT:     %U.param_patt: @Compare.%ComparableWith.type.loc31_42.2 (%ComparableWith.type.bb0721.1) = value_param_pattern %U.patt.loc31_22.1, runtime_param<none> [symbolic = %U.patt.loc31_22.2 (constants.%U.patt.761)]
-// CHECK:STDOUT:     %t.patt: @Compare.%T.loc31_12.2 (%T.8b3) = binding_pattern t
-// CHECK:STDOUT:     %t.param_patt: @Compare.%T.loc31_12.2 (%T.8b3) = value_param_pattern %t.patt, runtime_param0
-// CHECK:STDOUT:     %u.patt: @Compare.%U.as_type.loc31_54.2 (%U.as_type.2d1) = binding_pattern u
-// CHECK:STDOUT:     %u.param_patt: @Compare.%U.as_type.loc31_54.2 (%U.as_type.2d1) = value_param_pattern %u.patt, runtime_param1
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc31_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc31_12.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %U.param: @Compare.%ComparableWith.type.loc31_42.2 (%ComparableWith.type.bb0721.1) = value_param runtime_param<none>
-// CHECK:STDOUT:     %.loc31_42: type = splice_block %ComparableWith.type.loc31_42.1 [symbolic = %ComparableWith.type.loc31_42.2 (constants.%ComparableWith.type.bb0721.1)] {
-// CHECK:STDOUT:       %ComparableWith.ref: %ComparableWith.type.dbb = name_ref ComparableWith, file.%ComparableWith.decl [concrete = constants.%ComparableWith.generic]
-// CHECK:STDOUT:       %T.ref.loc31_41: type = name_ref T, %T.loc31_12.1 [symbolic = %T.loc31_12.2 (constants.%T.8b3)]
-// CHECK:STDOUT:       %ComparableWith.type.loc31_42.1: type = facet_type <@ComparableWith, @ComparableWith(constants.%T.8b3)> [symbolic = %ComparableWith.type.loc31_42.2 (constants.%ComparableWith.type.bb0721.1)]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc31_22.1: @Compare.%ComparableWith.type.loc31_42.2 (%ComparableWith.type.bb0721.1) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc31_22.2 (constants.%U.d53)]
-// CHECK:STDOUT:     %t.param: @Compare.%T.loc31_12.2 (%T.8b3) = value_param runtime_param0
-// CHECK:STDOUT:     %T.ref.loc31_48: type = name_ref T, %T.loc31_12.1 [symbolic = %T.loc31_12.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %t: @Compare.%T.loc31_12.2 (%T.8b3) = bind_name t, %t.param
-// CHECK:STDOUT:     %u.param: @Compare.%U.as_type.loc31_54.2 (%U.as_type.2d1) = value_param runtime_param1
-// CHECK:STDOUT:     %.loc31_54.1: type = splice_block %.loc31_54.2 [symbolic = %U.as_type.loc31_54.2 (constants.%U.as_type.2d1)] {
-// CHECK:STDOUT:       %U.ref: @Compare.%ComparableWith.type.loc31_42.2 (%ComparableWith.type.bb0721.1) = name_ref U, %U.loc31_22.1 [symbolic = %U.loc31_22.2 (constants.%U.d53)]
-// CHECK:STDOUT:       %U.as_type.loc31_54.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc31_54.2 (constants.%U.as_type.2d1)]
-// CHECK:STDOUT:       %.loc31_54.2: type = converted %U.ref, %U.as_type.loc31_54.1 [symbolic = %U.as_type.loc31_54.2 (constants.%U.as_type.2d1)]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: @Compare.%U.as_type.loc31_54.2 (%U.as_type.2d1) = bind_name u, %u.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ComparableTo(%T.loc7_24.1: type) {
-// CHECK:STDOUT:   %T.loc7_24.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_24.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt.loc7_24.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_24.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:   %T.loc7_24.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_24.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc7_24.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_24.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ComparableTo.type: type = facet_type <@ComparableTo, @ComparableTo(%T.loc7_24.2)> [symbolic = %ComparableTo.type (constants.%ComparableTo.type.4eeb0e.1)]
-// CHECK:STDOUT:   %Self.2: %ComparableTo.type.4eeb0e.1 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b15)]
+// CHECK:STDOUT:   %ComparableTo.type: type = facet_type <@ComparableTo, @ComparableTo(%T.loc7_24.2)> [symbolic = %ComparableTo.type (constants.%ComparableTo.type.4ee)]
+// CHECK:STDOUT:   %Self.2: %ComparableTo.type.4ee = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @ComparableTo.%ComparableTo.type (%ComparableTo.type.4eeb0e.1) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b15)]
+// CHECK:STDOUT:     %Self.1: @ComparableTo.%ComparableTo.type (%ComparableTo.type.4ee) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -1540,50 +1345,13 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ComparableWith(%T.loc25_26.1: type) {
-// CHECK:STDOUT:   %T.loc25_26.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc25_26.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt.loc25_26.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_26.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ComparableWith.type: type = facet_type <@ComparableWith, @ComparableWith(%T.loc25_26.2)> [symbolic = %ComparableWith.type (constants.%ComparableWith.type.bb0721.1)]
-// CHECK:STDOUT:   %Self.2: %ComparableWith.type.bb0721.1 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.d53)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @ComparableWith.%ComparableWith.type (%ComparableWith.type.bb0721.1) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.d53)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
-// CHECK:STDOUT:     witness = ()
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.ffd566.1: type) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.275)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.837)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic = %assoc0 (constants.%assoc0.43db8b.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.630
-// CHECK:STDOUT:     witness = (imports.%Core.Convert)
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.1(%T.loc10_14.1: type, %U.loc10_24.1: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4eeb0e.1)) {
-// CHECK:STDOUT:   %T.loc10_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc10_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt.loc10_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:   %ComparableTo.type.loc10_42.2: type = facet_type <@ComparableTo, @ComparableTo(%T.loc10_14.2)> [symbolic = %ComparableTo.type.loc10_42.2 (constants.%ComparableTo.type.4eeb0e.1)]
-// CHECK:STDOUT:   %U.loc10_24.2: %ComparableTo.type.4eeb0e.1 = bind_symbolic_name U, 1 [symbolic = %U.loc10_24.2 (constants.%U.b15)]
-// CHECK:STDOUT:   %U.patt.loc10_24.2: %ComparableTo.type.4eeb0e.1 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_24.2 (constants.%U.patt.16f)]
-// CHECK:STDOUT:   %U.as_type.loc10_45.2: type = facet_access_type %U.loc10_24.2 [symbolic = %U.as_type.loc10_45.2 (constants.%U.as_type.b21)]
+// CHECK:STDOUT: generic impl @impl.1(%T.loc10_14.1: type, %U.loc10_24.1: @impl.1.%ComparableTo.type.loc10_42.2 (%ComparableTo.type.4ee)) {
+// CHECK:STDOUT:   %T.loc10_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc10_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc10_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %ComparableTo.type.loc10_42.2: type = facet_type <@ComparableTo, @ComparableTo(%T.loc10_14.2)> [symbolic = %ComparableTo.type.loc10_42.2 (constants.%ComparableTo.type.4ee)]
+// CHECK:STDOUT:   %U.loc10_24.2: %ComparableTo.type.4ee = bind_symbolic_name U, 1 [symbolic = %U.loc10_24.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc10_24.2: %ComparableTo.type.4ee = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_24.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.as_type.loc10_45.2: type = facet_access_type %U.loc10_24.2 [symbolic = %U.as_type.loc10_45.2 (constants.%U.as_type)]
 // CHECK:STDOUT:   %Wraps.loc10_70.2: type = class_type @Wraps, @Wraps(%T.loc10_14.2) [symbolic = %Wraps.loc10_70.2 (constants.%Wraps.487)]
 // CHECK:STDOUT:   %ComparableTo.type.loc10_71.2: type = facet_type <@ComparableTo, @ComparableTo(%Wraps.loc10_70.2)> [symbolic = %ComparableTo.type.loc10_71.2 (constants.%ComparableTo.type.040)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.1.%ComparableTo.type.loc10_71.2 (%ComparableTo.type.040) [symbolic = %require_complete (constants.%require_complete.066)]
@@ -1597,15 +1365,15 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.2(%T.loc12_14.1: type, %U.loc12_24.1: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4eeb0e.1)) {
-// CHECK:STDOUT:   %T.loc12_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:   %ComparableTo.type.loc12_42.2: type = facet_type <@ComparableTo, @ComparableTo(%T.loc12_14.2)> [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4eeb0e.1)]
-// CHECK:STDOUT:   %U.loc12_24.2: %ComparableTo.type.4eeb0e.1 = bind_symbolic_name U, 1 [symbolic = %U.loc12_24.2 (constants.%U.b15)]
-// CHECK:STDOUT:   %U.patt.loc12_24.2: %ComparableTo.type.4eeb0e.1 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_24.2 (constants.%U.patt.16f)]
-// CHECK:STDOUT:   %U.as_type.loc12_52.2: type = facet_access_type %U.loc12_24.2 [symbolic = %U.as_type.loc12_52.2 (constants.%U.as_type.b21)]
+// CHECK:STDOUT: generic impl @impl.2(%T.loc12_14.1: type, %U.loc12_24.1: @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4ee)) {
+// CHECK:STDOUT:   %T.loc12_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %ComparableTo.type.loc12_42.2: type = facet_type <@ComparableTo, @ComparableTo(%T.loc12_14.2)> [symbolic = %ComparableTo.type.loc12_42.2 (constants.%ComparableTo.type.4ee)]
+// CHECK:STDOUT:   %U.loc12_24.2: %ComparableTo.type.4ee = bind_symbolic_name U, 1 [symbolic = %U.loc12_24.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc12_24.2: %ComparableTo.type.4ee = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_24.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.as_type.loc12_52.2: type = facet_access_type %U.loc12_24.2 [symbolic = %U.as_type.loc12_52.2 (constants.%U.as_type)]
 // CHECK:STDOUT:   %Wraps.loc12_52.2: type = class_type @Wraps, @Wraps(%U.as_type.loc12_52.2) [symbolic = %Wraps.loc12_52.2 (constants.%Wraps.b9a)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4eeb0e.1) [symbolic = %require_complete (constants.%require_complete.084)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.2.%ComparableTo.type.loc12_42.2 (%ComparableTo.type.4ee) [symbolic = %require_complete (constants.%require_complete.084)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.2(%T.loc12_14.2, %U.loc12_24.2) [symbolic = %impl_witness (constants.%impl_witness.96c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1621,62 +1389,9 @@ fn F() {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.4(%U.loc27_14.1: type) {
-// CHECK:STDOUT:   %U.loc27_14.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc27_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:   %U.patt.loc27_14.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc27_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:   %ComparableWith.type.loc27_45.2: type = facet_type <@ComparableWith, @ComparableWith(%U.loc27_14.2)> [symbolic = %ComparableWith.type.loc27_45.2 (constants.%ComparableWith.type.bb0721.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.4.%ComparableWith.type.loc27_45.2 (%ComparableWith.type.bb0721.2) [symbolic = %require_complete (constants.%require_complete.17f)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.4(%U.loc27_14.2) [symbolic = %impl_witness (constants.%impl_witness.497)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %U.ref.loc27_24 as %ComparableWith.type.loc27_45.1 {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%impl_witness.loc27
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.5(%U.loc28_14.1: type, %T.loc28_24.1: @impl.5.%ComparableTo.type.loc28_42.2 (%ComparableTo.type.4eeb0e.2)) {
-// CHECK:STDOUT:   %U.loc28_14.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc28_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:   %U.patt.loc28_14.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc28_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:   %ComparableTo.type.loc28_42.2: type = facet_type <@ComparableTo, @ComparableTo(%U.loc28_14.2)> [symbolic = %ComparableTo.type.loc28_42.2 (constants.%ComparableTo.type.4eeb0e.2)]
-// CHECK:STDOUT:   %T.loc28_24.2: %ComparableTo.type.4eeb0e.2 = bind_symbolic_name T, 1 [symbolic = %T.loc28_24.2 (constants.%T.b15)]
-// CHECK:STDOUT:   %T.patt.loc28_24.2: %ComparableTo.type.4eeb0e.2 = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc28_24.2 (constants.%T.patt.16f)]
-// CHECK:STDOUT:   %T.as_type.loc28_66.2: type = facet_access_type %T.loc28_24.2 [symbolic = %T.as_type.loc28_66.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %ComparableWith.type.loc28_66.2: type = facet_type <@ComparableWith, @ComparableWith(%T.as_type.loc28_66.2)> [symbolic = %ComparableWith.type.loc28_66.2 (constants.%ComparableWith.type.73a)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.5.%ComparableWith.type.loc28_66.2 (%ComparableWith.type.73a) [symbolic = %require_complete (constants.%require_complete.86a)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.5(%U.loc28_14.2, %T.loc28_24.2) [symbolic = %impl_witness (constants.%impl_witness.595)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %U.ref.loc28_45 as %ComparableWith.type.loc28_66.1 {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%impl_witness.loc28
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.6(%U.loc29_14.1: type, %T.loc29_24.1: @impl.6.%ComparableTo.type.loc29_42.2 (%ComparableTo.type.4eeb0e.2)) {
-// CHECK:STDOUT:   %U.loc29_14.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc29_14.2 (constants.%U.8b3)]
-// CHECK:STDOUT:   %U.patt.loc29_14.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc29_14.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:   %ComparableTo.type.loc29_42.2: type = facet_type <@ComparableTo, @ComparableTo(%U.loc29_14.2)> [symbolic = %ComparableTo.type.loc29_42.2 (constants.%ComparableTo.type.4eeb0e.2)]
-// CHECK:STDOUT:   %T.loc29_24.2: %ComparableTo.type.4eeb0e.2 = bind_symbolic_name T, 1 [symbolic = %T.loc29_24.2 (constants.%T.b15)]
-// CHECK:STDOUT:   %T.patt.loc29_24.2: %ComparableTo.type.4eeb0e.2 = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc29_24.2 (constants.%T.patt.16f)]
-// CHECK:STDOUT:   %T.as_type.loc29_45.2: type = facet_access_type %T.loc29_24.2 [symbolic = %T.as_type.loc29_45.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %ComparableWith.type.loc29_66.2: type = facet_type <@ComparableWith, @ComparableWith(%U.loc29_14.2)> [symbolic = %ComparableWith.type.loc29_66.2 (constants.%ComparableWith.type.bb0721.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.6.%ComparableWith.type.loc29_66.2 (%ComparableWith.type.bb0721.2) [symbolic = %require_complete (constants.%require_complete.17f)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.6(%U.loc29_14.2, %T.loc29_24.2) [symbolic = %impl_witness (constants.%impl_witness.c25)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %.loc29_45 as %ComparableWith.type.loc29_66.1 {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%impl_witness.loc29
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Wraps(%T.loc5_13.1: type) {
-// CHECK:STDOUT:   %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt.loc5_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_13.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:   %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc5_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1786,112 +1501,18 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Compare(%T.loc31_12.1: type, %U.loc31_22.1: @Compare.%ComparableWith.type.loc31_42.2 (%ComparableWith.type.bb0721.1)) {
-// CHECK:STDOUT:   %T.loc31_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc31_12.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt.loc31_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc31_12.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2: type = facet_type <@ComparableWith, @ComparableWith(%T.loc31_12.2)> [symbolic = %ComparableWith.type.loc31_42.2 (constants.%ComparableWith.type.bb0721.1)]
-// CHECK:STDOUT:   %U.loc31_22.2: %ComparableWith.type.bb0721.1 = bind_symbolic_name U, 1 [symbolic = %U.loc31_22.2 (constants.%U.d53)]
-// CHECK:STDOUT:   %U.patt.loc31_22.2: %ComparableWith.type.bb0721.1 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc31_22.2 (constants.%U.patt.761)]
-// CHECK:STDOUT:   %U.as_type.loc31_54.2: type = facet_access_type %U.loc31_22.2 [symbolic = %U.as_type.loc31_54.2 (constants.%U.as_type.2d1)]
+// CHECK:STDOUT: specific @Wraps(constants.%T) {
+// CHECK:STDOUT:   %T.loc5_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ComparableTo(constants.%T) {
+// CHECK:STDOUT:   %T.loc7_24.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_24.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc31_46: <witness> = require_complete_type @Compare.%T.loc31_12.2 (%T.8b3) [symbolic = %require_complete.loc31_46 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %require_complete.loc31_52: <witness> = require_complete_type @Compare.%U.as_type.loc31_54.2 (%U.as_type.2d1) [symbolic = %require_complete.loc31_52 (constants.%require_complete.9df)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type, %U.param_patt: @Compare.%ComparableWith.type.loc31_42.2 (%ComparableWith.type.bb0721.1)](%t.param_patt: @Compare.%T.loc31_12.2 (%T.8b3), %u.param_patt: @Compare.%U.as_type.loc31_54.2 (%U.as_type.2d1)) {
-// CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Compare.ref.loc34: %Compare.type = name_ref Compare, file.%Compare.decl [concrete = constants.%Compare]
-// CHECK:STDOUT:   %.loc34_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %C.ref.loc34_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc34_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc34_12.3: init %C = class_init (), %.loc34_12.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc34_12.4: ref %C = temporary %.loc34_12.2, %.loc34_12.3
-// CHECK:STDOUT:   %.loc34_14.1: ref %C = converted %.loc34_12.1, %.loc34_12.4
-// CHECK:STDOUT:   %.loc34_21.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %C.ref.loc34_26: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc34_21.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc34_21.3: init %C = class_init (), %.loc34_21.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc34_21.4: ref %C = temporary %.loc34_21.2, %.loc34_21.3
-// CHECK:STDOUT:   %.loc34_23.1: ref %C = converted %.loc34_21.1, %.loc34_21.4
-// CHECK:STDOUT:   %ComparableWith.facet.loc34: %ComparableWith.type.68c = facet_value constants.%C, constants.%impl_witness.887 [concrete = constants.%ComparableWith.facet.17d]
-// CHECK:STDOUT:   %.loc34_27: %ComparableWith.type.68c = converted constants.%C, %ComparableWith.facet.loc34 [concrete = constants.%ComparableWith.facet.17d]
-// CHECK:STDOUT:   %Compare.specific_fn.loc34: <specific function> = specific_function %Compare.ref.loc34, @Compare(constants.%C, %.loc34_27) [concrete = constants.%Compare.specific_fn.041]
-// CHECK:STDOUT:   %.loc34_14.2: %C = bind_value %.loc34_14.1
-// CHECK:STDOUT:   %.loc34_23.2: %C = bind_value %.loc34_23.1
-// CHECK:STDOUT:   %Compare.call.loc34: init %empty_tuple.type = call %Compare.specific_fn.loc34(%.loc34_14.2, %.loc34_23.2)
-// CHECK:STDOUT:   %Compare.ref.loc35: %Compare.type = name_ref Compare, file.%Compare.decl [concrete = constants.%Compare]
-// CHECK:STDOUT:   %.loc35_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %C.ref.loc35: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc35_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc35_12.3: init %C = class_init (), %.loc35_12.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc35_12.4: ref %C = temporary %.loc35_12.2, %.loc35_12.3
-// CHECK:STDOUT:   %.loc35_14.1: ref %C = converted %.loc35_12.1, %.loc35_12.4
-// CHECK:STDOUT:   %.loc35_21.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %D.ref.loc35: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %.loc35_21.2: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc35_21.3: init %D = class_init (), %.loc35_21.2 [concrete = constants.%D.val]
-// CHECK:STDOUT:   %.loc35_21.4: ref %D = temporary %.loc35_21.2, %.loc35_21.3
-// CHECK:STDOUT:   %.loc35_23.1: ref %D = converted %.loc35_21.1, %.loc35_21.4
-// CHECK:STDOUT:   %ComparableTo.facet.loc35: %ComparableTo.type.4f3 = facet_value constants.%C, constants.%impl_witness.1bc [concrete = constants.%ComparableTo.facet.3c8]
-// CHECK:STDOUT:   %.loc35_27.1: %ComparableTo.type.4f3 = converted constants.%C, %ComparableTo.facet.loc35 [concrete = constants.%ComparableTo.facet.3c8]
-// CHECK:STDOUT:   %ComparableWith.facet.loc35: %ComparableWith.type.68c = facet_value constants.%D, constants.%impl_witness.228 [concrete = constants.%ComparableWith.facet.aa3]
-// CHECK:STDOUT:   %.loc35_27.2: %ComparableWith.type.68c = converted constants.%D, %ComparableWith.facet.loc35 [concrete = constants.%ComparableWith.facet.aa3]
-// CHECK:STDOUT:   %Compare.specific_fn.loc35: <specific function> = specific_function %Compare.ref.loc35, @Compare(constants.%C, %.loc35_27.2) [concrete = constants.%Compare.specific_fn.94d]
-// CHECK:STDOUT:   %.loc35_14.2: %C = bind_value %.loc35_14.1
-// CHECK:STDOUT:   %.loc35_23.2: %D = bind_value %.loc35_23.1
-// CHECK:STDOUT:   %Compare.call.loc35: init %empty_tuple.type = call %Compare.specific_fn.loc35(%.loc35_14.2, %.loc35_23.2)
-// CHECK:STDOUT:   %Compare.ref.loc49: %Compare.type = name_ref Compare, file.%Compare.decl [concrete = constants.%Compare]
-// CHECK:STDOUT:   %.loc49_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %D.ref.loc49: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %.loc49_12.2: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc49_12.3: init %D = class_init (), %.loc49_12.2 [concrete = constants.%D.val]
-// CHECK:STDOUT:   %.loc49_12.4: ref %D = temporary %.loc49_12.2, %.loc49_12.3
-// CHECK:STDOUT:   %.loc49_14.1: ref %D = converted %.loc49_12.1, %.loc49_12.4
-// CHECK:STDOUT:   %.loc49_21.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %C.ref.loc49: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc49_21.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc49_21.3: init %C = class_init (), %.loc49_21.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc49_21.4: ref %C = temporary %.loc49_21.2, %.loc49_21.3
-// CHECK:STDOUT:   %.loc49_23.1: ref %C = converted %.loc49_21.1, %.loc49_21.4
-// CHECK:STDOUT:   %.loc49_27.1: %ComparableTo.type.406 = converted constants.%D, <error> [concrete = <error>]
-// CHECK:STDOUT:   %ComparableTo.facet.loc49: %ComparableTo.type.4f3 = facet_value constants.%C, constants.%impl_witness.1bc [concrete = constants.%ComparableTo.facet.3c8]
-// CHECK:STDOUT:   %.loc49_27.2: %ComparableTo.type.4f3 = converted constants.%C, %ComparableTo.facet.loc49 [concrete = constants.%ComparableTo.facet.3c8]
-// CHECK:STDOUT:   %ComparableWith.facet.loc49: %ComparableWith.type.c33 = facet_value constants.%C, constants.%impl_witness.d37 [concrete = constants.%ComparableWith.facet.7c0]
-// CHECK:STDOUT:   %.loc49_27.3: %ComparableWith.type.c33 = converted constants.%C, %ComparableWith.facet.loc49 [concrete = constants.%ComparableWith.facet.7c0]
-// CHECK:STDOUT:   %Compare.specific_fn.loc49: <specific function> = specific_function %Compare.ref.loc49, @Compare(constants.%D, %.loc49_27.3) [concrete = constants.%Compare.specific_fn.f4d]
-// CHECK:STDOUT:   %.loc49_14.2: %D = bind_value %.loc49_14.1
-// CHECK:STDOUT:   %.loc49_23.2: %C = bind_value %.loc49_23.1
-// CHECK:STDOUT:   %Compare.call.loc49: init %empty_tuple.type = call %Compare.specific_fn.loc49(%.loc49_14.2, %.loc49_23.2)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.ffd566.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wraps(constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc5_13.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.8b3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableTo(constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc7_24.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc7_24.2 => constants.%T.8b3
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ComparableTo.type => constants.%ComparableTo.type.4eeb0e.1
-// CHECK:STDOUT:   %Self.2 => constants.%Self.b15
+// CHECK:STDOUT:   %ComparableTo.type => constants.%ComparableTo.type.4ee
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ComparableTo(%T.loc7_24.2) {}
@@ -1902,16 +1523,16 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ComparableTo.type => constants.%ComparableTo.type.040
-// CHECK:STDOUT:   %Self.2 => constants.%Self.b15
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.1(constants.%T.8b3, constants.%U.b15) {
-// CHECK:STDOUT:   %T.loc10_14.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T.8b3
-// CHECK:STDOUT:   %ComparableTo.type.loc10_42.2 => constants.%ComparableTo.type.4eeb0e.1
-// CHECK:STDOUT:   %U.loc10_24.2 => constants.%U.b15
-// CHECK:STDOUT:   %U.patt.loc10_24.2 => constants.%U.b15
-// CHECK:STDOUT:   %U.as_type.loc10_45.2 => constants.%U.as_type.b21
+// CHECK:STDOUT: specific @impl.1(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T
+// CHECK:STDOUT:   %ComparableTo.type.loc10_42.2 => constants.%ComparableTo.type.4ee
+// CHECK:STDOUT:   %U.loc10_24.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc10_24.2 => constants.%U
+// CHECK:STDOUT:   %U.as_type.loc10_45.2 => constants.%U.as_type
 // CHECK:STDOUT:   %Wraps.loc10_70.2 => constants.%Wraps.487
 // CHECK:STDOUT:   %ComparableTo.type.loc10_71.2 => constants.%ComparableTo.type.040
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.066
@@ -1926,18 +1547,18 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.1(%T.loc10_14.2, %U.loc10_24.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wraps(constants.%U.as_type.b21) {
-// CHECK:STDOUT:   %T.loc5_13.2 => constants.%U.as_type.b21
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%U.as_type.b21
+// CHECK:STDOUT: specific @Wraps(constants.%U.as_type) {
+// CHECK:STDOUT:   %T.loc5_13.2 => constants.%U.as_type
+// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.2(constants.%T.8b3, constants.%U.b15) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T.8b3
-// CHECK:STDOUT:   %ComparableTo.type.loc12_42.2 => constants.%ComparableTo.type.4eeb0e.1
-// CHECK:STDOUT:   %U.loc12_24.2 => constants.%U.b15
-// CHECK:STDOUT:   %U.patt.loc12_24.2 => constants.%U.b15
-// CHECK:STDOUT:   %U.as_type.loc12_52.2 => constants.%U.as_type.b21
+// CHECK:STDOUT: specific @impl.2(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
+// CHECK:STDOUT:   %ComparableTo.type.loc12_42.2 => constants.%ComparableTo.type.4ee
+// CHECK:STDOUT:   %U.loc12_24.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc12_24.2 => constants.%U
+// CHECK:STDOUT:   %U.as_type.loc12_52.2 => constants.%U.as_type
 // CHECK:STDOUT:   %Wraps.loc12_52.2 => constants.%Wraps.b9a
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.084
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.96c
@@ -1955,7 +1576,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ComparableTo.type => constants.%ComparableTo.type.4f3
-// CHECK:STDOUT:   %Self.2 => constants.%Self.b15
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wraps(constants.%D) {
@@ -2069,305 +1690,6 @@ fn F() {
 // CHECK:STDOUT:   %ComparableTo.type.loc10_71.2 => constants.%ComparableTo.type.237
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.d0b
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.098
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc25_26.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc25_26.2 => constants.%T.8b3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(%T.loc25_26.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(constants.%U.8b3) {
-// CHECK:STDOUT:   %T.loc25_26.2 => constants.%U.8b3
-// CHECK:STDOUT:   %T.patt.loc25_26.2 => constants.%U.8b3
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ComparableWith.type => constants.%ComparableWith.type.bb0721.2
-// CHECK:STDOUT:   %Self.2 => constants.%Self.d53
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.4(constants.%U.8b3) {
-// CHECK:STDOUT:   %U.loc27_14.2 => constants.%U.8b3
-// CHECK:STDOUT:   %U.patt.loc27_14.2 => constants.%U.8b3
-// CHECK:STDOUT:   %ComparableWith.type.loc27_45.2 => constants.%ComparableWith.type.bb0721.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.17f
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.497
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(@impl.4.%U.loc27_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.4(%U.loc27_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableTo(constants.%U.8b3) {
-// CHECK:STDOUT:   %T.loc7_24.2 => constants.%U.8b3
-// CHECK:STDOUT:   %T.patt.loc7_24.2 => constants.%U.8b3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(constants.%T.as_type) {
-// CHECK:STDOUT:   %T.loc25_26.2 => constants.%T.as_type
-// CHECK:STDOUT:   %T.patt.loc25_26.2 => constants.%T.as_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ComparableWith.type => constants.%ComparableWith.type.73a
-// CHECK:STDOUT:   %Self.2 => constants.%Self.d53
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.5(constants.%U.8b3, constants.%T.b15) {
-// CHECK:STDOUT:   %U.loc28_14.2 => constants.%U.8b3
-// CHECK:STDOUT:   %U.patt.loc28_14.2 => constants.%U.8b3
-// CHECK:STDOUT:   %ComparableTo.type.loc28_42.2 => constants.%ComparableTo.type.4eeb0e.2
-// CHECK:STDOUT:   %T.loc28_24.2 => constants.%T.b15
-// CHECK:STDOUT:   %T.patt.loc28_24.2 => constants.%T.b15
-// CHECK:STDOUT:   %T.as_type.loc28_66.2 => constants.%T.as_type
-// CHECK:STDOUT:   %ComparableWith.type.loc28_66.2 => constants.%ComparableWith.type.73a
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.86a
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.595
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableTo(@impl.5.%U.loc28_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(@impl.5.%T.as_type.loc28_66.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.5(%U.loc28_14.2, %T.loc28_24.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6(constants.%U.8b3, constants.%T.b15) {
-// CHECK:STDOUT:   %U.loc29_14.2 => constants.%U.8b3
-// CHECK:STDOUT:   %U.patt.loc29_14.2 => constants.%U.8b3
-// CHECK:STDOUT:   %ComparableTo.type.loc29_42.2 => constants.%ComparableTo.type.4eeb0e.2
-// CHECK:STDOUT:   %T.loc29_24.2 => constants.%T.b15
-// CHECK:STDOUT:   %T.patt.loc29_24.2 => constants.%T.b15
-// CHECK:STDOUT:   %T.as_type.loc29_45.2 => constants.%T.as_type
-// CHECK:STDOUT:   %ComparableWith.type.loc29_66.2 => constants.%ComparableWith.type.bb0721.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.17f
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.c25
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableTo(@impl.6.%U.loc29_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(@impl.6.%U.loc29_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6(%U.loc29_14.2, %T.loc29_24.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Compare(constants.%T.8b3, constants.%U.d53) {
-// CHECK:STDOUT:   %T.loc31_12.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc31_12.2 => constants.%T.8b3
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2 => constants.%ComparableWith.type.bb0721.1
-// CHECK:STDOUT:   %U.loc31_22.2 => constants.%U.d53
-// CHECK:STDOUT:   %U.patt.loc31_22.2 => constants.%U.d53
-// CHECK:STDOUT:   %U.as_type.loc31_54.2 => constants.%U.as_type.2d1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(@Compare.%T.loc31_12.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(constants.%C) {
-// CHECK:STDOUT:   %T.loc25_26.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc25_26.2 => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.4(constants.%C) {
-// CHECK:STDOUT:   %U.loc27_14.2 => constants.%C
-// CHECK:STDOUT:   %U.patt.loc27_14.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc27_45.2 => constants.%ComparableWith.type.68c
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.aa9
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.887
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Compare(constants.%C, @G.%.loc34_27) {
-// CHECK:STDOUT:   %T.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2 => constants.%ComparableWith.type.68c
-// CHECK:STDOUT:   %U.loc31_22.2 => constants.%ComparableWith.facet.17d
-// CHECK:STDOUT:   %U.patt.loc31_22.2 => constants.%ComparableWith.facet.17d
-// CHECK:STDOUT:   %U.as_type.loc31_54.2 => constants.%C
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc31_46 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc31_52 => constants.%complete_type.357
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Compare(constants.%C, constants.%ComparableWith.facet.17d) {
-// CHECK:STDOUT:   %T.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2 => constants.%ComparableWith.type.68c
-// CHECK:STDOUT:   %U.loc31_22.2 => constants.%ComparableWith.facet.17d
-// CHECK:STDOUT:   %U.patt.loc31_22.2 => constants.%ComparableWith.facet.17d
-// CHECK:STDOUT:   %U.as_type.loc31_54.2 => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.5(constants.%D, @G.%.loc35_27.1) {
-// CHECK:STDOUT:   %U.loc28_14.2 => constants.%D
-// CHECK:STDOUT:   %U.patt.loc28_14.2 => constants.%D
-// CHECK:STDOUT:   %ComparableTo.type.loc28_42.2 => constants.%ComparableTo.type.4f3
-// CHECK:STDOUT:   %T.loc28_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.patt.loc28_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.as_type.loc28_66.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc28_66.2 => constants.%ComparableWith.type.68c
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.aa9
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.228
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.5(constants.%D, constants.%ComparableTo.facet.3c8) {
-// CHECK:STDOUT:   %U.loc28_14.2 => constants.%D
-// CHECK:STDOUT:   %U.patt.loc28_14.2 => constants.%D
-// CHECK:STDOUT:   %ComparableTo.type.loc28_42.2 => constants.%ComparableTo.type.4f3
-// CHECK:STDOUT:   %T.loc28_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.patt.loc28_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.as_type.loc28_66.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc28_66.2 => constants.%ComparableWith.type.68c
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.aa9
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.228
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Compare(constants.%C, @G.%.loc35_27.2) {
-// CHECK:STDOUT:   %T.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2 => constants.%ComparableWith.type.68c
-// CHECK:STDOUT:   %U.loc31_22.2 => constants.%ComparableWith.facet.aa3
-// CHECK:STDOUT:   %U.patt.loc31_22.2 => constants.%ComparableWith.facet.aa3
-// CHECK:STDOUT:   %U.as_type.loc31_54.2 => constants.%D
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc31_46 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc31_52 => constants.%complete_type.357
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Compare(constants.%C, constants.%ComparableWith.facet.aa3) {
-// CHECK:STDOUT:   %T.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc31_12.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2 => constants.%ComparableWith.type.68c
-// CHECK:STDOUT:   %U.loc31_22.2 => constants.%ComparableWith.facet.aa3
-// CHECK:STDOUT:   %U.patt.loc31_22.2 => constants.%ComparableWith.facet.aa3
-// CHECK:STDOUT:   %U.as_type.loc31_54.2 => constants.%D
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(constants.%D) {
-// CHECK:STDOUT:   %T.loc25_26.2 => constants.%D
-// CHECK:STDOUT:   %T.patt.loc25_26.2 => constants.%D
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableTo(constants.%C) {
-// CHECK:STDOUT:   %T.loc7_24.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc7_24.2 => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.4(constants.%D) {
-// CHECK:STDOUT:   %U.loc27_14.2 => constants.%D
-// CHECK:STDOUT:   %U.patt.loc27_14.2 => constants.%D
-// CHECK:STDOUT:   %ComparableWith.type.loc27_45.2 => constants.%ComparableWith.type.c33
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.9db
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.126
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
-// CHECK:STDOUT:   %Self => constants.%Self.519
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%ComparableTo.type.406) {
-// CHECK:STDOUT:   %Dest => constants.%ComparableTo.type.406
-// CHECK:STDOUT:   %Dest.patt => constants.%ComparableTo.type.406
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.632
-// CHECK:STDOUT:   %Self => constants.%Self.519
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.cd0
-// CHECK:STDOUT:   %Convert => constants.%Convert.088
-// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.38f
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.dca
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.4(type) {
-// CHECK:STDOUT:   %U.loc27_14.2 => type
-// CHECK:STDOUT:   %U.patt.loc27_14.2 => type
-// CHECK:STDOUT:   %ComparableWith.type.loc27_45.2 => constants.%ComparableWith.type.7aa
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.3dc
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.2ae
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(type) {
-// CHECK:STDOUT:   %T.loc25_26.2 => type
-// CHECK:STDOUT:   %T.patt.loc25_26.2 => type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.5(constants.%C, <error>) {
-// CHECK:STDOUT:   %U.loc28_14.2 => constants.%C
-// CHECK:STDOUT:   %U.patt.loc28_14.2 => constants.%C
-// CHECK:STDOUT:   %ComparableTo.type.loc28_42.2 => constants.%ComparableTo.type.406
-// CHECK:STDOUT:   %T.loc28_24.2 => <error>
-// CHECK:STDOUT:   %T.patt.loc28_24.2 => <error>
-// CHECK:STDOUT:   %T.as_type.loc28_66.2 => <error>
-// CHECK:STDOUT:   %ComparableWith.type.loc28_66.2 => <error>
-// CHECK:STDOUT:   %require_complete => <error>
-// CHECK:STDOUT:   %impl_witness => <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ComparableWith(<error>) {
-// CHECK:STDOUT:   %T.loc25_26.2 => <error>
-// CHECK:STDOUT:   %T.patt.loc25_26.2 => <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6(constants.%D, @G.%.loc49_27.2) {
-// CHECK:STDOUT:   %U.loc29_14.2 => constants.%D
-// CHECK:STDOUT:   %U.patt.loc29_14.2 => constants.%D
-// CHECK:STDOUT:   %ComparableTo.type.loc29_42.2 => constants.%ComparableTo.type.4f3
-// CHECK:STDOUT:   %T.loc29_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.patt.loc29_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.as_type.loc29_45.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc29_66.2 => constants.%ComparableWith.type.c33
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.9db
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.d37
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6(constants.%D, constants.%ComparableTo.facet.3c8) {
-// CHECK:STDOUT:   %U.loc29_14.2 => constants.%D
-// CHECK:STDOUT:   %U.patt.loc29_14.2 => constants.%D
-// CHECK:STDOUT:   %ComparableTo.type.loc29_42.2 => constants.%ComparableTo.type.4f3
-// CHECK:STDOUT:   %T.loc29_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.patt.loc29_24.2 => constants.%ComparableTo.facet.3c8
-// CHECK:STDOUT:   %T.as_type.loc29_45.2 => constants.%C
-// CHECK:STDOUT:   %ComparableWith.type.loc29_66.2 => constants.%ComparableWith.type.c33
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.9db
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.d37
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Compare(constants.%D, @G.%.loc49_27.3) {
-// CHECK:STDOUT:   %T.loc31_12.2 => constants.%D
-// CHECK:STDOUT:   %T.patt.loc31_12.2 => constants.%D
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2 => constants.%ComparableWith.type.c33
-// CHECK:STDOUT:   %U.loc31_22.2 => constants.%ComparableWith.facet.7c0
-// CHECK:STDOUT:   %U.patt.loc31_22.2 => constants.%ComparableWith.facet.7c0
-// CHECK:STDOUT:   %U.as_type.loc31_54.2 => constants.%C
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc31_46 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc31_52 => constants.%complete_type.357
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Compare(constants.%D, constants.%ComparableWith.facet.7c0) {
-// CHECK:STDOUT:   %T.loc31_12.2 => constants.%D
-// CHECK:STDOUT:   %T.patt.loc31_12.2 => constants.%D
-// CHECK:STDOUT:   %ComparableWith.type.loc31_42.2 => constants.%ComparableWith.type.c33
-// CHECK:STDOUT:   %U.loc31_22.2 => constants.%ComparableWith.facet.7c0
-// CHECK:STDOUT:   %U.patt.loc31_22.2 => constants.%ComparableWith.facet.7c0
-// CHECK:STDOUT:   %U.as_type.loc31_54.2 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
