@@ -169,10 +169,10 @@ auto HandleParseNode(Context& context,
   // We model `Self` as a symbolic binding whose type is the interface.
   // Because there is no equivalent non-symbolic value, we use `None` as
   // the `value_id` on the `BindSymbolicName`.
-  auto entity_name_id = context.entity_names().Add(
-      {.name_id = SemIR::NameId::SelfType,
-       .parent_scope_id = interface_info.scope_id,
-       .bind_index = context.scope_stack().AddCompileTimeBinding()});
+  auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+      SemIR::NameId::SelfType, interface_info.scope_id,
+      context.scope_stack().AddCompileTimeBinding(),
+      /*is_template=*/false);
   interface_info.self_param_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,

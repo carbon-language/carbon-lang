@@ -32,35 +32,6 @@
 
 namespace Carbon::Check {
 
-// Information about a scope in which we can perform name lookup.
-struct LookupScope {
-  // The name scope in which names are searched.
-  SemIR::NameScopeId name_scope_id;
-  // The specific for the name scope, or `None` if the name scope is not
-  // defined by a generic or we should perform lookup into the generic itself.
-  SemIR::SpecificId specific_id;
-};
-
-// A result produced by name lookup.
-struct LookupResult {
-  // The specific in which the lookup result was found. `None` if the result
-  // was not found in a specific.
-  SemIR::SpecificId specific_id;
-
-  // The result from the lookup in the scope.
-  SemIR::ScopeLookupResult scope_result;
-};
-
-// Information about an access.
-struct AccessInfo {
-  // The constant being accessed.
-  SemIR::ConstantId constant_id;
-
-  // The highest allowed access for a lookup. For example, `Protected` allows
-  // access to `Public` and `Protected` names, but not `Private`.
-  SemIR::AccessKind highest_allowed_access;
-};
-
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
@@ -207,59 +178,6 @@ class Context {
     sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
   }
 
-  // Adds a name to name lookup. Prints a diagnostic for name conflicts. If
-  // specified, `scope_index` specifies which lexical scope the name is inserted
-  // into, otherwise the name is inserted into the current scope.
-  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::None) -> void;
-
-  // Performs name lookup in a specified scope for a name appearing in a
-  // declaration. If scope_id is `None`, performs lookup into the lexical scope
-  // specified by scope_index instead.
-  auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                        SemIR::NameScopeId scope_id, ScopeIndex scope_index)
-      -> SemIR::ScopeLookupResult;
-
-  // Performs an unqualified name lookup, returning the referenced `InstId`.
-  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
-                             bool required = true) -> LookupResult;
-
-  // Performs a name lookup in a specified scope, returning the referenced
-  // `InstId`. Does not look into extended scopes. Returns `InstId::None` if the
-  // name is not found.
-  //
-  // If `is_being_declared` is false, then this is a regular name lookup, and
-  // the name will be poisoned if not found so that later lookups will fail; a
-  // poisoned name will be treated as if it is not declared. Otherwise, this is
-  // a lookup for a name being declared, so the name will not be poisoned, but
-  // poison will be returned if it's already been looked up.
-  auto LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
-                              SemIR::NameScopeId scope_id,
-                              SemIR::NameScope& scope,
-                              bool is_being_declared = false)
-      -> SemIR::ScopeLookupResult;
-
-  // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
-  // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
-  // still updates `*scopes` and returns `true`.
-  auto AppendLookupScopesForConstant(SemIR::LocId loc_id,
-                                     SemIR::ConstantId base_const_id,
-                                     llvm::SmallVector<LookupScope>* scopes)
-      -> bool;
-
-  // Performs a qualified name lookup in a specified scopes and in scopes that
-  // they extend, returning the referenced `InstId`.
-  auto LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
-                           llvm::ArrayRef<LookupScope> lookup_scopes,
-                           bool required = true,
-                           std::optional<AccessInfo> access_info = std::nullopt)
-      -> LookupResult;
-
-  // Returns the `InstId` corresponding to a name in the core package, or
-  // BuiltinErrorInst if not found.
-  auto LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
-      -> SemIR::InstId;
-
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
@@ -269,11 +187,6 @@ class Context {
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
-
-  // Prints a diagnostic for a missing qualified name.
-  auto DiagnoseMemberNameNotFound(SemIRLoc loc, SemIR::NameId name_id,
-                                  llvm::ArrayRef<LookupScope> lookup_scopes)
-      -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)

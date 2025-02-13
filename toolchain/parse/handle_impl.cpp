@@ -27,7 +27,7 @@ auto HandleImplAfterIntroducer(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Forall)) {
     // forall [<implicit parameter list>] ...
     context.PushState(State::ImplAfterForall);
-    context.ConsumeAndDiscard();
+    context.AddLeafNode(NodeKind::Forall, context.Consume());
     if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
       context.PushState(State::PatternListAsImplicit);
     } else {
@@ -53,7 +53,6 @@ auto HandleImplAfterForall(Context& context) -> void {
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
-  context.AddNode(NodeKind::ImplForall, state.token, state.has_error);
   // One of:
   //   as <expression> ...
   //   <expression> as <expression>...
