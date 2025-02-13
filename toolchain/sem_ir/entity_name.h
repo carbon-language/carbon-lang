@@ -24,9 +24,9 @@ struct EntityName : public Printable<EntityName> {
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
-  // The index for a compile-time binding. Invalid for a runtime binding, or
-  // for a symbolic binding, like `.Self`, that does not correspond to a generic
-  // parameter (and therefore has no index).
+  // The index of the binding, if this is the name of a symbolic binding, or
+  // `None` otherwise. This is also `None` for a `.Self` symbolic binding,
+  // because such a binding is not assigned an index.
   auto bind_index() const -> CompileTimeBindIndex {
     return CompileTimeBindIndex(bind_index_value);
   }
