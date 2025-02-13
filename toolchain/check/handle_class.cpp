@@ -15,6 +15,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
@@ -111,8 +112,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                                                 access_kind);
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, lookup_result.poisoning_loc_id(),
+                         name_context.loc_id);
     return;
   }
 
@@ -161,7 +162,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
   if (!prev_class_id.has_value()) {
     // This is a redeclaration of something other than a class.
-    context.DiagnoseDuplicateName(class_decl_id, prev_id);
+    DiagnoseDuplicateName(context, class_decl_id, prev_id);
     return;
   }
 

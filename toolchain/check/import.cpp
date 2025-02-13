@@ -10,6 +10,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -105,7 +106,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
         if (diagnose_duplicate_namespace) {
           auto import_id = make_import_id();
           CARBON_CHECK(import_id.has_value());
-          context.DiagnoseDuplicateName(import_id, prev_inst_id);
+          DiagnoseDuplicateName(context, import_id, prev_inst_id);
         }
         return {.name_scope_id = namespace_inst->name_scope_id,
                 .inst_id = prev_inst_id,
@@ -146,7 +147,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
   // may be overwriting a poisoned entry here.
   auto& result = parent_scope->GetEntry(entry_id).result;
   if (!result.is_poisoned() && !inserted) {
-    context.DiagnoseDuplicateName(namespace_id, result.target_inst_id());
+    DiagnoseDuplicateName(context, namespace_id, result.target_inst_id());
   }
   result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
                                                SemIR::AccessKind::Public);

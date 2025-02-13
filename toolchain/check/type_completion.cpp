@@ -261,7 +261,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       if (!class_info.is_defined()) {
         if (diagnoser_) {
           auto builder = diagnoser_();
-          context_.NoteIncompleteClass(inst.class_id, builder);
+          NoteIncompleteClass(context_, inst.class_id, builder);
           builder.Emit();
         }
         return false;
@@ -497,6 +497,18 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
+// Adds a note to a diagnostic explaining that a class is abstract.
+static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
+                              Context::DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+      "Class is not abstract");
+  CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
+                    "class was declared abstract here");
+  builder.Note(class_info.definition_id, ClassAbstractHere);
+}
+
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id,
                          Context::BuildDiagnosticFn diagnoser,
@@ -519,7 +531,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
     if (!builder) {
       return false;
     }
-    context.NoteAbstractClass(class_type->class_id, builder);
+    NoteAbstractClass(context, class_type->class_id, builder);
     builder.Emit();
     return false;
   }
@@ -541,7 +553,7 @@ auto RequireDefinedType(Context& context, SemIR::TypeId type_id,
       auto interface_id = interface.interface_id;
       if (!context.interfaces().Get(interface_id).is_defined()) {
         auto builder = diagnoser();
-        context.NoteUndefinedInterface(interface_id, builder);
+        NoteUndefinedInterface(context, interface_id, builder);
         builder.Emit();
         return false;
       }
@@ -588,6 +600,37 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
                              abstract_diagnoser)
              ? type_id
              : SemIR::ErrorInst::SingletonTypeId;
+}
+
+auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
+                         Context::DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
+  if (class_info.has_definition_started()) {
+    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                      "class is incomplete within its definition");
+    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                      "class was forward declared here");
+    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
+  }
+}
+
+auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
+                            Context::DiagnosticBuilder& builder) -> void {
+  const auto& interface_info = context.interfaces().Get(interface_id);
+  CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
+  if (interface_info.is_being_defined()) {
+    CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
+                      "interface is currently being defined");
+    builder.Note(interface_info.definition_id,
+                 InterfaceUndefinedWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                      "interface was forward declared here");
+    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
+  }
 }
 
 }  // namespace Carbon::Check

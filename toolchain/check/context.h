@@ -178,28 +178,6 @@ class Context {
     sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
   }
 
-  // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
-
-  // Prints a diagnostic for a poisoned name when it's later declared.
-  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
-                            SemIR::LocId decl_name_loc_id) -> void;
-
-  // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
-
-  // Adds a note to a diagnostic explaining that a class is incomplete.
-  auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
-      -> void;
-
-  // Adds a note to a diagnostic explaining that a class is abstract.
-  auto NoteAbstractClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
-      -> void;
-
-  // Adds a note to a diagnostic explaining that an interface is not defined.
-  auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
-                              DiagnosticBuilder& builder) -> void;
-
   // Returns the type ID for a constant that is a type value, i.e. it is a value
   // of type `TypeType`.
   //

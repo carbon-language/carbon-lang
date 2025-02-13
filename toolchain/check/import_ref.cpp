@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
@@ -147,7 +148,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
   }
   auto conflict_id =
       AddImportRef(context, {.ir_id = new_ir_id, .inst_id = new_inst_id});
-  context.DiagnoseDuplicateName(conflict_id, prev_id);
+  DiagnoseDuplicateName(context, conflict_id, prev_id);
 }
 
 // Returns an instruction that has the specified constant value.

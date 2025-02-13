@@ -18,6 +18,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -176,7 +177,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.has_value()) {
-    context.DiagnoseDuplicateName(function_info.latest_decl_id(), prev_id);
+    DiagnoseDuplicateName(context, function_info.latest_decl_id(), prev_id);
     return;
   }
 
@@ -272,8 +273,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    context.DiagnosePoisonedName(name_context.poisoning_loc_id,
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, name_context.poisoning_loc_id,
+                         name_context.loc_id);
   } else {
     TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
                    function_info, is_definition);

@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -46,8 +47,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
                                                 SemIR::AccessKind::Public);
   if (lookup_result.is_poisoned()) {
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, lookup_result.poisoning_loc_id(),
+                         name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_inst_id = lookup_result.target_inst_id();
     if (auto existing =
@@ -62,7 +63,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
               .Get(existing->name_scope_id)
               .is_closed_import()) {
         // The existing name is a package name, so this is a name conflict.
-        context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
+        DiagnoseDuplicateName(context, namespace_id, existing_inst_id);
 
         // Treat this as a local namespace name from now on to avoid further
         // diagnostics.
@@ -76,7 +77,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
         context.SetNamespaceNodeId(existing_inst_id, node_id);
       }
     } else {
-      context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
+      DiagnoseDuplicateName(context, namespace_id, existing_inst_id);
     }
   }
 
