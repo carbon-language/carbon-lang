@@ -205,6 +205,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           if (context.scope_stack().PeekInstId().has_value()) {
             // We are building a pattern for a choice alternative, not the
             // choice type itself.
+
+            // Implicit param lists are prevented during parse.
+            CARBON_CHECK(context.full_pattern_stack().CurrentKind() !=
+                             FullPatternStack::Kind::ImplicitParamList,
+                         "choice alternative with implicit parameters");
+            // Don't fall through to the `Class` logic for choice alternatives.
             break;
           }
           [[fallthrough]];
