@@ -8,15 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/generic_params/template_addr.carbon
 
-// CHECK:STDERR: template_addr.carbon:[[@LINE+4]]:17: error: expected name in binding pattern [ExpectedBindingPattern]
+// --- fail_wrong_order.carbon
+
+// CHECK:STDERR: fail_wrong_order.carbon:[[@LINE+4]]:17: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: fn foo(template addr a:! i32);
 // CHECK:STDERR:                 ^~~~
 // CHECK:STDERR:
 fn foo(template addr a:! i32);
 
+// --- correct_order.carbon
+
 fn bar(addr template b:! i32);
 
-// CHECK:STDOUT: - filename: template_addr.carbon
+// CHECK:STDOUT: - filename: fail_wrong_order.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
@@ -27,6 +31,11 @@ fn bar(addr template b:! i32);
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'template', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: correct_order.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'bar'},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
