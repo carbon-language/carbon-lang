@@ -50,7 +50,7 @@ TEST(SemIRTest, YAML) {
   auto type_block_id = Yaml::Scalar(MatchesRegex(R"(type_block\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\d+)"));
   auto constant_id =
-      Yaml::Scalar(MatchesRegex(R"(template_constant\(inst(\w+|\+\d+)\))"));
+      Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst(\w+|\+\d+)\))"));
   auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\(\w+\))"));
   auto type_id =
       Yaml::Scalar(MatchesRegex(R"(type\((\w+|inst\(\w+\)|inst\d+)\))"));

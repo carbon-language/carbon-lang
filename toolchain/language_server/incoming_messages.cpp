@@ -29,14 +29,14 @@ inline auto Parse(llvm::StringRef name, const llvm::json::Value& raw_params)
 template <typename ParamsT, typename ResultT>
 auto IncomingMessages::AddCallHandler(
     llvm::StringRef name,
-    void (*handler)(Context&, const ParamsT&,
-                    llvm::function_ref<void(llvm::Expected<ResultT>)>))
-    -> void {
+    auto (*handler)(Context&, const ParamsT&,
+                    llvm::function_ref<auto(llvm::Expected<ResultT>)->void>)
+        ->void) -> void {
   CallHandler parsing_handler =
       [name, handler](
           Context& context, llvm::json::Value raw_params,
-          llvm::function_ref<void(llvm::Expected<llvm::json::Value>)> on_done)
-      -> void {
+          llvm::function_ref<auto(llvm::Expected<llvm::json::Value>)->void>
+              on_done) -> void {
     auto params = Parse<ParamsT>(name, raw_params);
     if (!params) {
       on_done(params.takeError());
@@ -49,16 +49,18 @@ auto IncomingMessages::AddCallHandler(
 }
 
 template <typename ParamsT>
-auto IncomingMessages::AddNotificationHandler(llvm::StringRef name,
-                                              void (*handler)(Context&,
-                                                              const ParamsT&))
+auto IncomingMessages::AddNotificationHandler(
+    llvm::StringRef name, auto (*handler)(Context&, const ParamsT&)->void)
     -> void {
   NotificationHandler parsing_handler =
       [name, handler](Context& context, llvm::json::Value raw_params) -> void {
     auto params = Parse<ParamsT>(name, raw_params);
     if (!params) {
-      // TODO: Maybe we should do something more with this error?
-      llvm::consumeError(params.takeError());
+      CARBON_DIAGNOSTIC(LanguageServerNotificationParseError, Warning, "{0}",
+                        std::string);
+      context.no_loc_emitter().Emit(LanguageServerNotificationParseError,
+                                    llvm::toString(params.takeError()));
+      return;
     }
     handler(context, *params);
   };
@@ -71,8 +73,10 @@ IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
     : transport_(transport), context_(context) {
   AddCallHandler("textDocument/documentSymbol", &HandleDocumentSymbol);
   AddCallHandler("initialize", &HandleInitialize);
+  AddCallHandler("shutdown", &HandleShutdown);
   AddNotificationHandler("textDocument/didChange",
                          &HandleDidChangeTextDocument);
+  AddNotificationHandler("textDocument/didClose", &HandleDidCloseTextDocument);
   AddNotificationHandler("textDocument/didOpen", &HandleDidOpenTextDocument);
 }
 

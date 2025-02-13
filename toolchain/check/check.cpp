@@ -9,7 +9,7 @@
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/sem_ir_diagnostic_converter.h"
+#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
@@ -27,13 +27,18 @@ using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 // imports, not the main package declaration; as a consequence, it will be
 // `None` for the main package declaration.
 static auto GetImportKey(UnitAndImports& unit_info,
-                         IdentifierId file_package_id,
+                         PackageNameId file_package_id,
                          Parse::Tree::PackagingNames names) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
-  llvm::StringRef package_name =
-      names.package_id.has_value() ? stores->identifiers().Get(names.package_id)
-      : file_package_id.has_value() ? stores->identifiers().Get(file_package_id)
-                                    : "";
+  PackageNameId package_id =
+      names.package_id.has_value() ? names.package_id : file_package_id;
+  llvm::StringRef package_name;
+  if (package_id.has_value()) {
+    auto package_ident_id = package_id.AsIdentifierId();
+    package_name = package_ident_id.has_value()
+                       ? stores->identifiers().Get(package_ident_id)
+                       : package_id.AsSpecialName();
+  }
   llvm::StringRef library_name =
       names.library_id.has_value()
           ? stores->string_literal_values().Get(names.library_id)
@@ -65,8 +70,8 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     -> void {
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
-  IdentifierId file_package_id =
-      packaging ? packaging->names.package_id : IdentifierId::None;
+  PackageNameId file_package_id =
+      packaging ? packaging->names.package_id : PackageNameId::None;
   const auto import_key = GetImportKey(unit_info, file_package_id, import);
   const auto& [import_package_name, import_library_name] = import_key;
 
@@ -84,7 +89,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
       unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
       return;
     }
-    unit_info.cpp_imports.push_back(import);
+    unit_info.cpp_import_names.push_back(import);
     return;
   }
 
@@ -232,7 +237,7 @@ static auto BuildApiMapAndDiagnosePackaging(
     const auto& packaging = unit_info.parse_tree().packaging_decl();
     // An import key formed from the `package` or `library` declaration. Or, for
     // Main//default, a placeholder key.
-    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::None,
+    auto import_key = packaging ? GetImportKey(unit_info, PackageNameId::None,
                                                packaging->names)
                                 // Construct a boring key for Main//default.
                                 : ImportKey{"", ""};
@@ -320,9 +325,12 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos;
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
   unit_infos.reserve(units.size());
+  tree_and_subtrees_getters.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
     unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
+    tree_and_subtrees_getters.push_back(unit.tree_and_subtrees_getter);
   }
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -336,7 +344,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
-      implicit_names.package_id = IdentifierId::None;
+      implicit_names.package_id = PackageNameId::None;
       TrackImport(api_map, nullptr, unit_info, implicit_names, fuzzing);
     }
 
@@ -344,15 +352,13 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    IdentifierId core_ident_id =
-        unit_info.unit->value_stores->identifiers().Add("Core");
     if (prelude_import &&
-        !(packaging && packaging->names.package_id == core_ident_id)) {
+        !(packaging && packaging->names.package_id == PackageNameId::Core)) {
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
       TrackImport(api_map, &explicit_import_map, unit_info,
                   {.node_id = Parse::NoneNodeId(),
-                   .package_id = core_ident_id,
+                   .package_id = PackageNameId::Core,
                    .library_id = prelude_id},
                   fuzzing);
     }
@@ -372,7 +378,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, units.size(), fs, vlog_stream).Run();
+    CheckUnit(unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -419,7 +425,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, units.size(), fs, vlog_stream).Run();
+        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
       }
     }
   }

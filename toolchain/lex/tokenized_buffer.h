@@ -60,24 +60,6 @@ using CommentIterator = IndexIterator<CommentIndex>;
 // Random-access iterator over tokens within the buffer.
 using TokenIterator = IndexIterator<TokenIndex>;
 
-// A diagnostic location converter that maps token locations into source
-// buffer locations.
-class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
- public:
-  explicit TokenDiagnosticConverter(const TokenizedBuffer* tokens)
-      : tokens_(tokens) {}
-
-  // Implements `DiagnosticConverter::ConvertLoc`.
-  auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
-      -> ConvertedDiagnosticLoc override;
-
- protected:
-  auto tokens() const -> const TokenizedBuffer& { return *tokens_; }
-
- private:
-  const TokenizedBuffer* tokens_;
-};
-
 // A buffer of tokenized Carbon source code.
 //
 // This is constructed by lexing the source code text into a series of tokens.
@@ -225,17 +207,33 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
  private:
   friend class Lexer;
 
-  // A diagnostic location converter that maps token locations into source
-  // buffer locations.
-  class SourceBufferDiagnosticConverter
-      : public DiagnosticConverter<const char*> {
+  class SourcePointerDiagnosticEmitter : public DiagnosticEmitter<const char*> {
    public:
-    explicit SourceBufferDiagnosticConverter(const TokenizedBuffer* tokens)
-        : tokens_(tokens) {}
+    explicit SourcePointerDiagnosticEmitter(DiagnosticConsumer* consumer,
+                                            const TokenizedBuffer* tokens)
+        : DiagnosticEmitter(consumer), tokens_(tokens) {}
 
-    // Implements `DiagnosticConverter::ConvertLoc`.
-    auto ConvertLoc(const char* loc, ContextFnT context_fn) const
-        -> ConvertedDiagnosticLoc override;
+   protected:
+    auto ConvertLoc(const char* loc, ContextFnT /*context_fn*/) const
+        -> ConvertedDiagnosticLoc override {
+      return tokens_->SourcePointerToDiagnosticLoc(loc);
+    }
+
+   private:
+    const TokenizedBuffer* tokens_;
+  };
+
+  class TokenDiagnosticEmitter : public DiagnosticEmitter<TokenIndex> {
+   public:
+    explicit TokenDiagnosticEmitter(DiagnosticConsumer* consumer,
+                                    const TokenizedBuffer* tokens)
+        : DiagnosticEmitter(consumer), tokens_(tokens) {}
+
+   protected:
+    auto ConvertLoc(TokenIndex token, ContextFnT /*context_fn*/) const
+        -> ConvertedDiagnosticLoc override {
+      return tokens_->TokenToDiagnosticLoc(token);
+    }
 
    private:
     const TokenizedBuffer* tokens_;
@@ -492,13 +490,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // contain true for the tokens that were synthesized for recovery.
   llvm::BitVector recovery_tokens_;
 };
-
-// A diagnostic emitter that uses positions within a source buffer's text as
-// its source of location information.
-using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
-
-// A diagnostic emitter that uses tokens as its source of location information.
-using TokenDiagnosticEmitter = DiagnosticEmitter<TokenIndex>;
 
 inline auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
   return GetTokenInfo(token).kind();

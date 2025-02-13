@@ -15,7 +15,8 @@ namespace Carbon::SemIR {
 struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
-        << ", index: " << bind_index << "}";
+        << ", index: " << bind_index_value << ", is_template: " << is_template
+        << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
@@ -23,14 +24,26 @@ struct EntityName : public Printable<EntityName> {
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
+  // The index of the binding, if this is the name of a symbolic binding, or
+  // `None` otherwise. This is also `None` for a `.Self` symbolic binding,
+  // because such a binding is not assigned an index.
+  auto bind_index() const -> CompileTimeBindIndex {
+    return CompileTimeBindIndex(bind_index_value);
+  }
+
   // The name.
   NameId name_id;
   // The parent scope.
   NameScopeId parent_scope_id;
-  // The index for a compile-time binding. Invalid for a runtime binding, or
-  // for a symbolic binding, like `.Self`, that does not correspond to a generic
-  // parameter (and therefore has no index).
-  CompileTimeBindIndex bind_index;
+
+  // TODO: The following two fields are only meaningful for a symbolic binding.
+  // Consider splitting them off into a separate type so that we don't store
+  // them for other kinds of `EntityName`.
+
+  // The bind_index() value, unwrapped so it can be stored in a bit-field.
+  int32_t bind_index_value : 31 = CompileTimeBindIndex::None.index;
+  // Whether this binding is a template parameter.
+  bool is_template : 1 = false;
 };
 
 // Hashing for EntityName. See common/hashing.h.
@@ -45,6 +58,16 @@ inline auto CarbonHashValue(const EntityName& value, uint64_t seed)
 // functionality, this can provide optional canonical IDs for EntityNames.
 struct EntityNameStore : public ValueStore<EntityNameId> {
  public:
+  // Adds an entity name for a symbolic binding.
+  auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
+                              CompileTimeBindIndex bind_index, bool is_template)
+      -> EntityNameId {
+    return Add({.name_id = name_id,
+                .parent_scope_id = parent_scope_id,
+                .bind_index_value = bind_index.index,
+                .is_template = is_template});
+  }
+
   // Convert an ID to a canonical ID. All calls to this with equivalent
   // `EntityName`s will return the same `EntityNameId`.
   auto MakeCanonical(EntityNameId id) -> EntityNameId;

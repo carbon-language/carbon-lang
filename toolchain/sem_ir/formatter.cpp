@@ -804,7 +804,7 @@ class FormatterImpl {
     }
     out_ << '[';
     if (pending_constant_value_.has_value()) {
-      out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
+      out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "concrete");
       if (!pending_constant_value_is_self_) {
         out_ << " = ";
         FormatConstant(pending_constant_value_);
@@ -844,6 +844,12 @@ class FormatterImpl {
       case InstValueKind::None:
         break;
     }
+  }
+
+  // Format ImportCppDecl name.
+  auto FormatInstLHS(InstId inst_id, ImportCppDecl /*inst*/) -> void {
+    FormatName(inst_id);
+    out_ << " = ";
   }
 
   // Format ImportDecl with its name.
@@ -1078,6 +1084,20 @@ class FormatterImpl {
     out_ << " " << buffer;
   }
 
+  // Format the metadata in File for `import Cpp`.
+  auto FormatInstRHS(ImportCppDecl /*inst*/) -> void {
+    out_ << " ";
+    OpenBrace();
+    for (ImportCpp import_cpp : sem_ir_->import_cpps().array_ref()) {
+      Indent();
+      out_ << "import Cpp \""
+           << FormatEscaped(
+                  sem_ir_->string_literal_values().Get(import_cpp.library_id))
+           << "\"\n";
+    }
+    CloseBrace();
+  }
+
   auto FormatImportRefRHS(ImportIRInstId import_ir_inst_id,
                           EntityNameId entity_name_id,
                           llvm::StringLiteral loaded_label) -> void {
@@ -1168,8 +1188,11 @@ class FormatterImpl {
   auto FormatArg(EntityNameId id) -> void {
     const auto& info = sem_ir_->entity_names().Get(id);
     FormatName(info.name_id);
-    if (info.bind_index.has_value()) {
-      out_ << ", " << info.bind_index.index;
+    if (info.bind_index().has_value()) {
+      out_ << ", " << info.bind_index().index;
+    }
+    if (info.is_template) {
+      out_ << ", template";
     }
   }
 
@@ -1365,10 +1388,11 @@ class FormatterImpl {
     const auto& import_ir = *sem_ir_->import_irs().Get(id).sem_ir;
     CARBON_CHECK(import_ir.library_id().has_value());
 
+    auto package_id = import_ir.package_id();
     llvm::StringRef package_name =
-        import_ir.package_id().has_value()
-            ? import_ir.identifiers().Get(import_ir.package_id())
-            : "Main";
+        package_id.AsIdentifierId().has_value()
+            ? import_ir.identifiers().Get(package_id.AsIdentifierId())
+            : package_id.AsSpecialName();
     llvm::StringRef library_name =
         (import_ir.library_id() != LibraryNameId::Default)
             ? import_ir.string_literal_values().Get(

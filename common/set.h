@@ -94,7 +94,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 
   // Run the provided callback for every key in the set.
   template <typename CallbackT>
-  void ForEach(CallbackT callback)
+  auto ForEach(CallbackT callback) -> void
     requires(std::invocable<CallbackT, KeyT&>);
 
   // This routine is relatively inefficient and only intended for use in
@@ -184,7 +184,7 @@ class SetBase
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  void ForEach(CallbackT callback)
+  auto ForEach(CallbackT callback) -> void
     requires(std::invocable<CallbackT, KeyT&>)
   {
     return ViewT(*this).ForEach(callback);
@@ -257,7 +257,7 @@ class SetBase
 
   // Clear all key/value pairs from the set but leave the underlying hashtable
   // allocated and in place.
-  void Clear();
+  auto Clear() -> void;
 
  protected:
   using ImplT::ImplT;
@@ -301,7 +301,7 @@ class Set : public RawHashtable::TableImpl<SetBase<InputKeyT, InputKeyContextT>,
 
   // Reset the entire state of the hashtable to as it was when constructed,
   // throwing away any intervening allocations.
-  void Reset();
+  auto Reset() -> void;
 };
 
 template <typename InputKeyT, typename InputKeyContextT>
@@ -326,7 +326,7 @@ auto SetView<InputKeyT, InputKeyContextT>::Lookup(LookupKeyT lookup_key,
 
 template <typename InputKeyT, typename InputKeyContextT>
 template <typename CallbackT>
-void SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback)
+auto SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) -> void
   requires(std::invocable<CallbackT, KeyT&>)
 {
   this->ForEachEntry([callback](EntryT& entry) { callback(entry.key()); },
@@ -383,14 +383,14 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
 }
 
 template <typename InputKeyT, typename InputKeyContextT>
-void SetBase<InputKeyT, InputKeyContextT>::GrowToAllocSize(
-    ssize_t target_alloc_size, KeyContextT key_context) {
+auto SetBase<InputKeyT, InputKeyContextT>::GrowToAllocSize(
+    ssize_t target_alloc_size, KeyContextT key_context) -> void {
   this->GrowToAllocSizeImpl(target_alloc_size, key_context);
 }
 
 template <typename InputKeyT, typename InputKeyContextT>
-void SetBase<InputKeyT, InputKeyContextT>::GrowForInsertCount(
-    ssize_t count, KeyContextT key_context) {
+auto SetBase<InputKeyT, InputKeyContextT>::GrowForInsertCount(
+    ssize_t count, KeyContextT key_context) -> void {
   this->GrowForInsertCountImpl(count, key_context);
 }
 
@@ -403,12 +403,12 @@ auto SetBase<InputKeyT, InputKeyContextT>::Erase(LookupKeyT lookup_key,
 }
 
 template <typename InputKeyT, typename InputKeyContextT>
-void SetBase<InputKeyT, InputKeyContextT>::Clear() {
+auto SetBase<InputKeyT, InputKeyContextT>::Clear() -> void {
   this->ClearImpl();
 }
 
 template <typename InputKeyT, ssize_t SmallSize, typename InputKeyContextT>
-void Set<InputKeyT, SmallSize, InputKeyContextT>::Reset() {
+auto Set<InputKeyT, SmallSize, InputKeyContextT>::Reset() -> void {
   this->ResetImpl();
 }
 

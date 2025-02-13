@@ -21,7 +21,7 @@ constexpr llvm::StringLiteral SymbolRegex =
 
 // We restrict keywords to be lowercase ASCII letters and underscores with a few
 // specific exceptions.
-constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Self|String";
+constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Core|Self|String";
 
 #define CARBON_TOKEN(TokenName)                           \
   TEST(TokenKindTest, TokenName) {                        \

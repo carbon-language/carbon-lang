@@ -17,6 +17,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
+#include "toolchain/check/region_stack.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
@@ -31,50 +32,20 @@
 
 namespace Carbon::Check {
 
-// Information about a scope in which we can perform name lookup.
-struct LookupScope {
-  // The name scope in which names are searched.
-  SemIR::NameScopeId name_scope_id;
-  // The specific for the name scope, or `None` if the name scope is not
-  // defined by a generic or we should perform lookup into the generic itself.
-  SemIR::SpecificId specific_id;
-};
-
-// A result produced by name lookup.
-struct LookupResult {
-  // The specific in which the lookup result was found. `None` if the result
-  // was not found in a specific.
-  SemIR::SpecificId specific_id;
-
-  // The result from the lookup in the scope.
-  SemIR::ScopeLookupResult scope_result;
-};
-
-// Information about an access.
-struct AccessInfo {
-  // The constant being accessed.
-  SemIR::ConstantId constant_id;
-
-  // The highest allowed access for a lookup. For example, `Protected` allows
-  // access to `Public` and `Protected` names, but not `Private`.
-  SemIR::AccessKind highest_allowed_access;
-};
-
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
+
   // A function that forms a diagnostic for some kind of problem. The
   // DiagnosticBuilder is returned rather than emitted so that the caller can
   // add contextual notes as appropriate.
-  using BuildDiagnosticFn =
-      llvm::function_ref<auto()->Context::DiagnosticBuilder>;
+  using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
-                   llvm::function_ref<const Parse::TreeAndSubtrees&()>
-                       get_parse_tree_and_subtrees,
+                   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
 
@@ -207,76 +178,15 @@ class Context {
     sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
   }
 
-  // Adds a name to name lookup. Prints a diagnostic for name conflicts. If
-  // specified, `scope_index` specifies which lexical scope the name is inserted
-  // into, otherwise the name is inserted into the current scope.
-  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::None) -> void;
-
-  // Performs name lookup in a specified scope for a name appearing in a
-  // declaration. If scope_id is `None`, performs lookup into the lexical scope
-  // specified by scope_index instead. If found, returns the referenced
-  // `InstId` and false. If poisoned, returns `InstId::None` and true.
-  // TODO: For poisoned names, return the poisoning `InstId`.
-  auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                        SemIR::NameScopeId scope_id, ScopeIndex scope_index)
-      -> SemIR::ScopeLookupResult;
-
-  // Performs an unqualified name lookup, returning the referenced `InstId`.
-  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
-                             bool required = true) -> LookupResult;
-
-  // Performs a name lookup in a specified scope, returning the referenced
-  // `InstId`. Does not look into extended scopes. Returns `InstId::None` if the
-  // name is not found.
-  //
-  // If `is_being_declared` is false, then this is a regular name lookup, and
-  // the name will be poisoned if not found so that later lookups will fail; a
-  // poisoned name will be treated as if it is not declared. Otherwise, this is
-  // a lookup for a name being declared, so the name will not be poisoned, but
-  // poison will be returned if it's already been looked up.
-  //
-  // If `name_id` is not an identifier, the name will not be poisoned.
-  auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
-                              SemIR::NameScopeId scope_id,
-                              SemIR::NameScope& scope,
-                              bool is_being_declared = false)
-      -> SemIR::ScopeLookupResult;
-
-  // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
-  // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
-  // still updates `*scopes` and returns `true`.
-  auto AppendLookupScopesForConstant(SemIR::LocId loc_id,
-                                     SemIR::ConstantId base_const_id,
-                                     llvm::SmallVector<LookupScope>* scopes)
-      -> bool;
-
-  // Performs a qualified name lookup in a specified scopes and in scopes that
-  // they extend, returning the referenced `InstId`.
-  auto LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
-                           llvm::ArrayRef<LookupScope> lookup_scopes,
-                           bool required = true,
-                           std::optional<AccessInfo> access_info = std::nullopt)
-      -> LookupResult;
-
-  // Returns the `InstId` corresponding to a name in the core package, or
-  // BuiltinErrorInst if not found.
-  auto LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
-      -> SemIR::InstId;
-
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
-  // Prints a diagnostic for a poisoned name.
-  auto DiagnosePoisonedName(SemIR::InstId loc) -> void;
+  // Prints a diagnostic for a poisoned name when it's later declared.
+  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
+                            SemIR::LocId decl_name_loc_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
-
-  // Prints a diagnostic for a missing qualified name.
-  auto DiagnoseMemberNameNotFound(SemIRLoc loc, SemIR::NameId name_id,
-                                  llvm::ArrayRef<LookupScope> lookup_scopes)
-      -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
@@ -290,157 +200,24 @@ class Context {
   auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                               DiagnosticBuilder& builder) -> void;
 
-  // Returns the current scope, if it is of the specified kind. Otherwise,
-  // returns nullopt.
-  template <typename InstT>
-  auto GetCurrentScopeAs() -> std::optional<InstT> {
-    return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
-  }
-
-  // Mark the start of a new single-entry region with the given entry block.
-  auto PushRegion(SemIR::InstBlockId entry_block_id) -> void {
-    region_stack_.PushArray();
-    region_stack_.AppendToTop(entry_block_id);
-  }
-
-  // Add `block_id` to the most recently pushed single-entry region. To preserve
-  // the single-entry property, `block_id` must not be directly reachable from
-  // any block outside the region. To ensure the region's blocks are in lexical
-  // order, this should be called when the first parse node associated with this
-  // block is handled, or as close as possible.
-  auto AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id) -> void;
-
-  // Complete creation of the most recently pushed single-entry region, and
-  // return a list of its blocks.
-  auto PopRegion() -> llvm::SmallVector<SemIR::InstBlockId> {
-    llvm::SmallVector<SemIR::InstBlockId> result(region_stack_.PeekArray());
-    region_stack_.PopArray();
-    return result;
-  }
-
-  // Adds a `Branch` instruction branching to a new instruction block, and
-  // returns the ID of the new block. All paths to the branch target must go
-  // through the current block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::NodeId node_id) -> SemIR::InstBlockId;
-
-  // Adds a `Branch` instruction branching to a new instruction block with a
-  // value, and returns the ID of the new block. All paths to the branch target
-  // must go through the current block.
-  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
-                                         SemIR::InstId arg_id)
-      -> SemIR::InstBlockId;
-
-  // Adds a `BranchIf` instruction branching to a new instruction block, and
-  // returns the ID of the new block. All paths to the branch target must go
-  // through the current block.
-  auto AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
-                                    SemIR::InstId cond_id)
-      -> SemIR::InstBlockId;
-
-  // Handles recovergence of control flow. Adds branches from the top
-  // `num_blocks` on the instruction block stack to a new block, pops the
-  // existing blocks, pushes the new block onto the instruction block stack,
-  // and adds it to the most recently pushed region.
-  auto AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
-      -> void;
-
-  // Handles recovergence of control flow with a result value. Adds branches
-  // from the top few blocks on the instruction block stack to a new block, pops
-  // the existing blocks,  pushes the new block onto the instruction block
-  // stack, and adds it to the most recently pushed region. The number of blocks
-  // popped is the size of `block_args`, and the corresponding result values are
-  // the elements of `block_args`. Returns an instruction referring to the
-  // result value.
-  auto AddConvergenceBlockWithArgAndPush(
-      Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
-      -> SemIR::InstId;
-
-  // Sets the constant value of a block argument created as the result of a
-  // branch.  `select_id` should be a `BlockArg` that selects between two
-  // values. `cond_id` is the condition, `if_false` is the value to use if the
-  // condition is false, and `if_true` is the value to use if the condition is
-  // true.  We don't track enough information in the `BlockArg` inst for
-  // `TryEvalInst` to do this itself.
-  auto SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
-                                          SemIR::InstId cond_id,
-                                          SemIR::InstId if_true,
-                                          SemIR::InstId if_false) -> void;
-
-  // Returns whether the current position in the current block is reachable.
-  auto is_current_position_reachable() -> bool;
-
-  // Returns the type ID for a constant of type `type`.
+  // Returns the type ID for a constant that is a type value, i.e. it is a value
+  // of type `TypeType`.
+  //
+  // Facet values are of the same typishness as types, but are not themselves
+  // types, so they can not be passed here. They should be converted to a type
+  // through an `as type` conversion, that is, to a value of type `TypeType`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
-  // Returns the type ID for an instruction whose constant value is of type
-  // `type`.
+  // Returns the type ID for an instruction whose constant value is a type
+  // value, i.e. it is a value of type `TypeType`.
+  //
+  // Instructions whose values are facet values (see `FacetValue`) produce a
+  // value of the same typishness as types, but which are themselves not types,
+  // so they can not be passed here. They should be converted to a type through
+  // an `as type` conversion, such as to a `FacetAccessType` instruction whose
+  // value is of type `TypeType`.
   auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
     return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
-  }
-
-  // Attempts to complete the type `type_id`. Returns `true` if the type is
-  // complete, or `false` if it could not be completed. A complete type has
-  // known object and value representations. Returns `true` if the type is
-  // symbolic.
-  //
-  // Avoid calling this where possible, as it can lead to coherence issues.
-  // However, it's important that we use it during monomorphization, where we
-  // don't want to trigger a request for more monomorphization.
-  // TODO: Remove the other call to this function.
-  auto TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc,
-                         BuildDiagnosticFn diagnoser = nullptr) -> bool;
-
-  // Completes the type `type_id`. CHECK-fails if it can't be completed.
-  auto CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void;
-
-  // Like `TryToCompleteType`, but for cases where it is an error for the type
-  // to be incomplete.
-  //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
-  // if a `diagnoser` is provided. The builder it returns will be annotated to
-  // describe the reason why the type is not complete.
-  //
-  // `diagnoser` should build an error diagnostic. If `type_id` is dependent,
-  // the completeness of the type will be enforced during monomorphization, and
-  // `loc_id` is used as the location for a diagnostic produced at that time.
-  auto RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                           BuildDiagnosticFn diagnoser) -> bool;
-
-  // Like `RequireCompleteType`, but also require the type to not be an abstract
-  // class type. If it is, `abstract_diagnoser` is used to diagnose the problem,
-  // and this function returns false.
-  auto RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                           BuildDiagnosticFn diagnoser,
-                           BuildDiagnosticFn abstract_diagnoser) -> bool;
-
-  // Like `RequireCompleteType`, but also require the type to be defined. A
-  // defined type has known members. If the type is not defined, `diagnoser` is
-  // used to diagnose the problem, and this function returns false.
-  //
-  // This is the same as `RequireCompleteType` except for facet types, which are
-  // complete before they are fully defined.
-  auto RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                          BuildDiagnosticFn diagnoser) -> bool;
-
-  // Returns the type `type_id` if it is a complete type, or produces an
-  // incomplete type error and returns an error type. This is a convenience
-  // wrapper around `RequireCompleteType`.
-  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                      BuildDiagnosticFn diagnoser) -> SemIR::TypeId {
-    return RequireCompleteType(type_id, loc_id, diagnoser)
-               ? type_id
-               : SemIR::ErrorInst::SingletonTypeId;
-  }
-
-  // Returns the type `type_id` if it is a concrete type, or produces an
-  // incomplete or abstract type error and returns an error type. This is a
-  // convenience wrapper around `RequireConcreteType`.
-  auto AsConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                      BuildDiagnosticFn diagnoser,
-                      BuildDiagnosticFn abstract_diagnoser) -> SemIR::TypeId {
-    return RequireConcreteType(type_id, loc_id, diagnoser, abstract_diagnoser)
-               ? type_id
-               : SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Returns whether `type_id` represents a facet type.
@@ -478,6 +255,11 @@ class Context {
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
       -> SemIR::TypeId;
 
+  // Gets the type of an associated function with the `Self` parameter bound to
+  // a particular value. The returned type will be complete.
+  auto GetFunctionTypeWithSelfType(SemIR::InstId interface_function_type_id,
+                                   SemIR::InstId self_id) -> SemIR::TypeId;
+
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
   // type will be complete.
@@ -514,17 +296,6 @@ class Context {
 
   auto Finalize() -> void;
 
-  // Returns the imported IR ID for an IR, or `None` if not imported.
-  auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
-    return check_ir_map_[sem_ir.check_ir_id().index];
-  }
-
-  // True if the current file is an impl file.
-  auto IsImplFile() -> bool {
-    return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
-           nullptr;
-  }
-
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -539,7 +310,7 @@ class Context {
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
-    return get_parse_tree_and_subtrees_();
+    return tree_and_subtrees_getter_();
   }
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
@@ -552,6 +323,8 @@ class Context {
   auto tokens() const -> const Lex::TokenizedBuffer& {
     return parse_tree().tokens();
   }
+
+  auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
@@ -596,6 +369,10 @@ class Context {
   }
 
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
+  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+    return check_ir_map_;
+  }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
@@ -666,32 +443,6 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
-  // Marks the start of a region of insts in a pattern context that might
-  // represent an expression or a pattern. Typically this is called when
-  // handling a parse node that can immediately precede a subpattern (such
-  // as `let` or a `,` in a pattern list), and the handler for the subpattern
-  // node makes the matching `EndSubpatternAs*` call.
-  auto BeginSubpattern() -> void;
-
-  // Ends a region started by BeginSubpattern (in stack order), treating it as
-  // an expression with the given result, and returns the ID of the region. The
-  // region will not yet have any control-flow edges into or out of it.
-  auto EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::ExprRegionId;
-
-  // Ends a region started by BeginSubpattern (in stack order), asserting that
-  // it was empty.
-  auto EndSubpatternAsEmpty() -> void;
-
-  // TODO: Add EndSubpatternAsPattern, when needed.
-
-  // Inserts the given region into the current code block. If the region
-  // consists of a single block, this will be implemented as a `splice_block`
-  // inst. Otherwise, this will end the current block with a branch to the entry
-  // block of the region, and add future insts to a new block which is the
-  // immediate successor of the region's exit block. As a result, this cannot be
-  // called more than once for the same region.
-  auto InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId;
-
   auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
     return import_ref_ids_;
   }
@@ -714,6 +465,8 @@ class Context {
   auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
     return var_storage_map_;
   }
+
+  auto region_stack() -> RegionStack& { return region_stack_; }
 
   auto full_pattern_stack() -> FullPatternStack& {
     return scope_stack_.full_pattern_stack();
@@ -746,8 +499,7 @@ class Context {
   DiagnosticEmitter* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
-  llvm::function_ref<const Parse::TreeAndSubtrees&()>
-      get_parse_tree_and_subtrees_;
+  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;
@@ -842,7 +594,7 @@ class Context {
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
   // Stack of single-entry regions being built.
-  ArrayStack<SemIR::InstBlockId> region_stack_;
+  RegionStack region_stack_;
 };
 
 }  // namespace Carbon::Check

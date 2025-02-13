@@ -79,6 +79,9 @@ struct DiagnosticLoc {
 // A message composing a diagnostic. This may be the main message, but can also
 // be notes providing more information.
 struct DiagnosticMessage {
+  // Helper for calling `format_fn`.
+  auto Format() const -> std::string { return format_fn(*this); }
+
   // The diagnostic's kind.
   DiagnosticKind kind;
 
@@ -101,7 +104,7 @@ struct DiagnosticMessage {
   llvm::SmallVector<llvm::Any> format_args;
 
   // Returns the formatted string. By default, this uses llvm::formatv.
-  std::function<std::string(const DiagnosticMessage&)> format_fn;
+  std::function<auto(const DiagnosticMessage&)->std::string> format_fn;
 };
 
 // An instance of a single error or warning.  Information about the diagnostic

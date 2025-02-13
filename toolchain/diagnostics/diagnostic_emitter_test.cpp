@@ -17,7 +17,11 @@ using ::Carbon::Testing::IsDiagnostic;
 using ::Carbon::Testing::IsSingleDiagnostic;
 using testing::ElementsAre;
 
-struct FakeDiagnosticConverter : DiagnosticConverter<int> {
+class FakeDiagnosticEmitter : public DiagnosticEmitter<int> {
+ public:
+  using DiagnosticEmitter::DiagnosticEmitter;
+
+ protected:
   auto ConvertLoc(int n, ContextFnT /*context_fn*/) const
       -> ConvertedDiagnosticLoc override {
     return {.loc = {.line_number = 1, .column_number = n},
@@ -27,11 +31,10 @@ struct FakeDiagnosticConverter : DiagnosticConverter<int> {
 
 class DiagnosticEmitterTest : public ::testing::Test {
  public:
-  DiagnosticEmitterTest() : emitter_(converter_, consumer_) {}
+  DiagnosticEmitterTest() : emitter_(&consumer_) {}
 
-  FakeDiagnosticConverter converter_;
   Testing::MockDiagnosticConsumer consumer_;
-  DiagnosticEmitter<int> emitter_;
+  FakeDiagnosticEmitter emitter_;
 };
 
 TEST_F(DiagnosticEmitterTest, EmitSimpleError) {

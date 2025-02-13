@@ -26,14 +26,14 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT: --- fail_bound_overflow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %int_39999999999999999993: Core.IntLiteral = int_value 39999999999999999993 [template]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %int_39999999999999999993: Core.IntLiteral = int_value 39999999999999999993 [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
@@ -42,7 +42,7 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
@@ -53,11 +53,11 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:     %.loc15_1: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc15_34: type = splice_block %array_type.loc15 [template = <error>] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_39999999999999999993.loc15: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
-// CHECK:STDOUT:     %array_type.loc15: type = array_type %int_39999999999999999993.loc15, %i32 [template = <error>]
+// CHECK:STDOUT:   %.loc15_34: type = splice_block %array_type.loc15 [concrete = <error>] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_39999999999999999993.loc15: Core.IntLiteral = int_value 39999999999999999993 [concrete = constants.%int_39999999999999999993]
+// CHECK:STDOUT:     %array_type.loc15: type = array_type %int_39999999999999999993.loc15, %i32 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
@@ -65,11 +65,11 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %.loc24_32: type = splice_block %array_type.loc24 [template = <error>] {
-// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %int_39999999999999999993.loc24: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
-// CHECK:STDOUT:     %.loc24_9: type = converted %int_1, <error> [template = <error>]
-// CHECK:STDOUT:     %array_type.loc24: type = array_type %int_39999999999999999993.loc24, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc24_32: type = splice_block %array_type.loc24 [concrete = <error>] {
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:     %int_39999999999999999993.loc24: Core.IntLiteral = int_value 39999999999999999993 [concrete = constants.%int_39999999999999999993]
+// CHECK:STDOUT:     %.loc24_9: type = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %array_type.loc24: type = array_type %int_39999999999999999993.loc24, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }

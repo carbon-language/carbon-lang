@@ -142,7 +142,7 @@ class FunctionContext {
         : inst_namer_(inst_namer) {}
 
     // Sets the instruction we are currently emitting.
-    void SetCurrentInstId(SemIR::InstId inst_id) { inst_id_ = inst_id; }
+    auto SetCurrentInstId(SemIR::InstId inst_id) -> void { inst_id_ = inst_id; }
 
    private:
     auto InsertHelper(llvm::Instruction* inst, const llvm::Twine& name,

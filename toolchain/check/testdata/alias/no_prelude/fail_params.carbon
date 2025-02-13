@@ -26,13 +26,13 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic = constants.%ptr]
 // CHECK:STDOUT:   %T.param: type = value_param runtime_param<none>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
-// CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [template = <error>]
+// CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

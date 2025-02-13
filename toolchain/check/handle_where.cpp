@@ -31,9 +31,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::PeriodSelf,
-       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       // `None` because this is not the parameter of a generic.
-       .bind_index = SemIR::CompileTimeBindIndex::None});
+       .parent_scope_id = context.scope_stack().PeekNameScopeId()});
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,

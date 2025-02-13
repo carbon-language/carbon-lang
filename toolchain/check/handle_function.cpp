@@ -4,18 +4,21 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
@@ -43,6 +46,20 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
+
+  // If the previous node was `IdentifierNameBeforeParams`, then it would have
+  // caused these entries to be pushed to the pattern stacks. But it's possible
+  // to have a fn declaration without any parameters, in which case we find
+  // `IdentifierNameNotBeforeParams` on the node stack. Then these entries are
+  // not on the pattern stacks yet. They are only needed in that case if we have
+  // a return type, which we now know that we do.
+  if (context.node_stack().PeekNodeKind() ==
+      Parse::NodeKind::IdentifierNameNotBeforeParams) {
+    context.pattern_block_stack().Push();
+    context.full_pattern_stack().PushFullPattern(
+        FullPatternStack::Kind::ExplicitParamList);
+  }
+
   auto return_slot_pattern_id =
       context.AddPatternInst<SemIR::ReturnSlotPattern>(
           node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
@@ -255,7 +272,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    context.DiagnosePoisonedName(function_info.latest_decl_id());
+    context.DiagnosePoisonedName(name_context.poisoning_loc_id,
+                                 name_context.loc_id);
   } else {
     TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
                    function_info, is_definition);
@@ -263,7 +281,7 @@ static auto BuildFunctionDecl(Context& context,
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.has_value()) {
-    if (function_info.is_extern && context.IsImplFile()) {
+    if (function_info.is_extern && context.sem_ir().is_impl()) {
       DiagnoseExternRequiresDeclInApiFile(context, node_id);
     }
     function_info.generic_id = BuildGenericDecl(context, decl_id);
@@ -326,7 +344,7 @@ static auto BuildFunctionDecl(Context& context,
     }
   }
 
-  if (!is_definition && context.IsImplFile() && !is_extern) {
+  if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required().push_back(decl_id);
   }
 
@@ -360,8 +378,8 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     }
 
     // The parameter types need to be complete.
-    context.RequireCompleteType(
-        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+    RequireCompleteType(
+        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
         context.insts().GetLocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,
@@ -384,7 +402,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
-  context.PushRegion(context.inst_block_stack().PeekOrAdd());
+  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
 
@@ -429,7 +447,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
-  if (context.is_current_position_reachable()) {
+  if (IsCurrentPositionReachable(context)) {
     if (context.functions()
             .Get(function_id)
             .return_slot_pattern_id.has_value()) {
@@ -448,7 +466,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   context.decl_name_stack().PopScope();
 
   auto& function = context.functions().Get(function_id);
-  function.body_block_ids = context.PopRegion();
+  function.body_block_ids = context.region_stack().PopRegion();
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);

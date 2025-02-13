@@ -88,6 +88,7 @@ Some keywords can be inserted for content:
 
 -   ```
     [[@LSP:<method>:<extra content>]]
+    [[@LSP-CALL:<method>:<extra content>]]
     [[@LSP-NOTIFY:<method>:<extra content>]]
     [[@LSP-REPLY:<id>:<extra content>]]
     ```
@@ -95,6 +96,25 @@ Some keywords can be inserted for content:
     Produces JSON for an LSP method call, notification, or reply. Each includes
     the `Content-Length` header. The `:<extra content>` is optional, and may be
     omitted.
+
+    The difference between the replacements mirrors LSP calling conventions:
+
+    -   `LSP` does a minimal JSON format, and is primarily intended for testing
+        errors.
+        -   `method`: Assigned from `<method>`.
+    -   `LSP-CALL` maps to
+        [Request Message](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#requestMessage).
+        -   `method`: Assigned from `<method>`.
+        -   `id`: Automatically incremented across calls.
+        -   `params`: Optionally assigned from `<extra content>`.
+    -   `LSP-NOTIFY` maps to
+        [Notification Message](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#notificationMessage).
+        -   `method`: Assigned from `<method>`.
+        -   `params`: Optionally assigned from `<extra content>`.
+    -   `LSP-REPLY` maps to
+        [Response Message](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#responseMessage).
+        -   `id`: Assigned from `<id>`.
+        -   `result`: Optionally assigned from `<extra content>`.
 
 -   ```
     [[@TEST_NAME]]
