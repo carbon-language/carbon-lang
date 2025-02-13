@@ -17,8 +17,9 @@ auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType;
 
 // Gets the type to use for an unbound associated entity declared in this
-// interface. For example, this is the type of `I.T` after `interface I { let
-// T:! type; }`. The name of the interface is used for diagnostics.
+// interface. For example, this is the type of `I.T` after
+// `interface I { let T:! type; }`. The name of the interface is used for
+// diagnostics.
 // TODO: Should we use a different type for each such entity, or the same type
 // for all associated entities?
 auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
