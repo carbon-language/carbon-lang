@@ -33,10 +33,7 @@ class Context {
     auto SetText(Context& context, std::optional<int64_t> version,
                  llvm::StringRef text) -> void;
 
-    auto ApplyChanges(
-        Context& context, std::optional<int64_t> version,
-        const std::vector<clang::clangd::TextDocumentContentChangeEvent>&
-            content_changes) -> void;
+    auto text() const -> llvm::StringRef { return source_->text(); }
 
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
       return *tree_and_subtrees_;
@@ -52,11 +49,6 @@ class Context {
     std::unique_ptr<Lex::TokenizedBuffer> tokens_;
     std::unique_ptr<Parse::Tree> tree_;
     std::unique_ptr<Parse::TreeAndSubtrees> tree_and_subtrees_;
-
-    // Converts (line, row) position in source code to index.
-    auto PositionToIndex(const clang::clangd::Position& position) -> size_t;
-    auto PositionToIndex(const std::string& contents,
-                         const clang::clangd::Position& position) -> size_t;
   };
 
   // `vlog_stream` is optional; other parameters are required.
