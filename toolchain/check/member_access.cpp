@@ -13,6 +13,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/function.h"
@@ -60,9 +61,8 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::ScopeLookupResult lookup_result =
-      context
-          .LookupUnqualifiedName(loc_id.node_id(), SemIR::NameId::SelfType,
-                                 /*required=*/false)
+      LookupUnqualifiedName(context, loc_id.node_id(), SemIR::NameId::SelfType,
+                            /*required=*/false)
           .scope_result;
   CARBON_CHECK(!lookup_result.is_poisoned());
   if (!lookup_result.is_found()) {
@@ -172,10 +172,10 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
       context, loc_id, interface_specific_id, assoc_entity->decl_id,
       self_type_id, witness_id);
 
-  return context.insts().GetOrAdd<SemIR::ImplWitnessAccess>(
-      loc_id, {.type_id = assoc_type_id,
-               .witness_id = witness_id,
-               .index = assoc_entity->index});
+  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
+                                                {.type_id = assoc_type_id,
+                                                 .witness_id = witness_id,
+                                                 .index = assoc_entity->index});
 }
 
 // Performs impl lookup for a member name expression. This finds the relevant
@@ -241,8 +241,8 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
   };
   LookupResult result =
-      context.LookupQualifiedName(loc_id, name_id, lookup_scopes,
-                                  /*required=*/true, access_info);
+      LookupQualifiedName(context, loc_id, name_id, lookup_scopes,
+                          /*required=*/true, access_info);
 
   if (!result.scope_result.is_found()) {
     return SemIR::ErrorInst::SingletonInstId;
@@ -261,19 +261,21 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           .Get(result.scope_result.target_inst_id())
           .is_symbolic()) {
     result.scope_result = SemIR::ScopeLookupResult::MakeFound(
-        context.insts().GetOrAdd<SemIR::SpecificConstant>(
-            loc_id, {.type_id = type_id,
-                     .inst_id = result.scope_result.target_inst_id(),
-                     .specific_id = result.specific_id}),
+        GetOrAddInst<SemIR::SpecificConstant>(
+            context, loc_id,
+            {.type_id = type_id,
+             .inst_id = result.scope_result.target_inst_id(),
+             .specific_id = result.specific_id}),
         SemIR::AccessKind::Public);
   }
 
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
-  auto member_id = context.insts().GetOrAdd<SemIR::NameRef>(
-      loc_id, {.type_id = type_id,
-               .name_id = name_id,
-               .value_id = result.scope_result.target_inst_id()});
+  auto member_id = GetOrAddInst<SemIR::NameRef>(
+      context, loc_id,
+      {.type_id = type_id,
+       .name_id = name_id,
+       .value_id = result.scope_result.target_inst_id()});
 
   // If member name lookup finds an associated entity name, and the scope is not
   // a facet type, perform impl lookup.
@@ -307,11 +309,11 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         for (auto base_interface : facet_type_info.impls_constraints) {
           // Get the witness that `T` implements `base_type_id`.
           if (base_interface == *assoc_interface) {
-            witness_inst_id =
-                context.insts().GetOrAdd<SemIR::FacetAccessWitness>(
-                    loc_id, {.type_id = context.GetSingletonType(
-                                 SemIR::WitnessType::SingletonInstId),
-                             .facet_value_inst_id = base_id});
+            witness_inst_id = GetOrAddInst<SemIR::FacetAccessWitness>(
+                context, loc_id,
+                {.type_id = context.GetSingletonType(
+                     SemIR::WitnessType::SingletonInstId),
+                 .facet_value_inst_id = base_id});
             // TODO: Result will eventually be a facet type witness instead of
             // an interface witness. Will need to use the index
             // `*assoc_interface` was found in
@@ -366,11 +368,12 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
       return member_id;
     }
 
-    return context.insts().GetOrAdd<SemIR::BoundMethod>(
-        loc_id, {.type_id = context.GetSingletonType(
-                     SemIR::BoundMethodType::SingletonInstId),
-                 .object_id = base_id,
-                 .function_decl_id = member_id});
+    return GetOrAddInst<SemIR::BoundMethod>(
+        context, loc_id,
+        {.type_id =
+             context.GetSingletonType(SemIR::BoundMethodType::SingletonInstId),
+         .object_id = base_id,
+         .function_decl_id = member_id});
   }
 
   // Otherwise, if it's a field, form a class element access.
@@ -388,10 +391,11 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                  "Non-constant value {0} of unbound element type",
                  context.insts().Get(member_id));
     auto index = GetClassElementIndex(context, element_id);
-    auto access_id = context.insts().GetOrAdd<SemIR::ClassElementAccess>(
-        loc_id, {.type_id = unbound_element_type->element_type_id,
-                 .base_id = base_id,
-                 .index = index});
+    auto access_id = GetOrAddInst<SemIR::ClassElementAccess>(
+        context, loc_id,
+        {.type_id = unbound_element_type->element_type_id,
+         .base_id = base_id,
+         .index = index});
     if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
             SemIR::ExprCategory::Value &&
         SemIR::GetExprCategory(context.sem_ir(), access_id) !=
@@ -437,8 +441,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
-    if (context.AppendLookupScopesForConstant(loc_id, base_const_id,
-                                              &lookup_scopes)) {
+    if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
+                                      &lookup_scopes)) {
       return LookupMemberNameInScope(context, loc_id, base_id, name_id,
                                      base_const_id, lookup_scopes,
                                      /*lookup_in_type_of_base=*/false);
@@ -466,8 +470,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // Find the scope corresponding to the base type.
   llvm::SmallVector<LookupScope> lookup_scopes;
-  if (!context.AppendLookupScopesForConstant(loc_id, base_type_const_id,
-                                             &lookup_scopes)) {
+  if (!AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
+                                     &lookup_scopes)) {
     // The base type is not a name scope. Try some fallback options.
     if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
             context.constant_values().GetInstId(base_type_const_id))) {
@@ -477,10 +481,11 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
         if (name_id == field.name_id) {
           // TODO: Model this as producing a lookup result, and do instance
           // binding separately. Perhaps a struct type should be a name scope.
-          return context.insts().GetOrAdd<SemIR::StructAccess>(
-              loc_id, {.type_id = field.type_id,
-                       .struct_id = base_id,
-                       .index = SemIR::ElementIndex(i)});
+          return GetOrAddInst<SemIR::StructAccess>(
+              context, loc_id,
+              {.type_id = field.type_id,
+               .struct_id = base_id,
+               .index = SemIR::ElementIndex(i)});
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
@@ -584,7 +589,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   };
   // Diagnose a non-constant index prior to conversion to IntLiteral, because
   // the conversion will fail if the index is not constant.
-  if (!context.constant_values().Get(index_inst_id).is_template()) {
+  if (!context.constant_values().Get(index_inst_id).is_concrete()) {
     return diag_non_constant_index();
   }
 
@@ -596,7 +601,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::ErrorInst::SingletonInstId;
-  } else if (!index_const_id.is_template()) {
+  } else if (!index_const_id.is_concrete()) {
     return diag_non_constant_index();
   }
 
@@ -613,10 +618,10 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   element_type_id = type_block[index_val->getZExtValue()];
   auto tuple_index = SemIR::ElementIndex(index_val->getZExtValue());
 
-  return context.insts().GetOrAdd<SemIR::TupleAccess>(
-      loc_id, {.type_id = element_type_id,
-               .tuple_id = tuple_inst_id,
-               .index = tuple_index});
+  return GetOrAddInst<SemIR::TupleAccess>(context, loc_id,
+                                          {.type_id = element_type_id,
+                                           .tuple_id = tuple_inst_id,
+                                           .index = tuple_index});
 }
 
 }  // namespace Carbon::Check

@@ -13,6 +13,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/merge.h"
@@ -60,14 +61,13 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
         FullPatternStack::Kind::ExplicitParamList);
   }
 
-  auto return_slot_pattern_id =
-      context.insts().AddInPatternBlock<SemIR::ReturnSlotPattern>(
-          node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
-  auto param_pattern_id =
-      context.insts().AddInPatternBlock<SemIR::OutParamPattern>(
-          node_id, {.type_id = type_id,
-                    .subpattern_id = return_slot_pattern_id,
-                    .runtime_index = SemIR::RuntimeParamIndex::Unknown});
+  auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
+      context, node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
+  auto param_pattern_id = AddPatternInst<SemIR::OutParamPattern>(
+      context, node_id,
+      {.type_id = type_id,
+       .subpattern_id = return_slot_pattern_id,
+       .runtime_index = SemIR::RuntimeParamIndex::Unknown});
   context.node_stack().Push(node_id, param_pattern_id);
   return true;
 }
@@ -255,8 +255,8 @@ static auto BuildFunctionDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
-  auto decl_id = context.insts().AddPlaceholder(
-      SemIR::LocIdAndInst(node_id, function_decl));
+  auto decl_id =
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, function_decl));
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
@@ -274,7 +274,7 @@ static auto BuildFunctionDecl(Context& context,
 
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
     context.DiagnosePoisonedName(name_context.poisoning_loc_id,
-                                 function_info.latest_decl_id());
+                                 name_context.loc_id);
   } else {
     TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
                    function_info, is_definition);
@@ -295,7 +295,7 @@ static auto BuildFunctionDecl(Context& context,
       function_decl.function_id, context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
-  context.insts().ReplaceBeforeConstantUse(decl_id, function_decl);
+  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
 
   // Diagnose 'definition of `abstract` function' using the canonical Function's
   // modifiers.
@@ -457,7 +457,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
           "missing `return` at end of function with declared return type");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      context.insts().Add<SemIR::Return>(node_id, {});
+      AddInst<SemIR::Return>(context, node_id, {});
     }
   }
 

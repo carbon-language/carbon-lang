@@ -285,7 +285,7 @@ If the resulting SemIR needs a new instruction:
             field, as in:
 
             ```
-            SemIR::InstId inst_id = context.insts().Add<SemIR::NewInstKindName>(
+            SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(context,
                 node_id, {.type_id = SemIR::TypeType::SingletonTypeId, ...});
             ```
 
@@ -303,7 +303,7 @@ If the resulting SemIR needs a new instruction:
         ```
         SemIR::TypeId witness_type_id =
             context.GetSingletonType(SemIR::WitnessType::SingletonInstId);
-        SemIR::InstId inst_id = context.insts().Add<SemIR::NewInstKindName>(
+        SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(context,
             node_id, {.type_id = witness_type_id, ...});
         ```
 

@@ -35,13 +35,13 @@ interface Outer {
 // CHECK:STDOUT: --- fail_add_member_outside_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [template]
+// CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self.719: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1ad: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.5d3: %F.type.1ad = struct_value () [template]
-// CHECK:STDOUT:   %Outer.type: type = facet_type <@Outer> [template]
+// CHECK:STDOUT:   %F.type.1ad: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.5d3: %F.type.1ad = struct_value () [concrete]
+// CHECK:STDOUT:   %Outer.type: type = facet_type <@Outer> [concrete]
 // CHECK:STDOUT:   %Self.277: %Outer.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Inner.type.428: type = facet_type <@Inner> [template]
+// CHECK:STDOUT:   %Inner.type.428: type = facet_type <@Inner> [concrete]
 // CHECK:STDOUT:   %Inner.type.3d8: type = facet_type <@Inner, @Inner(%Self.277)> [symbolic]
 // CHECK:STDOUT:   %Self.b60: %Inner.type.3d8 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.277) [symbolic]
@@ -51,13 +51,13 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.1ad = fn_decl @F.1 [template = constants.%F.5d3] {} {}
-// CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [template = constants.%Outer.type] {} {}
+// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.1ad = fn_decl @F.1 [concrete = constants.%F.5d3] {} {}
+// CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [concrete = constants.%Outer.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -71,7 +71,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
 // CHECK:STDOUT:   %Self: %Outer.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.277]
-// CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [template = constants.%Inner.type.428] {} {}
+// CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [concrete = constants.%Inner.type.428] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.82c = fn_decl @F.2 [symbolic = constants.%F.978] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

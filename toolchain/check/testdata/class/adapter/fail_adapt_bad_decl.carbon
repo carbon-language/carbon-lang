@@ -106,14 +106,14 @@ class C {
 // CHECK:STDOUT: --- fail_not_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
-// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [template]
-// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
-// CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
+// CHECK:STDOUT:   %Bad: type = class_type @Bad [concrete]
+// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
+// CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -121,28 +121,28 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Bad = %Bad.decl
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
-// CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
+// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [concrete = constants.%Bad] {} {}
+// CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [concrete = constants.%Bad]
 // CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [template = constants.%int_100]
-// CHECK:STDOUT:   %.loc12: type = converted %int_100, <error> [template = <error>]
-// CHECK:STDOUT:   adapt_decl <error> [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete = constants.%int_100]
+// CHECK:STDOUT:   %.loc12: type = converted %int_100, <error> [concrete = <error>]
+// CHECK:STDOUT:   adapt_decl <error> [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -152,21 +152,21 @@ class C {
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
-// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
+// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_not_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
-// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [template]
-// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
-// CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
+// CHECK:STDOUT:   %Bad: type = class_type @Bad [concrete]
+// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
+// CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -174,28 +174,28 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Bad = %Bad.decl
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
-// CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
+// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [concrete = constants.%Bad] {} {}
+// CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [concrete = constants.%Bad]
 // CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [template = constants.%int_100]
-// CHECK:STDOUT:   %.loc12: type = converted %int_100, <error> [template = <error>]
-// CHECK:STDOUT:   adapt_decl <error> [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete = constants.%int_100]
+// CHECK:STDOUT:   %.loc12: type = converted %int_100, <error> [concrete = <error>]
+// CHECK:STDOUT:   adapt_decl <error> [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -206,44 +206,44 @@ class C {
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
-// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
+// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeated.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MultipleAdapts: type = class_type @MultipleAdapts [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [template]
-// CHECK:STDOUT:   %MultipleAdaptsSameType: type = class_type @MultipleAdaptsSameType [template]
+// CHECK:STDOUT:   %MultipleAdapts: type = class_type @MultipleAdapts [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %MultipleAdaptsSameType: type = class_type @MultipleAdaptsSameType [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .MultipleAdapts = %MultipleAdapts.decl
 // CHECK:STDOUT:     .MultipleAdaptsSameType = %MultipleAdaptsSameType.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %MultipleAdapts.decl: type = class_decl @MultipleAdapts [template = constants.%MultipleAdapts] {} {}
-// CHECK:STDOUT:   %MultipleAdaptsSameType.decl: type = class_decl @MultipleAdaptsSameType [template = constants.%MultipleAdaptsSameType] {} {}
+// CHECK:STDOUT:   %MultipleAdapts.decl: type = class_decl @MultipleAdapts [concrete = constants.%MultipleAdapts] {} {}
+// CHECK:STDOUT:   %MultipleAdaptsSameType.decl: type = class_decl @MultipleAdaptsSameType [concrete = constants.%MultipleAdaptsSameType] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MultipleAdapts {
 // CHECK:STDOUT:   %.loc5_10: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   adapt_decl %.loc5_11 [template]
+// CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   adapt_decl %.loc5_11 [concrete]
 // CHECK:STDOUT:   %.loc13: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -252,10 +252,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MultipleAdaptsSameType {
 // CHECK:STDOUT:   %.loc17_10: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_11: type = converted %.loc17_10, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   adapt_decl %.loc17_11 [template]
+// CHECK:STDOUT:   %.loc17_11: type = converted %.loc17_10, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   adapt_decl %.loc17_11 [concrete]
 // CHECK:STDOUT:   %.loc25: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -265,32 +265,32 @@ class C {
 // CHECK:STDOUT: --- fail_bad_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %I.type.733: type = facet_type <@I.1> [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %I.type.733: type = facet_type <@I.1> [concrete]
 // CHECK:STDOUT:   %Self.826: %I.type.733 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %I.type.e30: type = facet_type <@I.2> [template]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %I.type.e30: type = facet_type <@I.2> [concrete]
 // CHECK:STDOUT:   %Self.6ef: %I.type.e30 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [template = constants.%I.type.733] {} {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [concrete = constants.%I.type.733] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 {
@@ -312,8 +312,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%I.type.e30] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [concrete = constants.%I.type.e30] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -5,7 +5,9 @@
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -13,8 +15,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
-  context.insts().AddAndPush<SemIR::BoolLiteral>(
-      node_id,
+  AddInstAndPush<SemIR::BoolLiteral>(
+      context, node_id,
       {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::False});
   return true;
@@ -22,8 +24,8 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
-  context.insts().AddAndPush<SemIR::BoolLiteral>(
-      node_id,
+  AddInstAndPush<SemIR::BoolLiteral>(
+      context, node_id,
       {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::True});
   return true;
@@ -74,16 +76,17 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                                real_value.exponent.getSExtValue());
 
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
-  context.insts().AddAndPush<SemIR::FloatLiteral>(
-      node_id, {.type_id = context.GetSingletonType(
-                    SemIR::LegacyFloatType::SingletonInstId),
-                .float_id = float_id});
+  AddInstAndPush<SemIR::FloatLiteral>(
+      context, node_id,
+      {.type_id =
+           context.GetSingletonType(SemIR::LegacyFloatType::SingletonInstId),
+       .float_id = float_id});
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
-  context.insts().AddAndPush<SemIR::StringLiteral>(
-      node_id,
+  AddInstAndPush<SemIR::StringLiteral>(
+      context, node_id,
       {.type_id = context.GetSingletonType(SemIR::StringType::SingletonInstId),
        .string_literal_id = context.tokens().GetStringLiteralValue(
            context.parse_tree().node_token(node_id))});
@@ -92,7 +95,7 @@ auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
-  auto fn_inst_id = context.LookupNameInCore(node_id, "Bool");
+  auto fn_inst_id = LookupNameInCore(context, node_id, "Bool");
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
   context.node_stack().Push(node_id, type_inst_id);
   return true;
@@ -143,7 +146,7 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
   auto width_id = MakeIntLiteral(context, node_id, size_id);
-  auto fn_inst_id = context.LookupNameInCore(node_id, "Float");
+  auto fn_inst_id = LookupNameInCore(context, node_id, "Float");
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
   context.node_stack().Push(node_id, type_inst_id);
   return true;

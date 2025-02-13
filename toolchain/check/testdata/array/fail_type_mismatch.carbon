@@ -43,35 +43,35 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %array_type: type = array_type %int_3, %i32 [template]
-// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %str.ef1: String = string_literal "Hello" [template]
-// CHECK:STDOUT:   %str.abb: String = string_literal "World" [template]
-// CHECK:STDOUT:   %tuple.type.b0f: type = tuple_type (Core.IntLiteral, String, String) [template]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
-// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [template]
-// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [template]
-// CHECK:STDOUT:   %tuple.type.9e7: type = tuple_type (%i32, String, String) [template]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
+// CHECK:STDOUT:   %array_type: type = array_type %int_3, %i32 [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %str.ef1: String = string_literal "Hello" [concrete]
+// CHECK:STDOUT:   %str.abb: String = string_literal "World" [concrete]
+// CHECK:STDOUT:   %tuple.type.b0f: type = tuple_type (Core.IntLiteral, String, String) [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
+// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
+// CHECK:STDOUT:   %tuple.type.9e7: type = tuple_type (%i32, String, String) [concrete]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
@@ -80,7 +80,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .t1 = %t1
@@ -95,11 +95,11 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:     %.loc18_1: %array_type = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
-// CHECK:STDOUT:   %.loc18_15: type = splice_block %array_type.loc18 [template = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_3.loc18: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc18: type = array_type %int_3.loc18, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %.loc18_15: type = splice_block %array_type.loc18 [concrete = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_3.loc18: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:     %array_type.loc18: type = array_type %int_3.loc18, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -107,11 +107,11 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:     %.loc20_1: %tuple.type.9e7 = var_pattern %t1.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t1.var: ref %tuple.type.9e7 = var t1
-// CHECK:STDOUT:   %.loc20_29.1: type = splice_block %.loc20_29.3 [template = constants.%tuple.type.9e7] {
-// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc20_29.1: type = splice_block %.loc20_29.3 [concrete = constants.%tuple.type.9e7] {
+// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc20_29.2: %tuple.type.ff9 = tuple_literal (%i32.loc20, String, String)
-// CHECK:STDOUT:     %.loc20_29.3: type = converted %.loc20_29.2, constants.%tuple.type.9e7 [template = constants.%tuple.type.9e7]
+// CHECK:STDOUT:     %.loc20_29.3: type = converted %.loc20_29.2, constants.%tuple.type.9e7 [concrete = constants.%tuple.type.9e7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t1: ref %tuple.type.9e7 = bind_name t1, %t1.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -119,11 +119,11 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:     %.loc28_1: %array_type = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %array_type = var b
-// CHECK:STDOUT:   %.loc28_15: type = splice_block %array_type.loc28 [template = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc28: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc28: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_3.loc28: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc28: type = array_type %int_3.loc28, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %.loc28_15: type = splice_block %array_type.loc28 [concrete = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc28: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_3.loc28: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:     %array_type.loc28: type = array_type %int_3.loc28, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %array_type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -131,11 +131,11 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:     %.loc34_1: %array_type = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %array_type = var c
-// CHECK:STDOUT:   %.loc34_15: type = splice_block %array_type.loc34 [template = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc34: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_3.loc34: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc34: type = array_type %int_3.loc34, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %.loc34_15: type = splice_block %array_type.loc34 [concrete = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_3.loc34: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:     %array_type.loc34: type = array_type %int_3.loc34, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %array_type = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -143,13 +143,13 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:     %.loc36_1: %tuple.type.d07 = var_pattern %t2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t2.var: ref %tuple.type.d07 = var t2
-// CHECK:STDOUT:   %.loc36_18.1: type = splice_block %.loc36_18.3 [template = constants.%tuple.type.d07] {
-// CHECK:STDOUT:     %int_32.loc36_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc36_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc36_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc36_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc36_18.1: type = splice_block %.loc36_18.3 [concrete = constants.%tuple.type.d07] {
+// CHECK:STDOUT:     %int_32.loc36_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc36_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc36_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc36_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc36_18.2: %tuple.type.24b = tuple_literal (%i32.loc36_10, %i32.loc36_15)
-// CHECK:STDOUT:     %.loc36_18.3: type = converted %.loc36_18.2, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %.loc36_18.3: type = converted %.loc36_18.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t2: ref %tuple.type.d07 = bind_name t2, %t2.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -157,42 +157,42 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:     %.loc41_1: %array_type = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %array_type = var d
-// CHECK:STDOUT:   %.loc41_15: type = splice_block %array_type.loc41 [template = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc41: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc41: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_3.loc41: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc41: type = array_type %int_3.loc41, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %.loc41_15: type = splice_block %array_type.loc41 [concrete = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc41: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc41: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_3.loc41: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:     %array_type.loc41: type = array_type %int_3.loc41, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %array_type = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %str.loc18_23: String = string_literal "Hello" [template = constants.%str.ef1]
-// CHECK:STDOUT:   %str.loc18_32: String = string_literal "World" [template = constants.%str.abb]
+// CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %str.loc18_23: String = string_literal "Hello" [concrete = constants.%str.ef1]
+// CHECK:STDOUT:   %str.loc18_32: String = string_literal "World" [concrete = constants.%str.abb]
 // CHECK:STDOUT:   %.loc18_39.1: %tuple.type.b0f = tuple_literal (%int_1.loc18, %str.loc18_23, %str.loc18_32)
-// CHECK:STDOUT:   %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.loc18, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(%int_1.loc18) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc18_39.2: init %i32 = converted %int_1.loc18, %int.convert_checked [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %int_0.loc18: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.loc18, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(%int_1.loc18) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc18_39.2: init %i32 = converted %int_1.loc18, %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %int_0.loc18: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc18_39.3: ref %i32 = array_index file.%a.var, %int_0.loc18
-// CHECK:STDOUT:   %.loc18_39.4: init %i32 = initialize_from %.loc18_39.2 to %.loc18_39.3 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc18_39.5: %i32 = converted %str.loc18_23, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_39.4: init %i32 = initialize_from %.loc18_39.2 to %.loc18_39.3 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc18_39.5: %i32 = converted %str.loc18_23, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %t1.ref: ref %tuple.type.9e7 = name_ref t1, file.%t1
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %t1.ref, element0
 // CHECK:STDOUT:   %.loc28_19.1: %i32 = bind_value %tuple.elem0
-// CHECK:STDOUT:   %int_0.loc28: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %int_0.loc28: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc28_19.2: ref %i32 = array_index file.%b.var, %int_0.loc28
 // CHECK:STDOUT:   %.loc28_19.3: init %i32 = initialize_from %.loc28_19.1 to %.loc28_19.2
 // CHECK:STDOUT:   %tuple.elem1: ref String = tuple_access %t1.ref, element1
-// CHECK:STDOUT:   %.loc28_19.4: %i32 = converted %tuple.elem1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc28_19.4: %i32 = converted %tuple.elem1, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %int_1.loc34: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
+// CHECK:STDOUT:   %int_1.loc34: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %.loc34: %tuple.type.f94 = tuple_literal (%int_1.loc34, %int_2)
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %t2.ref: ref %tuple.type.d07 = name_ref t2, file.%t2

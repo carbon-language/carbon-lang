@@ -75,13 +75,13 @@ class AbsoluteInstId : public InstId {
 
 // The ID of a constant value of an expression. An expression is either:
 //
-// - a template constant, with an immediate value, such as `42` or `i32*` or
-//   `("hello", "world")`, or
-// - a symbolic constant, whose value includes a symbolic parameter, such as
+// - a concrete constant, whose value does not depend on any generic parameters,
+//   such as `42` or `i32*` or `("hello", "world")`, or
+// - a symbolic constant, whose value includes a generic parameter, such as
 //   `Vector(T*)`, or
 // - a runtime expression, such as `Print("hello")`.
 //
-// Template constants are a thin wrapper around the instruction ID of the
+// Concrete constants are a thin wrapper around the instruction ID of the
 // constant instruction that defines the constant. Symbolic constants are an
 // index into a separate table of `SymbolicConstant`s maintained by the constant
 // value store.
@@ -93,10 +93,10 @@ struct ConstantId : public IdBase<ConstantId> {
   // An ID with no value.
   static const ConstantId None;
 
-  // Returns the constant ID corresponding to a template constant, which should
+  // Returns the constant ID corresponding to a concrete constant, which should
   // either be in the `constants` block in the file or should be known to be
   // unique.
-  static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
+  static constexpr auto ForConcreteConstant(InstId const_id) -> ConstantId {
     return ConstantId(const_id.index);
   }
 
@@ -118,14 +118,14 @@ struct ConstantId : public IdBase<ConstantId> {
     CARBON_DCHECK(has_value());
     return index <= FirstSymbolicIndex;
   }
-  // Returns whether this represents a template constant. Requires has_value.
-  auto is_template() const -> bool {
+  // Returns whether this represents a concrete constant. Requires has_value.
+  auto is_concrete() const -> bool {
     CARBON_DCHECK(has_value());
     return index >= 0;
   }
 
   // Prints this ID to the given output stream. `disambiguate` indicates whether
-  // template constants should be wrapped with "templateConstant(...)" so that
+  // concrete constants should be wrapped with "concrete_constant(...)" so that
   // they aren't printed the same as an InstId. This can be set to false if
   // there is no risk of ambiguity.
   auto Print(llvm::raw_ostream& out, bool disambiguate = true) const -> void;
@@ -137,11 +137,11 @@ struct ConstantId : public IdBase<ConstantId> {
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
 
-  // Returns the instruction that describes this template constant value.
-  // Requires `is_template()`. Use `ConstantValueStore::GetInstId` to get the
+  // Returns the instruction that describes this concrete constant value.
+  // Requires `is_concrete()`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
-  constexpr auto template_inst_id() const -> InstId {
-    CARBON_DCHECK(is_template());
+  constexpr auto concrete_inst_id() const -> InstId {
+    CARBON_DCHECK(is_concrete());
     return InstId(index);
   }
 

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/control_flow.h"
 
+#include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -16,7 +17,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.insts().Add<BranchNode>(node_id, {block_id, args...});
+  AddInst<BranchNode>(context, node_id, {block_id, args...});
   return block_id;
 }
 
@@ -49,7 +50,7 @@ auto AddConvergenceBlockAndPush(Context& context, Parse::NodeId node_id,
         new_block_id = context.inst_blocks().AddDefaultValue();
       }
       CARBON_CHECK(node_id.has_value());
-      context.insts().Add<SemIR::Branch>(node_id, {.target_id = new_block_id});
+      AddInst<SemIR::Branch>(context, node_id, {.target_id = new_block_id});
     }
     context.inst_block_stack().Pop();
   }
@@ -68,8 +69,8 @@ auto AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = context.inst_blocks().AddDefaultValue();
       }
-      context.insts().Add<SemIR::BranchWithArg>(
-          node_id, {.target_id = new_block_id, .arg_id = arg_id});
+      AddInst<SemIR::BranchWithArg>(
+          context, node_id, {.target_id = new_block_id, .arg_id = arg_id});
     }
     context.inst_block_stack().Pop();
   }
@@ -79,8 +80,8 @@ auto AddConvergenceBlockWithArgAndPush(
   // Acquire the result value.
   SemIR::TypeId result_type_id =
       context.insts().Get(*block_args.begin()).type_id();
-  return context.insts().Add<SemIR::BlockArg>(
-      node_id, {.type_id = result_type_id, .block_id = new_block_id});
+  return AddInst<SemIR::BlockArg>(
+      context, node_id, {.type_id = result_type_id, .block_id = new_block_id});
 }
 
 auto SetBlockArgResultBeforeConstantUse(Context& context,
@@ -93,7 +94,7 @@ auto SetBlockArgResultBeforeConstantUse(Context& context,
   // Determine the constant result based on the condition value.
   SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
   auto cond_const_id = context.constant_values().Get(cond_id);
-  if (!cond_const_id.is_template()) {
+  if (!cond_const_id.is_concrete()) {
     // Symbolic or non-constant condition means a non-constant result.
   } else if (auto literal = context.insts().TryGetAs<SemIR::BoolLiteral>(
                  context.constant_values().GetInstId(cond_const_id))) {

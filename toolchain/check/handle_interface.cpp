@@ -6,6 +6,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -51,8 +52,8 @@ static auto BuildInterfaceDecl(Context& context,
   auto interface_decl =
       SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
                            SemIR::InterfaceId::None, decl_block_id};
-  auto interface_decl_id = context.insts().AddPlaceholder(
-      SemIR::LocIdAndInst(node_id, interface_decl));
+  auto interface_decl_id =
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, interface_decl));
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,
@@ -66,7 +67,7 @@ static auto BuildInterfaceDecl(Context& context,
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
     context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 interface_decl_id);
+                                 name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_id = lookup_result.target_inst_id();
     if (auto existing_interface_decl =
@@ -125,7 +126,7 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.insts().ReplaceBeforeConstantUse(interface_decl_id, interface_decl);
+  ReplaceInstBeforeConstantUse(context, interface_decl_id, interface_decl);
 
   return {interface_decl.interface_id, interface_decl_id};
 }
@@ -169,15 +170,15 @@ auto HandleParseNode(Context& context,
   // We model `Self` as a symbolic binding whose type is the interface.
   // Because there is no equivalent non-symbolic value, we use `None` as
   // the `value_id` on the `BindSymbolicName`.
-  auto entity_name_id = context.entity_names().Add(
-      {.name_id = SemIR::NameId::SelfType,
-       .parent_scope_id = interface_info.scope_id,
-       .bind_index = context.scope_stack().AddCompileTimeBinding()});
+  auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+      SemIR::NameId::SelfType, interface_info.scope_id,
+      context.scope_stack().AddCompileTimeBinding(),
+      /*is_template=*/false);
   interface_info.self_param_id =
-      context.insts().Add(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
-          {.type_id = self_type_id,
-           .entity_name_id = entity_name_id,
-           .value_id = SemIR::InstId::None}));
+      AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+                           {.type_id = self_type_id,
+                            .entity_name_id = entity_name_id,
+                            .value_id = SemIR::InstId::None}));
   context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
   context.name_scopes().AddRequiredName(interface_info.scope_id,
                                         SemIR::NameId::SelfType,

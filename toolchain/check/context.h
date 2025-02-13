@@ -15,7 +15,6 @@
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
-#include "toolchain/check/inst_store_wrapper.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
@@ -32,35 +31,6 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
-
-// Information about a scope in which we can perform name lookup.
-struct LookupScope {
-  // The name scope in which names are searched.
-  SemIR::NameScopeId name_scope_id;
-  // The specific for the name scope, or `None` if the name scope is not
-  // defined by a generic or we should perform lookup into the generic itself.
-  SemIR::SpecificId specific_id;
-};
-
-// A result produced by name lookup.
-struct LookupResult {
-  // The specific in which the lookup result was found. `None` if the result
-  // was not found in a specific.
-  SemIR::SpecificId specific_id;
-
-  // The result from the lookup in the scope.
-  SemIR::ScopeLookupResult scope_result;
-};
-
-// Information about an access.
-struct AccessInfo {
-  // The constant being accessed.
-  SemIR::ConstantId constant_id;
-
-  // The highest allowed access for a lookup. For example, `Protected` allows
-  // access to `Public` and `Protected` names, but not `Private`.
-  SemIR::AccessKind highest_allowed_access;
-};
 
 // Context and shared functionality for semantics handlers.
 class Context {
@@ -85,73 +55,15 @@ class Context {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
-  // Adds a name to name lookup. Prints a diagnostic for name conflicts. If
-  // specified, `scope_index` specifies which lexical scope the name is inserted
-  // into, otherwise the name is inserted into the current scope.
-  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::None) -> void;
-
-  // Performs name lookup in a specified scope for a name appearing in a
-  // declaration. If scope_id is `None`, performs lookup into the lexical scope
-  // specified by scope_index instead.
-  auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                        SemIR::NameScopeId scope_id, ScopeIndex scope_index)
-      -> SemIR::ScopeLookupResult;
-
-  // Performs an unqualified name lookup, returning the referenced `InstId`.
-  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
-                             bool required = true) -> LookupResult;
-
-  // Performs a name lookup in a specified scope, returning the referenced
-  // `InstId`. Does not look into extended scopes. Returns `InstId::None` if the
-  // name is not found.
-  //
-  // If `is_being_declared` is false, then this is a regular name lookup, and
-  // the name will be poisoned if not found so that later lookups will fail; a
-  // poisoned name will be treated as if it is not declared. Otherwise, this is
-  // a lookup for a name being declared, so the name will not be poisoned, but
-  // poison will be returned if it's already been looked up.
-  auto LookupNameInExactScope(SemIR::LocId loc_id, SemIR::NameId name_id,
-                              SemIR::NameScopeId scope_id,
-                              SemIR::NameScope& scope,
-                              bool is_being_declared = false)
-      -> SemIR::ScopeLookupResult;
-
-  // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
-  // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
-  // still updates `*scopes` and returns `true`.
-  auto AppendLookupScopesForConstant(SemIR::LocId loc_id,
-                                     SemIR::ConstantId base_const_id,
-                                     llvm::SmallVector<LookupScope>* scopes)
-      -> bool;
-
-  // Performs a qualified name lookup in a specified scopes and in scopes that
-  // they extend, returning the referenced `InstId`.
-  auto LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
-                           llvm::ArrayRef<LookupScope> lookup_scopes,
-                           bool required = true,
-                           std::optional<AccessInfo> access_info = std::nullopt)
-      -> LookupResult;
-
-  // Returns the `InstId` corresponding to a name in the core package, or
-  // BuiltinErrorInst if not found.
-  auto LookupNameInCore(SemIR::LocId loc_id, llvm::StringRef name)
-      -> SemIR::InstId;
-
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
   // Prints a diagnostic for a poisoned name when it's later declared.
   auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
-                            SemIR::InstId decl_inst_id) -> void;
+                            SemIR::LocId decl_name_loc_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
-
-  // Prints a diagnostic for a missing qualified name.
-  auto DiagnoseMemberNameNotFound(SemIRLoc loc, SemIR::NameId name_id,
-                                  llvm::ArrayRef<LookupScope> lookup_scopes)
-      -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
@@ -294,7 +206,6 @@ class Context {
   auto node_stack() -> NodeStack& { return node_stack_; }
 
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
-  auto insts() -> InstStoreWrapper& { return insts_; }
   auto pattern_block_stack() -> InstBlockStack& { return pattern_block_stack_; }
 
   auto param_and_arg_refs_stack() -> ParamAndArgRefsStack& {
@@ -392,6 +303,9 @@ class Context {
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
+  // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
+  // `inst.h`. This is `const` to prevent accidental misuse.
+  auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
   }
@@ -463,9 +377,6 @@ class Context {
 
   // The stack during Build. Will contain file-level parse nodes on return.
   NodeStack node_stack_;
-
-  // Wraps access to sem_ir_->insts().
-  InstStoreWrapper insts_;
 
   // The stack of instruction blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;

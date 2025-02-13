@@ -24,11 +24,11 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
     IdBase::Print(out);
     return;
   }
-  if (is_template()) {
+  if (is_concrete()) {
     if (disambiguate) {
-      out << "template_constant(";
+      out << "concrete_constant(";
     }
-    out << template_inst_id();
+    out << concrete_inst_id();
     if (disambiguate) {
       out << ")";
     }

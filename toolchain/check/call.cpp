@@ -97,10 +97,11 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
-  return context.insts().GetOrAdd<SemIR::ClassType>(
-      loc_id, {.type_id = SemIR::TypeType::SingletonTypeId,
-               .class_id = class_id,
-               .specific_id = *callee_specific_id});
+  return GetOrAddInst<SemIR::ClassType>(
+      context, loc_id,
+      {.type_id = SemIR::TypeType::SingletonTypeId,
+       .class_id = class_id,
+       .specific_id = *callee_specific_id});
 }
 
 // Performs a call where the callee is the name of a generic interface, such as
@@ -118,8 +119,8 @@ static auto PerformCallToGenericInterface(
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
-  return context.insts().GetOrAdd(
-      loc_id,
+  return GetOrAddInst(
+      context, loc_id,
       context.FacetTypeFromInterface(interface_id, *callee_specific_id));
 }
 
@@ -162,13 +163,13 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
   if (callee_specific_id->has_value()) {
-    callee_id = context.insts().GetOrAdd(
-        context.insts().GetLocId(callee_id),
-        SemIR::SpecificFunction{
-            .type_id = context.GetSingletonType(
-                SemIR::SpecificFunctionType::SingletonInstId),
-            .callee_id = callee_id,
-            .specific_id = *callee_specific_id});
+    callee_id =
+        GetOrAddInst(context, context.insts().GetLocId(callee_id),
+                     SemIR::SpecificFunction{
+                         .type_id = context.GetSingletonType(
+                             SemIR::SpecificFunctionType::SingletonInstId),
+                         .callee_id = callee_id,
+                         .specific_id = *callee_specific_id});
     if (callee_function.self_type_id.has_value()) {
       // This is an associated function, and will be required to be defined as
       // part of checking that the impl is complete.
@@ -195,8 +196,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     case SemIR::InitRepr::InPlace:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
-      return_slot_arg_id = context.insts().Add<SemIR::TemporaryStorage>(
-          loc_id, {.type_id = return_info.type_id});
+      return_slot_arg_id = AddInst<SemIR::TemporaryStorage>(
+          context, loc_id, {.type_id = return_info.type_id});
       break;
     case SemIR::InitRepr::None:
       // For functions with an implicit return type, the return type is the
@@ -219,10 +220,10 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       context, loc_id, callee_function.self_id, arg_ids, return_slot_arg_id,
       context.functions().Get(callee_function.function_id),
       *callee_specific_id);
-  auto call_inst_id = context.insts().GetOrAdd<SemIR::Call>(
-      loc_id, {.type_id = return_info.type_id,
-               .callee_id = callee_id,
-               .args_id = converted_args_id});
+  auto call_inst_id = GetOrAddInst<SemIR::Call>(context, loc_id,
+                                                {.type_id = return_info.type_id,
+                                                 .callee_id = callee_id,
+                                                 .args_id = converted_args_id});
 
   return call_inst_id;
 }

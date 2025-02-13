@@ -409,7 +409,6 @@ class NodeStack {
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
-      case Parse::NodeKind::ImplForall:
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::TuplePattern:
       case Parse::NodeKind::WhileCondition:
@@ -445,6 +444,7 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
       case Parse::NodeKind::StructTypeLiteralStart:
+      case Parse::NodeKind::TemplateBindingName:
       case Parse::NodeKind::TupleLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
@@ -467,6 +467,7 @@ class NodeStack {
       case Parse::NodeKind::ExportIntroducer:
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
+      case Parse::NodeKind::Forall:
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::ForIn:
@@ -508,7 +509,6 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
-      case Parse::NodeKind::Template:
       case Parse::NodeKind::TupleLiteralComma:
         return Id::Kind::Invalid;
       default:

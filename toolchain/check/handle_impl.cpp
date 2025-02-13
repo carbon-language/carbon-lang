@@ -8,8 +8,10 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
@@ -37,22 +39,14 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 
   // This might be a generic impl.
   StartGenericDecl(context);
-
-  // Push a pattern block for the signature of the `forall` (if any).
-  // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
-  // and only push a pattern block in `forall` case.
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
-  auto params_id =
-      context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
-  context.node_stack().Push(node_id, params_id);
+auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
+  // Push a pattern block for the signature of the `forall`.
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 
@@ -65,7 +59,7 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  context.AddNameToLookup(SemIR::NameId::SelfType, self_id);
+  AddNameToLookup(context, SemIR::NameId::SelfType, self_id);
   return true;
 }
 
@@ -113,8 +107,8 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // is a class and found its `Self`, so additionally performing an unqualified
   // name lookup would be redundant work, but would avoid duplicating the
   // handling of the `Self` expression.
-  auto self_inst_id = context.insts().Add(
-      node_id,
+  auto self_inst_id = AddInst(
+      context, node_id,
       SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
                      .name_id = SemIR::NameId::SelfType,
                      .value_id = context.types().GetInstId(self_type_id)});
@@ -207,9 +201,12 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
     -> NameComponent {
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
-      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
+      context.node_stack()
+          .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
 
   if (implicit_param_patterns_id) {
+    context.node_stack()
+        .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
     auto call_params_id =
@@ -242,7 +239,9 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       .param_patterns_id = SemIR::InstBlockId::None,
       .call_params_id = SemIR::InstBlockId::None,
       .return_slot_pattern_id = SemIR::InstId::None,
-      .pattern_block_id = context.pattern_block_stack().Pop(),
+      .pattern_block_id = implicit_param_patterns_id
+                              ? context.pattern_block_stack().Pop()
+                              : SemIR::InstBlockId::None,
   };
 }
 
@@ -343,7 +342,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
   auto impl_decl_id =
-      context.insts().AddPlaceholder(SemIR::LocIdAndInst(node_id, impl_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, impl_decl));
 
   SemIR::Impl impl_info = {
       name_context.MakeEntityWithParamsBase(name, impl_decl_id,
@@ -384,15 +383,15 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Write the impl ID into the ImplDecl.
-  context.insts().ReplaceBeforeConstantUse(impl_decl_id, impl_decl);
+  ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
-      constraint_inst_id = context.insts().Add<SemIR::SpecificConstant>(
-          context.insts().GetLocId(constraint_inst_id),
+      constraint_inst_id = AddInst<SemIR::SpecificConstant>(
+          context, context.insts().GetLocId(constraint_inst_id),
           {.type_id = type_id,
            .inst_id = constraint_inst_id,
            .specific_id =

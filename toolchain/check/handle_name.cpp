@@ -5,8 +5,10 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/inst.h"
@@ -102,7 +104,7 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
 // lookup.
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> SemIR::InstId {
-  auto result = context.LookupUnqualifiedName(node_id, name_id);
+  auto result = LookupUnqualifiedName(context, node_id, name_id);
   SemIR::InstId inst_id = result.scope_result.target_inst_id();
   auto value = context.insts().Get(inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
@@ -113,14 +115,16 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
   // store the specific too.
   if (result.specific_id.has_value() &&
       context.constant_values().Get(inst_id).is_symbolic()) {
-    inst_id = context.insts().Add<SemIR::SpecificConstant>(
-        node_id, {.type_id = type_id,
-                  .inst_id = inst_id,
-                  .specific_id = result.specific_id});
+    inst_id =
+        AddInst<SemIR::SpecificConstant>(context, node_id,
+                                         {.type_id = type_id,
+                                          .inst_id = inst_id,
+                                          .specific_id = result.specific_id});
   }
 
-  return context.insts().Add<SemIR::NameRef>(
-      node_id, {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
+  return AddInst<SemIR::NameRef>(
+      context, node_id,
+      {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
 }
 
 static auto HandleIdentifierName(Context& context,
@@ -236,11 +240,11 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {
-  context.insts().AddAndPush<SemIR::NameRef>(
-      node_id, {.type_id = context.GetSingletonType(
-                    SemIR::NamespaceType::SingletonInstId),
-                .name_id = SemIR::NameId::PackageNamespace,
-                .value_id = SemIR::Namespace::PackageInstId});
+  AddInstAndPush<SemIR::NameRef>(context, node_id,
+                                 {.type_id = context.GetSingletonType(
+                                      SemIR::NamespaceType::SingletonInstId),
+                                  .name_id = SemIR::NameId::PackageNamespace,
+                                  .value_id = SemIR::Namespace::PackageInstId});
   return true;
 }
 
