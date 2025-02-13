@@ -123,10 +123,9 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 ## Project status
 
-Carbon Language is currently an experimental project. You can see the demo
-interpreter for Carbon on
-[compiler-explorer.com](http://carbon.compiler-explorer.com/). We are also hard
-at work on a toolchain implementation with compiler and linker.
+Carbon Language is currently an experimental project. We are hard at work on a
+toolchain implementation with compiler and linker. You can try out the current
+state at [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
 We want to better understand whether we can build a language that meets our
 successor language criteria, and whether the resulting language can gather a
@@ -268,8 +267,7 @@ semantics onto C++ such as Rust-inspired
 
 ## Getting started
 
-To try out Carbon immediately in your browser, you can use the demo interpreter
-for Carbon on:
+To try out Carbon immediately in your browser, you can use the toolchain at:
 [carbon.compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
 We are developing a traditional toolchain for Carbon that can compile and link
