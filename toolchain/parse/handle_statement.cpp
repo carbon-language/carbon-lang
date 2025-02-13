@@ -48,9 +48,8 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(State::MatchIntroducer);
       break;
     }
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
-  case Lex::TokenKind::Name:
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"
     case Lex::TokenKind::Adapt:
     case Lex::TokenKind::Alias:
