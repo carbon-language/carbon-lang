@@ -116,6 +116,10 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // Checking the binding pattern for an alternative requires a non-empty stack.
   // We reuse the Choice token even though we're now checking an alternative
   // inside the Choice, since there's no better token to use.
+  //
+  //  TODO: The token here is _not_ `Choice` though, we shouldn't need to use
+  //  that here. Either remove the need for a token or find a token (a new
+  //  introducer?) for the alternative to name.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   StartGenericDefinition(context);
 
@@ -139,6 +143,13 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
   auto name_component = PopNameComponent(context);
   if (name_component.param_patterns_id == SemIR::InstBlockId::Empty) {
     // Treat an empty parameter list the same as no parameter list.
+    //
+    // TODO: The current design suggests that we might want Foo() to result in a
+    // member function `ChoiceType.Foo()`, and `Foo` to result in a member
+    // constant `ChoiceType.Foo`. See
+    // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/sum_types.md#user-defined-sum-types.
+    // For now they are not treated differently and both resolve to a member
+    // constant.
     name_component.param_patterns_id = SemIR::InstBlockId::None;
   }
   if (name_component.param_patterns_id.has_value()) {
