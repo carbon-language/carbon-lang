@@ -18,7 +18,6 @@ namespace Carbon::Check {
 
 // Returns a best-effort name for the given ParamPattern, suitable for use in
 // IR pretty-printing.
-// TODO: Resolve overlap with SemIR::Function::ParamPatternInfo::GetNameId
 template <typename ParamPattern>
 static auto GetPrettyName(Context& context, ParamPattern param_pattern)
     -> SemIR::NameId {
