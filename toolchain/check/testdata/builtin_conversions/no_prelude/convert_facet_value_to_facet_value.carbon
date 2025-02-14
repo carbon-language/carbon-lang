@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtin_conversions/no_prelude/fail_todo_convert_facet_value_to_facet_value.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtin_conversions/no_prelude/convert_facet_value_to_facet_value.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtin_conversions/no_prelude/fail_todo_convert_facet_value_to_facet_value.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtin_conversions/no_prelude/convert_facet_value_to_facet_value.carbon
 
 // --- core.carbon
 
@@ -16,7 +16,7 @@ interface ImplicitAs(T:! type) {
   fn Convert[self: Self]() -> T;
 }
 
-// --- fail_todo_convert_facet_value_to_facet_value.carbon
+// --- convert_facet_value_to_facet_value.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -133,7 +133,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_convert_facet_value_to_facet_value.carbon
+// CHECK:STDOUT: --- convert_facet_value_to_facet_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats> [concrete]
