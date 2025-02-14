@@ -135,7 +135,7 @@ static auto MergeFunctionRedecl(Context& context,
 
 // Check whether this is a redeclaration, merging if needed.
 static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           SemIR::InstId prev_id, SemIR::LocId prev_name_loc_id,
+                           SemIR::InstId prev_id, SemIR::LocId name_loc_id,
                            SemIR::FunctionDecl& function_decl,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
@@ -176,7 +176,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.has_value()) {
-    context.DiagnoseDuplicateName(prev_name_loc_id, prev_id);
+    context.DiagnoseDuplicateName(name_loc_id, prev_id);
     return;
   }
 
