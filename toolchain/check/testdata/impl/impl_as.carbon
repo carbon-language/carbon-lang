@@ -74,6 +74,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   witness = @C.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -88,6 +89,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .Simple = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %Simple.type) {

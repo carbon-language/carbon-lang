@@ -43,7 +43,7 @@ def load_diagnostic_kind() -> Set[str]:
     """
     path = Path("toolchain/diagnostics/diagnostic_kind.def")
     content = path.read_text()
-    decls = set(re.findall(r"CARBON_DIAGNOSTIC_KIND\((.+)\)", content))
+    decls = set(re.findall(r"^\s+CARBON_DIAGNOSTIC_KIND\((.+)\)", content))
     return decls.difference(IGNORED)
 
 

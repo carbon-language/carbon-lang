@@ -1180,6 +1180,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc5_8
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.param_patt: %ptr.11f]();

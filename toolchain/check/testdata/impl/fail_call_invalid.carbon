@@ -57,6 +57,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Simple = %Simple.decl
+// CHECK:STDOUT:     .Undeclared = <poisoned>
 // CHECK:STDOUT:     .InstanceCall = %InstanceCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -113,6 +114,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Undeclared = <poisoned>
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }

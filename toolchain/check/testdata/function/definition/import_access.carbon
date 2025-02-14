@@ -282,6 +282,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
+// CHECK:STDOUT:     .Def = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -316,6 +317,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [concrete] {
+// CHECK:STDOUT:     .Def = <poisoned>
 // CHECK:STDOUT:     import Test//def
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -412,6 +414,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
+// CHECK:STDOUT:     .ForwardWithDef = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -446,6 +449,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [concrete] {
+// CHECK:STDOUT:     .ForwardWithDef = <poisoned>
 // CHECK:STDOUT:     import Test//forward_with_def
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -546,6 +550,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
+// CHECK:STDOUT:     .Forward = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -580,6 +585,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [concrete] {
+// CHECK:STDOUT:     .Forward = <poisoned>
 // CHECK:STDOUT:     import Test//forward
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

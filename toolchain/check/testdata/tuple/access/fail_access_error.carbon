@@ -55,6 +55,7 @@ var b: i32 = a.(oops);
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .oops = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {

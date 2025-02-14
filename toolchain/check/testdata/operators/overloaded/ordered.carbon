@@ -304,6 +304,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Less = %Less.decl
 // CHECK:STDOUT:   .LessOrEquivalent = %LessOrEquivalent.decl
 // CHECK:STDOUT:   .Greater = %Greater.decl

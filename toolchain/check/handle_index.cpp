@@ -8,9 +8,11 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -53,9 +55,10 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
   }
 
   for (const auto& impl : context.impls().array_ref()) {
-    auto impl_self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
+    auto impl_self_type_id =
+        context.types().GetTypeIdForTypeInstId(impl.self_id);
     auto impl_constraint_type_id =
-        context.GetTypeIdForTypeInst(impl.constraint_id);
+        context.types().GetTypeIdForTypeInstId(impl.constraint_id);
 
     if (impl_self_type_id != self_id) {
       continue;
@@ -115,7 +118,7 @@ static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
 
   // The first argument of the `IndexWith` interface corresponds to the
   // `SubscriptType`, so first cast `index_inst_id` to that type.
-  auto subscript_type_id = context.GetTypeIdForTypeInst((*args)[0]);
+  auto subscript_type_id = context.types().GetTypeIdForTypeInstId((*args)[0]);
   auto cast_index_id =
       ConvertToValueOfType(context, node_id, index_inst_id, subscript_type_id);
 
@@ -143,15 +146,17 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       if (array_cat == SemIR::ExprCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
-        operand_inst_id = context.AddInst<SemIR::ValueAsRef>(
-            node_id, {.type_id = operand_type_id, .value_id = operand_inst_id});
+        operand_inst_id = AddInst<SemIR::ValueAsRef>(
+            context, node_id,
+            {.type_id = operand_type_id, .value_id = operand_inst_id});
       }
       // Constant evaluation will perform a bounds check on this array indexing
       // if the index is constant.
-      auto elem_id = context.AddInst<SemIR::ArrayIndex>(
-          node_id, {.type_id = array_type.element_type_id,
-                    .array_id = operand_inst_id,
-                    .index_id = cast_index_id});
+      auto elem_id =
+          AddInst<SemIR::ArrayIndex>(context, node_id,
+                                     {.type_id = array_type.element_type_id,
+                                      .array_id = operand_inst_id,
+                                      .index_id = cast_index_id});
       if (array_cat != SemIR::ExprCategory::DurableRef) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.

@@ -29,6 +29,7 @@ cc_library(
         "import.cpp",
         "import_cpp.cpp",
         "import_ref.cpp",
+        "inst.cpp",
         "inst_block_stack.cpp",
         "interface.cpp",
         "literal.cpp",
@@ -42,6 +43,7 @@ cc_library(
         "return.cpp",
         "subpattern.cpp",
         "subst.cpp",
+        "type.cpp",
         "type_completion.cpp",
     ],
     hdrs = [
@@ -61,6 +63,7 @@ cc_library(
         "import.h",
         "import_cpp.h",
         "import_ref.h",
+        "inst.h",
         "inst_block_stack.h",
         "interface.h",
         "keyword_modifier_set.h",
@@ -78,6 +81,7 @@ cc_library(
         "return.h",
         "subpattern.h",
         "subst.h",
+        "type.h",
         "type_completion.h",
     ],
     deps = [

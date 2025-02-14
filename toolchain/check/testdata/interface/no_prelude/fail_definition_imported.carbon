@@ -19,9 +19,9 @@ interface I;
 library "[[@TEST_NAME]]";
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:           ^
 // CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: a.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface I;

@@ -239,6 +239,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.fe1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc3_8
 // CHECK:STDOUT:     .Get = %Get.decl
 // CHECK:STDOUT:     .GetAddr = %GetAddr.decl
@@ -482,6 +483,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     .Class = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Make = %Make.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

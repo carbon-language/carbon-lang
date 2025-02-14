@@ -90,6 +90,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   extend @impl.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -176,6 +177,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend imports.%Main.import_ref.3019d1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

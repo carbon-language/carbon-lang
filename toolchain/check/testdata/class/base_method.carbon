@@ -138,7 +138,9 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc22
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

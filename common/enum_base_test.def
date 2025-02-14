@@ -8,6 +8,7 @@
 
 #ifndef CARBON_ENUM_BASE_TEST_KIND
 #error "Must define the x-macro to use this file."
+#define CARBON_ENUM_BASE_TEST_KIND(Name)
 #endif
 
 CARBON_ENUM_BASE_TEST_KIND(Beep)

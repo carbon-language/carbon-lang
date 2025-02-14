@@ -120,6 +120,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Child
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
@@ -208,6 +209,8 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.9a9
 // CHECK:STDOUT:   .base = imports.%Main.import_ref.7e5
+// CHECK:STDOUT:   .x = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend imports.%Main.import_ref.a21640.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

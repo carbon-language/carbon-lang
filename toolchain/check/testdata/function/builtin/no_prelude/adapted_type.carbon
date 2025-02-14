@@ -154,6 +154,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MyIntLiteral
+// CHECK:STDOUT:   .IntLiteral = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MyInt32 {
@@ -184,6 +185,9 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MyInt32
+// CHECK:STDOUT:   .Int = <poisoned>
+// CHECK:STDOUT:   .MyIntLiteral = <poisoned>
+// CHECK:STDOUT:   .MyInt32 = <poisoned>
 // CHECK:STDOUT:   .Make = %Make.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -359,6 +359,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -805,6 +806,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .CompleteClass = imports.%Main.CompleteClass
 // CHECK:STDOUT:     .F = imports.%Main.F
 // CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
@@ -842,6 +844,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.e41
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc17_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

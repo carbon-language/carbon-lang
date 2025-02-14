@@ -33,6 +33,25 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return type_id.AsConstantId();
   }
 
+  // Returns the type ID for a constant that is a type value, i.e. it is a value
+  // of type `TypeType`.
+  //
+  // Facet values are of the same typishness as types, but are not themselves
+  // types, so they can not be passed here. They should be converted to a type
+  // through an `as type` conversion, that is, to a value of type `TypeType`.
+  auto GetTypeIdForTypeConstantId(SemIR::ConstantId constant_id) const
+      -> SemIR::TypeId;
+
+  // Returns the type ID for an instruction whose constant value is a type
+  // value, i.e. it is a value of type `TypeType`.
+  //
+  // Instructions whose values are facet values (see `FacetValue`) produce a
+  // value of the same typishness as types, but which are themselves not types,
+  // so they can not be passed here. They should be converted to a type through
+  // an `as type` conversion, such as to a `FacetAccessType` instruction whose
+  // value is of type `TypeType`.
+  auto GetTypeIdForTypeInstId(SemIR::InstId inst_id) const -> SemIR::TypeId;
+
   // Returns the ID of the instruction used to define the specified type.
   auto GetInstId(TypeId type_id) const -> InstId;
 
@@ -112,6 +131,12 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // adapting such a type. Uses IntId::None for types that have a
   // non-constant width and for IntLiteral.
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;
+
+  // Returns whether `type_id` represents a facet type.
+  auto IsFacetType(SemIR::TypeId type_id) const -> bool {
+    return type_id == SemIR::TypeType::SingletonTypeId ||
+           Is<SemIR::FacetType>(type_id);
+  }
 
   // Returns a list of types that were completed in this file, in the order in
   // which they were completed. Earlier types in this list cannot contain

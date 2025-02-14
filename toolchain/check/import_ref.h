@@ -48,6 +48,30 @@ auto ImportImplsFromApiFile(Context& context) -> void;
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                 SemIR::ImplId impl_id) -> void;
 
+namespace Internal {
+
+// Checks that the provided imported location has a node kind that is
+// compatible with that of the given instruction.
+auto CheckCompatibleImportedNodeKind(Context& context,
+                                     SemIR::ImportIRInstId imported_loc_id,
+                                     SemIR::InstKind kind) -> void;
+}  // namespace Internal
+
+// Returns a LocIdAndInst for an instruction with an imported location. Checks
+// that the imported location is compatible with the kind of instruction being
+// created.
+template <typename InstT>
+  requires SemIR::Internal::HasNodeId<InstT>
+auto MakeImportedLocIdAndInst(Context& context,
+                              SemIR::ImportIRInstId imported_loc_id, InstT inst)
+    -> SemIR::LocIdAndInst {
+  if constexpr (!SemIR::Internal::HasUntypedNodeId<InstT>) {
+    Internal::CheckCompatibleImportedNodeKind(context, imported_loc_id,
+                                              InstT::Kind);
+  }
+  return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
+}
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPORT_REF_H_

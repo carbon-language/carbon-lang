@@ -230,6 +230,8 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
+// CHECK:STDOUT:   .HasG = <poisoned>
+// CHECK:STDOUT:   .G = <poisoned>
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -241,6 +243,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .G = %assoc0
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -276,6 +279,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .HasF = <poisoned>
+// CHECK:STDOUT:   .HasG = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
+// CHECK:STDOUT:   .G = <poisoned>
 // CHECK:STDOUT:   extend @impl.1.%HasF.ref
 // CHECK:STDOUT:   extend @impl.2.%HasG.ref
 // CHECK:STDOUT: }
@@ -394,6 +401,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .A = %assoc0
+// CHECK:STDOUT:   .HasA2 = <poisoned>
 // CHECK:STDOUT:   witness = (%A.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -440,6 +448,9 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   .HasA1 = <poisoned>
+// CHECK:STDOUT:   .HasA2 = <poisoned>
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   extend @impl.1.%HasA1.ref
 // CHECK:STDOUT:   extend @impl.2.%HasA2.ref
 // CHECK:STDOUT: }
@@ -544,6 +555,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .I = %assoc0
+// CHECK:STDOUT:   .J = <poisoned>
 // CHECK:STDOUT:   witness = (%I.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -563,6 +575,8 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .J = %J.decl
+// CHECK:STDOUT:   .HasI = <poisoned>
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
@@ -578,7 +592,11 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   .HasI = <poisoned>
+// CHECK:STDOUT:   .I = <poisoned>
+// CHECK:STDOUT:   .J = <poisoned>
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT:   extend @impl.%HasI.ref
 // CHECK:STDOUT: }
@@ -702,6 +720,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .K = %K.decl
+// CHECK:STDOUT:   .HasK = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @L {
@@ -717,7 +736,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%L
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   .HasK = <poisoned>
+// CHECK:STDOUT:   .K = <poisoned>
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT:   extend @impl.%HasK.ref
 // CHECK:STDOUT: }
@@ -827,6 +849,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .N = %assoc0
+// CHECK:STDOUT:   .HasN2 = <poisoned>
 // CHECK:STDOUT:   witness = (%N.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -865,6 +888,8 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NBase
 // CHECK:STDOUT:   .N = %N.decl
+// CHECK:STDOUT:   .HasN1 = <poisoned>
+// CHECK:STDOUT:   .HasN2 = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O {
@@ -886,7 +911,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O
+// CHECK:STDOUT:   .NBase = <poisoned>
 // CHECK:STDOUT:   .base = %.loc17
+// CHECK:STDOUT:   .HasN1 = <poisoned>
+// CHECK:STDOUT:   .HasN2 = <poisoned>
 // CHECK:STDOUT:   .N = %N.decl
 // CHECK:STDOUT:   extend %NBase.ref
 // CHECK:STDOUT:   extend @impl.1.%HasN1.ref

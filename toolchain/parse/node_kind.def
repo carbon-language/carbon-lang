@@ -31,6 +31,7 @@
 
 #if !defined(CARBON_PARSE_NODE_KIND)
 #error "Must define CARBON_PARSE_NODE_KIND family x-macros to use this file."
+#define CARBON_PARSE_NODE_KIND(Name)
 #endif
 
 // This is expected to be used with something like:

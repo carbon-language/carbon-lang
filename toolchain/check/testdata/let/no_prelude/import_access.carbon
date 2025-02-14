@@ -123,6 +123,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .v2 = %v2
+// CHECK:STDOUT:     .v = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
@@ -149,6 +150,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [concrete] {
+// CHECK:STDOUT:     .v = <poisoned>
 // CHECK:STDOUT:     import Test//def
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

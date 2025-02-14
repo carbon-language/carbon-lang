@@ -69,18 +69,18 @@ interface Bar(a:! D);
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Foo(a:! C) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:6: in import [InImport]
 // CHECK:STDERR: two_file.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 interface Foo(a:! C) {}
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Bar(a:! D) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:6: in import [InImport]
 // CHECK:STDERR: two_file.carbon:8:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Bar(a:! D);
@@ -156,9 +156,9 @@ alias D = C;
 // TODO: This fails because importing interfaces doesn't work well. It should
 // fail due to `C` versus `D`, but may succeed if importing interfaces is fixed
 // before syntax matching on imports is supported.
-// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Foo(a:! D) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:6: in import [InImport]
 // CHECK:STDERR: alias_two_file.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Foo(a:! C);

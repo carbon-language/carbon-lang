@@ -84,6 +84,7 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {

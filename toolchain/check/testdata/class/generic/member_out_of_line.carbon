@@ -235,6 +235,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     .n = %.loc7_8
@@ -388,6 +389,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -423,6 +425,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%B
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
