@@ -9,6 +9,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
@@ -121,7 +122,7 @@ static auto PerformCallToGenericInterface(
   }
   return GetOrAddInst(
       context, loc_id,
-      context.FacetTypeFromInterface(interface_id, *callee_specific_id));
+      FacetTypeFromInterface(context, interface_id, *callee_specific_id));
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
@@ -163,13 +164,13 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
   if (callee_specific_id->has_value()) {
-    callee_id =
-        GetOrAddInst(context, context.insts().GetLocId(callee_id),
-                     SemIR::SpecificFunction{
-                         .type_id = context.GetSingletonType(
-                             SemIR::SpecificFunctionType::SingletonInstId),
-                         .callee_id = callee_id,
-                         .specific_id = *callee_specific_id});
+    callee_id = GetOrAddInst(
+        context, context.insts().GetLocId(callee_id),
+        SemIR::SpecificFunction{
+            .type_id = GetSingletonType(
+                context, SemIR::SpecificFunctionType::SingletonInstId),
+            .callee_id = callee_id,
+            .specific_id = *callee_specific_id});
     if (callee_function.self_type_id.has_value()) {
       // This is an associated function, and will be required to be defined as
       // part of checking that the impl is complete.
@@ -203,7 +204,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       // For functions with an implicit return type, the return type is the
       // empty tuple type.
       if (!return_info.type_id.has_value()) {
-        return_info.type_id = context.GetTupleType({});
+        return_info.type_id = GetTupleType(context, {});
       }
       break;
     case SemIR::InitRepr::ByCopy:

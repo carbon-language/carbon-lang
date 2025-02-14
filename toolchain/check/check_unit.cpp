@@ -19,6 +19,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -93,7 +94,7 @@ auto CheckUnit::Run() -> void {
 auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      context_.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context_, SemIR::NamespaceType::SingletonInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.

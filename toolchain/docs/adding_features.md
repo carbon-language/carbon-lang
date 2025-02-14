@@ -298,13 +298,13 @@ If the resulting SemIR needs a new instruction:
         constructed as a special-case in
         [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
         one of these builtin types, use something like
-        `context.GetSingletonType(SemIR::WitnessType::SingletonInstId)`, as in:
+        `GetSingletonType(context,SemIR::WitnessType::SingletonInstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
-            context.GetSingletonType(SemIR::WitnessType::SingletonInstId);
-        SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(context,
-            node_id, {.type_id = witness_type_id, ...});
+            GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
+        SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(
+            context, node_id, {.type_id = witness_type_id, ...});
         ```
 
     -   Instructions without types may still be used as arguments to

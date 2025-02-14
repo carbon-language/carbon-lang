@@ -20,6 +20,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -126,6 +127,7 @@ static auto MergeFunctionRedecl(Context& context,
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
     prev_function.return_slot_pattern_id = new_function.return_slot_pattern_id;
+    prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,
@@ -259,13 +261,30 @@ static auto BuildFunctionDecl(Context& context,
   auto decl_id =
       AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, function_decl));
 
+  // Find self parameter pattern.
+  // TODO: Do this during initial traversal of implicit params.
+  auto self_param_id = SemIR::InstId::None;
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(name.implicit_param_patterns_id);
+  if (const auto* i =
+          llvm::find_if(implicit_param_patterns,
+                        [&](auto implicit_param_id) {
+                          return SemIR::Function::GetNameFromPatternId(
+                                     context.sem_ir(), implicit_param_id) ==
+                                 SemIR::NameId::SelfValue;
+                        });
+      i != implicit_param_patterns.end()) {
+    self_param_id = *i;
+  }
+
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
                       {.return_slot_pattern_id = name.return_slot_pattern_id,
-                       .virtual_modifier = virtual_modifier}};
+                       .virtual_modifier = virtual_modifier,
+                       .self_param_id = self_param_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
@@ -292,8 +311,9 @@ static auto BuildFunctionDecl(Context& context,
     FinishGenericRedecl(context, decl_id, function_info.generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
-  function_decl.type_id = context.GetFunctionType(
-      function_decl.function_id, context.scope_stack().PeekSpecificId());
+  function_decl.type_id =
+      GetFunctionType(context, function_decl.function_id,
+                      context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
   ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
@@ -334,7 +354,7 @@ static auto BuildFunctionDecl(Context& context,
         !function_info.param_patterns_id.has_value() ||
         !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.has_value() &&
-         return_type_id != context.GetTupleType({}) &&
+         return_type_id != GetTupleType(context, {}) &&
          // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
          // have an interface for this.
          return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
@@ -531,7 +551,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   // Get the return type. This is `()` if none was specified.
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
   if (!return_type_id.has_value()) {
-    return_type_id = context.GetTupleType({});
+    return_type_id = GetTupleType(context, {});
   }
 
   return builtin_kind.IsValidType(context.sem_ir(), param_type_ids,

@@ -178,6 +178,8 @@ class NameScope : public Printable<NameScope> {
 
   // Searches for the given name. If found, including if a poisoned entry is
   // found, returns the corresponding EntryId. Otherwise, returns nullopt and
+  // poisons the name so it can't be declared later. Names that are not
+  // identifiers will not be poisoned.
   // poisons the name so it can't be declared later.
   auto LookupOrPoison(LocId loc_id, NameId name_id) -> std::optional<EntryId>;
 

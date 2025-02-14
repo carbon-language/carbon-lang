@@ -14,6 +14,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/function.h"
@@ -194,13 +195,13 @@ static auto PerformImplLookup(
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  auto self_type_id = context.GetTypeIdForTypeConstant(type_const_id);
+  auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   auto witness_id =
       LookupImplWitness(context, loc_id, type_const_id,
                         assoc_type.interface_type_id.AsConstantId());
   if (!witness_id.has_value()) {
-    auto interface_type_id = context.GetInterfaceType(
-        interface_type->interface_id, interface_type->specific_id);
+    auto interface_type_id = GetInterfaceType(
+        context, interface_type->interface_id, interface_type->specific_id);
     if (missing_impl_diagnoser) {
       // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
@@ -288,7 +289,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     if (lookup_in_type_of_base) {
       SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
       if (base_type_id != SemIR::TypeType::SingletonTypeId &&
-          context.IsFacetType(base_type_id)) {
+          context.types().IsFacetType(base_type_id)) {
         // Handles `T.F` when `T` is a non-type facet.
         auto base_as_type = ExprAsType(context, loc_id, base_id);
 
@@ -311,8 +312,8 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           if (base_interface == *assoc_interface) {
             witness_inst_id = GetOrAddInst<SemIR::FacetAccessWitness>(
                 context, loc_id,
-                {.type_id = context.GetSingletonType(
-                     SemIR::WitnessType::SingletonInstId),
+                {.type_id = GetSingletonType(
+                     context, SemIR::WitnessType::SingletonInstId),
                  .facet_value_inst_id = base_id});
             // TODO: Result will eventually be a facet type witness instead of
             // an interface witness. Will need to use the index
@@ -371,7 +372,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
     return GetOrAddInst<SemIR::BoundMethod>(
         context, loc_id,
         {.type_id =
-             context.GetSingletonType(SemIR::BoundMethodType::SingletonInstId),
+             GetSingletonType(context, SemIR::BoundMethodType::SingletonInstId),
          .object_id = base_id,
          .function_decl_id = member_id});
   }
@@ -514,7 +515,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   // TODO: According to the design, this should be a "lookup in base" lookup,
   // not a "lookup in type of base" lookup, and the facet itself should have
   // member names that directly name members of the `impl`.
-  if (context.IsFacetType(base_type_id)) {
+  if (context.types().IsFacetType(base_type_id)) {
     return member_id;
   }
 
@@ -597,7 +598,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
       context, index_node_id, index_inst_id,
-      context.GetSingletonType(SemIR::IntLiteralType::SingletonInstId));
+      GetSingletonType(context, SemIR::IntLiteralType::SingletonInstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::ErrorInst::SingletonInstId;
