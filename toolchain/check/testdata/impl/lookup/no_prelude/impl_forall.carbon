@@ -229,6 +229,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc7_26.1
 // CHECK:STDOUT:     witness = (%F.decl)
 // CHECK:STDOUT:   }
@@ -262,6 +263,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .V = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     witness = file.%impl_witness
 // CHECK:STDOUT:   }
@@ -289,6 +291,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.13025a.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .n = %.loc3_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

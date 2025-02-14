@@ -252,6 +252,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Member = @Member.%assoc0
+// CHECK:STDOUT:   .J = <poisoned>
 // CHECK:STDOUT:   .Second = @Second.%assoc1
 // CHECK:STDOUT:   witness = (%Member, %Second)
 // CHECK:STDOUT: }
@@ -398,6 +399,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .L = <poisoned>
 // CHECK:STDOUT:   .Associated = @Associated.%assoc0
 // CHECK:STDOUT:   witness = (%Associated)
 // CHECK:STDOUT: }

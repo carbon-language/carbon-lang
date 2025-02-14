@@ -67,10 +67,13 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:     .InnerN = %InnerN
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .CallAB = %CallAB.decl
+// CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InnerN: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .CallABC = %CallABC.decl
+// CHECK:STDOUT:     .A = <poisoned>
+// CHECK:STDOUT:     .B = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}

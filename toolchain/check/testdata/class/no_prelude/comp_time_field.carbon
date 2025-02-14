@@ -82,6 +82,7 @@ var x: Class = {};
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .A = %A
+// CHECK:STDOUT:   .Class = <poisoned>
 // CHECK:STDOUT:   .B = %B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

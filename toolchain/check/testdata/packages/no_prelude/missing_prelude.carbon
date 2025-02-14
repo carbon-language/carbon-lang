@@ -133,6 +133,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Int = <poisoned>
 // CHECK:STDOUT:     import Core//prelude_empty
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

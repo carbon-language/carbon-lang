@@ -169,6 +169,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .X = @X.%assoc0
 // CHECK:STDOUT:     witness = (%X)
 // CHECK:STDOUT:   }
@@ -397,7 +398,9 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .X = @X.%assoc0
+// CHECK:STDOUT:     .nonesuch = <poisoned>
 // CHECK:STDOUT:     witness = (%X)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

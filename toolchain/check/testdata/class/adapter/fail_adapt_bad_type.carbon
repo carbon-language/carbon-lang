@@ -60,5 +60,6 @@ class AdaptIncomplete {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptIncomplete
+// CHECK:STDOUT:   .Incomplete = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

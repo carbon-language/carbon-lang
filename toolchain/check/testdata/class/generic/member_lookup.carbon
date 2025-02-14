@@ -229,6 +229,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .b = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -262,8 +263,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived.85c
+// CHECK:STDOUT:     .Base = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .base = %.loc9
 // CHECK:STDOUT:     .d = %.loc10_8
+// CHECK:STDOUT:     .b = <poisoned>
 // CHECK:STDOUT:     extend %Base.loc9_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -560,7 +564,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .b = %.loc5_8
+// CHECK:STDOUT:     .nonesuch = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -593,8 +599,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived.85c
+// CHECK:STDOUT:     .Base = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .base = %.loc9
 // CHECK:STDOUT:     .d = %.loc10_8
+// CHECK:STDOUT:     .nonesuch = <poisoned>
 // CHECK:STDOUT:     extend %Base.loc9_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

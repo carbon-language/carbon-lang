@@ -187,6 +187,7 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Zero = %assoc0
+// CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:   witness = (%Zero.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,6 +225,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Point
+// CHECK:STDOUT:   .Z = <poisoned>
+// CHECK:STDOUT:   .Zero = <poisoned>
 // CHECK:STDOUT:   extend @impl.2.%Z.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

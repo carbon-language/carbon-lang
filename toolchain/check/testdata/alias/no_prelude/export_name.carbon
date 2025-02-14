@@ -216,6 +216,7 @@ var d: D* = &c;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .D = imports.%Main.D
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>

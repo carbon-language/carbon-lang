@@ -114,6 +114,7 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -128,6 +129,8 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   .D = <poisoned>
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   extend @impl.2.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -142,6 +145,7 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   extend @impl.3.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

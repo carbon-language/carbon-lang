@@ -58,6 +58,7 @@ base class A {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
@@ -71,6 +72,7 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -81,6 +83,7 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
@@ -98,7 +101,9 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.a95
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc27
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .c = %.loc32_8
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }

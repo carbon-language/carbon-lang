@@ -78,7 +78,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.scope_stack().PushCompileTimeBinding(bind_id);
     }
     auto name_context =
-        context.decl_name_stack().MakeUnqualifiedName(node_id, name_id);
+        context.decl_name_stack().MakeUnqualifiedName(name_node, name_id);
     context.decl_name_stack().AddNameOrDiagnose(
         name_context, bind_id, introducer.modifier_set.GetAccessKind());
     context.full_pattern_stack().AddBindName(name_id);

@@ -79,6 +79,8 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B1
+// CHECK:STDOUT:   .B2 = <poisoned>
+// CHECK:STDOUT:   .B1 = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
@@ -98,7 +100,9 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B1 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc15
+// CHECK:STDOUT:   .B2 = <poisoned>
 // CHECK:STDOUT:   extend %B1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,6 +115,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   .B1 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc28
 // CHECK:STDOUT:   extend %B1.ref.loc28
 // CHECK:STDOUT: }

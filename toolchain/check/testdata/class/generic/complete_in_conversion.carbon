@@ -157,6 +157,8 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .Int = <poisoned>
+// CHECK:STDOUT:   .N = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @A(%N.loc6_9.1: %i32) {
@@ -188,7 +190,10 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.dd3
+// CHECK:STDOUT:     .B = <poisoned>
 // CHECK:STDOUT:     .base = %.loc7
+// CHECK:STDOUT:     .Int = <poisoned>
+// CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .n = %.loc12_8
 // CHECK:STDOUT:     extend %B.ref
 // CHECK:STDOUT:   }
