@@ -225,8 +225,6 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                         std::string, SemIR::TypeId);
       context.emitter()
           .Build(loc_id, ImplLookupCycle, "<TODO: interface name>",
-                 // FIXME: Invalid for facet values??? Write a test where cycle
-                 // will print a BindSymbolicName?
                  context.types().GetTypeIdForTypeConstantId(type_const_id))
           .Emit();
       return SemIR::ErrorInst::SingletonInstId;

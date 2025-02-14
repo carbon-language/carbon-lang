@@ -21,7 +21,7 @@ interface ImplicitAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
-// --- fail_impl_simple_cycle.carbon
+// --- fail_simple_impl_cycle.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
@@ -34,14 +34,61 @@ class Point {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:21: error: cycle found in lookup of interface <TODO: interface name> for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_simple_impl_cycle.carbon:[[@LINE+7]]:21: error: cycle found in lookup of interface <TODO: interface name> for type `Point` [ImplLookupCycle]
   // CHECK:STDERR:   ({} as Point) as (Point as Z);
   // CHECK:STDERR:                     ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_simple_impl_cycle.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: impl forall [T:! Z] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as Point) as (Point as Z);
+}
+
+// --- fail_simple_impl_cycle_lookup_on_bind_symbolic_name.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+// This creates a dependency cycle with itself.
+impl forall [T:! Z] T as Z {}
+
+fn F[T:! type](t: T) {
+  // CHECK:STDERR: fail_simple_impl_cycle_lookup_on_bind_symbolic_name.carbon:[[@LINE+11]]:9: error: cycle found in lookup of interface <TODO: interface name> for type `T` [ImplLookupCycle]
+  // CHECK:STDERR:   t as (T as Z);
+  // CHECK:STDERR:         ^~~~~~
+  // CHECK:STDERR: fail_simple_impl_cycle_lookup_on_bind_symbolic_name.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Z] T as Z {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_simple_impl_cycle_lookup_on_bind_symbolic_name.carbon:[[@LINE+4]]:9: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   t as (T as Z);
+  // CHECK:STDERR:         ^~~~~~
+  // CHECK:STDERR:
+  t as (T as Z);
+}
+
+// --- fail_simple_impl_cycle_lookup_on_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+interface A {}
+interface Z {}
+
+// This creates a dependency cycle with itself.
+impl forall [T:! Z] T as Z {}
+
+fn F[T:! A](t: T) {
+  // CHECK:STDERR: fail_simple_impl_cycle_lookup_on_facet_type.carbon:[[@LINE+11]]:9: error: cycle found in lookup of interface <TODO: interface name> for type `A` [ImplLookupCycle]
+  // CHECK:STDERR:   t as (T as Z);
+  // CHECK:STDERR:         ^~~~~~
+  // CHECK:STDERR: fail_simple_impl_cycle_lookup_on_facet_type.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Z] T as Z {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_simple_impl_cycle_lookup_on_facet_type.carbon:[[@LINE+4]]:9: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   t as (T as Z);
+  // CHECK:STDERR:         ^~~~~~
+  // CHECK:STDERR:
+  t as (T as Z);
 }
 
 // --- fail_impl_cycle_one_generic_param.carbon
