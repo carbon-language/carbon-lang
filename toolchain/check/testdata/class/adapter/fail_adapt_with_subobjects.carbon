@@ -124,6 +124,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc15
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
@@ -257,6 +258,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBaseAndFields
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .n = %.loc8_8
 // CHECK:STDOUT:   extend %Base.ref

@@ -211,6 +211,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   witness = file.%impl_witness.loc19
 // CHECK:STDOUT: }
@@ -260,6 +261,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   witness = file.%impl_witness.loc31
 // CHECK:STDOUT: }

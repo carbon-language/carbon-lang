@@ -41,6 +41,7 @@ fn Make() -> C {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .NoSuchType = <poisoned>
 // CHECK:STDOUT:     .Make = %Make.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -66,6 +67,7 @@ fn Make() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .NoSuchType = <poisoned>
 // CHECK:STDOUT:   .a = %.loc16_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

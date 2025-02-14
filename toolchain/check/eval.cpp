@@ -8,6 +8,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -124,7 +125,7 @@ class EvalContext {
 
   // Gets the constant value of the specified type in this context.
   auto GetConstantValueAsType(SemIR::TypeId id) -> SemIR::TypeId {
-    return context().GetTypeIdForTypeConstant(GetConstantValue(id));
+    return context().types().GetTypeIdForTypeConstantId(GetConstantValue(id));
   }
 
   // Gets the instruction describing the constant value of the specified type in
@@ -332,7 +333,7 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
                              Phase* phase) -> SemIR::TypeId {
   auto const_id = eval_context.GetConstantValue(type_id);
   *phase = LatestPhase(*phase, GetPhase(eval_context, const_id));
-  return eval_context.context().GetTypeIdForTypeConstant(const_id);
+  return eval_context.context().types().GetTypeIdForTypeConstantId(const_id);
 }
 
 // If the given instruction block contains only constants, returns a
@@ -690,7 +691,7 @@ static auto MakeIntTypeResult(Context& context, SemIRLoc loc,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
   auto result = SemIR::IntType{
-      .type_id = context.GetSingletonType(SemIR::TypeType::SingletonInstId),
+      .type_id = GetSingletonType(context, SemIR::TypeType::SingletonInstId),
       .int_kind = int_kind,
       .bit_width_id = width_id};
   if (!ValidateIntType(context, loc, result)) {
@@ -1752,8 +1753,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // A non-generic interface declaration evaluates to a facet type.
       return MakeConstantResult(
           eval_context.context(),
-          eval_context.context().FacetTypeFromInterface(
-              interface_decl.interface_id, SemIR::SpecificId::None),
+          FacetTypeFromInterface(eval_context.context(),
+                                 interface_decl.interface_id,
+                                 SemIR::SpecificId::None),
           Phase::Concrete);
     }
 
@@ -1863,7 +1865,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // argument of that specific, its constant value is the corresponding
       // argument value.
       if (auto value =
-              eval_context.GetCompileTimeBindValue(bind_name.bind_index);
+              eval_context.GetCompileTimeBindValue(bind_name.bind_index());
           value.has_value()) {
         return value;
       }
@@ -1872,6 +1874,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // original, with no equivalent value.
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+      // TODO: Propagate the `is_template` flag into the phase.
       return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
     }
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
@@ -1886,10 +1889,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         // argument of that specific, its constant value is the corresponding
         // argument value.
         if (auto value =
-                eval_context.GetCompileTimeBindValue(bind_name.bind_index);
+                eval_context.GetCompileTimeBindValue(bind_name.bind_index());
             value.has_value()) {
           return value;
         }
+        // TODO: Propagate the `is_template` flag into the phase.
         phase = Phase::Symbolic;
       }
       // The constant form of a symbolic binding is an idealized form of the
@@ -2073,8 +2077,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
     case CARBON_KIND(SemIR::RequireCompleteType require_complete): {
       auto phase = Phase::Concrete;
-      auto witness_type_id = eval_context.context().GetSingletonType(
-          SemIR::WitnessType::SingletonInstId);
+      auto witness_type_id = GetSingletonType(
+          eval_context.context(), SemIR::WitnessType::SingletonInstId);
       auto complete_type_id = GetConstantValue(
           eval_context, require_complete.complete_type_id, &phase);
 

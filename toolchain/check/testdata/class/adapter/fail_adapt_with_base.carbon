@@ -66,6 +66,7 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithVirtual
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .Simple = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F();

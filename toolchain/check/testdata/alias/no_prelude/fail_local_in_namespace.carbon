@@ -40,7 +40,9 @@ fn F() -> {} {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .a = <poisoned>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0

@@ -167,6 +167,7 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
 // CHECK:STDOUT:   witness = file.%impl_witness.loc15
 // CHECK:STDOUT: }
@@ -188,6 +189,7 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
 // CHECK:STDOUT:   witness = file.%impl_witness.loc19
 // CHECK:STDOUT: }

@@ -381,6 +381,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%IncompleteAddrSelf
+// CHECK:STDOUT:   .Class = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,6 +506,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .c = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

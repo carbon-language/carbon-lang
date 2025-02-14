@@ -36,6 +36,7 @@
 
 #ifndef CARBON_PARSE_STATE
 #error "Must define the x-macro to use this file."
+#define CARBON_PARSE_STATE(Name)
 #endif
 
 // Use CARBON_PARSE_STATE_VARIANTSN(State, Variant1, Variant2, ...) to generate
@@ -992,12 +993,6 @@ CARBON_PARSE_STATE(Pattern)
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
 //
-// template    (variant is not Variable)
-// ^~~~~~~~
-//   4. BindingPatternTemplate
-//
-// THEN
-//
 // addr        (variant is not Variable)
 // ^~~~
 //   3. BindingPatternAddr
@@ -1011,10 +1006,10 @@ CARBON_PARSE_STATE(Pattern)
 //   1. Expr
 //   2. BindingPatternFinishAsRegular
 //
-// name:! ...
-// ^~~~~~
-// self:! ...
-// ^~~~~~
+// [template] name:! ...
+// ^~~~~~~~~~~~~~~~~
+// [template] self:! ...
+// ^~~~~~~~~~~~~~~~~
 //   1. Expr
 //   2. BindingPatternFinishAsGeneric
 //
@@ -1029,13 +1024,6 @@ CARBON_PARSE_STATE(BindingPattern)
 //                ^
 //   (state done)
 CARBON_PARSE_STATE(BindingPatternAddr)
-
-// Handles `template` in a binding pattern.
-//
-// template name:! type
-//                     ^
-//   (state done)
-CARBON_PARSE_STATE(BindingPatternTemplate)
 
 // Finishes binding pattern processing.
 //

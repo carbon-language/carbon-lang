@@ -111,6 +111,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Wrap.af6
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Make = %Make.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

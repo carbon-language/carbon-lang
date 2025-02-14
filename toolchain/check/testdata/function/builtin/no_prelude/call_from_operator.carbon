@@ -288,6 +288,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc12_32.1
 // CHECK:STDOUT:     witness = (%Convert.decl)
 // CHECK:STDOUT:   }
@@ -329,6 +330,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc16_32.1
 // CHECK:STDOUT:     witness = (%Convert.decl)
 // CHECK:STDOUT:   }
@@ -424,6 +426,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .IntLiteral = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
 // CHECK:STDOUT:   witness = file.%impl_witness.loc31
 // CHECK:STDOUT: }

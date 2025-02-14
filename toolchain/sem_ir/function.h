@@ -31,6 +31,10 @@ struct FunctionFields {
   // this function.
   VirtualModifier virtual_modifier;
 
+  // The implicit self parameter, if any, in implicit_param_patterns_id from
+  // EntityWithParamsBase.
+  InstId self_param_id = SemIR::InstId::None;
+
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
 
@@ -51,6 +55,12 @@ struct FunctionFields {
 struct Function : public EntityWithParamsBase,
                   public FunctionFields,
                   public Printable<Function> {
+  struct ParamPatternInfo {
+    InstId inst_id;
+    AnyParamPattern inst;
+    EntityNameId entity_name_id;
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
@@ -69,14 +79,6 @@ struct Function : public EntityWithParamsBase,
   // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
   // corresponding instruction, its ID, and the entity_name_id of the underlying
   // binding pattern.
-  struct ParamPatternInfo {
-    InstId inst_id;
-    AnyParamPattern inst;
-    EntityNameId entity_name_id;
-
-    auto GetNameId(const File& sem_ir) -> NameId;
-  };
-
   static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                InstId param_pattern_id)
       -> ParamPatternInfo;

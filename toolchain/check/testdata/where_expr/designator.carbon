@@ -301,6 +301,7 @@ class D {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Member = @Member.%assoc0
+// CHECK:STDOUT:   .Mismatch = <poisoned>
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

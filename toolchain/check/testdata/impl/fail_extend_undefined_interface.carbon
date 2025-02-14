@@ -102,6 +102,8 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .I = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend @impl.%I.ref
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }

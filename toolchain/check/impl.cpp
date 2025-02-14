@@ -7,11 +7,13 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -83,9 +85,16 @@ static auto CheckAssociatedFunctionImplementation(
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
-  return context.ResolveFacetTypeImplWitness(
-      context.insts().GetLocId(impl.latest_decl_id()), impl.constraint_id,
-      impl.self_id, impl.interface,
+
+  auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
+  if (self_type_id == SemIR::ErrorInst::SingletonTypeId) {
+    // When 'impl as' is invalid, the self type is an error.
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
+  return ResolveFacetTypeImplWitness(
+      context, context.insts().GetLocId(impl.latest_decl_id()),
+      impl.constraint_id, impl.self_id, impl.interface,
       context.generics().GetSelfSpecific(impl.generic_id));
 }
 
@@ -144,7 +153,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
-  auto self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
+  auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);

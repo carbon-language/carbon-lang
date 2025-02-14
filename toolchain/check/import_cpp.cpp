@@ -17,6 +17,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
+#include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -99,13 +101,13 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
   return AddImportNamespace(
              context,
-             context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
+             GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
              SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
              [&]() {
-               return context.AddInst<SemIR::ImportCppDecl>(
-                   imports.front().node_id, {});
+               return AddInst<SemIR::ImportCppDecl>(
+                   context, imports.front().node_id, {});
              })
       .name_scope_id;
 }

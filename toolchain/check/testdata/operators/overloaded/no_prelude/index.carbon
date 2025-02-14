@@ -223,6 +223,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .SubscriptType = <poisoned>
 // CHECK:STDOUT:     .At = %assoc0.loc5_52.1
 // CHECK:STDOUT:     witness = (%At.decl)
 // CHECK:STDOUT:   }

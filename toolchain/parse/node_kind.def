@@ -31,6 +31,7 @@
 
 #if !defined(CARBON_PARSE_NODE_KIND)
 #error "Must define CARBON_PARSE_NODE_KIND family x-macros to use this file."
+#define CARBON_PARSE_NODE_KIND(Name)
 #endif
 
 // This is expected to be used with something like:
@@ -160,9 +161,9 @@ CARBON_PARSE_NODE_KIND(ArrayExpr)
 
 CARBON_PARSE_NODE_KIND(LetBindingPattern)
 CARBON_PARSE_NODE_KIND(VarBindingPattern)
+CARBON_PARSE_NODE_KIND(TemplateBindingName)
 CARBON_PARSE_NODE_KIND(CompileTimeBindingPattern)
 CARBON_PARSE_NODE_KIND(Addr)
-CARBON_PARSE_NODE_KIND(Template)
 
 CARBON_PARSE_NODE_KIND(LetIntroducer)
 CARBON_PARSE_NODE_KIND(LetInitializer)
@@ -340,7 +341,7 @@ CARBON_PARSE_NODE_KIND(ImplIntroducer)
 CARBON_PARSE_NODE_KIND(ImplDefinitionStart)
 CARBON_PARSE_NODE_KIND(ImplDefinition)
 CARBON_PARSE_NODE_KIND(ImplDecl)
-CARBON_PARSE_NODE_KIND(ImplForall)
+CARBON_PARSE_NODE_KIND(Forall)
 CARBON_PARSE_NODE_KIND(TypeImplAs)
 CARBON_PARSE_NODE_KIND(DefaultSelfImplAs)
 

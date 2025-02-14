@@ -85,5 +85,6 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

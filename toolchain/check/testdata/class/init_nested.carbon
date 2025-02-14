@@ -116,6 +116,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
+// CHECK:STDOUT:   .Inner = <poisoned>
 // CHECK:STDOUT:   .c = %.loc19_8
 // CHECK:STDOUT:   .d = %.loc20_8
 // CHECK:STDOUT: }

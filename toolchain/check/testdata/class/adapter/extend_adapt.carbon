@@ -205,6 +205,9 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
+// CHECK:STDOUT:   .SomeClass = <poisoned>
+// CHECK:STDOUT:   .StaticMemberFunction = <poisoned>
+// CHECK:STDOUT:   .AdapterMethod = <poisoned>
 // CHECK:STDOUT:   extend %SomeClass.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -236,6 +239,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   .a = %.loc7_8
 // CHECK:STDOUT:   .b = %.loc8_8
 // CHECK:STDOUT:   .StaticMemberFunction = %StaticMemberFunction.decl
+// CHECK:STDOUT:   .SomeClassAdapter = <poisoned>
 // CHECK:STDOUT:   .AdapterMethod = %AdapterMethod.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -327,6 +331,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
+// CHECK:STDOUT:   .SomeClass = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend %SomeClass.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -419,6 +425,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
+// CHECK:STDOUT:   .SomeClass = <poisoned>
+// CHECK:STDOUT:   .b = <poisoned>
 // CHECK:STDOUT:   extend %SomeClass.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -487,6 +495,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
+// CHECK:STDOUT:   .b = <poisoned>
 // CHECK:STDOUT:   extend %struct_type.a.b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -647,6 +656,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%IntAdapter
+// CHECK:STDOUT:   .MakeInt = <poisoned>
+// CHECK:STDOUT:   .foo = <poisoned>
 // CHECK:STDOUT:   extend %.loc7_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -201,6 +201,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .DeriveFromError = %DeriveFromError.decl
+// CHECK:STDOUT:     .error = <poisoned>
 // CHECK:STDOUT:     .AccessMemberWithInvalidBaseError = %AccessMemberWithInvalidBaseError.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -232,7 +233,9 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromError
+// CHECK:STDOUT:   .error = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
+// CHECK:STDOUT:   .n = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -301,6 +304,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromNonType
 // CHECK:STDOUT:   .base = %.loc12_18
+// CHECK:STDOUT:   .n = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -393,6 +397,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromi32
 // CHECK:STDOUT:   .base = %.loc9
+// CHECK:STDOUT:   .n = <poisoned>
 // CHECK:STDOUT:   extend %i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -509,7 +514,9 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromTuple
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc11_23
+// CHECK:STDOUT:   .n = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -614,6 +621,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromStruct
 // CHECK:STDOUT:   .base = %.loc11
+// CHECK:STDOUT:   .n = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -713,7 +721,9 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromIncomplete
+// CHECK:STDOUT:   .Incomplete = <poisoned>
 // CHECK:STDOUT:   .base = %.loc18
+// CHECK:STDOUT:   .n = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -840,6 +850,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Final
 // CHECK:STDOUT:   .a = %.loc5_8
+// CHECK:STDOUT:   .b = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
@@ -850,7 +861,10 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromFinal
+// CHECK:STDOUT:   .Final = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   .a = <poisoned>
+// CHECK:STDOUT:   .b = <poisoned>
 // CHECK:STDOUT:   extend %Final.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

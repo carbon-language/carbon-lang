@@ -311,8 +311,11 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
+// CHECK:STDOUT:   .Shape = <poisoned>
 // CHECK:STDOUT:   .base = %.loc10
 // CHECK:STDOUT:   .GetPosition = %GetPosition.decl
+// CHECK:STDOUT:   .x = <poisoned>
+// CHECK:STDOUT:   .y = <poisoned>
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -414,6 +417,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F [private] = %F.decl
 // CHECK:STDOUT:   extend %A.ref
@@ -441,8 +445,10 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -545,6 +551,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .SOME_CONSTANT [protected] = %SOME_CONSTANT
 // CHECK:STDOUT:   .SomeProtectedFunction [protected] = %SomeProtectedFunction.decl
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -573,6 +580,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
@@ -680,8 +688,10 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Square
+// CHECK:STDOUT:   .Shape = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .GetPosition = %GetPosition.decl
+// CHECK:STDOUT:   .y = <poisoned>
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -853,8 +863,10 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -924,8 +936,10 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1092,9 +1106,11 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .Internal = <poisoned>
 // CHECK:STDOUT:   .internal [private] = %.loc14_23
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .SomeFunc = %SomeFunc.decl
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
@@ -1164,6 +1180,7 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .x [private] = %.loc5_16
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -1182,6 +1199,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %A.ref
@@ -1243,6 +1261,7 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .x [protected] = %.loc5_18
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -1261,6 +1280,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %A.ref

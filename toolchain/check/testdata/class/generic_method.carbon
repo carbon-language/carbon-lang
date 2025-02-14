@@ -112,6 +112,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .a = %.loc12_8
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }

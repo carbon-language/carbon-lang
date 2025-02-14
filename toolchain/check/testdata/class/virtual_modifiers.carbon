@@ -358,6 +358,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Modifiers = <poisoned>
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   extend %Base.ref
@@ -431,6 +432,7 @@ class Derived {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .Modifiers = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
@@ -573,6 +575,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A2
+// CHECK:STDOUT:   .A1 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %A1.ref
@@ -649,6 +652,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
+// CHECK:STDOUT:   .B1 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %B1.ref
@@ -664,6 +668,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B2 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %B2.ref
@@ -935,6 +940,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %Base.ref
@@ -1005,6 +1011,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractIntermediate
+// CHECK:STDOUT:   .AbstractBase = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   extend %AbstractBase.ref
 // CHECK:STDOUT: }
@@ -1019,6 +1026,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .AbstractIntermediate = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %AbstractIntermediate.ref
@@ -1091,6 +1099,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%VirtualIntermediate
+// CHECK:STDOUT:   .VirtualBase = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   extend %VirtualBase.ref
 // CHECK:STDOUT: }
@@ -1105,6 +1114,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .VirtualIntermediate = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %VirtualIntermediate.ref
@@ -1185,6 +1195,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %Base.ref
@@ -1272,6 +1283,7 @@ class Derived {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .T1 = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
@@ -1307,7 +1319,9 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   .T1 = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .T2 = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -1327,7 +1341,9 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc21
+// CHECK:STDOUT:   .T2 = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
@@ -1432,7 +1448,9 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .T1 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1455,6 +1473,8 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
+// CHECK:STDOUT:   .T1 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %Base

@@ -96,6 +96,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
