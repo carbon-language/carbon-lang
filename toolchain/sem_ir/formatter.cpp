@@ -807,7 +807,7 @@ class FormatterImpl {
     if (pending_constant_value_.has_value()) {
       switch (
           sem_ir_->constant_values().GetDependence(pending_constant_value_)) {
-        case ConstantDependence::Concrete:
+        case ConstantDependence::None:
           out_ << "concrete";
           break;
         case ConstantDependence::PeriodSelf:

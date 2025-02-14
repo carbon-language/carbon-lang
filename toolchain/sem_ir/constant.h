@@ -19,7 +19,7 @@ namespace Carbon::SemIR {
 enum class ConstantDependence : uint8_t {
   // This constant's value is known concretely, and does not depend on any
   // symbolic binding.
-  Concrete,
+  None,
   // The only symbolic binding that this constant depends on is `.Self`.
   PeriodSelf,
   // The only symbolic bindings that this constant depends on are checked
@@ -50,7 +50,7 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
     out << "{inst: " << inst_id << ", generic: " << generic_id
         << ", index: " << index << ", kind: ";
     switch (dependence) {
-      case ConstantDependence::Concrete:
+      case ConstantDependence::None:
         out << "<error: concrete>";
         break;
       case ConstantDependence::PeriodSelf:
@@ -142,7 +142,7 @@ class ConstantValueStore {
   // Get the dependence of the given constant.
   auto GetDependence(ConstantId const_id) const -> ConstantDependence {
     return const_id.is_symbolic() ? GetSymbolicConstant(const_id).dependence
-                                  : ConstantDependence::Concrete;
+                                  : ConstantDependence::None;
   }
 
   // Returns true for symbolic constants other than those that are only symbolic

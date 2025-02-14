@@ -230,7 +230,7 @@ static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
     return Phase::UnknownDueToError;
   }
   switch (eval_context.constant_values().GetDependence(constant_id)) {
-    case SemIR::ConstantDependence::Concrete:
+    case SemIR::ConstantDependence::None:
       return Phase::Concrete;
     case SemIR::ConstantDependence::PeriodSelf:
       return Phase::PeriodSelfSymbolic;
@@ -268,7 +268,7 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
   switch (phase) {
     case Phase::Concrete:
       return context.constants().GetOrAdd(inst,
-                                          SemIR::ConstantDependence::Concrete);
+                                          SemIR::ConstantDependence::None);
     case Phase::PeriodSelfSymbolic:
       return context.constants().GetOrAdd(
           inst, SemIR::ConstantDependence::PeriodSelf);

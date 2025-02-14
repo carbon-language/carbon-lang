@@ -13,7 +13,7 @@ auto ConstantStore::GetOrAdd(Inst inst, ConstantDependence dependence)
   auto result = map_.Insert(inst, [&] {
     auto inst_id = sem_ir_->insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     ConstantId const_id = ConstantId::None;
-    if (dependence == ConstantDependence::Concrete) {
+    if (dependence == ConstantDependence::None) {
       const_id = SemIR::ConstantId::ForConcreteConstant(inst_id);
     } else {
       // The instruction in the constants store is an abstract symbolic
@@ -31,8 +31,7 @@ auto ConstantStore::GetOrAdd(Inst inst, ConstantDependence dependence)
   });
   CARBON_CHECK(result.value() != ConstantId::None);
   CARBON_CHECK(
-      result.value().is_symbolic() ==
-          (dependence != ConstantDependence::Concrete),
+      result.value().is_symbolic() == (dependence != ConstantDependence::None),
       "Constant {0} registered as both symbolic and concrete constant.", inst);
   return result.value();
 }
