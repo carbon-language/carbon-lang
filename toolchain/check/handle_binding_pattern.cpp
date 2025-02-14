@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/return.h"
@@ -54,21 +55,24 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                    : SemIR::CompileTimeBindIndex::None,
         is_template);
     if (is_generic) {
-      bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
-          name_node, SemIR::BindSymbolicName{.type_id = cast_type_id,
+      bind_id = AddInstInNoBlock(
+          context,
+          SemIR::LocIdAndInst(name_node, SemIR::BindSymbolicName{
+                                             .type_id = cast_type_id,
                                              .entity_name_id = entity_name_id,
                                              .value_id = SemIR::InstId::None}));
-      binding_pattern_id =
-          context.AddPatternInst<SemIR::SymbolicBindingPattern>(
-              name_node,
-              {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      binding_pattern_id = AddPatternInst<SemIR::SymbolicBindingPattern>(
+          context, name_node,
+          {.type_id = cast_type_id, .entity_name_id = entity_name_id});
     } else {
-      bind_id = context.AddInstInNoBlock(SemIR::LocIdAndInst(
-          name_node, SemIR::BindName{.type_id = cast_type_id,
-                                     .entity_name_id = entity_name_id,
-                                     .value_id = SemIR::InstId::None}));
-      binding_pattern_id = context.AddPatternInst<SemIR::BindingPattern>(
-          name_node,
+      bind_id = AddInstInNoBlock(
+          context,
+          SemIR::LocIdAndInst(
+              name_node, SemIR::BindName{.type_id = cast_type_id,
+                                         .entity_name_id = entity_name_id,
+                                         .value_id = SemIR::InstId::None}));
+      binding_pattern_id = AddPatternInst<SemIR::BindingPattern>(
+          context, name_node,
           {.type_id = cast_type_id, .entity_name_id = entity_name_id});
     }
 
@@ -126,10 +130,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
     auto field_type_id =
         GetUnboundElementType(context, class_info.self_type_id, cast_type_id);
-    auto field_id = context.AddInst<SemIR::FieldDecl>(
-        binding_id, {.type_id = field_type_id,
-                     .name_id = name_id,
-                     .index = SemIR::ElementIndex::None});
+    auto field_id =
+        AddInst<SemIR::FieldDecl>(context, binding_id,
+                                  {.type_id = field_type_id,
+                                   .name_id = name_id,
+                                   .index = SemIR::ElementIndex::None});
     context.field_decls_stack().AppendToTop(field_id);
 
     context.node_stack().Push(node_id, field_id);
@@ -163,16 +168,19 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         .type_id = cast_type_id,
         .assoc_const_id = SemIR::AssociatedConstantId::None,
         .decl_block_id = SemIR::InstBlockId::None};
-    auto decl_id = context.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
-        context.parse_tree().As<Parse::CompileTimeBindingPatternId>(node_id),
-        assoc_const_decl));
+    auto decl_id = AddPlaceholderInstInNoBlock(
+        context,
+        SemIR::LocIdAndInst(
+            context.parse_tree().As<Parse::CompileTimeBindingPatternId>(
+                node_id),
+            assoc_const_decl));
     assoc_const_decl.assoc_const_id = context.associated_constants().Add(
         {.name_id = name_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),
          .decl_id = decl_id,
          .generic_id = SemIR::GenericId::None,
          .default_value_id = SemIR::InstId::None});
-    context.ReplaceInstBeforeConstantUse(decl_id, assoc_const_decl);
+    ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
 
     context.node_stack().Push(node_id, decl_id);
     return true;
@@ -228,8 +236,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         param_pattern_id = SemIR::ErrorInst::SingletonInstId;
       } else {
         auto pattern_inst_id = make_binding_pattern();
-        param_pattern_id = context.AddPatternInst<SemIR::ValueParamPattern>(
-            node_id,
+        param_pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
+            context, node_id,
             {
                 .type_id = context.insts().Get(pattern_inst_id).type_id(),
                 .subpattern_id = pattern_inst_id,
@@ -332,9 +340,10 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
     auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
         context.insts().Get(param_pattern_id).type_id());
     if (pointer_type) {
-      auto addr_pattern_id = context.AddPatternInst<SemIR::AddrPattern>(
-          node_id, {.type_id = SemIR::AutoType::SingletonTypeId,
-                    .inner_id = param_pattern_id});
+      auto addr_pattern_id = AddPatternInst<SemIR::AddrPattern>(
+          context, node_id,
+          {.type_id = SemIR::AutoType::SingletonTypeId,
+           .inner_id = param_pattern_id});
       context.node_stack().Push(node_id, addr_pattern_id);
     } else {
       CARBON_DIAGNOSTIC(

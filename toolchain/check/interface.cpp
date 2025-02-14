@@ -7,6 +7,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -36,8 +37,8 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
   auto type_id = GetAssociatedEntityType(context, self_type_id);
-  return context.AddInst<SemIR::AssociatedEntity>(
-      context.insts().GetLocId(decl_id),
+  return AddInst<SemIR::AssociatedEntity>(
+      context, context.insts().GetLocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});
 }
 

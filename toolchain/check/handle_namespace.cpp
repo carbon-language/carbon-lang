@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
@@ -42,7 +43,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
       GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
       SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, namespace_inst));
 
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
@@ -75,7 +76,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
                  !context.insts().GetLocId(existing_inst_id).has_value()) {
         // When the name conflict is an imported namespace, fill the location ID
         // so that future diagnostics point at this declaration.
-        context.SetNamespaceNodeId(existing_inst_id, node_id);
+        SetNamespaceNodeId(context, existing_inst_id, node_id);
       }
     } else {
       DiagnoseDuplicateName(context, name_context.loc_id, existing_inst_id);
@@ -96,7 +97,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     }
   }
 
-  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
+  ReplaceInstBeforeConstantUse(context, namespace_id, namespace_inst);
 
   context.decl_name_stack().PopScope();
   return true;
