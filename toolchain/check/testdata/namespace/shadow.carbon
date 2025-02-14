@@ -77,6 +77,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %A.decl.loc14: %A.type.0e8 = fn_decl @A.2 [concrete = constants.%A.281] {} {}
 // CHECK:STDOUT:   %M: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern

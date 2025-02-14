@@ -673,10 +673,6 @@ class FormatterImpl {
     }
 
     for (auto [name_id, result] : scope.entries()) {
-      if (result.is_poisoned()) {
-        // TODO: Add poisoned names.
-        continue;
-      }
       Indent();
       out_ << ".";
       FormatName(name_id);
@@ -691,7 +687,11 @@ class FormatterImpl {
           break;
       }
       out_ << " = ";
-      FormatName(result.is_found() ? result.target_inst_id() : InstId::None);
+      if (result.is_poisoned()) {
+        out_ << "<poisoned>";
+      } else {
+        FormatName(result.is_found() ? result.target_inst_id() : InstId::None);
+      }
       out_ << "\n";
     }
 

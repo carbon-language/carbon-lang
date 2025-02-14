@@ -72,6 +72,7 @@ let b: B = C.base;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }

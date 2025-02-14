@@ -178,6 +178,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .SubscriptType = <poisoned>
+// CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %At.decl
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
@@ -488,6 +490,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .SubscriptType = <poisoned>
+// CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %At.decl
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }

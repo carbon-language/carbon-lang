@@ -143,6 +143,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .I = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend @impl.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -139,6 +139,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .GetAddr = %GetAddr.decl
 // CHECK:STDOUT:     .GetValue = %GetValue.decl
 // CHECK:STDOUT:     .k = %.loc21_8

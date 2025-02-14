@@ -170,6 +170,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.fe1b2d.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

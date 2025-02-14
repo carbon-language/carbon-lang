@@ -262,6 +262,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   witness = file.%impl_witness.loc31
 // CHECK:STDOUT: }
@@ -421,6 +422,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   .M = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

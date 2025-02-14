@@ -14,6 +14,7 @@
 
 #ifndef CARBON_DIAGNOSTIC_KIND
 #error "Must define the x-macro to use this file."
+#define CARBON_DIAGNOSTIC_KIND(Name)
 #endif
 
 // ============================================================================

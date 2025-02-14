@@ -102,6 +102,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .MakeSelf = %MakeSelf.decl
+// CHECK:STDOUT:     .Class = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .MakeClass = %MakeClass.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }

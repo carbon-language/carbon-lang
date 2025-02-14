@@ -64,6 +64,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -147,6 +147,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Bad
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
@@ -200,6 +201,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Bad
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

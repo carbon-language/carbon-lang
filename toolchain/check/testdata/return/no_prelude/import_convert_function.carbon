@@ -181,6 +181,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc9_32.1
 // CHECK:STDOUT:     witness = (%Convert.decl)
 // CHECK:STDOUT:   }
@@ -587,7 +588,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -607,7 +610,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -627,7 +632,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -647,7 +654,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -667,7 +676,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -687,7 +698,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -707,7 +720,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -727,7 +742,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Make = <poisoned>
 // CHECK:STDOUT:   witness = file.%impl_witness.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -159,7 +159,9 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc5_14.1
+// CHECK:STDOUT:     .Param = <poisoned>
 // CHECK:STDOUT:     witness = (%F.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -175,6 +177,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Param = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   witness = @C.%impl_witness
 // CHECK:STDOUT: }
@@ -206,6 +209,9 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .HasF = <poisoned>
+// CHECK:STDOUT:   .Param = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend @impl.1.%HasF.type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -403,7 +409,9 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc5_25.1
+// CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     witness = (%F.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -438,6 +446,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     witness = @X.%impl_witness
 // CHECK:STDOUT:   }
@@ -464,6 +473,8 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%X
+// CHECK:STDOUT:     .I = <poisoned>
+// CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     extend %.loc9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

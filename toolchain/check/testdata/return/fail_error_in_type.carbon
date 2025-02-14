@@ -31,6 +31,7 @@ fn Six() -> x;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .x = <poisoned>
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

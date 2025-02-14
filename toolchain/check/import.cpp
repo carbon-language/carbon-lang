@@ -107,6 +107,8 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
         if (diagnose_duplicate_namespace) {
           auto import_id = make_import_id();
           CARBON_CHECK(import_id.has_value());
+          // TODO: Pass the import package name location instead of the import
+          // id to get more accurate location.
           DiagnoseDuplicateName(context, import_id, prev_inst_id);
         }
         return {.name_scope_id = namespace_inst->name_scope_id,
@@ -148,6 +150,8 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
   // may be overwriting a poisoned entry here.
   auto& result = parent_scope->GetEntry(entry_id).result;
   if (!result.is_poisoned() && !inserted) {
+    // TODO: Pass the import namespace name location instead of the namespace id
+    // to get more accurate location.
     DiagnoseDuplicateName(context, namespace_id, result.target_inst_id());
   }
   result = SemIR::ScopeLookupResult::MakeFound(namespace_id,

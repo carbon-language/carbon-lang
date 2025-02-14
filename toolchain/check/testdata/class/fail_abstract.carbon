@@ -235,6 +235,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
+// CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT:   .a = %.loc15_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -383,6 +384,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapter
+// CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- define_and_call_abstract_param.carbon
@@ -520,6 +522,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .d = %.loc10_8
 // CHECK:STDOUT:   extend %Abstract.ref
@@ -605,6 +608,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .d = %.loc10_8
 // CHECK:STDOUT:   extend %Abstract.ref
@@ -695,6 +699,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .d = %.loc11_8
 // CHECK:STDOUT:   extend %Abstract.ref

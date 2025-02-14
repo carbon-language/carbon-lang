@@ -143,6 +143,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -179,6 +180,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .SelfBase = %SelfBase.decl
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase.decl

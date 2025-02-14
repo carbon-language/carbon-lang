@@ -17,6 +17,8 @@ auto AddNameToLookup(Context& context, SemIR::NameId name_id,
   if (auto existing = context.scope_stack().LookupOrAddName(name_id, target_id,
                                                             scope_index);
       existing.has_value()) {
+    // TODO: Add coverage to this use case and use the location of the name
+    // instead of the target.
     DiagnoseDuplicateName(context, target_id, existing);
   }
 }

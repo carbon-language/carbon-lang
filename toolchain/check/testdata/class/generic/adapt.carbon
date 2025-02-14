@@ -208,6 +208,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -223,6 +224,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapter
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%a.param_patt: %Adapter) -> %i32 {
@@ -476,6 +478,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -491,6 +494,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapter
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .x = <poisoned>
 // CHECK:STDOUT:   extend %C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -592,6 +597,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc8_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -607,6 +613,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapter
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   extend %C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -700,6 +707,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.feb
+// CHECK:STDOUT:   .x = <poisoned>
 // CHECK:STDOUT:   extend imports.%Main.import_ref.19d12e.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -830,6 +838,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Adapter.0e3
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
