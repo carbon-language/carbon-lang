@@ -2943,7 +2943,8 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
           {.inst_id =
                resolver.local_constant_values().GetInstId(result.const_id),
            .generic_id = GetLocalGenericId(resolver, generic_const_id),
-           .index = symbolic_const.index});
+           .index = symbolic_const.index,
+           .dependence = symbolic_const.dependence});
       if (result.decl_id.has_value()) {
         // Overwrite the abstract symbolic constant given initially to the
         // declaration with its final concrete symbolic value.

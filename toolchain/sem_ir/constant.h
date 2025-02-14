@@ -12,6 +12,24 @@
 
 namespace Carbon::SemIR {
 
+// The kinds of symbolic bindings that a constant might depend on. These are
+// ordered from least to most dependent, so that the dependence of an operation
+// can typically be computed by taking the maximum of the dependences of its
+// operands.
+enum class ConstantDependence : uint8_t {
+  // This constant's value is known concretely, and does not depend on any
+  // symbolic binding.
+  Concrete,
+  // The only symbolic binding that this constant depends on is `.Self`.
+  PeriodSelf,
+  // The only symbolic bindings that this constant depends on are checked
+  // generic bindings.
+  Checked,
+  // This symbolic binding depends on a template-dependent value, such as a
+  // template parameter.
+  Template,
+};
+
 // Information about a symbolic constant value. These are indexed by
 // `ConstantId`s for which `is_symbolic` is true.
 struct SymbolicConstant : Printable<SymbolicConstant> {
@@ -24,13 +42,28 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
   // The index of this symbolic constant within the generic's list of symbolic
   // constants, or `None` if `generic_id` is `None`.
   GenericInstIndex index;
-  // True if this is constant is symbolic just because it uses `.Self`.
-  bool period_self_only;
+  // The kind of dependence this symbolic constant exhibits. Should never be
+  // `Concrete`.
+  ConstantDependence dependence;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index
-        << ", .Self: " << (period_self_only ? "true" : "false") << "}";
+        << ", index: " << index << ", kind: ";
+    switch (dependence) {
+      case ConstantDependence::Concrete:
+        out << "<error: concrete>";
+        break;
+      case ConstantDependence::PeriodSelf:
+        out << "self";
+        break;
+      case ConstantDependence::Checked:
+        out << "checked";
+        break;
+      case ConstantDependence::Template:
+        out << "template";
+        break;
+    }
+    out << "}";
   }
 };
 
@@ -106,11 +139,16 @@ class ConstantValueStore {
     return symbolic_constants_[const_id.symbolic_index()];
   }
 
+  // Get the dependence of the given constant.
+  auto GetDependence(ConstantId const_id) const -> ConstantDependence {
+    return const_id.is_symbolic() ? GetSymbolicConstant(const_id).dependence
+                                  : ConstantDependence::Concrete;
+  }
+
   // Returns true for symbolic constants other than those that are only symbolic
   // because they depend on `.Self`.
   auto DependsOnGenericParameter(ConstantId const_id) const -> bool {
-    return const_id.is_symbolic() &&
-           !GetSymbolicConstant(const_id).period_self_only;
+    return GetDependence(const_id) > ConstantDependence::PeriodSelf;
   }
 
   // Collects memory usage of members.
@@ -161,8 +199,7 @@ class ConstantStore {
   //
   // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
-  enum PhaseKind : uint8_t { IsConcrete, IsPeriodSelfSymbolic, IsSymbolic };
-  auto GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId;
+  auto GetOrAdd(Inst inst, ConstantDependence dependence) -> ConstantId;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
