@@ -19,13 +19,6 @@ struct SpecificInterface {
 
   friend auto operator==(const SpecificInterface& lhs,
                          const SpecificInterface& rhs) -> bool = default;
-  // Canonically ordered by the numerical ids.
-  friend auto operator<=>(const SpecificInterface& lhs,
-                          const SpecificInterface& rhs)
-      -> std::strong_ordering {
-    return std::tie(lhs.interface_id.index, lhs.specific_id.index) <=>
-           std::tie(rhs.interface_id.index, rhs.specific_id.index);
-  }
 };
 
 constexpr SpecificInterface SpecificInterface::None = {
@@ -53,17 +46,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     ConstantId rhs_const_id;
 
     friend auto operator==(const RewriteConstraint& lhs,
-                           const RewriteConstraint& rhs) -> bool {
-      return lhs.lhs_const_id == rhs.lhs_const_id &&
-             lhs.rhs_const_id == rhs.rhs_const_id;
-    }
-    // Canonically ordered by the numerical ids.
-    friend auto operator<=>(const RewriteConstraint& lhs,
-                            const RewriteConstraint& rhs)
-        -> std::strong_ordering {
-      return std::tie(lhs.lhs_const_id.index, lhs.rhs_const_id.index) <=>
-             std::tie(rhs.lhs_const_id.index, rhs.rhs_const_id.index);
-    }
+                           const RewriteConstraint& rhs) -> bool = default;
   };
   llvm::SmallVector<RewriteConstraint> rewrite_constraints;
 
