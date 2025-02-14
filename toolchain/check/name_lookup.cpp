@@ -437,7 +437,8 @@ static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
   // Look up `package.Core`.
   auto core_scope_result = LookupNameInExactScope(
       context, loc_id, core_name_id, SemIR::NameScopeId::Package,
-      context.name_scopes().Get(SemIR::NameScopeId::Package));
+      context.name_scopes().Get(SemIR::NameScopeId::Package),
+      /*is_being_declared=*/true);
   if (core_scope_result.is_found()) {
     // We expect it to be a namespace.
     if (auto namespace_inst = context.insts().TryGetAs<SemIR::Namespace>(
