@@ -17,6 +17,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -105,8 +106,8 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
              [&]() {
-               return context.AddInst<SemIR::ImportCppDecl>(
-                   imports.front().node_id, {});
+               return AddInst<SemIR::ImportCppDecl>(
+                   context, imports.front().node_id, {});
              })
       .name_scope_id;
 }

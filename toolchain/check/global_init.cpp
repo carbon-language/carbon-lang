@@ -5,6 +5,7 @@
 #include "toolchain/check/global_init.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/inst.h"
 
 namespace Carbon::Check {
 
@@ -29,7 +30,7 @@ auto GlobalInit::Finalize() -> void {
   }
 
   Resume();
-  context_->AddInst<SemIR::Return>(Parse::NodeId::None, {});
+  AddInst<SemIR::Return>(*context_, Parse::NodeId::None, {});
   // Pop the GlobalInit block here to finalize it.
   context_->inst_block_stack().Pop();
 

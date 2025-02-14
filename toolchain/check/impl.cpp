@@ -86,6 +86,11 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
 
+  auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
+  if (self_type_id == SemIR::ErrorInst::SingletonTypeId) {
+    // When 'impl as' is invalid, the self type is an error.
+    return SemIR::ErrorInst::SingletonInstId;
+  }
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
@@ -133,8 +138,8 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
   llvm::SmallVector<SemIR::InstId> table(assoc_entities.size(),
                                          SemIR::InstId::None);
   auto table_id = context.inst_blocks().Add(table);
-  return context.AddInst<SemIR::ImplWitness>(
-      context.insts().GetLocId(impl.latest_decl_id()),
+  return AddInst<SemIR::ImplWitness>(
+      context, context.insts().GetLocId(impl.latest_decl_id()),
       {.type_id =
            GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
        .elements_id = table_id,

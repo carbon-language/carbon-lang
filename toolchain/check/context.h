@@ -55,129 +55,6 @@ class Context {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
-  // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-    inst_block_stack_.AddInstId(inst_id);
-    return inst_id;
-  }
-
-  // Convenience for AddInst with typed nodes.
-  template <typename InstT, typename LocT>
-  auto AddInst(LocT loc, InstT inst)
-      -> decltype(AddInst(SemIR::LocIdAndInst(loc, inst))) {
-    return AddInst(SemIR::LocIdAndInst(loc, inst));
-  }
-
-  // Returns a LocIdAndInst for an instruction with an imported location. Checks
-  // that the imported location is compatible with the kind of instruction being
-  // created.
-  template <typename InstT>
-    requires SemIR::Internal::HasNodeId<InstT>
-  auto MakeImportedLocAndInst(SemIR::ImportIRInstId imported_loc_id, InstT inst)
-      -> SemIR::LocIdAndInst {
-    if constexpr (!SemIR::Internal::HasUntypedNodeId<InstT>) {
-      CheckCompatibleImportedNodeKind(imported_loc_id, InstT::Kind);
-    }
-    return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
-  }
-
-  // Adds an instruction in no block, returning the produced ID. Should be used
-  // rarely.
-  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-    auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-    CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
-    FinishInst(inst_id, loc_id_and_inst.inst);
-    return inst_id;
-  }
-
-  // Convenience for AddInstInNoBlock with typed nodes.
-  template <typename InstT, typename LocT>
-  auto AddInstInNoBlock(LocT loc, InstT inst)
-      -> decltype(AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst))) {
-    return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
-  }
-
-  // If the instruction has an implicit location and a constant value, returns
-  // the constant value's instruction ID. Otherwise, same as AddInst.
-  auto GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
-
-  // Convenience for GetOrAddInst with typed nodes.
-  template <typename InstT, typename LocT>
-  auto GetOrAddInst(LocT loc, InstT inst)
-      -> decltype(GetOrAddInst(SemIR::LocIdAndInst(loc, inst))) {
-    return GetOrAddInst(SemIR::LocIdAndInst(loc, inst));
-  }
-
-  // Adds an instruction to the current block, returning the produced ID. The
-  // instruction is a placeholder that is expected to be replaced by
-  // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
-
-  // Adds an instruction in no block, returning the produced ID. Should be used
-  // rarely. The instruction is a placeholder that is expected to be replaced by
-  // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
-      -> SemIR::InstId;
-
-  // Adds an instruction to the current pattern block, returning the produced
-  // ID.
-  // TODO: Is it possible to remove this and pattern_block_stack, now that
-  // we have BeginSubpattern etc. instead?
-  auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-    pattern_block_stack_.AddInstId(inst_id);
-    return inst_id;
-  }
-
-  // Convenience for AddPatternInst with typed nodes.
-  template <typename InstT>
-    requires(SemIR::Internal::HasNodeId<InstT>)
-  auto AddPatternInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      -> SemIR::InstId {
-    return AddPatternInst(SemIR::LocIdAndInst(node_id, inst));
-  }
-
-  // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result.
-  template <typename InstT>
-    requires(SemIR::Internal::HasNodeId<InstT>)
-  auto AddInstAndPush(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      -> void {
-    node_stack_.Push(node_id, AddInst(node_id, inst));
-  }
-
-  // Replaces the instruction at `inst_id` with `loc_id_and_inst`. The
-  // instruction is required to not have been used in any constant evaluation,
-  // either because it's newly created and entirely unused, or because it's only
-  // used in a position that constant evaluation ignores, such as a return slot.
-  auto ReplaceLocIdAndInstBeforeConstantUse(SemIR::InstId inst_id,
-                                            SemIR::LocIdAndInst loc_id_and_inst)
-      -> void;
-
-  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
-  // The instruction is required to not have been used in any constant
-  // evaluation, either because it's newly created and entirely unused, or
-  // because it's only used in a position that constant evaluation ignores, such
-  // as a return slot.
-  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
-      -> void;
-
-  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
-  // The instruction is required to not change its constant value.
-  auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
-                                          SemIR::Inst inst) -> void;
-
-  // Sets only the parse node of an instruction. This is only used when setting
-  // the parse node of an imported namespace. Versus
-  // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used
-  // in constant evaluation. It's exposed this way mainly so that `insts()` can
-  // remain const.
-  auto SetNamespaceNodeId(SemIR::InstId inst_id, Parse::NodeId node_id)
-      -> void {
-    sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
-  }
-
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
@@ -313,8 +190,8 @@ class Context {
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
-  // Instructions should be added with `AddInst` or `AddInstInNoBlock`. This is
-  // `const` to prevent accidental misuse.
+  // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
+  // `inst.h`. This is `const` to prevent accidental misuse.
   auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
@@ -372,15 +249,6 @@ class Context {
    private:
     SemIR::TypeId type_id_;
   };
-
-  // Checks that the provided imported location has a node kind that is
-  // compatible with that of the given instruction.
-  auto CheckCompatibleImportedNodeKind(SemIR::ImportIRInstId imported_loc_id,
-                                       SemIR::InstKind kind) -> void;
-
-  // Finish producing an instruction. Set its constant value, and register it in
-  // any applicable instruction lists.
-  auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
 
   // Handles diagnostics.
   DiagnosticEmitter* emitter_;

@@ -145,14 +145,11 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     // constraint, the unique `interface` declaration.)
 
     auto specific_id = SemIR::SpecificId::None;
-    // This check comes first to avoid deduction when the witness_id is missing.
-    // We use an error value to indicate an error during creation of the impl,
-    // such as a recursive impl which will cause deduction to recurse
-    // infinitely.
-    if (!impl.witness_id.has_value() ||
-        impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
-      // TODO: Diagnose if the impl isn't defined yet?
-      return SemIR::InstId::None;
+    // This check comes first to avoid deduction with an invalid impl. We use an
+    // error value to indicate an error during creation of the impl, such as a
+    // recursive impl which will cause deduction to recurse infinitely.
+    if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+      continue;
     }
     if (impl.generic_id.has_value()) {
       specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
@@ -174,6 +171,10 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       // TODO: An impl of a constraint type should be treated as implementing
       // the constraint's interfaces.
       continue;
+    }
+    if (!impl.witness_id.has_value()) {
+      // TODO: Diagnose if the impl isn't defined yet?
+      return SemIR::InstId::None;
     }
     LoadImportRef(context, impl.witness_id);
     if (specific_id.has_value()) {

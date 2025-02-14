@@ -14,10 +14,11 @@ namespace Carbon::Check {
 
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
     -> SemIR::InstId {
-  return context.AddInst<SemIR::IntValue>(
-      node_id, {.type_id = GetSingletonType(
-                    context, SemIR::IntLiteralType::SingletonInstId),
-                .int_id = int_id});
+  return AddInst<SemIR::IntValue>(
+      context, node_id,
+      {.type_id =
+           GetSingletonType(context, SemIR::IntLiteralType::SingletonInstId),
+       .int_id = int_id});
 }
 
 auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,

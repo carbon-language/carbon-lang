@@ -6,6 +6,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -54,7 +55,7 @@ static auto BuildInterfaceDecl(Context& context,
       SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
                            SemIR::InterfaceId::None, decl_block_id};
   auto interface_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, interface_decl));
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,
@@ -128,7 +129,7 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
+  ReplaceInstBeforeConstantUse(context, interface_decl_id, interface_decl);
 
   return {interface_decl.interface_id, interface_decl_id};
 }
@@ -177,10 +178,10 @@ auto HandleParseNode(Context& context,
       context.scope_stack().AddCompileTimeBinding(),
       /*is_template=*/false);
   interface_info.self_param_id =
-      context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
-          {.type_id = self_type_id,
-           .entity_name_id = entity_name_id,
-           .value_id = SemIR::InstId::None}));
+      AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+                           {.type_id = self_type_id,
+                            .entity_name_id = entity_name_id,
+                            .value_id = SemIR::InstId::None}));
   context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
   context.name_scopes().AddRequiredName(interface_info.scope_id,
                                         SemIR::NameId::SelfType,

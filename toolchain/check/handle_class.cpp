@@ -12,6 +12,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -221,7 +222,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                        .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
   auto class_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, class_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, class_decl));
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
@@ -252,7 +253,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   }
 
   // Write the class ID into the ClassDecl.
-  context.ReplaceInstBeforeConstantUse(class_decl_id, class_decl);
+  ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
 
   if (is_new_class) {
     // Build the `Self` type using the resulting type constant.
@@ -416,8 +417,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   }
 
   // Build a SemIR representation for the declaration.
-  class_info.adapt_id = context.AddInst<SemIR::AdaptDecl>(
-      node_id, {.adapted_type_inst_id = adapted_inst_id});
+  class_info.adapt_id = AddInst<SemIR::AdaptDecl>(
+      context, node_id, {.adapted_type_inst_id = adapted_inst_id});
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
@@ -546,10 +547,11 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // binding will be performed when it's found by name lookup into an instance.
   auto field_type_id = GetUnboundElementType(context, class_info.self_type_id,
                                              base_info.type_id);
-  class_info.base_id = context.AddInst<SemIR::BaseDecl>(
-      node_id, {.type_id = field_type_id,
-                .base_type_inst_id = base_info.inst_id,
-                .index = SemIR::ElementIndex::None});
+  class_info.base_id =
+      AddInst<SemIR::BaseDecl>(context, node_id,
+                               {.type_id = field_type_id,
+                                .base_type_inst_id = base_info.inst_id,
+                                .index = SemIR::ElementIndex::None});
 
   if (base_info.type_id != SemIR::ErrorInst::SingletonTypeId) {
     auto base_class_info = context.classes().Get(
@@ -629,10 +631,11 @@ static auto CheckCompleteAdapterClassType(Context& context,
       class_info.GetAdaptedType(context.sem_ir(), SemIR::SpecificId::None);
   auto object_repr_id = context.types().GetObjectRepr(adapted_type_id);
 
-  return context.AddInst<SemIR::CompleteTypeWitness>(
-      node_id, {.type_id = GetSingletonType(
-                    context, SemIR::WitnessType::SingletonInstId),
-                .object_repr_id = object_repr_id});
+  return AddInst<SemIR::CompleteTypeWitness>(
+      context, node_id,
+      {.type_id =
+           GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+       .object_repr_id = object_repr_id});
 }
 
 static auto AddStructTypeFields(
@@ -643,7 +646,7 @@ static auto AddStructTypeFields(
     auto field_decl = context.insts().GetAs<SemIR::FieldDecl>(field_decl_id);
     field_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
-    context.ReplaceInstPreservingConstantValue(field_decl_id, field_decl);
+    ReplaceInstPreservingConstantValue(context, field_decl_id, field_decl);
     if (field_decl.type_id == SemIR::ErrorInst::SingletonTypeId) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id,
@@ -699,7 +702,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
     base_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
-    context.ReplaceInstPreservingConstantValue(class_info.base_id, base_decl);
+    ReplaceInstPreservingConstantValue(context, class_info.base_id, base_decl);
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Base, .type_id = base_type_id});
   }
@@ -747,14 +750,15 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
         vtable.push_back(inst_id);
       }
     }
-    class_info.vtable_id = context.AddInst<SemIR::Vtable>(
-        node_id, {.type_id = GetSingletonType(
-                      context, SemIR::VtableType::SingletonInstId),
-                  .virtual_functions_id = context.inst_blocks().Add(vtable)});
+    class_info.vtable_id = AddInst<SemIR::Vtable>(
+        context, node_id,
+        {.type_id =
+             GetSingletonType(context, SemIR::VtableType::SingletonInstId),
+         .virtual_functions_id = context.inst_blocks().Add(vtable)});
   }
 
-  return context.AddInst<SemIR::CompleteTypeWitness>(
-      node_id,
+  return AddInst<SemIR::CompleteTypeWitness>(
+      context, node_id,
       {.type_id =
            GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
        .object_repr_id = GetStructType(

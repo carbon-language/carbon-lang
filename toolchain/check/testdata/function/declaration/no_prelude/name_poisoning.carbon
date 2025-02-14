@@ -301,24 +301,6 @@ class N.X {
   }
 }
 
-// --- fail_using_poisoned_name_in_impl_outside_class.carbon
-
-library "[[@TEST_NAME]]";
-
-interface A {
-  fn B();
-}
-class X {
-  extend impl as A {
-    fn F() { return; }
-    // CHECK:STDERR: fail_using_poisoned_name_in_impl_outside_class.carbon:[[@LINE+4]]:10: error: `impl as` can only be used in a class [ImplAsOutsideClass]
-    // CHECK:STDERR:     impl as B {}
-    // CHECK:STDERR:          ^~
-    // CHECK:STDERR:
-    impl as B {}
-  }
-}
-
 // --- fail_poison_when_lookup_fails.carbon
 
 library "[[@TEST_NAME]]";
@@ -1199,50 +1181,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F1(%x.param_patt: %C.type);
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_using_poisoned_name_in_impl_outside_class.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
-// CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [concrete]
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [concrete]
-// CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @A {
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %B.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .B = %assoc0
-// CHECK:STDOUT:   witness = (%B.decl)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: <unexpected>.inst26.loc8_15 as <unexpected>.inst27.loc8_18;
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   complete_type_witness = invalid
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   extend <unexpected>.inst27.loc8_18
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @B(@A.%Self: %A.type) {
-// CHECK:STDOUT:   fn();
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_poison_when_lookup_fails.carbon
 // CHECK:STDOUT:

@@ -17,6 +17,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
 
@@ -102,18 +103,19 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
       SemIR::NameScopeId::None);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
-  auto package_inst_id = context_.AddInst<SemIR::Namespace>(
-      Parse::NodeId::None, {.type_id = namespace_type_id,
-                            .name_scope_id = SemIR::NameScopeId::Package,
-                            .import_id = SemIR::InstId::None});
+  auto package_inst_id =
+      AddInst<SemIR::Namespace>(context_, Parse::NodeId::None,
+                                {.type_id = namespace_type_id,
+                                 .name_scope_id = SemIR::NameScopeId::Package,
+                                 .import_id = SemIR::InstId::None});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // If there is an implicit `api` import, set it first so that it uses the
   // ImportIRId::ApiForImpl when processed for imports.
   if (unit_and_imports_->api_for_impl) {
     const auto& names = context_.parse_tree().packaging_decl()->names;
-    auto import_decl_id = context_.AddInst<SemIR::ImportDecl>(
-        names.node_id,
+    auto import_decl_id = AddInst<SemIR::ImportDecl>(
+        context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
     SetApiImportIR(context_,
                    {.decl_id = import_decl_id,
@@ -128,9 +130,10 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // are handled separately.
   for (auto& package_imports : unit_and_imports_->package_imports) {
     CARBON_CHECK(!package_imports.import_decl_id.has_value());
-    package_imports.import_decl_id = context_.AddInst<SemIR::ImportDecl>(
-        package_imports.node_id, {.package_id = SemIR::NameId::ForPackageName(
-                                      package_imports.package_id)});
+    package_imports.import_decl_id = AddInst<SemIR::ImportDecl>(
+        context_, package_imports.node_id,
+        {.package_id =
+             SemIR::NameId::ForPackageName(package_imports.package_id)});
   }
   // Process the imports.
   if (unit_and_imports_->api_for_impl) {
@@ -327,9 +330,10 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
             {.ir_id = SemIR::ImportIRId::ApiForImpl,
              .inst_id = api_imports->import_decl_id});
         import_decl_id =
-            context_.AddInst(context_.MakeImportedLocAndInst<SemIR::ImportDecl>(
-                import_ir_inst_id, {.package_id = SemIR::NameId::ForPackageName(
-                                        api_imports_entry.first)}));
+            AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
+                                  context_, import_ir_inst_id,
+                                  {.package_id = SemIR::NameId::ForPackageName(
+                                       api_imports_entry.first)}));
         package_id = api_imports_entry.first;
       }
       has_load_error |= api_imports->has_load_error;
