@@ -11,6 +11,7 @@
 #include "toolchain/check/literal.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -53,9 +54,10 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
   }
 
   for (const auto& impl : context.impls().array_ref()) {
-    auto impl_self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
+    auto impl_self_type_id =
+        context.types().GetTypeIdForTypeInstId(impl.self_id);
     auto impl_constraint_type_id =
-        context.GetTypeIdForTypeInst(impl.constraint_id);
+        context.types().GetTypeIdForTypeInstId(impl.constraint_id);
 
     if (impl_self_type_id != self_id) {
       continue;
@@ -115,7 +117,7 @@ static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
 
   // The first argument of the `IndexWith` interface corresponds to the
   // `SubscriptType`, so first cast `index_inst_id` to that type.
-  auto subscript_type_id = context.GetTypeIdForTypeInst((*args)[0]);
+  auto subscript_type_id = context.types().GetTypeIdForTypeInstId((*args)[0]);
   auto cast_index_id =
       ConvertToValueOfType(context, node_id, index_inst_id, subscript_type_id);
 

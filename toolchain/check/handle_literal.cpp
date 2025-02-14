@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -16,7 +17,7 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
       node_id,
-      {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::False});
   return true;
 }
@@ -25,7 +26,7 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
       node_id,
-      {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::True});
   return true;
 }
@@ -76,8 +77,8 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
   context.AddInstAndPush<SemIR::FloatLiteral>(
-      node_id, {.type_id = context.GetSingletonType(
-                    SemIR::LegacyFloatType::SingletonInstId),
+      node_id, {.type_id = GetSingletonType(
+                    context, SemIR::LegacyFloatType::SingletonInstId),
                 .float_id = float_id});
   return true;
 }
@@ -85,7 +86,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
   context.AddInstAndPush<SemIR::StringLiteral>(
       node_id,
-      {.type_id = context.GetSingletonType(SemIR::StringType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::StringType::SingletonInstId),
        .string_literal_id = context.tokens().GetStringLiteralValue(
            context.parse_tree().node_token(node_id))});
   return true;

@@ -42,6 +42,7 @@ cc_library(
         "return.cpp",
         "subpattern.cpp",
         "subst.cpp",
+        "type.cpp",
         "type_completion.cpp",
     ],
     hdrs = [
@@ -78,6 +79,7 @@ cc_library(
         "return.h",
         "subpattern.h",
         "subst.h",
+        "type.h",
         "type_completion.h",
     ],
     deps = [
