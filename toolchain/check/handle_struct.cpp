@@ -6,6 +6,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
@@ -141,8 +142,8 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
                              /*is_struct_type_literal=*/false)) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
   } else {
-    auto type_id = context.GetStructType(
-        context.struct_type_fields().AddCanonical(fields));
+    auto type_id = GetStructType(
+        context, context.struct_type_fields().AddCanonical(fields));
 
     auto value_id = context.AddInst<SemIR::StructLiteral>(
         node_id, {.type_id = type_id, .elements_id = elements_id});

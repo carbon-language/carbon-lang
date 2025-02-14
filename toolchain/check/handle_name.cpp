@@ -9,6 +9,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pointer_dereference.h"
+#include "toolchain/check/type.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -238,8 +239,8 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
 
 auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {
   context.AddInstAndPush<SemIR::NameRef>(
-      node_id, {.type_id = context.GetSingletonType(
-                    SemIR::NamespaceType::SingletonInstId),
+      node_id, {.type_id = GetSingletonType(
+                    context, SemIR::NamespaceType::SingletonInstId),
                 .name_id = SemIR::NameId::PackageNamespace,
                 .value_id = SemIR::Namespace::PackageInstId});
   return true;

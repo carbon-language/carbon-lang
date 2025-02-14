@@ -17,6 +17,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
@@ -160,8 +161,8 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
     auto index_id = block.template AddInst<SemIR::IntValue>(
-        loc_id, {.type_id = context.GetSingletonType(
-                     SemIR::IntLiteralType::SingletonInstId),
+        loc_id, {.type_id = GetSingletonType(
+                     context, SemIR::IntLiteralType::SingletonInstId),
                  .int_id = context.ints().Add(static_cast<int64_t>(i))});
     return block.template AddInst<AccessInstT>(
         loc_id, {elem_type_id, aggregate_id, index_id});
@@ -965,7 +966,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, loc_id, tuple_inst_id).type_id);
       }
-      auto tuple_type_id = context.GetTupleType(type_ids);
+      auto tuple_type_id = GetTupleType(context, type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
     }
 
@@ -1017,11 +1018,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           context.types().GetConstantId(target.type_id));
       if (witness_inst_id != SemIR::InstId::None) {
         return context.AddInst<SemIR::FacetValue>(
-            loc_id, {
-                        .type_id = target.type_id,
-                        .type_inst_id = lookup_inst_id,
-                        .witness_inst_id = witness_inst_id,
-                    });
+            loc_id, {.type_id = target.type_id,
+                     .type_inst_id = lookup_inst_id,
+                     .witness_inst_id = witness_inst_id});
       }
     }
 
@@ -1047,11 +1046,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           sem_ir.types().GetConstantId(target.type_id));
       if (witness_inst_id != SemIR::InstId::None) {
         return context.AddInst<SemIR::FacetValue>(
-            loc_id, {
-                        .type_id = target.type_id,
-                        .type_inst_id = lookup_inst_id,
-                        .witness_inst_id = witness_inst_id,
-                    });
+            loc_id, {.type_id = target.type_id,
+                     .type_inst_id = lookup_inst_id,
+                     .witness_inst_id = witness_inst_id});
       }
     }
   }
@@ -1305,7 +1302,7 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, loc_id, value_id,
-      context.GetSingletonType(SemIR::BoolType::SingletonInstId));
+      GetSingletonType(context, SemIR::BoolType::SingletonInstId));
 }
 
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
@@ -1326,8 +1323,6 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // The callee reference can be invalidated by conversions, so ensure all reads
   // from it are done before conversion calls.
   auto callee_decl_id = callee.latest_decl_id();
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_slot_pattern_id = callee.return_slot_pattern_id;
@@ -1335,18 +1330,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
 
-  // Find self parameter pattern.
-  // TODO: Do this during initial traversal of implicit params.
-  auto self_param_id = SemIR::InstId::None;
-  for (auto implicit_param_id : implicit_param_patterns) {
-    if (SemIR::Function::GetNameFromPatternId(
-            context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
-      CARBON_CHECK(!self_param_id.has_value());
-      self_param_id = implicit_param_id;
-    }
-  }
-
-  if (self_param_id.has_value() && !self_id.has_value()) {
+  if (callee.self_param_id.has_value() && !self_id.has_value()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
                       "missing object argument in method call");
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
@@ -1357,7 +1341,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     self_id = SemIR::ErrorInst::SingletonInstId;
   }
 
-  return CallerPatternMatch(context, callee_specific_id, self_param_id,
+  return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_slot_pattern_id,
                             self_id, arg_refs, return_slot_arg_id);
 }
@@ -1381,7 +1365,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
   }
 
   return {.inst_id = type_inst_id,
-          .type_id = context.GetTypeIdForTypeConstant(type_const_id)};
+          .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
 }  // namespace Carbon::Check

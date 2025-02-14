@@ -8,6 +8,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pointer_dereference.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Check {
@@ -244,7 +245,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
       break;
   }
   context.AddInstAndPush<SemIR::AddrOf>(
-      node_id, SemIR::AddrOf{.type_id = context.GetPointerType(type_id),
+      node_id, SemIR::AddrOf{.type_id = GetPointerType(context, type_id),
                              .lvalue_id = value_id});
   return true;
 }
