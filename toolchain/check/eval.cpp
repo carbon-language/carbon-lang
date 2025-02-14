@@ -211,6 +211,7 @@ enum class Phase : uint8_t {
   CheckedSymbolic,
   // Evaluation phase is symbolic because the expression involves a reference to
   // a template parameter, or otherwise depends on something template dependent.
+  // The expression might also reference non-template symbolic bindings.
   TemplateSymbolic,
   // The evaluation phase is unknown because evaluation encountered an
   // already-diagnosed semantic or syntax error. This is treated as being
