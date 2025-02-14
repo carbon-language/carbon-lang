@@ -29,14 +29,14 @@ alias a = true or false;
 // CHECK:STDOUT: --- fail_control_flow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc27: bool = block_arg <unexpected instblockref inst_block5> [template = constants.%true]
-// CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc27: bool = block_arg <unexpected instblockref inst_block5> [concrete = constants.%true]
+// CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -12,12 +12,13 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/subpattern.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
 // Returns a best-effort name for the given ParamPattern, suitable for use in
 // IR pretty-printing.
-// TODO: Resolve overlap with SemIR::Function::ParamPatternInfo::GetNameId
 template <typename ParamPattern>
 static auto GetPrettyName(Context& context, ParamPattern param_pattern)
     -> SemIR::NameId {
@@ -124,6 +125,53 @@ auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
   return block_id;
 }
 
+// Inserts the given region into the current code block. If the region
+// consists of a single block, this will be implemented as a `splice_block`
+// inst. Otherwise, this will end the current block with a branch to the entry
+// block of the region, and add future insts to a new block which is the
+// immediate successor of the region's exit block. As a result, this cannot be
+// called more than once for the same region.
+static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
+    -> SemIR::InstId {
+  auto region = context.sem_ir().expr_regions().Get(region_id);
+  auto loc_id = context.insts().GetLocId(region.result_id);
+  auto exit_block = context.inst_blocks().Get(region.block_ids.back());
+  if (region.block_ids.size() == 1) {
+    // TODO: Is it possible to avoid leaving an "orphan" block in the IR in the
+    // first two cases?
+    if (exit_block.empty()) {
+      return region.result_id;
+    }
+    if (exit_block.size() == 1) {
+      context.inst_block_stack().AddInstId(exit_block.front());
+      return region.result_id;
+    }
+    return AddInst<SemIR::SpliceBlock>(
+        context, loc_id,
+        {.type_id = context.insts().Get(region.result_id).type_id(),
+         .block_id = region.block_ids.front(),
+         .result_id = region.result_id});
+  }
+  if (context.region_stack().empty()) {
+    context.TODO(loc_id,
+                 "Control flow expressions are currently only supported inside "
+                 "functions.");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+                       {.target_id = region.block_ids.front()}));
+  context.inst_block_stack().Pop();
+  // TODO: this will cumulatively cost O(MN) running time for M blocks
+  // at the Nth level of the stack. Figure out how to do better.
+  context.region_stack().AddToRegion(region.block_ids);
+  auto resume_with_block_id =
+      context.insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
+  CARBON_CHECK(context.inst_blocks().GetOrEmpty(resume_with_block_id).empty());
+  context.inst_block_stack().Push(resume_with_block_id);
+  context.region_stack().AddToRegion(resume_with_block_id, loc_id);
+  return region.result_id;
+}
+
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::ErrorInst::SingletonInstId) {
@@ -149,7 +197,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           context.bind_name_map().Lookup(entry.pattern_id).value(),
           {.bind_name_id = SemIR::InstId::None,
            .type_expr_region_id = SemIR::ExprRegionId::None});
-      context.InsertHere(type_expr_region_id);
+      InsertHere(context, type_expr_region_id);
       auto value_id = entry.scrutinee_id;
       switch (kind_) {
         case MatchKind::Local: {
@@ -172,7 +220,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
       auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
       CARBON_CHECK(!bind_name.value_id.has_value());
       bind_name.value_id = value_id;
-      context.ReplaceInstBeforeConstantUse(bind_name_id, bind_name);
+      ReplaceInstBeforeConstantUse(context, bind_name_id, bind_name);
       context.inst_block_stack().AddInstId(bind_name_id);
       break;
     }
@@ -204,9 +252,9 @@ auto MatchContext::EmitPatternMatch(Context& context,
           return;
       }
       auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
-      auto new_scrutinee = context.AddInst<SemIR::AddrOf>(
-          context.insts().GetLocId(scrutinee_ref_id),
-          {.type_id = context.GetPointerType(scrutinee_ref.type_id()),
+      auto new_scrutinee = AddInst<SemIR::AddrOf>(
+          context, context.insts().GetLocId(scrutinee_ref_id),
+          {.type_id = GetPointerType(context, scrutinee_ref.type_id()),
            .lvalue_id = scrutinee_ref_id});
       AddWork(
           {.pattern_id = addr_pattern.inner_id, .scrutinee_id = new_scrutinee});
@@ -238,13 +286,13 @@ auto MatchContext::EmitPatternMatch(Context& context,
           if (param_pattern.runtime_index ==
               SemIR::RuntimeParamIndex::Unknown) {
             param_pattern.runtime_index = NextRuntimeIndex();
-            context.ReplaceInstBeforeConstantUse(entry.pattern_id,
-                                                 param_pattern);
+            ReplaceInstBeforeConstantUse(context, entry.pattern_id,
+                                         param_pattern);
           }
           AddWork(
               {.pattern_id = param_pattern.subpattern_id,
-               .scrutinee_id = context.AddInst<SemIR::ValueParam>(
-                   pattern.loc_id,
+               .scrutinee_id = AddInst<SemIR::ValueParam>(
+                   context, pattern.loc_id,
                    {.type_id = param_pattern.type_id,
                     .runtime_index = param_pattern.runtime_index,
                     .pretty_name_id = GetPrettyName(context, param_pattern)})});
@@ -275,13 +323,13 @@ auto MatchContext::EmitPatternMatch(Context& context,
           if (param_pattern.runtime_index ==
               SemIR::RuntimeParamIndex::Unknown) {
             param_pattern.runtime_index = NextRuntimeIndex();
-            context.ReplaceInstBeforeConstantUse(entry.pattern_id,
-                                                 param_pattern);
+            ReplaceInstBeforeConstantUse(context, entry.pattern_id,
+                                         param_pattern);
           }
           AddWork(
               {.pattern_id = param_pattern.subpattern_id,
-               .scrutinee_id = context.AddInst<SemIR::OutParam>(
-                   pattern.loc_id,
+               .scrutinee_id = AddInst<SemIR::OutParam>(
+                   context, pattern.loc_id,
                    {.type_id = param_pattern.type_id,
                     .runtime_index = param_pattern.runtime_index,
                     .pretty_name_id = GetPrettyName(context, param_pattern)})});
@@ -295,10 +343,11 @@ auto MatchContext::EmitPatternMatch(Context& context,
     }
     case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
       CARBON_CHECK(kind_ == MatchKind::Callee);
-      auto return_slot_id = context.AddInst<SemIR::ReturnSlot>(
-          pattern.loc_id, {.type_id = return_slot_pattern.type_id,
-                           .type_inst_id = return_slot_pattern.type_inst_id,
-                           .storage_id = entry.scrutinee_id});
+      auto return_slot_id = AddInst<SemIR::ReturnSlot>(
+          context, pattern.loc_id,
+          {.type_id = return_slot_pattern.type_id,
+           .type_inst_id = return_slot_pattern.type_inst_id,
+           .storage_id = entry.scrutinee_id});
       bool already_in_lookup =
           context.scope_stack()
               .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
@@ -320,8 +369,8 @@ auto MatchContext::EmitPatternMatch(Context& context,
             Initialize(context, pattern.loc_id, var_id, entry.scrutinee_id);
         // TODO: Consider using different instruction kinds for assignment
         // versus initialization.
-        context.AddInst<SemIR::Assign>(pattern.loc_id,
-                                       {.lhs_id = var_id, .rhs_id = init_id});
+        AddInst<SemIR::Assign>(context, pattern.loc_id,
+                               {.lhs_id = var_id, .rhs_id = init_id});
       }
       AddWork(
           {.pattern_id = var_pattern.subpattern_id, .scrutinee_id = var_id});

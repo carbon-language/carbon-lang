@@ -32,7 +32,7 @@ class ConstantContext {
   // lowered. Returns nullptr if it hasn't been, in which case it should not be
   // needed.
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
-    CARBON_CHECK(const_id.is_template(), "Unexpected constant ID {0}",
+    CARBON_CHECK(const_id.is_concrete(), "Unexpected constant ID {0}",
                  const_id);
     auto inst_id =
         file_context_->sem_ir().constant_values().GetInstId(const_id);
@@ -248,8 +248,8 @@ auto LowerConstants(FileContext& file_context,
   // dependencies of a constant before we lower the constant itself.
   for (auto [inst_id_val, const_id] :
        llvm::enumerate(file_context.sem_ir().constant_values().array_ref())) {
-    if (!const_id.has_value() || !const_id.is_template()) {
-      // We are only interested in lowering template constants.
+    if (!const_id.has_value() || !const_id.is_concrete()) {
+      // We are only interested in lowering concrete constants.
       continue;
     }
     auto inst_id = file_context.sem_ir().constant_values().GetInstId(const_id);

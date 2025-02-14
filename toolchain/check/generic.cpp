@@ -9,6 +9,8 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -114,7 +116,8 @@ class RebuildGenericConstantInEvalBlockCallbacks final
             context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
       if (context_.entity_names()
               .Get(binding->entity_name_id)
-              .bind_index.has_value()) {
+              .bind_index()
+              .has_value()) {
         inst_id = Rebuild(inst_id, *binding);
         return true;
       }
@@ -177,7 +180,7 @@ static auto AddGenericTypeToEvalBlock(
       SubstInst(context, context.types().GetInstId(type_id),
                 RebuildGenericConstantInEvalBlockCallbacks(
                     context, generic_id, region, loc_id, constants_in_generic));
-  return context.GetTypeIdForTypeInst(type_inst_id);
+  return context.types().GetTypeIdForTypeInstId(type_inst_id);
 }
 
 // Adds instructions to compute the substituted value of `inst_id` in each
@@ -255,7 +258,7 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       // constraints on the generic rather than properties of the type. For now,
       // require the transformed type to be complete if the original was.
       if (context.types().IsComplete(inst.type_id())) {
-        context.CompleteTypeOrCheckFail(type_id);
+        CompleteTypeOrCheckFail(context, type_id);
       }
       inst.SetType(type_id);
       context.sem_ir().insts().Set(inst_id, inst);
@@ -498,20 +501,20 @@ auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
   CARBON_KIND_SWITCH(decl) {
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       return context.types().GetInstId(
-          context.GetClassType(class_decl.class_id, specific_id));
+          GetClassType(context, class_decl.class_id, specific_id));
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       return context.types().GetInstId(
-          context.GetInterfaceType(interface_decl.interface_id, specific_id));
+          GetInterfaceType(context, interface_decl.interface_id, specific_id));
     }
     case SemIR::FunctionDecl::Kind: {
-      return context.constant_values().GetInstId(
-          TryEvalInst(context, SemIR::InstId::None,
-                      SemIR::SpecificFunction{
-                          .type_id = context.GetSingletonType(
-                              SemIR::SpecificFunctionType::SingletonInstId),
-                          .callee_id = generic.decl_id,
-                          .specific_id = specific_id}));
+      return context.constant_values().GetInstId(TryEvalInst(
+          context, SemIR::InstId::None,
+          SemIR::SpecificFunction{
+              .type_id = GetSingletonType(
+                  context, SemIR::SpecificFunctionType::SingletonInstId),
+              .callee_id = generic.decl_id,
+              .specific_id = specific_id}));
     }
     case SemIR::AssociatedConstantDecl::Kind: {
       // TODO: We don't have a good instruction to use here.

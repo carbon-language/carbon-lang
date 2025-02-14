@@ -9,7 +9,7 @@ namespace Carbon::LanguageServer {
 auto HandleInitialize(
     Context& /*context*/,
     const clang::clangd::NoParams& /*client_capabilities*/,
-    llvm::function_ref<void(llvm::Expected<llvm::json::Object>)> on_done)
+    llvm::function_ref<auto(llvm::Expected<llvm::json::Object>)->void> on_done)
     -> void {
   llvm::json::Object capabilities{{"documentSymbolProvider", true},
                                   {"textDocumentSync", /*Full=*/1}};

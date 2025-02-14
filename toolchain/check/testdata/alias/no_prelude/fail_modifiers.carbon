@@ -52,29 +52,29 @@ extern alias C = Class;
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %A: type = bind_alias A, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %Class.ref.loc44: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %B: type = bind_alias B, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %Class.ref.loc50: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %C: type = bind_alias C, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, %Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %A: type = bind_alias A, %Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc44: type = name_ref Class, %Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %B: type = bind_alias B, %Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc50: type = name_ref Class, %Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %C: type = bind_alias C, %Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

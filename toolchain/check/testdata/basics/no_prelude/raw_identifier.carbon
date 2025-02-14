@@ -23,67 +23,67 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT: --- raw_identifier.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %B.type: type = fn_type @B [template]
-// CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %C.type: type = fn_type @C [template]
-// CHECK:STDOUT:   %C: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
+// CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
+// CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
+// CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %n.patt: %empty_tuple.type = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %empty_tuple.type = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_17.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_17.2: type = converted %.loc11_17.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc11_17.2: type = converted %.loc11_17.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc11_10.1: type = splice_block %.loc11_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc11_10.1: type = splice_block %.loc11_10.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc11_10.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc11_10.3: type = converted %.loc11_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc11_10.3: type = converted %.loc11_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
 // CHECK:STDOUT:     %n.patt: %empty_tuple.type = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %empty_tuple.type = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_19.2: type = converted %.loc15_19.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_19.2: type = converted %.loc15_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15_12.1: type = splice_block %.loc15_12.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc15_12.1: type = splice_block %.loc15_12.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc15_12.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc15_12.3: type = converted %.loc15_12.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc15_12.3: type = converted %.loc15_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [concrete = constants.%C] {
 // CHECK:STDOUT:     %if.patt: %empty_tuple.type = binding_pattern r#if
 // CHECK:STDOUT:     %if.param_patt: %empty_tuple.type = value_param_pattern %if.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_20.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_20.2: type = converted %.loc19_20.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc19_20.2: type = converted %.loc19_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %if.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc19_13.1: type = splice_block %.loc19_13.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc19_13.1: type = splice_block %.loc19_13.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc19_13.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc19_13.3: type = converted %.loc19_13.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc19_13.3: type = converted %.loc19_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %if: %empty_tuple.type = bind_name r#if, %if.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param1

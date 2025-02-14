@@ -194,7 +194,7 @@ class TreeAndSubtrees {
 };
 
 // A standard signature for a callback to support lazy construction.
-using GetTreeAndSubtreesFn = llvm::function_ref<const TreeAndSubtrees&()>;
+using GetTreeAndSubtreesFn = llvm::function_ref<auto()->const TreeAndSubtrees&>;
 
 // A forward iterator across the siblings at a particular level in the parse
 // tree. It produces `Tree::NodeId` objects which are opaque handles and must

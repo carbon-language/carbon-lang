@@ -7,6 +7,7 @@
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -32,8 +33,8 @@ auto PerformPointerDereference(
   } else if (type_id != SemIR::ErrorInst::SingletonTypeId) {
     diagnose_not_pointer(type_id);
   }
-  return context.AddInst<SemIR::Deref>(
-      node_id, {.type_id = result_type_id, .pointer_id = base_id});
+  return AddInst<SemIR::Deref>(
+      context, node_id, {.type_id = result_type_id, .pointer_id = base_id});
 }
 
 }  // namespace Carbon::Check

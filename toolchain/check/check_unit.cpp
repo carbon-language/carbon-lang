@@ -17,7 +17,9 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -34,19 +36,21 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
   return count;
 }
 
-CheckUnit::CheckUnit(UnitAndImports* unit_and_imports, int total_ir_count,
-                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream)
+CheckUnit::CheckUnit(
+    UnitAndImports* unit_and_imports,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
-      total_ir_count_(total_ir_count),
+      total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
-      emitter_(*unit_and_imports_->unit->sem_ir_converter,
-               unit_and_imports_->err_tracker),
-      context_(&emitter_, unit_and_imports_->unit->get_parse_tree_and_subtrees,
+      emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
+               unit_and_imports_->unit->sem_ir),
+      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
                unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports), total_ir_count,
-               vlog_stream) {}
+               GetImportedIRCount(unit_and_imports),
+               tree_and_subtrees_getters.size(), vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -90,7 +94,7 @@ auto CheckUnit::Run() -> void {
 auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      context_.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context_, SemIR::NamespaceType::SingletonInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
@@ -99,19 +103,20 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
       SemIR::NameScopeId::None);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
-  auto package_inst_id = context_.AddInst<SemIR::Namespace>(
-      Parse::NodeId::None, {.type_id = namespace_type_id,
-                            .name_scope_id = SemIR::NameScopeId::Package,
-                            .import_id = SemIR::InstId::None});
+  auto package_inst_id =
+      AddInst<SemIR::Namespace>(context_, Parse::NodeId::None,
+                                {.type_id = namespace_type_id,
+                                 .name_scope_id = SemIR::NameScopeId::Package,
+                                 .import_id = SemIR::InstId::None});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // If there is an implicit `api` import, set it first so that it uses the
   // ImportIRId::ApiForImpl when processed for imports.
   if (unit_and_imports_->api_for_impl) {
     const auto& names = context_.parse_tree().packaging_decl()->names;
-    auto import_decl_id = context_.AddInst<SemIR::ImportDecl>(
-        names.node_id,
-        {.package_id = SemIR::NameId::ForIdentifier(names.package_id)});
+    auto import_decl_id = AddInst<SemIR::ImportDecl>(
+        context_, names.node_id,
+        {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
     SetApiImportIR(context_,
                    {.decl_id = import_decl_id,
                     .is_export = false,
@@ -125,11 +130,11 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // are handled separately.
   for (auto& package_imports : unit_and_imports_->package_imports) {
     CARBON_CHECK(!package_imports.import_decl_id.has_value());
-    package_imports.import_decl_id = context_.AddInst<SemIR::ImportDecl>(
-        package_imports.node_id, {.package_id = SemIR::NameId::ForIdentifier(
-                                      package_imports.package_id)});
+    package_imports.import_decl_id = AddInst<SemIR::ImportDecl>(
+        context_, package_imports.node_id,
+        {.package_id =
+             SemIR::NameId::ForPackageName(package_imports.package_id)});
   }
-
   // Process the imports.
   if (unit_and_imports_->api_for_impl) {
     ImportApiFile(context_, namespace_type_id,
@@ -138,7 +143,8 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   ImportCurrentPackage(package_inst_id, namespace_type_id);
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
-  ImportCppPackages();
+  ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
+                 unit_and_imports_->cpp_import_names, fs_);
 }
 
 auto CheckUnit::CollectDirectImports(
@@ -221,7 +227,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
                                      SemIR::TypeId namespace_type_id) -> void {
   // Add imports from the current package.
   auto import_map_lookup =
-      unit_and_imports_->package_imports_map.Lookup(IdentifierId::None);
+      unit_and_imports_->package_imports_map.Lookup(PackageNameId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
     context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
@@ -250,12 +256,12 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   // when processing an implementation file, in order to combine the API file
   // imports.
   //
-  // For packages imported by the API file, the IdentifierId is the package name
-  // and the index is into the API's import list. Otherwise, the initial
+  // For packages imported by the API file, the PackageNameId is the package
+  // name and the index is into the API's import list. Otherwise, the initial
   // {None, -1} state remains.
-  llvm::SmallVector<std::pair<IdentifierId, int32_t>> api_imports_list;
+  llvm::SmallVector<std::pair<PackageNameId, int32_t>> api_imports_list;
   api_imports_list.resize(unit_and_imports_->package_imports.size(),
-                          {IdentifierId::None, -1});
+                          {PackageNameId::None, -1});
 
   // When there's an API file, add the mapping to api_imports_list.
   if (unit_and_imports_->api_for_impl) {
@@ -270,9 +276,15 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
       if (!api_imports.package_id.has_value()) {
         continue;
       }
+
       // Translate the package ID from the API file to the implementation file.
-      auto impl_package_id =
-          impl_identifiers.Add(api_identifiers.Get(api_imports.package_id));
+      auto impl_package_id = api_imports.package_id;
+      if (auto package_identifier_id = impl_package_id.AsIdentifierId();
+          package_identifier_id.has_value()) {
+        impl_package_id = PackageNameId::ForIdentifier(
+            impl_identifiers.Add(api_identifiers.Get(package_identifier_id)));
+      }
+
       if (auto lookup =
               unit_and_imports_->package_imports_map.Lookup(impl_package_id)) {
         // On a hit, replace the entry to unify the API and implementation
@@ -288,7 +300,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   for (auto [i, api_imports_entry] : llvm::enumerate(api_imports_list)) {
     // These variables are updated after figuring out which imports are present.
     auto import_decl_id = SemIR::InstId::None;
-    IdentifierId package_id = IdentifierId::None;
+    PackageNameId package_id = PackageNameId::None;
     bool has_load_error = false;
 
     // Identify the local package imports if present.
@@ -318,9 +330,10 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
             {.ir_id = SemIR::ImportIRId::ApiForImpl,
              .inst_id = api_imports->import_decl_id});
         import_decl_id =
-            context_.AddInst(context_.MakeImportedLocAndInst<SemIR::ImportDecl>(
-                import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
-                                        api_imports_entry.first)}));
+            AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
+                                  context_, import_ir_inst_id,
+                                  {.package_id = SemIR::NameId::ForPackageName(
+                                       api_imports_entry.first)}));
         package_id = api_imports_entry.first;
       }
       has_load_error |= api_imports->has_load_error;
@@ -334,25 +347,6 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   }
 }
 
-auto CheckUnit::ImportCppPackages() -> void {
-  const auto& imports = unit_and_imports_->cpp_imports;
-  if (imports.empty()) {
-    return;
-  }
-
-  llvm::SmallVector<std::pair<llvm::StringRef, SemIRLoc>> import_pairs;
-  import_pairs.reserve(imports.size());
-  for (const auto& import : imports) {
-    import_pairs.push_back(
-        {unit_and_imports_->unit->value_stores->string_literal_values().Get(
-             import.library_id),
-         import.node_id});
-  }
-
-  ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                 import_pairs, fs_);
-}
-
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
@@ -363,7 +357,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->get_parse_tree_and_subtrees();
+    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
@@ -374,8 +368,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   while (auto maybe_node_id = traversal.Next()) {
     node_id = *maybe_node_id;
 
-    unit_and_imports_->unit->sem_ir_converter->AdvanceToken(
-        context_.parse_tree().node_token(node_id));
+    emitter_.AdvanceToken(context_.parse_tree().node_token(node_id));
 
     if (context_.parse_tree().node_has_error(node_id)) {
       context_.TODO(node_id, "handle invalid parse trees in `check`");

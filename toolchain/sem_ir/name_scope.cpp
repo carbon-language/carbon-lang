@@ -66,6 +66,10 @@ auto NameScope::LookupOrAdd(NameId name_id, InstId inst_id,
 
 auto NameScope::LookupOrPoison(LocId loc_id, NameId name_id)
     -> std::optional<EntryId> {
+  if (!name_id.AsIdentifierId().has_value()) {
+    return Lookup(name_id);
+  }
+
   auto insert_result = name_map_.Insert(name_id, EntryId(names_.size()));
   if (insert_result.is_inserted()) {
     names_.push_back({.name_id = name_id,
@@ -91,9 +95,7 @@ auto NameScopeStore::IsCorePackage(NameScopeId scope_id) const -> bool {
   if (!IsPackage(scope_id)) {
     return false;
   }
-  auto scope_name =
-      file_->names().GetAsStringIfIdentifier(Get(scope_id).name_id());
-  return scope_name == "Core";
+  return Get(scope_id).name_id() == NameId::Core;
 }
 
 }  // namespace Carbon::SemIR

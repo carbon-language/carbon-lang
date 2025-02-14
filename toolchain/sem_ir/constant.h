@@ -64,8 +64,8 @@ class ConstantValueStore {
   // Returns `None` if the constant ID is non-constant. Requires
   // `const_id.has_value()`.
   auto GetInstId(ConstantId const_id) const -> InstId {
-    if (const_id.is_template()) {
-      return const_id.template_inst_id();
+    if (const_id.is_concrete()) {
+      return const_id.concrete_inst_id();
     }
     if (const_id.is_symbolic()) {
       return GetSymbolicConstant(const_id).inst_id;
@@ -144,7 +144,7 @@ class ConstantValueStore {
   llvm::SmallVector<ConstantId, 0> values_;
 
   // A mapping from a symbolic constant ID index to information about the
-  // symbolic constant. For a template constant, the only information that we
+  // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
@@ -161,7 +161,7 @@ class ConstantStore {
   //
   // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
-  enum PhaseKind : uint8_t { IsTemplate, IsPeriodSelfSymbolic, IsSymbolic };
+  enum PhaseKind : uint8_t { IsConcrete, IsPeriodSelfSymbolic, IsSymbolic };
   auto GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId;
 
   // Collects memory usage of members.

@@ -42,6 +42,15 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     DiagnosticKind::TooManyDigits,
+
+    // TODO: This can only fire if the first message in a diagnostic is rooted
+    // in a file other than the file being compiled. The language server
+    // currently only supports compiling one file at a time. Do one of:
+    // - When imports are supported, find a diagnostic whose first message isn't
+    //   in the current file.
+    // - Require all diagnostics produced by compiling have their first location
+    //   be in the file being compiled, never an import.
+    DiagnosticKind::LanguageServerDiagnosticInWrongFile,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

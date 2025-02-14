@@ -11,15 +11,8 @@ namespace Carbon::Parse {
 auto HandleBindingPattern(Context& context) -> void {
   auto state = context.PopState();
 
-  // Parameters may have keywords prefixing the pattern. They become the parent
-  // for the full BindingPattern.
-  if (auto token = context.ConsumeIf(Lex::TokenKind::Template)) {
-    context.PushState({.state = State::BindingPatternTemplate,
-                       .in_var_pattern = state.in_var_pattern,
-                       .token = *token,
-                       .subtree_start = state.subtree_start});
-  }
-
+  // An `addr` pattern may wrap the binding, and becomes the parent of the
+  // `BindingPattern`.
   if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
     context.PushState({.state = State::BindingPatternAddr,
                        .in_var_pattern = state.in_var_pattern,
@@ -39,6 +32,9 @@ auto HandleBindingPattern(Context& context) -> void {
     }
   };
 
+  // A `template` keyword may precede the name.
+  auto template_token = context.ConsumeIf(Lex::TokenKind::Template);
+
   // The first item should be an identifier or `self`.
   bool has_name = false;
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
@@ -57,9 +53,21 @@ auto HandleBindingPattern(Context& context) -> void {
                         *context.position(), /*has_error=*/true);
     on_error(/*expected_name=*/true);
   }
-
   if (auto kind = context.PositionKind();
       kind == Lex::TokenKind::Colon || kind == Lex::TokenKind::ColonExclaim) {
+    // Add the wrapper node for the `template` keyword if present.
+    if (template_token) {
+      if (kind != Lex::TokenKind::ColonExclaim && !state.has_error) {
+        CARBON_DIAGNOSTIC(ExpectedGenericBindingPatternAfterTemplate, Error,
+                          "expected `:!` binding after `template`");
+        context.emitter().Emit(*template_token,
+                               ExpectedGenericBindingPatternAfterTemplate);
+        state.has_error = true;
+      }
+      context.AddNode(NodeKind::TemplateBindingName, *template_token,
+                      state.has_error);
+    }
+
     state.state = kind == Lex::TokenKind::Colon
                       ? State::BindingPatternFinishAsRegular
                       : State::BindingPatternFinishAsGeneric;
@@ -118,17 +126,6 @@ auto HandleBindingPatternAddr(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::Addr, state.token, state.has_error);
-
-  // If an error was encountered, propagate it while adding a node.
-  if (state.has_error) {
-    context.ReturnErrorOnState();
-  }
-}
-
-auto HandleBindingPatternTemplate(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::Template, state.token, state.has_error);
 
   // If an error was encountered, propagate it while adding a node.
   if (state.has_error) {
