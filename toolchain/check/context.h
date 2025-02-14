@@ -43,6 +43,12 @@ class Context {
   // add contextual notes as appropriate.
   using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
+  // An ongoing impl lookup, used to ensure termination.
+  struct ImplLookupStackEntry {
+    SemIR::ConstantId type_const_id;
+    SemIR::ConstantId interface_const_id;
+  };
+
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
@@ -359,11 +365,6 @@ class Context {
     return scope_stack_.full_pattern_stack();
   }
 
-  // An ongoing impl lookup, used to ensure termination.
-  struct ImplLookupStackEntry {
-    SemIR::ConstantId type_const_id;
-    SemIR::ConstantId interface_const_id;
-  };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
   }
