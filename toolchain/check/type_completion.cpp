@@ -570,7 +570,7 @@ static auto RequireCompleteFacetTypeImpl(
       auto builder = context.emitter().Build(
           loc_id, ResolveFacetTypeWithUndefinedInterface,
           static_cast<int>(context_for_diagnostics), interface.name_id);
-      context.NoteUndefinedInterface(interface_id, builder);
+      NoteUndefinedInterface(context, interface_id, builder);
       builder.Emit();
       return SemIR::CompleteFacetTypeId::None;
     }

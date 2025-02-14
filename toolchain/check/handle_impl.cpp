@@ -304,7 +304,8 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 static auto CompleteFacetTypeToInterface(Context& context,
                                          const SemIR::Impl& impl)
     -> const SemIR::CompleteFacetType::RequiredInterface* {
-  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
     return nullptr;
   }

@@ -257,8 +257,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
     auto complete_id = RequireCompleteFacetType(
-        context, context.GetTypeIdForTypeConstant(base_const_id), loc_id,
-        *base_as_facet_type, FacetTypeMemberAccess);
+        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
+        loc_id, *base_as_facet_type, FacetTypeMemberAccess);
     if (complete_id.has_value()) {
       const auto& resolved = context.complete_facet_types().Get(complete_id);
       for (const auto& interface : resolved.required_interfaces) {
