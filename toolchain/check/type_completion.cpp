@@ -24,6 +24,9 @@ namespace {
 // - A `BuildValueRepr` step computes the value representation for a
 //   type, once all of its nested types are complete, and marks the type as
 //   complete.
+//
+// TODO: Extend this to support computing other properties of types, like
+// being concrete.
 class TypeCompleter {
  public:
   TypeCompleter(Context& context, SemIRLoc loc,
@@ -503,12 +506,15 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          Context::BuildDiagnosticFn diagnoser,
                          Context::BuildDiagnosticFn abstract_diagnoser)
     -> bool {
+  // TODO: For symbolic types, should add a RequireConcreteType instruction,
+  // like RequireCompleteType.
   CARBON_CHECK(abstract_diagnoser);
 
   if (!RequireCompleteType(context, type_id, loc_id, diagnoser)) {
     return false;
   }
 
+  // TODO: This doesn't properly handle tuples and structs.
   if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
     auto& class_info = context.classes().Get(class_type->class_id);
     if (class_info.inheritance_kind !=
