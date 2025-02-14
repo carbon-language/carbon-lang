@@ -15,6 +15,8 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
@@ -111,8 +113,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                                                 access_kind);
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, lookup_result.poisoning_loc_id(),
+                         name_context.loc_id);
     return;
   }
 
@@ -161,7 +163,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
   if (!prev_class_id.has_value()) {
     // This is a redeclaration of something other than a class.
-    context.DiagnoseDuplicateName(class_decl_id, prev_id);
+    DiagnoseDuplicateName(context, class_decl_id, prev_id);
     return;
   }
 
@@ -242,8 +244,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     class_info.generic_id = BuildGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.has_parameters()) {
-      class_decl.type_id = context.GetGenericClassType(
-          class_decl.class_id, context.scope_stack().PeekSpecificId());
+      class_decl.type_id = GetGenericClassType(
+          context, class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
@@ -259,11 +261,12 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     auto& class_info = context.classes().Get(class_decl.class_id);
     auto specific_id =
         context.generics().GetSelfSpecific(class_info.generic_id);
-    class_info.self_type_id = context.GetTypeIdForTypeConstant(TryEvalInst(
-        context, SemIR::InstId::None,
-        SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
-                         .class_id = class_decl.class_id,
-                         .specific_id = specific_id}));
+    class_info.self_type_id =
+        context.types().GetTypeIdForTypeConstantId(TryEvalInst(
+            context, SemIR::InstId::None,
+            SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
+                             .class_id = class_decl.class_id,
+                             .specific_id = specific_id}));
   }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
@@ -541,8 +544,8 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
-  auto field_type_id =
-      context.GetUnboundElementType(class_info.self_type_id, base_info.type_id);
+  auto field_type_id = GetUnboundElementType(context, class_info.self_type_id,
+                                             base_info.type_id);
   class_info.base_id = context.AddInst<SemIR::BaseDecl>(
       node_id, {.type_id = field_type_id,
                 .base_type_inst_id = base_info.inst_id,
@@ -627,9 +630,9 @@ static auto CheckCompleteAdapterClassType(Context& context,
   auto object_repr_id = context.types().GetObjectRepr(adapted_type_id);
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
-      node_id,
-      {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
-       .object_repr_id = object_repr_id});
+      node_id, {.type_id = GetSingletonType(
+                    context, SemIR::WitnessType::SingletonInstId),
+                .object_repr_id = object_repr_id});
 }
 
 static auto AddStructTypeFields(
@@ -688,8 +691,9 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_id = context.GetPointerType(
-             context.GetSingletonType(SemIR::VtableType::SingletonInstId))});
+         .type_id = GetPointerType(
+             context,
+             GetSingletonType(context, SemIR::VtableType::SingletonInstId))});
   }
   if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
@@ -744,16 +748,17 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
       }
     }
     class_info.vtable_id = context.AddInst<SemIR::Vtable>(
-        node_id, {.type_id = context.GetSingletonType(
-                      SemIR::VtableType::SingletonInstId),
+        node_id, {.type_id = GetSingletonType(
+                      context, SemIR::VtableType::SingletonInstId),
                   .virtual_functions_id = context.inst_blocks().Add(vtable)});
   }
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
-      {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
-       .object_repr_id = context.GetStructType(
-           AddStructTypeFields(context, struct_type_fields))});
+      {.type_id =
+           GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+       .object_repr_id = GetStructType(
+           context, AddStructTypeFields(context, struct_type_fields))});
 }
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)

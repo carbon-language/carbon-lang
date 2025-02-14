@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -37,7 +38,7 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
 
   auto inst_id = name_context.prev_inst_id();
   if (!inst_id.has_value()) {
-    context.DiagnoseNameNotFound(node_id, name_context.name_id_for_new_inst());
+    DiagnoseNameNotFound(context, node_id, name_context.name_id_for_new_inst());
     return true;
   }
 

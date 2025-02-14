@@ -69,7 +69,7 @@ git_override(
 bazel_dep(name = "rules_bison", version = "0.3")
 bazel_dep(name = "rules_flex", version = "0.3")
 bazel_dep(name = "rules_m4", version = "0.2.4")
-bazel_dep(name = "rules_cc", version = "0.1.0")
+bazel_dep(name = "rules_cc", version = "0.1.1")
 
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
 git_override(

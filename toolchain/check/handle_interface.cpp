@@ -9,6 +9,8 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -65,8 +67,8 @@ static auto BuildInterfaceDecl(Context& context,
           introducer.modifier_set.GetAccessKind());
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, lookup_result.poisoning_loc_id(),
+                         name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_id = lookup_result.target_inst_id();
     if (auto existing_interface_decl =
@@ -102,7 +104,7 @@ static auto BuildInterfaceDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a interface.
-      context.DiagnoseDuplicateName(interface_decl_id, existing_id);
+      DiagnoseDuplicateName(context, interface_decl_id, existing_id);
     }
   }
 
@@ -115,8 +117,9 @@ static auto BuildInterfaceDecl(Context& context,
     interface_info.generic_id = BuildGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
-      interface_decl.type_id = context.GetGenericInterfaceType(
-          interface_decl.interface_id, context.scope_stack().PeekSpecificId());
+      interface_decl.type_id =
+          GetGenericInterfaceType(context, interface_decl.interface_id,
+                                  context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(
@@ -162,8 +165,8 @@ auto HandleParseNode(Context& context,
 
   // Declare and introduce `Self`.
   SemIR::FacetType facet_type =
-      context.FacetTypeFromInterface(interface_id, self_specific_id);
-  SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
+      FacetTypeFromInterface(context, interface_id, self_specific_id);
+  SemIR::TypeId self_type_id = context.types().GetTypeIdForTypeConstantId(
       TryEvalInst(context, SemIR::InstId::None, facet_type));
 
   // We model `Self` as a symbolic binding whose type is the interface.
