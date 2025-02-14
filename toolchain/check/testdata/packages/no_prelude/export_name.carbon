@@ -937,7 +937,9 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .Local = %Local
+// CHECK:STDOUT:     .NS = <poisoned>
 // CHECK:STDOUT:     .NSLocal = %NSLocal
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>

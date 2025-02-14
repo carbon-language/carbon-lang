@@ -375,6 +375,7 @@ fn F() {
 // CHECK:STDOUT:     .C = %C.decl.loc8
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:     .F2 = %F2.decl
+// CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc8: type = class_decl @C.2 [concrete = constants.%C.9f4] {} {}
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
@@ -439,6 +440,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
@@ -479,6 +481,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.1 [concrete = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
@@ -528,6 +531,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc4: type = interface_decl @I.1 [concrete = constants.%I.type.733] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
@@ -576,6 +580,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
@@ -651,6 +656,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   .C1 = <poisoned>
 // CHECK:STDOUT:   .F1 = %F1.decl
 // CHECK:STDOUT:   .C2 = %C2.decl
 // CHECK:STDOUT: }
@@ -684,6 +690,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.2 [concrete = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
@@ -728,7 +735,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
+// CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .F2 = %F2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
@@ -783,8 +792,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.1 [concrete = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:     .F2 = %F2.decl
+// CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
 // CHECK:STDOUT:     %x.patt: %C.f79 = binding_pattern x
@@ -864,12 +875,15 @@ fn F() {
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.1 [concrete = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N1: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .N2 = %N2
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N2: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .N3 = %N3
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N3: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .D1 = %D1.decl
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D1.decl: type = class_decl @D1 [concrete = constants.%D1] {} {}
 // CHECK:STDOUT:   %C.decl.loc59: type = class_decl @C.5 [concrete = constants.%C.0b8] {} {}
@@ -885,6 +899,7 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .D3 = %D3.decl
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -913,6 +928,7 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D1
 // CHECK:STDOUT:   .D2 = %D2.decl
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @D3(@D2.%Self: %D2.type) {
@@ -936,6 +952,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%D3.68e
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1016,7 +1033,9 @@ fn F() {
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C: type = bind_alias C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT: }
@@ -1118,6 +1137,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = interface_decl @C [concrete = constants.%C.type] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:   }
@@ -1156,6 +1176,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   extend @impl.%C.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1175,8 +1196,10 @@ fn F() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
@@ -1251,6 +1274,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .v = %.loc11_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

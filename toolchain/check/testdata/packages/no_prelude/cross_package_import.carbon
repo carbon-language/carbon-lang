@@ -150,9 +150,9 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace Other;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
@@ -599,6 +599,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
+// CHECK:STDOUT:     .F = <poisoned>
 // CHECK:STDOUT:     import Other//other_fn_use
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

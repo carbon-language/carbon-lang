@@ -163,7 +163,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
   if (!prev_class_id.has_value()) {
     // This is a redeclaration of something other than a class.
-    DiagnoseDuplicateName(context, class_decl_id, prev_id);
+    DiagnoseDuplicateName(context, name_context.loc_id, prev_id);
     return;
   }
 

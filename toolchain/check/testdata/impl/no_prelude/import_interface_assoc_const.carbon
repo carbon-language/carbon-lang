@@ -721,6 +721,10 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .I3 = imports.%Main.I3
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C5 = %C5.decl
+// CHECK:STDOUT:     .BAD1 = <poisoned>
+// CHECK:STDOUT:     .BAD2 = <poisoned>
+// CHECK:STDOUT:     .BAD3 = <poisoned>
+// CHECK:STDOUT:     .BAD4 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C5.decl: type = class_decl @C5 [concrete = constants.%C5] {} {}
@@ -1062,6 +1066,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .I3 = imports.%Main.I3
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C8 = %C8.decl
+// CHECK:STDOUT:     .BAD5 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C8.decl: type = class_decl @C8 [concrete = constants.%C8] {} {}
@@ -1152,6 +1157,7 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .I3 = imports.%Main.I3
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .C9 = %C9.decl
+// CHECK:STDOUT:     .BAD6 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C9.decl: type = class_decl @C9 [concrete = constants.%C9] {} {}
@@ -1242,6 +1248,8 @@ impl CC as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     .I3 = imports.%Main.I3
 // CHECK:STDOUT:     .NonType = imports.%Main.NonType
 // CHECK:STDOUT:     .CA = %CA.decl
+// CHECK:STDOUT:     .BAD7 = <poisoned>
+// CHECK:STDOUT:     .BAD8 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CA.decl: type = class_decl @CA [concrete = constants.%CA] {} {}

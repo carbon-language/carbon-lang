@@ -98,6 +98,8 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .BeingDefined = <poisoned>
+// CHECK:STDOUT:   .T = <poisoned>
 // CHECK:STDOUT:   .H = %assoc0
 // CHECK:STDOUT:   witness = (%H.decl)
 // CHECK:STDOUT: }

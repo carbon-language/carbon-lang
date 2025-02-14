@@ -107,6 +107,7 @@ fn F(c: Class) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .NoSelf = %NoSelf.decl
+// CHECK:STDOUT:   .Class = <poisoned>
 // CHECK:STDOUT:   .WithSelf = %WithSelf.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

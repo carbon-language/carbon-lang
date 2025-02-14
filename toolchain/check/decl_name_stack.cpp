@@ -180,7 +180,7 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
     DiagnosePoisonedName(*context_, name_context.poisoning_loc_id,
                          name_context.loc_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
-    DiagnoseDuplicateName(*context_, target_id, id);
+    DiagnoseDuplicateName(*context_, name_context.loc_id, id);
   } else {
     AddName(name_context, target_id, access_kind);
   }

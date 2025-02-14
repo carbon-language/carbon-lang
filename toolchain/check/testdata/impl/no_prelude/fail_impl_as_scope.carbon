@@ -243,6 +243,7 @@ class X {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Zero = %assoc0
+// CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:   witness = (%Zero.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -280,6 +281,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Point
+// CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Zero.1(@Z.%Self: %Z.type) {
@@ -393,7 +395,9 @@ class X {
 // CHECK:STDOUT:   %B.decl: %B.type.d47 = fn_decl @B.2 [concrete = constants.%B.4af] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .B = %B.decl
+// CHECK:STDOUT:   .G = <poisoned>
 // CHECK:STDOUT:   witness = @X.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -413,6 +417,9 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .G = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @B.1(@A.%Self: %A.type) {

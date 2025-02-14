@@ -149,10 +149,12 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.eced1c.1: <namespace> = namespace file.%Core.import.1, [concrete] {
+// CHECK:STDOUT:     .F = <poisoned>
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.eced1c.2: <namespace> = namespace file.%Core.import.loc4, [concrete] {
+// CHECK:STDOUT:     .Int = <poisoned>
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
