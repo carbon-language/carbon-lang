@@ -79,7 +79,7 @@ impl library "no_decl_extern";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_no_decl.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: no_decl_extern.carbon:4:1: error: no owning function declaration or definition found for declaration in non-owning file [MissingDeclarationInApi]
+// CHECK:STDERR: no_decl_extern.carbon:4:1: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
 // CHECK:STDERR: extern library "no_decl" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -96,7 +96,7 @@ extern library "indirect_two_file" fn F();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: indirect_two_file.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: indirect_two_file_extern.carbon:4:1: error: no owning function declaration or definition found for declaration in non-owning file [MissingDeclarationInApi]
+// CHECK:STDERR: indirect_two_file_extern.carbon:4:1: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
 // CHECK:STDERR: extern library "indirect_two_file" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -141,16 +141,10 @@ package OtherPackage library "[[@TEST_NAME]]";
 
 extern library "cross_package" fn Extern();
 
-// --- todo_cross_package.carbon
-// This should work, the import comes from a different package.
+// --- cross_package.carbon
 
 package ThisPackage library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: todo_cross_package.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: cross_package_extern.carbon:4:1: error: no owning function declaration or definition found for declaration in non-owning file [MissingDeclarationInApi]
-// CHECK:STDERR: extern library "cross_package" fn Extern();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 import OtherPackage library "cross_package_extern";
 
 // This call causes the function to be imported.
@@ -493,7 +487,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @Extern();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_cross_package.carbon
+// CHECK:STDOUT: --- cross_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
