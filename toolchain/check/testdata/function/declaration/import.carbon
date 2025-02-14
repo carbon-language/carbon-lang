@@ -810,32 +810,32 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple.type.a1c: type = tuple_type (%i32) [concrete]
-// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %tuple.type.dd4: type = tuple_type (%i32) [concrete]
+// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [concrete]
 // CHECK:STDOUT:   %E: %E.type = struct_value () [concrete]
+// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
-// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.9ba: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %impl_witness.b97: <witness> = impl_witness (imports.%Core.import_ref.a86), @impl.1(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.1(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, %impl_witness.b97 [concrete]
+// CHECK:STDOUT:   %.39b: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.16d [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [concrete]
-// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_1.47b: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.a1c = tuple_value (%int_1.5d2) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.dd4 = tuple_value (%int_1.47b) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -884,14 +884,14 @@ import library "extern_api";
 // CHECK:STDOUT:     %int_32.loc8_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc8_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
-// CHECK:STDOUT:     %c.param: %tuple.type.a1c = value_param runtime_param0
-// CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.3 [concrete = constants.%tuple.type.a1c] {
+// CHECK:STDOUT:     %c.param: %tuple.type.dd4 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.3 [concrete = constants.%tuple.type.dd4] {
 // CHECK:STDOUT:       %int_32.loc8_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc8_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc8_21.2: %tuple.type.85c = tuple_literal (%i32.loc8_17)
-// CHECK:STDOUT:       %.loc8_21.3: type = converted %.loc8_21.2, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
+// CHECK:STDOUT:       %.loc8_21.3: type = converted %.loc8_21.2, constants.%tuple.type.dd4 [concrete = constants.%tuple.type.dd4]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %tuple.type.a1c = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %tuple.type.dd4 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %struct_type.c = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -954,7 +954,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @B(%b.param_patt: %i32) -> %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type.a1c) -> %struct_type.c;
+// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type.dd4) -> %struct_type.c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -967,25 +967,25 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc13: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc13: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %bound_method.loc13, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %specific_fn.loc13(%int_1.loc13) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc13_16.1: %i32 = value_of_initializer %int.convert_checked.loc13 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc13_16.2: %i32 = converted %int_1.loc13, %.loc13_16.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %specific_fn.loc13(%int_1.loc13) [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc13_16.1: %i32 = value_of_initializer %int.convert_checked.loc13 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc13_16.2: %i32 = converted %int_1.loc13, %.loc13_16.1 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc13_16.2)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc14_25.1: %tuple.type.985 = tuple_literal (%int_1.loc14)
-// CHECK:STDOUT:   %impl.elem0.loc14: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc14: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
 // CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %int_1.loc14, %impl.elem0.loc14 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %bound_method.loc14, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc14: init %i32 = call %specific_fn.loc14(%int_1.loc14) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc14_25.2: %i32 = value_of_initializer %int.convert_checked.loc14 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc14_25.3: %i32 = converted %int_1.loc14, %.loc14_25.2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %tuple: %tuple.type.a1c = tuple_value (%.loc14_25.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_25.4: %tuple.type.a1c = converted %.loc14_25.1, %tuple [concrete = constants.%tuple]
+// CHECK:STDOUT:   %int.convert_checked.loc14: init %i32 = call %specific_fn.loc14(%int_1.loc14) [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc14_25.2: %i32 = value_of_initializer %int.convert_checked.loc14 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc14_25.3: %i32 = converted %int_1.loc14, %.loc14_25.2 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %tuple: %tuple.type.dd4 = tuple_value (%.loc14_25.3) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc14_25.4: %tuple.type.dd4 = converted %.loc14_25.1, %tuple [concrete = constants.%tuple]
 // CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc14_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [concrete = constants.%D]

@@ -77,6 +77,8 @@ auto CheckUnit::Run() -> void {
 
   CheckRequiredDefinitions();
 
+  CheckRequiredDeclarations();
+
   context_.Finalize();
 
   context_.VerifyOnFinish();
@@ -396,6 +398,19 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     traversal.Handle(parse_kind);
   }
   return true;
+}
+
+auto CheckUnit::CheckRequiredDeclarations() -> void {
+  for (const auto& function : context_.functions().array_ref()) {
+    if (!function.first_owning_decl_id.has_value() &&
+        function.extern_library_id == context_.sem_ir().library_id()) {
+      // TODO: add condition function.package == context_.sem_ir().package_id()
+      CARBON_DIAGNOSTIC(MissingDeclarationInApi, Error,
+                        "no owning function declaration or definition found "
+                        "for declaration in non-owning file");
+      emitter_.Emit(function.non_owning_decl_id, MissingDeclarationInApi);
+    }
+  }
 }
 
 auto CheckUnit::CheckRequiredDefinitions() -> void {

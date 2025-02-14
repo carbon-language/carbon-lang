@@ -264,6 +264,38 @@ static auto CopyAncestorNameScopesFromImportIR(
   return scope_cursor;
 }
 
+static auto LoadImportForOwningFunction(Context& context,
+                                        const SemIR::File& import_sem_ir,
+                                        const SemIR::Function& function,
+                                        SemIR::InstId import_ref) {
+  // Import if function is declared as extern and is a non-owning declaration
+  if (!function.is_extern || !function.non_owning_decl_id.has_value()) {
+    return;
+  }
+  auto lib_id = function.extern_library_id;
+  bool is_lib_default = lib_id == SemIR::LibraryNameId::Default;
+
+  auto current_id = context.sem_ir().library_id();
+  bool is_current_default = current_id == SemIR::LibraryNameId::Default;
+
+  if (is_lib_default == is_current_default) {
+    if (is_lib_default) {
+      // Both libraries are default, import ref.
+      LoadImportRef(context, import_ref);
+    } else {
+      // Both libraries are non-default: check if they're the same named
+      // library, import ref if yes.
+      auto str_owner_library = context.string_literal_values().Get(
+          current_id.AsStringLiteralValueId());
+      auto str_decl_library = import_sem_ir.string_literal_values().Get(
+          lib_id.AsStringLiteralValueId());
+      if (str_owner_library == str_decl_library) {
+        LoadImportRef(context, import_ref);
+      }
+    }
+  }
+}
+
 // Adds an ImportRef for an entity, handling merging if needed.
 static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
                                 const SemIR::File& import_sem_ir,
@@ -280,10 +312,20 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
   if (inserted) {
     auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id, .parent_scope_id = parent_scope_id});
+    auto import_ref = AddImportRef(
+        context, {.ir_id = ir_id, .inst_id = import_inst_id}, entity_name_id);
     entry.result = SemIR::ScopeLookupResult::MakeFound(
-        AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
-                     entity_name_id),
-        SemIR::AccessKind::Public);
+        import_ref, SemIR::AccessKind::Public);
+
+    // Import references for non-owning declarations that match current library.
+    if (auto function_decl =
+            import_sem_ir.insts().TryGetAs<SemIR::FunctionDecl>(
+                import_inst_id)) {
+      LoadImportForOwningFunction(
+          context, import_sem_ir,
+          import_sem_ir.functions().Get(function_decl.value().function_id),
+          import_ref);
+    }
     return;
   }
 
