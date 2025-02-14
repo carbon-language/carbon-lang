@@ -7,6 +7,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 
 namespace Carbon::Check {
@@ -489,11 +490,13 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   // specific type to be complete.
   if (type_id.AsConstantId().is_symbolic()) {
     // TODO: Deduplicate these.
-    context.AddInstInNoBlock(SemIR::LocIdAndInst(
-        loc_id, SemIR::RequireCompleteType{
-                    .type_id = GetSingletonType(
-                        context, SemIR::WitnessType::SingletonInstId),
-                    .complete_type_id = type_id}));
+    AddInstInNoBlock(
+        context,
+        SemIR::LocIdAndInst(
+            loc_id, SemIR::RequireCompleteType{
+                        .type_id = GetSingletonType(
+                            context, SemIR::WitnessType::SingletonInstId),
+                        .complete_type_id = type_id}));
   }
 
   return true;

@@ -6,6 +6,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 
 namespace Carbon::Check {
 
@@ -54,7 +55,7 @@ auto HandleParseNode(Context& context, Parse::IfStatementId node_id) -> bool {
       // block.
       auto else_block_id =
           context.node_stack().Pop<Parse::NodeKind::IfCondition>();
-      context.AddInst<SemIR::Branch>(node_id, {.target_id = else_block_id});
+      AddInst<SemIR::Branch>(context, node_id, {.target_id = else_block_id});
       context.inst_block_stack().Pop();
       context.inst_block_stack().Push(else_block_id);
       context.region_stack().AddToRegion(else_block_id, node_id);

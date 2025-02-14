@@ -4,6 +4,8 @@
 
 #include "toolchain/check/subpattern.h"
 
+#include "toolchain/check/inst.h"
+
 namespace Carbon::Check {
 
 auto BeginSubpattern(Context& context) -> void {
@@ -16,8 +18,9 @@ auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
   if (context.region_stack().PeekRegion().size() > 1) {
     // End the exit block with a branch to a successor block, whose contents
     // will be determined later.
-    context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
-        {.target_id = context.inst_blocks().AddDefaultValue()}));
+    AddInst(context,
+            SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+                {.target_id = context.inst_blocks().AddDefaultValue()}));
   } else {
     // This single-block region will be inserted as a SpliceBlock, so we don't
     // need control flow out of it.
