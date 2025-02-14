@@ -220,9 +220,9 @@ struct FileTestFactory {
 
   // A factory function for tests. The output_mutex is optional; see
   // `FileTestBase::output_mutex_`.
-  std::function<FileTestBase*(llvm::StringRef exe_path,
-                              std::mutex* output_mutex,
-                              llvm::StringRef test_name)>
+  std::function<auto(llvm::StringRef exe_path, std::mutex* output_mutex,
+                     llvm::StringRef test_name)
+                    ->FileTestBase*>
       factory_fn;
 };
 

@@ -14,6 +14,7 @@
 #if !defined(CARBON_SEM_IR_BUILTIN_FUNCTION_KIND)
 #error \
     "Must define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND x-macro to use this file."
+#define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name)
 #endif
 
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(None)

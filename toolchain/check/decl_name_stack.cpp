@@ -10,6 +10,8 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -134,8 +136,8 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
 
     case NameContext::State::Unresolved:
       if (!name_context.parent_scope_id.has_value()) {
-        context_->AddNameToLookup(name_context.unresolved_name_id, target_id,
-                                  name_context.initial_scope_index);
+        AddNameToLookup(*context_, name_context.unresolved_name_id, target_id,
+                        name_context.initial_scope_index);
       } else {
         auto& name_scope =
             context_->name_scopes().Get(name_context.parent_scope_id);
@@ -175,10 +177,10 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
                                       SemIR::InstId target_id,
                                       SemIR::AccessKind access_kind) -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    context_->DiagnosePoisonedName(name_context.name_id_for_new_inst(),
-                                   name_context.poisoning_loc_id, target_id);
+    DiagnosePoisonedName(*context_, name_context.name_id_for_new_inst(),
+                         name_context.poisoning_loc_id, name_context.loc_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
-    context_->DiagnoseDuplicateName(target_id, id);
+    DiagnoseDuplicateName(*context_, name_context.loc_id, id);
   } else {
     AddName(name_context, target_id, access_kind);
   }
@@ -264,9 +266,9 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
   }
 
   // For identifier nodes, we need to perform a lookup on the identifier.
-  auto lookup_result = context_->LookupNameInDecl(
-      name_context.loc_id, name_id, name_context.parent_scope_id,
-      name_context.initial_scope_index);
+  auto lookup_result = LookupNameInDecl(*context_, name_context.loc_id, name_id,
+                                        name_context.parent_scope_id,
+                                        name_context.initial_scope_index);
   if (lookup_result.is_poisoned()) {
     name_context.unresolved_name_id = name_id;
     name_context.poisoning_loc_id = lookup_result.poisoning_loc_id();
@@ -298,8 +300,8 @@ static auto CheckQualifierIsResolved(
     case DeclNameStack::NameContext::State::Unresolved:
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier failed to resolve.
-      context.DiagnoseNameNotFound(name_context.loc_id,
-                                   name_context.unresolved_name_id);
+      DiagnoseNameNotFound(context, name_context.loc_id,
+                           name_context.unresolved_name_id);
       return false;
 
     case DeclNameStack::NameContext::State::Finished:
@@ -323,7 +325,7 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
   auto builder =
       context.emitter().Build(loc, QualifiedDeclInIncompleteClassScope,
                               context.classes().Get(class_id).self_type_id);
-  context.NoteIncompleteClass(class_id, builder);
+  NoteIncompleteClass(context, class_id, builder);
   builder.Emit();
 }
 
@@ -337,7 +339,7 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
                     InstIdAsType);
   auto builder = context.emitter().Build(
       loc, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
-  context.NoteUndefinedInterface(interface_id, builder);
+  NoteUndefinedInterface(context, interface_id, builder);
   builder.Emit();
 }
 

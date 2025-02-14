@@ -5,6 +5,7 @@
 #include "toolchain/check/merge.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
@@ -135,7 +136,7 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 
   // Check for disallowed redeclarations cross-library.
-  if (new_decl.is_extern && context.IsImplFile()) {
+  if (new_decl.is_extern && context.sem_ir().is_impl()) {
     // We continue after issuing the "missing API declaration" diagnostic,
     // because it may still be helpful to note other issues with the
     // declarations.

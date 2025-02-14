@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -26,18 +27,18 @@ namespace Carbon::Lower {
 FileContext::FileContext(
     llvm::LLVMContext& llvm_context,
     std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-        all_trees_and_subtrees_for_debug_info,
+        tree_and_subtrees_getters_for_debug_info,
     llvm::StringRef module_name, const SemIR::File& sem_ir,
     const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       di_builder_(*llvm_module_),
       di_compile_unit_(
-          all_trees_and_subtrees_for_debug_info
+          tree_and_subtrees_getters_for_debug_info
               ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
               : nullptr),
-      all_trees_and_subtrees_for_debug_info_(
-          all_trees_and_subtrees_for_debug_info),
+      tree_and_subtrees_getters_for_debug_info_(
+          tree_and_subtrees_getters_for_debug_info),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
@@ -118,7 +119,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   auto inst = sem_ir().insts().Get(inst_id);
 
   auto const_id = sem_ir().constant_values().Get(inst_id);
-  if (const_id.is_template()) {
+  if (const_id.is_concrete()) {
     auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
 
     // For value expressions and initializing expressions, the value produced by
@@ -450,6 +451,16 @@ static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
   CARBON_FATAL("Cannot use inst as type: {0}", inst);
 }
 
+template <typename InstT>
+  requires(InstT::Kind.constant_kind() ==
+               SemIR::InstConstantKind::SymbolicOnly &&
+           InstT::Kind.is_type() != SemIR::InstIsType::Never)
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  // Treat non-monomorphized symbolic types as opaque.
+  return llvm::StructType::get(context.llvm_context());
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> llvm::Type* {
   return llvm::ArrayType::get(
@@ -571,26 +582,16 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 }
 
 template <typename InstT>
-  requires(
-      InstT::Kind.template IsAnyOf<
-          SemIR::AssociatedEntityType, SemIR::FacetAccessType, SemIR::FacetType,
-          SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
-          SemIR::GenericClassType, SemIR::GenericInterfaceType,
-          SemIR::UnboundElementType, SemIR::WhereExpr>())
+  requires(InstT::Kind.template IsAnyOf<
+           SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
+           SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+           SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+           SemIR::WhereExpr>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.
   // TODO: Should we model an interface as a witness table, or an associated
   // entity as an index?
-  return llvm::StructType::get(context.llvm_context());
-}
-
-// Treat non-monomorphized symbolic types as opaque.
-template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
-                                        SemIR::ImplWitnessAccess>())
-static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
-    -> llvm::Type* {
   return llvm::StructType::get(context.llvm_context());
 }
 
@@ -621,7 +622,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
   const auto& tree_and_subtrees =
-      (*all_trees_and_subtrees_for_debug_info_)[resolved.check_ir_id.index]();
+      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
+                                                       .index]();
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
   if (resolved.node_id.has_value()) {

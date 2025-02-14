@@ -25,7 +25,7 @@ using ::testing::Pair;
 using ::testing::UnorderedElementsAreArray;
 
 template <typename MapT, typename MatcherRangeT>
-void ExpectMapElementsAre(MapT&& m, MatcherRangeT element_matchers) {
+auto ExpectMapElementsAre(MapT&& m, MatcherRangeT element_matchers) -> void {
   // Now collect the elements into a container.
   using KeyT = typename std::remove_reference<MapT>::type::KeyT;
   using ValueT = typename std::remove_reference<MapT>::type::ValueT;
@@ -41,14 +41,16 @@ void ExpectMapElementsAre(MapT&& m, MatcherRangeT element_matchers) {
 
 // Allow directly using an initializer list.
 template <typename MapT, typename MatcherT>
-void ExpectMapElementsAre(MapT&& m,
-                          std::initializer_list<MatcherT> element_matchers) {
+auto ExpectMapElementsAre(MapT&& m,
+                          std::initializer_list<MatcherT> element_matchers)
+    -> void {
   std::vector<MatcherT> element_matchers_storage = element_matchers;
   ExpectMapElementsAre(m, element_matchers_storage);
 }
 
 template <typename ValueCB, typename RangeT, typename... RangeTs>
-auto MakeKeyValues(ValueCB value_cb, RangeT&& range, RangeTs&&... ranges) {
+auto MakeKeyValues(ValueCB value_cb, RangeT&& range, RangeTs&&... ranges)
+    -> auto {
   using KeyT = typename RangeT::value_type;
   using ValueT = decltype(value_cb(std::declval<KeyT>()));
   std::vector<std::pair<KeyT, ValueT>> elements;

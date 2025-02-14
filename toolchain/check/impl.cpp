@@ -12,6 +12,9 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -83,7 +86,8 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
 
-  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
     return SemIR::ErrorInst::SingletonInstId;
   }
@@ -107,15 +111,16 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
       context.interfaces().Get(interface_type->interface_id);
 
   // TODO: This should be done as part of facet type resolution.
-  if (!context.RequireDefinedType(
-          facet_type_id, context.insts().GetLocId(impl.latest_decl_id()), [&] {
-            CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
-                              "implementation of undefined interface {0}",
-                              SemIR::NameId);
-            return context.emitter().Build(impl.latest_decl_id(),
-                                           ImplOfUndefinedInterface,
-                                           interface.name_id);
-          })) {
+  if (!RequireDefinedType(context, facet_type_id,
+                          context.insts().GetLocId(impl.latest_decl_id()), [&] {
+                            CARBON_DIAGNOSTIC(
+                                ImplOfUndefinedInterface, Error,
+                                "implementation of undefined interface {0}",
+                                SemIR::NameId);
+                            return context.emitter().Build(
+                                impl.latest_decl_id(), ImplOfUndefinedInterface,
+                                interface.name_id);
+                          })) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -130,7 +135,8 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
   auto table_id = context.inst_blocks().Add(table);
   return context.AddInst<SemIR::ImplWitness>(
       context.insts().GetLocId(impl.latest_decl_id()),
-      {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
+      {.type_id =
+           GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
        .elements_id = table_id,
        .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
 }
@@ -159,7 +165,8 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
   if (witness_id == SemIR::ErrorInst::SingletonInstId) {
     return;
   }
-  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
   const SemIR::FacetTypeInfo& facet_type_info =
@@ -236,7 +243,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
         // value for `Self`.
         assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
             context, impl.constraint_id, interface_type->specific_id, decl_id,
-            context.GetTypeIdForTypeInst(impl.self_id), witness_id);
+            context.types().GetTypeIdForTypeInstId(impl.self_id), witness_id);
 
         // Perform the conversion of the value to the type. We skipped this when
         // forming the facet type because the type of the associated constant
@@ -280,7 +287,8 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     return;
   }
 
-  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
   const SemIR::FacetTypeInfo& facet_type_info =
@@ -337,7 +345,8 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
     return;
   }
 
-  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
   const SemIR::FacetTypeInfo& facet_type_info =
@@ -351,7 +360,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
-  auto self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
+  auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
@@ -375,9 +384,9 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
           CARBON_FATAL("Unexpected type: {0}", type_inst);
         }
         auto& fn = context.functions().Get(fn_type->function_id);
-        auto lookup_result = context.LookupNameInExactScope(
-            context.insts().GetLocId(decl_id), fn.name_id, impl.scope_id,
-            impl_scope);
+        auto lookup_result =
+            LookupNameInExactScope(context, context.insts().GetLocId(decl_id),
+                                   fn.name_id, impl.scope_id, impl_scope);
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_block[index] = CheckAssociatedFunctionImplementation(

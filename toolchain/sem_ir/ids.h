@@ -26,6 +26,7 @@ struct FacetTypeInfo;
 struct Function;
 struct Generic;
 struct Specific;
+struct ImportCpp;
 struct ImportIR;
 struct ImportIRInst;
 struct Impl;
@@ -74,13 +75,13 @@ class AbsoluteInstId : public InstId {
 
 // The ID of a constant value of an expression. An expression is either:
 //
-// - a template constant, with an immediate value, such as `42` or `i32*` or
-//   `("hello", "world")`, or
-// - a symbolic constant, whose value includes a symbolic parameter, such as
+// - a concrete constant, whose value does not depend on any generic parameters,
+//   such as `42` or `i32*` or `("hello", "world")`, or
+// - a symbolic constant, whose value includes a generic parameter, such as
 //   `Vector(T*)`, or
 // - a runtime expression, such as `Print("hello")`.
 //
-// Template constants are a thin wrapper around the instruction ID of the
+// Concrete constants are a thin wrapper around the instruction ID of the
 // constant instruction that defines the constant. Symbolic constants are an
 // index into a separate table of `SymbolicConstant`s maintained by the constant
 // value store.
@@ -92,10 +93,10 @@ struct ConstantId : public IdBase<ConstantId> {
   // An ID with no value.
   static const ConstantId None;
 
-  // Returns the constant ID corresponding to a template constant, which should
+  // Returns the constant ID corresponding to a concrete constant, which should
   // either be in the `constants` block in the file or should be known to be
   // unique.
-  static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
+  static constexpr auto ForConcreteConstant(InstId const_id) -> ConstantId {
     return ConstantId(const_id.index);
   }
 
@@ -117,14 +118,14 @@ struct ConstantId : public IdBase<ConstantId> {
     CARBON_DCHECK(has_value());
     return index <= FirstSymbolicIndex;
   }
-  // Returns whether this represents a template constant. Requires has_value.
-  auto is_template() const -> bool {
+  // Returns whether this represents a concrete constant. Requires has_value.
+  auto is_concrete() const -> bool {
     CARBON_DCHECK(has_value());
     return index >= 0;
   }
 
   // Prints this ID to the given output stream. `disambiguate` indicates whether
-  // template constants should be wrapped with "templateConstant(...)" so that
+  // concrete constants should be wrapped with "concrete_constant(...)" so that
   // they aren't printed the same as an InstId. This can be set to false if
   // there is no risk of ambiguity.
   auto Print(llvm::raw_ostream& out, bool disambiguate = true) const -> void;
@@ -136,11 +137,11 @@ struct ConstantId : public IdBase<ConstantId> {
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
 
-  // Returns the instruction that describes this template constant value.
-  // Requires `is_template()`. Use `ConstantValueStore::GetInstId` to get the
+  // Returns the instruction that describes this concrete constant value.
+  // Requires `is_concrete()`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
-  constexpr auto template_inst_id() const -> InstId {
-    CARBON_DCHECK(is_template());
+  constexpr auto concrete_inst_id() const -> InstId {
+    CARBON_DCHECK(is_concrete());
     return InstId(index);
   }
 
@@ -377,6 +378,18 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
 constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
 
+struct ImportCppId : public IdBase<ImportCppId> {
+  static constexpr llvm::StringLiteral Label = "import_cpp";
+  using ValueType = ImportCpp;
+
+  // An ID with no value.
+  static const ImportCppId None;
+
+  using IdBase::IdBase;
+};
+
+constexpr ImportCppId ImportCppId::None = ImportCppId(NoneIndex);
+
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
   static constexpr llvm::StringLiteral Label = "ir";
@@ -463,18 +476,20 @@ struct NameId : public IdBase<NameId> {
 
   // An ID with no value.
   static const NameId None;
-  // The name of `self`.
-  static const NameId SelfValue;
-  // The name of `Self`.
-  static const NameId SelfType;
+  // The name of `base`.
+  static const NameId Base;
+  // The name of the package `Core`.
+  static const NameId Core;
+  // The name of `package`.
+  static const NameId PackageNamespace;
   // The name of `.Self`.
   static const NameId PeriodSelf;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
-  // The name of `package`.
-  static const NameId PackageNamespace;
-  // The name of `base`.
-  static const NameId Base;
+  // The name of `Self`.
+  static const NameId SelfType;
+  // The name of `self`.
+  static const NameId SelfValue;
   // The name of `vptr`.
   static const NameId Vptr;
 
@@ -484,6 +499,10 @@ struct NameId : public IdBase<NameId> {
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId;
+
+  // Returns the NameId corresponding to a particular PackageNameId. This is the
+  // name that is declared when the package is imported.
+  static auto ForPackageName(PackageNameId id) -> NameId;
 
   using IdBase::IdBase;
 
@@ -497,14 +516,15 @@ struct NameId : public IdBase<NameId> {
 };
 
 constexpr NameId NameId::None = NameId(NoneIndex);
-constexpr NameId NameId::SelfValue = NameId(NoneIndex - 1);
-constexpr NameId NameId::SelfType = NameId(NoneIndex - 2);
-constexpr NameId NameId::PeriodSelf = NameId(NoneIndex - 3);
-constexpr NameId NameId::ReturnSlot = NameId(NoneIndex - 4);
-constexpr NameId NameId::PackageNamespace = NameId(NoneIndex - 5);
-constexpr NameId NameId::Base = NameId(NoneIndex - 6);
-constexpr NameId NameId::Vptr = NameId(NoneIndex - 7);
-constexpr int NameId::NonIndexValueCount = 8;
+constexpr NameId NameId::Base = NameId(NoneIndex - 1);
+constexpr NameId NameId::Core = NameId(NoneIndex - 2);
+constexpr NameId NameId::PackageNamespace = NameId(NoneIndex - 3);
+constexpr NameId NameId::PeriodSelf = NameId(NoneIndex - 4);
+constexpr NameId NameId::ReturnSlot = NameId(NoneIndex - 5);
+constexpr NameId NameId::SelfType = NameId(NoneIndex - 6);
+constexpr NameId NameId::SelfValue = NameId(NoneIndex - 7);
+constexpr NameId NameId::Vptr = NameId(NoneIndex - 8);
+constexpr int NameId::NonIndexValueCount = 9;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Vptr.index);
 

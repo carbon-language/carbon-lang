@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -24,9 +25,8 @@ Context::Context(Tree* tree, Lex::TokenizedBuffer* tokens,
                  DiagnosticConsumer* consumer, llvm::raw_ostream* vlog_stream)
     : tree_(tree),
       tokens_(tokens),
-      converter_(tokens, &position_),
       err_tracker_(*consumer),
-      emitter_(converter_, err_tracker_),
+      emitter_(&err_tracker_, this),
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {

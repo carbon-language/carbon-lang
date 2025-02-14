@@ -13,8 +13,11 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
@@ -157,8 +160,8 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
     auto index_id = block.template AddInst<SemIR::IntValue>(
-        loc_id, {.type_id = context.GetSingletonType(
-                     SemIR::IntLiteralType::SingletonInstId),
+        loc_id, {.type_id = GetSingletonType(
+                     context, SemIR::IntLiteralType::SingletonInstId),
                  .int_id = context.ints().Add(static_cast<int64_t>(i))});
     return block.template AddInst<AccessInstT>(
         loc_id, {elem_type_id, aggregate_id, index_id});
@@ -616,7 +619,7 @@ static auto ComputeInheritancePath(Context& context, SemIRLoc loc,
   // We intend for NRVO to be applied to `result`. All `return` statements in
   // this function should `return result;`.
   std::optional<InheritancePath> result(std::in_place);
-  if (!context.TryToCompleteType(derived_id, loc)) {
+  if (!TryToCompleteType(context, derived_id, loc)) {
     // TODO: Should we give an error here? If we don't, and there is an
     // inheritance path when the class is defined, we may have a coherence
     // problem.
@@ -962,7 +965,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, loc_id, tuple_inst_id).type_id);
       }
-      auto tuple_type_id = context.GetTupleType(type_ids);
+      auto tuple_type_id = GetTupleType(context, type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
     }
 
@@ -985,6 +988,65 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
       return context.AddInst<SemIR::FacetAccessType>(
           loc_id, {.type_id = target.type_id, .facet_value_inst_id = value_id});
+    }
+  }
+
+  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+    auto lookup_inst_id = value_id;
+
+    // `FacetAccessType` wraps an instruction that evaluates to a facet value
+    // (of type `FacetType`). If the `FacetType` matches the target
+    // `FacetType` then we don't need to do impl lookup. Otherwise, we want to
+    // try convert the result of the instruction in the `FacetAccessType`.
+    if (auto facet_access_type_value =
+            context.insts().TryGetAs<SemIR::FacetAccessType>(lookup_inst_id)) {
+      auto facet_value_inst_id = facet_access_type_value->facet_value_inst_id;
+      if (context.insts().Get(facet_value_inst_id).type_id() ==
+          target.type_id) {
+        return facet_value_inst_id;
+      }
+      lookup_inst_id = facet_access_type_value->facet_value_inst_id;
+    }
+
+    if (sem_ir.types().Is<SemIR::FacetType>(
+            sem_ir.insts().Get(lookup_inst_id).type_id())) {
+      // Conversion from a facet value (which has type `FacetType`) to a
+      // different facet value (which has type `FacetType`), if the value's
+      // `FacetType` satisfies the requirements of the target `FacetType`. The
+      // underlying type in the facet value will be preserved, just the
+      // `FacetType` will change.
+
+      // TODO: We need to do impl lookup for the FacetType, here, not for the
+      // FacetValue (so not using `context.constant_values().Get(value_id)` like
+      // we do for `TypeType`). The FacetType erased the type in the FacetValue,
+      // so using that here would be like an implicit cast back to the concrete
+      // type.
+      context.TODO(loc_id, "Facet value converting to facet value");
+      return value_id;
+    }
+
+    if (sem_ir.types().Is<SemIR::TypeType>(
+            sem_ir.insts().Get(lookup_inst_id).type_id())) {
+      // Conversion from a type value (which has type `type`) to a facet value
+      // (which has type `FacetType`), if the type satisfies the requirements of
+      // the target `FacetType`, as determined by finding an impl witness. This
+      // binds the value to the `FacetType` with a `FacetValue`.
+
+      auto witness_inst_id = LookupImplWitness(
+          context, loc_id,
+          // The value instruction evaluates to a type value (which has type
+          // `type`). This gets that type value if it's available at compile
+          // time, as a constant value.
+          context.constant_values().Get(lookup_inst_id),
+          context.types().GetConstantId(target.type_id));
+      if (witness_inst_id != SemIR::InstId::None) {
+        return context.AddInst<SemIR::FacetValue>(
+            loc_id, {
+                        .type_id = target.type_id,
+                        .type_inst_id = lookup_inst_id,
+                        .witness_inst_id = witness_inst_id,
+                    });
+      }
     }
   }
 
@@ -1040,8 +1102,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // We can only perform initialization for complete, non-abstract types.
-  if (!context.RequireConcreteType(
-          target.type_id, loc_id,
+  if (!RequireConcreteType(
+          context, target.type_id, loc_id,
           [&] {
             CARBON_CHECK(!target.is_initializer(),
                          "Initialization of incomplete types is expected to be "
@@ -1237,7 +1299,7 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, loc_id, value_id,
-      context.GetSingletonType(SemIR::BoolType::SingletonInstId));
+      GetSingletonType(context, SemIR::BoolType::SingletonInstId));
 }
 
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
@@ -1258,8 +1320,6 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // The callee reference can be invalidated by conversions, so ensure all reads
   // from it are done before conversion calls.
   auto callee_decl_id = callee.latest_decl_id();
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_slot_pattern_id = callee.return_slot_pattern_id;
@@ -1267,18 +1327,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
 
-  // Find self parameter pattern.
-  // TODO: Do this during initial traversal of implicit params.
-  auto self_param_id = SemIR::InstId::None;
-  for (auto implicit_param_id : implicit_param_patterns) {
-    if (SemIR::Function::GetNameFromPatternId(
-            context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
-      CARBON_CHECK(!self_param_id.has_value());
-      self_param_id = implicit_param_id;
-    }
-  }
-
-  if (self_param_id.has_value() && !self_id.has_value()) {
+  if (callee.self_param_id.has_value() && !self_id.has_value()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
                       "missing object argument in method call");
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
@@ -1289,7 +1338,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     self_id = SemIR::ErrorInst::SingletonInstId;
   }
 
-  return CallerPatternMatch(context, callee_specific_id, self_param_id,
+  return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_slot_pattern_id,
                             self_id, arg_refs, return_slot_arg_id);
 }
@@ -1313,7 +1362,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
   }
 
   return {.inst_id = type_inst_id,
-          .type_id = context.GetTypeIdForTypeConstant(type_const_id)};
+          .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
 }  // namespace Carbon::Check

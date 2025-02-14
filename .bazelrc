@@ -167,7 +167,6 @@ common --incompatible_default_to_explicit_init_py
 common --incompatible_depset_for_java_output_source_jars
 common --incompatible_depset_for_libraries_to_link_getter
 common --incompatible_disable_native_android_rules
-common --incompatible_disable_native_apple_binary_rule
 common --incompatible_disable_native_repo_rules
 common --incompatible_disable_objc_library_transition
 common --incompatible_disable_target_provider_fields

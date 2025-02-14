@@ -58,22 +58,22 @@ extern namespace C;
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

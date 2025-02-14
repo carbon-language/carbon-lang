@@ -17,12 +17,12 @@ var x: ((),) = ();
 // CHECK:STDOUT: --- fail_assign_empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type) [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
@@ -30,11 +30,11 @@ var x: ((),) = ();
 // CHECK:STDOUT:     %.loc15_1: %tuple.type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type = var x
-// CHECK:STDOUT:   %.loc15_12.1: type = splice_block %.loc15_12.4 [template = constants.%tuple.type] {
+// CHECK:STDOUT:   %.loc15_12.1: type = splice_block %.loc15_12.4 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:     %.loc15_10: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: %tuple.type = tuple_literal (%.loc15_10)
-// CHECK:STDOUT:     %.loc15_12.3: type = converted %.loc15_10, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc15_12.4: type = converted %.loc15_12.2, constants.%tuple.type [template = constants.%tuple.type]
+// CHECK:STDOUT:     %.loc15_12.3: type = converted %.loc15_10, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_12.4: type = converted %.loc15_12.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }

@@ -17,7 +17,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
   // Only facet types may have `where` restrictions.
   if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
-      !context.IsFacetType(self_type_id)) {
+      !context.types().IsFacetType(self_type_id)) {
     CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
                       "left argument of `where` operator must be a facet type");
     context.emitter().Emit(self_node, WhereOnNonFacetType);
@@ -31,9 +31,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::PeriodSelf,
-       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       // `None` because this is not the parameter of a generic.
-       .bind_index = SemIR::CompileTimeBindIndex::None});
+       .parent_scope_id = context.scope_stack().PeekNameScopeId()});
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
@@ -109,7 +107,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
   if (rhs_as_type.type_id != SemIR::ErrorInst::SingletonTypeId &&
-      !context.IsFacetType(rhs_as_type.type_id)) {
+      !context.types().IsFacetType(rhs_as_type.type_id)) {
     CARBON_DIAGNOSTIC(
         ImplsOnNonFacetType, Error,
         "right argument of `impls` requirement must be a facet type");

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -32,7 +33,7 @@ auto HandleParseNode(Context& context, Parse::TupleLiteralId node_id) -> bool {
   for (auto inst : inst_block) {
     type_ids.push_back(context.insts().Get(inst).type_id());
   }
-  auto type_id = context.GetTupleType(type_ids);
+  auto type_id = GetTupleType(context, type_ids);
 
   auto value_id = context.AddInst<SemIR::TupleLiteral>(
       node_id, {.type_id = type_id, .elements_id = refs_id});
