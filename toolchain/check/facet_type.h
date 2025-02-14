@@ -10,12 +10,19 @@
 
 namespace Carbon::Check {
 
+// Create a FacetType typed instruction object consisting of a single
+// interface.
+auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
+                            SemIR::SpecificId specific_id) -> SemIR::FacetType;
+
 // Adds and returns an `ImplWitness` instruction (created with location set to
 // `witness_loc_id`) that "`Self` type" of type "facet type" implements
 // interface `interface_to_witness`, which must be an interface required by
 // "facet type" (as determined by `RequireCompleteFacetType`). This witness
 // reflects the values assigned to associated constant members of that
-// interface by rewrite constraints in the facet type.
+// interface by rewrite constraints in the facet type. `self_specific_id`
+// will be the `specific_id` of the resulting witness, and should be the
+// specific_id of the `Self` facet.
 //
 // `self_type_inst_id` is the `Self` type of the facet type. For example, in
 // `T:! X where ...`, we will bind the `.Self` of the `where` facet type to

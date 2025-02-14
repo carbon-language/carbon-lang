@@ -12,6 +12,15 @@
 
 namespace Carbon::Check {
 
+auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
+                            SemIR::SpecificId specific_id) -> SemIR::FacetType {
+  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(
+      SemIR::FacetTypeInfo{.impls_constraints = {{interface_id, specific_id}},
+                           .other_requirements = false});
+  return {.type_id = SemIR::TypeType::SingletonTypeId,
+          .facet_type_id = facet_type_id};
+}
+
 // Returns `true` if the `FacetAccessWitness` of `witness_id` matches
 // `interface`.
 static auto WitnessAccessMatchesInterface(
@@ -79,8 +88,6 @@ auto ResolveFacetTypeImplWitness(
                                        interface_to_witness)) {
       continue;
     }
-    CARBON_CHECK(access.index.index >= 0);
-    CARBON_CHECK(access.index.index < static_cast<int32_t>(table.size()));
     auto& table_entry = table[access.index.index];
     if (table_entry == SemIR::ErrorInst::SingletonInstId) {
       // Don't overwrite an error value. This prioritizes not generating

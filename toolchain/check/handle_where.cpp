@@ -69,7 +69,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // For now we convert to a value expression eagerly because otherwise we'll
     // often be unable to constant-evaluate the enclosing `where` expression.
     // TODO: Perform the conversion symbolically and add an implicit constraint
-    // that this conversion exist.
+    // that this conversion is valid and produces a constant.
     rhs_id = ConvertToValueExpr(context, rhs_id);
   } else {
     rhs_id = ConvertToValueOfType(context, rhs_node, rhs_id,

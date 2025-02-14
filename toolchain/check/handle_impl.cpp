@@ -300,7 +300,9 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
   return true;
 }
 
-// On error, issues a diagnostic and returns nullptr.
+// Checks that the constraint specified for the impl is valid and complete.
+// Returns a pointer to the interface that the impl implements. On error,
+// issues a diagnostic and returns nullptr.
 static auto CompleteFacetTypeToInterface(Context& context,
                                          const SemIR::Impl& impl)
     -> const SemIR::CompleteFacetType::RequiredInterface* {
@@ -385,8 +387,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (required_interface) {
     impl_info.interface = *required_interface;
   }
-  // FIXME: If we don't have a single complete interface, how should that be
-  // handled below?
 
   // Add the impl declaration.
   bool invalid_redeclaration = false;
