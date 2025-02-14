@@ -2,33 +2,32 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_DRIVER_CLANG_SUBCOMMAND_H_
-#define CARBON_TOOLCHAIN_DRIVER_CLANG_SUBCOMMAND_H_
+#ifndef CARBON_TOOLCHAIN_DRIVER_BUILD_RUNTIMES_SUBCOMMAND_H_
+#define CARBON_TOOLCHAIN_DRIVER_BUILD_RUNTIMES_SUBCOMMAND_H_
 
 #include "common/command_line.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
 
 namespace Carbon {
 
-// Options for the clang subcommand, which is just a thin wrapper.
+// Options for the `build_runtimes` subcommand.
 //
 // See the implementation of `Build` for documentation on members.
-struct ClangOptions {
+struct BuildRuntimesOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
-  llvm::StringRef prebuilt_runtimes_path;
-  bool build_runtimes_on_demand = false;
-
-  llvm::SmallVector<llvm::StringRef> args;
+  CodegenOptions codegen_options;
+  llvm::StringRef directory;
 };
 
-// Implements the clang subcommand of the driver.
-class ClangSubcommand : public DriverSubcommand {
+// Implements the link subcommand of the driver.
+class BuildRuntimesSubcommand : public DriverSubcommand {
  public:
-  explicit ClangSubcommand();
+  explicit BuildRuntimesSubcommand();
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
@@ -37,9 +36,9 @@ class ClangSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
-  ClangOptions options_;
+  BuildRuntimesOptions options_;
 };
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_DRIVER_CLANG_SUBCOMMAND_H_
+#endif  // CARBON_TOOLCHAIN_DRIVER_BUILD_RUNTIMES_SUBCOMMAND_H_
