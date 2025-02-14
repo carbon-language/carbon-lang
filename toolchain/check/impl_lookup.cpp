@@ -152,7 +152,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                         std::string, SemIR::TypeId);
       context.emitter()
           .Build(loc_id, ImplLookupCycle, "<TODO: interface name>",
-                 context.GetTypeIdForTypeConstant(type_const_id))
+                 context.types().GetTypeIdForTypeConstantId(type_const_id))
           .Emit();
       return SemIR::ErrorInst::SingletonInstId;
     }
