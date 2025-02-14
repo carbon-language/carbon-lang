@@ -7,7 +7,6 @@
 #include <gmock/gmock.h>
 
 #include <filesystem>
-#include <fstream>
 #include <optional>
 #include <string>
 #include <utility>
@@ -28,6 +27,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/ThreadPool.h"
+#include "testing/base/file_helpers.h"
 #include "testing/file_test/autoupdate.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
@@ -59,21 +59,6 @@ using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
 static constexpr llvm::StringLiteral StdinFilename = "STDIN";
-
-// Reads a file to string.
-static auto ReadFile(std::string_view path) -> ErrorOr<std::string> {
-  std::ifstream proto_file{std::string(path)};
-  if (proto_file.fail()) {
-    return Error(llvm::formatv("Error opening file: {0}", path));
-  }
-  std::stringstream buffer;
-  buffer << proto_file.rdbuf();
-  if (proto_file.fail()) {
-    return Error(llvm::formatv("Error reading file: {0}", path));
-  }
-  proto_file.close();
-  return buffer.str();
-}
 
 // Splits outputs to string_view because gtest handles string_view by default.
 static auto SplitOutput(llvm::StringRef output)
@@ -288,7 +273,7 @@ auto FileTestBase::GetLineNumberReplacements(
 auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
     -> ErrorOr<Success> {
   // Store the file so that test_files can use references to content.
-  CARBON_ASSIGN_OR_RETURN(context.input_content, ReadFile(test_name_));
+  CARBON_ASSIGN_OR_RETURN(context.input_content, ReadFile(test_name_.str()));
 
   // Load expected output.
   CARBON_RETURN_IF_ERROR(ProcessTestFile(context));

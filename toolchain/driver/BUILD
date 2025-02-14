@@ -153,6 +153,7 @@ cc_test(
         ":driver",
         "//common:all_llvm_targets",
         "//common:raw_string_ostream",
+        "//testing/base:file_helpers",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",

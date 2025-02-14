@@ -92,6 +92,14 @@ cc_binary(
 )
 
 cc_library(
+    name = "file_helpers",
+    testonly = 1,
+    srcs = ["file_helpers.cpp"],
+    hdrs = ["file_helpers.h"],
+    deps = ["//common:error"],
+)
+
+cc_library(
     name = "global_exe_path",
     testonly = 1,
     srcs = ["global_exe_path.cpp"],
