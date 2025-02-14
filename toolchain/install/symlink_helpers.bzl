@@ -80,7 +80,7 @@ symlink_filegroup = rule(
     implementation = _symlink_filegroup_impl,
     attrs = {
         "out_prefix": attr.string(mandatory = True),
-        "remove_prefix": attr.string(default = ""),
+        "remove_prefix": attr.string(),
         "srcs": attr.label_list(mandatory = True),
     },
 )
