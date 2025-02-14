@@ -31,7 +31,6 @@ auto HandleDidOpenTextDocument(
 // code. We often need to know the offsets when modifying strings, so
 // this function helps us calculate the offsets. It assumes that the start
 // position comes before the end position.
-// TODO: Use lexer line number data but avoid re-lexing multiple times.
 static auto PositionToIndex(const std::string& contents,
                             const clang::clangd::Position& start,
                             const clang::clangd::Position& end)
@@ -87,6 +86,7 @@ static auto ApplyChanges(
       continue;
     }
 
+    // TODO: Use lexer line number data but avoid re-lexing multiple times.
     auto [start_index, end_index] =
         PositionToIndex(source, change.range->start, change.range->end);
 
