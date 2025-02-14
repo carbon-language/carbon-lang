@@ -13,6 +13,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/subpattern.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -252,7 +253,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
       auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
       auto new_scrutinee = context.AddInst<SemIR::AddrOf>(
           context.insts().GetLocId(scrutinee_ref_id),
-          {.type_id = context.GetPointerType(scrutinee_ref.type_id()),
+          {.type_id = GetPointerType(context, scrutinee_ref.type_id()),
            .lvalue_id = scrutinee_ref_id});
       AddWork(
           {.pattern_id = addr_pattern.inner_id, .scrutinee_id = new_scrutinee});

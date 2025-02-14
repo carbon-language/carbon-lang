@@ -10,6 +10,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -107,7 +109,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
           CARBON_CHECK(import_id.has_value());
           // TODO: Pass the import package name location instead of the import
           // id to get more accurate location.
-          context.DiagnoseDuplicateName(import_id, prev_inst_id);
+          DiagnoseDuplicateName(context, import_id, prev_inst_id);
         }
         return {.name_scope_id = namespace_inst->name_scope_id,
                 .inst_id = prev_inst_id,
@@ -150,7 +152,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
   if (!result.is_poisoned() && !inserted) {
     // TODO: Pass the import namespace name location instead of the namespace id
     // to get more accurate location.
-    context.DiagnoseDuplicateName(namespace_id, result.target_inst_id());
+    DiagnoseDuplicateName(context, namespace_id, result.target_inst_id());
   }
   result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
                                                SemIR::AccessKind::Public);
@@ -511,7 +513,7 @@ static auto AddNamespaceFromOtherPackage(Context& context,
                                          SemIR::NameId name_id)
     -> SemIR::InstId {
   auto namespace_type_id =
-      context.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context, SemIR::NamespaceType::SingletonInstId);
   AddImportNamespaceResult result = CopySingleNameScopeFromImportIR(
       context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
       import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);

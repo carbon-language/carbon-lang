@@ -9,6 +9,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/subpattern.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
@@ -124,7 +125,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
     auto field_type_id =
-        context.GetUnboundElementType(class_info.self_type_id, cast_type_id);
+        GetUnboundElementType(context, class_info.self_type_id, cast_type_id);
     auto field_id = context.AddInst<SemIR::FieldDecl>(
         binding_id, {.type_id = field_type_id,
                      .name_id = name_id,
