@@ -182,6 +182,8 @@ class Context {
     return import_ref_ids_;
   }
 
+  // TODO: Consider putting this behind a narrower API to guard against emitting
+  // multiple times.
   auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
     return bind_name_map_;
   }
@@ -344,9 +346,6 @@ class Context {
 
   // Map from an AnyBindingPattern inst to precomputed parts of the
   // pattern-match SemIR for it.
-  //
-  // TODO: Consider putting this behind a narrower API to guard against emitting
-  // multiple times.
   Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
 
   // Map from VarPattern insts to the corresponding VarStorage insts. The
