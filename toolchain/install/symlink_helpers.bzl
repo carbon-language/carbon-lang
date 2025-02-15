@@ -59,6 +59,8 @@ def _symlink_filegroup_impl(ctx):
         relative_path = relative_path.removeprefix(f.root.path + "/")
         relative_path = relative_path.removeprefix(f.owner.workspace_root + "/")
         relative_path = relative_path.removeprefix(f.owner.package + "/")
+        if not relative_path.startswith(remove_prefix):
+            fail("Missing `{0}` in `{1}`".format(remove_prefix, relative_path))
         relative_path = relative_path.removeprefix(remove_prefix)
 
         out = ctx.actions.declare_file(prefix + "/" + relative_path)
