@@ -19,7 +19,6 @@ auto ReadFile(std::filesystem::path path) -> ErrorOr<std::string> {
   if (file_stream.fail()) {
     return Error(llvm::formatv("Error reading file: {0}", path));
   }
-  file_stream.close();
   return buffer.str();
 }
 
