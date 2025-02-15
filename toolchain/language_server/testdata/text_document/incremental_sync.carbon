@@ -56,7 +56,7 @@
 [[@LSP-NOTIFY:textDocument/didChange:
   "textDocument": {"uri": "file:/test.carbon"},
   "contentChanges": [
-    { "text": "fn Foo() {}\n\nfn Bar() {}\n" }
+    {"text": "fn Foo() {}\n\nfn Bar() {}\n"}
   ]
 ]]
 [[@LSP-CALL:textDocument/documentSymbol:
