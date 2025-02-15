@@ -39,7 +39,7 @@
   "contentChanges": [
     {"range": {"start": {"line": 3, "character": 0},
                "end": {"line": 3, "character": 0}},
-                "text": "\nfn FourthFunction() {}\n"}
+     "text": "\nfn FourthFunction() {}\n"}
   ]
 ]]
 [[@LSP-NOTIFY:textDocument/didChange:
@@ -47,7 +47,7 @@
   "contentChanges": [
     {"range": {"start": {"line": 0, "character": 0},
                "end": {"line": 0, "character": 0}},
-                "text": "fn FirstFunction() {}\n\n"}
+     "text": "fn FirstFunction() {}\n\n"}
   ]
 ]]
 [[@LSP-CALL:textDocument/documentSymbol:
