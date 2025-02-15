@@ -104,8 +104,8 @@ auto HandleDidChangeTextDocument(
   }
 
   if (auto* file = context.LookupFile(filename)) {
-    // we copy the document to a new string, apply changes to the string and
-    // set the string as the new text
+    // We copy the document to a new string, apply changes to the string, and
+    // set the string as the new text.
     std::string source = file->text().str();
     ApplyChanges(source, params.contentChanges);
     file->SetText(context, params.textDocument.version, source);
