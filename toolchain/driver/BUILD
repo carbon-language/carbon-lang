@@ -20,11 +20,8 @@ cc_library(
     name = "clang_runner",
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
-    data = [
-        "//toolchain/install:install_data.no_driver",
-    ],
     deps = [
-        "//common:command_line",
+        ":tool_runner_base",
         "//common:ostream",
         "//common:vlog",
         "//toolchain/install:install_paths",
@@ -104,6 +101,8 @@ cc_library(
         "language_server_subcommand.h",
         "link_subcommand.cpp",
         "link_subcommand.h",
+        "lld_subcommand.cpp",
+        "lld_subcommand.h",
     ],
     hdrs = [
         "driver.h",
@@ -115,6 +114,7 @@ cc_library(
     textual_hdrs = ["flags.def"],
     deps = [
         ":clang_runner",
+        ":lld_runner",
         "//common:command_line",
         "//common:error",
         "//common:ostream",
@@ -178,6 +178,60 @@ cc_fuzz_test(
         "//common:exe_path",
         "//common:raw_string_ostream",
         "//testing/fuzzing:libfuzzer_header",
+        "//toolchain/install:install_paths",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "lld_runner",
+    srcs = ["lld_runner.cpp"],
+    hdrs = ["lld_runner.h"],
+    deps = [
+        ":tool_runner_base",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/install:install_paths",
+        "@llvm-project//lld:Common",
+        "@llvm-project//lld:ELF",
+        "@llvm-project//lld:MachO",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "lld_runner_test",
+    size = "small",
+    srcs = ["lld_runner_test.cpp"],
+    env = cc_env(),
+    deps = [
+        ":clang_runner",
+        ":lld_runner",
+        "//common:all_llvm_targets",
+        "//common:check",
+        "//common:ostream",
+        "//common:raw_string_ostream",
+        "//testing/base:capture_std_streams",
+        "//testing/base:file_helpers",
+        "//testing/base:global_exe_path",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Object",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
+    ],
+)
+
+cc_library(
+    name = "tool_runner_base",
+    srcs = ["tool_runner_base.cpp"],
+    hdrs = ["tool_runner_base.h"],
+    data = [
+        "//toolchain/install:install_data.no_driver",
+    ],
+    deps = [
+        "//common:ostream",
+        "//common:vlog",
         "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",
     ],

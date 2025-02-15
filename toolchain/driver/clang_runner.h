@@ -10,6 +10,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/driver/tool_runner_base.h"
 #include "toolchain/install/install_paths.h"
 
 namespace Carbon {
@@ -36,7 +37,7 @@ namespace Carbon {
 // standard output and standard error, and otherwise can only read and write
 // files based on their names described in the arguments. It doesn't provide any
 // higher-level abstraction such as streams for inputs or outputs.
-class ClangRunner {
+class ClangRunner : ToolRunnerBase {
  public:
   // Build a Clang runner that uses the provided `exe_name` and `err_stream`.
   //
@@ -61,11 +62,8 @@ class ClangRunner {
   auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
 
  private:
-  const InstallPaths* installation_;
-
   llvm::StringRef target_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-  llvm::raw_ostream* vlog_stream_;
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids_;
 
