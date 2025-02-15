@@ -19,7 +19,7 @@
 //     Defines a parse node for a postfix operator, with the Name as token.
 //   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)
 //     Defines a parse node that corresponds to a token that is a single-token
-//     literal. The token is wrapped for LexTokenKind.
+//     literal.
 //   - CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)
 //     A token-based modifier. The Name is the TokenKind, and will be appended
 //     with "Modifier" for the parse kind.
