@@ -19,19 +19,19 @@
   "contentChanges": [
     {"range": {"start": {"line": 0, "character": 17},
                "end": {"line": 0, "character": 20}},
-                "text": ""},
+     "text": ""},
     {"range": {"start": {"line": 0, "character": 12},
                "end": {"line": 0, "character": 13}},
-                "text": "c"},
+     "text": "c"},
     {"range": {"start": {"line": 0, "character": 13},
                "end": {"line": 0, "character": 15}},
-                "text": "ti"},
+     "text": "ti"},
     {"range": {"start": {"line": 2, "character": 9},
                "end": {"line": 2, "character": 9}},
-                "text": "u"},
+     "text": "u"},
     {"range": {"start": {"line": 2, "character": 11},
                "end": {"line": 2, "character": 11}},
-                "text": "ction"}
+     "text": "ction"}
   ]
 ]]
 [[@LSP-NOTIFY:textDocument/didChange:
