@@ -19,6 +19,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Program.h"
 #include "llvm/TargetParser/Host.h"
+#include "testing/base/capture_std_streams.h"
 #include "testing/base/global_exe_path.h"
 
 namespace Carbon {
@@ -26,31 +27,6 @@ namespace {
 
 using ::testing::HasSubstr;
 using ::testing::StrEq;
-
-// While these are marked as "internal" APIs, they seem to work and be pretty
-// widely used for their exact documented behavior.
-using ::testing::internal::CaptureStderr;
-using ::testing::internal::CaptureStdout;
-using ::testing::internal::GetCapturedStderr;
-using ::testing::internal::GetCapturedStdout;
-
-// Calls the provided lambda with `stderr` and `stdout` captured and saved into
-// the provided output parameters. The lambda's result is returned. It is
-// important to not put anything inside the lambda whose output would be useful
-// in interpreting test errors such as Google Test assertions as their output
-// will end up captured as well.
-template <typename CallableT>
-static auto RunWithCapturedOutput(std::string& out, std::string& err,
-                                  CallableT callable) {
-  CaptureStderr();
-  CaptureStdout();
-  auto result = callable();
-  // No need to flush stderr.
-  err = GetCapturedStderr();
-  llvm::outs().flush();
-  out = GetCapturedStdout();
-  return result;
-}
 
 TEST(ClangRunnerTest, Version) {
   RawStringOstream test_os;
@@ -62,8 +38,8 @@ TEST(ClangRunnerTest, Version) {
 
   std::string out;
   std::string err;
-  EXPECT_TRUE(RunWithCapturedOutput(out, err,
-                                    [&] { return runner.Run({"--version"}); }));
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err, [&] { return runner.Run({"--version"}); }));
   // The arguments to Clang should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
 
@@ -132,12 +108,12 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
   ClangRunner runner(&install_paths, target, vfs, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_TRUE(RunWithCapturedOutput(out, err,
-                                    [&] {
-                                      return runner.Run({"-###", "-o", "binary",
-                                                         foo_file.string(),
-                                                         bar_file.string()});
-                                    }))
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err,
+      [&] {
+        return runner.Run(
+            {"-###", "-o", "binary", foo_file.string(), bar_file.string()});
+      }))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();
@@ -166,12 +142,12 @@ TEST(ClangRunnerTest, DashC) {
   ClangRunner runner(&install_paths, target, vfs, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_TRUE(RunWithCapturedOutput(out, err,
-                                    [&] {
-                                      return runner.Run(
-                                          {"-c", test_file.string(), "-o",
-                                           test_output.string()});
-                                    }))
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err,
+      [&] {
+        return runner.Run(
+            {"-c", test_file.string(), "-o", test_output.string()});
+      }))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();
@@ -199,12 +175,12 @@ TEST(ClangRunnerTest, BuitinHeaders) {
   ClangRunner runner(&install_paths, target, vfs, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_TRUE(RunWithCapturedOutput(out, err,
-                                    [&] {
-                                      return runner.Run(
-                                          {"-c", test_file.string(), "-o",
-                                           test_output.string()});
-                                    }))
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err,
+      [&] {
+        return runner.Run(
+            {"-c", test_file.string(), "-o", test_output.string()});
+      }))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();

@@ -49,6 +49,7 @@ cc_test(
         "//common:check",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//testing/base:capture_std_streams",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "@googletest//:gtest",

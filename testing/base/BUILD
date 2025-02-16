@@ -46,6 +46,17 @@ cc_library(
 )
 
 cc_library(
+    name = "capture_std_streams",
+    testonly = 1,
+    srcs = ["capture_std_streams.cpp"],
+    hdrs = ["capture_std_streams.h"],
+    deps = [
+        "//common:ostream",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "source_gen_lib",
     testonly = 1,
     srcs = ["source_gen.cpp"],
