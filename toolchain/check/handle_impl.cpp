@@ -303,8 +303,8 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 // Checks that the constraint specified for the impl is valid and complete.
 // Returns a pointer to the interface that the impl implements. On error,
 // issues a diagnostic and returns nullptr.
-static auto CompleteFacetTypeToInterface(Context& context,
-                                         const SemIR::Impl& impl)
+static auto CheckConstraintIsInterface(Context& context,
+                                       const SemIR::Impl& impl)
     -> const SemIR::CompleteFacetType::RequiredInterface* {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(impl.constraint_id);
@@ -383,7 +383,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                             .interface = SemIR::SpecificInterface::None}};
 
   const SemIR::CompleteFacetType::RequiredInterface* required_interface =
-      CompleteFacetTypeToInterface(context, impl_info);
+      CheckConstraintIsInterface(context, impl_info);
   if (required_interface) {
     impl_info.interface = *required_interface;
   }

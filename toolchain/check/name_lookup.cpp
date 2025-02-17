@@ -266,6 +266,11 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
         scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
                                       .specific_id = interface.specific_id});
       }
+    } else {
+      // Lookup into this scope should fail without producing an error since
+      // `RequireCompleteFacetType` has already issued a diagnostic.
+      scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
+                                    .specific_id = SemIR::SpecificId::None});
     }
     return true;
   }
