@@ -413,6 +413,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
     } else {
       impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
+      // TODO: We might also want to mark that the name scope for the impl has
+      // an error -- at least once we start making name lookups within the impl
+      // also look into the facet (eg, so you can name associated constants from
+      // within the impl).
     }
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
