@@ -20,6 +20,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/TargetParser/Host.h"
 #include "testing/base/capture_std_streams.h"
+#include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
 
 namespace Carbon {
@@ -56,38 +57,6 @@ TEST(ClangRunnerTest, Version) {
                              install_paths.llvm_install_bin()));
 }
 
-// Utility to write a test file. We don't need the full power provided here yet,
-// but we anticipate adding more tests such as compiling basic C++ code in the
-// future and this provides a basis for building those tests.
-static auto WriteTestFile(llvm::StringRef name_suffix, llvm::Twine contents)
-    -> std::filesystem::path {
-  std::filesystem::path test_tmpdir;
-  if (char* tmpdir_env = getenv("TEST_TMPDIR"); tmpdir_env != nullptr) {
-    test_tmpdir = std::string(tmpdir_env);
-  } else {
-    test_tmpdir = std::filesystem::temp_directory_path();
-  }
-
-  const auto* unit_test = ::testing::UnitTest::GetInstance();
-  const auto* test_info = unit_test->current_test_info();
-  std::filesystem::path test_file =
-      test_tmpdir / llvm::formatv("{0}_{1}_{2}", test_info->test_suite_name(),
-                                  test_info->name(), name_suffix)
-                        .str();
-  // Make debugging a bit easier by cleaning up any files from previous runs.
-  // This is only necessary when not run in Bazel's test environment.
-  std::filesystem::remove(test_file);
-  CARBON_CHECK(!std::filesystem::exists(test_file));
-
-  {
-    std::error_code ec;
-    llvm::raw_fd_ostream test_file_stream(test_file.string(), ec);
-    CARBON_CHECK(!ec, "Test file error: {0}", ec.message());
-    test_file_stream << contents;
-  }
-  return test_file;
-}
-
 // It's hard to write a portable and reliable unittest for all the layers of the
 // Clang driver because they work hard to interact with the underlying
 // filesystem and operating system. For now, we just check that a link command
@@ -97,8 +66,8 @@ static auto WriteTestFile(llvm::StringRef name_suffix, llvm::Twine contents)
 // test more complete Clang functionality here.
 TEST(ClangRunnerTest, LinkCommandEcho) {
   // Just create some empty files to use in a synthetic link command below.
-  std::filesystem::path foo_file = WriteTestFile("foo.o", "");
-  std::filesystem::path bar_file = WriteTestFile("bar.o", "");
+  std::filesystem::path foo_file = *Testing::WriteTestFile("foo.o", "");
+  std::filesystem::path bar_file = *Testing::WriteTestFile("bar.o", "");
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
@@ -131,8 +100,8 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
 
 TEST(ClangRunnerTest, DashC) {
   std::filesystem::path test_file =
-      WriteTestFile("test.cpp", "int test() { return 0; }");
-  std::filesystem::path test_output = WriteTestFile("test.o", "");
+      *Testing::WriteTestFile("test.cpp", "int test() { return 0; }");
+  std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
@@ -158,14 +127,14 @@ TEST(ClangRunnerTest, DashC) {
 }
 
 TEST(ClangRunnerTest, BuitinHeaders) {
-  std::filesystem::path test_file = WriteTestFile("test.c", R"cpp(
+  std::filesystem::path test_file = *Testing::WriteTestFile("test.c", R"cpp(
 #include <stdalign.h>
 
 #ifndef alignas
 #error included the wrong header
 #endif
   )cpp");
-  std::filesystem::path test_output = WriteTestFile("test.o", "");
+  std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());

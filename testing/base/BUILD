@@ -107,7 +107,10 @@ cc_library(
     testonly = 1,
     srcs = ["file_helpers.cpp"],
     hdrs = ["file_helpers.h"],
-    deps = ["//common:error"],
+    deps = [
+        "//common:error",
+        "@googletest//:gtest",
+    ],
 )
 
 cc_library(
