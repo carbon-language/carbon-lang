@@ -86,9 +86,8 @@ class ValueStore
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto i : llvm::seq(values_.size())) {
-        IdT id(i);
-        map.Add(PrintToString(id), Yaml::OutputScalar(Get(id)));
+      for (auto [id, value] : enumerate()) {
+        map.Add(PrintToString(id), Yaml::OutputScalar(value));
       }
     });
   }

@@ -81,11 +81,9 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto block_index : llvm::seq(values_.size())) {
-        auto block_id = IdT(block_index);
+      for (auto [block_id, block] : values_.enumerate()) {
         map.Add(PrintToString(block_id),
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                  auto block = Get(block_id);
                   for (auto i : llvm::seq(block.size())) {
                     map.Add(llvm::itostr(i), Yaml::OutputScalar(block[i]));
                   }

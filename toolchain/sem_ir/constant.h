@@ -121,10 +121,20 @@ class ConstantValueStore {
                       symbolic_constants_);
   }
 
-  // Returns the constant values mapping as an ArrayRef whose keys are
-  // instruction indexes. Some of the elements in this mapping may be `None` or
-  // NotConstant.
-  auto array_ref() const -> llvm::ArrayRef<ConstantId> { return values_; }
+  // Makes an iterable range over pairs of the instruction id and constant value
+  // id for each value in the store.
+  auto enumerate() const -> auto {
+    auto index_to_id = [](auto pair) -> std::pair<InstId, ConstantId> {
+      auto [index, value] = pair;
+      return std::pair<InstId, ConstantId>(InstId(index), value);
+    };
+    auto range = llvm::enumerate(values_);
+    using Iter =
+        llvm::mapped_iterator<decltype(range.begin()), decltype(index_to_id)>;
+    auto begin = Iter(range.begin(), index_to_id);
+    auto end = Iter(range.end(), index_to_id);
+    return llvm::make_range(begin, end);
+  }
 
   // Returns the symbolic constants mapping as an ArrayRef whose keys are
   // symbolic indexes of constants.

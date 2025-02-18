@@ -338,6 +338,8 @@ auto DeductionContext::Deduce() -> bool {
       // TODO: The call logic should reuse the conversion here (if any) instead
       // of doing the same conversion again. At the moment we throw away the
       // converted arg_id.
+      //
+      // TODO: Suppress diagnostics here if `diagnose_` is false.
       arg_id = ConvertToValueOfType(context(), loc_id_, arg_id, param_type_id);
       if (arg_id == SemIR::ErrorInst::SingletonInstId) {
         return false;

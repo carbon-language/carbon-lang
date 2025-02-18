@@ -70,28 +70,28 @@ class FormatterImpl {
     CloseBrace();
     out_ << '\n';
 
-    for (int i : llvm::seq(sem_ir_->interfaces().size())) {
-      FormatInterface(InterfaceId(i));
+    for (auto [id, _] : sem_ir_->interfaces().enumerate()) {
+      FormatInterface(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->associated_constants().size())) {
-      FormatAssociatedConstant(AssociatedConstantId(i));
+    for (auto [id, _] : sem_ir_->associated_constants().enumerate()) {
+      FormatAssociatedConstant(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->impls().size())) {
-      FormatImpl(ImplId(i));
+    for (auto [id, _] : sem_ir_->impls().enumerate()) {
+      FormatImpl(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->classes().size())) {
-      FormatClass(ClassId(i));
+    for (auto [id, _] : sem_ir_->classes().enumerate()) {
+      FormatClass(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->functions().size())) {
-      FormatFunction(FunctionId(i));
+    for (auto [id, _] : sem_ir_->functions().enumerate()) {
+      FormatFunction(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->specifics().size())) {
-      FormatSpecific(SpecificId(i));
+    for (auto [id, _] : sem_ir_->specifics().enumerate()) {
+      FormatSpecific(id);
     }
 
     // End-of-file newline.

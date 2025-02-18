@@ -439,6 +439,7 @@ class InstStore {
 
   auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
+  auto enumerate() const -> auto { return values_.enumerate(); }
 
  private:
   llvm::SmallVector<LocId> loc_ids_;

@@ -3209,9 +3209,7 @@ auto ImportImplsFromApiFile(Context& context) -> void {
     return;
   }
 
-  for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
-    SemIR::ImplId impl_id(impl_index);
-
+  for (auto [impl_id, _] : import_ir.sem_ir->impls().enumerate()) {
     // Resolve the imported impl to a local impl ID.
     ImportImpl(context, import_ir_id, impl_id);
   }
