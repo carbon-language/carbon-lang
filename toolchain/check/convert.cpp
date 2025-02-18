@@ -256,26 +256,31 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
       sem_ir.GetArrayBoundValue(array_type.bound_id);
   if (!array_bound) {
     // TODO: Should this fall back to using `ImplicitAs`?
-    CARBON_DIAGNOSTIC(ArrayInitDependentBound, Error,
-                      "cannot initialize array with dependent bound from a "
-                      "list of initializers");
-    context.emitter().Emit(value_loc_id, ArrayInitDependentBound);
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(ArrayInitDependentBound, Error,
+                        "cannot initialize array with dependent bound from a "
+                        "list of initializers");
+      context.emitter().Emit(value_loc_id, ArrayInitDependentBound);
+    }
     return SemIR::ErrorInst::SingletonInstId;
   }
   if (tuple_elem_types.size() != array_bound) {
-    CARBON_DIAGNOSTIC(
-        ArrayInitFromLiteralArgCountMismatch, Error,
-        "cannot initialize array of {0} element{0:s} from {1} initializer{1:s}",
-        IntAsSelect, IntAsSelect);
-    CARBON_DIAGNOSTIC(ArrayInitFromExprArgCountMismatch, Error,
-                      "cannot initialize array of {0} element{0:s} from tuple "
-                      "with {1} element{1:s}",
-                      IntAsSelect, IntAsSelect);
-    context.emitter().Emit(value_loc_id,
-                           literal_elems.empty()
-                               ? ArrayInitFromExprArgCountMismatch
-                               : ArrayInitFromLiteralArgCountMismatch,
-                           *array_bound, tuple_elem_types.size());
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(ArrayInitFromLiteralArgCountMismatch, Error,
+                        "cannot initialize array of {0} element{0:s} from {1} "
+                        "initializer{1:s}",
+                        IntAsSelect, IntAsSelect);
+      CARBON_DIAGNOSTIC(
+          ArrayInitFromExprArgCountMismatch, Error,
+          "cannot initialize array of {0} element{0:s} from tuple "
+          "with {1} element{1:s}",
+          IntAsSelect, IntAsSelect);
+      context.emitter().Emit(value_loc_id,
+                             literal_elems.empty()
+                                 ? ArrayInitFromExprArgCountMismatch
+                                 : ArrayInitFromLiteralArgCountMismatch,
+                             *array_bound, tuple_elem_types.size());
+    }
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -348,12 +353,15 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
 
   // Check that the tuples are the same size.
   if (src_elem_types.size() != dest_elem_types.size()) {
-    CARBON_DIAGNOSTIC(TupleInitElementCountMismatch, Error,
-                      "cannot initialize tuple of {0} element{0:s} from tuple "
-                      "with {1} element{1:s}",
-                      IntAsSelect, IntAsSelect);
-    context.emitter().Emit(value_loc_id, TupleInitElementCountMismatch,
-                           dest_elem_types.size(), src_elem_types.size());
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(
+          TupleInitElementCountMismatch, Error,
+          "cannot initialize tuple of {0} element{0:s} from tuple "
+          "with {1} element{1:s}",
+          IntAsSelect, IntAsSelect);
+      context.emitter().Emit(value_loc_id, TupleInitElementCountMismatch,
+                             dest_elem_types.size(), src_elem_types.size());
+    }
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -445,14 +453,16 @@ static auto ConvertStructToStructOrClass(Context& context,
   // TODO: If not, include the name of the first source field that doesn't
   // exist in the destination or vice versa in the diagnostic.
   if (src_elem_fields.size() != dest_elem_fields_size) {
-    CARBON_DIAGNOSTIC(
-        StructInitElementCountMismatch, Error,
-        "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
-        "with {2} field{2:s}",
-        BoolAsSelect, IntAsSelect, IntAsSelect);
-    context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
-                           ToClass, dest_elem_fields_size,
-                           src_elem_fields.size());
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(
+          StructInitElementCountMismatch, Error,
+          "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
+          "with {2} field{2:s}",
+          BoolAsSelect, IntAsSelect, IntAsSelect);
+      context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
+                             ToClass, dest_elem_fields_size,
+                             src_elem_fields.size());
+    }
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -511,21 +521,24 @@ static auto ConvertStructToStructOrClass(Context& context,
       if (auto lookup = src_field_indexes.Lookup(dest_field.name_id)) {
         src_field_index = lookup.value();
       } else {
-        if (literal_elems_id.has_value()) {
-          CARBON_DIAGNOSTIC(
-              StructInitMissingFieldInLiteral, Error,
-              "missing value for field `{0}` in struct initialization",
-              SemIR::NameId);
-          context.emitter().Emit(value_loc_id, StructInitMissingFieldInLiteral,
-                                 dest_field.name_id);
-        } else {
-          CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
-                            "cannot convert from struct type {0} to {1}: "
-                            "missing field `{2}` in source type",
-                            TypeOfInstId, SemIR::TypeId, SemIR::NameId);
-          context.emitter().Emit(value_loc_id,
-                                 StructInitMissingFieldInConversion, value_id,
-                                 target.type_id, dest_field.name_id);
+        if (target.diagnose) {
+          if (literal_elems_id.has_value()) {
+            CARBON_DIAGNOSTIC(
+                StructInitMissingFieldInLiteral, Error,
+                "missing value for field `{0}` in struct initialization",
+                SemIR::NameId);
+            context.emitter().Emit(value_loc_id,
+                                   StructInitMissingFieldInLiteral,
+                                   dest_field.name_id);
+          } else {
+            CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
+                              "cannot convert from struct type {0} to {1}: "
+                              "missing field `{2}` in source type",
+                              TypeOfInstId, SemIR::TypeId, SemIR::NameId);
+            context.emitter().Emit(value_loc_id,
+                                   StructInitMissingFieldInConversion, value_id,
+                                   target.type_id, dest_field.name_id);
+          }
         }
         return SemIR::ErrorInst::SingletonInstId;
       }
@@ -863,12 +876,11 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
 
         foundation_value_id =
             PerformBuiltinConversion(context, loc_id, foundation_value_id,
-                                     {
-                                         .kind = target.kind,
-                                         .type_id = foundation_type_id,
-                                         .init_id = foundation_init_id,
-                                         .init_block = target.init_block,
-                                     });
+                                     {.kind = target.kind,
+                                      .type_id = foundation_type_id,
+                                      .init_id = foundation_init_id,
+                                      .init_block = target.init_block,
+                                      .diagnose = target.diagnose});
         if (foundation_value_id == SemIR::ErrorInst::SingletonInstId) {
           return SemIR::ErrorInst::SingletonInstId;
         }
@@ -891,10 +903,10 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
       // necessary.
       if (SemIR::GetExprCategory(context.sem_ir(), value_id) ==
           SemIR::ExprCategory::Mixed) {
-        value_id = PerformBuiltinConversion(
-            context, loc_id, value_id,
-            ConversionTarget{.kind = ConversionTarget::Value,
-                             .type_id = value_type_id});
+        value_id = PerformBuiltinConversion(context, loc_id, value_id,
+                                            {.kind = ConversionTarget::Value,
+                                             .type_id = value_type_id,
+                                             .diagnose = target.diagnose});
       }
       return AddInst<SemIR::AsCompatible>(
           context, loc_id, {.type_id = target.type_id, .source_id = value_id});
@@ -979,7 +991,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
            sem_ir.inst_blocks().Get(tuple_literal->elements_id)) {
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.
-        type_ids.push_back(ExprAsType(context, loc_id, tuple_inst_id).type_id);
+        type_ids.push_back(
+            ExprAsType(context, loc_id, tuple_inst_id, target.diagnose)
+                .type_id);
       }
       auto tuple_type_id = GetTupleType(context, type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
@@ -1075,7 +1089,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
 
 // Given a value expression, form a corresponding initializer that copies from
 // that value, if it is possible to do so.
-static auto PerformCopy(Context& context, SemIR::InstId expr_id)
+static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
     -> SemIR::InstId {
   auto expr = context.insts().Get(expr_id);
   auto type_id = expr.type_id();
@@ -1091,9 +1105,11 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
 
   // TODO: We don't yet have rules for whether and when a class type is
   // copyable, or how to perform the copy.
-  CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
-                    "cannot copy value of type {0}", TypeOfInstId);
-  context.emitter().Emit(expr_id, CopyOfUncopyableType, expr_id);
+  if (diagnose) {
+    CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
+                      "cannot copy value of type {0}", TypeOfInstId);
+    context.emitter().Emit(expr_id, CopyOfUncopyableType, expr_id);
+  }
   return SemIR::ErrorInst::SingletonInstId;
 }
 
@@ -1114,9 +1130,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     // TODO: We currently encounter this for use of namespaces and functions.
     // We should provide a better diagnostic for inappropriate use of
     // namespace names, and allow use of functions as values.
-    CARBON_DIAGNOSTIC(UseOfNonExprAsValue, Error,
-                      "expression cannot be used as a value");
-    context.emitter().Emit(expr_id, UseOfNonExprAsValue);
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(UseOfNonExprAsValue, Error,
+                        "expression cannot be used as a value");
+      context.emitter().Emit(expr_id, UseOfNonExprAsValue);
+    }
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -1127,6 +1145,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
             CARBON_CHECK(!target.is_initializer(),
                          "Initialization of incomplete types is expected to be "
                          "caught elsewhere.");
+            if (!target.diagnose) {
+              return context.emitter().BuildSuppressed();
+            }
             CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
                               "forming value of incomplete type {0}",
                               SemIR::TypeId);
@@ -1141,12 +1162,12 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                 target.type_id);
           },
           [&] {
+            if (!target.diagnose || !target.is_initializer()) {
+              return context.emitter().BuildSuppressed();
+            }
             CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
                               "initialization of abstract type {0}",
                               SemIR::TypeId);
-            if (!target.is_initializer()) {
-              return context.emitter().BuildSuppressed();
-            }
             return context.emitter().Build(loc_id, AbstractTypeInInit,
                                            target.type_id);
           })) {
@@ -1171,6 +1192,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         .op_name = "Convert",
     };
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
+      if (!target.diagnose) {
+        return context.emitter().BuildSuppressed();
+      }
       CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
                         "cannot implicitly convert from {0} to {1}",
                         TypeOfInstId, SemIR::TypeId);
@@ -1256,7 +1280,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     case SemIR::ExprCategory::Value:
       // When initializing from a value, perform a copy.
       if (target.is_initializer()) {
-        expr_id = PerformCopy(context, expr_id);
+        expr_id = PerformCopy(context, expr_id, target.diagnose);
       }
       break;
   }
@@ -1314,6 +1338,16 @@ auto ConvertToValueOrRefOfType(Context& context, SemIR::LocId loc_id,
                  {.kind = ConversionTarget::ValueOrRef, .type_id = type_id});
 }
 
+// Like ConvertToValueOfType but failure to convert does not result in
+// diagnostics. An ErrorInst instruction is still returned on failure.
+auto TryConvertToValueOfType(Context& context, SemIR::LocId loc_id,
+                             SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId {
+  return Convert(
+      context, loc_id, expr_id,
+      {.kind = ConversionTarget::Value, .type_id = type_id, .diagnose = false});
+}
+
 auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
@@ -1362,8 +1396,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                             self_id, arg_refs, return_slot_arg_id);
 }
 
-auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
-    -> TypeExpr {
+auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
+                bool diagnose) -> TypeExpr {
   auto type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
                                            SemIR::TypeType::SingletonTypeId);
   if (type_inst_id == SemIR::ErrorInst::SingletonInstId) {
@@ -1373,9 +1407,11 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
 
   auto type_const_id = context.constant_values().Get(type_inst_id);
   if (!type_const_id.is_constant()) {
-    CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
-                      "cannot evaluate type expression");
-    context.emitter().Emit(loc_id, TypeExprEvaluationFailure);
+    if (diagnose) {
+      CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
+                        "cannot evaluate type expression");
+      context.emitter().Emit(loc_id, TypeExprEvaluationFailure);
+    }
     return {.inst_id = SemIR::ErrorInst::SingletonInstId,
             .type_id = SemIR::ErrorInst::SingletonTypeId};
   }
