@@ -83,7 +83,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   llvm::errs() << facet_type_id;
   if (facet_type_id.has_value()) {
     const auto& facet_type = file.facet_types().Get(facet_type_id);
-    llvm::errs() << ": " << facet_type << "\n";
+    llvm::errs() << ": " << facet_type << '\n';
     for (auto impls : facet_type.impls_constraints) {
       llvm::errs() << "  - ";
       DumpNoNewline(file, impls.interface_id);

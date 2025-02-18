@@ -551,7 +551,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-static auto RequireCompleteFacetTypeImpl(
+static auto AddCompleteFacetType(
     Context& context, SemIR::LocId loc_id,
     const SemIR::FacetTypeInfo& facet_type_info,
     FacetTypeContext context_for_diagnostics) -> SemIR::CompleteFacetTypeId {

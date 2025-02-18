@@ -263,7 +263,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       const auto& resolved = context.complete_facet_types().Get(complete_id);
       for (const auto& interface : resolved.required_interfaces) {
         auto& interface_info = context.interfaces().Get(interface.interface_id);
-        scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
+        scopes->push_back({.name_scope_id = interface_info.scope_id,
                                       .specific_id = interface.specific_id});
       }
     } else {
