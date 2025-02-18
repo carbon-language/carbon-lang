@@ -68,8 +68,8 @@ static auto BuildInterfaceDecl(Context& context,
           introducer.modifier_set.GetAccessKind());
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    DiagnosePoisonedName(context, lookup_result.poisoning_loc_id(),
-                         name_context.loc_id);
+    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                         lookup_result.poisoning_loc_id(), name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_id = lookup_result.target_inst_id();
     if (auto existing_interface_decl =

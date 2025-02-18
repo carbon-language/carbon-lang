@@ -121,7 +121,7 @@ class DeclNameStack {
 
     // Returns the name_id for a new instruction. This is `None` when the name
     // resolved.
-    auto name_id_for_new_inst() -> SemIR::NameId {
+    auto name_id_for_new_inst() const -> SemIR::NameId {
       switch (state) {
         case State::Unresolved:
         case State::Poisoned:

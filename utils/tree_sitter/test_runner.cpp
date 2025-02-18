@@ -5,26 +5,15 @@
 #include <tree_sitter/api.h>
 
 #include <cstdlib>
-#include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
+#include "testing/base/file_helpers.h"
 #include "utils/tree_sitter/src/tree_sitter/parser.h"
 
 extern "C" {
 auto tree_sitter_carbon() -> TSLanguage*;
-}
-
-// Reads a file to string.
-static auto ReadFile(std::filesystem::path path) -> std::string {
-  std::ifstream file(path);
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  file.close();
-  return buffer.str();
 }
 
 // TODO: use file_test.cpp
@@ -42,7 +31,7 @@ auto main(int argc, char** argv) -> int {
   std::vector<std::string> incorrect;
   for (int i = 1; i < argc; i++) {
     std::string file_path = argv[i];
-    std::string source = ReadFile(file_path);
+    std::string source = std::move(*Carbon::Testing::ReadFile(file_path));
 
     auto* tree =
         ts_parser_parse_string(parser, nullptr, source.data(), source.size());

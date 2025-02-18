@@ -143,23 +143,10 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
       return SemIR::InstId::None;
     }
   }
-  auto specific_self_const_id = SemIR::GetConstantValueInSpecific(
-      context.sem_ir(), specific_id, impl.self_id);
-  // A FacetAccessType's constant value is itself, but the `type_const_id`
-  // will need to match based on the FacetType of its facet value instruction.
-  //
-  // TODO: For now we still just require them to be equal, but facet values
-  // (really, their FacetTypes) can be compatible if any subset of the
-  // `type_const_id`'s FacetType is equal to all of the FacetType of the facet
-  // value instruction.
-  if (auto facet_access_type_id =
-          context.insts().TryGetAs<SemIR::FacetAccessType>(
-              context.constant_values().GetInstId(specific_self_const_id))) {
-    specific_self_const_id = context.constant_values().Get(
-        facet_access_type_id->facet_value_inst_id);
-  }
   if (!context.constant_values().AreEqualAcrossDeclarations(
-          specific_self_const_id, type_const_id)) {
+          SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                            impl.self_id),
+          type_const_id)) {
     return SemIR::InstId::None;
   }
   if (!context.constant_values().AreEqualAcrossDeclarations(

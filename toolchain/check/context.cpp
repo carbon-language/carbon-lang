@@ -62,15 +62,6 @@ Context::Context(DiagnosticEmitter* emitter,
   import_ir_constant_values_.reserve(imported_ir_count);
   check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::None);
 
-  // Map the builtin `<error>` and `type` type constants to their corresponding
-  // special `TypeId` values.
-  type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForConcreteConstant(SemIR::ErrorInst::SingletonInstId),
-      SemIR::ErrorInst::SingletonTypeId);
-  type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForConcreteConstant(SemIR::TypeType::SingletonInstId),
-      SemIR::TypeType::SingletonTypeId);
-
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
   // in the right places.
   generic_region_stack().Push();

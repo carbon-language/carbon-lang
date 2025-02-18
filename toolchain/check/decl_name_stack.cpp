@@ -177,8 +177,8 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
                                       SemIR::InstId target_id,
                                       SemIR::AccessKind access_kind) -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(*context_, name_context.poisoning_loc_id,
-                         name_context.loc_id);
+    DiagnosePoisonedName(*context_, name_context.name_id_for_new_inst(),
+                         name_context.poisoning_loc_id, name_context.loc_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
     DiagnoseDuplicateName(*context_, name_context.loc_id, id);
   } else {

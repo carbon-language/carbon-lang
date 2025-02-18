@@ -293,8 +293,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(context, name_context.poisoning_loc_id,
-                         name_context.loc_id);
+    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                         name_context.poisoning_loc_id, name_context.loc_id);
   } else {
     TryMergeRedecl(context, node_id, name_context.prev_inst_id(),
                    name_context.loc_id, function_decl, function_info,

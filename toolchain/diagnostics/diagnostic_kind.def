@@ -458,7 +458,6 @@ CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
 
 // Document handling.
 CARBON_DIAGNOSTIC_KIND(LanguageServerOpenDuplicateFile)
-CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedChanges)
 CARBON_DIAGNOSTIC_KIND(LanguageServerCloseUnknownFile)
 CARBON_DIAGNOSTIC_KIND(LanguageServerDiagnosticInWrongFile)
 
