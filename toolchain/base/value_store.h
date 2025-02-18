@@ -11,8 +11,10 @@
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/set.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator_range.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/yaml.h"
 
@@ -99,6 +101,21 @@ class ValueStore
 
   auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
   auto size() const -> size_t { return values_.size(); }
+
+  // Makes an iterable range over pairs of the index and value for each value in
+  // the store.
+  auto enumerate() const -> auto {
+    auto index_to_id = [](auto pair) -> std::pair<IdT, ConstRefType> {
+      auto [index, value] = pair;
+      return std::pair<IdT, ConstRefType>(IdT(index), value);
+    };
+    auto range = llvm::enumerate(values_);
+    using Iter =
+        llvm::mapped_iterator<decltype(range.begin()), decltype(index_to_id)>;
+    auto begin = Iter(range.begin(), index_to_id);
+    auto end = Iter(range.end(), index_to_id);
+    return llvm::make_range(begin, end);
+  }
 
  private:
   // Set inline size to 0 because these will typically be too large for the
