@@ -21,8 +21,7 @@ auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
 // "facet type" (as determined by `RequireCompleteFacetType`). This witness
 // reflects the values assigned to associated constant members of that
 // interface by rewrite constraints in the facet type. `self_specific_id`
-// will be the `specific_id` of the resulting witness, and should be the
-// specific_id of the `Self` facet.
+// will be the `specific_id` of the resulting witness.
 //
 // `self_type_inst_id` is the `Self` type of the facet type. For example, in
 // `T:! X where ...`, we will bind the `.Self` of the `where` facet type to
