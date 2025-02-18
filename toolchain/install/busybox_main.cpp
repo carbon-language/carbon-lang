@@ -45,7 +45,8 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   }
   args.append(argv + 1, argv + argc);
 
-  Driver driver(fs, &install_paths, stdin, &llvm::outs(), &llvm::errs());
+  Driver driver(fs, &install_paths, stdin, &llvm::outs(), &llvm::errs(),
+                /*fuzzing=*/false, /*enable_leaking=*/true);
   bool success = driver.RunCommand(args).success;
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
