@@ -194,3 +194,65 @@ fn F() {
   Compare({} as C, {} as D);
   Compare({} as D, {} as C);
 }
+
+// --- deduce_cycle_without_symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface First {}
+interface Second {}
+
+// This impl is looked at for "does T impl Second" first, which requires a
+// recursive query in deduction that is the same "does T impl Second", which can
+// land us back looking at this impl again. So we require a way to eliminate
+// this impl without doing deduction in order to avoid the cycle.
+impl forall [T:! Second] T as First {}
+impl forall [T:! type] T as Second {}
+
+class C {}
+impl C as Second {}
+
+fn F() {
+  ({} as C) as (C as Second);
+  ({} as C) as (C as First);
+}
+
+// --- deduce_cycle_with_symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface First(T:! type) {}
+interface Second {}
+
+// This impl is looked at for "does T impl Second" first, which requires a
+// recursive query in deduction that is the same "does T impl Second", which can
+// land us back looking at this impl again. So we require a way to eliminate
+// this impl without doing deduction in order to avoid the cycle.
+impl forall [T:! Second, U:! type] T as First(U) {}
+impl forall [T:! type] T as Second {}
+
+class C {}
+impl C as Second {}
+
+// TODO: See the TODO in impl_lookup.cpp to reject impls where the interface
+// does not match the query.
+fn F() {
+  // CHECK:STDERR: deduce_cycle_with_symbolic.carbon:[[@LINE+7]]:17: error: cycle found in lookup of interface <TODO: interface name> for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as C) as (C as Second);
+  // CHECK:STDERR:                 ^~~~~~~~~~~
+  // CHECK:STDERR: deduce_cycle_with_symbolic.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as C) as (C as Second);
+
+  // CHECK:STDERR: deduce_cycle_with_symbolic.carbon:[[@LINE+10]]:17: error: cycle found in lookup of interface <TODO: interface name> for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as C) as (C as First(C));
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~
+  // CHECK:STDERR: deduce_cycle_with_symbolic.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: deduce_cycle_with_symbolic.carbon:[[@LINE-24]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as C) as (C as First(C));
+}
