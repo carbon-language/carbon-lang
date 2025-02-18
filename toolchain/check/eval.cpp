@@ -454,20 +454,25 @@ static auto GetConstantValue(EvalContext& eval_context,
 static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::FacetTypeId facet_type_id,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info = eval_context.facet_types().Get(facet_type_id);
-  for (auto& interface : info.impls_constraints) {
+  const auto& orig = eval_context.facet_types().Get(facet_type_id);
+  SemIR::FacetTypeInfo info;
+  info.impls_constraints.reserve(orig.impls_constraints.size());
+  for (auto interface : orig.impls_constraints) {
     interface.specific_id =
         GetConstantValue(eval_context, interface.specific_id, phase);
+    info.impls_constraints.push_back(interface);
   }
-  for (auto& rewrite : info.rewrite_constraints) {
+  info.rewrite_constraints.reserve(orig.rewrite_constraints.size());
+  for (auto rewrite : orig.rewrite_constraints) {
     rewrite.lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
     rewrite.rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
     // `where` requirements using `.Self` should not be considered symbolic
     UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.lhs_const_id, phase);
     UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.rhs_const_id, phase);
+    info.rewrite_constraints.push_back(rewrite);
   }
   // TODO: Process other requirements.
-  info.ClearCachedState();
+  info.other_requirements = orig.other_requirements;
   return info;
 }
 

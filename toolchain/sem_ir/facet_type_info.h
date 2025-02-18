@@ -45,6 +45,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     ConstantId lhs_const_id;
     ConstantId rhs_const_id;
 
+    static const RewriteConstraint None;
+
     friend auto operator==(const RewriteConstraint& lhs,
                            const RewriteConstraint& rhs) -> bool = default;
   };
@@ -54,13 +56,18 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Remove once all requirements are supported.
   bool other_requirements;
 
+  // This is should be `None` for new facet type values, and only set by
+  // `RequireCompleteFacetType`. It is stored here so that we only compute its
+  // value once per facet type.
+
   // Optional complete facet type. For facet types used in contexts that require
   // them to be fully defined. This is a private implementation detail of
-  // `RequireCompleteFacetType` and is not part of the value of the facet type.
-  // Reset to `None` by `ClearCachedState()`.
+  // `RequireCompleteFacetType` and is not part of the value of the facet type,
+  // excluded from `==` and its hash value.
   CompleteFacetTypeId complete_id = CompleteFacetTypeId::None;
 
-  // Sorts and deduplicates constraints.
+  // Sorts and deduplicates constraints. Call after building the value, and then
+  // don't mutate this value afterwards.
   auto Canonicalize() -> void;
 
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -76,9 +83,6 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return std::nullopt;
   }
 
-  // Call after modifying this value.
-  auto ClearCachedState() -> void { complete_id = CompleteFacetTypeId::None; }
-
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
     return lhs.impls_constraints == rhs.impls_constraints &&
@@ -86,6 +90,10 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
            lhs.other_requirements == rhs.other_requirements;
   }
 };
+
+constexpr FacetTypeInfo::RewriteConstraint
+    FacetTypeInfo::RewriteConstraint::None = {.lhs_const_id = ConstantId::None,
+                                              .rhs_const_id = ConstantId::None};
 
 struct CompleteFacetType {
   using RequiredInterface = SpecificInterface;
