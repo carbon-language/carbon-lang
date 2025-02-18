@@ -551,10 +551,10 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-static auto AddCompleteFacetType(
-    Context& context, SemIR::LocId loc_id,
-    const SemIR::FacetTypeInfo& facet_type_info,
-    FacetTypeContext context_for_diagnostics) -> SemIR::CompleteFacetTypeId {
+static auto AddCompleteFacetType(Context& context, SemIR::LocId loc_id,
+                                 const SemIR::FacetTypeInfo& facet_type_info,
+                                 FacetTypeContext context_for_diagnostics)
+    -> SemIR::CompleteFacetTypeId {
   SemIR::CompleteFacetType result;
   result.required_interfaces.reserve(facet_type_info.impls_constraints.size());
   // Every mentioned interface needs to be defined.
@@ -609,7 +609,7 @@ auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
   auto& facet_type_info =
       context.facet_types().GetMutable(facet_type.facet_type_id);
   if (!facet_type_info.complete_id.has_value()) {
-    facet_type_info.complete_id = RequireCompleteFacetTypeImpl(
+    facet_type_info.complete_id = AddCompleteFacetType(
         context, loc_id, facet_type_info, context_for_diagnostics);
   }
   return facet_type_info.complete_id;
