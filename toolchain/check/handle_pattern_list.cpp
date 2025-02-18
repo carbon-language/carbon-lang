@@ -4,6 +4,9 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
+#include "toolchain/check/subpattern.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -12,7 +15,7 @@ static auto HandlePatternListStart(Context& context, Parse::NodeId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
-  context.BeginSubpattern();
+  BeginSubpattern(context);
   return true;
 }
 
@@ -39,7 +42,7 @@ static auto HandleParamListEnd(Context& context, Parse::NodeId node_id,
   if (context.node_stack().PeekIs(start_kind)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
-    context.EndSubpatternAsNonExpr();
+    EndSubpatternAsNonExpr(context);
   }
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
@@ -64,7 +67,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
-    context.EndSubpatternAsNonExpr();
+    EndSubpatternAsNonExpr(context);
   }
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
@@ -77,18 +80,19 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   for (auto inst : inst_block) {
     type_ids.push_back(context.insts().Get(inst).type_id());
   }
-  auto type_id = context.GetTupleType(type_ids);
+  auto type_id = GetTupleType(context, type_ids);
   context.node_stack().Push(
-      node_id, context.AddPatternInst<SemIR::TuplePattern>(
-                   node_id, {.type_id = type_id, .elements_id = refs_id}));
-  context.EndSubpatternAsNonExpr();
+      node_id,
+      AddPatternInst<SemIR::TuplePattern>(
+          context, node_id, {.type_id = type_id, .elements_id = refs_id}));
+  EndSubpatternAsNonExpr(context);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
-  context.BeginSubpattern();
+  BeginSubpattern(context);
   return true;
 }
 

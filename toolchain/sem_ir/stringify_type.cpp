@@ -591,6 +591,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case ImplWitness::Kind:
+      case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:

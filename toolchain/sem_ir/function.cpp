@@ -55,10 +55,6 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   return result;
 }
 
-auto Function::ParamPatternInfo::GetNameId(const File& sem_ir) -> NameId {
-  return sem_ir.entity_names().Get(entity_name_id).name_id;
-}
-
 auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                 InstId pattern_id)
     -> ParamPatternInfo {

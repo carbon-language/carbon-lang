@@ -405,7 +405,6 @@ class NodeStack {
       case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
-      case Parse::NodeKind::ImplForall:
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
@@ -441,6 +440,7 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
       case Parse::NodeKind::StructTypeLiteralStart:
+      case Parse::NodeKind::TemplateBindingName:
       case Parse::NodeKind::TupleLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
@@ -459,12 +459,15 @@ class NodeStack {
       case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::CodeBlock:
       case Parse::NodeKind::ContinueStatementStart:
+      case Parse::NodeKind::CorePackageName:
       case Parse::NodeKind::ExportIntroducer:
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
+      case Parse::NodeKind::Forall:
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::ForIn:
+      case Parse::NodeKind::IdentifierPackageName:
       case Parse::NodeKind::IfConditionStart:
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
@@ -492,7 +495,6 @@ class NodeStack {
       case Parse::NodeKind::NameQualifierWithoutParams:
       case Parse::NodeKind::NamespaceStart:
       case Parse::NodeKind::PackageIntroducer:
-      case Parse::NodeKind::PackageName:
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:
       case Parse::NodeKind::Placeholder:

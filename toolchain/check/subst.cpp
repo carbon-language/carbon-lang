@@ -172,7 +172,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       if (!type_id.has_value()) {
         return arg;
       }
-      return context.GetTypeIdForTypeInst(worklist.Pop()).index;
+      return context.types().GetTypeIdForTypeInstId(worklist.Pop()).index;
     }
     case SemIR::IdKind::For<SemIR::InstBlockId>: {
       return pop_block_id(SemIR::InstBlockId(arg)).index;
@@ -183,9 +183,9 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(context.sem_ir(),
                                                          old_fields_id);
       for (auto i : llvm::reverse(llvm::seq(old_fields.size()))) {
-        new_fields.Set(
-            i, {.name_id = old_fields[i].name_id,
-                .type_id = context.GetTypeIdForTypeInst(worklist.Pop())});
+        new_fields.Set(i, {.name_id = old_fields[i].name_id,
+                           .type_id = context.types().GetTypeIdForTypeInstId(
+                               worklist.Pop())});
       }
       return new_fields.GetCanonical().index;
     }
@@ -195,7 +195,8 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       SemIR::CopyOnWriteTypeBlock new_type_block(context.sem_ir(),
                                                  old_type_block_id);
       for (auto i : llvm::reverse(llvm::seq(size))) {
-        new_type_block.Set(i, context.GetTypeIdForTypeInst(worklist.Pop()));
+        new_type_block.Set(
+            i, context.types().GetTypeIdForTypeInstId(worklist.Pop()));
       }
       return new_type_block.GetCanonical().index;
     }
@@ -320,8 +321,8 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   // Applies the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
-    if (context_.constant_values().Get(inst_id).is_template()) {
-      // This instruction is a template constant, so can't contain any
+    if (context_.constant_values().Get(inst_id).is_concrete()) {
+      // This instruction is a concrete constant, so can't contain any
       // bindings that need to be substituted.
       return true;
     }
@@ -342,7 +343,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
     // TODO: Consider building a hash map for substitutions. We might have a
     // lot of them.
     for (auto [bind_index, replacement_id] : substitutions_) {
-      if (context_.entity_names().Get(entity_name_id).bind_index ==
+      if (context_.entity_names().Get(entity_name_id).bind_index() ==
           bind_index) {
         // This is the binding we're replacing. Perform substitution.
         inst_id = context_.constant_values().GetInstId(replacement_id);
@@ -380,7 +381,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
   }
 
   if (!const_id.is_symbolic()) {
-    // A template constant can't contain a reference to a symbolic binding.
+    // A concrete constant can't contain a reference to a symbolic binding.
     return const_id;
   }
 

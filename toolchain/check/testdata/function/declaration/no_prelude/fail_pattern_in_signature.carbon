@@ -17,17 +17,17 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT: --- fail_pattern_in_signature.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type) [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %empty_struct_type = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %empty_struct_type = value_param_pattern %a.patt, runtime_param<unknown>
 // CHECK:STDOUT:     %b.patt: %empty_struct_type = binding_pattern b
@@ -37,9 +37,9 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT:     %c.param_patt: %empty_struct_type = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %empty_struct_type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15_26.1: type = splice_block %.loc15_26.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc15_26.1: type = splice_block %.loc15_26.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:       %.loc15_26.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc15_26.3: type = converted %.loc15_26.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc15_26.3: type = converted %.loc15_26.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %empty_struct_type = bind_name c, %c.param
 // CHECK:STDOUT:   }

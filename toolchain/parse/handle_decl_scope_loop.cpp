@@ -184,9 +184,8 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Library:
         case Lex::TokenKind::Namespace:
         case Lex::TokenKind::Var:
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
-  case Lex::TokenKind::Name:
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"
 
           return false;
@@ -214,8 +213,8 @@ static auto TryHandleAsModifier(Context& context) -> bool {
   }
 
   switch (position_kind) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)              \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)                   \
   case Lex::TokenKind::Name:                                          \
     context.AddLeafNode(NodeKind::Name##Modifier, context.Consume()); \
     return true;

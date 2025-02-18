@@ -32,8 +32,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %AddWith.type.b35: type = generic_interface_type @AddWith [template]
-// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [template]
+// CHECK:STDOUT:   %AddWith.type.b35: type = generic_interface_type @AddWith [concrete]
+// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.type.bc7: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic]
@@ -43,10 +43,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .AddWith = %AddWith.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddWith.decl: %AddWith.type.b35 = interface_decl @AddWith [template = constants.%AddWith.generic] {
+// CHECK:STDOUT:   %AddWith.decl: %AddWith.type.b35 = interface_decl @AddWith [concrete = constants.%AddWith.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_19.1, runtime_param<none> [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -95,11 +95,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %AddWith.type.b35: type = generic_interface_type @AddWith [template]
-// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [template]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %AddWith.type.b35: type = generic_interface_type @AddWith [concrete]
+// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.bc7: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic]
@@ -108,19 +108,19 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.be3: %F.type.fbc = struct_value () [symbolic]
 // CHECK:STDOUT:   %AddWith.assoc_type.73f: type = assoc_entity_type %AddWith.type.bc7 [symbolic]
 // CHECK:STDOUT:   %assoc0.80d: %AddWith.assoc_type.73f = assoc_entity element0, imports.%Main.import_ref.0c5 [symbolic]
-// CHECK:STDOUT:   %AddWith.type.e8e: type = facet_type <@AddWith, @AddWith(%C)> [template]
-// CHECK:STDOUT:   %F.type.cd2: type = fn_type @F.1, @AddWith(%C) [template]
-// CHECK:STDOUT:   %F.b58: %F.type.cd2 = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.assoc_type.ace: type = assoc_entity_type %AddWith.type.e8e [template]
-// CHECK:STDOUT:   %assoc0.a9f: %AddWith.assoc_type.ace = assoc_entity element0, imports.%Main.import_ref.0c5 [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
-// CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, %impl_witness [template]
+// CHECK:STDOUT:   %AddWith.type.e8e: type = facet_type <@AddWith, @AddWith(%C)> [concrete]
+// CHECK:STDOUT:   %F.type.cd2: type = fn_type @F.1, @AddWith(%C) [concrete]
+// CHECK:STDOUT:   %F.b58: %F.type.cd2 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.assoc_type.ace: type = assoc_entity_type %AddWith.type.e8e [concrete]
+// CHECK:STDOUT:   %assoc0.a9f: %AddWith.assoc_type.ace = assoc_entity element0, imports.%Main.import_ref.0c5 [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
+// CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, %impl_witness [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
+// CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [concrete = constants.%AddWith.generic]
 // CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.550 = import_ref Main//a, loc5_9, unloaded
@@ -131,19 +131,19 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .AddWith = imports.%Main.AddWith
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.b35 = name_ref AddWith, imports.%Main.AddWith [template = constants.%AddWith.generic]
-// CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [template = constants.%AddWith.type.e8e]
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.b35 = name_ref AddWith, imports.%Main.AddWith [concrete = constants.%AddWith.generic]
+// CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [concrete = constants.%AddWith.type.e8e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.f6b058.1: type) [from "a.carbon"] {
@@ -167,7 +167,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref.loc7_6 as %AddWith.type {
-// CHECK:STDOUT:   %F.decl: %F.type.c09 = fn_decl @F.2 [template = constants.%F.e62] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.c09 = fn_decl @F.2 [concrete = constants.%F.e62] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -175,7 +175,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

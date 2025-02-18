@@ -195,8 +195,9 @@ TEST(NameScope, Lookup) {
   EXPECT_EQ(name_scope.GetEntry(*lookup), entry3);
 
   NameId unknown_name_id(++id);
-  lookup = name_scope.Lookup(unknown_name_id);
-  EXPECT_EQ(lookup, std::nullopt);
+  EXPECT_EQ(name_scope.Lookup(unknown_name_id), std::nullopt);
+  // Check that this is different from LookupOrPoison() - doesn't get poisoned.
+  EXPECT_EQ(name_scope.Lookup(unknown_name_id), std::nullopt);
 }
 
 TEST(NameScope, LookupOrPoison) {
@@ -222,24 +223,50 @@ TEST(NameScope, LookupOrPoison) {
                                  InstId(++id), AccessKind::Private)};
   name_scope.AddRequired(entry3);
 
-  LocId poisoning_loc_id(++id);
-  auto lookup = name_scope.LookupOrPoison(poisoning_loc_id, entry1.name_id);
+  LocId poisoning_loc_id_known_entries(++id);
+  auto lookup =
+      name_scope.LookupOrPoison(poisoning_loc_id_known_entries, entry1.name_id);
   ASSERT_NE(lookup, std::nullopt);
   EXPECT_EQ(static_cast<NameScope&>(name_scope).GetEntry(*lookup), entry1);
   EXPECT_EQ(static_cast<const NameScope&>(name_scope).GetEntry(*lookup),
             entry1);
 
-  lookup = name_scope.LookupOrPoison(poisoning_loc_id, entry2.name_id);
+  lookup =
+      name_scope.LookupOrPoison(poisoning_loc_id_known_entries, entry2.name_id);
   ASSERT_NE(lookup, std::nullopt);
   EXPECT_EQ(name_scope.GetEntry(*lookup), entry2);
 
-  lookup = name_scope.LookupOrPoison(poisoning_loc_id, entry3.name_id);
+  lookup =
+      name_scope.LookupOrPoison(poisoning_loc_id_known_entries, entry3.name_id);
   ASSERT_NE(lookup, std::nullopt);
   EXPECT_EQ(name_scope.GetEntry(*lookup), entry3);
 
   NameId unknown_name_id(++id);
-  lookup = name_scope.LookupOrPoison(poisoning_loc_id, unknown_name_id);
-  EXPECT_EQ(lookup, std::nullopt);
+  LocId poisoning_loc_id_unknown_entry(++id);
+  EXPECT_EQ(name_scope.LookupOrPoison(poisoning_loc_id_unknown_entry,
+                                      unknown_name_id),
+            std::nullopt);
+  // Check that this is different from Lookup() - does get poisoned.
+  lookup = name_scope.Lookup(unknown_name_id);
+  ASSERT_NE(lookup, std::nullopt);
+  EXPECT_EQ(name_scope.GetEntry(*lookup).result,
+            ScopeLookupResult::MakePoisoned(poisoning_loc_id_unknown_entry));
+}
+
+TEST(NameScope, LookupOrPoisonNotIdentifier) {
+  int id = 0;
+
+  InstId scope_inst_id(++id);
+  NameId scope_name_id(++id);
+  NameScopeId parent_scope_id(++id);
+  NameScope name_scope(scope_inst_id, scope_name_id, parent_scope_id);
+  LocId poisoning_loc_id(++id);
+
+  EXPECT_EQ(name_scope.LookupOrPoison(poisoning_loc_id, NameId::SelfType),
+            std::nullopt);
+  // Check that this is different from the identifier use case - doesn't get
+  // poisoned.
+  EXPECT_EQ(name_scope.Lookup(NameId::SelfType), std::nullopt);
 }
 
 TEST(NameScope, LookupOrAdd) {

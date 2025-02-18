@@ -32,10 +32,14 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       os << prefix;
     }
     if (name_scope_id == SemIR::NameScopeId::Package) {
-      if (auto package_id = sem_ir().package_id(); package_id.has_value()) {
-        os << sem_ir().identifiers().Get(package_id);
+      auto package_id = sem_ir().package_id();
+      if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+        os << sem_ir().identifiers().Get(ident_id);
       } else {
-        os << "Main";
+        // TODO: Handle name conflicts between special package names and raw
+        // identifier package names. Note that any change here will also require
+        // a change to namespace mangling for imported packages.
+        os << package_id.AsSpecialName();
       }
       continue;
     }
@@ -111,7 +115,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         break;
       }
       case SemIR::Namespace::Kind: {
-        os << names().GetAsStringIfIdentifier(name_scope.name_id());
+        os << names().GetIRBaseName(name_scope.name_id());
         break;
       }
       default:

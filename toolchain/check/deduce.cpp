@@ -226,7 +226,7 @@ class DeductionContext {
   auto MakeSpecific() -> SemIR::SpecificId;
 
  private:
-  void NoteInitializingParam(SemIR::InstId param_id, auto& builder) {
+  auto NoteInitializingParam(SemIR::InstId param_id, auto& builder) -> void {
     if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
             param_id)) {
       CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
@@ -357,7 +357,7 @@ auto DeductionContext::Deduce() -> bool {
       // compile-time constant.
       case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
-        auto index = entity_name.bind_index;
+        auto index = entity_name.bind_index();
         if (!index.has_value()) {
           break;
         }
@@ -396,7 +396,7 @@ auto DeductionContext::Deduce() -> bool {
       // deducing `[T:! type](x: T)` against `("foo")` deduces `T` as `String`.
       case CARBON_KIND(SemIR::BindSymbolicName bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
-        auto index = entity_name.bind_index;
+        auto index = entity_name.bind_index();
         if (!index.has_value() || index < first_deduced_index_ ||
             non_deduced_indexes_[index.index - first_deduced_index_.index]) {
           break;
@@ -551,7 +551,8 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       auto param_type_const_id = SubstConstant(
           context(), binding_type_id.AsConstantId(), substitutions_);
       CARBON_CHECK(param_type_const_id.has_value());
-      binding_type_id = context().GetTypeIdForTypeConstant(param_type_const_id);
+      binding_type_id =
+          context().types().GetTypeIdForTypeConstantId(param_type_const_id);
 
       // TODO: Suppress diagnostics here if `diagnose_` is false.
       DiagnosticAnnotationScope annotate_diagnostics(

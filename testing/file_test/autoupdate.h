@@ -42,7 +42,7 @@ class FileTestAutoupdater {
       llvm::StringRef actual_stdout, llvm::StringRef actual_stderr,
       const std::optional<RE2>& default_file_re,
       const llvm::SmallVector<LineNumberReplacement>& line_number_replacements,
-      std::function<void(std::string&)> do_extra_check_replacements)
+      std::function<auto(std::string&)->void> do_extra_check_replacements)
       : file_test_path_(file_test_path),
         test_command_(std::move(test_command)),
         dump_command_(std::move(dump_command)),
@@ -203,7 +203,7 @@ class FileTestAutoupdater {
   const llvm::SmallVector<FileTestLine>& non_check_lines_;
   const std::optional<RE2>& default_file_re_;
   const llvm::SmallVector<LineNumberReplacement>& line_number_replacements_;
-  std::function<void(std::string&)> do_extra_check_replacements_;
+  std::function<auto(std::string&)->void> do_extra_check_replacements_;
 
   // Generated TIP lines, from AddTips.
   llvm::SmallVector<TipLine> tips_;

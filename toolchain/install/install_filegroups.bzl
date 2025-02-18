@@ -7,7 +7,7 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
 load("symlink_helpers.bzl", "symlink_file", "symlink_filegroup")
 
-def install_filegroup(name, filegroup_target):
+def install_filegroup(name, filegroup_target, remove_prefix = ""):
     """Adds a filegroup for install.
 
     Used in the `install_dirs` dict.
@@ -20,6 +20,7 @@ def install_filegroup(name, filegroup_target):
         "filegroup": filegroup_target,
         "is_driver": False,
         "name": name,
+        "remove_prefix": remove_prefix,
     }
 
 def install_symlink(name, symlink_to, is_driver = False):
@@ -111,6 +112,7 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                     name = prefixed_path,
                     out_prefix = prefixed_path,
                     srcs = [entry["filegroup"]],
+                    remove_prefix = entry["remove_prefix"],
                 )
                 pkg_files(
                     name = pkg_path,

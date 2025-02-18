@@ -10,7 +10,7 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+8]]:21: error: TODO: improve match parsing [MatchParseTODO]
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+8]]:21: error: expected `(` after `if` [ExpectedMatchCaseGuardOpenParen]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                     ^~~~~
     // CHECK:STDERR:

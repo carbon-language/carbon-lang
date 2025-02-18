@@ -95,8 +95,8 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
   return true;
 }
 
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                  \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)                       \
   auto HandleParseNode(Context& context, Parse::Name##ModifierId node_id) \
       -> bool {                                                           \
     HandleModifier(context, node_id, KeywordModifierSet::Name);           \

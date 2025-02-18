@@ -200,8 +200,16 @@ struct DeclName {
 using PackageExpr =
     LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
 
+// The `Core` keyword in an expression.
+using CoreNameExpr =
+    LeafNode<NodeKind::CoreNameExpr, Lex::CoreTokenIndex, NodeCategory::Expr>;
+
 // The name of a package or library for `package`, `import`, and `library`.
-using PackageName = LeafNode<NodeKind::PackageName, Lex::IdentifierTokenIndex>;
+using IdentifierPackageName =
+    LeafNode<NodeKind::IdentifierPackageName, Lex::IdentifierTokenIndex,
+             NodeCategory::PackageName>;
+using CorePackageName = LeafNode<NodeKind::CorePackageName, Lex::CoreTokenIndex,
+                                 NodeCategory::PackageName>;
 using LibraryName =
     LeafNode<NodeKind::LibraryName, Lex::StringLiteralTokenIndex>;
 using DefaultLibrary =
@@ -228,7 +236,7 @@ struct PackageDecl {
 
   PackageIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<PackageNameId> name;
+  std::optional<AnyPackageNameId> name;
   std::optional<LibrarySpecifierId> library;
   Lex::SemiTokenIndex token;
 };
@@ -242,7 +250,7 @@ struct ImportDecl {
 
   ImportIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<PackageNameId> name;
+  std::optional<AnyPackageNameId> name;
   std::optional<LibrarySpecifierId> library;
   Lex::SemiTokenIndex token;
 };
@@ -314,12 +322,22 @@ struct VarBindingPattern {
   AnyExprId type;
 };
 
+// A template binding name: `template T`.
+struct TemplateBindingName {
+  static constexpr auto Kind =
+      NodeKind::TemplateBindingName.Define({.child_count = 1});
+
+  Lex::TemplateTokenIndex token;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+};
+
 // `name:! Type`
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, TemplateBindingName>
+      name;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };
@@ -330,17 +348,6 @@ struct Addr {
       {.category = NodeCategory::Pattern, .child_count = 1});
 
   Lex::AddrTokenIndex token;
-  AnyPatternId inner;
-};
-
-// A template binding: `template T:! type`.
-struct Template {
-  static constexpr auto Kind = NodeKind::Template.Define(
-      {.category = NodeCategory::Pattern, .child_count = 1});
-
-  Lex::TemplateTokenIndex token;
-  // This is a CompileTimeBindingPatternId in any valid program.
-  // TODO: Should the parser enforce that?
   AnyPatternId inner;
 };
 
@@ -951,7 +958,7 @@ struct PostfixOperator {
 
 // Literals, operators, and modifiers
 
-#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND(Name)
 #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)       \
   using Name = LeafNode<NodeKind::Name, Lex::LexTokenKind##TokenIndex, \
                         NodeCategory::Expr>;
@@ -1346,11 +1353,12 @@ struct InterfaceDefinition {
 // `impl`
 using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer, Lex::ImplTokenIndex>;
 
+// `forall`
+using Forall = LeafNode<NodeKind::Forall, Lex::ForallTokenIndex>;
+
 // `forall [...]`
 struct ImplForall {
-  static constexpr auto Kind = NodeKind::ImplForall.Define({.child_count = 1});
-
-  Lex::ForallTokenIndex token;
+  ForallId forall;
   ImplicitParamListId params;
 };
 
@@ -1376,7 +1384,7 @@ struct ImplSignature {
 
   ImplIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<ImplForallId> forall;
+  std::optional<ImplForall> forall;
   AnyImplAsId as;
   AnyExprId interface;
   TokenKind token;

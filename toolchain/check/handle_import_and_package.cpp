@@ -63,7 +63,12 @@ auto HandleParseNode(Context& context, Parse::LibrarySpecifierId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& /*context*/, Parse::PackageNameId /*node_id*/)
+auto HandleParseNode(Context& /*context*/,
+                     Parse::IdentifierPackageNameId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/, Parse::CorePackageNameId /*node_id*/)
     -> bool {
   return true;
 }

@@ -14,6 +14,7 @@
 
 #ifndef CARBON_DIAGNOSTIC_KIND
 #error "Must define the x-macro to use this file."
+#define CARBON_DIAGNOSTIC_KIND(Name)
 #endif
 
 // ============================================================================
@@ -82,6 +83,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedExpr)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPeriodOrArrow)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierOrSelfAfterPeriod)
 CARBON_DIAGNOSTIC_KIND(ExpectedBindingPattern)
+CARBON_DIAGNOSTIC_KIND(ExpectedGenericBindingPatternAfterTemplate)
 CARBON_DIAGNOSTIC_KIND(ExpectedParenAfter)
 CARBON_DIAGNOSTIC_KIND(ExpectedExprSemi)
 CARBON_DIAGNOSTIC_KIND(ExpectedStatementSemi)
@@ -90,7 +92,6 @@ CARBON_DIAGNOSTIC_KIND(ExpectedVarAfterReturned)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableDecl)
 CARBON_DIAGNOSTIC_KIND(ExpectedChoiceDefinition)
 CARBON_DIAGNOSTIC_KIND(ExpectedChoiceAlternativeName)
-CARBON_DIAGNOSTIC_KIND(UnreachableMatchCase)
 CARBON_DIAGNOSTIC_KIND(OperatorRequiresParentheses)
 CARBON_DIAGNOSTIC_KIND(StatementOperatorAsSubExpr)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresParentheses)
@@ -101,12 +102,14 @@ CARBON_DIAGNOSTIC_KIND(UnrecognizedDecl)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
 
 // Match diagnostics.
-CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInMatchCasesBlock)
-CARBON_DIAGNOSTIC_KIND(ExpectedMatchCases)
-CARBON_DIAGNOSTIC_KIND(ExpectedMatchCasesBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseArrow)
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseBlock)
-CARBON_DIAGNOSTIC_KIND(MatchParseTODO)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseGuardCloseParen)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseGuardOpenParen)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCases)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCasesBlock)
+CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInMatchCasesBlock)
+CARBON_DIAGNOSTIC_KIND(UnreachableMatchCase)
 
 // Package-related diagnostics.
 CARBON_DIAGNOSTIC_KIND(FirstDecl)
@@ -289,6 +292,7 @@ CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
@@ -297,6 +301,9 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInAssociatedConstant)
+
+// Pattern checking.
+CARBON_DIAGNOSTIC_KIND(TemplateBindingInAssociatedConstantDecl)
 
 // Qualified declaration name checking.
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclOutsidePackage)
@@ -356,7 +363,7 @@ CARBON_DIAGNOSTIC_KIND(NameUseBeforeDecl)
 CARBON_DIAGNOSTIC_KIND(NameUseBeforeDeclNote)
 CARBON_DIAGNOSTIC_KIND(RepeatedConst)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAdaptDecl)
-CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAssociatedDecl)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAssociatedConstantDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBaseDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBindingDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInConversion)
@@ -455,7 +462,6 @@ CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
 
 // Document handling.
 CARBON_DIAGNOSTIC_KIND(LanguageServerOpenDuplicateFile)
-CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedChanges)
 CARBON_DIAGNOSTIC_KIND(LanguageServerCloseUnknownFile)
 CARBON_DIAGNOSTIC_KIND(LanguageServerDiagnosticInWrongFile)
 

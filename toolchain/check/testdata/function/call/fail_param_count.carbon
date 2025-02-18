@@ -68,22 +68,22 @@ fn Main() {
 // CHECK:STDOUT: --- fail_param_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Run0.type: type = fn_type @Run0 [template]
-// CHECK:STDOUT:   %Run0: %Run0.type = struct_value () [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Run1.type: type = fn_type @Run1 [template]
-// CHECK:STDOUT:   %Run1: %Run1.type = struct_value () [template]
-// CHECK:STDOUT:   %Run2.type: type = fn_type @Run2 [template]
-// CHECK:STDOUT:   %Run2: %Run2.type = struct_value () [template]
-// CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
-// CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %Run0.type: type = fn_type @Run0 [concrete]
+// CHECK:STDOUT:   %Run0: %Run0.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Run1.type: type = fn_type @Run1 [concrete]
+// CHECK:STDOUT:   %Run1: %Run1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Run2.type: type = fn_type @Run2 [concrete]
+// CHECK:STDOUT:   %Run2: %Run2.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
+// CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -91,7 +91,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Run0 = %Run0.decl
 // CHECK:STDOUT:     .Run1 = %Run1.decl
@@ -99,38 +99,38 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Run0.decl: %Run0.type = fn_decl @Run0 [template = constants.%Run0] {} {}
-// CHECK:STDOUT:   %Run1.decl: %Run1.type = fn_decl @Run1 [template = constants.%Run1] {
+// CHECK:STDOUT:   %Run0.decl: %Run0.type = fn_decl @Run0 [concrete = constants.%Run0] {} {}
+// CHECK:STDOUT:   %Run1.decl: %Run1.type = fn_decl @Run1 [concrete = constants.%Run1] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc12: type = splice_block %i32 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [template = constants.%Run2] {
+// CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [concrete = constants.%Run2] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc13_12: type = splice_block %i32.loc13_12 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc13_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc13_12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_12: type = splice_block %i32.loc13_12 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc13_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc13_12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %.loc13_20: type = splice_block %i32.loc13_20 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc13_20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc13_20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_20: type = splice_block %i32.loc13_20 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc13_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc13_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
@@ -150,18 +150,18 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Run0.ref.loc23: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]
-// CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %Run0.ref.loc31: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]
-// CHECK:STDOUT:   %int_0.loc31: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %Run1.ref.loc40: %Run1.type = name_ref Run1, file.%Run1.decl [template = constants.%Run1]
-// CHECK:STDOUT:   %Run1.ref.loc48: %Run1.type = name_ref Run1, file.%Run1.decl [template = constants.%Run1]
-// CHECK:STDOUT:   %int_0.loc48: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %int_1.loc48: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %Run2.ref.loc57: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %Run2.ref.loc65: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %int_0.loc65: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %Run0.ref.loc23: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
+// CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run0.ref.loc31: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
+// CHECK:STDOUT:   %int_0.loc31: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run1.ref.loc40: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
+// CHECK:STDOUT:   %Run1.ref.loc48: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
+// CHECK:STDOUT:   %int_0.loc48: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc48: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run2.ref.loc57: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
+// CHECK:STDOUT:   %Run2.ref.loc65: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
+// CHECK:STDOUT:   %int_0.loc65: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

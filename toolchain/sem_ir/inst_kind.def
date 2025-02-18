@@ -13,6 +13,7 @@
 
 #ifndef CARBON_SEM_IR_INST_KIND
 #error "Must define the x-macro to use this file."
+#define CARBON_SEM_IR_INST_KIND(Name)
 #endif
 
 // For each instruction kind declared here there is a matching definition in
@@ -69,6 +70,7 @@ CARBON_SEM_IR_INST_KIND(GenericInterfaceType)
 CARBON_SEM_IR_INST_KIND(ImplDecl)
 CARBON_SEM_IR_INST_KIND(ImplWitness)
 CARBON_SEM_IR_INST_KIND(ImplWitnessAccess)
+CARBON_SEM_IR_INST_KIND(ImportCppDecl)
 CARBON_SEM_IR_INST_KIND(ImportDecl)
 CARBON_SEM_IR_INST_KIND(ImportRefLoaded)
 CARBON_SEM_IR_INST_KIND(ImportRefUnloaded)

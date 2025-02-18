@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -17,7 +18,7 @@ namespace Carbon::Check {
 static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                                   Operator op) -> SemIR::InstId {
   // Look up the interface, and pass it any generic arguments.
-  auto interface_id = context.LookupNameInCore(loc_id, op.interface_name);
+  auto interface_id = LookupNameInCore(context, loc_id, op.interface_name);
   if (!op.interface_args_ref.empty()) {
     interface_id =
         PerformCall(context, loc_id, interface_id, op.interface_args_ref);

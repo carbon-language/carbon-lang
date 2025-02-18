@@ -83,6 +83,9 @@ around what we expect evaluations to be able to include:
     the critical path and get representative performance results.
     -   This can in turn be a still smaller subset of all aspects of C++
         interoperability based around what impacts interesting benchmarks.
+-   Both strategy and design for memory safety allow evaluators to be confident
+    in safe Carbon having strong memory safety protections, and being
+    incrementally adoptable starting from existing C++ codebases.
 
 ### Language features
 
@@ -226,6 +229,17 @@ to be completed as part of 0.1 beyond _language_ features:
         those platforms.
 -   Build system integration for CMake, and documentation for integrating with
     Make or similar build systems.
+-   Detailed safety strategy for Carbon
+    -   Will include specific expectations for how unsafe C++ code and unsafe
+        Carbon code will interact with safe Carbon code.
+    -   Also includes any tradeoffs or prioritization across different kinds or
+        levels of safety.
+-   Detailed and concrete design for safe Carbon
+    -   Must at least include ways in which most modern C++ is safe: type and
+        initialization safety.
+    -   Must also include spatial, temporal, and mutation safety.
+    -   Will include an analysis of how this impacts _safe_ Rust interop.
+    -   Does _not_ include having a complete implementation in 0.1.
 -   Basic documentation for evaluators from getting started to FAQs.
 
 ## Milestone 0.2: feature complete product for evaluation

@@ -12,8 +12,8 @@ auto ConstantStore::GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId {
   auto result = map_.Insert(inst, [&] {
     auto inst_id = sem_ir_->insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     ConstantId const_id = ConstantId::None;
-    if (phase == IsTemplate) {
-      const_id = SemIR::ConstantId::ForTemplateConstant(inst_id);
+    if (phase == IsConcrete) {
+      const_id = SemIR::ConstantId::ForConcreteConstant(inst_id);
     } else {
       // The instruction in the constants store is an abstract symbolic
       // constant, not associated with any particular generic.
@@ -31,7 +31,7 @@ auto ConstantStore::GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId {
   });
   CARBON_CHECK(result.value() != ConstantId::None);
   CARBON_CHECK(
-      result.value().is_symbolic() == (phase != IsTemplate),
+      result.value().is_symbolic() == (phase != IsConcrete),
       "Constant {0} registered as both symbolic and template constant.", inst);
   return result.value();
 }
