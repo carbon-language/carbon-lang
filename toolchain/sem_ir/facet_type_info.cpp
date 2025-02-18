@@ -27,8 +27,7 @@ static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  CARBON_CHECK(!complete_id.has_value(),
-               "Call ClearCacheState() after modifying FacetTypeInfo");
+  CARBON_CHECK(!complete_id.has_value());
   SortAndDeduplicate(impls_constraints, ImplsLess);
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
