@@ -92,6 +92,8 @@ constexpr FacetTypeInfo::RewriteConstraint
                                               .rhs_const_id = ConstantId::None};
 
 struct CompleteFacetType {
+  // TODO: Add additional fields, for example to support types other than
+  // `.Self` implementation requirements.
   using RequiredInterface = SpecificInterface;
 
   // Interfaces mentioned explicitly in the facet type expression, or
