@@ -200,6 +200,7 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
