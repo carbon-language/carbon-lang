@@ -159,7 +159,6 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     // TODO: We should see if upstream would be open to some configuration hook
     // to suppress this when it is generating the CC1 flags and use that.
     if (!enable_leaking) {
-      // There should only be one flag instance, but this will handle multiple if present.
       llvm::erase(cc1_args, "-disable-free");
     }
 
