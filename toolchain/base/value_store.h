@@ -101,11 +101,11 @@ class ValueStore
   auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
   auto size() const -> size_t { return values_.size(); }
 
-  // Makes an iterable range over pairs of the index and value for each value in
-  // the store.
+  // Makes an iterable range over pairs of the index and a reference to the
+  // value for each value in the store.
   //
-  // The range is over references to the values in the store, even if used
-  // with `auto` to destructure the pair. In this example, the `value` is a
+  // The range is over references to the values in the store, even if used with
+  // `auto` to destructure the pair. In this example, the `value` is a
   // `ConstRefType`:
   // ```
   // for (auto [id, value] : store.enumerate()) { ... }
