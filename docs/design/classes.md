@@ -713,7 +713,7 @@ a variable in the class's scope.
 
 > **Open question:** Is there a way to declare a variable in a class's scope?
 
-In a field declaration, an initializer (such as `= "default` above) specifies
+In a field declaration, an initializer (such as `= "default"` above) specifies
 the default value of the field, and will be ignored if another value is supplied
 for that field when constructing an instance of the class. Defaults must be
 constants whose value can be determined at compile time.
