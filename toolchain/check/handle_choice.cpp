@@ -8,8 +8,10 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/ids.h"
@@ -53,7 +55,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
                        .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
   auto class_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, class_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, class_decl));
 
   context.decl_name_stack().AddNameOrDiagnose(name_context, class_decl_id,
                                               SemIR::AccessKind::Public);
@@ -91,11 +93,11 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
       class_decl_id, SemIR::NameId::None, class_info.parent_scope_id);
   class_decl.class_id = context.classes().Add(class_info);
   if (class_info.has_parameters()) {
-    class_decl.type_id = context.GetGenericClassType(
-        class_decl.class_id, context.scope_stack().PeekSpecificId());
+    class_decl.type_id = GetGenericClassType(
+        context, class_decl.class_id, context.scope_stack().PeekSpecificId());
   }
 
-  context.ReplaceInstBeforeConstantUse(class_decl_id, class_decl);
+  ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
 
   // We had to construct the `ClassId` from `Class` in order to build the `Self`
   // type below. But it needs to be written back to the `Class` in the
@@ -103,7 +105,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // `Class` in the ValueStore.
   SemIR::Class& mut_class = context.classes().Get(class_decl.class_id);
   // Build the `Self` type using the resulting type constant.
-  auto self_type_id = context.GetTypeIdForTypeConstant(
+  auto self_type_id = context.types().GetTypeIdForTypeConstantId(
       TryEvalInst(context, SemIR::InstId::None,
                   SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                                    .class_id = class_decl.class_id,
@@ -186,9 +188,9 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
     -> void {
   SemIR::InstId discriminant_value_id = [&] {
     if (choice_info.num_alternative_bits == 0) {
-      return context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
+      return AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
           binding.node_id, SemIR::TupleLiteral{
-                               .type_id = context.GetTupleType({}),
+                               .type_id = GetTupleType(context, {}),
                                .elements_id = SemIR::InstBlockId::Empty,
                            }));
     } else {
@@ -202,7 +204,7 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
 
   auto self_value_id = ConvertToValueOfType(
       context, binding.node_id,
-      context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
+      AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
           binding.node_id,
           SemIR::StructLiteral{
               .type_id = choice_info.self_struct_type_id,
@@ -218,12 +220,13 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
   auto entity_name_id = context.entity_names().Add(
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_info.name_scope_id});
-  auto bind_name_id = context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
-      binding.node_id, SemIR::BindName{
-                           .type_id = choice_info.self_type_id,
-                           .entity_name_id = entity_name_id,
-                           .value_id = self_value_id,
-                       }));
+  auto bind_name_id = AddInst(
+      context, SemIR::LocIdAndInst::UncheckedLoc(
+                   binding.node_id, SemIR::BindName{
+                                        .type_id = choice_info.self_type_id,
+                                        .entity_name_id = entity_name_id,
+                                        .value_id = self_value_id,
+                                    }));
   context.name_scopes()
       .Get(choice_info.name_scope_id)
       .AddRequired({.name_id = binding.name_component.name_id,
@@ -261,7 +264,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
       //
       // TODO: Find a way to produce a better diagnostic, and not require an
       // empty field.
-      return context.GetTupleType({});
+      return GetTupleType(context, {});
     } else {
       return MakeIntType(context, node_id, SemIR::IntKind::Unsigned,
                          context.ints().Add(num_alternative_bits));
@@ -275,10 +278,12 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   });
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
-  auto choice_witness_id = context.AddInst<SemIR::CompleteTypeWitness>(
-      node_id,
-      {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
-       .object_repr_id = context.GetStructType(fields_id)});
+  auto choice_witness_id =
+      AddInst(context, node_id,
+              SemIR::CompleteTypeWitness{
+                  .type_id = GetSingletonType(
+                      context, SemIR::WitnessType::SingletonInstId),
+                  .object_repr_id = GetStructType(context, fields_id)});
   // Note: avoid storing a reference to the returned Class, since it may be
   // invalidated by other type constructions.
   context.classes().Get(class_id).complete_type_witness_id = choice_witness_id;
@@ -286,8 +291,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   auto self_type_id = context.classes().Get(class_id).self_type_id;
   auto name_scope_id = context.classes().Get(class_id).scope_id;
 
-  auto self_struct_type_id = context.GetStructType(
-      context.struct_type_fields().AddCanonical(struct_type_fields));
+  auto self_struct_type_id = GetStructType(
+      context, context.struct_type_fields().AddCanonical(struct_type_fields));
 
   for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
@@ -297,7 +302,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
                        .name_scope_id = name_scope_id,
                        .self_struct_type_id = self_struct_type_id,
                        .discriminant_type_id = discriminant_type_id,
-                       .num_alternative_bits = num_alternative_bits,
+                       .num_alternative_bits = num_alternative_bits
                    },
                    i, deferred_binding);
   }
