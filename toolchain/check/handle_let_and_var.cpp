@@ -364,7 +364,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
     auto var = context.insts().GetAs<SemIR::VarPattern>(decl_info.pattern_id);
     if (!context.insts().TryGetAs<SemIR::FieldDecl>(var.subpattern_id)) {
       CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInFieldDecl, Error,
-                        "pattern in field declaration must be a "
+                        "pattern in field declaration is not a "
                         "single `:` binding");
       context.emitter().Emit(context.insts().GetLocId(var.subpattern_id),
                              ExpectedSymbolicBindingInFieldDecl);

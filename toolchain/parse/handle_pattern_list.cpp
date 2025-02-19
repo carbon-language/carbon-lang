@@ -7,7 +7,7 @@
 
 namespace Carbon::Parse {
 
-// Handles PatternListElementAs(Explicit|Implicit|Tuple).
+// Handles PatternListElementAs(Tuple|Explicit|Implicit).
 static auto HandlePatternListElement(Context& context, State pattern_state,
                                      State finish_state) -> void {
   auto state = context.PopState();

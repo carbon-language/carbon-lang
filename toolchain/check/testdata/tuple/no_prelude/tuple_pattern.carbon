@@ -70,7 +70,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+4]]:7: error: pattern in field declaration must be a single `:` binding [ExpectedSymbolicBindingInFieldDecl]
+  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+4]]:7: error: pattern in field declaration is not a single `:` binding [ExpectedSymbolicBindingInFieldDecl]
   // CHECK:STDERR:   var (x: {}, y: {});
   // CHECK:STDERR:       ^~~~~~~~~~~~~~
   // CHECK:STDERR:
