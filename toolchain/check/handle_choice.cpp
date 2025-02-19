@@ -146,12 +146,15 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
   if (name_component.param_patterns_id == SemIR::InstBlockId::Empty) {
     // Treat an empty parameter list the same as no parameter list.
     //
-    // TODO: The current design suggests that we might want Foo() to result in a
+    // TODO: The current design suggests that we want Foo() to result in a
     // member function `ChoiceType.Foo()`, and `Foo` to result in a member
-    // constant `ChoiceType.Foo`. See
+    // constant `ChoiceType.Foo`, but that only one of the two is allowed in a
+    // single choice type. See
     // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/sum_types.md#user-defined-sum-types.
     // For now they are not treated differently and both resolve to a member
     // constant.
+    context.TODO(name_component.params_loc_id,
+                 "empty parameter list should make a member function");
     name_component.param_patterns_id = SemIR::InstBlockId::None;
   }
   if (name_component.param_patterns_id.has_value()) {
@@ -189,10 +192,11 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
   SemIR::InstId discriminant_value_id = [&] {
     if (choice_info.num_alternative_bits == 0) {
       return AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
-          binding.node_id, SemIR::TupleLiteral{
-                               .type_id = GetTupleType(context, {}),
-                               .elements_id = SemIR::InstBlockId::Empty,
-                           }));
+                                  binding.node_id,
+                                  SemIR::TupleLiteral{
+                                      .type_id = GetTupleType(context, {}),
+                                      .elements_id = SemIR::InstBlockId::Empty,
+                                  }));
     } else {
       return MakeIntLiteral(context, binding.node_id,
                             context.ints().Add(alternative_index));
@@ -205,16 +209,17 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
   auto self_value_id = ConvertToValueOfType(
       context, binding.node_id,
       AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
-          binding.node_id,
-          SemIR::StructLiteral{
-              .type_id = choice_info.self_struct_type_id,
-              .elements_id =
-                  [&] {
-                    context.inst_block_stack().Push();
-                    context.inst_block_stack().AddInstId(discriminant_value_id);
-                    return context.inst_block_stack().Pop();
-                  }(),
-          })),
+                           binding.node_id,
+                           SemIR::StructLiteral{
+                               .type_id = choice_info.self_struct_type_id,
+                               .elements_id =
+                                   [&] {
+                                     context.inst_block_stack().Push();
+                                     context.inst_block_stack().AddInstId(
+                                         discriminant_value_id);
+                                     return context.inst_block_stack().Pop();
+                                   }(),
+                           })),
       choice_info.self_type_id);
 
   auto entity_name_id = context.entity_names().Add(
@@ -297,13 +302,11 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
     MakeLetBinding(context,
-                   ChoiceInfo{
-                       .self_type_id = self_type_id,
-                       .name_scope_id = name_scope_id,
-                       .self_struct_type_id = self_struct_type_id,
-                       .discriminant_type_id = discriminant_type_id,
-                       .num_alternative_bits = num_alternative_bits
-                   },
+                   ChoiceInfo{.self_type_id = self_type_id,
+                              .name_scope_id = name_scope_id,
+                              .self_struct_type_id = self_struct_type_id,
+                              .discriminant_type_id = discriminant_type_id,
+                              .num_alternative_bits = num_alternative_bits},
                    i, deferred_binding);
   }
 

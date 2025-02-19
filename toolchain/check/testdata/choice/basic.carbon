@@ -45,6 +45,10 @@ fn H() {
 library "[[@TEST_NAME]]";
 
 choice Always {
+  // CHECK:STDERR: empty_params.carbon:[[@LINE+4]]:8: error: semantics TODO: `empty parameter list should make a member function` [SemanticsTodo]
+  // CHECK:STDERR:   Sunny()
+  // CHECK:STDERR:        ^~
+  // CHECK:STDERR:
   Sunny()
 }
 
@@ -352,19 +356,19 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Always {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %.loc5_1.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_1.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.2: %empty_tuple.type = converted %.loc5_1.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.3: %struct_type.discriminant = struct_literal (%.loc5_1.2)
-// CHECK:STDOUT:   %.loc5_1.4: ref %Always = temporary_storage
-// CHECK:STDOUT:   %.loc5_1.5: ref %empty_tuple.type = class_element_access %.loc5_1.4, element0
-// CHECK:STDOUT:   %.loc5_1.6: init %empty_tuple.type = tuple_init () to %.loc5_1.5 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.7: init %empty_tuple.type = converted %.loc5_1.2, %.loc5_1.6 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_1.8: init %Always = class_init (%.loc5_1.7), %.loc5_1.4 [concrete = constants.%Always.val]
-// CHECK:STDOUT:   %.loc5_1.9: ref %Always = temporary %.loc5_1.4, %.loc5_1.8
-// CHECK:STDOUT:   %.loc5_1.10: ref %Always = converted %.loc5_1.3, %.loc5_1.9
-// CHECK:STDOUT:   %.loc5_1.11: %Always = bind_value %.loc5_1.10
-// CHECK:STDOUT:   %Sunny: %Always = bind_name Sunny, %.loc5_1.11
+// CHECK:STDOUT:   %.loc9_1.2: %empty_tuple.type = converted %.loc9_1.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_1.3: %struct_type.discriminant = struct_literal (%.loc9_1.2)
+// CHECK:STDOUT:   %.loc9_1.4: ref %Always = temporary_storage
+// CHECK:STDOUT:   %.loc9_1.5: ref %empty_tuple.type = class_element_access %.loc9_1.4, element0
+// CHECK:STDOUT:   %.loc9_1.6: init %empty_tuple.type = tuple_init () to %.loc9_1.5 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_1.7: init %empty_tuple.type = converted %.loc9_1.2, %.loc9_1.6 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_1.8: init %Always = class_init (%.loc9_1.7), %.loc9_1.4 [concrete = constants.%Always.val]
+// CHECK:STDOUT:   %.loc9_1.9: ref %Always = temporary %.loc9_1.4, %.loc9_1.8
+// CHECK:STDOUT:   %.loc9_1.10: ref %Always = converted %.loc9_1.3, %.loc9_1.9
+// CHECK:STDOUT:   %.loc9_1.11: %Always = bind_value %.loc9_1.10
+// CHECK:STDOUT:   %Sunny: %Always = bind_name Sunny, %.loc9_1.11
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -377,9 +381,9 @@ fn G() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %mood.patt: %Always = binding_pattern mood
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Always.ref.loc8_22: type = name_ref Always, file.%Always.decl [concrete = constants.%Always]
+// CHECK:STDOUT:   %Always.ref.loc12_22: type = name_ref Always, file.%Always.decl [concrete = constants.%Always]
 // CHECK:STDOUT:   %Sunny.ref: %Always = name_ref Sunny, @Always.%Sunny
-// CHECK:STDOUT:   %Always.ref.loc8_13: type = name_ref Always, file.%Always.decl [concrete = constants.%Always]
+// CHECK:STDOUT:   %Always.ref.loc12_13: type = name_ref Always, file.%Always.decl [concrete = constants.%Always]
 // CHECK:STDOUT:   %mood: %Always = bind_name mood, %Sunny.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
