@@ -492,6 +492,20 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
   return true;
 }
 
+// Function template that can be called with an argument of type `T`. Used below
+// to detect which overloads of `GetConstantValue` exist.
+template <typename T>
+static void Accept(T) {}
+
+// Determines whether a `GetConstantValue` overload exists for a given ID type.
+// Note that we do not check whether `GetConstantValue` is *callable* with a
+// given ID type, because that would use the `InstId` overload for
+// `AbsoluteInstId`, which should be left alone.
+template <typename IdT>
+static constexpr bool HasGetConstantValueOverload = requires {
+  Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
+};
+
 // Given the stored value `arg` of an instruction field and its corresponding
 // kind `kind`, returns the constant value to use for that field, if it has a
 // constant phase. `*phase` is updated to include the new constant value. If
@@ -502,10 +516,10 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
                                    SemIR::TypeEnum<Type...> kind, int32_t arg,
                                    Phase* phase) -> int32_t {
   using Handler = auto(EvalContext&, int32_t arg, Phase* phase)->int32_t;
-  static constexpr Handler* handlers[] = {
+  static constexpr Handler* Handlers[] = {
       [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
         auto id = SemIR::Inst::FromRaw<Type>(arg);
-        if constexpr (requires { GetConstantValue(eval_context, id, phase); }) {
+        if constexpr (HasGetConstantValueOverload<Type>) {
           // If we have a custom `GetConstantValue` overload, call it.
           return SemIR::Inst::ToRaw(GetConstantValue(eval_context, id, phase));
         } else {
@@ -513,11 +527,15 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
           return arg;
         }
       }...,
+      [](EvalContext&, int32_t, Phase*) -> int32_t {
+        // Handler for IdKind::Invalid is next.
+        CARBON_FATAL("Instruction has argument with invalid IdKind");
+      },
       [](EvalContext&, int32_t arg, Phase*) -> int32_t {
         // Handler for IdKind::None is last.
         return arg;
       }};
-  return handlers[kind.ToIndex()](eval_context, arg, phase);
+  return Handlers[kind.ToIndex()](eval_context, arg, phase);
 }
 
 // Given an instruction, replaces its type and operands with their constant
@@ -1580,21 +1598,54 @@ static auto MakeFacetTypeResult(Context& context,
       phase);
 }
 
-static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                             SemIR::AddrOf inst, Phase phase)
-    -> SemIR::ConstantId {
-  return MakeConstantResult(context, inst, phase);
+// The result of constant evaluation of an instruction.
+class ConstantEvalResult {
+ public:
+  // Produce an existing constant as the result of an evaluation.
+  static constexpr auto Existing(SemIR::ConstantId existing_id)
+      -> ConstantEvalResult {
+    CARBON_CHECK(existing_id.is_constant());
+    return ConstantEvalResult(existing_id);
+  }
+
+  // Produce the instruction itself as a new constant.
+  static const ConstantEvalResult New;
+
+  // Indicates that an error was produced by evaluation.
+  static const ConstantEvalResult Error;
+
+  // Returns whether the result of evaluation is that we should produce the
+  // instruction itself as a new constant.
+  auto is_new() const -> bool { return !result_id.has_value(); }
+
+  // Returns whether the result of evaluation is an existing constant.
+  auto existing() const -> SemIR::ConstantId { return result_id; }
+
+ private:
+  explicit constexpr ConstantEvalResult(SemIR::ConstantId raw_id)
+      : result_id(raw_id) {}
+
+  SemIR::ConstantId result_id;
+};
+
+constexpr ConstantEvalResult ConstantEvalResult::New =
+    ConstantEvalResult(SemIR::ConstantId::None);
+constexpr ConstantEvalResult ConstantEvalResult::Error =
+    Existing(SemIR::ErrorInst::SingletonConstantId);
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::AddrOf /*inst*/) -> ConstantEvalResult {
+  return ConstantEvalResult::New;
 }
 
 static auto EvalConstantInst(Context& context, SemIRLoc loc,
-                             SemIR::ArrayType inst, Phase phase)
-    -> SemIR::ConstantId {
+                             SemIR::ArrayType inst) -> ConstantEvalResult {
   auto bound_inst = context.insts().Get(inst.bound_id);
   auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
   if (!int_bound) {
     CARBON_CHECK(context.constant_values().Get(inst.bound_id).is_symbolic(),
                  "Unexpected inst {0} for template constant int", bound_inst);
-    return MakeConstantResult(context, inst, phase);
+    return ConstantEvalResult::New;
   }
   // TODO: We should check that the size of the resulting array type
   // fits in 64 bits, not just that the bound does. Should we use a
@@ -1606,16 +1657,28 @@ static auto EvalConstantInst(Context& context, SemIRLoc loc,
                       "array bound of {0} is negative", TypedInt);
     context.emitter().Emit(loc, ArrayBoundNegative,
                            {.type = int_bound->type_id, .value = bound_val});
-    return SemIR::ErrorInst::SingletonConstantId;
+    return ConstantEvalResult::Error;
   }
   if (bound_val.getActiveBits() > 64) {
     CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                       "array bound of {0} is too large", TypedInt);
     context.emitter().Emit(loc, ArrayBoundTooLarge,
                            {.type = int_bound->type_id, .value = bound_val});
-    return SemIR::ErrorInst::SingletonConstantId;
+    return ConstantEvalResult::Error;
   }
-  return MakeConstantResult(context, inst, phase);
+  return ConstantEvalResult::New;
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::AssociatedEntityType /*inst*/)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::New;
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::BoundMethod /*inst*/)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::New;
 }
 
 template <typename InstT>
@@ -1628,8 +1691,16 @@ static auto PerformDefaultEval(EvalContext& eval_context, SemIR::Inst inst)
           eval_context, &inst, &phase)) {
     return MakeNonConstantResult(phase);
   }
-  return EvalConstantInst(eval_context.context(), eval_context.fallback_loc(),
-                          inst.As<InstT>(), phase);
+  ConstantEvalResult result = ConstantEvalResult::New;
+  if constexpr (InstT::Kind.constant_kind() !=
+                SemIR::InstConstantKind::Always) {
+    result = EvalConstantInst(eval_context.context(),
+                              eval_context.fallback_loc(), inst.As<InstT>());
+  }
+  if (result.is_new()) {
+    return MakeConstantResult(eval_context.context(), inst, phase);
+  }
+  return result.existing();
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
@@ -1649,22 +1720,15 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::ArrayType::Kind:
       return PerformDefaultEval<SemIR::ArrayType>(eval_context, inst);
     case SemIR::AssociatedEntity::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::AssociatedEntity::type_id);
+      return PerformDefaultEval<SemIR::AssociatedEntity>(eval_context, inst);
     case SemIR::AssociatedEntityType::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id);
+      return PerformDefaultEval<SemIR::AssociatedEntityType>(eval_context, inst);
     case SemIR::BoundMethod::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::BoundMethod::type_id,
-                                        &SemIR::BoundMethod::object_id,
-                                        &SemIR::BoundMethod::function_decl_id);
+      return PerformDefaultEval<SemIR::BoundMethod>(eval_context, inst);
     case SemIR::ClassType::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::ClassType::specific_id);
+      return PerformDefaultEval<SemIR::ClassType>(eval_context, inst);
     case SemIR::CompleteTypeWitness::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::CompleteTypeWitness::object_repr_id);
+      return PerformDefaultEval<SemIR::CompleteTypeWitness>(eval_context, inst);
     case SemIR::FacetValue::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FacetValue::type_id,

@@ -109,17 +109,17 @@ struct ConstantId : public IdBase<ConstantId> {
   using IdBase::IdBase;
 
   // Returns whether this represents a constant. Requires has_value.
-  auto is_constant() const -> bool {
+  constexpr auto is_constant() const -> bool {
     CARBON_DCHECK(has_value());
     return *this != ConstantId::NotConstant;
   }
   // Returns whether this represents a symbolic constant. Requires has_value.
-  auto is_symbolic() const -> bool {
+  constexpr auto is_symbolic() const -> bool {
     CARBON_DCHECK(has_value());
     return index <= FirstSymbolicIndex;
   }
   // Returns whether this represents a concrete constant. Requires has_value.
-  auto is_concrete() const -> bool {
+  constexpr auto is_concrete() const -> bool {
     CARBON_DCHECK(has_value());
     return index >= 0;
   }
