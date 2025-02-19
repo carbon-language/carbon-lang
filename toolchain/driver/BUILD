@@ -95,6 +95,7 @@ cc_library(
         "compile_subcommand.h",
         "driver.cpp",
         "driver_env.h",
+        "driver_subcommand.cpp",
         "format_subcommand.cpp",
         "format_subcommand.h",
         "language_server_subcommand.cpp",
