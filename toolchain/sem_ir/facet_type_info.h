@@ -56,14 +56,10 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Remove once all requirements are supported.
   bool other_requirements;
 
-  // This is should be `None` for new facet type values, and only set by
-  // `RequireCompleteFacetType`. It is stored here so that we only compute its
-  // value once per facet type.
-
-  // Optional complete facet type. For facet types used in contexts that require
-  // them to be fully defined. This is a private implementation detail of
-  // `RequireCompleteFacetType` and is not part of the value of the facet type,
-  // excluded from `==` and its hash value.
+  // This is should be `None` for new facet type values, and only set as a
+  // private implementation detail of `RequireCompleteFacetType`. It is stored
+  // here so that we only compute its value once per facet type. This is not
+  // part of the value of the facet type, excluded from `==` and its hash value.
   CompleteFacetTypeId complete_id = CompleteFacetTypeId::None;
 
   // Sorts and deduplicates constraints. Call after building the value, and then
