@@ -445,7 +445,7 @@ CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 
-// Pattern matching diagnostics
+// Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
 // ============================================================================

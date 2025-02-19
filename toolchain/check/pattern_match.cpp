@@ -408,9 +408,8 @@ auto MatchContext::EmitPatternMatch(Context& context,
                             "literal has {1}",
                             IntAsSelect, IntAsSelect);
           context.emitter()
-              .Build(pattern.loc_id, TuplePatternSizeDoesntMatchLiteral,
-                     subpattern_ids.size(), subscrutinee_ids.size())
-              .Emit();
+              .Emit(pattern.loc_id, TuplePatternSizeDoesntMatchLiteral,
+                     subpattern_ids.size(), subscrutinee_ids.size());
           break;
         }
         add_all_subscrutinees(subscrutinee_ids);
@@ -433,6 +432,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           context.types().GetAs<SemIR::TupleType>(tuple_pattern.type_id);
       auto element_type_ids = context.type_blocks().Get(tuple_type.elements_id);
       llvm::SmallVector<SemIR::InstId> subscrutinee_ids;
+      subscrutinee_ids.reserve(element_type_ids.size());
       for (auto [i, element_type_id] : llvm::enumerate(element_type_ids)) {
         subscrutinee_ids.push_back(
             AddInst<SemIR::TupleAccess>(context, scrutinee.loc_id,
