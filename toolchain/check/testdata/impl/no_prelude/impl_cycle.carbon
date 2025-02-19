@@ -201,10 +201,9 @@ library "[[@TEST_NAME]]";
 interface First {}
 interface Second {}
 
-// This impl is looked at for "does T impl Second" first, which requires a
-// recursive query in deduction that is the same "does T impl Second", which can
-// land us back looking at this impl again. So we require a way to eliminate
-// this impl without doing deduction in order to avoid the cycle.
+// When answering a query "does T impl Second", we must avoid trying to deduce
+// parameters for this impl. Not only is doing so unnecessary, it would start a new
+// "does T impl Second" query, leading to a "cycle in impl lookup" error.
 impl forall [T:! Second] T as First {}
 impl forall [T:! type] T as Second {}
 
