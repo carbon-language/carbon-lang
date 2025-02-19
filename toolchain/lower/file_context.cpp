@@ -60,9 +60,8 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
   // Lower function declarations.
   functions_.resize_for_overwrite(sem_ir_->functions().size());
-  for (auto [i, pair] : llvm::enumerate(sem_ir_->functions().enumerate())) {
-    auto [id, _] = pair;
-    functions_[i] = BuildFunctionDecl(id);
+  for (auto [id, _] : sem_ir_->functions().enumerate()) {
+    functions_[id.index] = BuildFunctionDecl(id);
   }
 
   // Specific functions are lowered when we emit a reference to them.
