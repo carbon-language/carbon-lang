@@ -89,9 +89,6 @@ class Context {
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
-  // Prints the the formatted sem_ir to stderr.
-  LLVM_DUMP_METHOD auto DumpFormattedFile() const -> void;
-
   // Get the Lex::TokenKind of a node for diagnostics.
   auto token_kind(Parse::NodeId node_id) -> Lex::TokenKind {
     return tokens().GetKind(parse_tree().node_token(node_id));
