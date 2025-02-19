@@ -145,8 +145,11 @@ class DeclNameStack {
     // should be used.
     SemIR::NameScopeId parent_scope_id;
 
-    // The last location ID used.
+    // The location of the final name component.
     SemIR::LocId loc_id = SemIR::LocId::None;
+
+    // The name of the final name component.
+    SemIR::NameId name_id = SemIR::NameId::None;
 
     union {
       // The ID of a resolved qualifier, including both identifiers and
@@ -157,9 +160,6 @@ class DeclNameStack {
       // the poisoning location.
       SemIR::LocId poisoning_loc_id = SemIR::LocId::None;
     };
-
-    // The ID of an identifier.
-    SemIR::NameId name_id = SemIR::NameId::None;
   };
 
   // Information about a declaration name that has been temporarily removed from

@@ -255,10 +255,8 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
 auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
                                        SemIR::LocId loc_id,
                                        SemIR::NameId name_id) -> void {
-  // The location of the name is the location of the last name token we've
-  // processed so far.
+  // Update the final name component.
   name_context.loc_id = loc_id;
-
   name_context.name_id = name_id;
 
   // Don't perform any more lookups after we hit an error. We still track the
