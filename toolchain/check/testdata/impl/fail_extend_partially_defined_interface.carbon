@@ -10,9 +10,9 @@
 
 interface I {
   class C {
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+11]]:5: error: implementation of undefined interface I [ImplOfUndefinedInterface]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+11]]:20: error: impl of undefined interface I [ResolveFacetTypeWithUndefinedInterface]
     // CHECK:STDERR:     extend impl as I;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:                    ^
     // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~

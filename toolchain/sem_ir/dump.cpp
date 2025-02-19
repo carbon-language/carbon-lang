@@ -39,7 +39,7 @@ static auto DumpNoNewline(const File& file, InstId inst_id) -> void {
 static auto DumpNoNewline(const File& file, InterfaceId interface_id) -> void {
   llvm::errs() << interface_id;
   if (interface_id.has_value()) {
-    auto interface = file.interfaces().Get(interface_id);
+    const auto& interface = file.interfaces().Get(interface_id);
     llvm::errs() << ": " << interface;
     DumpNameIfValid(file, interface.name_id);
   }
@@ -55,7 +55,7 @@ static auto DumpNoNewline(const File& file, SpecificId specific_id) -> void {
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> void {
   llvm::errs() << class_id;
   if (class_id.has_value()) {
-    auto class_obj = file.classes().Get(class_id);
+    const auto& class_obj = file.classes().Get(class_id);
     llvm::errs() << ": " << class_obj;
     DumpNameIfValid(file, class_obj.name_id);
   }
@@ -82,30 +82,36 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
     -> void {
   llvm::errs() << facet_type_id;
   if (facet_type_id.has_value()) {
-    auto facet_type = file.facet_types().Get(facet_type_id);
-    llvm::errs() << ": " << facet_type;
+    const auto& facet_type = file.facet_types().Get(facet_type_id);
+    llvm::errs() << ": " << facet_type << '\n';
     for (auto impls : facet_type.impls_constraints) {
-      llvm::errs() << "\n  - ";
+      llvm::errs() << "  - ";
       DumpNoNewline(file, impls.interface_id);
       if (impls.specific_id.has_value()) {
         llvm::errs() << "; ";
         DumpNoNewline(file, impls.specific_id);
       }
+      llvm::errs() << '\n';
     }
     for (auto rewrite : facet_type.rewrite_constraints) {
-      llvm::errs() << "\n  - ";
-      DumpNoNewline(file, rewrite.lhs_const_id);
-      llvm::errs() << "\n  - ";
-      DumpNoNewline(file, rewrite.rhs_const_id);
+      llvm::errs() << "  - ";
+      Dump(file, rewrite.lhs_const_id);
+      llvm::errs() << "  - ";
+      Dump(file, rewrite.rhs_const_id);
     }
+    if (facet_type.complete_id.has_value()) {
+      llvm::errs() << "complete: ";
+      Dump(file, facet_type.complete_id);
+    }
+  } else {
+    llvm::errs() << '\n';
   }
-  llvm::errs() << '\n';
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id) -> void {
   llvm::errs() << function_id;
   if (function_id.has_value()) {
-    auto function = file.functions().Get(function_id);
+    const auto& function = file.functions().Get(function_id);
     llvm::errs() << ": " << function;
     DumpNameIfValid(file, function.name_id);
   }
@@ -179,7 +185,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
     -> void {
   llvm::errs() << name_scope_id;
   if (name_scope_id.has_value()) {
-    auto name_scope = file.name_scopes().Get(name_scope_id);
+    const auto& name_scope = file.name_scopes().Get(name_scope_id);
     llvm::errs() << ": " << name_scope;
     if (name_scope.inst_id().has_value()) {
       llvm::errs() << " " << file.insts().Get(name_scope.inst_id());
@@ -187,6 +193,28 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
     DumpNameIfValid(file, name_scope.name_id());
   }
   llvm::errs() << '\n';
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           CompleteFacetTypeId complete_facet_type_id) -> void {
+  llvm::errs() << complete_facet_type_id << "\n";
+  if (complete_facet_type_id.has_value()) {
+    const auto& complete_facet_type =
+        file.complete_facet_types().Get(complete_facet_type_id);
+    for (auto [i, req_interface] :
+         llvm::enumerate(complete_facet_type.required_interfaces)) {
+      llvm::errs() << "  - ";
+      DumpNoNewline(file, req_interface.interface_id);
+      if (req_interface.specific_id.has_value()) {
+        llvm::errs() << "; ";
+        DumpNoNewline(file, req_interface.specific_id);
+      }
+      if (static_cast<int>(i) < complete_facet_type.num_to_impl) {
+        llvm::errs() << " (to impl)";
+      }
+      llvm::errs() << '\n';
+    }
+  }
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id) -> void {
@@ -272,6 +300,10 @@ LLVM_DUMP_METHOD static auto MakeInterfaceId(int id) -> InterfaceId {
 LLVM_DUMP_METHOD static auto MakeNameId(int id) -> NameId { return NameId(id); }
 LLVM_DUMP_METHOD static auto MakeNameScopeId(int id) -> NameScopeId {
   return NameScopeId(id);
+}
+LLVM_DUMP_METHOD static auto MakeCompleteFacetTypeId(int id)
+    -> CompleteFacetTypeId {
+  return CompleteFacetTypeId(id);
 }
 LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
   return SpecificId(id);

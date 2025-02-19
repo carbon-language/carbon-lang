@@ -38,7 +38,7 @@ library "[[@TEST_NAME]]";
 // Note: This code is not expected to pass checking, even once the TODO is
 // addressed.
 
-// CHECK:STDERR: fail_impl_as_type_where.carbon:[[@LINE+4]]:1: error: semantics TODO: `impl as not 1 interface` [SemanticsTodo]
+// CHECK:STDERR: fail_impl_as_type_where.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR: impl f64 as type where .Self impls type {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
