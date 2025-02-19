@@ -138,6 +138,34 @@ TEST_F(TypedNodeTest, For) {
   ASSERT_TRUE(for_var_name.has_value());
 }
 
+TEST_F(TypedNodeTest, VerifyExtractTracePackage) {
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
+    impl package Banana;
+  )carbon");
+  auto file = tree.ExtractFile();
+
+  ASSERT_EQ(file.decls.size(), 1);
+  ErrorBuilder trace;
+  auto library =
+      Peer::VerifyExtractAs<PackageDecl>(tree, file.decls[0], &trace);
+  EXPECT_TRUE(library.has_value());
+  Error err = trace;
+  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  EXPECT_THAT(err.message(), testing::MatchesRegex(
+                                 R"Trace(Aggregate [^:]*: begin
+Optional [^:]*: begin
+NodeIdForKind error: wrong kind IdentifierPackageName, expected LibrarySpecifier
+Optional [^:]*: missing
+NodeIdInCategory PackageName: kind IdentifierPackageName consumed
+Vector: begin
+NodeIdInCategory Modifier: kind ImplModifier consumed
+NodeIdInCategory Modifier error: kind PackageIntroducer doesn't match
+Vector: end
+NodeIdForKind: PackageIntroducer consumed
+Aggregate [^:]*: success
+)Trace"));
+}
+
 TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
   auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     impl library default;
@@ -234,7 +262,7 @@ Aggregate [^:]*: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-NodeIdInCategory MemberExpr\|MemberName: kind IdentifierNameNotBeforeParams consumed
+NodeIdInCategory MemberExpr\|MemberName\|IntConst: kind IdentifierNameNotBeforeParams consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
 Aggregate [^:]*: success
 )Trace"));
@@ -262,7 +290,7 @@ Optional [^:]*: found
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitParamList
 Optional [^:]*: missing
-NodeIdInCategory : kind IdentifierNameBeforeParams consumed
+NodeIdInCategory NonExprIdentifierName: kind IdentifierNameBeforeParams consumed
 Vector: begin
 NodeIdOneOf NameQualifierWithParams or NameQualifierWithoutParams: NameQualifierWithoutParams consumed
 NodeIdOneOf error: wrong kind AbstractModifier, expected NameQualifierWithParams or NameQualifierWithoutParams

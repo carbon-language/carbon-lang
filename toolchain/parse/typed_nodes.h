@@ -236,7 +236,7 @@ struct PackageDecl {
 
   PackageIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<AnyPackageNameId> name;
+  AnyPackageNameId name;
   std::optional<LibrarySpecifierId> library;
   Lex::SemiTokenIndex token;
 };
