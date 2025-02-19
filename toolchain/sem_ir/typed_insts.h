@@ -61,19 +61,6 @@ struct AutoType {
   TypeId type_id;
 };
 
-// The type of bool literals and branch conditions, bool.
-struct BoolType {
-  static constexpr auto Kind = InstKind::BoolType.Define<Parse::NoneNodeId>(
-      {.ir_name = "bool",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-
-  TypeId type_id;
-};
-
 // Common representation for declarations describing the foundation type of a
 // class -- either its adapted type or its base class.
 struct AnyFoundationDecl {
@@ -386,6 +373,19 @@ struct BoolLiteral {
 
   TypeId type_id;
   BoolValue value;
+};
+
+// The type of bool literals and branch conditions, bool.
+struct BoolType {
+  static constexpr auto Kind = InstKind::BoolType.Define<Parse::NoneNodeId>(
+      {.ir_name = "bool",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+
+  TypeId type_id;
 };
 
 // For member access such as `object.MethodName`, combines a member function

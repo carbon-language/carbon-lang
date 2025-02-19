@@ -15,6 +15,7 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -46,6 +47,8 @@ class EvalContext {
   // unavailable.
   // TODO: This is also sometimes unavailable.
   auto fallback_loc() const -> SemIRLoc { return fallback_loc_; }
+
+  auto SetFallbackLoc(SemIRLoc loc) { fallback_loc_ = loc; }
 
   // Returns a location to use to point at an instruction in a diagnostic, given
   // a list of instructions that might have an attached location. This is the
@@ -217,6 +220,11 @@ enum class Phase : uint8_t {
   Runtime,
 };
 }  // namespace
+
+// Returns whether the specified phase is a constant phase.
+static auto IsConstant(Phase phase) -> bool {
+  return phase < Phase::UnknownDueToError;
+}
 
 // Gets the phase in which the value of a constant will become available.
 static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
@@ -481,6 +489,65 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
     return false;
   }
   inst->*field = unwrapped;
+  return true;
+}
+
+// Given the stored value `arg` of an instruction field and its corresponding
+// kind `kind`, returns the constant value to use for that field, if it has a
+// constant phase. `*phase` is updated to include the new constant value. If
+// the resulting phase is not constant, the returned value is not useful and
+// will typically be `InvalidIndex`.
+template <typename... Type>
+static auto GetConstantValueForArg(EvalContext& eval_context,
+                                   SemIR::TypeEnum<Type...> kind, int32_t arg,
+                                   Phase* phase) -> int32_t {
+  using Handler = auto(EvalContext&, int32_t arg, Phase* phase)->int32_t;
+  static constexpr Handler* handlers[] = {
+      [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
+        auto id = SemIR::Inst::FromRaw<Type>(arg);
+        if constexpr (requires { GetConstantValue(eval_context, id, phase); }) {
+          // If we have a custom `GetConstantValue` overload, call it.
+          return SemIR::Inst::ToRaw(GetConstantValue(eval_context, id, phase));
+        } else {
+          // Otherwise, we assume the value is already constant.
+          return arg;
+        }
+      }...,
+      [](EvalContext&, int32_t arg, Phase*) -> int32_t {
+        // Handler for IdKind::None is last.
+        return arg;
+      }};
+  return handlers[kind.ToIndex()](eval_context, arg, phase);
+}
+
+// Given an instruction, replaces its type and operands with their constant
+// values from the specified evaluation context. `*phase` is updated to describe
+// the constant phase of the result. Returns whether `*phase` is a constant
+// phase; if not, `inst` may not be fully updated and should not be used.
+static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
+                                               SemIR::Inst* inst, Phase* phase)
+    -> bool {
+  auto type_id = SemIR::TypeId(
+      GetConstantValueForArg(eval_context, SemIR::IdKind::For<SemIR::TypeId>,
+                             inst->type_id().index, phase));
+  inst->SetType(type_id);
+  if (!IsConstant(*phase)) {
+    return false;
+  }
+
+  auto kinds = inst->ArgKinds();
+  auto arg0 =
+      GetConstantValueForArg(eval_context, kinds.first, inst->arg0(), phase);
+  if (!IsConstant(*phase)) {
+    return false;
+  }
+
+  auto arg1 =
+      GetConstantValueForArg(eval_context, kinds.second, inst->arg1(), phase);
+  if (!IsConstant(*phase)) {
+    return false;
+  }
+  inst->SetArgs(arg0, arg1);
   return true;
 }
 
@@ -1513,6 +1580,58 @@ static auto MakeFacetTypeResult(Context& context,
       phase);
 }
 
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::AddrOf inst, Phase phase)
+    -> SemIR::ConstantId {
+  return MakeConstantResult(context, inst, phase);
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc loc,
+                             SemIR::ArrayType inst, Phase phase)
+    -> SemIR::ConstantId {
+  auto bound_inst = context.insts().Get(inst.bound_id);
+  auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
+  if (!int_bound) {
+    CARBON_CHECK(context.constant_values().Get(inst.bound_id).is_symbolic(),
+                 "Unexpected inst {0} for template constant int", bound_inst);
+    return MakeConstantResult(context, inst, phase);
+  }
+  // TODO: We should check that the size of the resulting array type
+  // fits in 64 bits, not just that the bound does. Should we use a
+  // 32-bit limit for 32-bit targets?
+  const auto& bound_val = context.ints().Get(int_bound->int_id);
+  if (context.types().IsSignedInt(int_bound->type_id) &&
+      bound_val.isNegative()) {
+    CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
+                      "array bound of {0} is negative", TypedInt);
+    context.emitter().Emit(loc, ArrayBoundNegative,
+                           {.type = int_bound->type_id, .value = bound_val});
+    return SemIR::ErrorInst::SingletonConstantId;
+  }
+  if (bound_val.getActiveBits() > 64) {
+    CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
+                      "array bound of {0} is too large", TypedInt);
+    context.emitter().Emit(loc, ArrayBoundTooLarge,
+                           {.type = int_bound->type_id, .value = bound_val});
+    return SemIR::ErrorInst::SingletonConstantId;
+  }
+  return MakeConstantResult(context, inst, phase);
+}
+
+template <typename InstT>
+static auto PerformDefaultEval(EvalContext& eval_context, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  // Build a constant instruction by replacing each non-constant operand with
+  // its constant value.
+  Phase phase = Phase::Concrete;
+  if (!ReplaceAllFieldsWithConstantValues(
+          eval_context, &inst, &phase)) {
+    return MakeNonConstantResult(phase);
+  }
+  return EvalConstantInst(eval_context.context(), eval_context.fallback_loc(),
+                          inst.As<InstT>(), phase);
+}
+
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
 //
 // Tail call should not be diagnosed as recursion.
@@ -1526,49 +1645,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
   CARBON_KIND_SWITCH(inst) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::AddrOf::type_id,
-                                        &SemIR::AddrOf::lvalue_id);
-    case CARBON_KIND(SemIR::ArrayType array_type): {
-      return RebuildAndValidateIfFieldsAreConstant(
-          eval_context, inst,
-          [&](SemIR::ArrayType result) {
-            auto bound_id = array_type.bound_id;
-            auto bound_inst = eval_context.insts().Get(result.bound_id);
-            auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
-            if (!int_bound) {
-              CARBON_CHECK(eval_context.constant_values()
-                               .Get(result.bound_id)
-                               .is_symbolic(),
-                           "Unexpected inst {0} for template constant int",
-                           bound_inst);
-              return true;
-            }
-            // TODO: We should check that the size of the resulting array type
-            // fits in 64 bits, not just that the bound does. Should we use a
-            // 32-bit limit for 32-bit targets?
-            const auto& bound_val = eval_context.ints().Get(int_bound->int_id);
-            if (eval_context.types().IsSignedInt(int_bound->type_id) &&
-                bound_val.isNegative()) {
-              CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
-                                "array bound of {0} is negative", TypedInt);
-              eval_context.emitter().Emit(
-                  eval_context.GetDiagnosticLoc(bound_id), ArrayBoundNegative,
-                  {.type = int_bound->type_id, .value = bound_val});
-              return false;
-            }
-            if (bound_val.getActiveBits() > 64) {
-              CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
-                                "array bound of {0} is too large", TypedInt);
-              eval_context.emitter().Emit(
-                  eval_context.GetDiagnosticLoc(bound_id), ArrayBoundTooLarge,
-                  {.type = int_bound->type_id, .value = bound_val});
-              return false;
-            }
-            return true;
-          },
-          &SemIR::ArrayType::bound_id, &SemIR::ArrayType::element_type_id);
-    }
+      return PerformDefaultEval<SemIR::AddrOf>(eval_context, inst);
+    case SemIR::ArrayType::Kind:
+      return PerformDefaultEval<SemIR::ArrayType>(eval_context, inst);
     case SemIR::AssociatedEntity::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::AssociatedEntity::type_id);
@@ -2180,6 +2259,8 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
       });
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
+    eval_context.SetFallbackLoc(
+        context.insts().GetLocId(inst_id).has_value() ? inst_id : loc);
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
