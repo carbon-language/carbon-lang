@@ -58,11 +58,8 @@ class ClangRunner {
   // that this will not override _explicit_ `args` in a run invocation that
   // cause leaking, it will merely disable Clang's libraries injecting that
   // behavior.
-  //
-  // Optionally, passing `false` will disable leaking on subsequent runs,
-  // overriding any previous calls.
-  auto EnableLeakingMemory(bool enable = true) -> void {
-    enable_leaking_ = enable;
+  auto EnableLeakingMemory() -> void {
+    enable_leaking_ = true;
   }
 
  private:
