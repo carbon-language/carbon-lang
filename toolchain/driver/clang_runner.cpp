@@ -159,13 +159,8 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     // TODO: We should see if upstream would be open to some configuration hook
     // to suppress this when it is generating the CC1 flags and use that.
     if (!enable_leaking) {
-      llvm::StringRef flag = "-disable-free";
-      if (const char** it = llvm::find(cc1_args, flag); it != cc1_args.end()) {
-        cc1_args.erase(it);
-      }
-      // There should only ever be one of these flags, but let's be sure.
-      CARBON_CHECK(llvm::find(cc1_args, flag) == cc1_args.end(),
-                   "Found duplicate `-disable-free` flag!");
+      // There should only be one flag instance, but this will handle multiple if present.
+      llvm::erase(cc1_args, "-disable-free");
     }
 
     // cc1_args[0] will be the `clang_path` so we don't need the prepend arg.
