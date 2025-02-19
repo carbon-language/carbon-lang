@@ -195,4 +195,12 @@ auto InstallPaths::ld64_lld_path() const -> std::string {
   return path.str().str();
 }
 
+auto InstallPaths::llvm_tool_path(LLVMTool tool) const -> std::string {
+  llvm::SmallString<256> path(prefix_);
+  // TODO: Adjust this to work equally well on Windows.
+  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
+                          "lib/carbon/llvm/bin", tool.bin_name());
+  return path.str().str();
+}
+
 }  // namespace Carbon

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("llvm_tools.bzl", "LLVM_TOOLS", "generate_llvm_tools_def")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -118,6 +119,23 @@ cc_test(
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
     ],
+)
+
+generate_llvm_tools_def(
+    name = "llvm_tools_def",
+    out = "llvm_tools.def",
+)
+
+cc_library(
+    name = "llvm_tools",
+    srcs = ["llvm_tools.cpp"],
+    hdrs = ["llvm_tools.h"],
+    deps = [
+        ":llvm_tools_def",
+        "//common:command_line",
+        "//common:enum_base",
+        "@llvm-project//llvm:Support",
+    ] + [info.lib for info in LLVM_TOOLS.values()],
 )
 
 cc_library(
