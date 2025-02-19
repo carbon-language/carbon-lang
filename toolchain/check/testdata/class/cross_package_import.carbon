@@ -63,7 +63,7 @@ var c: Other.C = {};
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_extern.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_extern.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1: in import [InImport]
@@ -84,7 +84,7 @@ var c: Other.C = {};
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_conflict.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_conflict.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]

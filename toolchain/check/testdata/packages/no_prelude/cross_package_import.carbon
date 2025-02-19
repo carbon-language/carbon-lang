@@ -71,7 +71,7 @@ fn Run() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_fn_extern.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_fn_extern.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1: in import [InImport]
@@ -101,7 +101,7 @@ import Other library "other_fn_conflict";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn F(x: ()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: in import [InImport]
@@ -124,7 +124,7 @@ fn Run() {
 library "[[@TEST_NAME]]";
 
 import library "main_other_ns";
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: in import [InImport]
@@ -150,7 +150,7 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:11: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]

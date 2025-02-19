@@ -492,6 +492,8 @@ struct NameId : public IdBase<NameId> {
   static const NameId SelfValue;
   // The name of `vptr`.
   static const NameId Vptr;
+  // The name of the discriminant field (if any) in a choice.
+  static const NameId ChoiceDiscriminant;
 
   // The number of non-index (<0) that exist, and will need storage in name
   // lookup.
@@ -524,9 +526,10 @@ constexpr NameId NameId::ReturnSlot = NameId(NoneIndex - 5);
 constexpr NameId NameId::SelfType = NameId(NoneIndex - 6);
 constexpr NameId NameId::SelfValue = NameId(NoneIndex - 7);
 constexpr NameId NameId::Vptr = NameId(NoneIndex - 8);
-constexpr int NameId::NonIndexValueCount = 9;
+constexpr NameId NameId::ChoiceDiscriminant = NameId(NoneIndex - 9);
+constexpr int NameId::NonIndexValueCount = 10;
 // Enforce the link between SpecialValueCount and the last special value.
-static_assert(NameId::NonIndexValueCount == -NameId::Vptr.index);
+static_assert(NameId::NonIndexValueCount == -NameId::ChoiceDiscriminant.index);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase<NameScopeId> {

@@ -139,7 +139,8 @@ static auto MergeFunctionRedecl(Context& context,
 
 // Check whether this is a redeclaration, merging if needed.
 static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           SemIR::InstId prev_id, SemIR::LocId name_loc_id,
+                           SemIR::NameId name_id, SemIR::InstId prev_id,
+                           SemIR::LocId name_loc_id,
                            SemIR::FunctionDecl& function_decl,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
@@ -180,7 +181,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_loc_id, prev_id);
+    DiagnoseDuplicateName(context, name_id, name_loc_id, prev_id);
     return;
   }
 
@@ -296,9 +297,9 @@ static auto BuildFunctionDecl(Context& context,
     DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
                          name_context.poisoning_loc_id, name_context.loc_id);
   } else {
-    TryMergeRedecl(context, node_id, name_context.prev_inst_id(),
-                   name_context.loc_id, function_decl, function_info,
-                   is_definition);
+    TryMergeRedecl(context, node_id, name_context.name_id,
+                   name_context.prev_inst_id(), name_context.loc_id,
+                   function_decl, function_info, is_definition);
   }
 
   // Create a new function if this isn't a valid redeclaration.

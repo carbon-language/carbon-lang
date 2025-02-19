@@ -105,7 +105,8 @@ static auto BuildInterfaceDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a interface.
-      DiagnoseDuplicateName(context, name_context.loc_id, existing_id);
+      DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
+                            existing_id);
     }
   }
 

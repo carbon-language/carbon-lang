@@ -8,20 +8,20 @@
 
 namespace Carbon::SemIR {
 
-auto ConstantStore::GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId {
+auto ConstantStore::GetOrAdd(Inst inst, ConstantDependence dependence)
+    -> ConstantId {
   auto result = map_.Insert(inst, [&] {
     auto inst_id = sem_ir_->insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     ConstantId const_id = ConstantId::None;
-    if (phase == IsConcrete) {
+    if (dependence == ConstantDependence::None) {
       const_id = SemIR::ConstantId::ForConcreteConstant(inst_id);
     } else {
       // The instruction in the constants store is an abstract symbolic
       // constant, not associated with any particular generic.
-      SymbolicConstant symbolic_constant = {
-          .inst_id = inst_id,
-          .generic_id = GenericId::None,
-          .index = GenericInstIndex::None,
-          .period_self_only = (phase == IsPeriodSelfSymbolic)};
+      SymbolicConstant symbolic_constant = {.inst_id = inst_id,
+                                            .generic_id = GenericId::None,
+                                            .index = GenericInstIndex::None,
+                                            .dependence = dependence};
       const_id =
           sem_ir_->constant_values().AddSymbolicConstant(symbolic_constant);
     }
@@ -31,8 +31,8 @@ auto ConstantStore::GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId {
   });
   CARBON_CHECK(result.value() != ConstantId::None);
   CARBON_CHECK(
-      result.value().is_symbolic() == (phase != IsConcrete),
-      "Constant {0} registered as both symbolic and template constant.", inst);
+      result.value().is_symbolic() == (dependence != ConstantDependence::None),
+      "Constant {0} registered as both symbolic and concrete constant.", inst);
   return result.value();
 }
 

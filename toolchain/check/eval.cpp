@@ -207,8 +207,12 @@ enum class Phase : uint8_t {
   // reference to `.Self`.
   PeriodSelfSymbolic,
   // Evaluation phase is symbolic because the expression involves a reference to
-  // a symbolic binding.
-  Symbolic,
+  // a non-template symbolic binding other than `.Self`.
+  CheckedSymbolic,
+  // Evaluation phase is symbolic because the expression involves a reference to
+  // a template parameter, or otherwise depends on something template dependent.
+  // The expression might also reference non-template symbolic bindings.
+  TemplateSymbolic,
   // The evaluation phase is unknown because evaluation encountered an
   // already-diagnosed semantic or syntax error. This is treated as being
   // potentially constant, but with an unknown phase.
@@ -225,14 +229,16 @@ static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
     return Phase::Runtime;
   } else if (constant_id == SemIR::ErrorInst::SingletonConstantId) {
     return Phase::UnknownDueToError;
-  } else if (constant_id.is_concrete()) {
-    return Phase::Concrete;
-  } else if (eval_context.constant_values().DependsOnGenericParameter(
-                 constant_id)) {
-    return Phase::Symbolic;
-  } else {
-    CARBON_CHECK(constant_id.is_symbolic());
-    return Phase::PeriodSelfSymbolic;
+  }
+  switch (eval_context.constant_values().GetDependence(constant_id)) {
+    case SemIR::ConstantDependence::None:
+      return Phase::Concrete;
+    case SemIR::ConstantDependence::PeriodSelf:
+      return Phase::PeriodSelfSymbolic;
+    case SemIR::ConstantDependence::Checked:
+      return Phase::CheckedSymbolic;
+    case SemIR::ConstantDependence::Template:
+      return Phase::TemplateSymbolic;
   }
 }
 
@@ -263,13 +269,16 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
   switch (phase) {
     case Phase::Concrete:
       return context.constants().GetOrAdd(inst,
-                                          SemIR::ConstantStore::IsConcrete);
+                                          SemIR::ConstantDependence::None);
     case Phase::PeriodSelfSymbolic:
       return context.constants().GetOrAdd(
-          inst, SemIR::ConstantStore::IsPeriodSelfSymbolic);
-    case Phase::Symbolic:
+          inst, SemIR::ConstantDependence::PeriodSelf);
+    case Phase::CheckedSymbolic:
       return context.constants().GetOrAdd(inst,
-                                          SemIR::ConstantStore::IsSymbolic);
+                                          SemIR::ConstantDependence::Checked);
+    case Phase::TemplateSymbolic:
+      return context.constants().GetOrAdd(inst,
+                                          SemIR::ConstantDependence::Template);
     case Phase::UnknownDueToError:
       return SemIR::ErrorInst::SingletonConstantId;
     case Phase::Runtime:
@@ -1308,13 +1317,13 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
 
     // Integer conversions.
     case SemIR::BuiltinFunctionKind::IntConvert: {
-      if (phase == Phase::Symbolic) {
+      if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
       return PerformIntConvert(context, arg_ids[0], call.type_id);
     }
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
-      if (phase == Phase::Symbolic) {
+      if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
       return PerformCheckedIntConvert(context, loc, arg_ids[0], call.type_id);
@@ -1873,8 +1882,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // original, with no equivalent value.
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-      // TODO: Propagate the `is_template` flag into the phase.
-      return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
+      return MakeConstantResult(eval_context.context(), bind,
+                                bind_name.is_template ? Phase::TemplateSymbolic
+                                                      : Phase::CheckedSymbolic);
     }
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
       const auto& bind_name =
@@ -1892,8 +1902,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
             value.has_value()) {
           return value;
         }
-        // TODO: Propagate the `is_template` flag into the phase.
-        phase = Phase::Symbolic;
+        phase = bind_name.is_template ? Phase::TemplateSymbolic
+                                      : Phase::CheckedSymbolic;
       }
       // The constant form of a symbolic binding is an idealized form of the
       // original, with no equivalent value.

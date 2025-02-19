@@ -110,7 +110,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
           CARBON_CHECK(import_id.has_value());
           // TODO: Pass the import package name location instead of the import
           // id to get more accurate location.
-          DiagnoseDuplicateName(context, import_id, prev_inst_id);
+          DiagnoseDuplicateName(context, name_id, import_id, prev_inst_id);
         }
         return {.name_scope_id = namespace_inst->name_scope_id,
                 .inst_id = prev_inst_id,
@@ -153,7 +153,8 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
   if (!result.is_poisoned() && !inserted) {
     // TODO: Pass the import namespace name location instead of the namespace id
     // to get more accurate location.
-    DiagnoseDuplicateName(context, namespace_id, result.target_inst_id());
+    DiagnoseDuplicateName(context, name_id, namespace_id,
+                          result.target_inst_id());
   }
   result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
                                                SemIR::AccessKind::Public);
@@ -289,8 +290,8 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
 
   auto inst_id = entry.result.target_inst_id();
   auto prev_ir_inst = GetCanonicalImportIRInst(context, inst_id);
-  VerifySameCanonicalImportIRInst(context, inst_id, prev_ir_inst, ir_id,
-                                  &import_sem_ir, import_inst_id);
+  VerifySameCanonicalImportIRInst(context, name_id, inst_id, prev_ir_inst,
+                                  ir_id, &import_sem_ir, import_inst_id);
 }
 
 namespace {
@@ -605,9 +606,9 @@ auto ImportNameFromOtherPackage(
     if (!canonical_result_inst) {
       canonical_result_inst = GetCanonicalImportIRInst(context, result_id);
     }
-    VerifySameCanonicalImportIRInst(context, result_id, *canonical_result_inst,
-                                    import_ir_id, import_ir.sem_ir,
-                                    import_scope_inst_id);
+    VerifySameCanonicalImportIRInst(context, name_id, result_id,
+                                    *canonical_result_inst, import_ir_id,
+                                    import_ir.sem_ir, import_scope_inst_id);
   }
 
   return result_id;

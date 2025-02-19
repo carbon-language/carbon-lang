@@ -60,8 +60,8 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
   // Lower function declarations.
   functions_.resize_for_overwrite(sem_ir_->functions().size());
-  for (auto i : llvm::seq(sem_ir_->functions().size())) {
-    functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
+  for (auto [id, _] : sem_ir_->functions().enumerate()) {
+    functions_[id.index] = BuildFunctionDecl(id);
   }
 
   // Specific functions are lowered when we emit a reference to them.
@@ -82,8 +82,8 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   LowerConstants(*this, constants_);
 
   // Lower function definitions.
-  for (auto i : llvm::seq(sem_ir_->functions().size())) {
-    BuildFunctionDefinition(SemIR::FunctionId(i));
+  for (auto [id, _] : sem_ir_->functions().enumerate()) {
+    BuildFunctionDefinition(id);
   }
   // Append `__global_init` to `llvm::global_ctors` to initialize global
   // variables.

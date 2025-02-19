@@ -68,7 +68,7 @@ auto HandleChoiceAlternative(Context& context) -> void {
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *token);
-    context.PushState(State::PatternListAsTuple);
+    context.PushState(State::PatternListAsExplicit);
   } else {
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *token);
   }

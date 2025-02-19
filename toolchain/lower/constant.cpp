@@ -246,15 +246,15 @@ auto LowerConstants(FileContext& file_context,
   ConstantContext context(file_context, constants);
   // Lower each constant in InstId order. This guarantees we lower the
   // dependencies of a constant before we lower the constant itself.
-  for (auto [inst_id_val, const_id] :
-       llvm::enumerate(file_context.sem_ir().constant_values().array_ref())) {
+  for (auto [inst_id, const_id] :
+       file_context.sem_ir().constant_values().enumerate()) {
     if (!const_id.has_value() || !const_id.is_concrete()) {
       // We are only interested in lowering concrete constants.
       continue;
     }
-    auto inst_id = file_context.sem_ir().constant_values().GetInstId(const_id);
-
-    if (inst_id.index != static_cast<int32_t>(inst_id_val)) {
+    auto defining_inst_id =
+        file_context.sem_ir().constant_values().GetInstId(const_id);
+    if (defining_inst_id != inst_id) {
       // This isn't the instruction that defines the constant.
       continue;
     }

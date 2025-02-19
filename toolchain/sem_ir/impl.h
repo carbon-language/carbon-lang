@@ -185,6 +185,7 @@ class ImplStore {
 
   auto array_ref() const -> llvm::ArrayRef<Impl> { return values_.array_ref(); }
   auto size() const -> size_t { return values_.size(); }
+  auto enumerate() const -> auto { return values_.enumerate(); }
 
  private:
   File& sem_ir_;

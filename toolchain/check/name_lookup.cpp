@@ -19,7 +19,7 @@ auto AddNameToLookup(Context& context, SemIR::NameId name_id,
       existing.has_value()) {
     // TODO: Add coverage to this use case and use the location of the name
     // instead of the target.
-    DiagnoseDuplicateName(context, target_id, existing);
+    DiagnoseDuplicateName(context, name_id, target_id, existing);
   }
 }
 
@@ -484,13 +484,14 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
       scope_result.target_inst_id());
 }
 
-auto DiagnoseDuplicateName(Context& context, SemIRLoc dup_def,
-                           SemIRLoc prev_def) -> void {
+auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
+                           SemIRLoc dup_def, SemIRLoc prev_def) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
-                    "duplicate name being declared in the same scope");
+                    "duplicate name `{0}` being declared in the same scope",
+                    SemIR::NameId);
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
   context.emitter()
-      .Build(dup_def, NameDeclDuplicate)
+      .Build(dup_def, NameDeclDuplicate, name_id)
       .Note(prev_def, NameDeclPrevious)
       .Emit();
 }

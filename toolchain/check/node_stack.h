@@ -412,6 +412,8 @@ class NodeStack {
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
         return Id::KindFor<SemIR::FunctionId>();
+      case Parse::NodeKind::ChoiceDefinitionStart:
+        // TODO: Should we have a separate SemIR::ChoiceId?
       case Parse::NodeKind::ClassDefinitionStart:
         return Id::KindFor<SemIR::ClassId>();
       case Parse::NodeKind::InterfaceDefinitionStart:
@@ -426,6 +428,7 @@ class NodeStack {
         return Id::KindFor<SemIR::LibraryNameId>();
       case Parse::NodeKind::ArrayExprSemi:
       case Parse::NodeKind::BuiltinName:
+      case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::ExplicitParamListStart:
@@ -455,8 +458,6 @@ class NodeStack {
       case Parse::NodeKind::BreakStatementStart:
       case Parse::NodeKind::CallExprComma:
       case Parse::NodeKind::ChoiceAlternativeListComma:
-      case Parse::NodeKind::ChoiceDefinitionStart:
-      case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::CodeBlock:
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:

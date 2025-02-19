@@ -116,9 +116,4 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   args_type_info_stack_.PrintForStackDump(Indent, output);
 }
 
-auto Context::DumpFormattedFile() const -> void {
-  SemIR::Formatter formatter(sem_ir_);
-  formatter.Print(llvm::errs());
-}
-
 }  // namespace Carbon::Check

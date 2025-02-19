@@ -1160,7 +1160,7 @@ struct ChoiceDefinition {
   ChoiceDefinitionStartId signature;
   struct Alternative {
     AnyNonExprIdentifierNameId name;
-    std::optional<TuplePatternId> parameters;
+    std::optional<ExplicitParamListId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
   Lex::CloseCurlyBraceTokenIndex token;

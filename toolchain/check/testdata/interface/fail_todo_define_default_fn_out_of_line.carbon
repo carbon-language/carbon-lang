@@ -24,7 +24,7 @@ interface Interface {
   default fn G(a: i32, b: i32) -> i32;
 }
 
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+7]]:14: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+7]]:14: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn Interface.F() {}
 // CHECK:STDERR:              ^
 // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-12]]:3: note: name is previously declared here [NameDeclPrevious]
@@ -33,7 +33,7 @@ interface Interface {
 // CHECK:STDERR:
 fn Interface.F() {}
 
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+7]]:14: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+7]]:14: error: duplicate name `G` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDERR:              ^
 // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-15]]:3: note: name is previously declared here [NameDeclPrevious]

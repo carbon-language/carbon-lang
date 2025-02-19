@@ -144,17 +144,17 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst61:          symbolic_constant9
 // CHECK:STDOUT:     inst62:          symbolic_constant10
 // CHECK:STDOUT:   symbolic_constants:
-// CHECK:STDOUT:     symbolic_constant0: {inst: inst14, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant1: {inst: inst16, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant2: {inst: inst28, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant3: {inst: inst14, generic: generic0, index: generic_inst_in_decl0, .Self: false}
-// CHECK:STDOUT:     symbolic_constant4: {inst: inst16, generic: generic0, index: generic_inst_in_decl1, .Self: false}
-// CHECK:STDOUT:     symbolic_constant5: {inst: inst28, generic: generic0, index: generic_inst_in_decl2, .Self: false}
-// CHECK:STDOUT:     symbolic_constant6: {inst: inst42, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant7: {inst: inst44, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant8: {inst: inst46, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant9: {inst: inst44, generic: generic0, index: generic_inst_in_def0, .Self: false}
-// CHECK:STDOUT:     symbolic_constant10: {inst: inst46, generic: generic0, index: generic_inst_in_def1, .Self: false}
+// CHECK:STDOUT:     symbolic_constant0: {inst: inst14, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant1: {inst: inst16, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant2: {inst: inst28, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant3: {inst: inst14, generic: generic0, index: generic_inst_in_decl0, kind: checked}
+// CHECK:STDOUT:     symbolic_constant4: {inst: inst16, generic: generic0, index: generic_inst_in_decl1, kind: checked}
+// CHECK:STDOUT:     symbolic_constant5: {inst: inst28, generic: generic0, index: generic_inst_in_decl2, kind: checked}
+// CHECK:STDOUT:     symbolic_constant6: {inst: inst42, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant7: {inst: inst44, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant8: {inst: inst46, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant9: {inst: inst44, generic: generic0, index: generic_inst_in_def0, kind: checked}
+// CHECK:STDOUT:     symbolic_constant10: {inst: inst46, generic: generic0, index: generic_inst_in_def1, kind: checked}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
