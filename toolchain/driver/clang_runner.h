@@ -58,9 +58,7 @@ class ClangRunner {
   // that this will not override _explicit_ `args` in a run invocation that
   // cause leaking, it will merely disable Clang's libraries injecting that
   // behavior.
-  auto EnableLeakingMemory() -> void {
-    enable_leaking_ = true;
-  }
+  auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
 
  private:
   const InstallPaths* installation_;
