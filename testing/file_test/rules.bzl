@@ -9,6 +9,7 @@ a file which can be accessed as a list. This avoids long argument parsing.
 """
 
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
 
 def file_test(
@@ -50,6 +51,7 @@ def file_test(
             srcs = [prebuilt_binary],
             data = data,
             args = args,
+            env = cc_env(),
             **kwargs
         )
     else:
@@ -57,5 +59,6 @@ def file_test(
             name = name,
             data = data,
             args = args,
+            env = cc_env(),
             **kwargs
         )
