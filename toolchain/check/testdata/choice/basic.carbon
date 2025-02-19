@@ -41,11 +41,11 @@ fn H() {
   let inc: Ordering = Ordering.Incomparable;
 }
 
-// --- empty_params.carbon
+// --- fail_todo_empty_params.carbon
 library "[[@TEST_NAME]]";
 
 choice Always {
-  // CHECK:STDERR: empty_params.carbon:[[@LINE+4]]:8: error: semantics TODO: `empty parameter list should make a member function` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_empty_params.carbon:[[@LINE+4]]:8: error: semantics TODO: `empty parameter list should make a member function` [SemanticsTodo]
   // CHECK:STDERR:   Sunny()
   // CHECK:STDERR:        ^~
   // CHECK:STDERR:
@@ -323,7 +323,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- empty_params.carbon
+// CHECK:STDOUT: --- fail_todo_empty_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Always: type = class_type @Always [concrete]
