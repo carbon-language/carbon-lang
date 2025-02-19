@@ -78,6 +78,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .n = %.loc12_8
+// CHECK:STDOUT:   .something = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param_patt: %Class) -> %i32 {

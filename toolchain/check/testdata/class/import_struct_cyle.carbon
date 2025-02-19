@@ -82,6 +82,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
+// CHECK:STDOUT:   .Cycle = <poisoned>
 // CHECK:STDOUT:   .c = %.loc10_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

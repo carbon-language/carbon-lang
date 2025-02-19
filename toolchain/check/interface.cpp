@@ -7,6 +7,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -34,9 +36,9 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
-  auto type_id = context.GetAssociatedEntityType(self_type_id);
-  return context.AddInst<SemIR::AssociatedEntity>(
-      context.insts().GetLocId(decl_id),
+  auto type_id = GetAssociatedEntityType(context, self_type_id);
+  return AddInst<SemIR::AssociatedEntity>(
+      context, context.insts().GetLocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});
 }
 
@@ -173,8 +175,9 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
         GetSelfFacet(context, interface_specific_id,
                      context.functions().Get(fn->function_id).generic_id,
                      self_type_id, self_witness_id);
-    return context.GetFunctionTypeWithSelfType(
-        context.types().GetInstId(interface_fn_type_id), self_facet_id);
+    return GetFunctionTypeWithSelfType(
+        context, context.types().GetInstId(interface_fn_type_id),
+        self_facet_id);
   } else {
     CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
   }

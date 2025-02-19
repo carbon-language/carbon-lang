@@ -5,8 +5,11 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -37,17 +40,17 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   auto namespace_inst = SemIR::Namespace{
-      context.GetSingletonType(SemIR::NamespaceType::SingletonInstId),
+      GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
       SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, namespace_inst));
 
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
                                                 SemIR::AccessKind::Public);
   if (lookup_result.is_poisoned()) {
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                         lookup_result.poisoning_loc_id(), name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_inst_id = lookup_result.target_inst_id();
     if (auto existing =
@@ -62,7 +65,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
               .Get(existing->name_scope_id)
               .is_closed_import()) {
         // The existing name is a package name, so this is a name conflict.
-        context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
+        DiagnoseDuplicateName(context, name_context.loc_id, existing_inst_id);
 
         // Treat this as a local namespace name from now on to avoid further
         // diagnostics.
@@ -73,10 +76,10 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
                  !context.insts().GetLocId(existing_inst_id).has_value()) {
         // When the name conflict is an imported namespace, fill the location ID
         // so that future diagnostics point at this declaration.
-        context.SetNamespaceNodeId(existing_inst_id, node_id);
+        SetNamespaceNodeId(context, existing_inst_id, node_id);
       }
     } else {
-      context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
+      DiagnoseDuplicateName(context, name_context.loc_id, existing_inst_id);
     }
   }
 
@@ -94,7 +97,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     }
   }
 
-  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
+  ReplaceInstBeforeConstantUse(context, namespace_id, namespace_inst);
 
   context.decl_name_stack().PopScope();
   return true;

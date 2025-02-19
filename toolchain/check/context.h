@@ -32,7 +32,19 @@
 
 namespace Carbon::Check {
 
-// Context and shared functionality for semantics handlers.
+// Context stored during check.
+//
+// This file stores state, and members objects may provide an API. Other files
+// may also have helpers that operate on Context. To keep this file manageable,
+// please put logic into other files.
+//
+// For example, consider the API for functions:
+// - `context.functions()`: Exposes storage of `SemIR::Function` objects.
+// - `toolchain/check/function.h`: Contains helper functions which use
+//   `Check::Context`.
+// - `toolchain/sem_ir/function.h`: Contains helper functions which only need
+//   `SemIR` objects, for which it's helpful not to depend on `Check::Context`
+//   (for example, shared with lowering).
 class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
@@ -42,6 +54,20 @@ class Context {
   // DiagnosticBuilder is returned rather than emitted so that the caller can
   // add contextual notes as appropriate.
   using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
+
+  // Pre-computed parts of a binding pattern.
+  struct BindingPatternInfo {
+    // The corresponding AnyBindName inst.
+    SemIR::InstId bind_name_id;
+    // The region of insts that computes the type of the binding.
+    SemIR::ExprRegionId type_expr_region_id;
+  };
+
+  // An ongoing impl lookup, used to ensure termination.
+  struct ImplLookupStackEntry {
+    SemIR::ConstantId type_const_id;
+    SemIR::ConstantId interface_const_id;
+  };
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
@@ -54,242 +80,6 @@ class Context {
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
-
-  // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-    inst_block_stack_.AddInstId(inst_id);
-    return inst_id;
-  }
-
-  // Convenience for AddInst with typed nodes.
-  template <typename InstT, typename LocT>
-  auto AddInst(LocT loc, InstT inst)
-      -> decltype(AddInst(SemIR::LocIdAndInst(loc, inst))) {
-    return AddInst(SemIR::LocIdAndInst(loc, inst));
-  }
-
-  // Returns a LocIdAndInst for an instruction with an imported location. Checks
-  // that the imported location is compatible with the kind of instruction being
-  // created.
-  template <typename InstT>
-    requires SemIR::Internal::HasNodeId<InstT>
-  auto MakeImportedLocAndInst(SemIR::ImportIRInstId imported_loc_id, InstT inst)
-      -> SemIR::LocIdAndInst {
-    if constexpr (!SemIR::Internal::HasUntypedNodeId<InstT>) {
-      CheckCompatibleImportedNodeKind(imported_loc_id, InstT::Kind);
-    }
-    return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
-  }
-
-  // Adds an instruction in no block, returning the produced ID. Should be used
-  // rarely.
-  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-    auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-    CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
-    FinishInst(inst_id, loc_id_and_inst.inst);
-    return inst_id;
-  }
-
-  // Convenience for AddInstInNoBlock with typed nodes.
-  template <typename InstT, typename LocT>
-  auto AddInstInNoBlock(LocT loc, InstT inst)
-      -> decltype(AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst))) {
-    return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
-  }
-
-  // If the instruction has an implicit location and a constant value, returns
-  // the constant value's instruction ID. Otherwise, same as AddInst.
-  auto GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
-
-  // Convenience for GetOrAddInst with typed nodes.
-  template <typename InstT, typename LocT>
-  auto GetOrAddInst(LocT loc, InstT inst)
-      -> decltype(GetOrAddInst(SemIR::LocIdAndInst(loc, inst))) {
-    return GetOrAddInst(SemIR::LocIdAndInst(loc, inst));
-  }
-
-  // Adds an instruction to the current block, returning the produced ID. The
-  // instruction is a placeholder that is expected to be replaced by
-  // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
-
-  // Adds an instruction in no block, returning the produced ID. Should be used
-  // rarely. The instruction is a placeholder that is expected to be replaced by
-  // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
-      -> SemIR::InstId;
-
-  // Adds an instruction to the current pattern block, returning the produced
-  // ID.
-  // TODO: Is it possible to remove this and pattern_block_stack, now that
-  // we have BeginSubpattern etc. instead?
-  auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-    pattern_block_stack_.AddInstId(inst_id);
-    return inst_id;
-  }
-
-  // Convenience for AddPatternInst with typed nodes.
-  template <typename InstT>
-    requires(SemIR::Internal::HasNodeId<InstT>)
-  auto AddPatternInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      -> SemIR::InstId {
-    return AddPatternInst(SemIR::LocIdAndInst(node_id, inst));
-  }
-
-  // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result.
-  template <typename InstT>
-    requires(SemIR::Internal::HasNodeId<InstT>)
-  auto AddInstAndPush(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      -> void {
-    node_stack_.Push(node_id, AddInst(node_id, inst));
-  }
-
-  // Replaces the instruction at `inst_id` with `loc_id_and_inst`. The
-  // instruction is required to not have been used in any constant evaluation,
-  // either because it's newly created and entirely unused, or because it's only
-  // used in a position that constant evaluation ignores, such as a return slot.
-  auto ReplaceLocIdAndInstBeforeConstantUse(SemIR::InstId inst_id,
-                                            SemIR::LocIdAndInst loc_id_and_inst)
-      -> void;
-
-  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
-  // The instruction is required to not have been used in any constant
-  // evaluation, either because it's newly created and entirely unused, or
-  // because it's only used in a position that constant evaluation ignores, such
-  // as a return slot.
-  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
-      -> void;
-
-  // Replaces the instruction at `inst_id` with `inst`, not affecting location.
-  // The instruction is required to not change its constant value.
-  auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
-                                          SemIR::Inst inst) -> void;
-
-  // Sets only the parse node of an instruction. This is only used when setting
-  // the parse node of an imported namespace. Versus
-  // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used
-  // in constant evaluation. It's exposed this way mainly so that `insts()` can
-  // remain const.
-  auto SetNamespaceNodeId(SemIR::InstId inst_id, Parse::NodeId node_id)
-      -> void {
-    sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
-  }
-
-  // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
-
-  // Prints a diagnostic for a poisoned name when it's later declared.
-  auto DiagnosePoisonedName(SemIR::LocId poisoning_loc_id,
-                            SemIR::LocId decl_name_loc_id) -> void;
-
-  // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
-
-  // Adds a note to a diagnostic explaining that a class is incomplete.
-  auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
-      -> void;
-
-  // Adds a note to a diagnostic explaining that a class is abstract.
-  auto NoteAbstractClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
-      -> void;
-
-  // Adds a note to a diagnostic explaining that an interface is not defined.
-  auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
-                              DiagnosticBuilder& builder) -> void;
-
-  // Returns the type ID for a constant that is a type value, i.e. it is a value
-  // of type `TypeType`.
-  //
-  // Facet values are of the same typishness as types, but are not themselves
-  // types, so they can not be passed here. They should be converted to a type
-  // through an `as type` conversion, that is, to a value of type `TypeType`.
-  auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
-
-  // Returns the type ID for an instruction whose constant value is a type
-  // value, i.e. it is a value of type `TypeType`.
-  //
-  // Instructions whose values are facet values (see `FacetValue`) produce a
-  // value of the same typishness as types, but which are themselves not types,
-  // so they can not be passed here. They should be converted to a type through
-  // an `as type` conversion, such as to a `FacetAccessType` instruction whose
-  // value is of type `TypeType`.
-  auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
-    return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
-  }
-
-  // Returns whether `type_id` represents a facet type.
-  auto IsFacetType(SemIR::TypeId type_id) -> bool {
-    return type_id == SemIR::TypeType::SingletonTypeId ||
-           types().Is<SemIR::FacetType>(type_id);
-  }
-
-  // Create a FacetType typed instruction object consisting of a single
-  // interface.
-  auto FacetTypeFromInterface(SemIR::InterfaceId interface_id,
-                              SemIR::SpecificId specific_id)
-      -> SemIR::FacetType;
-
-  // TODO: Consider moving these `Get*Type` functions to a separate class.
-
-  // Gets the type to use for an unbound associated entity declared in this
-  // interface. For example, this is the type of `I.T` after
-  // `interface I { let T:! type; }`.
-  // The name of the interface is used for diagnostics.
-  // TODO: Should we use a different type for each such entity, or the same type
-  // for all associated entities?
-  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id)
-      -> SemIR::TypeId;
-
-  // Gets a singleton type. The returned type will be complete. Requires that
-  // `singleton_id` is already validated to be a singleton.
-  auto GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId;
-
-  // Gets a class type.
-  auto GetClassType(SemIR::ClassId class_id, SemIR::SpecificId specific_id)
-      -> SemIR::TypeId;
-
-  // Gets a function type. The returned type will be complete.
-  auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
-      -> SemIR::TypeId;
-
-  // Gets the type of an associated function with the `Self` parameter bound to
-  // a particular value. The returned type will be complete.
-  auto GetFunctionTypeWithSelfType(SemIR::InstId interface_function_type_id,
-                                   SemIR::InstId self_id) -> SemIR::TypeId;
-
-  // Gets a generic class type, which is the type of a name of a generic class,
-  // such as the type of `Vector` given `class Vector(T:! type)`. The returned
-  // type will be complete.
-  auto GetGenericClassType(SemIR::ClassId class_id,
-                           SemIR::SpecificId enclosing_specific_id)
-      -> SemIR::TypeId;
-
-  // Gets a generic interface type, which is the type of a name of a generic
-  // interface, such as the type of `AddWith` given
-  // `interface AddWith(T:! type)`. The returned type will be complete.
-  auto GetGenericInterfaceType(SemIR::InterfaceId interface_id,
-                               SemIR::SpecificId enclosing_specific_id)
-      -> SemIR::TypeId;
-
-  // Gets the facet type corresponding to a particular interface.
-  auto GetInterfaceType(SemIR::InterfaceId interface_id,
-                        SemIR::SpecificId specific_id) -> SemIR::TypeId;
-
-  // Returns a pointer type whose pointee type is `pointee_type_id`.
-  auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
-
-  // Returns a struct type with the given fields.
-  auto GetStructType(SemIR::StructTypeFieldsId fields_id) -> SemIR::TypeId;
-
-  // Returns a tuple type with the given element types.
-  auto GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids) -> SemIR::TypeId;
-
-  // Returns an unbound element type.
-  auto GetUnboundElementType(SemIR::TypeId class_type_id,
-                             SemIR::TypeId element_type_id) -> SemIR::TypeId;
 
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
@@ -316,10 +106,10 @@ class Context {
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
+  // Convenience functions for major phase data.
   auto parse_tree() const -> const Parse::Tree& {
     return sem_ir_->parse_tree();
   }
-
   auto tokens() const -> const Lex::TokenizedBuffer& {
     return parse_tree().tokens();
   }
@@ -355,13 +145,16 @@ class Context {
 
   auto scope_stack() -> ScopeStack& { return scope_stack_; }
 
+  // Conveneicne functions for frequently-used `scope_stack` members.
   auto return_scope_stack() -> llvm::SmallVector<ScopeStack::ReturnScope>& {
     return scope_stack().return_scope_stack();
   }
-
   auto break_continue_stack()
       -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
     return scope_stack().break_continue_stack();
+  }
+  auto full_pattern_stack() -> FullPatternStack& {
+    return scope_stack_.full_pattern_stack();
   }
 
   auto generic_region_stack() -> GenericRegionStack& {
@@ -379,7 +172,35 @@ class Context {
     return import_ir_constant_values_;
   }
 
+  auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
+    return definitions_required_;
+  }
+
+  auto global_init() -> GlobalInit& { return global_init_; }
+
+  auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
+    return import_ref_ids_;
+  }
+
+  // TODO: Consider putting this behind a narrower API to guard against emitting
+  // multiple times.
+  auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
+    return bind_name_map_;
+  }
+
+  auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
+    return var_storage_map_;
+  }
+
+  auto region_stack() -> RegionStack& { return region_stack_; }
+
+  auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
+    return impl_lookup_stack_;
+  }
+
+  // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
+  // --------------------------------------------------------------------------
 
   auto identifiers() -> SharedValueStores::IdentifierStore& {
     return sem_ir().identifiers();
@@ -426,8 +247,8 @@ class Context {
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
-  // Instructions should be added with `AddInst` or `AddInstInNoBlock`. This is
-  // `const` to prevent accidental misuse.
+  // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
+  // `inst.h`. This is `const` to prevent accidental misuse.
   auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
@@ -437,40 +258,9 @@ class Context {
   }
   auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
 
-  auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
-    return definitions_required_;
-  }
-
-  auto global_init() -> GlobalInit& { return global_init_; }
-
-  auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
-    return import_ref_ids_;
-  }
-
-  // Map from an AnyBindingPattern inst to precomputed parts of the
-  // pattern-match SemIR for it.
-  //
-  // TODO: Consider putting this behind a narrower API to guard against emitting
-  // multiple times.
-  struct BindingPatternInfo {
-    // The corresponding AnyBindName inst.
-    SemIR::InstId bind_name_id;
-    // The region of insts that computes the type of the binding.
-    SemIR::ExprRegionId type_expr_region_id;
-  };
-  auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
-    return bind_name_map_;
-  }
-
-  auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
-    return var_storage_map_;
-  }
-
-  auto region_stack() -> RegionStack& { return region_stack_; }
-
-  auto full_pattern_stack() -> FullPatternStack& {
-    return scope_stack_.full_pattern_stack();
-  }
+  // --------------------------------------------------------------------------
+  // End of SemIR::File members.
+  // --------------------------------------------------------------------------
 
   // During Choice typechecking, each alternative turns into a name binding on
   // the Choice type, but this can't be done until the full Choice type is
@@ -485,28 +275,6 @@ class Context {
   }
 
  private:
-  // A FoldingSet node for a type.
-  class TypeNode : public llvm::FastFoldingSetNode {
-   public:
-    explicit TypeNode(const llvm::FoldingSetNodeID& node_id,
-                      SemIR::TypeId type_id)
-        : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
-
-    auto type_id() -> SemIR::TypeId { return type_id_; }
-
-   private:
-    SemIR::TypeId type_id_;
-  };
-
-  // Checks that the provided imported location has a node kind that is
-  // compatible with that of the given instruction.
-  auto CheckCompatibleImportedNodeKind(SemIR::ImportIRInstId imported_loc_id,
-                                       SemIR::InstKind kind) -> void;
-
-  // Finish producing an instruction. Set its constant value, and register it in
-  // any applicable instruction lists.
-  auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
-
   // Handles diagnostics.
   DiagnosticEmitter* emitter_;
 
@@ -560,16 +328,6 @@ class Context {
   // defined, regardless of whether the class can have virtual functions.
   InstBlockStack vtable_stack_;
 
-  // Cache of reverse mapping from type constants to types.
-  //
-  // TODO: Instead of mapping to a dense `TypeId` space, we could make `TypeId`
-  // be a thin wrapper around `ConstantId` and only perform the lookup only when
-  // we want to access the completeness and value representation of a type. It's
-  // not clear whether that would result in more or fewer lookups.
-  //
-  // TODO: Should this be part of the `TypeStore`?
-  Map<SemIR::ConstantId, SemIR::TypeId> type_ids_for_type_constants_;
-
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
 
@@ -598,6 +356,8 @@ class Context {
   // FinalizeImportRefBlock() will produce an inst block for them.
   llvm::SmallVector<SemIR::InstId> import_ref_ids_;
 
+  // Map from an AnyBindingPattern inst to precomputed parts of the
+  // pattern-match SemIR for it.
   Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
 
   // Map from VarPattern insts to the corresponding VarStorage insts. The
@@ -615,6 +375,10 @@ class Context {
 
   // Stack of single-entry regions being built.
   RegionStack region_stack_;
+
+  // Tracks all ongoing impl lookups in order to ensure that lookup terminates
+  // via the acyclic rule and the termination rule.
+  llvm::SmallVector<ImplLookupStackEntry> impl_lookup_stack_;
 };
 
 }  // namespace Carbon::Check

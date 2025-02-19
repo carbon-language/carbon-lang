@@ -6,6 +6,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/inst.h"
 
 namespace Carbon::Check {
 
@@ -126,7 +127,7 @@ auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
     diag.Emit();
   }
 
-  context.AddInst<SemIR::Return>(node_id, {});
+  AddInst<SemIR::Return>(context, node_id, {});
 }
 
 auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
@@ -167,8 +168,8 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
         ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);
   }
 
-  context.AddInst<SemIR::ReturnExpr>(
-      node_id, {.expr_id = expr_id, .dest_id = return_slot_id});
+  AddInst<SemIR::ReturnExpr>(context, node_id,
+                             {.expr_id = expr_id, .dest_id = return_slot_id});
 }
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
@@ -192,8 +193,9 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     return_slot_id = SemIR::InstId::None;
   }
 
-  context.AddInst<SemIR::ReturnExpr>(
-      node_id, {.expr_id = returned_var_id, .dest_id = return_slot_id});
+  AddInst<SemIR::ReturnExpr>(
+      context, node_id,
+      {.expr_id = returned_var_id, .dest_id = return_slot_id});
 }
 
 }  // namespace Carbon::Check

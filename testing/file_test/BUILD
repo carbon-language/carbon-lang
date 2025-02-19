@@ -29,7 +29,13 @@ cc_library(
 cc_library(
     name = "file_test_base",
     testonly = 1,
-    srcs = ["file_test_base.cpp"],
+    srcs = [
+        "file_test_base.cpp",
+        "run_test.cpp",
+        "run_test.h",
+        "test_file.cpp",
+        "test_file.h",
+    ],
     hdrs = ["file_test_base.h"],
     deps = [
         ":autoupdate",
@@ -39,6 +45,7 @@ cc_library(
         "//common:init_llvm",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//testing/base:file_helpers",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
         "@googletest//:gtest",

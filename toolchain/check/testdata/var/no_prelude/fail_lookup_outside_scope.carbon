@@ -30,6 +30,7 @@ var y: () = x;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:     .x = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT:   name_binding_decl {

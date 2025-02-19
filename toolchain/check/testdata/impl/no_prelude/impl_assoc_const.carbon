@@ -508,6 +508,10 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I4 = %I4.decl
+// CHECK:STDOUT:     .BAD1 = <poisoned>
+// CHECK:STDOUT:     .BAD2 = <poisoned>
+// CHECK:STDOUT:     .BAD3 = <poisoned>
+// CHECK:STDOUT:     .BAD4 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I4.decl: type = interface_decl @I4 [concrete = constants.%I4.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
@@ -803,6 +807,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .L2 = %L2.decl
+// CHECK:STDOUT:     .BAD5 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %L2.decl: type = interface_decl @L2 [concrete = constants.%L2.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
@@ -876,6 +881,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .L3 = %L3.decl
+// CHECK:STDOUT:     .BAD6 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %L3.decl: type = interface_decl @L3 [concrete = constants.%L3.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
@@ -948,6 +954,8 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .L4 = %L4.decl
+// CHECK:STDOUT:     .BAD7 = <poisoned>
+// CHECK:STDOUT:     .BAD8 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %L4.decl: type = interface_decl @L4 [concrete = constants.%L4.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {

@@ -73,6 +73,14 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
                     Context::BuildDiagnosticFn abstract_diagnoser)
     -> SemIR::TypeId;
 
+// Adds a note to a diagnostic explaining that a class is incomplete.
+auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
+                         Context::DiagnosticBuilder& builder) -> void;
+
+// Adds a note to a diagnostic explaining that an interface is not defined.
+auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
+                            Context::DiagnosticBuilder& builder) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_TYPE_COMPLETION_H_

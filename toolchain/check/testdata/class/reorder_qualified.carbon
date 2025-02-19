@@ -146,6 +146,7 @@ class A {
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .AF = %AF.decl
 // CHECK:STDOUT:   .a = %.loc46_8
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -164,6 +165,9 @@ class A {
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   .BF = %BF.decl
 // CHECK:STDOUT:   .b = %.loc16_10
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .B = <poisoned>
+// CHECK:STDOUT:   .AF = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -183,6 +187,11 @@ class A {
 // CHECK:STDOUT:   .D = %D.decl
 // CHECK:STDOUT:   .CF = %CF.decl
 // CHECK:STDOUT:   .c = %.loc42_10
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .B = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .AF = <poisoned>
+// CHECK:STDOUT:   .BF = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -201,6 +210,13 @@ class A {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .DF = %DF.decl
 // CHECK:STDOUT:   .d = %.loc24_12
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .B = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .D = <poisoned>
+// CHECK:STDOUT:   .AF = <poisoned>
+// CHECK:STDOUT:   .BF = <poisoned>
+// CHECK:STDOUT:   .CF = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BF();

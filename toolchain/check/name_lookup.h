@@ -69,6 +69,8 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
 // poisoned name will be treated as if it is not declared. Otherwise, this is
 // a lookup for a name being declared, so the name will not be poisoned, but
 // poison will be returned if it's already been looked up.
+//
+// If `name_id` is not an identifier, the name will not be poisoned.
 auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
                             SemIR::NameId name_id, SemIR::NameScopeId scope_id,
                             SemIR::NameScope& scope,
@@ -96,6 +98,19 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 // BuiltinErrorInst if not found.
 auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
                       llvm::StringRef name) -> SemIR::InstId;
+
+// Prints a diagnostic for a duplicate name.
+auto DiagnoseDuplicateName(Context& context, SemIRLoc dup_def,
+                           SemIRLoc prev_def) -> void;
+
+// Prints a diagnostic for a poisoned name when it's later declared.
+auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
+                          SemIR::LocId poisoning_loc_id,
+                          SemIR::LocId decl_name_loc_id) -> void;
+
+// Prints a diagnostic for a missing name.
+auto DiagnoseNameNotFound(Context& context, SemIRLoc loc, SemIR::NameId name_id)
+    -> void;
 
 }  // namespace Carbon::Check
 

@@ -6,9 +6,12 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -52,7 +55,7 @@ static auto BuildInterfaceDecl(Context& context,
       SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
                            SemIR::InterfaceId::None, decl_block_id};
   auto interface_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, interface_decl));
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,
@@ -65,8 +68,8 @@ static auto BuildInterfaceDecl(Context& context,
           introducer.modifier_set.GetAccessKind());
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(lookup_result.poisoning_loc_id(),
-                                 name_context.loc_id);
+    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                         lookup_result.poisoning_loc_id(), name_context.loc_id);
   } else if (lookup_result.is_found()) {
     SemIR::InstId existing_id = lookup_result.target_inst_id();
     if (auto existing_interface_decl =
@@ -102,7 +105,7 @@ static auto BuildInterfaceDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a interface.
-      context.DiagnoseDuplicateName(interface_decl_id, existing_id);
+      DiagnoseDuplicateName(context, name_context.loc_id, existing_id);
     }
   }
 
@@ -115,8 +118,9 @@ static auto BuildInterfaceDecl(Context& context,
     interface_info.generic_id = BuildGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
-      interface_decl.type_id = context.GetGenericInterfaceType(
-          interface_decl.interface_id, context.scope_stack().PeekSpecificId());
+      interface_decl.type_id =
+          GetGenericInterfaceType(context, interface_decl.interface_id,
+                                  context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(
@@ -125,7 +129,7 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
+  ReplaceInstBeforeConstantUse(context, interface_decl_id, interface_decl);
 
   return {interface_decl.interface_id, interface_decl_id};
 }
@@ -162,8 +166,8 @@ auto HandleParseNode(Context& context,
 
   // Declare and introduce `Self`.
   SemIR::FacetType facet_type =
-      context.FacetTypeFromInterface(interface_id, self_specific_id);
-  SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
+      FacetTypeFromInterface(context, interface_id, self_specific_id);
+  SemIR::TypeId self_type_id = context.types().GetTypeIdForTypeConstantId(
       TryEvalInst(context, SemIR::InstId::None, facet_type));
 
   // We model `Self` as a symbolic binding whose type is the interface.
@@ -174,10 +178,10 @@ auto HandleParseNode(Context& context,
       context.scope_stack().AddCompileTimeBinding(),
       /*is_template=*/false);
   interface_info.self_param_id =
-      context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
-          {.type_id = self_type_id,
-           .entity_name_id = entity_name_id,
-           .value_id = SemIR::InstId::None}));
+      AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+                           {.type_id = self_type_id,
+                            .entity_name_id = entity_name_id,
+                            .value_id = SemIR::InstId::None}));
   context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
   context.name_scopes().AddRequiredName(interface_info.scope_id,
                                         SemIR::NameId::SelfType,

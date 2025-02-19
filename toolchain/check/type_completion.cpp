@@ -7,6 +7,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -261,7 +263,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       if (!class_info.is_defined()) {
         if (diagnoser_) {
           auto builder = diagnoser_();
-          context_.NoteIncompleteClass(inst.class_id, builder);
+          NoteIncompleteClass(context_, inst.class_id, builder);
           builder.Emit();
         }
         return false;
@@ -290,7 +292,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
 }
 
 auto TypeCompleter::MakeEmptyValueRepr() const -> SemIR::ValueRepr {
-  return {.kind = SemIR::ValueRepr::None, .type_id = context_.GetTupleType({})};
+  return {.kind = SemIR::ValueRepr::None,
+          .type_id = GetTupleType(context_, {})};
 }
 
 auto TypeCompleter::MakeCopyValueRepr(
@@ -307,7 +310,7 @@ auto TypeCompleter::MakePointerValueRepr(
   // TODO: Should we add `const` qualification to `pointee_id`?
   return {.kind = SemIR::ValueRepr::Pointer,
           .aggregate_kind = aggregate_kind,
-          .type_id = context_.GetPointerType(pointee_id)};
+          .type_id = GetPointerType(context_, pointee_id)};
 }
 
 auto TypeCompleter::GetNestedValueRepr(SemIR::TypeId nested_type_id) const
@@ -375,8 +378,8 @@ auto TypeCompleter::BuildValueReprForInst(SemIR::TypeId type_id,
   auto value_rep =
       same_as_object_rep
           ? type_id
-          : context_.GetStructType(
-                context_.struct_type_fields().AddCanonical(value_rep_fields));
+          : GetStructType(context_, context_.struct_type_fields().AddCanonical(
+                                        value_rep_fields));
   return BuildStructOrTupleValueRepr(fields.size(), value_rep,
                                      same_as_object_rep);
 }
@@ -405,7 +408,7 @@ auto TypeCompleter::BuildValueReprForInst(SemIR::TypeId type_id,
   }
 
   auto value_rep =
-      same_as_object_rep ? type_id : context_.GetTupleType(value_rep_elements);
+      same_as_object_rep ? type_id : GetTupleType(context_, value_rep_elements);
   return BuildStructOrTupleValueRepr(elements.size(), value_rep,
                                      same_as_object_rep);
 }
@@ -487,14 +490,28 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   // specific type to be complete.
   if (type_id.AsConstantId().is_symbolic()) {
     // TODO: Deduplicate these.
-    context.AddInstInNoBlock(SemIR::LocIdAndInst(
-        loc_id,
-        SemIR::RequireCompleteType{.type_id = context.GetSingletonType(
-                                       SemIR::WitnessType::SingletonInstId),
-                                   .complete_type_id = type_id}));
+    AddInstInNoBlock(
+        context,
+        SemIR::LocIdAndInst(
+            loc_id, SemIR::RequireCompleteType{
+                        .type_id = GetSingletonType(
+                            context, SemIR::WitnessType::SingletonInstId),
+                        .complete_type_id = type_id}));
   }
 
   return true;
+}
+
+// Adds a note to a diagnostic explaining that a class is abstract.
+static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
+                              Context::DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+      "Class is not abstract");
+  CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
+                    "class was declared abstract here");
+  builder.Note(class_info.definition_id, ClassAbstractHere);
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
@@ -519,7 +536,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
     if (!builder) {
       return false;
     }
-    context.NoteAbstractClass(class_type->class_id, builder);
+    NoteAbstractClass(context, class_type->class_id, builder);
     builder.Emit();
     return false;
   }
@@ -541,7 +558,7 @@ auto RequireDefinedType(Context& context, SemIR::TypeId type_id,
       auto interface_id = interface.interface_id;
       if (!context.interfaces().Get(interface_id).is_defined()) {
         auto builder = diagnoser();
-        context.NoteUndefinedInterface(interface_id, builder);
+        NoteUndefinedInterface(context, interface_id, builder);
         builder.Emit();
         return false;
       }
@@ -588,6 +605,37 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
                              abstract_diagnoser)
              ? type_id
              : SemIR::ErrorInst::SingletonTypeId;
+}
+
+auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
+                         Context::DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
+  if (class_info.has_definition_started()) {
+    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                      "class is incomplete within its definition");
+    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                      "class was forward declared here");
+    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
+  }
+}
+
+auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
+                            Context::DiagnosticBuilder& builder) -> void {
+  const auto& interface_info = context.interfaces().Get(interface_id);
+  CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
+  if (interface_info.is_being_defined()) {
+    CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
+                      "interface is currently being defined");
+    builder.Note(interface_info.definition_id,
+                 InterfaceUndefinedWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                      "interface was forward declared here");
+    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
+  }
 }
 
 }  // namespace Carbon::Check

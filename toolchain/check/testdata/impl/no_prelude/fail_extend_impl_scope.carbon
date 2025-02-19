@@ -36,24 +36,20 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  fn Zero() -> Self;
+  fn Zero();
 
   // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+4]]:15: error: `impl as` can only be used in a class [ImplAsOutsideClass]
   // CHECK:STDERR:   extend impl as Z {
   // CHECK:STDERR:               ^~
   // CHECK:STDERR:
   extend impl as Z {
-    fn Zero() -> Self {
-      return {};
-    }
+    fn Zero() {}
   }
 }
 
 class Point {
   extend impl as Z {
-    fn Zero() -> Self {
-      return {};
-    }
+    fn Zero() {}
   }
 }
 
@@ -148,27 +144,136 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %Zero.type.822: type = fn_type @Zero.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Zero.d14: %Zero.type.822 = struct_value () [concrete]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type %Z.type [concrete]
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, @Z.%Zero.decl [concrete]
+// CHECK:STDOUT:   %Zero.type.db4: type = fn_type @Zero.2, @impl.1(%Self) [symbolic]
+// CHECK:STDOUT:   %Zero.8fb: %Zero.type.db4 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.2.%Zero.decl) [concrete]
+// CHECK:STDOUT:   %Zero.type.e33: type = fn_type @Zero.3 [concrete]
+// CHECK:STDOUT:   %Zero.dec: %Zero.type.e33 = struct_value () [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, %impl_witness [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
+// CHECK:STDOUT:   %.c37: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Z = %Z.decl
+// CHECK:STDOUT:     .Point = %Point.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
+// CHECK:STDOUT:   %Point.decl: type = class_decl @Point [concrete = constants.%Point] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
+// CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Zero.decl: %Zero.type.822 = fn_decl @Zero.1 [concrete = constants.%Zero.d14] {} {}
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Zero.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, <error> [concrete = <error>]
+// CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst15
-// CHECK:STDOUT:   .Zero = <unexpected>.inst32.loc4_20
-// CHECK:STDOUT:   witness = invalid
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Zero = %assoc0
+// CHECK:STDOUT:   .Z = <poisoned>
+// CHECK:STDOUT:   witness = (%Zero.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Zero(<unexpected>.inst15: %Z.type) {
+// CHECK:STDOUT: generic impl @impl.1(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %Zero.type: type = fn_type @Zero.2, @impl.1(%Self) [symbolic = %Zero.type (constants.%Zero.type.db4)]
+// CHECK:STDOUT:   %Zero: @impl.1.%Zero.type (%Zero.type.db4) = struct_value () [symbolic = %Zero (constants.%Zero.8fb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Zero.%Self.as_type (%Self.as_type);
+// CHECK:STDOUT:   impl: %Self.ref as %Z.ref {
+// CHECK:STDOUT:     %Zero.decl: @impl.1.%Zero.type (%Zero.type.db4) = fn_decl @Zero.2 [symbolic = @impl.1.%Zero (constants.%Zero.8fb)] {} {}
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Zero = %Zero.decl
+// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Zero(constants.%Self) {
+// CHECK:STDOUT: impl @impl.2: %Self.ref as %Z.ref {
+// CHECK:STDOUT:   %Zero.decl: %Zero.type.e33 = fn_decl @Zero.3 [concrete = constants.%Zero.dec] {} {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Zero = %Zero.decl
+// CHECK:STDOUT:   witness = @Point.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Point {
+// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
+// CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.2.%Zero.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Point
+// CHECK:STDOUT:   .Z = <poisoned>
+// CHECK:STDOUT:   .Zero = <poisoned>
+// CHECK:STDOUT:   extend @impl.2.%Z.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Zero.1(@Z.%Self: %Z.type) {
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Zero.2(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Zero.3() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Point.ref: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %.loc25_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc25_5.3: init %Point = class_init (), %.loc25_5.2 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc25_5.4: ref %Point = temporary %.loc25_5.2, %.loc25_5.3
+// CHECK:STDOUT:   %.loc25_7: ref %Point = converted %.loc25_5.1, %.loc25_5.4
+// CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0: %.c37 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Zero.dec]
+// CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Zero.1(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.1(constants.%Self) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %Zero.type => constants.%Zero.type.db4
+// CHECK:STDOUT:   %Zero => constants.%Zero.8fb
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Zero.2(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.1(%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Zero.1(constants.%Z.facet) {}
 // CHECK:STDOUT:

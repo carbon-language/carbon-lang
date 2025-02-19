@@ -945,7 +945,7 @@ struct PostfixOperator {
 
 // Literals, operators, and modifiers
 
-#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND(Name)
 #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)       \
   using Name = LeafNode<NodeKind::Name, Lex::LexTokenKind##TokenIndex, \
                         NodeCategory::Expr>;

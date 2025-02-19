@@ -299,6 +299,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%MyInt
+// CHECK:STDOUT:     .Int = <poisoned>
+// CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -928,6 +930,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%OtherInt
+// CHECK:STDOUT:   .Int = <poisoned>
+// CHECK:STDOUT:   .IntLiteral = <poisoned>
 // CHECK:STDOUT:   .ToLiteral = %ToLiteral.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

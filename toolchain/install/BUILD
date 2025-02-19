@@ -2,6 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load(
+    "@llvm-project//:vars.bzl",
+    "LLVM_VERSION_MAJOR",
+)
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
@@ -119,6 +123,11 @@ lld_aliases = [
     "wasm-ld",
 ]
 
+filegroup(
+    name = "clang_headers",
+    srcs = ["@llvm-project//clang:builtin_headers_gen"],
+)
+
 # Given a root `prefix_root`, the hierarchy looks like:
 #
 # - prefix_root/bin: Binaries intended for direct use.
@@ -158,6 +167,9 @@ install_dirs = {
             is_driver = True,
         ),
     ] + [install_symlink(name, "lld") for name in lld_aliases],
+    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
+        install_filegroup("include", ":clang_headers", "staging/include/"),
+    ],
 }
 
 make_install_filegroups(

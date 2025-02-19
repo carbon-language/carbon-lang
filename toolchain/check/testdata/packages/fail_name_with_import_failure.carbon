@@ -35,6 +35,7 @@ var a: () = A();
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>

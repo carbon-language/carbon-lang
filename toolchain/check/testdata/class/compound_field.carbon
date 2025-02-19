@@ -194,6 +194,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   .d = %.loc20_8
 // CHECK:STDOUT:   .e = %.loc21_8

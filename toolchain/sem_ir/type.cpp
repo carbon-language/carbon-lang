@@ -8,6 +8,26 @@
 
 namespace Carbon::SemIR {
 
+auto TypeStore::GetTypeIdForTypeConstantId(SemIR::ConstantId constant_id) const
+    -> SemIR::TypeId {
+  CARBON_CHECK(constant_id.is_constant(),
+               "Canonicalizing non-constant type: {0}", constant_id);
+  auto type_id = file_->insts()
+                     .Get(file_->constant_values().GetInstId(constant_id))
+                     .type_id();
+  CARBON_CHECK(type_id == SemIR::TypeType::SingletonTypeId ||
+                   constant_id == SemIR::ErrorInst::SingletonConstantId,
+               "Forming type ID for non-type constant of type {0}",
+               GetAsInst(type_id));
+
+  return SemIR::TypeId::ForTypeConstant(constant_id);
+}
+
+auto TypeStore::GetTypeIdForTypeInstId(SemIR::InstId inst_id) const
+    -> SemIR::TypeId {
+  return GetTypeIdForTypeConstantId(file_->constant_values().Get(inst_id));
+}
+
 auto TypeStore::GetInstId(TypeId type_id) const -> InstId {
   return file_->constant_values().GetInstId(GetConstantId(type_id));
 }

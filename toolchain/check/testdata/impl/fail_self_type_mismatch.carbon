@@ -108,6 +108,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
@@ -128,6 +129,7 @@ impl i32 as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }

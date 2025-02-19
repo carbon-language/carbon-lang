@@ -38,6 +38,7 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .n = %n
+// CHECK:STDOUT:     .undeclared = <poisoned>
 // CHECK:STDOUT:     .n2 = %n2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

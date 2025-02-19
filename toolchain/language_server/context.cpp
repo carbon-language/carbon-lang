@@ -61,7 +61,9 @@ class PublishDiagnosticConsumer : public DiagnosticConsumer {
   }
 
   // Returns the constructed request.
-  auto params() -> llvm::json::Value { return params_; }
+  auto params() -> const clang::clangd::PublishDiagnosticsParams& {
+    return params_;
+  }
 
  private:
   // Returns the LSP range for a diagnostic. Note that Carbon uses 1-based
@@ -151,8 +153,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing
   // when they change.
-  context.outgoing().notify("textDocument/publishDiagnostics",
-                            consumer.params());
+  context.PublishDiagnostics(consumer.params());
 }
 
 auto Context::LookupFile(llvm::StringRef filename) -> File* {
