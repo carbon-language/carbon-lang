@@ -62,6 +62,7 @@ cc_binary(
     tags = ["manual"],
     deps = [
         ":parser",
+        "//testing/base:file_helpers",
     ],
 )
 
@@ -74,6 +75,7 @@ cc_test(
     tags = ["manual"],
     deps = [
         ":parser",
+        "//testing/base:file_helpers",
     ],
 )
 
@@ -99,6 +101,7 @@ cc_test(
     tags = ["manual"],
     deps = [
         ":parser",
+        "//testing/base:file_helpers",
     ],
 )
 
@@ -114,5 +117,6 @@ cc_test(
     tags = ["manual"],
     deps = [
         ":parser",
+        "//testing/base:file_helpers",
     ],
 )

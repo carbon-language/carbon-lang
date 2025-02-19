@@ -105,7 +105,7 @@ impl package Test library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:9: error: name used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:9: error: name `Forward` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 fn F(i: Forward*) {}

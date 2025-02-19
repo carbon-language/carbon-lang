@@ -41,8 +41,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   CollectNamesInBlock(ScopeId::File, sem_ir->top_inst_block_id());
 
   // Build each function scope.
-  for (auto [i, fn] : llvm::enumerate(sem_ir->functions().array_ref())) {
-    FunctionId fn_id(i);
+  for (auto [fn_id, fn] : sem_ir->functions().enumerate()) {
     auto fn_scope = GetScopeFor(fn_id);
     // TODO: Provide a location for the function for use as a
     // disambiguator.
@@ -64,8 +63,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   }
 
   // Build each class scope.
-  for (auto [i, class_info] : llvm::enumerate(sem_ir->classes().array_ref())) {
-    ClassId class_id(i);
+  for (auto [class_id, class_info] : sem_ir->classes().enumerate()) {
     auto class_scope = GetScopeFor(class_id);
     // TODO: Provide a location for the class for use as a disambiguator.
     auto class_loc = Parse::NodeId::None;
@@ -78,9 +76,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   }
 
   // Build each interface scope.
-  for (auto [i, interface_info] :
-       llvm::enumerate(sem_ir->interfaces().array_ref())) {
-    InterfaceId interface_id(i);
+  for (auto [interface_id, interface_info] : sem_ir->interfaces().enumerate()) {
     auto interface_scope = GetScopeFor(interface_id);
     // TODO: Provide a location for the interface for use as a disambiguator.
     auto interface_loc = Parse::NodeId::None;
@@ -94,9 +90,8 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   }
 
   // Build each associated constant scope.
-  for (auto [i, assoc_const_info] :
-       llvm::enumerate(sem_ir->associated_constants().array_ref())) {
-    AssociatedConstantId assoc_const_id(i);
+  for (auto [assoc_const_id, assoc_const_info] :
+       sem_ir->associated_constants().enumerate()) {
     auto assoc_const_scope = GetScopeFor(assoc_const_id);
     auto assoc_const_loc = sem_ir->insts().GetLocId(assoc_const_info.decl_id);
     GetScopeInfo(assoc_const_scope).name = globals_.AllocateName(
@@ -106,8 +101,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   }
 
   // Build each impl scope.
-  for (auto [i, impl_info] : llvm::enumerate(sem_ir->impls().array_ref())) {
-    ImplId impl_id(i);
+  for (auto [impl_id, impl_info] : sem_ir->impls().enumerate()) {
     auto impl_scope = GetScopeFor(impl_id);
     // TODO: Provide a location for the impl for use as a disambiguator.
     auto impl_loc = Parse::NodeId::None;

@@ -135,6 +135,7 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
     return specifics_.array_ref();
   }
   auto size() const -> size_t { return specifics_.size(); }
+  auto enumerate() const -> auto { return specifics_.enumerate(); }
 
  private:
   // Context for hashing keys.

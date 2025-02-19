@@ -355,10 +355,10 @@ auto HandleExprLoop(Context& context) -> void {
   } else {
     NodeKind node_kind;
     switch (operator_kind) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
-  case Lex::TokenKind::Name:                               \
-    node_kind = NodeKind::PostfixOperator##Name;           \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) \
+  case Lex::TokenKind::Name:                          \
+    node_kind = NodeKind::PostfixOperator##Name;      \
     break;
 #include "toolchain/parse/node_kind.def"
 
@@ -386,8 +386,8 @@ auto HandleExprLoopForInfixOperator(Context& context) -> void {
   auto state = context.PopState();
 
   switch (auto token_kind = context.tokens().GetKind(state.token)) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...)                      \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name)                           \
   case Lex::TokenKind::Name:                                                  \
     HandleExprLoopForOperator(context, state, NodeKind::InfixOperator##Name); \
     break;
@@ -402,8 +402,8 @@ auto HandleExprLoopForPrefixOperator(Context& context) -> void {
   auto state = context.PopState();
 
   switch (auto token_kind = context.tokens().GetKind(state.token)) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...)                      \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name)                           \
   case Lex::TokenKind::Name:                                                   \
     HandleExprLoopForOperator(context, state, NodeKind::PrefixOperator##Name); \
     break;

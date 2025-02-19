@@ -13,6 +13,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -70,28 +71,28 @@ class FormatterImpl {
     CloseBrace();
     out_ << '\n';
 
-    for (int i : llvm::seq(sem_ir_->interfaces().size())) {
-      FormatInterface(InterfaceId(i));
+    for (auto [id, _] : sem_ir_->interfaces().enumerate()) {
+      FormatInterface(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->associated_constants().size())) {
-      FormatAssociatedConstant(AssociatedConstantId(i));
+    for (auto [id, _] : sem_ir_->associated_constants().enumerate()) {
+      FormatAssociatedConstant(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->impls().size())) {
-      FormatImpl(ImplId(i));
+    for (auto [id, _] : sem_ir_->impls().enumerate()) {
+      FormatImpl(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->classes().size())) {
-      FormatClass(ClassId(i));
+    for (auto [id, _] : sem_ir_->classes().enumerate()) {
+      FormatClass(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->functions().size())) {
-      FormatFunction(FunctionId(i));
+    for (auto [id, _] : sem_ir_->functions().enumerate()) {
+      FormatFunction(id);
     }
 
-    for (int i : llvm::seq(sem_ir_->specifics().size())) {
-      FormatSpecific(SpecificId(i));
+    for (auto [id, _] : sem_ir_->specifics().enumerate()) {
+      FormatSpecific(id);
     }
 
     // End-of-file newline.
@@ -804,7 +805,22 @@ class FormatterImpl {
     }
     out_ << '[';
     if (pending_constant_value_.has_value()) {
-      out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "concrete");
+      switch (
+          sem_ir_->constant_values().GetDependence(pending_constant_value_)) {
+        case ConstantDependence::None:
+          out_ << "concrete";
+          break;
+        case ConstantDependence::PeriodSelf:
+          out_ << "symbolic_self";
+          break;
+        // TODO: Consider renaming this. This will cause a lot of SemIR churn.
+        case ConstantDependence::Checked:
+          out_ << "symbolic";
+          break;
+        case ConstantDependence::Template:
+          out_ << "template";
+          break;
+      }
       if (!pending_constant_value_is_self_) {
         out_ << " = ";
         FormatConstant(pending_constant_value_);

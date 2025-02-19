@@ -138,7 +138,8 @@ auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
   return GetCanonicalImportIRInst(context, &context.sem_ir(), inst_id);
 }
 
-auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
+auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
+                                     SemIR::InstId prev_id,
                                      SemIR::ImportIRInst prev_import_ir_inst,
                                      SemIR::ImportIRId new_ir_id,
                                      const SemIR::File* new_import_ir,
@@ -151,7 +152,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
   auto conflict_id =
       AddImportRef(context, {.ir_id = new_ir_id, .inst_id = new_inst_id});
   // TODO: Pass the imported name location instead of the conflict id.
-  DiagnoseDuplicateName(context, conflict_id, prev_id);
+  DiagnoseDuplicateName(context, name_id, conflict_id, prev_id);
 }
 
 // Returns an instruction that has the specified constant value.
@@ -2989,7 +2990,8 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
           {.inst_id =
                resolver.local_constant_values().GetInstId(result.const_id),
            .generic_id = GetLocalGenericId(resolver, generic_const_id),
-           .index = symbolic_const.index});
+           .index = symbolic_const.index,
+           .dependence = symbolic_const.dependence});
       if (result.decl_id.has_value()) {
         // Overwrite the abstract symbolic constant given initially to the
         // declaration with its final concrete symbolic value.
@@ -3232,9 +3234,7 @@ auto ImportImplsFromApiFile(Context& context) -> void {
     return;
   }
 
-  for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
-    SemIR::ImplId impl_id(impl_index);
-
+  for (auto [impl_id, _] : import_ir.sem_ir->impls().enumerate()) {
     // Resolve the imported impl to a local impl ID.
     ImportImpl(context, import_ir_id, impl_id);
   }

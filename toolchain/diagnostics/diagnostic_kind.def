@@ -285,6 +285,7 @@ CARBON_DIAGNOSTIC_KIND(ImplAsNonFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplAssociatedConstantNeedsValue)
 CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
@@ -460,7 +461,6 @@ CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
 
 // Document handling.
 CARBON_DIAGNOSTIC_KIND(LanguageServerOpenDuplicateFile)
-CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedChanges)
 CARBON_DIAGNOSTIC_KIND(LanguageServerCloseUnknownFile)
 CARBON_DIAGNOSTIC_KIND(LanguageServerDiagnosticInWrongFile)
 

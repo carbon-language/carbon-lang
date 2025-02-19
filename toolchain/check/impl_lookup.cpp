@@ -8,6 +8,8 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -110,6 +112,65 @@ static auto FindAssociatedImportIRs(Context& context,
   return result;
 }
 
+static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
+                                SemIR::ConstantId type_const_id,
+                                SemIR::ConstantId interface_const_id,
+                                const SemIR::Impl& impl) -> SemIR::InstId {
+  // If impl.constraint_id is not symbolic, and doesn't match the query, then
+  // we don't need to proceed.
+  auto impl_interface_const_id =
+      context.constant_values().Get(impl.constraint_id);
+  if (!impl_interface_const_id.is_symbolic() &&
+      interface_const_id != impl_interface_const_id) {
+    return SemIR::InstId::None;
+  }
+
+  // TODO: If the interface id of the `impl` and the query are not the same,
+  // then we can skip this `impl`. (The interface id is the root of the
+  // constraint, the unique `interface` declaration.)
+
+  auto specific_id = SemIR::SpecificId::None;
+  // This check comes first to avoid deduction with an invalid impl. We use an
+  // error value to indicate an error during creation of the impl, such as a
+  // recursive impl which will cause deduction to recurse infinitely.
+  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+    return SemIR::InstId::None;
+  }
+  if (impl.generic_id.has_value()) {
+    specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
+                                      interface_const_id);
+    if (!specific_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+  }
+  if (!context.constant_values().AreEqualAcrossDeclarations(
+          SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                            impl.self_id),
+          type_const_id)) {
+    return SemIR::InstId::None;
+  }
+  if (!context.constant_values().AreEqualAcrossDeclarations(
+          SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                            impl.constraint_id),
+          interface_const_id)) {
+    // TODO: An impl of a constraint type should be treated as implementing
+    // the constraint's interfaces.
+    return SemIR::InstId::None;
+  }
+  if (!impl.witness_id.has_value()) {
+    // TODO: Diagnose if the impl isn't defined yet?
+    return SemIR::InstId::None;
+  }
+  LoadImportRef(context, impl.witness_id);
+  if (specific_id.has_value()) {
+    // We need a definition of the specific `impl` so we can access its
+    // witness.
+    ResolveSpecificDefinition(context, loc_id, specific_id);
+  }
+  return context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, impl.witness_id));
+}
+
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId type_const_id,
                        SemIR::ConstantId interface_const_id) -> SemIR::InstId {
@@ -130,63 +191,50 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  for (const auto& impl : context.impls().array_ref()) {
-    // If impl.constraint_id is not symbolic, and doesn't match the query, then
-    // we don't need to proceed.
-    auto impl_interface_const_id =
-        context.constant_values().Get(impl.constraint_id);
-    if (!impl_interface_const_id.is_symbolic() &&
-        interface_const_id != impl_interface_const_id) {
-      continue;
+  auto& stack = context.impl_lookup_stack();
+  // Deduction of the interface parameters can do further impl lookups, and we
+  // need to ensure we terminate.
+  //
+  // https://docs.carbon-lang.dev/docs/design/generics/details.html#acyclic-rule
+  // - We look for violations of the acyclic rule by seeing if a previous lookup
+  //   had all the same type inputs.
+  // - The `interface_const_id` encodes the entire facet type being looked up,
+  //   including any specific parameters for a generic interface.
+  //
+  // TODO: Implement the termination rule, which requires looking at the
+  // complexity of the types on the top of (or throughout?) the stack:
+  // https://docs.carbon-lang.dev/docs/design/generics/details.html#termination-rule
+  for (auto entry : stack) {
+    if (entry.type_const_id == type_const_id &&
+        entry.interface_const_id == interface_const_id) {
+      CARBON_DIAGNOSTIC(ImplLookupCycle, Error,
+                        "cycle found in lookup of interface {0} for type {1}",
+                        std::string, SemIR::TypeId);
+      context.emitter()
+          .Build(loc_id, ImplLookupCycle, "<TODO: interface name>",
+                 context.types().GetTypeIdForTypeConstantId(type_const_id))
+          .Emit();
+      return SemIR::ErrorInst::SingletonInstId;
     }
-
-    // TODO: If the interface id of the `impl` and the query are not the same,
-    // then we can skip this `impl`. (The interface id is the root of the
-    // constraint, the unique `interface` declaration.)
-
-    auto specific_id = SemIR::SpecificId::None;
-    // This check comes first to avoid deduction with an invalid impl. We use an
-    // error value to indicate an error during creation of the impl, such as a
-    // recursive impl which will cause deduction to recurse infinitely.
-    if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
-      continue;
-    }
-    if (impl.generic_id.has_value()) {
-      specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
-                                        interface_const_id);
-      if (!specific_id.has_value()) {
-        continue;
-      }
-    }
-    if (!context.constant_values().AreEqualAcrossDeclarations(
-            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              impl.self_id),
-            type_const_id)) {
-      continue;
-    }
-    if (!context.constant_values().AreEqualAcrossDeclarations(
-            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              impl.constraint_id),
-            interface_const_id)) {
-      // TODO: An impl of a constraint type should be treated as implementing
-      // the constraint's interfaces.
-      continue;
-    }
-    if (!impl.witness_id.has_value()) {
-      // TODO: Diagnose if the impl isn't defined yet?
-      return SemIR::InstId::None;
-    }
-    LoadImportRef(context, impl.witness_id);
-    if (specific_id.has_value()) {
-      // We need a definition of the specific `impl` so we can access its
-      // witness.
-      ResolveSpecificDefinition(context, loc_id, specific_id);
-    }
-    return context.constant_values().GetInstId(
-        SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                          impl.witness_id));
   }
-  return SemIR::InstId::None;
+
+  auto witness_id = SemIR::InstId::None;
+
+  stack.push_back({
+      .type_const_id = type_const_id,
+      .interface_const_id = interface_const_id,
+  });
+  for (const auto& impl : context.impls().array_ref()) {
+    witness_id = GetWitnessIdForImpl(context, loc_id, type_const_id,
+                                     interface_const_id, impl);
+    if (witness_id.has_value()) {
+      // We found a matching impl, don't keep looking.
+      break;
+    }
+  }
+  stack.pop_back();
+
+  return witness_id;
 }
 
 }  // namespace Carbon::Check

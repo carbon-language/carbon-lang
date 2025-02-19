@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+7]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+7]]:11: error: duplicate name `Cpp` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace Cpp;
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]

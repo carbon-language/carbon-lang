@@ -19,7 +19,7 @@ auto AddNameToLookup(Context& context, SemIR::NameId name_id,
       existing.has_value()) {
     // TODO: Add coverage to this use case and use the location of the name
     // instead of the target.
-    DiagnoseDuplicateName(context, target_id, existing);
+    DiagnoseDuplicateName(context, name_id, target_id, existing);
   }
 }
 
@@ -264,7 +264,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       for (const auto& interface : resolved.required_interfaces) {
         auto& interface_info = context.interfaces().Get(interface.interface_id);
         scopes->push_back({.name_scope_id = interface_info.scope_id,
-                                      .specific_id = interface.specific_id});
+                           .specific_id = interface.specific_id});
       }
     } else {
       // Lookup into this scope should fail without producing an error since
@@ -484,26 +484,28 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
       scope_result.target_inst_id());
 }
 
-auto DiagnoseDuplicateName(Context& context, SemIRLoc dup_def,
-                           SemIRLoc prev_def) -> void {
+auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
+                           SemIRLoc dup_def, SemIRLoc prev_def) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
-                    "duplicate name being declared in the same scope");
+                    "duplicate name `{0}` being declared in the same scope",
+                    SemIR::NameId);
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
   context.emitter()
-      .Build(dup_def, NameDeclDuplicate)
+      .Build(dup_def, NameDeclDuplicate, name_id)
       .Note(prev_def, NameDeclPrevious)
       .Emit();
 }
 
-auto DiagnosePoisonedName(Context& context, SemIR::LocId poisoning_loc_id,
+auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
+                          SemIR::LocId poisoning_loc_id,
                           SemIR::LocId decl_name_loc_id) -> void {
   CARBON_CHECK(poisoning_loc_id.has_value(),
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
-                    "name used before it was declared");
+                    "name `{0}` used before it was declared", SemIR::NameId);
   CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
   context.emitter()
-      .Build(poisoning_loc_id, NameUseBeforeDecl)
+      .Build(poisoning_loc_id, NameUseBeforeDecl, name_id)
       .Note(decl_name_loc_id, NameUseBeforeDeclNote)
       .Emit();
 }

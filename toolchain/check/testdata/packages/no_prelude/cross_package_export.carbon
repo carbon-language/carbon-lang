@@ -154,7 +154,7 @@ import Other library "conflict";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: base.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: base.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:1: in import [InImport]
@@ -175,7 +175,7 @@ alias C = Other.C;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: conflict.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: conflict.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+5]]:1: in import [InImport]

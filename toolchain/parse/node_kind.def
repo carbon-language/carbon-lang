@@ -19,7 +19,7 @@
 //     Defines a parse node for a postfix operator, with the Name as token.
 //   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)
 //     Defines a parse node that corresponds to a token that is a single-token
-//     literal. The token is wrapped for LexTokenKinds.
+//     literal.
 //   - CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)
 //     A token-based modifier. The Name is the TokenKind, and will be appended
 //     with "Modifier" for the parse kind.
@@ -37,8 +37,8 @@
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR
 #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) \
   CARBON_PARSE_NODE_KIND(PrefixOperator##Name)
@@ -47,8 +47,8 @@
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_INFIX_OPERATOR
 #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) \
   CARBON_PARSE_NODE_KIND(InfixOperator##Name)
@@ -57,8 +57,8 @@
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR
 #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) \
   CARBON_PARSE_NODE_KIND(PostfixOperator##Name)
@@ -67,18 +67,18 @@
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle literal cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind) <code>
 #ifndef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
-#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKinds) \
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind) \
   CARBON_PARSE_NODE_KIND(Name)
 #endif
 
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) \
   CARBON_PARSE_NODE_KIND(Name##Modifier)

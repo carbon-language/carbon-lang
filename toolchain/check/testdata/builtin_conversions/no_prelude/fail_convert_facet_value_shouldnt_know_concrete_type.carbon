@@ -36,20 +36,13 @@ impl Goat as Eats {}
 fn Feed(e:! Eats) {}
 
 fn F() {
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+17]]:3: error: semantics TODO: `Facet value converting to facet value` [SemanticsTodo]
-  // CHECK:STDERR:   Feed(Goat as Animal);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Feed(e:! Eats) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `Animal` to `Eats` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+7]]:3: note: type `Animal` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Feed(e:! Eats) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -390,9 +383,9 @@ fn F() {
 // CHECK:STDOUT:   %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat.ref, constants.%impl_witness [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc33_13: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc33_22: %Eats.type = converted %.loc33_13, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, constants.%impl_witness [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc26_13: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc26_22: %Eats.type = converted %.loc26_13, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

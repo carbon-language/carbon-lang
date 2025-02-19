@@ -31,7 +31,8 @@ auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
 
 // Verifies a new instruction is the same as a previous instruction.
 // prev_import_ir_inst should come from GetCanonicalImportIRInst.
-auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
+auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
+                                     SemIR::InstId prev_id,
                                      SemIR::ImportIRInst prev_import_ir_inst,
                                      SemIR::ImportIRId new_ir_id,
                                      const SemIR::File* new_import_ir,

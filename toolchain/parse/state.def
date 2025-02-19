@@ -1432,7 +1432,7 @@ CARBON_PARSE_STATE(LetFinish)
 // choice ...
 // ^~~~~~
 //   1. DeclNameAndParams
-//   2. ChoiceAlternativeListStart
+//   2. ChoiceDefinitionStart
 //   3. ChoiceDefinitionFinish
 CARBON_PARSE_STATE(ChoiceIntroducer)
 
