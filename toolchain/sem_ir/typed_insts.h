@@ -1410,6 +1410,7 @@ struct TupleLiteral {
   InstBlockId elements_id;
 };
 
+// A tuple pattern, such as `(x, y: i32)`.
 struct TuplePattern {
   static constexpr auto Kind =
       InstKind::TuplePattern.Define<Parse::TuplePatternId>(
