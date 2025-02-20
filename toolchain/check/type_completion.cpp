@@ -606,13 +606,12 @@ auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
     return SemIR::CompleteFacetTypeId::None;
   }
 
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
   auto complete_id = context.facet_type_to_complete_facet_types().Get(
       facet_type.facet_type_id);
   if (!complete_id.has_value()) {
-    complete_id = AddCompleteFacetType(context, loc_id, facet_type_info,
-                                       context_for_diagnostics);
+    complete_id = AddCompleteFacetType(
+        context, loc_id, context.facet_types().Get(facet_type.facet_type_id),
+        context_for_diagnostics);
     context.facet_type_to_complete_facet_types().Set(facet_type.facet_type_id,
                                                      complete_id);
   }
