@@ -97,7 +97,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Gets the `CompleteTypeInfo` for a type, with an empty value if the type is
   // not complete.
-  auto GetCompleteInfo(TypeId type_id) const -> CompleteTypeInfo {
+  auto GetCompleteTypeInfo(TypeId type_id) const -> CompleteTypeInfo {
     if (auto type_info = complete_type_info_.Lookup(type_id)) {
       return type_info.value();
     }
@@ -157,7 +157,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto type_id : complete_types_) {
-        auto info = GetCompleteInfo(type_id);
+        auto info = GetCompleteTypeInfo(type_id);
         map.Add(PrintToString(type_id),
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
                   map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));

@@ -315,7 +315,7 @@ auto TypeCompleter::GetNestedInfo(SemIR::TypeId nested_type_id) const
     -> SemIR::CompleteTypeInfo {
   CARBON_CHECK(context_.types().IsComplete(nested_type_id),
                "Nested type should already be complete");
-  auto info = context_.types().GetCompleteInfo(nested_type_id);
+  auto info = context_.types().GetCompleteTypeInfo(nested_type_id);
   CARBON_CHECK(info.value_repr.kind != SemIR::ValueRepr::Unknown,
                "Complete type should have a value representation");
   return info;
@@ -549,7 +549,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
     return false;
   }
 
-  auto complete_info = context.types().GetCompleteInfo(type_id);
+  auto complete_info = context.types().GetCompleteTypeInfo(type_id);
   if (complete_info.abstract_class_id.has_value()) {
     auto builder = abstract_diagnoser();
     if (builder) {
