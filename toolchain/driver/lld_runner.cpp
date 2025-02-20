@@ -23,8 +23,8 @@ namespace Carbon {
 
 auto LldRunner::LinkHelper(llvm::StringLiteral label,
                            llvm::ArrayRef<llvm::StringRef> args,
-                           const std::string& path,
-                           lld::DriverDef driver_def) -> bool {
+                           const std::string& path, lld::DriverDef driver_def)
+    -> bool {
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.
   llvm::OwningArrayRef<char> cstr_arg_storage;
