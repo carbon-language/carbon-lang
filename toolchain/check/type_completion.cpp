@@ -526,14 +526,18 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
 
 // Adds a note to a diagnostic explaining that a class is abstract.
 static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
+                              bool direct_use,
                               Context::DiagnosticBuilder& builder) -> void {
   const auto& class_info = context.classes().Get(class_id);
   CARBON_CHECK(
       class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
       "Class is not abstract");
-  CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
-                    "class was declared abstract here");
-  builder.Note(class_info.definition_id, ClassAbstractHere);
+  CARBON_DIAGNOSTIC(
+      ClassAbstractHere, Note,
+      "{0:=0:uses class that|=1:class} was declared abstract here",
+      IntAsSelect);
+  builder.Note(class_info.definition_id, ClassAbstractHere,
+               static_cast<int>(direct_use));
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
@@ -553,7 +557,14 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   if (complete_info.abstract_class_id.has_value()) {
     auto builder = abstract_diagnoser();
     if (builder) {
-      NoteAbstractClass(context, complete_info.abstract_class_id, builder);
+      bool direct_use = false;
+      if (auto inst = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
+        if (inst->class_id == complete_info.abstract_class_id) {
+          direct_use = true;
+        }
+      }
+      NoteAbstractClass(context, complete_info.abstract_class_id, direct_use,
+                        builder);
       builder.Emit();
     }
     return false;
