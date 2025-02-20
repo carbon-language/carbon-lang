@@ -11,8 +11,8 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& /*context*/, Parse::ArrayExprStartId /*node_id*/)
-    -> bool {
+auto HandleParseNode(Context& /*context*/,
+                     Parse::ArrayExprOpenParenId /*node_id*/) -> bool {
   return true;
 }
 

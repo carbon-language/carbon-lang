@@ -16,7 +16,7 @@ auto HandleArrayExpr(Context& context) -> void {
   auto array_token = context.ConsumeChecked(Lex::TokenKind::Array);
   context.AddLeafNode(NodeKind::ArrayExprKeyword, array_token, state.has_error);
   if (auto open_paren = context.ConsumeAndAddOpenParen(
-          array_token, NodeKind::ArrayExprStart)) {
+          array_token, NodeKind::ArrayExprOpenParen)) {
     state.token = *open_paren;
   } else {
     state.has_error = true;
@@ -27,7 +27,8 @@ auto HandleArrayExpr(Context& context) -> void {
 
 auto HandleArrayExprComma(Context& context) -> void {
   auto state = context.PopState();
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Comma, NodeKind::ArrayExprComma)) {
+  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Comma,
+                                       NodeKind::ArrayExprComma)) {
     context.AddLeafNode(NodeKind::ArrayExprComma, *context.position(), true);
     CARBON_DIAGNOSTIC(ExpectedArrayComma, Error,
                       "expected `,` in array(Type, Count)");

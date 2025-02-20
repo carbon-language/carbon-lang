@@ -808,25 +808,18 @@ struct MatchStatement {
 using ArrayExprKeyword =
     LeafNode<NodeKind::ArrayExprKeyword, Lex::ArrayTokenIndex>;
 
-// The array keyword and opening paren in `array(T, N)`.
-struct ArrayExprStart {
-  static constexpr auto Kind =
-      NodeKind::ArrayExprStart.Define({.child_count = 1});
-
-  ArrayExprKeywordId keyword;
-  Lex::OpenParenTokenIndex token;
-};
+using ArrayExprOpenParen =
+    LeafNode<NodeKind::ArrayExprOpenParen, Lex::OpenParenTokenIndex>;
 
 using ArrayExprComma = LeafNode<NodeKind::ArrayExprComma, Lex::CommaTokenIndex>;
 
 // An array type, `array(T, N)`.
 struct ArrayExpr {
-  static constexpr auto Kind =
-      NodeKind::ArrayExpr.Define({.category = NodeCategory::Expr,
-                                  .bracketed_by = ArrayExprStart::Kind,
-                                  .child_count = 4});
+  static constexpr auto Kind = NodeKind::ArrayExpr.Define(
+      {.category = NodeCategory::Expr, .child_count = 5});
 
-  ArrayExprStartId start;
+  ArrayExprKeywordId keyword;
+  ArrayExprOpenParenId start;
   AnyExprId type;
   ArrayExprCommaId comma;
   AnyExprId bound;
