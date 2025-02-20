@@ -221,23 +221,30 @@ auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
   values_.Reserve(size);
 }
 
-// A ValueStore keyed on `FromIdT`, and maps that to a `StoredIdT`.
-template <typename FromIdT, typename StoredIdT>
+// A ValueStore that builds a 1:1 relationship between two IDs.
+// * `RelatedIdT` represents a related ID that can be used to find values in the
+//   store.
+// * `IdT` is the actual ID of values in this store, and `IdT::ValueType` is the
+//   value type being stored.
+//
+// The value store builds a mapping so that either ID can be used later to find
+// a value. And the user can query if a related `RelatedIdT` has been used to
+// add a value to the store or not.
+//
+// When adding to the store, the user provides the related `RelatedIdT` along
+// with the value being stored, and gets back the ID of the value in the store.
+template <typename RelatedIdT, typename IdT>
 class RelationalValueStore {
-  struct ConditionalId {
-    using ValueType = std::optional<typename StoredIdT::ValueType>;
-    StoredIdT id;
-  };
-
  public:
-  using RefType = StoredIdT::ValueType&;
-  using ConstRefType = const StoredIdT::ValueType&;
+  using ValueType = IdT::ValueType;
+  using RefType = ValueStore<IdT>::RefType;
+  using ConstRefType = ValueStore<IdT>::ConstRefType;
 
-  // Given the original ID and a value, stores the value and returns a mapped ID
-  // to reference it. This allows lookups later through either id.
-  auto Add(FromIdT from_id, StoredIdT::ValueType value) -> StoredIdT {
-    CARBON_DCHECK(from_id.index >= 0, "{0}", from_id);
-    StoredIdT id(from_id.index);
+  // Given the related ID and a value, stores the value and returns a mapped ID
+  // to reference it in the store.
+  auto Add(RelatedIdT related_id, ValueType value) -> IdT {
+    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
+    IdT id(related_id.index);
     if (static_cast<size_t>(id.index) >= values_.size()) {
       values_.resize(id.index + 1);
     }
@@ -245,28 +252,28 @@ class RelationalValueStore {
     return id;
   }
 
-  // Returns the id of a stored value, if `try_id` has been inserted into the
-  // store, and None otherwise.
-  auto TryGetId(FromIdT try_id) const -> StoredIdT {
-    CARBON_DCHECK(try_id.index >= 0, "{0}", try_id);
-    if (static_cast<size_t>(try_id.index) >= values_.size()) {
-      return StoredIdT::None;
+  // Returns the ID of a value in the store if the `related_id` was previously
+  // used to add a value to the store, or None.
+  auto TryGetId(RelatedIdT related_id) const -> IdT {
+    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
+    if (static_cast<size_t>(related_id.index) >= values_.size()) {
+      return IdT::None;
     }
-    auto& opt = values_[try_id.index];
+    auto& opt = values_[related_id.index];
     if (!opt.has_value()) {
-      return StoredIdT::None;
+      return IdT::None;
     }
-    return StoredIdT(try_id.index);
+    return IdT(related_id.index);
   }
 
-  // Returns a pointer value to the mutable value for an ID, if it's present in
-  // the store. Returns nullptr otherwise.
-  auto Get(StoredIdT id) -> RefType {
+  // Returns a mutable value for an ID.
+  auto Get(IdT id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
     return *values_[id.index];
   }
 
-  auto Get(StoredIdT id) const -> ConstRefType {
+  // Returns a value for an ID.
+  auto Get(IdT id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
     return *values_[id.index];
   }
@@ -274,9 +281,7 @@ class RelationalValueStore {
  private:
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  llvm::SmallVector<std::optional<std::decay_t<typename StoredIdT::ValueType>>,
-                    0>
-      values_;
+  llvm::SmallVector<std::optional<std::decay_t<ValueType>>, 0> values_;
 };
 
 }  // namespace Carbon
