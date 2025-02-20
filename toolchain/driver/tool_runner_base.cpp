@@ -37,7 +37,7 @@ auto ToolRunnerBase::BuildCStrArgs(llvm::StringRef tool_name,
 
   CARBON_VLOG("Running {} driver with arguments:\n", tool_name);
 
-  // Render the arguments into null-terminated C-strings Command lines can get
+  // Render the arguments into null-terminated C-strings. Command lines can get
   // quite long in build systems so this tries to minimize the memory allocation
   // overhead.
 
