@@ -708,10 +708,11 @@ class TextLabel {
 
 Notice that this is subtly different from the meaning of `var` in other
 contexts: it declares an
-[instance variable](https://en.wikipedia.org/wiki/Instance_variable)), not just
-a variable in the class's scope.
+[instance variable](https://en.wikipedia.org/wiki/Instance_variable), not just a
+variable in the class's scope.
 
-> **Open question:** Is there a way to declare a variable in a class's scope?
+> **Open question:** Is there a way to declare class variables (scoped to the
+> class, not an instance)?
 
 In a field declaration, an initializer (such as `= "default"` above) specifies
 the default value of the field, and will be ignored if another value is supplied
