@@ -21,7 +21,8 @@ namespace Carbon {
 // Note that this struct just collects common data and helper methods, and does
 // not itself impose any invariants or form a meaningful API. It should be used
 // as an implementation detail only.
-struct ToolRunnerBase {
+class ToolRunnerBase {
+ public:
   // Construct the tool runner bas.
   //
   // If `vlog_stream` is provided, it will be used for `CARBON_VLOG`s. If it is
@@ -30,6 +31,7 @@ struct ToolRunnerBase {
   explicit ToolRunnerBase(const InstallPaths* install_paths,
                           llvm::raw_ostream* vlog_stream = nullptr);
 
+ protected:
   // Translates `args` into C-string arguments for tool APIs based on `main`.
   //
   // Accepts a `tool_name` for logging, and a `tool_path` that will be used as
