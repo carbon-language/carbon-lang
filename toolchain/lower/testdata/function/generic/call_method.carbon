@@ -44,7 +44,10 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_CF.C.Main.b88d1103f417c6d4(ptr, i32)
+// CHECK:STDOUT: define i32 @_CF.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %x, !dbg !13
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
@@ -67,3 +70,5 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !9 = !DILocation(line: 20, column: 14, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 20, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.b88d1103f417c6d4", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 5, scope: !12)
