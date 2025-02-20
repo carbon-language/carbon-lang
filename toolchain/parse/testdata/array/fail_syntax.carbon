@@ -58,7 +58,7 @@ var y: array(`);
 
 // --- fail_no_open_paren.carbon
 
-// CHECK:STDERR: fail_no_open_paren.carbon:[[@LINE+4]]:14: error: expected `(` after `array` [ExpectedArrayParen]
+// CHECK:STDERR: fail_no_open_paren.carbon:[[@LINE+4]]:14: error: expected `(` after `array` [ExpectedParenAfter]
 // CHECK:STDERR: var x: array i32, 1;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR:
@@ -70,7 +70,7 @@ var x: array i32, 1;
 // CHECK:STDERR: var x: array(i32,;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+12]]:13: error: expected `(` after `array` [ExpectedArrayParen]
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+12]]:13: error: expected `(` after `array` [ExpectedParenAfter]
 // CHECK:STDERR: var x: array(i32,;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ var x: array();
 
 // --- fail_keyword_alone.carbon
 
-// CHECK:STDERR: fail_keyword_alone.carbon:[[@LINE+16]]:13: error: expected `(` after `array` [ExpectedArrayParen]
+// CHECK:STDERR: fail_keyword_alone.carbon:[[@LINE+16]]:13: error: expected `(` after `array` [ExpectedParenAfter]
 // CHECK:STDERR: var x: array;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -183,9 +183,9 @@ var x: array;
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'ArrayExprKeyword', text: 'array'},
-// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: 'i32', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: 'array', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'ArrayExprComma', text: ',', has_error: yes},
+// CHECK:STDOUT:             {kind: 'ArrayExprComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IntLiteral', text: '1'},
 // CHECK:STDOUT:           {kind: 'ArrayExpr', text: 'array', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 8},
@@ -199,7 +199,7 @@ var x: array;
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'ArrayExprKeyword', text: 'array'},
-// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '(', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: 'array', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:             {kind: 'ArrayExprComma', text: '(', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: '(', has_error: yes},
@@ -247,7 +247,7 @@ var x: array;
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'ArrayExprKeyword', text: 'array'},
-// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'ArrayExprStart', text: 'array', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:             {kind: 'ArrayExprComma', text: ';', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ';', has_error: yes},

@@ -13,17 +13,11 @@ namespace Carbon::Parse {
 
 auto HandleArrayExpr(Context& context) -> void {
   auto state = context.PopState();
-  context.AddLeafNode(NodeKind::ArrayExprKeyword,
-                      context.ConsumeChecked(Lex::TokenKind::Array),
-                      state.has_error);
-  if (auto open_paren = context.ConsumeIf(Lex::TokenKind::OpenParen)) {
-    context.AddNode(NodeKind::ArrayExprStart, *open_paren, state.has_error);
+  auto array_token = context.ConsumeChecked(Lex::TokenKind::Array);
+  context.AddLeafNode(NodeKind::ArrayExprKeyword, array_token, state.has_error);
+  if (auto open_paren = context.ConsumeAndAddOpenParen(
+          array_token, NodeKind::ArrayExprStart)) {
     state.token = *open_paren;
-  } else {
-    context.AddNode(NodeKind::ArrayExprStart, *context.position(), true);
-    CARBON_DIAGNOSTIC(ExpectedArrayParen, Error, "expected `(` after `array`");
-    context.emitter().Emit(*context.position(), ExpectedArrayParen);
-    state.has_error = true;
   }
   context.PushState(state, State::ArrayExprComma);
   context.PushState(State::Expr);
