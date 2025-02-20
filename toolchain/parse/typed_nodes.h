@@ -590,6 +590,8 @@ struct ReturnStatement {
        .bracketed_by = ReturnStatementStart::Kind});
 
   ReturnStatementStartId introducer;
+  // TODO: This should be optional<OneOf<AnyExprId, ReturnVarModifierId>>,
+  // but we don't have support for OneOf between a node kind and a category.
   std::optional<AnyExprId> expr;
   std::optional<ReturnVarModifierId> var;
   Lex::SemiTokenIndex token;
@@ -604,8 +606,8 @@ struct ForIn {
       {.bracketed_by = VariableIntroducer::Kind, .child_count = 2});
 
   VariableIntroducerId introducer;
-  Lex::InTokenIndex token;
   AnyPatternId pattern;
+  Lex::InTokenIndex token;
 };
 
 // The `for (var ... in ...)` portion of a `for` statement.
