@@ -86,7 +86,9 @@ struct AddrOf {
 // generally be a pattern inst.
 struct AddrPattern {
   static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
-      {.ir_name = "addr_pattern", .is_lowered = false});
+      {.ir_name = "addr_pattern",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   TypeId type_id;
   // The `self` binding.
@@ -128,7 +130,7 @@ struct AnyAggregateInit {
   InstKind kind;
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // Common representation for all kinds of aggregate value.
@@ -150,7 +152,7 @@ struct ArrayInit {
 
   TypeId type_id;
   InstBlockId inits_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // An array of `element_type_id` values, sized to `bound_id`.
@@ -180,8 +182,8 @@ struct AsCompatible {
 // `InitializeFrom`.
 struct Assign {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::Assign.Define<Parse::NodeId>({.ir_name = "assign"});
+  static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
+      {.ir_name = "assign", .constant_kind = InstConstantKind::Never});
 
   // Assignments are statements, and so have no type.
   InstId lhs_id;
@@ -294,8 +296,8 @@ struct BindAlias {
 // Binds a name, such as `x` in `var x: i32`.
 struct BindName {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::BindName.Define<Parse::NodeId>({.ir_name = "bind_name"});
+  static constexpr auto Kind = InstKind::BindName.Define<Parse::NodeId>(
+      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -340,7 +342,9 @@ struct AnyBindingPattern {
 // Represents a non-symbolic binding pattern.
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
-      {.ir_name = "binding_pattern", .is_lowered = false});
+      {.ir_name = "binding_pattern",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -361,8 +365,8 @@ struct SymbolicBindingPattern {
 
 // Reads an argument from `BranchWithArg`.
 struct BlockArg {
-  static constexpr auto Kind =
-      InstKind::BlockArg.Define<Parse::NodeId>({.ir_name = "block_arg"});
+  static constexpr auto Kind = InstKind::BlockArg.Define<Parse::NodeId>(
+      {.ir_name = "block_arg", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   LabelId block_id;
@@ -438,7 +442,9 @@ struct AnyBranch {
 struct Branch {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Branch.Define<Parse::NodeId>(
-      {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
+      {.ir_name = "br",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
   LabelId target_id;
@@ -448,7 +454,9 @@ struct Branch {
 struct BranchIf {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::BranchIf.Define<Parse::NodeId>(
-      {.ir_name = "br", .terminator_kind = TerminatorKind::TerminatorSequence});
+      {.ir_name = "br",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::TerminatorSequence});
 
   // Branches don't produce a value, so have no type.
   LabelId target_id;
@@ -460,7 +468,9 @@ struct BranchIf {
 struct BranchWithArg {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::BranchWithArg.Define<Parse::NodeId>(
-      {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
+      {.ir_name = "br",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
   LabelId target_id;
@@ -520,7 +530,7 @@ struct ClassInit {
 
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // The type for a class, either non-generic or specific.
@@ -847,14 +857,18 @@ struct ImplWitnessAccess {
 struct ImportCppDecl {
   static constexpr auto Kind =
       InstKind::ImportCppDecl.Define<Parse::ImportDeclId>(
-          {.ir_name = "import_cpp", .is_lowered = false});
+          {.ir_name = "import_cpp",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 };
 
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
   static constexpr auto Kind = InstKind::ImportDecl.Define<Parse::ImportDeclId>(
-      {.ir_name = "import", .is_lowered = false});
+      {.ir_name = "import",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   NameId package_id;
 };
@@ -903,7 +917,7 @@ struct InitializeFrom {
 
   TypeId type_id;
   InstId src_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // An interface declaration.
@@ -970,7 +984,8 @@ struct IntType {
 struct NameBindingDecl {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::NameBindingDecl.Define<Parse::NodeId>(
-      {.ir_name = "name_binding_decl"});
+      {.ir_name = "name_binding_decl",
+       .constant_kind = InstConstantKind::Never});
 
   InstBlockId pattern_block_id;
 };
@@ -1037,8 +1052,8 @@ struct AnyParam {
 // An output parameter. See AnyParam for member documentation.
 struct OutParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::OutParam.Define<Parse::NodeId>({.ir_name = "out_param"});
+  static constexpr auto Kind = InstKind::OutParam.Define<Parse::NodeId>(
+      {.ir_name = "out_param", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   RuntimeParamIndex runtime_index;
@@ -1048,8 +1063,8 @@ struct OutParam {
 // A by-value parameter. See AnyParam for member documentation.
 struct ValueParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::ValueParam.Define<Parse::NodeId>({.ir_name = "value_param"});
+  static constexpr auto Kind = InstKind::ValueParam.Define<Parse::NodeId>(
+      {.ir_name = "value_param", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   RuntimeParamIndex runtime_index;
@@ -1073,7 +1088,9 @@ struct AnyParamPattern {
 struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
-          {.ir_name = "out_param_pattern", .is_lowered = false});
+          {.ir_name = "out_param_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1085,7 +1102,9 @@ struct ValueParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
-          {.ir_name = "value_param_pattern", .is_lowered = false});
+          {.ir_name = "value_param_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1128,7 +1147,9 @@ struct Return {
   static constexpr auto Kind =
       InstKind::Return.Define<Parse::NodeIdOneOf<Parse::FunctionDefinitionId,
                                                  Parse::ReturnStatementId>>(
-          {.ir_name = "return", .terminator_kind = TerminatorKind::Terminator});
+          {.ir_name = "return",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
 };
@@ -1137,20 +1158,22 @@ struct Return {
 struct ReturnExpr {
   static constexpr auto Kind =
       InstKind::ReturnExpr.Define<Parse::ReturnStatementId>(
-          {.ir_name = "return", .terminator_kind = TerminatorKind::Terminator});
+          {.ir_name = "return",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
   InstId expr_id;
   // The return slot, if any. `None` if we're not returning through memory.
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // The return slot of a function declaration, as exposed in the function body.
 // This acts as an output parameter, analogous to `BindName` for input
 // parameters.
 struct ReturnSlot {
-  static constexpr auto Kind =
-      InstKind::ReturnSlot.Define<Parse::NodeId>({.ir_name = "return_slot"});
+  static constexpr auto Kind = InstKind::ReturnSlot.Define<Parse::NodeId>(
+      {.ir_name = "return_slot", .constant_kind = InstConstantKind::Never});
 
   // The type of the value that will be stored in this slot (i.e. the return
   // type of the function).
@@ -1171,7 +1194,9 @@ struct ReturnSlot {
 struct ReturnSlotPattern {
   static constexpr auto Kind =
       InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
-          {.ir_name = "return_slot_pattern", .is_lowered = false});
+          {.ir_name = "return_slot_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // The type of the value that will be stored in this slot (i.e. the return
   // type of the function).
@@ -1187,7 +1212,9 @@ struct ReturnSlotPattern {
 struct RequirementEquivalent {
   static constexpr auto Kind =
       InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
-          {.ir_name = "requirement_equivalent", .is_lowered = false});
+          {.ir_name = "requirement_equivalent",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
@@ -1198,7 +1225,9 @@ struct RequirementEquivalent {
 struct RequirementImpls {
   static constexpr auto Kind =
       InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
-          {.ir_name = "requirement_impls", .is_lowered = false});
+          {.ir_name = "requirement_impls",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
@@ -1209,7 +1238,9 @@ struct RequirementImpls {
 struct RequirementRewrite {
   static constexpr auto Kind =
       InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
-          {.ir_name = "requirement_rewrite", .is_lowered = false});
+          {.ir_name = "requirement_rewrite",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
@@ -1325,7 +1356,7 @@ struct StructInit {
 
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // A literal struct value, such as `{.a = 1, .b = 2}`.
@@ -1400,7 +1431,7 @@ struct TupleInit {
 
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // A literal tuple value.
@@ -1506,7 +1537,9 @@ struct ValueOfInitializer {
 struct VarPattern {
   static constexpr auto Kind =
       InstKind::VarPattern.Define<Parse::VariablePatternId>(
-          {.ir_name = "var_pattern", .is_lowered = false});
+          {.ir_name = "var_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1515,8 +1548,8 @@ struct VarPattern {
 // Tracks storage for a `var` pattern.
 struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::VarStorage.Define<Parse::NodeId>({.ir_name = "var"});
+  static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
+      {.ir_name = "var", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
 
@@ -1602,6 +1635,12 @@ concept HasUntypedNodeId =
 template <typename T>
 concept HasKindMemberAsField = requires {
   { &T::kind } -> std::same_as<InstKind T::*>;
+};
+
+// HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
+template <typename T>
+concept HasTypeIdMember = requires {
+  { &T::type_id } -> std::same_as<TypeId T::*>;
 };
 
 }  // namespace Internal

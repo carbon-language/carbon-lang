@@ -333,6 +333,14 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
   return eval_context.constant_values().GetInstId(const_id);
 }
 
+// Explicitly discard a `DestInstId`, because we should not be using the
+// destination as part of evaluation.
+static auto GetConstantValue(EvalContext& /*eval_context*/,
+                             SemIR::DestInstId /*inst_id*/, Phase* /*phase*/)
+    -> SemIR::DestInstId {
+  return SemIR::InstId::None;
+}
+
 // Given a type which may refer to a generic parameter, returns the
 // corresponding type in the evaluation context.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
@@ -630,21 +638,6 @@ static auto RebuildIfFieldsAreConstant(EvalContext& eval_context,
   return RebuildIfFieldsAreConstantImpl(
       eval_context, inst, [](...) { return true; }, std::identity{},
       each_field_id...);
-}
-
-// Rebuilds the given aggregate initialization instruction as a corresponding
-// constant aggregate value, if its elements are all constants.
-static auto RebuildInitAsValue(EvalContext& eval_context, SemIR::Inst inst,
-                               SemIR::InstKind value_kind)
-    -> SemIR::ConstantId {
-  return TransformIfFieldsAreConstant(
-      eval_context, inst,
-      [&](SemIR::AnyAggregateInit result) {
-        return SemIR::AnyAggregateValue{.kind = value_kind,
-                                        .type_id = result.type_id,
-                                        .elements_id = result.elements_id};
-      },
-      &SemIR::AnyAggregateInit::type_id, &SemIR::AnyAggregateInit::elements_id);
 }
 
 // Performs an access into an aggregate, retrieving the specified element.
@@ -1599,6 +1592,13 @@ static auto MakeFacetTypeResult(Context& context,
 // The result of constant evaluation of an instruction.
 class ConstantEvalResult {
  public:
+  // Produce a new constant as the result of an evaluation. The phase of the
+  // produced constant must be the same as the phase of the operands in the
+  // evaluation.
+  static auto New(SemIR::Inst inst) -> ConstantEvalResult {
+    return ConstantEvalResult(inst);
+  }
+
   // Produce an existing constant as the result of an evaluation.
   static constexpr auto Existing(SemIR::ConstantId existing_id)
       -> ConstantEvalResult {
@@ -1606,28 +1606,35 @@ class ConstantEvalResult {
     return ConstantEvalResult(existing_id);
   }
 
-  // Produce the instruction itself as a new constant.
-  static const ConstantEvalResult New;
-
   // Indicates that an error was produced by evaluation.
   static const ConstantEvalResult Error;
 
   // Returns whether the result of evaluation is that we should produce the
   // instruction itself as a new constant.
-  auto is_new() const -> bool { return !result_id.has_value(); }
+  auto is_new() const -> bool { return !result_id_.has_value(); }
 
   // Returns whether the result of evaluation is an existing constant.
-  auto existing() const -> SemIR::ConstantId { return result_id; }
+  auto existing() const -> SemIR::ConstantId { return result_id_; }
+
+  // Returns the new constant instruction that is the result of evaluation.
+  auto new_inst() const -> SemIR::Inst {
+    CARBON_CHECK(is_new());
+    return new_inst_;
+  }
 
  private:
-  explicit constexpr ConstantEvalResult(SemIR::ConstantId raw_id)
-      : result_id(raw_id) {}
+  constexpr explicit ConstantEvalResult(SemIR::ConstantId raw_id)
+      : result_id_(raw_id) {}
 
-  SemIR::ConstantId result_id;
+  explicit ConstantEvalResult(SemIR::Inst inst)
+      : result_id_(SemIR::ConstantId::None), new_inst_(inst) {}
+
+  SemIR::ConstantId result_id_;
+  union {
+    SemIR::Inst new_inst_;
+  };
 };
 
-constexpr ConstantEvalResult ConstantEvalResult::New =
-    ConstantEvalResult(SemIR::ConstantId::None);
 constexpr ConstantEvalResult ConstantEvalResult::Error =
     Existing(SemIR::ErrorInst::SingletonConstantId);
 
@@ -1638,7 +1645,7 @@ static auto EvalConstantInst(Context& context, SemIRLoc loc,
   if (!int_bound) {
     CARBON_CHECK(context.constant_values().Get(inst.bound_id).is_symbolic(),
                  "Unexpected inst {0} for template constant int", bound_inst);
-    return ConstantEvalResult::New;
+    return ConstantEvalResult::New(inst);
   }
   // TODO: We should check that the size of the resulting array type
   // fits in 64 bits, not just that the bound does. Should we use a
@@ -1659,19 +1666,49 @@ static auto EvalConstantInst(Context& context, SemIRLoc loc,
                            {.type = int_bound->type_id, .value = bound_val});
     return ConstantEvalResult::Error;
   }
-  return ConstantEvalResult::New;
+  return ConstantEvalResult::New(inst);
 }
 
 static auto EvalConstantInst(Context& context, SemIRLoc loc,
                              SemIR::IntType inst) -> ConstantEvalResult {
-  return ValidateIntType(context, loc, inst) ? ConstantEvalResult::New
+  return ValidateIntType(context, loc, inst) ? ConstantEvalResult::New(inst)
                                              : ConstantEvalResult::Error;
 }
 
 static auto EvalConstantInst(Context& context, SemIRLoc loc,
                              SemIR::FloatType inst) -> ConstantEvalResult {
-  return ValidateFloatType(context, loc, inst) ? ConstantEvalResult::New
+  return ValidateFloatType(context, loc, inst) ? ConstantEvalResult::New(inst)
                                                : ConstantEvalResult::Error;
+}
+
+// Initializers evaluate to a value of the object representation.
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::ArrayInit init) -> ConstantEvalResult {
+  // TODO: Add an `ArrayValue` to represent a constant array object
+  // representation instead of using a `TupleValue`.
+  return ConstantEvalResult::New(SemIR::TupleValue{
+      .type_id = init.type_id, .elements_id = init.inits_id});
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::ClassInit init) -> ConstantEvalResult {
+  // TODO: Add a `ClassValue` to represent a constant class object
+  // representation instead of using a `StructValue`.
+  return ConstantEvalResult::New(SemIR::StructValue{
+      .type_id = init.type_id, .elements_id = init.elements_id});
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::StructInit init) -> ConstantEvalResult {
+  return ConstantEvalResult::New(SemIR::StructValue{
+      .type_id = init.type_id, .elements_id = init.elements_id});
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::TupleInit init) -> ConstantEvalResult {
+  return ConstantEvalResult::New(SemIR::TupleValue{
+      .type_id = init.type_id, .elements_id = init.elements_id});
 }
 
 template <typename InstT>
@@ -1688,24 +1725,22 @@ static auto PerformDefaultEval(EvalContext& eval_context, SemIR::InstId inst_id,
     // its constant value.
     Phase phase = Phase::Concrete;
     if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-      if constexpr (InstT::Kind.constant_kind() ==
-                    SemIR::InstConstantKind::Always) {
+      if constexpr (ConstantKind == SemIR::InstConstantKind::Always) {
         CARBON_CHECK(phase == Phase::UnknownDueToError,
                      "{0} should always be constant", InstT::Kind);
       }
       return MakeNonConstantResult(phase);
     }
-    if constexpr (InstT::Kind.constant_kind() ==
-                      SemIR::InstConstantKind::Always ||
-                  InstT::Kind.constant_kind() ==
-                      SemIR::InstConstantKind::WheneverPossible) {
+    if constexpr (ConstantKind == SemIR::InstConstantKind::Always ||
+                  ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else {
       ConstantEvalResult result = EvalConstantInst(
           eval_context.context(), eval_context.GetDiagnosticLoc({inst_id}),
           inst.As<InstT>());
       if (result.is_new()) {
-        return MakeConstantResult(eval_context.context(), inst, phase);
+        return MakeConstantResult(eval_context.context(), result.new_inst(),
+                                  phase);
       }
       return result.existing();
     }
@@ -1776,20 +1811,14 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return PerformDefaultEval<SemIR::TupleValue>(eval_context, inst_id, inst);
     case SemIR::UnboundElementType::Kind:
       return PerformDefaultEval<SemIR::UnboundElementType>(eval_context, inst_id, inst);
-
-    // Initializers evaluate to a value of the object representation.
     case SemIR::ArrayInit::Kind:
-      // TODO: Add an `ArrayValue` to represent a constant array object
-      // representation instead of using a `TupleValue`.
-      return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
+      return PerformDefaultEval<SemIR::ArrayInit>(eval_context, inst_id, inst);
     case SemIR::ClassInit::Kind:
-      // TODO: Add a `ClassValue` to represent a constant class object
-      // representation instead of using a `StructValue`.
-      return RebuildInitAsValue(eval_context, inst, SemIR::StructValue::Kind);
+      return PerformDefaultEval<SemIR::ClassInit>(eval_context, inst_id, inst);
     case SemIR::StructInit::Kind:
-      return RebuildInitAsValue(eval_context, inst, SemIR::StructValue::Kind);
+      return PerformDefaultEval<SemIR::StructInit>(eval_context, inst_id, inst);
     case SemIR::TupleInit::Kind:
-      return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
+      return PerformDefaultEval<SemIR::TupleInit>(eval_context, inst_id, inst);
 
     case SemIR::Vtable::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
