@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
+#include <memory>
 #include <type_traits>
 
 #include "common/check.h"
@@ -219,6 +220,64 @@ auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
   }
   values_.Reserve(size);
 }
+
+// A ValueStore keyed on `FromIdT`, and maps that to a `StoredIdT`.
+template <typename FromIdT, typename StoredIdT>
+class RelationalValueStore {
+  struct ConditionalId {
+    using ValueType = std::optional<typename StoredIdT::ValueType>;
+    StoredIdT id;
+  };
+
+ public:
+  using RefType = StoredIdT::ValueType&;
+  using ConstRefType = const StoredIdT::ValueType&;
+
+  // Given the original ID and a value, stores the value and returns a mapped ID
+  // to reference it. This allows lookups later through either id.
+  auto Add(FromIdT from_id, StoredIdT::ValueType value) -> StoredIdT {
+    CARBON_DCHECK(from_id.index >= 0, "{0}", from_id);
+    StoredIdT id(from_id.index);
+    if (static_cast<size_t>(id.index) >= values_.size()) {
+      values_.resize(id.index + 1);
+    }
+    values_[id.index] = std::move(value);
+    return id;
+  }
+
+  // Returns the id of a stored value, if `try_id` has been inserted into the
+  // store, and None otherwise.
+  auto TryGetId(FromIdT try_id) const -> StoredIdT {
+    CARBON_DCHECK(try_id.index >= 0, "{0}", try_id);
+    if (static_cast<size_t>(try_id.index) >= values_.size()) {
+      return StoredIdT::None;
+    }
+    auto& opt = values_[try_id.index];
+    if (!opt.has_value()) {
+      return StoredIdT::None;
+    }
+    return StoredIdT(try_id.index);
+  }
+
+  // Returns a pointer value to the mutable value for an ID, if it's present in
+  // the store. Returns nullptr otherwise.
+  auto Get(StoredIdT id) -> RefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
+    return *values_[id.index];
+  }
+
+  auto Get(StoredIdT id) const -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
+    return *values_[id.index];
+  }
+
+ private:
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<std::optional<std::decay_t<typename StoredIdT::ValueType>>,
+                    0>
+      values_;
+};
 
 }  // namespace Carbon
 

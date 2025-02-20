@@ -224,11 +224,9 @@ class Context {
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }
-  auto complete_facet_types() -> ValueStore<SemIR::CompleteFacetTypeId>& {
+  auto complete_facet_types()
+      -> RelationalValueStore<SemIR::FacetTypeId, SemIR::CompleteFacetTypeId>& {
     return sem_ir().complete_facet_types();
-  }
-  auto facet_type_to_complete_facet_types() -> SemIR::CompleteFacetTypeStore& {
-    return sem_ir().facet_type_to_complete_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }

@@ -119,29 +119,6 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
-// A store for mappings from FacetType to CompleteFacetType. If the mapping has
-// not been established, it will be returned as `None`.
-class CompleteFacetTypeStore {
- public:
-  auto Get(FacetTypeId id) -> CompleteFacetTypeId {
-    CARBON_DCHECK(id.index >= 0);
-    if (static_cast<size_t>(id.index) >= values_.size()) {
-      return CompleteFacetTypeId::None;
-    }
-    return values_[id.index];
-  }
-  auto Set(FacetTypeId id, CompleteFacetTypeId complete_id) {
-    CARBON_DCHECK(id.index >= 0);
-    if (static_cast<size_t>(id.index) >= values_.size()) {
-      values_.resize(id.index + 1, CompleteFacetTypeId::None);
-    }
-    values_[id.index] = complete_id;
-  }
-
- private:
-  llvm::SmallVector<CompleteFacetTypeId, 0> values_;
-};
-
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
