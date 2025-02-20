@@ -18,6 +18,8 @@ auto HandleArrayExpr(Context& context) -> void {
   if (auto open_paren = context.ConsumeAndAddOpenParen(
           array_token, NodeKind::ArrayExprStart)) {
     state.token = *open_paren;
+  } else {
+    state.has_error = true;
   }
   context.PushState(state, State::ArrayExprComma);
   context.PushState(State::Expr);
@@ -25,15 +27,12 @@ auto HandleArrayExpr(Context& context) -> void {
 
 auto HandleArrayExprComma(Context& context) -> void {
   auto state = context.PopState();
-  auto comma = context.ConsumeIf(Lex::TokenKind::Comma);
-  if (!comma) {
+  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Comma, NodeKind::ArrayExprComma)) {
     context.AddLeafNode(NodeKind::ArrayExprComma, *context.position(), true);
     CARBON_DIAGNOSTIC(ExpectedArrayComma, Error,
                       "expected `,` in array(Type, Count)");
     context.emitter().Emit(*context.position(), ExpectedArrayComma);
     state.has_error = true;
-  } else {
-    context.AddLeafNode(NodeKind::ArrayExprComma, *comma, state.has_error);
   }
   context.PushState(state, State::ArrayExprFinish);
   context.PushState(State::Expr);
