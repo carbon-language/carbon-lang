@@ -829,7 +829,7 @@ auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
     return;
   }
 
-  CARBON_DIAGNOSTIC(UnsupportedLFCRLineEnding, Error,
+  CARBON_DIAGNOSTIC(UnsupportedLfCrLineEnding, Error,
                     "the LF+CR line ending is not supported, only LF and CR+LF "
                     "are supported");
   CARBON_DIAGNOSTIC(UnsupportedCRLineEnding, Error,
@@ -839,7 +839,7 @@ auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
   // TODO: This diagnostic has an unfortunate snippet -- we should tweak the
   // snippet rendering to gracefully handle CRs.
   emitter_.Emit(source_text.begin() + position,
-                is_lfcr ? UnsupportedLFCRLineEnding : UnsupportedCRLineEnding);
+                is_lfcr ? UnsupportedLfCrLineEnding : UnsupportedCRLineEnding);
 
   // Recover by treating the CR as a horizontal whitespace. This should make our
   // whitespace rules largely work and parse cleanly without disrupting the line

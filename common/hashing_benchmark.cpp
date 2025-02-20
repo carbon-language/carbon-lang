@@ -185,7 +185,7 @@ struct AbseilHashBench : HashBenchBase {
   }
 };
 
-struct LLVMHashBench : HashBenchBase {
+struct LlvmHashBench : HashBenchBase {
   template <typename T>
   auto operator()(const T& value) -> uint64_t {
     // Manually seed this with an after-the-fact XOR as there isn't a seeded
@@ -216,7 +216,7 @@ auto BM_LatencyHash(benchmark::State& state) -> void {
 #define LATENCY_VALUE_BENCHMARKS(...)                                  \
   BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, CarbonHashBench>); \
   BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, AbseilHashBench>); \
-  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, LLVMHashBench>)
+  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, LlvmHashBench>)
 LATENCY_VALUE_BENCHMARKS(uint8_t);
 LATENCY_VALUE_BENCHMARKS(uint16_t);
 LATENCY_VALUE_BENCHMARKS(std::pair<uint8_t, uint8_t>);
@@ -241,7 +241,7 @@ LATENCY_VALUE_BENCHMARKS(std::pair<int*, uint64_t>);
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, \
                            AbseilHashBench>);                       \
   BENCHMARK(                                                        \
-      BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, LLVMHashBench>)
+      BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, LlvmHashBench>)
 
 LATENCY_STRING_BENCHMARKS(/*MaxSize=*/4);
 LATENCY_STRING_BENCHMARKS(/*MaxSize=*/8);
