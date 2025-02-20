@@ -49,6 +49,17 @@ class ClangRunner {
   // Run Clang with the provided arguments.
   auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
+  // Enable leaking memory.
+  //
+  // Clang can avoid deallocating some of its memory to improve compile time.
+  // However, this isn't compatible with library-based invocations. When using
+  // the runner in a context where memory leaks are acceptable, such as from a
+  // command line driver, you can use this to enable that leaking behavior. Note
+  // that this will not override _explicit_ `args` in a run invocation that
+  // cause leaking, it will merely disable Clang's libraries injecting that
+  // behavior.
+  auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
+
  private:
   const InstallPaths* installation_;
 
@@ -57,6 +68,8 @@ class ClangRunner {
   llvm::raw_ostream* vlog_stream_;
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids_;
+
+  bool enable_leaking_ = false;
 };
 
 }  // namespace Carbon

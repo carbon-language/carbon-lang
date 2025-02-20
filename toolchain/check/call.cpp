@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"

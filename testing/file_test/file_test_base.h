@@ -63,7 +63,7 @@ class FileTestBase : public testing::Test {
   // provided at `input_stream` instead of `fs`. Otherwise, `input_stream` will
   // be null.
   //
-  // Any test expectations should be called from ValidateRun, not Run.
+  // This cannot be used for test expectations, such as EXPECT_TRUE.
   //
   // The return value should be an error if there was an abnormal error, and
   // RunResult otherwise.
@@ -72,11 +72,6 @@ class FileTestBase : public testing::Test {
                    FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
                    llvm::raw_pwrite_stream& error_stream)
       -> ErrorOr<RunResult> = 0;
-
-  // Implemented by children to do post-Run test expectations. Only called when
-  // testing. Does not need to be provided if only CHECK test expectations are
-  // used.
-  virtual auto ValidateRun() -> void {}
 
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;

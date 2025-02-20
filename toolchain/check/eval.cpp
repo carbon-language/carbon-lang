@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type.h"
@@ -462,19 +463,27 @@ static auto GetConstantValue(EvalContext& eval_context,
 static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::FacetTypeId facet_type_id,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info = eval_context.facet_types().Get(facet_type_id);
-  for (auto& interface : info.impls_constraints) {
-    interface.specific_id =
-        GetConstantValue(eval_context, interface.specific_id, phase);
+  const auto& orig = eval_context.facet_types().Get(facet_type_id);
+  SemIR::FacetTypeInfo info;
+  info.impls_constraints.reserve(orig.impls_constraints.size());
+  for (const auto& interface : orig.impls_constraints) {
+    info.impls_constraints.push_back(
+        {.interface_id = interface.interface_id,
+         .specific_id =
+             GetConstantValue(eval_context, interface.specific_id, phase)});
   }
-  for (auto& rewrite : info.rewrite_constraints) {
-    rewrite.lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
-    rewrite.rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
+  info.rewrite_constraints.reserve(orig.rewrite_constraints.size());
+  for (const auto& rewrite : orig.rewrite_constraints) {
+    auto lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
+    auto rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
     // `where` requirements using `.Self` should not be considered symbolic
-    UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.lhs_const_id, phase);
-    UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.rhs_const_id, phase);
+    UpdatePhaseIgnorePeriodSelf(eval_context, lhs_const_id, phase);
+    UpdatePhaseIgnorePeriodSelf(eval_context, rhs_const_id, phase);
+    info.rewrite_constraints.push_back(
+        {.lhs_const_id = lhs_const_id, .rhs_const_id = rhs_const_id});
   }
   // TODO: Process other requirements.
+  info.other_requirements = orig.other_requirements;
   return info;
 }
 

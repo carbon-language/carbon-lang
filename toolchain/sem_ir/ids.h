@@ -25,6 +25,7 @@ struct ExprRegion;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
+struct CompleteFacetType;
 struct Specific;
 struct ImportCpp;
 struct ImportIR;
@@ -265,7 +266,7 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   static constexpr llvm::StringLiteral Label = "assoc_const";
   using ValueType = AssociatedConstant;
 
-  // An explicitly invalid ID.
+  // An ID with no value.
   static const AssociatedConstantId None;
 
   using IdBase::IdBase;
@@ -286,6 +287,20 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 };
 
 constexpr FacetTypeId FacetTypeId::None = FacetTypeId(NoneIndex);
+
+// The ID of an resolved faceet type value.
+struct CompleteFacetTypeId : public IdBase<CompleteFacetTypeId> {
+  static constexpr llvm::StringLiteral Label = "complete_facet_type";
+  using ValueType = CompleteFacetType;
+
+  // An ID with no value.
+  static const CompleteFacetTypeId None;
+
+  using IdBase::IdBase;
+};
+
+constexpr CompleteFacetTypeId CompleteFacetTypeId::None =
+    CompleteFacetTypeId(NoneIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase<ImplId> {

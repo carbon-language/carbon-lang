@@ -146,7 +146,22 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // Note the subprocessing will effectively call `clang -cc1`, which turns into
   // `carbon-busybox clang -cc1`, which results in an equivalent `clang_main`
   // call.
-  auto cc1_main = [](llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
+  //
+  // Also note that we only do `-disable-free` filtering in the in-process
+  // execution here, as subprocesses leaking memory won't impact this process.
+  auto cc1_main = [enable_leaking = enable_leaking_](
+                      llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
+    // Clang doesn't expose any option to disable injecting `-disable-free` into
+    // the CC1 invocation, or any way to append a flag that undoes it. So to
+    // avoid leaks, we need to edit the `cc1_args` here and remove
+    // `-disable-free`.
+    //
+    // TODO: We should see if upstream would be open to some configuration hook
+    // to suppress this when it is generating the CC1 flags and use that.
+    if (!enable_leaking) {
+      llvm::erase(cc1_args, llvm::StringRef("-disable-free"));
+    }
+
     // cc1_args[0] will be the `clang_path` so we don't need the prepend arg.
     llvm::ToolContext tool_context = {
         .Path = cc1_args[0], .PrependArg = "clang", .NeedsPrependArg = false};

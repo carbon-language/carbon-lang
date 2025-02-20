@@ -157,7 +157,6 @@ auto FileTestBase::TestBody() -> void {
       ProcessTestFileAndRun(this, output_mutex_, /*dump_output=*/false,
                             absl::GetFlag(FLAGS_autoupdate));
   ASSERT_TRUE(test_file.ok()) << test_file.error();
-  ValidateRun();
   auto test_filename = std::filesystem::path(test_name_.str()).filename();
 
   // Check success/failure against `fail_` prefixes.

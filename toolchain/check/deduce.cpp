@@ -338,7 +338,10 @@ auto DeductionContext::Deduce() -> bool {
       // TODO: The call logic should reuse the conversion here (if any) instead
       // of doing the same conversion again. At the moment we throw away the
       // converted arg_id.
-      arg_id = ConvertToValueOfType(context(), loc_id_, arg_id, param_type_id);
+      arg_id = diagnose_ ? ConvertToValueOfType(context(), loc_id_, arg_id,
+                                                param_type_id)
+                         : TryConvertToValueOfType(context(), loc_id_, arg_id,
+                                                   param_type_id);
       if (arg_id == SemIR::ErrorInst::SingletonInstId) {
         return false;
       }
@@ -554,26 +557,31 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       binding_type_id =
           context().types().GetTypeIdForTypeConstantId(param_type_const_id);
 
-      // TODO: Suppress diagnostics here if `diagnose_` is false.
       DiagnosticAnnotationScope annotate_diagnostics(
           &context().emitter(),
           [&](auto& builder) { NoteInitializingParam(binding_id, builder); });
-      auto converted_arg_id = ConvertToValueOfType(
-          context(), loc_id_, deduced_arg_id, binding_type_id);
+      auto converted_arg_id =
+          diagnose_ ? ConvertToValueOfType(context(), loc_id_, deduced_arg_id,
+                                           binding_type_id)
+                    : TryConvertToValueOfType(context(), loc_id_,
+                                              deduced_arg_id, binding_type_id);
       // Replace the deduced arg with its value converted to the parameter
       // type. The conversion of the argument type must produce a constant value
       // to be used in deduction.
       if (context().constant_values().Get(converted_arg_id).is_constant()) {
         deduced_arg_id = converted_arg_id;
       } else {
-        CARBON_DIAGNOSTIC(RuntimeConversionDuringCompTimeDeduction, Error,
-                          "compile-time value requires runtime conversion, "
-                          "constructing value of type {0}",
-                          SemIR::TypeId);
-        auto diag = context().emitter().Build(
-            loc_id_, RuntimeConversionDuringCompTimeDeduction, binding_type_id);
-        NoteGenericHere(context(), generic_id_, diag);
-        diag.Emit();
+        if (diagnose_) {
+          CARBON_DIAGNOSTIC(RuntimeConversionDuringCompTimeDeduction, Error,
+                            "compile-time value requires runtime conversion, "
+                            "constructing value of type {0}",
+                            SemIR::TypeId);
+          auto diag = context().emitter().Build(
+              loc_id_, RuntimeConversionDuringCompTimeDeduction,
+              binding_type_id);
+          NoteGenericHere(context(), generic_id_, diag);
+          diag.Emit();
+        }
         deduced_arg_id = SemIR::ErrorInst::SingletonInstId;
       }
     }
