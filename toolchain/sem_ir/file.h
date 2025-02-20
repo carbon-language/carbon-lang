@@ -162,6 +162,13 @@ class File : public Printable<File> {
   auto complete_facet_types() const -> const ValueStore<CompleteFacetTypeId>& {
     return complete_facet_types_;
   }
+  auto facet_type_to_complete_facet_types() -> CompleteFacetTypeStore& {
+    return facet_type_to_complete_facet_types_;
+  }
+  auto facet_type_to_complete_facet_types() const
+      -> const CompleteFacetTypeStore& {
+    return facet_type_to_complete_facet_types_;
+  }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
   auto generics() -> GenericStore& { return generics_; }
@@ -277,6 +284,9 @@ class File : public Printable<File> {
 
   // Storage for complete facet types.
   ValueStore<CompleteFacetTypeId> complete_facet_types_;
+
+  // Storage for mapping from a facet type to its complete facet type.
+  CompleteFacetTypeStore facet_type_to_complete_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
