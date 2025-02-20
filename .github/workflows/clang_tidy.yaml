@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   clang-tidy:
-    runs-on: ubuntu-22.04
+    runs-on: macos-latest
 
     steps:
       - name: Harden Runner
