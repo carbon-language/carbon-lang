@@ -12,7 +12,10 @@
         "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
         "settings set target.source-map \".\" \"${workspaceFolder}\""
       ],
-      "env": { "TEST_TMPDIR": "/tmp" }
+      "env": { "TEST_TMPDIR": "/tmp" },
+      "sourceMap": {
+        "/proc/self/cwd/": "${workspaceFolder}"
+      }
     },
     {
       "type": "lldb-dap",
