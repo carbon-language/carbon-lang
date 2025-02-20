@@ -104,18 +104,6 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return {.value_repr = {.kind = ValueRepr::Unknown}};
   }
 
-  // Sets the value representation associated with a concrete type. This marks
-  // the type as complete.
-  auto SetValueRepr(TypeId type_id, ValueRepr value_repr) -> void {
-    CARBON_CHECK(value_repr.kind != ValueRepr::Unknown);
-    auto insert_info =
-        complete_type_info_.Insert(type_id, {.value_repr = value_repr});
-    CARBON_CHECK(insert_info.is_inserted(), "Type {0} completed more than once",
-                 type_id);
-    complete_types_.push_back(type_id);
-    CARBON_CHECK(IsComplete(type_id));
-  }
-
   // Sets the `CompleteTypeInfo` associated with a type, marking it as complete.
   // This can be used with abstract types.
   auto SetComplete(TypeId type_id, const CompleteTypeInfo& info) -> void {
@@ -169,8 +157,15 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto type_id : complete_types_) {
+        auto info = GetCompleteInfo(type_id);
         map.Add(PrintToString(type_id),
-                Yaml::OutputScalar(GetValueRepr(type_id)));
+                Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
+                  map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));
+                  if (info.abstract_class_id.has_value()) {
+                    map2.Add("abstract_class_id",
+                             Yaml::OutputScalar(info.abstract_class_id));
+                  }
+                }));
       }
     });
   }
