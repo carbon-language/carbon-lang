@@ -1662,6 +1662,18 @@ static auto EvalConstantInst(Context& context, SemIRLoc loc,
   return ConstantEvalResult::New;
 }
 
+static auto EvalConstantInst(Context& context, SemIRLoc loc,
+                             SemIR::IntType inst) -> ConstantEvalResult {
+  return ValidateIntType(context, loc, inst) ? ConstantEvalResult::New
+                                             : ConstantEvalResult::Error;
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc loc,
+                             SemIR::FloatType inst) -> ConstantEvalResult {
+  return ValidateFloatType(context, loc, inst) ? ConstantEvalResult::New
+                                               : ConstantEvalResult::Error;
+}
+
 template <typename InstT>
 static auto PerformDefaultEval(EvalContext& eval_context, SemIR::InstId inst_id,
                                SemIR::Inst inst) -> SemIR::ConstantId {
@@ -1744,59 +1756,26 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return PerformDefaultEval<SemIR::GenericInterfaceType>(eval_context,
                                                              inst_id, inst);
     case SemIR::ImplWitness::Kind:
-      // We intentionally don't replace the `elements_id` field here. We want to
-      // track that specific InstBlock in particular, not coalesce blocks with
-      // the same members. That block may get updated, and we want to pick up
-      // those changes.
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::ImplWitness::specific_id);
-    case CARBON_KIND(SemIR::IntType int_type): {
-      return RebuildAndValidateIfFieldsAreConstant(
-          eval_context, inst,
-          [&](SemIR::IntType result) {
-            return ValidateIntType(
-                eval_context.context(),
-                eval_context.GetDiagnosticLoc({inst_id, int_type.bit_width_id}),
-                result);
-          },
-          &SemIR::IntType::bit_width_id);
-    }
+      return PerformDefaultEval<SemIR::ImplWitness>(eval_context, inst_id,
+                                                    inst);
+    case SemIR::IntType::Kind:
+      return PerformDefaultEval<SemIR::IntType>(eval_context, inst_id, inst);
     case SemIR::PointerType::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::PointerType::pointee_id);
-    case CARBON_KIND(SemIR::FloatType float_type): {
-      return RebuildAndValidateIfFieldsAreConstant(
-          eval_context, inst,
-          [&](SemIR::FloatType result) {
-            return ValidateFloatType(eval_context.context(),
-                                     eval_context.GetDiagnosticLoc(
-                                         {inst_id, float_type.bit_width_id}),
-                                     result);
-          },
-          &SemIR::FloatType::bit_width_id);
-    }
+      return PerformDefaultEval<SemIR::PointerType>(eval_context, inst_id, inst);
+    case SemIR::FloatType::Kind:
+      return PerformDefaultEval<SemIR::FloatType>(eval_context, inst_id, inst);
     case SemIR::SpecificFunction::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::SpecificFunction::callee_id,
-                                        &SemIR::SpecificFunction::specific_id);
+      return PerformDefaultEval<SemIR::SpecificFunction>(eval_context, inst_id, inst);
     case SemIR::StructType::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::StructType::fields_id);
+      return PerformDefaultEval<SemIR::StructType>(eval_context, inst_id, inst);
     case SemIR::StructValue::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::StructValue::type_id,
-                                        &SemIR::StructValue::elements_id);
+      return PerformDefaultEval<SemIR::StructValue>(eval_context, inst_id, inst);
     case SemIR::TupleType::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::TupleType::elements_id);
+      return PerformDefaultEval<SemIR::TupleType>(eval_context, inst_id, inst);
     case SemIR::TupleValue::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::TupleValue::type_id,
-                                        &SemIR::TupleValue::elements_id);
+      return PerformDefaultEval<SemIR::TupleValue>(eval_context, inst_id, inst);
     case SemIR::UnboundElementType::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::UnboundElementType::class_type_id,
-          &SemIR::UnboundElementType::element_type_id);
+      return PerformDefaultEval<SemIR::UnboundElementType>(eval_context, inst_id, inst);
 
     // Initializers evaluate to a value of the object representation.
     case SemIR::ArrayInit::Kind:

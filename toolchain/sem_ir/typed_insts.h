@@ -1604,12 +1604,6 @@ concept HasKindMemberAsField = requires {
   { &T::kind } -> std::same_as<InstKind T::*>;
 };
 
-// HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
-template <typename T>
-concept HasTypeIdMember = requires {
-  { &T::type_id } -> std::same_as<TypeId T::*>;
-};
-
 }  // namespace Internal
 
 }  // namespace Carbon::SemIR

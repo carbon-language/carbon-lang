@@ -5,13 +5,26 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 
+#include <concepts>
 #include <cstdint>
 
 #include "common/check.h"
 #include "common/enum_base.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
+
+// This concept is an implementation detail of the library, not public API.
+namespace Internal {
+
+// HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
+template <typename T>
+concept HasTypeIdMember = requires {
+  { &T::type_id } -> std::same_as<TypeId T::*>;
+};
+
+}  // namespace Internal
 
 // Whether an instruction defines a type.
 enum class InstIsType : int8_t {
@@ -35,20 +48,30 @@ enum class InstValueKind : int8_t {
   Typed,
 };
 
-// Whether an instruction can be used to define a constant value. This specifies
-// whether the instruction can be added to the `constants()` list. Note that
-// even instructions that cannot define a constant value can still have an
-// associated `constant_value()`, but the constant value will be a different
-// kind of instruction.
+// Whether an instruction can have a constant value, and whether it can be used
+// to define a constant value.
+//
+// This specifies whether an instruction of this kind can have a corresponding
+// constant value in the `constant_values()` list, and whether an instruction of
+// this kind can be added to the `constants()` list.
 enum class InstConstantKind : int8_t {
-  // This instruction never defines a constant value. For example,
-  // `UnaryOperatorNot` never defines a constant value; if its operand is a
-  // concrete constant, its constant value will instead be a `BoolLiteral`. This
-  // is also used for instructions that don't produce a value at all.
+  // Used when the kind is not specified explicitly for an instruction. This is
+  // replaced by `Never` for instructions with a value kind of `None`, and is
+  // replaced by `Indirect` otherwise.
+  Unspecified,
+  // This instruction is never constant. Its constant value is always
+  // `NotConstant`. This is also used for instructions that don't produce a
+  // value at all.
   Never,
-  // This instruction may be a symbolic constant, depending on its operands, but
-  // is never a concrete constant. For example, a `Call` instruction can be a
-  // symbolic constant but never a concrete constant.
+  // This instruction never defines a constant value, but can evaluate to a
+  // constant value of a different kind. For example, `UnaryOperatorNot` never
+  // defines a constant value; if its operand is a concrete constant, its
+  // constant value will instead be a `BoolLiteral`.
+  Indirect,
+  // This instruction may define a symbolic constant, depending on its operands,
+  // but never a concrete constant. For example, a `Call` instruction can define
+  // a symbolic constant but never a concrete constant. The instruction may have
+  // a concrete constant value of a different kind.
   SymbolicOnly,
   // This instruction can define a symbolic or concrete constant, but might not
   // have a constant value, might have a constant value that is not defined by
@@ -104,7 +127,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   struct DefinitionInfo {
     llvm::StringLiteral ir_name;
     InstIsType is_type = InstIsType::Never;
-    InstConstantKind constant_kind = InstConstantKind::Never;
+    InstConstantKind constant_kind = InstConstantKind::Unspecified;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
@@ -194,6 +217,12 @@ class InstKind::Definition : public InstKind {
   // Returns whether this instruction kind defines a type.
   constexpr auto is_type() const -> InstIsType { return info_.is_type; }
 
+  // Returns whether this instruction kind is expected to produce a value.
+  static constexpr auto value_kind() -> InstValueKind {
+    return Internal::HasTypeIdMember<TypedNodeIdArg> ? InstValueKind::Typed
+                                                     : InstValueKind::None;
+  }
+
   // Returns this instruction kind's category of allowed constants.
   constexpr auto constant_kind() const -> InstConstantKind {
     return info_.constant_kind;
@@ -224,6 +253,13 @@ class InstKind::Definition : public InstKind {
 template <typename TypedNodeId>
 constexpr auto InstKind::Define(DefinitionInfo info) const
     -> Definition<TypedNodeId> {
+  if (info.constant_kind == InstConstantKind::Unspecified) {
+    info.constant_kind =
+        Definition<TypedNodeId>::value_kind() == InstValueKind::None
+            ? InstConstantKind::Never
+            : InstConstantKind::Indirect;
+  }
+
   return Definition<TypedNodeId>(*this, info);
 }
 

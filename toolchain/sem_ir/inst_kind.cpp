@@ -23,9 +23,7 @@ auto InstKind::definition_info(InstKind inst_kind) -> const DefinitionInfo& {
 
 auto InstKind::value_kind() const -> InstValueKind {
   static constexpr InstValueKind Table[] = {
-#define CARBON_SEM_IR_INST_KIND(Name)                           \
-  Internal::HasTypeIdMember<SemIR::Name> ? InstValueKind::Typed \
-                                         : InstValueKind::None,
+#define CARBON_SEM_IR_INST_KIND(Name) Definition<SemIR::Name>::value_kind(),
 #include "toolchain/sem_ir/inst_kind.def"
   };
   return Table[AsInt()];
