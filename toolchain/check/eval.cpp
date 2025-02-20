@@ -48,8 +48,6 @@ class EvalContext {
   // TODO: This is also sometimes unavailable.
   auto fallback_loc() const -> SemIRLoc { return fallback_loc_; }
 
-  auto SetFallbackLoc(SemIRLoc loc) { fallback_loc_ = loc; }
-
   // Returns a location to use to point at an instruction in a diagnostic, given
   // a list of instructions that might have an attached location. This is the
   // location of the first instruction in the list that has a location if there
@@ -1633,11 +1631,6 @@ constexpr ConstantEvalResult ConstantEvalResult::New =
 constexpr ConstantEvalResult ConstantEvalResult::Error =
     Existing(SemIR::ErrorInst::SingletonConstantId);
 
-static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                             SemIR::AddrOf /*inst*/) -> ConstantEvalResult {
-  return ConstantEvalResult::New;
-}
-
 static auto EvalConstantInst(Context& context, SemIRLoc loc,
                              SemIR::ArrayType inst) -> ConstantEvalResult {
   auto bound_inst = context.insts().Get(inst.bound_id);
@@ -1669,38 +1662,42 @@ static auto EvalConstantInst(Context& context, SemIRLoc loc,
   return ConstantEvalResult::New;
 }
 
-static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                             SemIR::AssociatedEntityType /*inst*/)
-    -> ConstantEvalResult {
-  return ConstantEvalResult::New;
-}
-
-static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                             SemIR::BoundMethod /*inst*/)
-    -> ConstantEvalResult {
-  return ConstantEvalResult::New;
-}
-
 template <typename InstT>
-static auto PerformDefaultEval(EvalContext& eval_context, SemIR::Inst inst)
-    -> SemIR::ConstantId {
-  // Build a constant instruction by replacing each non-constant operand with
-  // its constant value.
-  Phase phase = Phase::Concrete;
-  if (!ReplaceAllFieldsWithConstantValues(
-          eval_context, &inst, &phase)) {
-    return MakeNonConstantResult(phase);
+static auto PerformDefaultEval(EvalContext& eval_context, SemIR::InstId inst_id,
+                               SemIR::Inst inst) -> SemIR::ConstantId {
+  constexpr auto ConstantKind = InstT::Kind.constant_kind();
+  if constexpr (ConstantKind == SemIR::InstConstantKind::Never) {
+    return SemIR::ConstantId::NotConstant;
+  } else if constexpr (ConstantKind == SemIR::InstConstantKind::Unique) {
+    CARBON_CHECK(inst_id.has_value());
+    return SemIR::ConstantId::ForConcreteConstant(inst_id);
+  } else {
+    // Build a constant instruction by replacing each non-constant operand with
+    // its constant value.
+    Phase phase = Phase::Concrete;
+    if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+      if constexpr (InstT::Kind.constant_kind() ==
+                    SemIR::InstConstantKind::Always) {
+        CARBON_CHECK(phase == Phase::UnknownDueToError,
+                     "{0} should always be constant", InstT::Kind);
+      }
+      return MakeNonConstantResult(phase);
+    }
+    if constexpr (InstT::Kind.constant_kind() ==
+                      SemIR::InstConstantKind::Always ||
+                  InstT::Kind.constant_kind() ==
+                      SemIR::InstConstantKind::WheneverPossible) {
+      return MakeConstantResult(eval_context.context(), inst, phase);
+    } else {
+      ConstantEvalResult result = EvalConstantInst(
+          eval_context.context(), eval_context.GetDiagnosticLoc({inst_id}),
+          inst.As<InstT>());
+      if (result.is_new()) {
+        return MakeConstantResult(eval_context.context(), inst, phase);
+      }
+      return result.existing();
+    }
   }
-  ConstantEvalResult result = ConstantEvalResult::New;
-  if constexpr (InstT::Kind.constant_kind() !=
-                SemIR::InstConstantKind::Always) {
-    result = EvalConstantInst(eval_context.context(),
-                              eval_context.fallback_loc(), inst.As<InstT>());
-  }
-  if (result.is_new()) {
-    return MakeConstantResult(eval_context.context(), inst, phase);
-  }
-  return result.existing();
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
@@ -1716,39 +1713,36 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
   CARBON_KIND_SWITCH(inst) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:
-      return PerformDefaultEval<SemIR::AddrOf>(eval_context, inst);
+      return PerformDefaultEval<SemIR::AddrOf>(eval_context, inst_id, inst);
     case SemIR::ArrayType::Kind:
-      return PerformDefaultEval<SemIR::ArrayType>(eval_context, inst);
+      return PerformDefaultEval<SemIR::ArrayType>(eval_context, inst_id, inst);
     case SemIR::AssociatedEntity::Kind:
-      return PerformDefaultEval<SemIR::AssociatedEntity>(eval_context, inst);
+      return PerformDefaultEval<SemIR::AssociatedEntity>(eval_context, inst_id,
+                                                         inst);
     case SemIR::AssociatedEntityType::Kind:
-      return PerformDefaultEval<SemIR::AssociatedEntityType>(eval_context, inst);
+      return PerformDefaultEval<SemIR::AssociatedEntityType>(eval_context,
+                                                             inst_id, inst);
     case SemIR::BoundMethod::Kind:
-      return PerformDefaultEval<SemIR::BoundMethod>(eval_context, inst);
+      return PerformDefaultEval<SemIR::BoundMethod>(eval_context, inst_id,
+                                                    inst);
     case SemIR::ClassType::Kind:
-      return PerformDefaultEval<SemIR::ClassType>(eval_context, inst);
+      return PerformDefaultEval<SemIR::ClassType>(eval_context, inst_id, inst);
     case SemIR::CompleteTypeWitness::Kind:
-      return PerformDefaultEval<SemIR::CompleteTypeWitness>(eval_context, inst);
+      return PerformDefaultEval<SemIR::CompleteTypeWitness>(eval_context,
+                                                            inst_id, inst);
     case SemIR::FacetValue::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::FacetValue::type_id,
-                                        &SemIR::FacetValue::type_inst_id,
-                                        &SemIR::FacetValue::witness_inst_id);
+      return PerformDefaultEval<SemIR::FacetValue>(eval_context, inst_id, inst);
     case SemIR::FunctionType::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::FunctionType::specific_id);
+      return PerformDefaultEval<SemIR::FunctionType>(eval_context, inst_id, inst);
     case SemIR::FunctionTypeWithSelfType::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst,
-          &SemIR::FunctionTypeWithSelfType::interface_function_type_id,
-          &SemIR::FunctionTypeWithSelfType::self_id);
+      return PerformDefaultEval<SemIR::FunctionTypeWithSelfType>(eval_context,
+                                                                 inst_id, inst);
     case SemIR::GenericClassType::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::GenericClassType::enclosing_specific_id);
+      return PerformDefaultEval<SemIR::GenericClassType>(eval_context, inst_id,
+                                                         inst);
     case SemIR::GenericInterfaceType::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst,
-          &SemIR::GenericInterfaceType::enclosing_specific_id);
+      return PerformDefaultEval<SemIR::GenericInterfaceType>(eval_context,
+                                                             inst_id, inst);
     case SemIR::ImplWitness::Kind:
       // We intentionally don't replace the `elements_id` field here. We want to
       // track that specific InstBlock in particular, not coalesce blocks with
@@ -2323,8 +2317,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
       });
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
-    eval_context.SetFallbackLoc(
-        context.insts().GetLocId(inst_id).has_value() ? inst_id : loc);
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);

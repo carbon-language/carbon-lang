@@ -51,12 +51,25 @@ enum class InstConstantKind : int8_t {
   // symbolic constant but never a concrete constant.
   SymbolicOnly,
   // This instruction can define a symbolic or concrete constant, but might not
-  // have a constant value, depending on its operands. For example, a
-  // `TupleValue` can define a constant if its operands are constants.
+  // have a constant value, might have a constant value that is not defined by
+  // itself, or might result in a compile-time error, depending on its operands.
+  // For example, `ArrayType` is a compile-time constant if its operands are
+  // constant and its array bound is within a valid range.
   Conditional,
-  // This instruction always has a constant value of the same kind. For example,
-  // `IntValue`.
+  // This instruction defines a symbolic or concrete constant whenever its
+  // operands are constant. Otherwise, it is non-constant. For example, a
+  // `TupleValue` defines a constant if and only if its operands are constants.
+  // Constant evaluation support for types with this constant kind is provided
+  // automatically.
+  WheneverPossible,
+  // This instruction always has a constant value of the same kind. This is the
+  // same as `WheneverPossible`, except that the operands are known in advance
+  // to always be constant. For example, `IntValue`.
   Always,
+  // This instruction is a unique constant. This is used for declarations whose
+  // constant identity is simply themselves.
+  // TODO: Decide if this is the model we want for these cases.
+  Unique,
 };
 
 // Whether an instruction is a terminator or part of the terminator sequence.

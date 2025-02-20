@@ -72,7 +72,9 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
         "instruction in lowered contexts. Instruction: {0}",
         inst);
   } else if constexpr (InstT::Kind.constant_kind() ==
-                       SemIR::InstConstantKind::Always) {
+                           SemIR::InstConstantKind::Always ||
+                       InstT::Kind.constant_kind() ==
+                           SemIR::InstConstantKind::Unique) {
     CARBON_FATAL("Missing constant value for constant instruction {0}", inst);
   } else if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Always) {
     // For instructions that are always of type `type`, produce the trivial
