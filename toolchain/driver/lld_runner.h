@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_DRIVER_LLD_RUNNER_H_
 
 #include "common/ostream.h"
+#include "lld/Common/Driver.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/tool_runner_base.h"
@@ -23,6 +24,11 @@ class LldRunner : ToolRunnerBase {
 
   // Run LLD as a Darwin-style linker with the provided arguments.
   auto MachOLink(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+
+ private:
+  auto LinkHelper(llvm::StringLiteral label,
+                  llvm::ArrayRef<llvm::StringRef> args, const std::string& path,
+                  lld::DriverDef driver_def) -> bool;
 };
 
 }  // namespace Carbon

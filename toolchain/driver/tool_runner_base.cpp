@@ -18,9 +18,9 @@ ToolRunnerBase::ToolRunnerBase(const InstallPaths* install_paths,
 
 auto ToolRunnerBase::BuildCStrArgs(llvm::StringRef tool_name,
                                    llvm::StringRef tool_path,
+                                   std::optional<llvm::StringRef> verbose_flag,
                                    llvm::ArrayRef<llvm::StringRef> args,
-                                   llvm::OwningArrayRef<char>& cstr_arg_storage,
-                                   std::optional<llvm::StringRef> verbose_flag)
+                                   llvm::OwningArrayRef<char>& cstr_arg_storage)
     -> llvm::SmallVector<const char*, 64> {
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
 

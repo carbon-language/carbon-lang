@@ -46,15 +46,18 @@ class ToolRunnerBase {
   // `vlog_stream_` is bound to stderr for this instance, the verbose flag will
   // be injected at the start of the argument list.
   auto BuildCStrArgs(llvm::StringRef tool_name, llvm::StringRef tool_path,
+                     std::optional<llvm::StringRef> verbose_flag,
                      llvm::ArrayRef<llvm::StringRef> args,
-                     llvm::OwningArrayRef<char>& cstr_arg_storage,
-                     std::optional<llvm::StringRef> verbose_flag = {})
+                     llvm::OwningArrayRef<char>& cstr_arg_storage)
       -> llvm::SmallVector<const char*, 64>;
 
-  // Note, named with `_`s for consistency with other private members when this
-  // is a private base.
+  // We use protected members as this base is just factoring out common
+  // implementation details of other runners.
+  //
+  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
   const InstallPaths* installation_;
   llvm::raw_ostream* vlog_stream_;
+  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 }  // namespace Carbon

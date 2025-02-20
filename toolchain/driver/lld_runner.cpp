@@ -10,7 +10,6 @@
 #include <optional>
 
 #include "common/vlog.h"
-#include "lld/Common/Driver.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -22,17 +21,19 @@ LLD_HAS_DRIVER(macho)
 
 namespace Carbon {
 
-auto LldRunner::ElfLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto LldRunner::LinkHelper(llvm::StringLiteral label,
+                           llvm::ArrayRef<llvm::StringRef> args,
+                           const std::string& path,
+                           lld::DriverDef driver_def) -> bool {
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.
   llvm::OwningArrayRef<char> cstr_arg_storage;
-  llvm::SmallVector<const char*, 64> cstr_args = BuildCStrArgs(
-      "LLD", installation_->ld_lld_path(), args, cstr_arg_storage, "-v");
+  llvm::SmallVector<const char*, 64> cstr_args =
+      BuildCStrArgs("LLD", path, "-v", args, cstr_arg_storage);
 
-  CARBON_VLOG("Running LLD GNU-platform link...\n");
+  CARBON_VLOG("Running LLD {0}-platform link...\n", label);
   lld::Result result =
-      lld::lldMain(cstr_args, llvm::outs(), llvm::errs(),
-                   {lld::DriverDef{.f = lld::Gnu, .d = &lld::elf::link}});
+      lld::lldMain(cstr_args, llvm::outs(), llvm::errs(), {driver_def});
 
   // Check for an unrecoverable error.
   CARBON_CHECK(result.canRunAgain, "LLD encountered an unrecoverable error!");
@@ -41,23 +42,14 @@ auto LldRunner::ElfLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   return result.retCode == 0;
 }
 
+auto LldRunner::ElfLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+  return LinkHelper("GNU", args, installation_->ld_lld_path(),
+                    {.f = lld::Gnu, .d = &lld::elf::link});
+}
+
 auto LldRunner::MachOLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  // Allocate one chunk of storage for the actual C-strings and a vector of
-  // pointers into the storage.
-  llvm::OwningArrayRef<char> cstr_arg_storage;
-  llvm::SmallVector<const char*, 64> cstr_args = BuildCStrArgs(
-      "LLD", installation_->ld64_lld_path(), args, cstr_arg_storage, "-v");
-
-  CARBON_VLOG("Running LLD Darwin-platform link...\n");
-  lld::Result result =
-      lld::lldMain(cstr_args, llvm::outs(), llvm::errs(),
-                   {lld::DriverDef{.f = lld::Darwin, .d = &lld::macho::link}});
-
-  // Check for an unrecoverable error.
-  CARBON_CHECK(result.canRunAgain, "LLD encountered an unrecoverable error!");
-
-  // TODO: Should this be forwarding the full exit code?
-  return result.retCode == 0;
+  return LinkHelper("Darwin", args, installation_->ld64_lld_path(),
+                    {.f = lld::Darwin, .d = &lld::macho::link});
 }
 
 }  // namespace Carbon

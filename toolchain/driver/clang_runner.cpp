@@ -56,7 +56,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // Rebuild the args as C-string args.
   llvm::OwningArrayRef<char> cstr_arg_storage;
   llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs("Clang", clang_path, args, cstr_arg_storage, "-v");
+      BuildCStrArgs("Clang", clang_path, "-v", args, cstr_arg_storage);
 
   if (!args.empty() && args[0].starts_with("-cc1")) {
     CARBON_VLOG("Calling clang_main for cc1...");
