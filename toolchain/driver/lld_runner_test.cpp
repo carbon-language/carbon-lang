@@ -31,7 +31,7 @@ using ::testing::HasSubstr;
 using ::testing::Not;
 using ::testing::StrEq;
 
-TEST(LLDRunnerTest, Version) {
+TEST(LldRunnerTest, Version) {
   RawStringOstream test_os;
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
