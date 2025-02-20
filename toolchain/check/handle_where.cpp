@@ -66,12 +66,10 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // If the type of the associated constant is symbolic, we defer conversion
     // until the constraint is resolved, in case it depends on `Self` (which
     // will now be a reference to `.Self`).
-    // TODO: It would be simpler to always defer this conversion until the
-    // constraint is resolved.
     // For now we convert to a value expression eagerly because otherwise we'll
     // often be unable to constant-evaluate the enclosing `where` expression.
-    // TODO: Find another way to handle this that allows us to only convert the
-    // RHS once.
+    // TODO: Perform the conversion symbolically and add an implicit constraint
+    // that this conversion is valid and produces a constant.
     rhs_id = ConvertToValueExpr(context, rhs_id);
   } else {
     rhs_id = ConvertToValueOfType(context, rhs_node, rhs_id,
@@ -116,6 +114,8 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     rhs_as_type.inst_id = SemIR::ErrorInst::SingletonInstId;
   }
   // TODO: Require that at least one side uses a designator.
+  // TODO: For things like `HashSet(.T) as type`, add an implied constraint
+  // that `.T impls Hash`.
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(

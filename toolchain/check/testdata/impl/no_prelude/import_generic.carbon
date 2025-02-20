@@ -296,9 +296,9 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//import_generic, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.I: %I.type.dac = import_ref Main//import_generic, I, loaded [concrete = constants.%I.generic]
-// CHECK:STDOUT:   %Main.import_ref.003 = import_ref Main//import_generic, loc8_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//import_generic, loc5_13, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.003 = import_ref Main//import_generic, loc8_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//import_generic, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//import_generic, loc8_14, loaded [symbolic = @impl.1.%T (constants.%T)]

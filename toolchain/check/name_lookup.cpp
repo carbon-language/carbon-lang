@@ -241,7 +241,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    RequireDefinedType(
+    RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
         loc_id, [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
@@ -256,21 +256,21 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    RequireDefinedType(
+    auto complete_id = RequireCompleteFacetType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-        loc_id, [&] {
-          CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
-                            "member access into undefined interface {0}",
-                            InstIdAsType);
-          return context.emitter().Build(
-              loc_id, QualifiedExprInUndefinedInterfaceScope, base_id);
-        });
-    const auto& facet_type_info =
-        context.facet_types().Get(base_as_facet_type->facet_type_id);
-    for (auto interface : facet_type_info.impls_constraints) {
-      auto& interface_info = context.interfaces().Get(interface.interface_id);
-      scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
-                                    .specific_id = interface.specific_id});
+        loc_id, *base_as_facet_type, FacetTypeMemberAccess);
+    if (complete_id.has_value()) {
+      const auto& resolved = context.complete_facet_types().Get(complete_id);
+      for (const auto& interface : resolved.required_interfaces) {
+        auto& interface_info = context.interfaces().Get(interface.interface_id);
+        scopes->push_back({.name_scope_id = interface_info.scope_id,
+                           .specific_id = interface.specific_id});
+      }
+    } else {
+      // Lookup into this scope should fail without producing an error since
+      // `RequireCompleteFacetType` has already issued a diagnostic.
+      scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
+                                    .specific_id = SemIR::SpecificId::None});
     }
     return true;
   }

@@ -2004,6 +2004,15 @@ interface NSpacePoint {
 }
 ```
 
+The pattern of an associated constant declaration must be a symbolic binding
+pattern, and unlike other `let` declarations, an associated constant declaration
+cannot have an initializer unless it's
+[preceded by `default`](#interface-defaults):
+
+_associated-constant-decl_ ::= `let` _identifier_ `:!` _expression_ `;`
+_associated-constant-decl_ ::= `default` `let` _identifier_ `:!` _expression_ =
+_expression_ `;`
+
 An implementation of an interface specifies values for associated constants with
 a [`where` clause](#where-constraints). For example, implementations of
 `NSpacePoint` for different types might have different values for `N`:

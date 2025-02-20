@@ -6,15 +6,30 @@
 
 namespace Carbon::SemIR {
 
-template <typename VecT>
-static auto SortAndDeduplicate(VecT& vec) -> void {
-  llvm::sort(vec);
+template <typename VecT, typename CompareT>
+static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {
+  llvm::sort(vec, compare);
   vec.erase(llvm::unique(vec), vec.end());
 }
 
+// Canonically ordered by the numerical ids.
+static auto ImplsLess(const FacetTypeInfo::ImplsConstraint& lhs,
+                      const FacetTypeInfo::ImplsConstraint& rhs) -> bool {
+  return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
+         std::tie(rhs.interface_id.index, rhs.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
+                        const FacetTypeInfo::RewriteConstraint& rhs) -> bool {
+  return std::tie(lhs.lhs_const_id.index, lhs.rhs_const_id.index) <
+         std::tie(rhs.lhs_const_id.index, rhs.rhs_const_id.index);
+}
+
 auto FacetTypeInfo::Canonicalize() -> void {
-  SortAndDeduplicate(impls_constraints);
-  SortAndDeduplicate(rewrite_constraints);
+  CARBON_CHECK(!complete_id.has_value());
+  SortAndDeduplicate(impls_constraints, ImplsLess);
+  SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
 
 auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
@@ -42,6 +57,10 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
 
   if (other_requirements) {
     out << outer_sep << "+ TODO requirements";
+  }
+
+  if (complete_id.has_value()) {
+    out << outer_sep << "complete: " << complete_id;
   }
   out << "}";
 }

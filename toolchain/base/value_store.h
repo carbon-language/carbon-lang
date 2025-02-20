@@ -146,6 +146,9 @@ class CanonicalValueStore {
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType { return values_.Get(id); }
 
+  // Returns the value for an ID. Changes should not affect hash or ==.
+  auto GetMutable(IdT id) -> RefType { return values_.Get(id); }
+
   // Looks up the canonical ID for a value, or returns `None` if not in the
   // store.
   auto Lookup(ValueType value) const -> IdT;
