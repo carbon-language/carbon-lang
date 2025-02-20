@@ -754,7 +754,7 @@ class FormatterImpl {
   template <typename InstT>
   auto FormatInst(InstId inst_id, InstT inst) -> void {
     Indent();
-    FormatInstLHS(inst_id, inst);
+    FormatInstLhs(inst_id, inst);
     out_ << InstT::Kind.ir_name();
     pending_constant_value_ = sem_ir_->constant_values().Get(inst_id);
     pending_constant_value_is_self_ =
@@ -768,7 +768,7 @@ class FormatterImpl {
   // Don't print a constant for ImportRefUnloaded.
   auto FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
     Indent();
-    FormatInstLHS(inst_id, inst);
+    FormatInstLhs(inst_id, inst);
     out_ << ImportRefUnloaded::Kind.ir_name();
     FormatInstRHS(inst);
     out_ << "\n";
@@ -835,7 +835,7 @@ class FormatterImpl {
     pending_constant_value_ = ConstantId::NotConstant;
   }
 
-  auto FormatInstLHS(InstId inst_id, Inst inst) -> void {
+  auto FormatInstLhs(InstId inst_id, Inst inst) -> void {
     switch (inst.kind().value_kind()) {
       case InstValueKind::Typed:
         FormatName(inst_id);
@@ -863,20 +863,20 @@ class FormatterImpl {
   }
 
   // Format ImportCppDecl name.
-  auto FormatInstLHS(InstId inst_id, ImportCppDecl /*inst*/) -> void {
+  auto FormatInstLhs(InstId inst_id, ImportCppDecl /*inst*/) -> void {
     FormatName(inst_id);
     out_ << " = ";
   }
 
   // Format ImportDecl with its name.
-  auto FormatInstLHS(InstId inst_id, ImportDecl /*inst*/) -> void {
+  auto FormatInstLhs(InstId inst_id, ImportDecl /*inst*/) -> void {
     FormatName(inst_id);
     out_ << " = ";
   }
 
   // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
-  auto FormatInstLHS(InstId inst_id, ImportRefUnloaded /*inst*/) -> void {
+  auto FormatInstLhs(InstId inst_id, ImportRefUnloaded /*inst*/) -> void {
     FormatName(inst_id);
     out_ << " = ";
   }

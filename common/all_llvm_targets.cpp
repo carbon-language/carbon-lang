@@ -7,7 +7,7 @@
 
 namespace Carbon {
 
-static auto InitLLVMTargets() -> void {
+static auto InitLlvmTargets() -> void {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
@@ -15,9 +15,9 @@ static auto InitLLVMTargets() -> void {
   llvm::InitializeAllAsmPrinters();
 }
 
-// On program startup, set `InitLLVM::InitializeTargets` to be our
-// initialization function so that `InitLLVM` can call it at the right moment.
-const char InitLLVM::RegisterTargets =
-    (InitializeTargets = &InitLLVMTargets, 0);
+// On program startup, set `InitLlvm::InitializeTargets` to be our
+// initialization function so that `InitLlvm` can call it at the right moment.
+const char InitLlvm::RegisterTargets =
+    (InitializeTargets = &InitLlvmTargets, 0);
 
 }  // namespace Carbon

@@ -136,7 +136,7 @@ enum class MapOverride : uint8_t {
   Abseil,
   Boost,
   LLVM,
-  LLVMAndCarbonHash,
+  LlvmAndCarbonHash,
 };
 #ifndef CARBON_MAP_BENCH_OVERRIDE
 #define CARBON_MAP_BENCH_OVERRIDE None
@@ -159,7 +159,7 @@ struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>, MapOverride::LLVM>
 
 template <typename KeyT, typename ValueT, int MinSmallSize>
 struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>,
-                          MapOverride::LLVMAndCarbonHash>
+                          MapOverride::LlvmAndCarbonHash>
     : MapWrapperImpl<llvm::DenseMap<KeyT, ValueT, CarbonHashDI<KeyT>>> {};
 
 template <typename MapT>

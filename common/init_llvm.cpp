@@ -9,7 +9,7 @@
 
 namespace Carbon {
 
-InitLLVM::InitLLVM(int& argc, char**& argv)
+InitLlvm::InitLlvm(int& argc, char**& argv)
     : init_llvm_(argc, argv),
       // LLVM assumes that argc and argv won't change, and registers them with
       // an `llvm::PrettyStackTraceProgram` that will crash if an argv element
@@ -39,6 +39,6 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
   llvm::errs().tie(&llvm::outs());
 }
 
-InitLLVM::InitializeTargetsFn* InitLLVM::InitializeTargets = nullptr;
+InitLlvm::InitializeTargetsFn* InitLlvm::InitializeTargets = nullptr;
 
 }  // namespace Carbon

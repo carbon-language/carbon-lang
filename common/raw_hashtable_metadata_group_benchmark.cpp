@@ -41,13 +41,13 @@ class BenchmarkPortableMetadataGroup : public MetadataGroup {
 };
 
 // Override the core API with explicit use of the SIMD API.
-class BenchmarkSIMDMetadataGroup : public MetadataGroup {
+class BenchmarkSimdMetadataGroup : public MetadataGroup {
  public:
-  explicit BenchmarkSIMDMetadataGroup(MetadataGroup g) : MetadataGroup(g) {}
+  explicit BenchmarkSimdMetadataGroup(MetadataGroup g) : MetadataGroup(g) {}
 
   static auto Load(uint8_t* metadata, ssize_t index)
-      -> BenchmarkSIMDMetadataGroup {
-    return BenchmarkSIMDMetadataGroup(SIMDLoad(metadata, index));
+      -> BenchmarkSimdMetadataGroup {
+    return BenchmarkSimdMetadataGroup(SIMDLoad(metadata, index));
   }
   auto Store(uint8_t* metadata, ssize_t index) const -> void {
     SIMDStore(metadata, index);
@@ -75,7 +75,7 @@ constexpr ssize_t BenchSize = 256;
 
 #if CARBON_NEON_SIMD_SUPPORT || CARBON_X86_SIMD_SUPPORT
 using PortableGroup = BenchmarkPortableMetadataGroup;
-using SIMDGroup = BenchmarkSIMDMetadataGroup;
+using SIMDGroup = BenchmarkSimdMetadataGroup;
 #endif
 
 struct BenchMetadata {

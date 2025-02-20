@@ -303,14 +303,14 @@ class BitIndexRange
 // auto MetadataGroup::Operation(...) -> ... {
 //   ... portable_result;
 //   ... simd_result;
-//   if constexpr (!UseSIMD || DebugSIMD) {
+//   if constexpr (!UseSimd || DebugSimd) {
 //     portable_result = PortableOperation(...);
 //   }
-//   if (UseSIMD || DebugSIMD) {
+//   if (UseSimd || DebugSimd) {
 //     simd_result = SIMDOperation(...)
 //     CARBON_DCHECK(result == portable_result, "{0}", ...);
 //   }
-//   return UseSIMD ? simd_result : portable_result;
+//   return UseSimd ? simd_result : portable_result;
 // }
 // ```
 class MetadataGroup : public Printable<MetadataGroup> {
@@ -344,7 +344,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // Whether to use a SIMD implementation. Even when we *support* a SIMD
   // implementation, we do not always have to use it in the event that it is
   // less efficient than the portable version.
-  static constexpr bool UseSIMD =
+  static constexpr bool UseSimd =
 #if CARBON_X86_SIMD_SUPPORT
       true;
 #else
@@ -396,9 +396,9 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // The public API range types can be either the portable or SIMD variations,
   // selected here.
   using MatchRange =
-      std::conditional_t<UseSIMD, SIMDMatchRange, PortableMatchRange>;
+      std::conditional_t<UseSimd, SIMDMatchRange, PortableMatchRange>;
   using MatchPresentRange =
-      std::conditional_t<UseSIMD, SIMDMatchPresentRange, PortableMatchRange>;
+      std::conditional_t<UseSimd, SIMDMatchPresentRange, PortableMatchRange>;
 
   union {
     uint8_t metadata_bytes[Size];
@@ -477,13 +477,13 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // Two classes only defined in the benchmark code are allowed to directly call
   // the portable and SIMD implementations for benchmarking purposes.
   friend class BenchmarkPortableMetadataGroup;
-  friend class BenchmarkSIMDMetadataGroup;
+  friend class BenchmarkSimdMetadataGroup;
 
   // All SIMD variants that we have an implementation for should be enabled for
   // debugging. This lets us maintain a SIMD implementation even if it is not
   // used due to performance reasons, and easily re-enable it if the performance
   // changes.
-  static constexpr bool DebugSIMD =
+  static constexpr bool DebugSimd =
 #if !defined(NDEBUG) && (CARBON_NEON_SIMD_SUPPORT || CARBON_X86_SIMD_SUPPORT)
       true;
 #else
@@ -581,9 +581,9 @@ inline constexpr ssize_t GroupMask = MetadataGroup::Mask;
 inline auto MetadataGroup::Load(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup portable_g;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_g = PortableLoad(metadata, index);
-    if constexpr (!UseSIMD) {
+    if constexpr (!UseSimd) {
       return portable_g;
     }
   }
@@ -594,7 +594,7 @@ inline auto MetadataGroup::Load(const uint8_t* metadata, ssize_t index)
 
 inline auto MetadataGroup::Store(uint8_t* metadata, ssize_t index) const
     -> void {
-  if constexpr (!UseSIMD) {
+  if constexpr (!UseSimd) {
     std::memcpy(metadata + index, &metadata_bytes, Size);
   } else {
     SIMDStore(metadata, index);
@@ -615,17 +615,17 @@ inline auto MetadataGroup::ClearByte(ssize_t byte_index) -> void {
 inline auto MetadataGroup::ClearDeleted() -> void {
   MetadataGroup portable_g = *this;
   MetadataGroup simd_g = *this;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_g.PortableClearDeleted();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
+  if constexpr (UseSimd || DebugSimd) {
     simd_g.SIMDClearDeleted();
     CARBON_DCHECK(
         simd_g == portable_g,
         "SIMD cleared group '{0}' doesn't match portable cleared group '{1}'",
         simd_g, portable_g);
   }
-  *this = UseSIMD ? simd_g : portable_g;
+  *this = UseSimd ? simd_g : portable_g;
 }
 
 inline auto MetadataGroup::Match(uint8_t tag) const -> MatchRange {
@@ -636,77 +636,77 @@ inline auto MetadataGroup::Match(uint8_t tag) const -> MatchRange {
 
   PortableMatchRange portable_result;
   SIMDMatchRange simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatch(tag);
   }
-  if constexpr (UseSIMD || DebugSIMD) {
+  if constexpr (UseSimd || DebugSimd) {
     simd_result = SIMDMatch(tag);
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
   // Return whichever result we're using.
-  return ConstexprTernary<UseSIMD>(simd_result, portable_result);
+  return ConstexprTernary<UseSimd>(simd_result, portable_result);
 }
 
 inline auto MetadataGroup::MatchPresent() const -> MatchPresentRange {
   PortableMatchRange portable_result;
   SIMDMatchPresentRange simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatchPresent();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
+  if constexpr (UseSimd || DebugSimd) {
     simd_result = SIMDMatchPresent();
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
   // Return whichever result we're using.
-  return ConstexprTernary<UseSIMD>(simd_result, portable_result);
+  return ConstexprTernary<UseSimd>(simd_result, portable_result);
 }
 
 inline auto MetadataGroup::MatchEmpty() const -> MatchIndex {
   MatchIndex portable_result;
   MatchIndex simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatchEmpty();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
+  if constexpr (UseSimd || DebugSimd) {
     simd_result = SIMDMatchEmpty();
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
-  return UseSIMD ? simd_result : portable_result;
+  return UseSimd ? simd_result : portable_result;
 }
 
 inline auto MetadataGroup::MatchDeleted() const -> MatchIndex {
   MatchIndex portable_result;
   MatchIndex simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatchDeleted();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
+  if constexpr (UseSimd || DebugSimd) {
     simd_result = SIMDMatchDeleted();
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
-  return UseSIMD ? simd_result : portable_result;
+  return UseSimd ? simd_result : portable_result;
 }
 
 inline auto MetadataGroup::CompareEqual(MetadataGroup lhs, MetadataGroup rhs)
     -> bool {
   bool portable_result;
   bool simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableCompareEqual(lhs, rhs);
   }
-  if constexpr (UseSIMD || DebugSIMD) {
+  if constexpr (UseSimd || DebugSimd) {
     simd_result = SIMDCompareEqual(lhs, rhs);
     CARBON_DCHECK(simd_result == portable_result);
   }
-  return UseSIMD ? simd_result : portable_result;
+  return UseSimd ? simd_result : portable_result;
 }
 
 inline auto MetadataGroup::VerifyIndexBits(
@@ -994,7 +994,7 @@ inline auto MetadataGroup::SIMDLoad(const uint8_t* metadata, ssize_t index)
   g.metadata_vec =
       _mm_load_si128(reinterpret_cast<const __m128i*>(metadata + index));
 #else
-  static_assert(!UseSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd, "Unimplemented SIMD operation");
   static_cast<void>(metadata);
   static_cast<void>(index);
 #endif
@@ -1008,7 +1008,7 @@ inline auto MetadataGroup::SIMDStore(uint8_t* metadata, ssize_t index) const
 #elif CARBON_X86_SIMD_SUPPORT
   _mm_store_si128(reinterpret_cast<__m128i*>(metadata + index), metadata_vec);
 #else
-  static_assert(!UseSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd, "Unimplemented SIMD operation");
   static_cast<void>(metadata);
   static_cast<void>(index);
 #endif
@@ -1028,7 +1028,7 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
   metadata_vec =
       _mm_blendv_epi8(_mm_setzero_si128(), metadata_vec, metadata_vec);
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
 }
 
@@ -1046,7 +1046,7 @@ inline auto MetadataGroup::SIMDMatch(uint8_t tag) const -> SIMDMatchRange {
 #elif CARBON_X86_SIMD_SUPPORT
   result = X86SIMDMatch(tag | PresentMask);
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
   static_cast<void>(tag);
 #endif
   return result;
@@ -1065,7 +1065,7 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> SIMDMatchPresentRange {
   // which this instruction extracts.
   result = SIMDMatchPresentRange(_mm_movemask_epi8(metadata_vec));
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
   return result;
 }
@@ -1090,7 +1090,7 @@ inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
   // We then convert it into a `MatchIndex` that just finds the first one.
   result = static_cast<MatchIndex>(X86SIMDMatch(Empty));
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
   return result;
 }
@@ -1115,7 +1115,7 @@ inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
   // We then convert it into a `MatchIndex` that just finds the first one.
   result = static_cast<MatchIndex>(X86SIMDMatch(Deleted));
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
   return result;
 }
@@ -1141,7 +1141,7 @@ inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
                                           rhs.metadata_vec)) == 0x0000'ffffU;
 #endif
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
   static_cast<void>(lhs);
   static_cast<void>(rhs);
   return false;

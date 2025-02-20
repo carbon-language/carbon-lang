@@ -10,7 +10,7 @@
 
 auto main(int orig_argc, char** orig_argv) -> int {
   // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.
-  Carbon::InitLLVM init_llvm(orig_argc, orig_argv);
+  Carbon::InitLlvm init_llvm(orig_argc, orig_argv);
 
   Carbon::Testing::SetExePath(orig_argv[0]);
 

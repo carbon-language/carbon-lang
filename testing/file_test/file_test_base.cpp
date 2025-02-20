@@ -337,7 +337,7 @@ static auto RunAutoupdate(llvm::StringRef exe_path,
 
 // Implements main() within the Carbon::Testing namespace for convenience.
 static auto Main(int argc, char** argv) -> int {
-  Carbon::InitLLVM init_llvm(argc, argv);
+  Carbon::InitLlvm init_llvm(argc, argv);
   testing::InitGoogleTest(&argc, argv);
   auto args = absl::ParseCommandLine(argc, argv);
 

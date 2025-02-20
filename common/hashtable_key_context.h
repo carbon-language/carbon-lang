@@ -217,11 +217,11 @@ auto TranslatingKeyContext<DerivedT>::KeyEq(const AnyKeyT& lhs_key,
   const DerivedT& self = *static_cast<const DerivedT*>(this);
   // Because we don't want to make no-op calls and potentially struggle with
   // temporary lifetimes at runtime we have to fully expand the 4 states.
-  constexpr bool TranslateLHS = requires { self.TranslateKey(lhs_key); };
+  constexpr bool TranslateLhs = requires { self.TranslateKey(lhs_key); };
   constexpr bool TranslateRHS = requires { self.TranslateKey(rhs_key); };
-  if constexpr (TranslateLHS && TranslateRHS) {
+  if constexpr (TranslateLhs && TranslateRHS) {
     return HashtableEq(self.TranslateKey(lhs_key), self.TranslateKey(rhs_key));
-  } else if constexpr (TranslateLHS) {
+  } else if constexpr (TranslateLhs) {
     return HashtableEq(self.TranslateKey(lhs_key), rhs_key);
   } else if constexpr (TranslateRHS) {
     return HashtableEq(lhs_key, self.TranslateKey(rhs_key));
