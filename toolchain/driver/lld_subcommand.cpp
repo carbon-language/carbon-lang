@@ -10,21 +10,21 @@
 
 namespace Carbon {
 
-auto LLDOptions::Build(CommandLine::CommandBuilder& b) -> void {
+auto LldOptions::Build(CommandLine::CommandBuilder& b) -> void {
   // We want to select a default platform based on the default target. Since
   // that requires some dynamic inspection of the target, do that here.
   std::string default_target = llvm::sys::getDefaultTargetTriple();
   llvm::Triple default_triple(default_target);
   switch (default_triple.getObjectFormat()) {
     case llvm::Triple::MachO:
-      platform = Platform::Darwin;
+      platform = Platform::MachO;
       break;
 
       // We default to the GNU or Unix platform as ELF is a plausible default
       // and LLD doesn't support any generic invocations.
     default:
     case llvm::Triple::ELF:
-      platform = Platform::Gnu;
+      platform = Platform::Elf;
       break;
   }
 
@@ -39,11 +39,15 @@ target's platform.
       [&](auto& arg_b) {
         arg_b.SetOneOf(
             {
-                arg_b.OneOfValue("gnu", Platform::Gnu),
-                // Some of LLD documentation uses "Unix" instead of "GNU", so
+                arg_b.OneOfValue("elf", Platform::Elf),
+                // Some of LLD documentation uses "Unix" or "GNU", so
                 // include an alias here.
-                arg_b.OneOfValue("unix", Platform::Gnu),
-                arg_b.OneOfValue("darwin", Platform::Darwin),
+                arg_b.OneOfValue("gnu", Platform::Elf),
+                arg_b.OneOfValue("unix", Platform::Elf),
+
+                arg_b.OneOfValue("macho", Platform::MachO),
+                // Darwin is also sometimes used, include it as an alias here.
+                arg_b.OneOfValue("darwin", Platform::MachO),
             },
             &platform);
       });
@@ -69,7 +73,7 @@ generic LLD command line.
 For a given platform, this is equivalent to running that platform's LLD alias
 directly, and provides the full command line interface.
 
-Use `carbon lld --platform=gnu -- ARGS` to separate the `ARGS` forwarded to LLD
+Use `carbon lld --platform=elf -- ARGS` to separate the `ARGS` forwarded to LLD
 from the flags passed to the Carbon subcommand.
 
 Note that typically it is better to use a higher level command to link code,
@@ -79,13 +83,13 @@ syntaxes, as well as testing and debugging of the underlying tool.
 )""",
 };
 
-LLDSubcommand::LLDSubcommand() : DriverSubcommand(SubcommandInfo) {}
+LldSubcommand::LldSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 // TODO: This lacks a lot of features from the main driver code. We may need to
 // add more.
 // https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp
-auto LLDSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  LLDRunner runner(driver_env.installation, driver_env.vlog_stream);
+auto LldSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
+  LldRunner runner(driver_env.installation, driver_env.vlog_stream);
 
   // Don't run LLD when fuzzing, as we're not currently in a good position to
   // debug and fix fuzzer-found bugs within LLD.
@@ -98,10 +102,10 @@ auto LLDSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   switch (options_.platform) {
-    case LLDOptions::Platform::Gnu:
-      return {.success = runner.GnuLink(options_.args)};
-    case LLDOptions::Platform::Darwin:
-      return {.success = runner.DarwinLink(options_.args)};
+    case LldOptions::Platform::Elf:
+      return {.success = runner.ElfLink(options_.args)};
+    case LldOptions::Platform::MachO:
+      return {.success = runner.MachOLink(options_.args)};
   }
   CARBON_FATAL("Failed to find and run a valid LLD platform link!");
 }

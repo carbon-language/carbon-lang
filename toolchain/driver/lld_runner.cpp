@@ -22,11 +22,7 @@ LLD_HAS_DRIVER(macho)
 
 namespace Carbon {
 
-LLDRunner::LLDRunner(const InstallPaths* install_paths,
-                     llvm::raw_ostream* vlog_stream)
-    : ToolRunnerBase(install_paths, vlog_stream) {}
-
-auto LLDRunner::GnuLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto LldRunner::ElfLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.
   llvm::OwningArrayRef<char> cstr_arg_storage;
@@ -45,7 +41,7 @@ auto LLDRunner::GnuLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   return result.retCode == 0;
 }
 
-auto LLDRunner::DarwinLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto LldRunner::MachOLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.
   llvm::OwningArrayRef<char> cstr_arg_storage;

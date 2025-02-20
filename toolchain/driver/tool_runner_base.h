@@ -14,11 +14,14 @@
 
 namespace Carbon {
 
-// Base class that factors out common utilities needed when implementing a
-// runner of an external tool, especially tools part of the LLVM and Clang C++
-// toolchain that Carbon will end up wrapping.
-class ToolRunnerBase {
- protected:
+// Base  that factors out common utilities needed when implementing a runner of
+// an external tool, especially tools part of the LLVM and Clang C++ toolchain
+// that Carbon will end up wrapping.
+//
+// Note that this struct just collects common data and helper methods, and does
+// not itself impose any invariants or form a meaningful API. It should be used
+// as an implementation detail only.
+struct ToolRunnerBase {
   // Construct the tool runner bas.
   //
   // If `vlog_stream` is provided, it will be used for `CARBON_VLOG`s. If it is
@@ -46,13 +49,10 @@ class ToolRunnerBase {
                      std::optional<llvm::StringRef> verbose_flag = {})
       -> llvm::SmallVector<const char*, 64>;
 
-  // These protected members are common members factored out from the derived
-  // class.
-  //
-  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+  // Note, named with `_`s for consistency with other private members when this
+  // is a private base.
   const InstallPaths* installation_;
   llvm::raw_ostream* vlog_stream_;
-  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 }  // namespace Carbon

@@ -35,12 +35,12 @@ TEST(LLDRunnerTest, Version) {
   RawStringOstream test_os;
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
-  LLDRunner runner(&install_paths, &test_os);
+  LldRunner runner(&install_paths, &test_os);
 
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
-      out, err, [&] { return runner.GnuLink({"--version"}); }));
+      out, err, [&] { return runner.ElfLink({"--version"}); }));
 
   // The arguments to LLD should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
@@ -55,7 +55,7 @@ TEST(LLDRunnerTest, Version) {
 
   // Try the Darwin linker.
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
-      out, err, [&] { return runner.DarwinLink({"--version"}); }));
+      out, err, [&] { return runner.MachOLink({"--version"}); }));
 
   // Again, the arguments to LLD should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
@@ -112,7 +112,7 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   return {test_a_output, test_b_output};
 }
 
-TEST(LLDRunnerTest, GnuLinkTest) {
+TEST(LldRunnerTest, ElfLinkTest) {
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
 
@@ -127,7 +127,7 @@ TEST(LLDRunnerTest, GnuLinkTest) {
   std::string out;
   std::string err;
 
-  LLDRunner lld(&install_paths, &verbose_out);
+  LldRunner lld(&install_paths, &verbose_out);
 
   // Link the two object files together.
   //
@@ -139,7 +139,7 @@ TEST(LLDRunnerTest, GnuLinkTest) {
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return lld.GnuLink({"-m", "aarch64linux", "--relocatable", "-o",
+        return lld.ElfLink({"-m", "aarch64linux", "--relocatable", "-o",
                             test_output.string(), test_a_output.string(),
                             test_b_output.string()});
       }))
@@ -152,7 +152,7 @@ TEST(LLDRunnerTest, GnuLinkTest) {
   EXPECT_THAT(err, StrEq(""));
 }
 
-TEST(LLDRunnerTest, DarwinLinkTest) {
+TEST(LldRunnerTest, MachOLinkTest) {
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
 
@@ -172,11 +172,11 @@ TEST(LLDRunnerTest, DarwinLinkTest) {
   // This is a somewhat arbitrary command line, and is missing the C-runtimes,
   // but seems to succeed currently. The goal isn't to test any *particular*
   // link, but just than an actual link occurs successfully.
-  LLDRunner lld(&install_paths, &verbose_out);
+  LldRunner lld(&install_paths, &verbose_out);
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return lld.DarwinLink({"-arch", "arm64", "-platform_version", "macos",
+        return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
                                "10.4.0", "10.4.0", "-o", test_output.string(),
                                test_a_output.string(), test_b_output.string()});
       }))
@@ -193,7 +193,7 @@ TEST(LLDRunnerTest, DarwinLinkTest) {
   EXPECT_FALSE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return lld.DarwinLink({"-arch", "arm64", "-platform_version", "macos",
+        return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
                                "10.4.0", "10.4.0", "-o", test_output.string(),
                                test_b_output.string()});
       }))

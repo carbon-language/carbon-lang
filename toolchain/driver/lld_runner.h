@@ -14,20 +14,15 @@
 namespace Carbon {
 
 // Runs LLD in a manner similar to invoking it with the provided arguments.
-class LLDRunner : ToolRunnerBase {
+class LldRunner : ToolRunnerBase {
  public:
-  // Build an LLD runner that uses the provided `exe_name` and `err_stream`.
-  //
-  // If `verbose` is passed as true, will enable verbose logging to the
-  // `err_stream` both from the runner and LLD itself.
-  explicit LLDRunner(const InstallPaths* install_paths,
-                     llvm::raw_ostream* vlog_stream = nullptr);
+  using ToolRunnerBase::ToolRunnerBase;
 
   // Run LLD as a GNU-style linker with the provided arguments.
-  auto GnuLink(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto ElfLink(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
   // Run LLD as a Darwin-style linker with the provided arguments.
-  auto DarwinLink(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto MachOLink(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 };
 
 }  // namespace Carbon

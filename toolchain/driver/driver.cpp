@@ -34,7 +34,7 @@ struct Options {
   FormatSubcommand format;
   LanguageServerSubcommand language_server;
   LinkSubcommand link;
-  LLDSubcommand lld;
+  LldSubcommand lld;
 
   // On success, this is set to the subcommand to run.
   DriverSubcommand* selected_subcommand = nullptr;

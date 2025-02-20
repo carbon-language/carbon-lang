@@ -16,10 +16,16 @@ namespace Carbon {
 // Options for the LLD subcommand, which is just a thin wrapper.
 //
 // See the implementation of `Build` for documentation on members.
-struct LLDOptions {
+struct LldOptions {
+  // Supported linking platforms.
+  //
+  // Note that these are similar to the object formats in an LLVM triple, but we
+  // use a distinct enum because we only include the platforms supported by our
+  // subcommand which is a subset of those recognized by the LLVM triple
+  // infrastructure.
   enum class Platform {
-    Gnu,
-    Darwin,
+    Elf,
+    MachO,
   };
 
   auto Build(CommandLine::CommandBuilder& b) -> void;
@@ -29,9 +35,9 @@ struct LLDOptions {
 };
 
 // Implements the LLD subcommand of the driver.
-class LLDSubcommand : public DriverSubcommand {
+class LldSubcommand : public DriverSubcommand {
  public:
-  explicit LLDSubcommand();
+  explicit LldSubcommand();
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
@@ -40,7 +46,7 @@ class LLDSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
-  LLDOptions options_;
+  LldOptions options_;
 };
 
 }  // namespace Carbon
