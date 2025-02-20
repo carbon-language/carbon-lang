@@ -233,11 +233,15 @@ auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
 //
 // When adding to the store, the user provides the related `RelatedIdT` along
 // with the value being stored, and gets back the ID of the value in the store.
+//
+// This store requires more storage space than normal ValueStore does, as it
+// requires storing a bit for presence of each `RelatedIdT`. And it allocates
+// memory for values for all IDs up largest ID present in the store, even if
+// they are not yet used.
 template <typename RelatedIdT, typename IdT>
 class RelationalValueStore {
  public:
   using ValueType = IdT::ValueType;
-  using RefType = ValueStore<IdT>::RefType;
   using ConstRefType = ValueStore<IdT>::ConstRefType;
 
   // Given the related ID and a value, stores the value and returns a mapped ID
@@ -248,7 +252,10 @@ class RelationalValueStore {
     if (static_cast<size_t>(id.index) >= values_.size()) {
       values_.resize(id.index + 1);
     }
-    values_[id.index] = std::move(value);
+    auto& opt = values_[id.index];
+    CARBON_CHECK(!opt.has_value(),
+                 "Add with `related_id` that was already added to the store");
+    opt.emplace(std::move(value));
     return id;
   }
 
@@ -264,12 +271,6 @@ class RelationalValueStore {
       return IdT::None;
     }
     return IdT(related_id.index);
-  }
-
-  // Returns a mutable value for an ID.
-  auto Get(IdT id) -> RefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return *values_[id.index];
   }
 
   // Returns a value for an ID.
