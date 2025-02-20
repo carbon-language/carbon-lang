@@ -518,7 +518,7 @@ class BaseImpl {
   // returns `true`. If not found, returns `false`.
   //
   // Does not release any memory, just leaves a tombstone behind so this entry
-  // cannot be found and the slot can in theory be re-used.
+  // cannot be found and the slot can in theory be reused.
   template <typename LookupKeyT>
   auto EraseImpl(LookupKeyT lookup_key, KeyContextT key_context) -> bool;
 
