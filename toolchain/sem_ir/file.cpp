@@ -35,13 +35,13 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(this) {
-  // `type` and the error type are both complete types.
-  types_.SetValueRepr(
-      TypeType::SingletonTypeId,
-      {.kind = ValueRepr::Copy, .type_id = TypeType::SingletonTypeId});
-  types_.SetValueRepr(
-      ErrorInst::SingletonTypeId,
-      {.kind = ValueRepr::Copy, .type_id = ErrorInst::SingletonTypeId});
+  // `type` and the error type are both complete & concrete types.
+  types_.SetComplete(TypeType::SingletonTypeId,
+                     {.value_repr = {.kind = ValueRepr::Copy,
+                                     .type_id = TypeType::SingletonTypeId}});
+  types_.SetComplete(ErrorInst::SingletonTypeId,
+                     {.value_repr = {.kind = ValueRepr::Copy,
+                                     .type_id = ErrorInst::SingletonTypeId}});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {

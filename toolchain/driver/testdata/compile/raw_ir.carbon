@@ -37,17 +37,28 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
-// CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
-// CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst40)':    {kind: none, type: type(inst23)}
-// CHECK:STDOUT:     'type(inst23)':    {kind: none, type: type(inst23)}
-// CHECK:STDOUT:     'type(symbolic_constant0)': {kind: copy, type: type(symbolic_constant0)}
-// CHECK:STDOUT:     'type(symbolic_constant2)': {kind: pointer, type: type(symbolic_constant6)}
-// CHECK:STDOUT:     'type(symbolic_constant6)': {kind: copy, type: type(symbolic_constant6)}
-// CHECK:STDOUT:     'type(inst(WitnessType))': {kind: copy, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     'type(symbolic_constant3)': {kind: copy, type: type(symbolic_constant3)}
-// CHECK:STDOUT:     'type(symbolic_constant5)': {kind: pointer, type: type(symbolic_constant6)}
+// CHECK:STDOUT:     'type(TypeType)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:     'type(Error)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:     'type(inst(NamespaceType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'type(inst40)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst23)}
+// CHECK:STDOUT:     'type(inst23)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst23)}
+// CHECK:STDOUT:     'type(symbolic_constant0)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant0)}
+// CHECK:STDOUT:     'type(symbolic_constant2)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant6)}
+// CHECK:STDOUT:     'type(symbolic_constant6)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant6)}
+// CHECK:STDOUT:     'type(inst(WitnessType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     'type(symbolic_constant3)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant3)}
+// CHECK:STDOUT:     'type(symbolic_constant5)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant6)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:     type_block1:
