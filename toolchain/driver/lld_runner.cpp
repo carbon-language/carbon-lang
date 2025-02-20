@@ -15,10 +15,10 @@
 #include "llvm/ADT/StringRef.h"
 
 // Declare the supported driver flavor entry points.
-// NOLINTNEXTLINE(readability-identifier-naming): External library name.
+// NOLINTBEGIN(readability-identifier-naming): External library name.
 LLD_HAS_DRIVER(elf)
-// NOLINTNEXTLINE(readability-identifier-naming): External library name.
 LLD_HAS_DRIVER(macho)
+// NOLINTEND(readability-identifier-naming)
 
 namespace Carbon {
 
