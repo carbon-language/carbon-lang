@@ -159,7 +159,7 @@ TEST(LLDRunnerTest, DarwinLinkTest) {
   std::filesystem::path test_a_output;
   std::filesystem::path test_b_output;
   std::tie(test_a_output, test_b_output) =
-      CompileTwoSources(install_paths, "arm64-unknown-darwin");
+      CompileTwoSources(install_paths, "arm64-unknown-macosx10.4.0");
 
   std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
