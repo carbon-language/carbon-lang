@@ -10,7 +10,7 @@
 
 // --- fail_no_comma.carbon
 
-// CHECK:STDERR: fail_no_comma.carbon:[[@LINE+8]]:17: error: expected `,` in array(Type, Count) [ExpectedArrayComma]
+// CHECK:STDERR: fail_no_comma.carbon:[[@LINE+8]]:17: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR: var x: array(i32);
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
@@ -26,7 +26,7 @@ var x: array(i32);
 // CHECK:STDERR: fn X() -> array(:);
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+12]]:17: error: expected `,` in array(Type, Count) [ExpectedArrayComma]
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+12]]:17: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR: fn X() -> array(:);
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
@@ -46,7 +46,7 @@ fn X() -> array(:);
 // CHECK:STDERR: var y: array(`);
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+8]]:14: error: expected `,` in array(Type, Count) [ExpectedArrayComma]
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+8]]:14: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR: var y: array(`);
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
@@ -74,7 +74,7 @@ var x: array i32, 1;
 // CHECK:STDERR: var x: array(i32,;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+8]]:13: error: expected `,` in array(Type, Count) [ExpectedArrayComma]
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+8]]:13: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR: var x: array(i32,;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -98,7 +98,7 @@ var x: array(i32,);
 // CHECK:STDERR: var x: array();
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_params.carbon:[[@LINE+8]]:14: error: expected `,` in array(Type, Count) [ExpectedArrayComma]
+// CHECK:STDERR: fail_no_params.carbon:[[@LINE+8]]:14: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR: var x: array();
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
@@ -118,7 +118,7 @@ var x: array();
 // CHECK:STDERR: var x: array;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_keyword_alone.carbon:[[@LINE+8]]:13: error: expected `,` in array(Type, Count) [ExpectedArrayComma]
+// CHECK:STDERR: fail_keyword_alone.carbon:[[@LINE+8]]:13: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR: var x: array;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:

@@ -76,11 +76,9 @@ CARBON_PARSE_STATE(IndexExprFinish)
 // Handles the array keyword and opening paren in an array expression.
 //
 // array(T, N)
-// ^
+// ^~~~~~
 //   1. Expr
 //   2. ArrayExprComma
-//   3. Expr
-//   4. ArrayExprFinish
 CARBON_PARSE_STATE(ArrayExpr)
 
 // Handles ',' in an array expression.
