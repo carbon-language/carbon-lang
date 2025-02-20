@@ -116,7 +116,7 @@ cc_binary(
     ],
 )
 
-# TODO: Add remaining aliases of LLD for Windaws and WASM when we have support
+# TODO: Add remaining aliases of LLD for Windows and WASM when we have support
 # for them wired up through the busybox.
 lld_aliases = [
     "ld.lld",
