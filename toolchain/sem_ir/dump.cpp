@@ -99,9 +99,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
       llvm::errs() << "  - ";
       Dump(file, rewrite.rhs_const_id);
     }
-    if (facet_type.complete_id.has_value()) {
+    if (auto complete_id = file.complete_facet_types().TryGetId(facet_type_id);
+        complete_id.has_value()) {
       llvm::errs() << "complete: ";
-      Dump(file, facet_type.complete_id);
+      Dump(file, complete_id);
     }
   } else {
     llvm::errs() << '\n';

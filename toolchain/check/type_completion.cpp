@@ -10,6 +10,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -552,9 +553,11 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 }
 
 static auto AddCompleteFacetType(Context& context, SemIR::LocId loc_id,
-                                 const SemIR::FacetTypeInfo& facet_type_info,
+                                 SemIR::FacetTypeId facet_type_id,
                                  FacetTypeContext context_for_diagnostics)
     -> SemIR::CompleteFacetTypeId {
+  const auto& facet_type_info = context.facet_types().Get(facet_type_id);
+
   SemIR::CompleteFacetType result;
   result.required_interfaces.reserve(facet_type_info.impls_constraints.size());
   // Every mentioned interface needs to be defined.
@@ -589,7 +592,7 @@ static auto AddCompleteFacetType(Context& context, SemIR::LocId loc_id,
   // TODO: Distinguish interfaces that are required but would not be
   // implemented, such as those from `where .Self impls I`.
   result.num_to_impl = result.required_interfaces.size();
-  return context.complete_facet_types().Add(result);
+  return context.complete_facet_types().Add(facet_type_id, result);
 }
 
 // TODO: RequireCompleteType should do these checks, this should just return
@@ -606,13 +609,13 @@ auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
     return SemIR::CompleteFacetTypeId::None;
   }
 
-  auto& facet_type_info =
-      context.facet_types().GetMutable(facet_type.facet_type_id);
-  if (!facet_type_info.complete_id.has_value()) {
-    facet_type_info.complete_id = AddCompleteFacetType(
-        context, loc_id, facet_type_info, context_for_diagnostics);
+  auto complete_id =
+      context.complete_facet_types().TryGetId(facet_type.facet_type_id);
+  if (!complete_id.has_value()) {
+    complete_id = AddCompleteFacetType(
+        context, loc_id, facet_type.facet_type_id, context_for_diagnostics);
   }
-  return facet_type_info.complete_id;
+  return complete_id;
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,

@@ -275,7 +275,7 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
 constexpr AssociatedConstantId AssociatedConstantId::None =
     AssociatedConstantId(NoneIndex);
 
-// The ID of an faceet type value.
+// The ID of an facet type value.
 struct FacetTypeId : public IdBase<FacetTypeId> {
   static constexpr llvm::StringLiteral Label = "facet_type";
   using ValueType = FacetTypeInfo;
@@ -288,7 +288,7 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 
 constexpr FacetTypeId FacetTypeId::None = FacetTypeId(NoneIndex);
 
-// The ID of an resolved faceet type value.
+// The ID of an resolved facet type value.
 struct CompleteFacetTypeId : public IdBase<CompleteFacetTypeId> {
   static constexpr llvm::StringLiteral Label = "complete_facet_type";
   using ValueType = CompleteFacetType;
