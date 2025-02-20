@@ -228,22 +228,23 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
   --last_param_iter;
 
-  return {
-      .name_loc_id = Parse::NodeId::None,
-      .name_id = SemIR::NameId::None,
-      .first_param_node_id = first_param_node_id,
-      .last_param_node_id = *last_param_iter,
-      .implicit_params_loc_id = implicit_params_loc_id,
-      .implicit_param_patterns_id =
-          implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
-      .params_loc_id = Parse::NodeId::None,
-      .param_patterns_id = SemIR::InstBlockId::None,
-      .call_params_id = SemIR::InstBlockId::None,
-      .return_slot_pattern_id = SemIR::InstId::None,
-      .pattern_block_id = implicit_param_patterns_id
-                              ? context.pattern_block_stack().Pop()
-                              : SemIR::InstBlockId::None,
-  };
+  auto pattern_block_id = SemIR::InstBlockId::None;
+  if (implicit_param_patterns_id) {
+    pattern_block_id = context.pattern_block_stack().Pop();
+    context.full_pattern_stack().PopFullPattern();
+  }
+  return {.name_loc_id = Parse::NodeId::None,
+          .name_id = SemIR::NameId::None,
+          .first_param_node_id = first_param_node_id,
+          .last_param_node_id = *last_param_iter,
+          .implicit_params_loc_id = implicit_params_loc_id,
+          .implicit_param_patterns_id =
+              implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
+          .params_loc_id = Parse::NodeId::None,
+          .param_patterns_id = SemIR::InstBlockId::None,
+          .call_params_id = SemIR::InstBlockId::None,
+          .return_slot_pattern_id = SemIR::InstId::None,
+          .pattern_block_id = pattern_block_id};
 }
 
 static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
