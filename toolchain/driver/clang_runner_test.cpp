@@ -159,5 +159,40 @@ TEST(ClangRunnerTest, BuitinHeaders) {
   EXPECT_THAT(err, StrEq(""));
 }
 
+TEST(ClangRunnerTest, CompileMultipleFiles) {
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
+
+  // Memory leaks and other errors from running Clang can at times only manifest
+  // with repeated compilations. Use a lambda to just do a series of compiles.
+  auto compile = [&](llvm::StringRef filename, llvm::StringRef source) {
+    std::string output_file = std::string(filename.split('.').first) + ".o";
+    std::filesystem::path file = *Testing::WriteTestFile(filename, source);
+    std::filesystem::path output = *Testing::WriteTestFile(output_file, "");
+
+    RawStringOstream verbose_out;
+    std::string target = llvm::sys::getDefaultTargetTriple();
+    auto vfs = llvm::vfs::getRealFileSystem();
+    ClangRunner runner(&install_paths, target, vfs, &verbose_out);
+    std::string out;
+    std::string err;
+    EXPECT_TRUE(Testing::CallWithCapturedOutput(
+        out, err,
+        [&] {
+          return runner.Run({"-c", file.string(), "-o", output.string()});
+        }))
+        << "Verbose output from runner:\n"
+        << verbose_out.TakeStr() << "\n";
+    verbose_out.clear();
+
+    EXPECT_THAT(out, StrEq(""));
+    EXPECT_THAT(err, StrEq(""));
+  };
+
+  compile("test1.cpp", "int test1() { return 0; }");
+  compile("test2.cpp", "int test2() { return 0; }");
+  compile("test3.cpp", "int test3() { return 0; }");
+}
+
 }  // namespace
 }  // namespace Carbon

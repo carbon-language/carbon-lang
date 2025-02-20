@@ -58,6 +58,11 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
+  // Only enable Clang's leaking of memory if the driver can support that.
+  if (driver_env.enable_leaking) {
+    runner.EnableLeakingMemory();
+  }
+
   return {.success = runner.Run(options_.args)};
 }
 
