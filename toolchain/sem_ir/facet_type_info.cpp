@@ -27,7 +27,6 @@ static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  CARBON_CHECK(!complete_id.has_value());
   SortAndDeduplicate(impls_constraints, ImplsLess);
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
@@ -59,9 +58,6 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     out << outer_sep << "+ TODO requirements";
   }
 
-  if (complete_id.has_value()) {
-    out << outer_sep << "complete: " << complete_id;
-  }
   out << "}";
 }
 
