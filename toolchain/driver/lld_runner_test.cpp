@@ -177,8 +177,8 @@ TEST(LldRunnerTest, MachOLinkTest) {
       out, err,
       [&] {
         return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
-                               "10.4.0", "10.4.0", "-o", test_output.string(),
-                               test_a_output.string(), test_b_output.string()});
+                              "10.4.0", "10.4.0", "-o", test_output.string(),
+                              test_a_output.string(), test_b_output.string()});
       }))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
@@ -194,8 +194,8 @@ TEST(LldRunnerTest, MachOLinkTest) {
       out, err,
       [&] {
         return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
-                               "10.4.0", "10.4.0", "-o", test_output.string(),
-                               test_b_output.string()});
+                              "10.4.0", "10.4.0", "-o", test_output.string(),
+                              test_b_output.string()});
       }))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
