@@ -17,8 +17,8 @@ fn foo[]();
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

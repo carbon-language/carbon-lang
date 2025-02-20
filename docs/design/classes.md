@@ -30,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Nominal class types](#nominal-class-types)
+    -   [Fields](#fields)
     -   [Forward declaration](#forward-declaration)
     -   [`Self`](#self)
     -   [Construction](#construction)
@@ -688,9 +689,13 @@ The declarations for nominal class types will have:
 -   a sequence of declarations
 -   `}`, a close curly brace
 
-Declarations should generally match declarations that can be declared in other
-contexts, for example variable declarations with `var` will define
-[instance variables](https://en.wikipedia.org/wiki/Instance_variable):
+Declarations within a class should generally have the same syntax as
+declarations that occur in other contexts. For example, member functions are
+introduced with `fn`.
+
+### Fields
+
+Fields of a nominal class type are declared with `var`:
 
 ```
 class TextLabel {
@@ -701,10 +706,23 @@ class TextLabel {
 }
 ```
 
-The main difference here is that `"default"` is a default instead of an
-initializer, and will be ignored if another value is supplied for that field
-when constructing a value. Defaults must be constants whose value can be
-determined at compile time.
+Notice that this is subtly different from the meaning of `var` in other
+contexts: it declares an
+[instance variable](https://en.wikipedia.org/wiki/Instance_variable)), not just
+a variable in the class's scope.
+
+> **Open question:** Is there a way to declare a variable in a class's scope?
+
+In a field declaration, an initializer (such as `= "default"` above) specifies
+the default value of the field, and will be ignored if another value is supplied
+for that field when constructing an instance of the class. Defaults must be
+constants whose value can be determined at compile time.
+
+The pattern in a field declaration must be a run-time binding pattern, so the
+full syntax is:
+
+_field-declaration_ ::= `var` _identifier_ `:` _expression_ [ `=` _expression_
+] `;`
 
 ### Forward declaration
 

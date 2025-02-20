@@ -197,9 +197,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnSlotPattern::Kind:
-      case Vtable::Kind:
       case ReturnExpr::Kind:
+      case TuplePattern::Kind:
       case VarPattern::Kind:
+      case Vtable::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:

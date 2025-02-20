@@ -2155,6 +2155,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::ReturnSlotPattern::Kind:
     case SemIR::StructLiteral::Kind:
     case SemIR::TupleLiteral::Kind:
+    case SemIR::TuplePattern::Kind:
     case SemIR::ValueParam::Kind:
     case SemIR::VarPattern::Kind:
     case SemIR::VarStorage::Kind:

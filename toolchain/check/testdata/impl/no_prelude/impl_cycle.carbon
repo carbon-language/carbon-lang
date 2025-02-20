@@ -177,3 +177,61 @@ fn F() {
   Compare({} as C, {} as D);
   Compare({} as D, {} as C);
 }
+
+// --- deduce_cycle_without_symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface First {}
+interface Second {}
+
+// When answering a query "does T impl Second", we must avoid trying to deduce
+// parameters for this impl. Not only is doing so unnecessary, it would start a new
+// "does T impl Second" query, leading to a "cycle in impl lookup" error.
+impl forall [T:! Second] T as First {}
+impl forall [T:! type] T as Second {}
+
+class C {}
+
+fn F() {
+  ({} as C) as (C as Second);
+  ({} as C) as (C as First);
+}
+
+// --- fail_todo_deduce_cycle_with_symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface First(T:! type) {}
+interface Second {}
+
+// When answering a query "does T impl Second", we must avoid trying to deduce
+// parameters for this impl. Not only is doing so unnecessary, it would start a new
+// "does T impl Second" query, leading to a "cycle in impl lookup" error.
+impl forall [T:! Second, U:! type] T as First(U) {}
+impl forall [T:! type] T as Second {}
+
+class C {}
+
+// TODO: See the TODO in impl_lookup.cpp to reject impls where the interface
+// does not match the query.
+fn F() {
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE+7]]:17: error: cycle found in lookup of interface <TODO: interface name> for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as C) as (C as Second);
+  // CHECK:STDERR:                 ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE-11]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as C) as (C as Second);
+
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE+10]]:17: error: cycle found in lookup of interface <TODO: interface name> for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as C) as (C as First(C));
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE-20]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE-23]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as C) as (C as First(C));
+}

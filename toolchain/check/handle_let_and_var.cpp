@@ -15,6 +15,7 @@
 #include "toolchain/check/return.h"
 #include "toolchain/check/subpattern.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/ids.h"
@@ -135,17 +136,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
   auto subpattern_id = SemIR::InstId::None;
-  if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
-    context.node_stack().PopAndIgnore();
-    CARBON_CHECK(
-        context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart));
-    context.node_stack().PopAndIgnore();
-    context.inst_block_stack().PopAndDiscard();
-    context.TODO(node_id, "tuple pattern in let/var");
-    subpattern_id = SemIR::ErrorInst::SingletonInstId;
-  } else {
-    subpattern_id = context.node_stack().PopPattern();
-  }
+  subpattern_id = context.node_stack().PopPattern();
   auto type_id = context.insts().Get(subpattern_id).type_id();
 
   auto pattern_id = AddPatternInst<SemIR::VarPattern>(
@@ -251,21 +242,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
   }
   context.full_pattern_stack().PopFullPattern();
 
-  if (auto [tuple_pattern_node_id, tuple_inst_block_id] =
-          context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
-      tuple_inst_block_id) {
-    context.TODO(tuple_pattern_node_id, "tuple pattern in let/var");
-
-    // TODO: Tuple patterns don't behave like other patterns. They are
-    // associated with an InstBlockId on the node stack rather than an InstId,
-    // and leave behind an entry on the subpattern stack and one on the node
-    // stack.
-    EndSubpatternAsExpr(context, SemIR::ErrorInst::SingletonInstId);
-    context.node_stack().PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
-    decl_info.pattern_id = SemIR::ErrorInst::SingletonInstId;
-  } else {
-    decl_info.pattern_id = context.node_stack().PopPattern();
-  }
+  decl_info.pattern_id = context.node_stack().PopPattern();
 
   context.node_stack().PopAndDiscardSoloNodeId<IntroducerNodeKind>();
 
@@ -382,7 +359,19 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
 
-  if (context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>()) {
+  if (auto class_scope =
+          context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>()) {
+    auto var = context.insts().GetAs<SemIR::VarPattern>(decl_info.pattern_id);
+    if (!context.insts().TryGetAs<SemIR::FieldDecl>(var.subpattern_id)) {
+      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInFieldDecl, Error,
+                        "pattern in field declaration is not a "
+                        "single `:` binding");
+      context.emitter().Emit(context.insts().GetLocId(var.subpattern_id),
+                             ExpectedSymbolicBindingInFieldDecl);
+      context.name_scopes()
+          .Get(context.classes().Get(class_scope->class_id).scope_id)
+          .set_has_error();
+    }
     if (decl_info.init_id.has_value()) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.

@@ -54,7 +54,7 @@ auto HandleDeclNameAndParams(Context& context) -> void {
       context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *identifier);
       state.state = State::DeclNameAndParamsAfterParams;
       context.PushState(state);
-      context.PushState(State::PatternListAsTuple);
+      context.PushState(State::PatternListAsExplicit);
       break;
 
     default:
@@ -77,7 +77,7 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
 
   state.state = State::DeclNameAndParamsAfterParams;
   context.PushState(state);
-  context.PushState(State::PatternListAsTuple);
+  context.PushState(State::PatternListAsExplicit);
 }
 
 auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {

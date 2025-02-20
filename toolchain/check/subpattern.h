@@ -24,8 +24,8 @@ auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
     -> SemIR::ExprRegionId;
 
 // Ends a region started by BeginSubpattern (in stack order), asserting that
-// it was empty.
-auto EndSubpatternAsEmpty(Context& context) -> void;
+// it had no expression content.
+auto EndSubpatternAsNonExpr(Context& context) -> void;
 
 // TODO: Add EndSubpatternAsPattern, when needed.
 

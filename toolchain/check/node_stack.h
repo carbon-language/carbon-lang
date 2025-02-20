@@ -373,8 +373,8 @@ class NodeStack {
       }
     };
 
-    // TODO: Patterns should also produce an `InstId`, but currently
-    // `TuplePattern` produces an `InstBlockId`.
+    set_id_if_category_is(Parse::NodeCategory::Pattern,
+                          Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::Expr,
                           Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::MemberName |
@@ -394,23 +394,18 @@ class NodeStack {
   static constexpr auto NodeKindToIdKindSpecialCases(Parse::NodeKind node_kind)
       -> std::optional<Id::Kind> {
     switch (node_kind) {
-      case Parse::NodeKind::Addr:
       case Parse::NodeKind::CallExprStart:
-      case Parse::NodeKind::CompileTimeBindingPattern:
       case Parse::NodeKind::IfExprThen:
-      case Parse::NodeKind::LetBindingPattern:
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
-      case Parse::NodeKind::VarBindingPattern:
-      case Parse::NodeKind::VariablePattern:
       case Parse::NodeKind::WhereOperand:
         return Id::KindFor<SemIR::InstId>();
+      case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
-      case Parse::NodeKind::TuplePattern:
       case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
         return Id::KindFor<SemIR::InstBlockId>();
@@ -436,6 +431,7 @@ class NodeStack {
       case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::ExplicitParamListStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:

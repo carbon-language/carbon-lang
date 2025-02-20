@@ -152,6 +152,8 @@ CARBON_PARSE_NODE_KIND(TuplePatternStart)
 CARBON_PARSE_NODE_KIND(PatternListComma)
 CARBON_PARSE_NODE_KIND(TuplePattern)
 
+CARBON_PARSE_NODE_KIND(ExplicitParamListStart)
+CARBON_PARSE_NODE_KIND(ExplicitParamList)
 CARBON_PARSE_NODE_KIND(ImplicitParamListStart)
 CARBON_PARSE_NODE_KIND(ImplicitParamList)
 
