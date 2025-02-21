@@ -258,7 +258,13 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
     auto complete_id = RequireCompleteFacetType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-        loc_id, *base_as_facet_type, FacetTypeMemberAccess);
+        loc_id, *base_as_facet_type, [&] {
+          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
+                            "member access into incomplete facet type {0}",
+                            InstIdAsType);
+          return context.emitter().Build(
+              loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
+        });
     if (complete_id.has_value()) {
       const auto& resolved = context.complete_facet_types().Get(complete_id);
       for (const auto& interface : resolved.required_interfaces) {

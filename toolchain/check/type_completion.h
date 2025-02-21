@@ -48,16 +48,12 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          Context::BuildDiagnosticFn diagnoser,
                          Context::BuildDiagnosticFn abstract_diagnoser) -> bool;
 
-// Like `RequireCompleteType`, but also require the facet type to be fully
-// defined with known members. If it uses some incomplete interface, diagnoses
-// the problem and returns None.
-// TODO: Get rid of this enum and use the `RequireCompleteType` diagnostic
-// mechanism instead.
-enum FacetTypeContext { FacetTypeMemberAccess, FacetTypeImpl };
+// Like `RequireCompleteType`, but only for facet types. If it uses some
+// incomplete interface, diagnoses the problem and returns `None`.
 auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
                               SemIR::LocId loc_id,
                               const SemIR::FacetType& facet_type,
-                              FacetTypeContext context_for_diagnostics)
+                              Context::BuildDiagnosticFn diagnoser)
     -> SemIR::CompleteFacetTypeId;
 
 // Returns the type `type_id` if it is a complete type, or produces an
