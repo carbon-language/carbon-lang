@@ -10,7 +10,7 @@ import library "io_utils";
 
 // Read a sequence of lines each containing a pair of numbers into two arrays.
 // Returns the number of lines read.
-fn ReadInputs(ap: [i32; 1000]*, bp: [i32; 1000]*) -> i32 {
+fn ReadInputs(ap: array(i32, 1000)*, bp: array(i32, 1000)*) -> i32 {
   var n: i32 = 0;
   var a: i32;
   var b: i32;

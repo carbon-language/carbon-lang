@@ -5,6 +5,7 @@
 #include "toolchain/check/type.h"
 
 #include "toolchain/check/eval.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/type_completion.h"
 
 namespace Carbon::Check {
@@ -17,15 +18,6 @@ static auto GetTypeImpl(Context& context, EachArgT... each_arg)
   InstT inst = {SemIR::TypeType::SingletonTypeId, each_arg...};
   return context.types().GetTypeIdForTypeConstantId(
       TryEvalInst(context, SemIR::InstId::None, inst));
-}
-
-auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
-                            SemIR::SpecificId specific_id) -> SemIR::FacetType {
-  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(
-      SemIR::FacetTypeInfo{.impls_constraints = {{interface_id, specific_id}},
-                           .other_requirements = false});
-  return {.type_id = SemIR::TypeType::SingletonTypeId,
-          .facet_type_id = facet_type_id};
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments,

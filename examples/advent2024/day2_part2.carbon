@@ -19,7 +19,7 @@ class Window {
     ++self->size;
   }
 
-  var data: [i32; 3];
+  var data: array(i32, 3);
   var size: i32;
 }
 

@@ -12,9 +12,9 @@ var tuple_copy: (i32, i32) = (1, 2) as (i32, i32);
 
 var struct_copy: {.a: i32, .b: i32, .c: i32} = {.c = 3, .b = 2, .a = 1} as {.b: i32, .a: i32, .c: i32};
 
-var tuple_index: [i32; 1] = (0,) as [i32; (5, 7, 1, 9).2];
+var tuple_index: array(i32, 1) = (0,) as array(i32, (5, 7, 1, 9).2);
 
-var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
+var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 
 // CHECK:STDOUT: --- aggregate.carbon
 // CHECK:STDOUT:
@@ -117,7 +117,7 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:     %.loc15_1: %array_type = var_pattern %tuple_index.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_index.var: ref %array_type = var tuple_index
-// CHECK:STDOUT:   %.loc15_25: type = splice_block %array_type.loc15 [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc15_30: type = splice_block %array_type.loc15 [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -129,7 +129,7 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:     %.loc17_1: %array_type = var_pattern %struct_access.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_access.var: ref %array_type = var struct_access
-// CHECK:STDOUT:   %.loc17_27: type = splice_block %array_type.loc17 [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc17_32: type = splice_block %array_type.loc17 [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1.loc17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -215,55 +215,55 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc13_73.11: init %struct_type.a.b.c = struct_init (%.loc13_73.4, %.loc13_73.7, %.loc13_73.10) to file.%struct_copy.var [concrete = constants.%struct.cff]
 // CHECK:STDOUT:   %.loc13_1: init %struct_type.a.b.c = converted %.loc13_73.1, %.loc13_73.11 [concrete = constants.%struct.cff]
 // CHECK:STDOUT:   assign file.%struct_copy.var, %.loc13_1
-// CHECK:STDOUT:   %int_0.loc15_30: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %.loc15_32.1: %tuple.type.985 = tuple_literal (%int_0.loc15_30)
+// CHECK:STDOUT:   %int_0.loc15_35: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
+// CHECK:STDOUT:   %.loc15_37.1: %tuple.type.985 = tuple_literal (%int_0.loc15_35)
 // CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
 // CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9]
-// CHECK:STDOUT:   %.loc15_54.1: %tuple.type.d46 = tuple_literal (%int_5, %int_7, %int_1.loc15, %int_9)
+// CHECK:STDOUT:   %.loc15_64.1: %tuple.type.d46 = tuple_literal (%int_5, %int_7, %int_1.loc15, %int_9)
 // CHECK:STDOUT:   %int_2.loc15: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %tuple.loc15: %tuple.type.d46 = tuple_value (%int_5, %int_7, %int_1.loc15, %int_9) [concrete = constants.%tuple.869]
-// CHECK:STDOUT:   %.loc15_54.2: %tuple.type.d46 = converted %.loc15_54.1, %tuple.loc15 [concrete = constants.%tuple.869]
-// CHECK:STDOUT:   %tuple.elem2: Core.IntLiteral = tuple_access %.loc15_54.2, element2 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc15_64.2: %tuple.type.d46 = converted %.loc15_64.1, %tuple.loc15 [concrete = constants.%tuple.869]
+// CHECK:STDOUT:   %tuple.elem2: Core.IntLiteral = tuple_access %.loc15_64.2, element2 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %array_type.loc15: type = array_type %tuple.elem2, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   %impl.elem0.loc15: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %int_0.loc15_30, %impl.elem0.loc15 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %int_0.loc15_35, %impl.elem0.loc15 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %bound_method.loc15, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %specific_fn.loc15(%int_0.loc15_30) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc15_32.2: init %i32 = converted %int_0.loc15_30, %int.convert_checked.loc15 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %specific_fn.loc15(%int_0.loc15_35) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc15_37.2: init %i32 = converted %int_0.loc15_35, %int.convert_checked.loc15 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc15_1: ref %array_type = splice_block file.%tuple_index.var {}
-// CHECK:STDOUT:   %int_0.loc15_32: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %.loc15_32.3: ref %i32 = array_index %.loc15_1, %int_0.loc15_32
-// CHECK:STDOUT:   %.loc15_32.4: init %i32 = initialize_from %.loc15_32.2 to %.loc15_32.3 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc15_32.5: init %array_type = array_init (%.loc15_32.4) to %.loc15_1 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc15_34: init %array_type = converted %.loc15_32.1, %.loc15_32.5 [concrete = constants.%array]
-// CHECK:STDOUT:   assign file.%tuple_index.var, %.loc15_34
-// CHECK:STDOUT:   %int_0.loc17_32: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %.loc17_34.1: %tuple.type.985 = tuple_literal (%int_0.loc17_32)
+// CHECK:STDOUT:   %int_0.loc15_37: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
+// CHECK:STDOUT:   %.loc15_37.3: ref %i32 = array_index %.loc15_1, %int_0.loc15_37
+// CHECK:STDOUT:   %.loc15_37.4: init %i32 = initialize_from %.loc15_37.2 to %.loc15_37.3 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc15_37.5: init %array_type = array_init (%.loc15_37.4) to %.loc15_1 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc15_39: init %array_type = converted %.loc15_37.1, %.loc15_37.5 [concrete = constants.%array]
+// CHECK:STDOUT:   assign file.%tuple_index.var, %.loc15_39
+// CHECK:STDOUT:   %int_0.loc17_37: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
+// CHECK:STDOUT:   %.loc17_39.1: %tuple.type.985 = tuple_literal (%int_0.loc17_37)
 // CHECK:STDOUT:   %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %int_3.loc17: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %int_1.loc17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc17_60.1: %struct_type.a.b = struct_literal (%int_3.loc17, %int_1.loc17)
+// CHECK:STDOUT:   %.loc17_70.1: %struct_type.a.b = struct_literal (%int_3.loc17, %int_1.loc17)
 // CHECK:STDOUT:   %struct.loc17: %struct_type.a.b = struct_value (%int_3.loc17, %int_1.loc17) [concrete = constants.%struct.a81]
-// CHECK:STDOUT:   %.loc17_60.2: %struct_type.a.b = converted %.loc17_60.1, %struct.loc17 [concrete = constants.%struct.a81]
-// CHECK:STDOUT:   %.loc17_61: Core.IntLiteral = struct_access %.loc17_60.2, element1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %array_type.loc17: type = array_type %.loc17_61, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %.loc17_70.2: %struct_type.a.b = converted %.loc17_70.1, %struct.loc17 [concrete = constants.%struct.a81]
+// CHECK:STDOUT:   %.loc17_71: Core.IntLiteral = struct_access %.loc17_70.2, element1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %array_type.loc17: type = array_type %.loc17_71, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   %impl.elem0.loc17: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %int_0.loc17_32, %impl.elem0.loc17 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %int_0.loc17_37, %impl.elem0.loc17 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %bound_method.loc17, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc17: init %i32 = call %specific_fn.loc17(%int_0.loc17_32) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc17_34.2: init %i32 = converted %int_0.loc17_32, %int.convert_checked.loc17 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %int.convert_checked.loc17: init %i32 = call %specific_fn.loc17(%int_0.loc17_37) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc17_39.2: init %i32 = converted %int_0.loc17_37, %int.convert_checked.loc17 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc17_1: ref %array_type = splice_block file.%struct_access.var {}
-// CHECK:STDOUT:   %int_0.loc17_34: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %.loc17_34.3: ref %i32 = array_index %.loc17_1, %int_0.loc17_34
-// CHECK:STDOUT:   %.loc17_34.4: init %i32 = initialize_from %.loc17_34.2 to %.loc17_34.3 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc17_34.5: init %array_type = array_init (%.loc17_34.4) to %.loc17_1 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc17_36: init %array_type = converted %.loc17_34.1, %.loc17_34.5 [concrete = constants.%array]
-// CHECK:STDOUT:   assign file.%struct_access.var, %.loc17_36
+// CHECK:STDOUT:   %int_0.loc17_39: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
+// CHECK:STDOUT:   %.loc17_39.3: ref %i32 = array_index %.loc17_1, %int_0.loc17_39
+// CHECK:STDOUT:   %.loc17_39.4: init %i32 = initialize_from %.loc17_39.2 to %.loc17_39.3 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc17_39.5: init %array_type = array_init (%.loc17_39.4) to %.loc17_1 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc17_41: init %array_type = converted %.loc17_39.1, %.loc17_39.5 [concrete = constants.%array]
+// CHECK:STDOUT:   assign file.%struct_access.var, %.loc17_41
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

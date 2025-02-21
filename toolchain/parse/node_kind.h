@@ -37,6 +37,7 @@ class NodeCategory : public Printable<NodeCategory> {
     Requirement = 1 << 9,
     NonExprIdentifierName = 1 << 10,
     PackageName = 1 << 11,
+    // If you add a new category here, also add it to the Print function.
     None = 0,
 
     LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/PackageName)
@@ -48,15 +49,14 @@ class NodeCategory : public Printable<NodeCategory> {
   constexpr NodeCategory(RawEnumType value) : value_(value) {}
 
   // Returns true if there's a non-empty set intersection.
-  constexpr auto HasAnyOf(NodeCategory other) -> bool {
+  constexpr auto HasAnyOf(NodeCategory other) const -> bool {
     return value_ & other.value_;
   }
 
   // Returns the set inverse.
-  constexpr auto operator~() -> NodeCategory { return ~value_; }
+  constexpr auto operator~() const -> NodeCategory { return ~value_; }
 
-  friend auto operator==(const NodeCategory& lhs, const NodeCategory& rhs)
-      -> bool {
+  friend auto operator==(NodeCategory lhs, NodeCategory rhs) -> bool {
     return lhs.value_ == rhs.value_;
   }
 

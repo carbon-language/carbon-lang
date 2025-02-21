@@ -8,11 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_out_of_bound.carbon
 
-// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+4]]:19: error: cannot initialize array of 1 element from 3 initializers [ArrayInitFromLiteralArgCountMismatch]
-// CHECK:STDERR: var a: [i32; 1] = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~
+// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+4]]:24: error: cannot initialize array of 1 element from 3 initializers [ArrayInitFromLiteralArgCountMismatch]
+// CHECK:STDERR: var a: array(i32, 1) = (1, 2, 3);
+// CHECK:STDERR:                        ^~~~~~~~~
 // CHECK:STDERR:
-var a: [i32; 1] = (1, 2, 3);
+var a: array(i32, 1) = (1, 2, 3);
 
 // CHECK:STDOUT: --- fail_out_of_bound.carbon
 // CHECK:STDOUT:
@@ -45,7 +45,7 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:     %.loc15_1: %array_type = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
-// CHECK:STDOUT:   %.loc15_15: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc15_20: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]

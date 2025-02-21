@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/Sequence.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
@@ -18,6 +19,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -61,15 +63,6 @@ Context::Context(DiagnosticEmitter* emitter,
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
   check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::None);
-
-  // Map the builtin `<error>` and `type` type constants to their corresponding
-  // special `TypeId` values.
-  type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForConcreteConstant(SemIR::ErrorInst::SingletonInstId),
-      SemIR::ErrorInst::SingletonTypeId);
-  type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForConcreteConstant(SemIR::TypeType::SingletonInstId),
-      SemIR::TypeType::SingletonTypeId);
 
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
   // in the right places.
@@ -123,11 +116,6 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   pattern_block_stack_.PrintForStackDump(Indent, output);
   param_and_arg_refs_stack_.PrintForStackDump(Indent, output);
   args_type_info_stack_.PrintForStackDump(Indent, output);
-}
-
-auto Context::DumpFormattedFile() const -> void {
-  SemIR::Formatter formatter(sem_ir_);
-  formatter.Print(llvm::errs());
 }
 
 }  // namespace Carbon::Check

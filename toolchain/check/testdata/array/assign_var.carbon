@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/assign_var.carbon
 
 var a: (i32, i32, i32) = (1, 2, 3);
-var b: [i32; 3] = a;
+var b: array(i32, 3) = a;
 
 // CHECK:STDOUT: --- assign_var.carbon
 // CHECK:STDOUT:
@@ -80,7 +80,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:     %.loc12_1: %array_type = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %array_type = var b
-// CHECK:STDOUT:   %.loc12_15: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc12_20: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -121,22 +121,22 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_1
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.189 = name_ref a, file.%a
 // CHECK:STDOUT:   %tuple.elem0.loc12: ref %i32 = tuple_access %a.ref, element0
-// CHECK:STDOUT:   %.loc12_19.1: %i32 = bind_value %tuple.elem0.loc12
+// CHECK:STDOUT:   %.loc12_24.1: %i32 = bind_value %tuple.elem0.loc12
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc12_19.2: ref %i32 = array_index file.%b.var, %int_0
-// CHECK:STDOUT:   %.loc12_19.3: init %i32 = initialize_from %.loc12_19.1 to %.loc12_19.2
+// CHECK:STDOUT:   %.loc12_24.2: ref %i32 = array_index file.%b.var, %int_0
+// CHECK:STDOUT:   %.loc12_24.3: init %i32 = initialize_from %.loc12_24.1 to %.loc12_24.2
 // CHECK:STDOUT:   %tuple.elem1.loc12: ref %i32 = tuple_access %a.ref, element1
-// CHECK:STDOUT:   %.loc12_19.4: %i32 = bind_value %tuple.elem1.loc12
+// CHECK:STDOUT:   %.loc12_24.4: %i32 = bind_value %tuple.elem1.loc12
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc12_19.5: ref %i32 = array_index file.%b.var, %int_1.loc12
-// CHECK:STDOUT:   %.loc12_19.6: init %i32 = initialize_from %.loc12_19.4 to %.loc12_19.5
+// CHECK:STDOUT:   %.loc12_24.5: ref %i32 = array_index file.%b.var, %int_1.loc12
+// CHECK:STDOUT:   %.loc12_24.6: init %i32 = initialize_from %.loc12_24.4 to %.loc12_24.5
 // CHECK:STDOUT:   %tuple.elem2.loc12: ref %i32 = tuple_access %a.ref, element2
-// CHECK:STDOUT:   %.loc12_19.7: %i32 = bind_value %tuple.elem2.loc12
+// CHECK:STDOUT:   %.loc12_24.7: %i32 = bind_value %tuple.elem2.loc12
 // CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc12_19.8: ref %i32 = array_index file.%b.var, %int_2.loc12
-// CHECK:STDOUT:   %.loc12_19.9: init %i32 = initialize_from %.loc12_19.7 to %.loc12_19.8
-// CHECK:STDOUT:   %.loc12_19.10: init %array_type = array_init (%.loc12_19.3, %.loc12_19.6, %.loc12_19.9) to file.%b.var
-// CHECK:STDOUT:   %.loc12_1: init %array_type = converted %a.ref, %.loc12_19.10
+// CHECK:STDOUT:   %.loc12_24.8: ref %i32 = array_index file.%b.var, %int_2.loc12
+// CHECK:STDOUT:   %.loc12_24.9: init %i32 = initialize_from %.loc12_24.7 to %.loc12_24.8
+// CHECK:STDOUT:   %.loc12_24.10: init %array_type = array_init (%.loc12_24.3, %.loc12_24.6, %.loc12_24.9) to file.%b.var
+// CHECK:STDOUT:   %.loc12_1: init %array_type = converted %a.ref, %.loc12_24.10
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

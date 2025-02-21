@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 base class B {}
 
 class C {
-  // CHECK:STDERR: fail_extend_poison_class_members.carbon:[[@LINE+3]]:16: error: name used before it was declared [NameUseBeforeDecl]
+  // CHECK:STDERR: fail_extend_poison_class_members.carbon:[[@LINE+3]]:16: error: name `B` used before it was declared [NameUseBeforeDecl]
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:                ^
   extend base: B;

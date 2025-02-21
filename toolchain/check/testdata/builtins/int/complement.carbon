@@ -17,8 +17,8 @@ library "[[@TEST_NAME]]";
 fn Complement(a: i32) -> i32 = "int.complement";
 fn And(a: i32, b: i32) -> i32 = "int.and";
 
-var arr: [i32; And(Complement(0x123456), 0xFFFFFF)];
-let arr_p: [i32; 0xEDCBA9]* = &arr;
+var arr: array(i32, And(Complement(0x123456), 0xFFFFFF));
+let arr_p: array(i32, 0xEDCBA9)* = &arr;
 
 fn RuntimeCallIsValid(a: i32) -> i32 {
   return Complement(a);

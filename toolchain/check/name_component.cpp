@@ -16,11 +16,12 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
 
   // Explicit params.
   auto [params_loc_id, param_patterns_id] =
-      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
+      context.node_stack()
+          .PopWithNodeIdIf<Parse::NodeKind::ExplicitParamList>();
   if (param_patterns_id) {
     first_param_node_id =
         context.node_stack()
-            .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
+            .PopForSoloNodeId<Parse::NodeKind::ExplicitParamListStart>();
     last_param_node_id = params_loc_id;
   } else {
     param_patterns_id = SemIR::InstBlockId::None;

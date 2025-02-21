@@ -16,7 +16,7 @@ namespace Nested;
 // --- fail_conflict.carbon
 
 import Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:11: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-4]]:1: note: name is previously declared here [NameDeclPrevious]

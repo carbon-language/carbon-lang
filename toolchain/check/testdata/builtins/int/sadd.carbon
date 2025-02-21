@@ -94,30 +94,30 @@ fn MixedAdd3(a: i32, b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sadd";
 // CHECK:STDERR:
 fn MixedAdd4(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.sadd";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_few: [i32; TooFew(1)];
-// CHECK:STDERR:                    ^~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:25: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var too_few: array(i32, TooFew(1));
+// CHECK:STDERR:                         ^~~~~~~~~
 // CHECK:STDERR:
-var too_few: [i32; TooFew(1)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_many: [i32; TooMany(1, 2, 3)];
-// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
+var too_few: array(i32, TooFew(1));
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:26: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var too_many: array(i32, TooMany(1, 2, 3));
+// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var too_many: [i32; TooMany(1, 2, 3)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1, 2)];
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~
+var too_many: array(i32, TooMany(1, 2, 3));
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:33: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var bad_return_type: array(i32, BadReturnType(1, 2));
+// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var bad_return_type: [i32; BadReturnType(1, 2)];
+var bad_return_type: array(i32, BadReturnType(1, 2));
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: var bad_call: [i32; JustRight(1, 2, 3)];
-// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:26: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
+// CHECK:STDERR: var bad_call: array(i32, JustRight(1, 2, 3));
+// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-43]]:1: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR: fn JustRight(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var bad_call: [i32; JustRight(1, 2, 3)];
+var bad_call: array(i32, JustRight(1, 2, 3));
 
 fn RuntimeCallIsValidTooFew(a: i32) -> i32 {
   return TooFew(a);

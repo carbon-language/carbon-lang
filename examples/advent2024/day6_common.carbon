@@ -104,7 +104,7 @@ class Maze {
     return total;
   }
 
-  var data: [[i8; 130]; 130];
+  var data: array(array(i8, 130), 130);
   var loc: (i32, i32);
   var dir: (i32, i32);
 }

@@ -24,7 +24,7 @@ import library "namespace";
 // imported declaration.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR:    ^~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1: in import [InImport]
@@ -38,7 +38,7 @@ fn NS();
 // we don't move it.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR:    ^~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import [InImport]

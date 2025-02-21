@@ -87,7 +87,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   }
 
   // Gets the value representation to use for a type. This returns an
-  // invalid type if the given type is not complete.
+  // `None` type if the given type is not complete.
   auto GetValueRepr(TypeId type_id) const -> ValueRepr {
     if (auto type_info = complete_type_info_.Lookup(type_id)) {
       return type_info.value().value_repr;
@@ -95,11 +95,20 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return {.kind = ValueRepr::Unknown};
   }
 
-  // Sets the value representation associated with a type.
-  auto SetValueRepr(TypeId type_id, ValueRepr value_repr) -> void {
-    CARBON_CHECK(value_repr.kind != ValueRepr::Unknown);
-    auto insert_info =
-        complete_type_info_.Insert(type_id, {.value_repr = value_repr});
+  // Gets the `CompleteTypeInfo` for a type, with an empty value if the type is
+  // not complete.
+  auto GetCompleteTypeInfo(TypeId type_id) const -> CompleteTypeInfo {
+    if (auto type_info = complete_type_info_.Lookup(type_id)) {
+      return type_info.value();
+    }
+    return {.value_repr = {.kind = ValueRepr::Unknown}};
+  }
+
+  // Sets the `CompleteTypeInfo` associated with a type, marking it as complete.
+  // This can be used with abstract types.
+  auto SetComplete(TypeId type_id, const CompleteTypeInfo& info) -> void {
+    CARBON_CHECK(info.value_repr.kind != ValueRepr::Unknown);
+    auto insert_info = complete_type_info_.Insert(type_id, info);
     CARBON_CHECK(insert_info.is_inserted(), "Type {0} completed more than once",
                  type_id);
     complete_types_.push_back(type_id);
@@ -148,8 +157,15 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto type_id : complete_types_) {
+        auto info = GetCompleteTypeInfo(type_id);
         map.Add(PrintToString(type_id),
-                Yaml::OutputScalar(GetValueRepr(type_id)));
+                Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
+                  map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));
+                  if (info.abstract_class_id.has_value()) {
+                    map2.Add("abstract_class_id",
+                             Yaml::OutputScalar(info.abstract_class_id));
+                  }
+                }));
       }
     });
   }

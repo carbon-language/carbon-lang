@@ -20,7 +20,7 @@ package Example;
 
 import library "namespace";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR:    ^~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import [InImport]

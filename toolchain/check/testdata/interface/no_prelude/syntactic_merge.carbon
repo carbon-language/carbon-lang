@@ -69,7 +69,7 @@ interface Bar(a:! D);
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Foo(a:! C) {}
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:6: in import [InImport]
@@ -78,7 +78,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 interface Foo(a:! C) {}
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Bar` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Bar(a:! D) {}
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:6: in import [InImport]
@@ -156,7 +156,7 @@ alias D = C;
 // TODO: This fails because importing interfaces doesn't work well. It should
 // fail due to `C` versus `D`, but may succeed if importing interfaces is fixed
 // before syntax matching on imports is supported.
-// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Foo(a:! D) {}
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:6: in import [InImport]

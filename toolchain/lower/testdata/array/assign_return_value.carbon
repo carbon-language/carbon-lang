@@ -11,7 +11,7 @@
 fn F() -> (i32, i32) { return (12, 24); }
 
 fn Run() {
-  var t: [i32; 2] = F();
+  var t: array(i32, 2) = F();
 }
 
 // CHECK:STDOUT: ; ModuleID = 'assign_return_value.carbon'
@@ -31,16 +31,16 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %t.var = alloca [2 x i32], align 4, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %t.var), !dbg !10
-// CHECK:STDOUT:   %.loc14_23.1.temp = alloca { i32, i32 }, align 8, !dbg !11
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_23.1.temp), !dbg !11
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_23.1.temp, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc14_23.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc14_23.4.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 0, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc14_23.3, ptr %.loc14_23.4.array.index, align 4, !dbg !11
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_23.1.temp, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc14_23.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc14_23.7.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 1, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc14_23.6, ptr %.loc14_23.7.array.index, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc14_28.1.temp = alloca { i32, i32 }, align 8, !dbg !11
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_28.1.temp), !dbg !11
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_28.1.temp, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc14_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc14_28.4.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 0, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc14_28.3, ptr %.loc14_28.4.array.index, align 4, !dbg !11
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_28.1.temp, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   %.loc14_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc14_28.7.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 1, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc14_28.6, ptr %.loc14_28.7.array.index, align 4, !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,5 +67,5 @@ fn Run() {
 // CHECK:STDOUT: !8 = !DILocation(line: 11, column: 24, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 21, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 26, scope: !9)
 // CHECK:STDOUT: !12 = !DILocation(line: 13, column: 1, scope: !9)

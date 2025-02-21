@@ -136,7 +136,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
 
     case NameContext::State::Unresolved:
       if (!name_context.parent_scope_id.has_value()) {
-        AddNameToLookup(*context_, name_context.unresolved_name_id, target_id,
+        AddNameToLookup(*context_, name_context.name_id, target_id,
                         name_context.initial_scope_index);
       } else {
         auto& name_scope =
@@ -161,7 +161,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
           context_->AddExport(target_id);
         }
 
-        name_scope.AddRequired({.name_id = name_context.unresolved_name_id,
+        name_scope.AddRequired({.name_id = name_context.name_id,
                                 .result = SemIR::ScopeLookupResult::MakeFound(
                                     target_id, access_kind)});
       }
@@ -177,10 +177,11 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
                                       SemIR::InstId target_id,
                                       SemIR::AccessKind access_kind) -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(*context_, name_context.poisoning_loc_id,
-                         name_context.loc_id);
+    DiagnosePoisonedName(*context_, name_context.name_id_for_new_inst(),
+                         name_context.poisoning_loc_id, name_context.loc_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
-    DiagnoseDuplicateName(*context_, name_context.loc_id, id);
+    DiagnoseDuplicateName(*context_, name_context.name_id, name_context.loc_id,
+                          id);
   } else {
     AddName(name_context, target_id, access_kind);
   }
@@ -254,14 +255,13 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
 auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
                                        SemIR::LocId loc_id,
                                        SemIR::NameId name_id) -> void {
-  // The location of the name is the location of the last name token we've
-  // processed so far.
+  // Update the final name component.
   name_context.loc_id = loc_id;
+  name_context.name_id = name_id;
 
   // Don't perform any more lookups after we hit an error. We still track the
   // final name, though.
   if (name_context.state == NameContext::State::Error) {
-    name_context.unresolved_name_id = name_id;
     return;
   }
 
@@ -270,12 +270,10 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
                                         name_context.parent_scope_id,
                                         name_context.initial_scope_index);
   if (lookup_result.is_poisoned()) {
-    name_context.unresolved_name_id = name_id;
     name_context.poisoning_loc_id = lookup_result.poisoning_loc_id();
     name_context.state = NameContext::State::Poisoned;
   } else if (!lookup_result.is_found()) {
     // Invalid indicates an unresolved name. Store it and return.
-    name_context.unresolved_name_id = name_id;
     name_context.state = NameContext::State::Unresolved;
   } else {
     // Store the resolved instruction and continue for the target scope
@@ -300,8 +298,7 @@ static auto CheckQualifierIsResolved(
     case DeclNameStack::NameContext::State::Unresolved:
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier failed to resolve.
-      DiagnoseNameNotFound(context, name_context.loc_id,
-                           name_context.unresolved_name_id);
+      DiagnoseNameNotFound(context, name_context.loc_id, name_context.name_id);
       return false;
 
     case DeclNameStack::NameContext::State::Finished:

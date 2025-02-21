@@ -57,6 +57,9 @@ struct ExprRegion {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
+  using CompleteFacetTypeStore =
+      RelationalValueStore<SemIR::FacetTypeId, SemIR::CompleteFacetTypeId>;
+
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
@@ -155,6 +158,12 @@ class File : public Printable<File> {
   }
   auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
+  }
+  auto complete_facet_types() -> CompleteFacetTypeStore& {
+    return complete_facet_types_;
+  }
+  auto complete_facet_types() const -> const CompleteFacetTypeStore& {
+    return complete_facet_types_;
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
@@ -268,6 +277,9 @@ class File : public Printable<File> {
 
   // Storage for facet types.
   CanonicalValueStore<FacetTypeId> facet_types_;
+
+  // Storage for complete facet types.
+  CompleteFacetTypeStore complete_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;

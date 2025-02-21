@@ -95,7 +95,7 @@ class DeclNameStack {
     // construction.
     auto MakeEntityWithParamsBase(const NameComponent& name,
                                   SemIR::InstId decl_id, bool is_extern,
-                                  SemIR::LibraryNameId extern_library)
+                                  SemIR::LibraryNameId extern_library) const
         -> SemIR::EntityWithParamsBase {
       return {
           .name_id = name_id_for_new_inst(),
@@ -121,11 +121,11 @@ class DeclNameStack {
 
     // Returns the name_id for a new instruction. This is `None` when the name
     // resolved.
-    auto name_id_for_new_inst() -> SemIR::NameId {
+    auto name_id_for_new_inst() const -> SemIR::NameId {
       switch (state) {
         case State::Unresolved:
         case State::Poisoned:
-          return unresolved_name_id;
+          return name_id;
         default:
           return SemIR::NameId::None;
       }
@@ -145,21 +145,21 @@ class DeclNameStack {
     // should be used.
     SemIR::NameScopeId parent_scope_id;
 
-    // The last location ID used.
+    // The location of the final name component.
     SemIR::LocId loc_id = SemIR::LocId::None;
+
+    // The name of the final name component.
+    SemIR::NameId name_id = SemIR::NameId::None;
 
     union {
       // The ID of a resolved qualifier, including both identifiers and
       // expressions. `None` indicates resolution failed.
       SemIR::InstId resolved_inst_id;
 
-      // The ID of an unresolved identifier.
-      SemIR::NameId unresolved_name_id = SemIR::NameId::None;
+      // When `state` is `Poisoned` (name is unresolved due to name poisoning),
+      // the poisoning location.
+      SemIR::LocId poisoning_loc_id = SemIR::LocId::None;
     };
-
-    // When `state` is `Poisoned` (name is unresolved due to name poisoning),
-    // the poisoning location.
-    SemIR::LocId poisoning_loc_id = SemIR::LocId::None;
   };
 
   // Information about a declaration name that has been temporarily removed from

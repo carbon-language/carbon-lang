@@ -116,6 +116,6 @@ class SectorList {
     return total;
   }
 
-  var data: [i32; 200000];
+  var data: array(i32, 200000);
   var size: i32;
 }

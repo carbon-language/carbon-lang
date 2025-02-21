@@ -12,11 +12,11 @@
 fn F(T:! type) {
   var u: (T*, const T);
   var v: {.a: T};
-  var w: [T; 5];
+  var w: array(T, 5);
 }
 
 fn G(N:! i32) {
-  var k: [i32; N];
+  var k: array(i32, N);
 }
 
 // CHECK:STDOUT: --- symbolic.carbon
@@ -103,8 +103,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @F.%tuple.type (%tuple.type.4f2) [symbolic = %require_complete.loc13 (constants.%require_complete.155)]
 // CHECK:STDOUT:   %struct_type.a.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @F.%struct_type.a.loc14_16.2 (%struct_type.a) [symbolic = %require_complete.loc14 (constants.%require_complete.28a)]
-// CHECK:STDOUT:   %array_type.loc15_15.2: type = array_type constants.%int_5, @F.%T.loc12_6.2 (%T) [symbolic = %array_type.loc15_15.2 (constants.%array_type.ec2)]
-// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @F.%array_type.loc15_15.2 (%array_type.ec2) [symbolic = %require_complete.loc15 (constants.%require_complete.fe1)]
+// CHECK:STDOUT:   %array_type.loc15_20.2: type = array_type constants.%int_5, @F.%T.loc12_6.2 (%T) [symbolic = %array_type.loc15_20.2 (constants.%array_type.ec2)]
+// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @F.%array_type.loc15_20.2 (%array_type.ec2) [symbolic = %require_complete.loc15 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -133,16 +133,16 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc14_16.2 (%struct_type.a) = bind_name v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %w.patt: @F.%array_type.loc15_15.2 (%array_type.ec2) = binding_pattern w
-// CHECK:STDOUT:       %.loc15_3: @F.%array_type.loc15_15.2 (%array_type.ec2) = var_pattern %w.patt
+// CHECK:STDOUT:       %w.patt: @F.%array_type.loc15_20.2 (%array_type.ec2) = binding_pattern w
+// CHECK:STDOUT:       %.loc15_3: @F.%array_type.loc15_20.2 (%array_type.ec2) = var_pattern %w.patt
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w.var: ref @F.%array_type.loc15_15.2 (%array_type.ec2) = var w
-// CHECK:STDOUT:     %.loc15_15: type = splice_block %array_type.loc15_15.1 [symbolic = %array_type.loc15_15.2 (constants.%array_type.ec2)] {
+// CHECK:STDOUT:     %w.var: ref @F.%array_type.loc15_20.2 (%array_type.ec2) = var w
+// CHECK:STDOUT:     %.loc15_20: type = splice_block %array_type.loc15_20.1 [symbolic = %array_type.loc15_20.2 (constants.%array_type.ec2)] {
 // CHECK:STDOUT:       %T.ref.loc15: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:       %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:       %array_type.loc15_15.1: type = array_type %int_5, %T [symbolic = %array_type.loc15_15.2 (constants.%array_type.ec2)]
+// CHECK:STDOUT:       %array_type.loc15_20.1: type = array_type %int_5, %T [symbolic = %array_type.loc15_20.2 (constants.%array_type.ec2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w: ref @F.%array_type.loc15_15.2 (%array_type.ec2) = bind_name w, %w.var
+// CHECK:STDOUT:     %w: ref @F.%array_type.loc15_20.2 (%array_type.ec2) = bind_name w, %w.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -154,30 +154,30 @@ fn G(N:! i32) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc18_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn (constants.%Convert.specific_fn)]
-// CHECK:STDOUT:   %int.convert_checked.loc19_16.2: init Core.IntLiteral = call %Convert.specific_fn(%N.loc18_6.2) [symbolic = %int.convert_checked.loc19_16.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:   %array_type.loc19_17.2: type = array_type %int.convert_checked.loc19_16.2, %i32 [symbolic = %array_type.loc19_17.2 (constants.%array_type.b04)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc19_17.2 (%array_type.b04) [symbolic = %require_complete (constants.%require_complete.9dc)]
+// CHECK:STDOUT:   %int.convert_checked.loc19_21.2: init Core.IntLiteral = call %Convert.specific_fn(%N.loc18_6.2) [symbolic = %int.convert_checked.loc19_21.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:   %array_type.loc19_22.2: type = array_type %int.convert_checked.loc19_21.2, %i32 [symbolic = %array_type.loc19_22.2 (constants.%array_type.b04)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc19_22.2 (%array_type.b04) [symbolic = %require_complete (constants.%require_complete.9dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %k.patt: @G.%array_type.loc19_17.2 (%array_type.b04) = binding_pattern k
-// CHECK:STDOUT:       %.loc19_3: @G.%array_type.loc19_17.2 (%array_type.b04) = var_pattern %k.patt
+// CHECK:STDOUT:       %k.patt: @G.%array_type.loc19_22.2 (%array_type.b04) = binding_pattern k
+// CHECK:STDOUT:       %.loc19_3: @G.%array_type.loc19_22.2 (%array_type.b04) = var_pattern %k.patt
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %k.var: ref @G.%array_type.loc19_17.2 (%array_type.b04) = var k
-// CHECK:STDOUT:     %.loc19_17: type = splice_block %array_type.loc19_17.1 [symbolic = %array_type.loc19_17.2 (constants.%array_type.b04)] {
+// CHECK:STDOUT:     %k.var: ref @G.%array_type.loc19_22.2 (%array_type.b04) = var k
+// CHECK:STDOUT:     %.loc19_22: type = splice_block %array_type.loc19_22.1 [symbolic = %array_type.loc19_22.2 (constants.%array_type.b04)] {
 // CHECK:STDOUT:       %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc18_6.1 [symbolic = %N.loc18_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:       %impl.elem0: %.10e = impl_witness_access constants.%impl_witness.023, element0 [concrete = constants.%Convert.960]
 // CHECK:STDOUT:       %bound_method: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %bound_method, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn (constants.%Convert.specific_fn)]
-// CHECK:STDOUT:       %int.convert_checked.loc19_16.1: init Core.IntLiteral = call %specific_fn(%N.ref) [symbolic = %int.convert_checked.loc19_16.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:       %.loc19_16.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc19_16.1 [symbolic = %int.convert_checked.loc19_16.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:       %.loc19_16.2: Core.IntLiteral = converted %N.ref, %.loc19_16.1 [symbolic = %int.convert_checked.loc19_16.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:       %array_type.loc19_17.1: type = array_type %.loc19_16.2, %i32 [symbolic = %array_type.loc19_17.2 (constants.%array_type.b04)]
+// CHECK:STDOUT:       %int.convert_checked.loc19_21.1: init Core.IntLiteral = call %specific_fn(%N.ref) [symbolic = %int.convert_checked.loc19_21.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:       %.loc19_21.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc19_21.1 [symbolic = %int.convert_checked.loc19_21.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:       %.loc19_21.2: Core.IntLiteral = converted %N.ref, %.loc19_21.1 [symbolic = %int.convert_checked.loc19_21.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:       %array_type.loc19_22.1: type = array_type %.loc19_21.2, %i32 [symbolic = %array_type.loc19_22.2 (constants.%array_type.b04)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %k: ref @G.%array_type.loc19_17.2 (%array_type.b04) = bind_name k, %k.var
+// CHECK:STDOUT:     %k: ref @G.%array_type.loc19_22.2 (%array_type.b04) = bind_name k, %k.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

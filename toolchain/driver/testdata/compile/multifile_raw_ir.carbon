@@ -43,11 +43,16 @@ fn B() {
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
-// CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
-// CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst14)':    {kind: none, type: type(inst15)}
-// CHECK:STDOUT:     'type(inst15)':    {kind: none, type: type(inst15)}
+// CHECK:STDOUT:     'type(TypeType)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:     'type(Error)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:     'type(inst(NamespaceType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'type(inst14)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst15)}
+// CHECK:STDOUT:     'type(inst15)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst15)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
@@ -100,12 +105,18 @@ fn B() {
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
-// CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
-// CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst16)':    {kind: none, type: type(inst17)}
-// CHECK:STDOUT:     'type(inst17)':    {kind: none, type: type(inst17)}
-// CHECK:STDOUT:     'type(inst22)':    {kind: none, type: type(inst17)}
+// CHECK:STDOUT:     'type(TypeType)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:     'type(Error)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:     'type(inst(NamespaceType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'type(inst16)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst17)}
+// CHECK:STDOUT:     'type(inst17)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst17)}
+// CHECK:STDOUT:     'type(inst22)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst17)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:

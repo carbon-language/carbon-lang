@@ -11,7 +11,7 @@
 fn F() {
   // 8 and 9 trigger special behavior in APInt when mishandling signed versus
   // unsigned, so we pay extra attention to those.
-  var ints: [i32; 6] = (
+  var ints: array(i32, 6) = (
     8,
     9,
     0x8,
@@ -19,7 +19,7 @@ fn F() {
     2147483647,
     0x7FFFFFFF,
   );
-  var floats: [f64; 6] = (
+  var floats: array(f64, 6) = (
     0.9,
     8.0,
     80.0,
@@ -163,7 +163,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_3.20: init %array_type.d49 = array_init (%.loc21_3.4, %.loc21_3.7, %.loc21_3.10, %.loc21_3.13, %.loc21_3.16, %.loc21_3.19) to %ints.var [concrete = constants.%array.ae2]
 // CHECK:STDOUT:   %.loc14_3.2: init %array_type.d49 = converted %.loc21_3.1, %.loc21_3.20 [concrete = constants.%array.ae2]
 // CHECK:STDOUT:   assign %ints.var, %.loc14_3.2
-// CHECK:STDOUT:   %.loc14_20: type = splice_block %array_type.loc14 [concrete = constants.%array_type.d49] {
+// CHECK:STDOUT:   %.loc14_25: type = splice_block %array_type.loc14 [concrete = constants.%array_type.d49] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_6.loc14: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
@@ -203,12 +203,12 @@ fn F() {
 // CHECK:STDOUT:   %.loc29_3.14: init %array_type.72b = array_init (%.loc29_3.3, %.loc29_3.5, %.loc29_3.7, %.loc29_3.9, %.loc29_3.11, %.loc29_3.13) to %floats.var [concrete = constants.%array.a2f]
 // CHECK:STDOUT:   %.loc22_3.2: init %array_type.72b = converted %.loc29_3.1, %.loc29_3.14 [concrete = constants.%array.a2f]
 // CHECK:STDOUT:   assign %floats.var, %.loc22_3.2
-// CHECK:STDOUT:   %.loc22_22: type = splice_block %array_type.loc22 [concrete = constants.%array_type.72b] {
+// CHECK:STDOUT:   %.loc22_27: type = splice_block %array_type.loc22 [concrete = constants.%array_type.72b] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
 // CHECK:STDOUT:     %int_6.loc22: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
-// CHECK:STDOUT:     %.loc22_16.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc22_16.2: type = converted %float.make_type, %.loc22_16.1 [concrete = f64]
+// CHECK:STDOUT:     %.loc22_21.1: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:     %.loc22_21.2: type = converted %float.make_type, %.loc22_21.1 [concrete = f64]
 // CHECK:STDOUT:     %array_type.loc22: type = array_type %int_6.loc22, f64 [concrete = constants.%array_type.72b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %floats: ref %array_type.72b = bind_name floats, %floats.var
