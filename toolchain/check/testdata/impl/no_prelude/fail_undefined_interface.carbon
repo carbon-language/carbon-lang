@@ -13,9 +13,9 @@
 library "[[@TEST_NAME]]";
 
 interface I;
-// CHECK:STDERR: fail_empty_struct.carbon:[[@LINE+7]]:12: error: impl of undefined interface I [ResolveFacetTypeWithUndefinedInterface]
+// CHECK:STDERR: fail_empty_struct.carbon:[[@LINE+7]]:1: error: impl as incomplete facet type `I` [ImplAsIncompleteFacetType]
 // CHECK:STDERR: impl {} as I {}
-// CHECK:STDERR:            ^
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_empty_struct.carbon:[[@LINE-4]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
@@ -28,9 +28,9 @@ library "[[@TEST_NAME]]";
 
 interface J;
 class C {}
-// CHECK:STDERR: fail_class.carbon:[[@LINE+7]]:11: error: impl of undefined interface J [ResolveFacetTypeWithUndefinedInterface]
+// CHECK:STDERR: fail_class.carbon:[[@LINE+7]]:1: error: impl as incomplete facet type `J` [ImplAsIncompleteFacetType]
 // CHECK:STDERR: impl C as J {}
-// CHECK:STDERR:           ^
+// CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_class.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface J;
 // CHECK:STDERR: ^~~~~~~~~~~~

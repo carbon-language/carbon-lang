@@ -323,6 +323,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       // TODO: Distinguish interfaces that are required but would not be
       // implemented, such as those from `where .Self impls I`.
       result.num_to_impl = result.required_interfaces.size();
+
+      // TODO: Process other kinds of requirements.
       context_.complete_facet_types().Add(inst.facet_type_id, result);
       break;
     }
