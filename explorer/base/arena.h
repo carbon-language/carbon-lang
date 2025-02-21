@@ -109,7 +109,7 @@ class Arena {
   class ArenaEntryTyped;
 
   // Hash functor implemented in terms of hash_value (see llvm/ADT/Hashing.h).
-  struct LLVMHasher {
+  struct LlvmHasher {
     template <typename T>
     auto operator()(const T& t) const -> size_t {
       using llvm::hash_value;
@@ -132,7 +132,7 @@ class Arena {
   template <typename T, typename... Args>
   using CanonicalizationTable =
       std::unordered_map<std::tuple<ArgKeyType<Args>...>, Nonnull<const T*>,
-                         LLVMHasher>;
+                         LlvmHasher>;
 
   // Allocates an object in the arena. Unlike New, this will always allocate
   // and construct a new object.
