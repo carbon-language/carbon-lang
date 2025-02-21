@@ -91,11 +91,11 @@ library "[[@TEST_NAME]]";
 
 extern library "indirect_two_file" fn F();
 
-// --- indirect_two_file.carbon
+// --- fail_indirect_two_file.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: indirect_two_file.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: fail_indirect_two_file.carbon:[[@LINE+5]]:1: in import [InImport]
 // CHECK:STDERR: indirect_two_file_extern.carbon:4:1: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
 // CHECK:STDERR: extern library "indirect_two_file" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -381,7 +381,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_two_file.carbon
+// CHECK:STDOUT: --- fail_indirect_two_file.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
