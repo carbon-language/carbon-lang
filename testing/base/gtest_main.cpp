@@ -9,7 +9,7 @@
 
 auto main(int argc, char** argv) -> int {
   // Initialize LLVM first, as that will also handle ensuring UTF-8 encoding.
-  Carbon::InitLlvm init_llvm(argc, argv);
+  Carbon::InitLLVM init_llvm(argc, argv);
 
   Carbon::Testing::SetExePath(argv[0]);
   testing::InitGoogleTest(&argc, argv);

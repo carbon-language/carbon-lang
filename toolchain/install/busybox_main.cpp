@@ -22,7 +22,7 @@ namespace Carbon {
 // The actual `main` implementation. Can return an exit code or an `Error`
 // (which causes EXIT_FAILRUE).
 static auto Main(int argc, char** argv) -> ErrorOr<int> {
-  InitLlvm init_llvm(argc, argv);
+  InitLLVM init_llvm(argc, argv);
 
   // Start by resolving any symlinks.
   CARBON_ASSIGN_OR_RETURN(auto busybox_info,

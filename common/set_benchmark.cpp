@@ -94,7 +94,7 @@ struct SetWrapperImpl<Set<KT, MinSmallSize>> {
 enum class SetOverride : uint8_t {
   Abseil,
   LLVM,
-  LlvmAndCarbonHash,
+  LLVMAndCarbonHash,
 };
 template <typename SetT, SetOverride Override>
 struct SetWrapperOverride : SetWrapperImpl<SetT> {};
@@ -109,7 +109,7 @@ struct SetWrapperOverride<Set<KeyT, MinSmallSize>, SetOverride::LLVM>
 
 template <typename KeyT, int MinSmallSize>
 struct SetWrapperOverride<Set<KeyT, MinSmallSize>,
-                          SetOverride::LlvmAndCarbonHash>
+                          SetOverride::LLVMAndCarbonHash>
     : SetWrapperImpl<llvm::DenseSet<KeyT, CarbonHashDI<KeyT>>> {};
 
 #ifndef CARBON_SET_BENCH_OVERRIDE

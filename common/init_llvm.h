@@ -13,15 +13,15 @@ namespace Carbon {
 // A RAII class to handle initializing LLVM and shutting it down. An instance of
 // this class should be created in the `main` function of each Carbon binary
 // that interacts with LLVM, before `argc` and `argv` are first inspected.
-class InitLlvm {
+class InitLLVM {
  public:
   // Initializes LLVM for use by a Carbon binary. On Windows, `argc` and `argv`
   // are updated to refer to properly-encoded UTF-8 versions of the command line
   // arguments.
-  explicit InitLlvm(int& argc, char**& argv);
+  explicit InitLLVM(int& argc, char**& argv);
 
   // Shuts down LLVM.
-  ~InitLlvm() = default;
+  ~InitLLVM() = default;
 
  private:
   using InitializeTargetsFn = auto() -> void;

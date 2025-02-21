@@ -73,7 +73,7 @@ serves to simplify it.
 -   For acronyms and initialisms, we generally follow the
     [capitalization style](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
     (`Api` instead of `API`).
-    -   The one exception is `IR`, which we capitalize.
+    -   The exceptions are `LLVM` and `IR`, which we capitalize.
 -   For abbreviations, there is a list of
     [common toolchain abbreviations](/toolchain/docs/idioms.md#abbreviations-used-in-the-code-aka-carbon-abbreviation-decoder-ring).
 
