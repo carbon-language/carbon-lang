@@ -14,6 +14,10 @@
 #include "llvm/ADT/StringRef.h"
 
 // Declare the supported driver flavor entry points.
+//
+// TODO: Currently, just ELF and MachO, but eventually we should support all of
+// the LLD platforms.
+//
 // NOLINTBEGIN(readability-identifier-naming): External library name.
 LLD_HAS_DRIVER(elf)
 LLD_HAS_DRIVER(macho)
