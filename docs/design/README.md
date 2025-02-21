@@ -3368,7 +3368,7 @@ The common type is required to be a type that both types have an
 > -   Proposal
 >     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
 > -   Question-for-leads issue
->     [#1077: find a way to permit impls of CommonTypeWith where the LHS and Rhs type overlap](https://github.com/carbon-language/carbon-lang/issues/1077)
+>     [#1077: find a way to permit impls of CommonTypeWith where the LHS and RHS type overlap](https://github.com/carbon-language/carbon-lang/issues/1077)
 
 ## Bidirectional interoperability with C and C++
 
