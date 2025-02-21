@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -503,6 +504,35 @@ auto DeductionContext::Deduce() -> bool {
   return true;
 }
 
+// Gets the entity name of a generic binding. The generic binding may be an
+// imported instruction.
+//
+// Returns a string because the diagnostics machinery can't handle ids from
+// other `SemIR::File`s.
+//
+// TODO: It would be nicer if we can return the `SemIR::File*` and `NameId`
+// here, and have the diagnostic do the formatting to a string.
+static auto GetEntityNameForGenericBinding(Context& context,
+                                           SemIR::InstId binding_id)
+    -> std::string {
+  // Move the `binding_id` to its original imported SemIR inst if needed.
+  const SemIR::File* sem_ir = &context.sem_ir();
+  if (sem_ir->insts().Is<SemIR::ImportRefLoaded>(binding_id)) {
+    auto imported = GetCanonicalImportIRInst(context, binding_id);
+    sem_ir = sem_ir->import_irs().Get(imported.ir_id).sem_ir;
+    binding_id = imported.inst_id;
+  }
+
+  if (auto bind_name =
+          sem_ir->insts().TryGetAs<SemIR::AnyBindName>(binding_id)) {
+    auto name_id =
+        sem_ir->entity_names().Get(bind_name->entity_name_id).name_id;
+    return sem_ir->names().GetFormatted(name_id).str();
+  } else {
+    CARBON_FATAL("Instruction without entity name in generic binding position");
+  }
+}
+
 auto DeductionContext::CheckDeductionIsComplete() -> bool {
   // Check we deduced an argument value for every parameter, and convert each
   // argument to match the final parameter type after substituting any deduced
@@ -515,16 +545,12 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
         context().generics().Get(generic_id_).bindings_id)[binding_index];
     if (!deduced_arg_id.has_value()) {
       if (diagnose_) {
-        auto entity_name_id = context()
-                                  .insts()
-                                  .GetAs<SemIR::AnyBindName>(binding_id)
-                                  .entity_name_id;
         CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
                           "cannot deduce value for generic parameter `{0}`",
-                          SemIR::NameId);
+                          std::string);
         auto diag = context().emitter().Build(
             loc_id_, DeductionIncomplete,
-            context().entity_names().Get(entity_name_id).name_id);
+            GetEntityNameForGenericBinding(context(), binding_id));
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
       }
