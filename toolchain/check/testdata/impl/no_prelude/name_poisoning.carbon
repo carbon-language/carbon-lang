@@ -14,10 +14,15 @@ library "[[@TEST_NAME]]";
 
 interface I;
 
-// N.F uses N.I and not I.
+// `N.F` uses `N.I` and not `package.I`.
 namespace N;
 interface N.I {}
 fn N.F(x: I);
+
+fn TestCall(x: N.I) {
+  // `N.F` accepts an `N.I` not a `package.I`.
+  N.F(x);
+}
 
 // --- poison.carbon
 
@@ -26,7 +31,7 @@ library "[[@TEST_NAME]]";
 interface I;
 
 namespace N;
-// Use I and poison N.I.
+// Use `package.I` and poison `N.I`.
 fn N.F(x: I);
 
 // --- fail_declare_after_poison.carbon
@@ -36,7 +41,7 @@ library "[[@TEST_NAME]]";
 interface I;
 
 namespace N;
-// Use I and poison N.I.
+// Use `package.I` and poison `N.I`.
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+3]]:11: error: name `I` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F(x: I);
 // CHECK:STDERR:           ^
@@ -56,7 +61,7 @@ library "[[@TEST_NAME]]";
 interface I;
 
 namespace N;
-// Use I and poison N.I.
+// Use `package.I` and poison `N.I`.
 fn N.F1(x: I);
 
 // CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:12: error: member name `I` not found in `N` [MemberNameNotFoundInScope]
@@ -72,7 +77,7 @@ library "[[@TEST_NAME]]";
 interface I;
 
 namespace N;
-// Use I and poison N.I.
+// Use `package.I` and poison `N.I`.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:12: error: name `I` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F1(x: I);
 // CHECK:STDERR:            ^
@@ -115,10 +120,10 @@ interface I1;
 interface I2 {
   interface I3 {
     interface I4 {
-      // Use I1 and poison:
-      // * I2.I1
-      // * I2.I3.I1
-      // * I2.I3.I4.I1
+      // Use `package.I1` and poison:
+      // * `I2.I1`
+      // * `I2.I3.I1`
+      // * `I2.I3.I4.I1`
       // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:15: error: name `I1` used before it was declared [NameUseBeforeDecl]
       // CHECK:STDERR:       fn F(x: I1);
       // CHECK:STDERR:               ^~
@@ -161,7 +166,7 @@ interface N.I;
 
 impl library "[[@TEST_NAME]]";
 
-// TODO: #4622 This should fail since N.F1 was poisoned in the api.
+// TODO: #4622 This should fail since `N.I` was poisoned in the api.
 interface N.I;
 
 // --- fail_poison_when_lookup_fails.carbon
@@ -169,30 +174,30 @@ interface N.I;
 library "[[@TEST_NAME]]";
 
 namespace N;
-// N.I1 poisoned when not found.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:11: error: name `I1` not found [NameNotFound]
-// CHECK:STDERR: fn N.F(x: I1);
-// CHECK:STDERR:           ^~
+// `package.I` and `N.I` poisoned when not found.
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:11: error: name `I` not found [NameNotFound]
+// CHECK:STDERR: fn N.F(x: I);
+// CHECK:STDERR:           ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:11: error: name `I1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: fn N.F(x: I1);
-// CHECK:STDERR:           ^~
-fn N.F(x: I1);
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:11: error: name `I` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F(x: I);
+// CHECK:STDERR:           ^
+fn N.F(x: I);
 
 // TODO: We should ideally only produce one diagnostic here.
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:11: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: interface I1;
-// CHECK:STDERR:           ^~
+// CHECK:STDERR: interface I;
+// CHECK:STDERR:           ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-7]]:11: error: name `I1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: fn N.F(x: I1);
-// CHECK:STDERR:           ^~
-interface I1;
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-7]]:11: error: name `I` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn N.F(x: I);
+// CHECK:STDERR:           ^
+interface I;
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+4]]:13: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: interface N.I1;
-// CHECK:STDERR:             ^~
+// CHECK:STDERR: interface N.I;
+// CHECK:STDERR:             ^
 // CHECK:STDERR:
-interface N.I1;
+interface N.I;
 
 // --- fail_poison_with_lexical_result.carbon
 
@@ -219,14 +224,14 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-interface C1 {};
+interface I {};
 
 namespace N;
-// Use C1 and poison N.C1.
-fn N.F1(x: C1);
+// Use `package.I` and poison `N.I`.
+fn N.F1(x: I);
 
-class N.C2 {
-  extend impl as C1 {
+class N.C {
+  extend impl as I {
   }
 }
 
@@ -237,13 +242,17 @@ class N.C2 {
 // CHECK:STDOUT:   %I.type.4da: type = facet_type <@I.2> [concrete]
 // CHECK:STDOUT:   %Self: %I.type.4da = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %TestCall.type: type = fn_type @TestCall [concrete]
+// CHECK:STDOUT:   %TestCall: %TestCall.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl.loc4
 // CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     .TestCall = %TestCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc4: type = interface_decl @I.1 [concrete = constants.%I.type.733] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
@@ -259,6 +268,17 @@ class N.C2 {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl.loc8 [concrete = constants.%I.type.4da]
 // CHECK:STDOUT:     %x: %I.type.4da = bind_name x, %x.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %TestCall.decl: %TestCall.type = fn_decl @TestCall [concrete = constants.%TestCall] {
+// CHECK:STDOUT:     %x.patt: %I.type.4da = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %I.type.4da = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %I.type.4da = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11: type = splice_block %I.ref [concrete = constants.%I.type.4da] {
+// CHECK:STDOUT:       %N.ref.loc11: <namespace> = name_ref N, file.%N [concrete = file.%N]
+// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl.loc8 [concrete = constants.%I.type.4da]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: %I.type.4da = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1;
@@ -272,6 +292,15 @@ class N.C2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param_patt: %I.type.4da);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @TestCall(%x.param_patt: %I.type.4da) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %N.ref.loc13: <namespace> = name_ref N, file.%N [concrete = file.%N]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %x.ref: %I.type.4da = name_ref x, %x
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%x.ref)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- poison.carbon
 // CHECK:STDOUT:
@@ -656,17 +685,17 @@ class N.C2 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %I1.type.80c: type = facet_type <@I1.1> [concrete]
-// CHECK:STDOUT:   %I1.type.46a: type = facet_type <@I1.2> [concrete]
+// CHECK:STDOUT:   %I.type.733: type = facet_type <@I.1> [concrete]
+// CHECK:STDOUT:   %I.type.4da: type = facet_type <@I.2> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .N = %N
-// CHECK:STDOUT:     .I1 = <poisoned>
+// CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .I1 = <poisoned>
+// CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
@@ -674,16 +703,16 @@ class N.C2 {
 // CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:     %I1.ref: <error> = name_ref I1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %I.ref: <error> = name_ref I, <error> [concrete = <error>]
 // CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I1.decl.loc23: type = interface_decl @I1.1 [concrete = constants.%I1.type.80c] {} {}
-// CHECK:STDOUT:   %I1.decl.loc28: type = interface_decl @I1.2 [concrete = constants.%I1.type.46a] {} {}
+// CHECK:STDOUT:   %I.decl.loc23: type = interface_decl @I.1 [concrete = constants.%I.type.733] {} {}
+// CHECK:STDOUT:   %I.decl.loc28: type = interface_decl @I.2 [concrete = constants.%I.type.4da] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I1.1;
+// CHECK:STDOUT: interface @I.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I1.2;
+// CHECK:STDOUT: interface @I.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param_patt: <error>);
 // CHECK:STDOUT:
@@ -744,11 +773,11 @@ class N.C2 {
 // CHECK:STDOUT: --- using_poisoned_name_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C1.type: type = facet_type <@C1> [concrete]
-// CHECK:STDOUT:   %Self: %C1.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F1.type: type = fn_type @F1 [concrete]
 // CHECK:STDOUT:   %F1: %F1.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C2: type = class_type @C2 [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -756,53 +785,53 @@ class N.C2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C1 = %C1.decl
+// CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C1.decl: type = interface_decl @C1 [concrete = constants.%C1.type] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C1 = <poisoned>
+// CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     .F1 = %F1.decl
-// CHECK:STDOUT:     .C2 = %C2.decl
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
-// CHECK:STDOUT:     %x.patt: %C1.type = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %C1.type = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.patt: %I.type = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %I.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %C1.type = value_param runtime_param0
-// CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [concrete = constants.%C1.type]
-// CHECK:STDOUT:     %x: %C1.type = bind_name x, %x.param
+// CHECK:STDOUT:     %x.param: %I.type = value_param runtime_param0
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:     %x: %I.type = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [concrete = constants.%C2] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @C1 {
-// CHECK:STDOUT:   %Self: %C1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %Self.ref as %C1.ref {
+// CHECK:STDOUT: impl @impl: %Self.ref as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = @C2.%impl_witness
+// CHECK:STDOUT:   witness = @C.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C2 {
+// CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C2 [concrete = constants.%C2]
-// CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [concrete = constants.%C1.type]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C2
-// CHECK:STDOUT:   .C1 = <poisoned>
-// CHECK:STDOUT:   extend @impl.%C1.ref
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .I = <poisoned>
+// CHECK:STDOUT:   extend @impl.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F1(%x.param_patt: %C1.type);
+// CHECK:STDOUT: fn @F1(%x.param_patt: %I.type);
 // CHECK:STDOUT:

@@ -14,10 +14,16 @@ library "[[@TEST_NAME]]";
 
 namespace N1;
 
-// N2.N3 uses N2.N1 and not N1.
+// `N2.N3` uses `N2.N1` and not `package.N1`.
 namespace N2;
 namespace N2.N1;
 alias N2.N3 = N1;
+
+class N2.N1.S {}
+fn TestNamespaces() {
+  var x: N2.N1.S;
+  var y: N2.N3.S* = &x;
+}
 
 // --- poison.carbon
 
@@ -25,7 +31,7 @@ library "[[@TEST_NAME]]";
 
 namespace N1;
 
-// Use N1 and poison N2.N1.
+// Use `package.N1` and poison `N2.N1`.
 namespace N2;
 alias N2.N3 = N1;
 
@@ -35,7 +41,7 @@ library "[[@TEST_NAME]]";
 
 namespace N1;
 
-// Use N1 and poison N2.N1.
+// Use `package.N1` and poison `N2.N1`.
 namespace N2;
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+3]]:15: error: name `N1` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: alias N2.N3 = N1;
@@ -55,7 +61,7 @@ library "[[@TEST_NAME]]";
 
 namespace N1;
 
-// Use N1 and poison N2.N1.
+// Use `package.N1` and poison `N2.N1`.
 namespace N2;
 alias N2.N3 = N1;
 
@@ -71,14 +77,14 @@ library "[[@TEST_NAME]]";
 
 namespace N1;
 
-// Use N1 and poison N2.N1.
+// Use `package.N1` and poison `N2.N1`.
 namespace N2;
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:15: error: name `N1` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: alias N2.N3 = N1;
 // CHECK:STDERR:               ^~
 alias N2.N3 = N1;
 
-// Failure: N2.N1 declared after it was poisoned.
+// Failure: `N2.N1` declared after it was poisoned.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:14: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: namespace N2.N1;
 // CHECK:STDERR:              ^~
@@ -113,10 +119,10 @@ namespace N1;
 namespace N2;
 namespace N2.N3;
 namespace N2.N3.N4;
-// Use N1 and poison:
-// * N2.N1
-// * N2.N3.N1
-// * N2.N3.N4.N1
+// Use `package.N1` and poison:
+// * `N2.N1`
+// * `N2.N3.N1`
+// * `N2.N3.N4.N1`
 // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:21: error: name `N1` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: alias N2.N3.N4.N5 = N1;
 // CHECK:STDERR:                     ^~
@@ -156,7 +162,7 @@ namespace N2.N1;
 
 impl library "[[@TEST_NAME]]";
 
-// TODO: #4622 This should fail since N2.N1 was poisoned in the api.
+// TODO: #4622 This should fail since `N2.N1` was poisoned in the api.
 namespace N2.N1;
 
 // --- fail_poison_when_lookup_fails.carbon
@@ -164,7 +170,7 @@ namespace N2.N1;
 library "[[@TEST_NAME]]";
 
 namespace N1;
-// N1.N3 poisoned when not found.
+// `N1.N3` poisoned when not found.
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:15: error: name `N3` not found [NameNotFound]
 // CHECK:STDERR: alias N1.N2 = N3;
 // CHECK:STDERR:               ^~
@@ -191,19 +197,72 @@ namespace N1.N3;
 
 // CHECK:STDOUT: --- no_poison.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %TestNamespaces.type: type = fn_type @TestNamespaces [concrete]
+// CHECK:STDOUT:   %TestNamespaces: %TestNamespaces.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.251: type = ptr_type %S [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .N1 = %N1.loc4
 // CHECK:STDOUT:     .N2 = %N2
+// CHECK:STDOUT:     .TestNamespaces = %TestNamespaces.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N1.loc4: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %N2: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .N1 = %N1.loc8
 // CHECK:STDOUT:     .N3 = %N3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %N1.loc8: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %N1.loc8: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N1.ref: <namespace> = name_ref N1, %N1.loc8 [concrete = %N1.loc8]
 // CHECK:STDOUT:   %N3: <namespace> = bind_alias N3, %N1.loc8 [concrete = %N1.loc8]
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %TestNamespaces.decl: %TestNamespaces.type = fn_decl @TestNamespaces [concrete = constants.%TestNamespaces] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @S {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%S
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @TestNamespaces() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %S = binding_pattern x
+// CHECK:STDOUT:     %.loc13_3: %S = var_pattern %x.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.var: ref %S = var x
+// CHECK:STDOUT:   %.loc13_15: type = splice_block %S.ref.loc13 [concrete = constants.%S] {
+// CHECK:STDOUT:     %N2.ref.loc13: <namespace> = name_ref N2, file.%N2 [concrete = file.%N2]
+// CHECK:STDOUT:     %N1.ref: <namespace> = name_ref N1, file.%N1.loc8 [concrete = file.%N1.loc8]
+// CHECK:STDOUT:     %S.ref.loc13: type = name_ref S, file.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: ref %S = bind_name x, %x.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %ptr.251 = binding_pattern y
+// CHECK:STDOUT:     %.loc14_3: %ptr.251 = var_pattern %y.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %y.var: ref %ptr.251 = var y
+// CHECK:STDOUT:   %x.ref: ref %S = name_ref x, %x
+// CHECK:STDOUT:   %addr: %ptr.251 = addr_of %x.ref
+// CHECK:STDOUT:   assign %y.var, %addr
+// CHECK:STDOUT:   %.loc14_17: type = splice_block %ptr [concrete = constants.%ptr.251] {
+// CHECK:STDOUT:     %N2.ref.loc14: <namespace> = name_ref N2, file.%N2 [concrete = file.%N2]
+// CHECK:STDOUT:     %N3.ref: <namespace> = name_ref N3, file.%N3 [concrete = file.%N1.loc8]
+// CHECK:STDOUT:     %S.ref.loc14: type = name_ref S, file.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:     %ptr: type = ptr_type %S [concrete = constants.%ptr.251]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %y: ref %ptr.251 = bind_name y, %y.var
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- poison.carbon

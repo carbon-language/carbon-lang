@@ -12,12 +12,20 @@
 
 library "[[@TEST_NAME]]";
 
-fn F1();
+class C1 {}
+class C2 {}
 
-// N.F2 uses N.F1 and not F1.
+fn F1(x: C1);
+
+// `N.F2` uses `N.F1` and not `package.F1`.
 namespace N;
-fn N.F1();
+fn N.F1(x: C2);
 alias N.F2 = F1;
+
+fn TestCall(x: C2) {
+  // `N.F2` accepts a `C2` not a `C1`.
+  N.F2(x);
+}
 
 // --- poison.carbon
 
@@ -25,7 +33,7 @@ library "[[@TEST_NAME]]";
 
 fn F1();
 
-// Use F1 and poison N.F1.
+// Use `package.F1` and poison `N.F1`.
 namespace N;
 alias N.F2 = F1;
 
@@ -36,13 +44,13 @@ library "[[@TEST_NAME]]";
 fn F1();
 
 namespace N;
-// Use F1 and poison N.F1.
+// Use `package.F1` and poison `N.F1`.
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+3]]:14: error: name `F1` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: alias N.F2 = F1;
 // CHECK:STDERR:              ^~
 alias N.F2 = F1;
 
-// Failure: N.F1 declared after it was poisoned.
+// Failure: `N.F1` declared after it was poisoned.
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: fn N.F1();
 // CHECK:STDERR:      ^~
@@ -55,7 +63,7 @@ library "[[@TEST_NAME]]";
 
 fn F1();
 
-// Use F1 and poison N.F1.
+// Use `package.F1` and poison `N.F1`.
 namespace N;
 alias N.F2 = F1;
 
@@ -72,20 +80,20 @@ library "[[@TEST_NAME]]";
 fn F1();
 
 namespace N;
-// Use F1 and poison N.F1.
+// Use `package.F1` and poison `N.F1`.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:14: error: name `F1` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: alias N.F2 = F1;
 // CHECK:STDERR:              ^~
 alias N.F2 = F1;
 
-// Failure: N.F1 declared after it was poisoned.
+// Failure: `N.F1` declared after it was poisoned.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: fn N.F1();
 // CHECK:STDERR:      ^~
 // CHECK:STDERR:
 fn N.F1();
 
-// Failure: N.F1 used after declaration failed.
+// Failure: `N.F1` used after declaration failed.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:14: error: member name `F1` not found in `N` [MemberNameNotFoundInScope]
 // CHECK:STDERR: alias N.F3 = N.F1;
 // CHECK:STDERR:              ^~~~
@@ -101,10 +109,10 @@ fn F1();
 namespace N1;
 namespace N1.N2;
 namespace N1.N2.N3;
-// Use F1 and poison:
-// * N1.F1
-// * N1.N2.F1
-// * N1.N2.N3.F1
+// Use `package.F1` and poison:
+// * `N1.F1`
+// * `N1.N2.F1`
+// * `N1.N2.N3.F1`
 // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:21: error: name `F1` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: alias N1.N2.N3.F2 = F1;
 // CHECK:STDERR:                     ^~
@@ -160,7 +168,7 @@ fn N.F1();
 
 impl library "[[@TEST_NAME]]";
 
-// TODO: #4622 This should fail since N.F1 was poisoned in the api.
+// TODO: #4622 This should fail since `N.F1` was poisoned in the api.
 fn N.F1() {}
 
 // --- fail_poison_when_lookup_fails.carbon
@@ -168,7 +176,7 @@ fn N.F1() {}
 library "[[@TEST_NAME]]";
 
 namespace N;
-// N.F1 poisoned when not found.
+// `N.F1` poisoned when not found.
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:14: error: name `F1` not found [NameNotFound]
 // CHECK:STDERR: alias N.F2 = F1;
 // CHECK:STDERR:              ^~
@@ -217,30 +225,90 @@ fn F1() {
 // CHECK:STDOUT: --- no_poison.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C1: type = class_type @C1 [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C2: type = class_type @C2 [concrete]
 // CHECK:STDOUT:   %F1.type.75d: type = fn_type @F1.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F1.afe: %F1.type.75d = struct_value () [concrete]
 // CHECK:STDOUT:   %F1.type.fe6: type = fn_type @F1.2 [concrete]
 // CHECK:STDOUT:   %F1.cc1: %F1.type.fe6 = struct_value () [concrete]
+// CHECK:STDOUT:   %TestCall.type: type = fn_type @TestCall [concrete]
+// CHECK:STDOUT:   %TestCall: %TestCall.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .F1 = %F1.decl.loc4
+// CHECK:STDOUT:     .C1 = %C1.decl
+// CHECK:STDOUT:     .C2 = %C2.decl
+// CHECK:STDOUT:     .F1 = %F1.decl.loc7
 // CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     .TestCall = %TestCall.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F1.decl.loc4: %F1.type.75d = fn_decl @F1.1 [concrete = constants.%F1.afe] {} {}
+// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [concrete = constants.%C1] {} {}
+// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [concrete = constants.%C2] {} {}
+// CHECK:STDOUT:   %F1.decl.loc7: %F1.type.75d = fn_decl @F1.1 [concrete = constants.%F1.afe] {
+// CHECK:STDOUT:     %x.patt: %C1 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %C1 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %C1 = value_param runtime_param0
+// CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [concrete = constants.%C1]
+// CHECK:STDOUT:     %x: %C1 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .F1 = %F1.decl.loc8
+// CHECK:STDOUT:     .C2 = <poisoned>
+// CHECK:STDOUT:     .F1 = %F1.decl.loc11
 // CHECK:STDOUT:     .F2 = %F2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F1.decl.loc8: %F1.type.fe6 = fn_decl @F1.2 [concrete = constants.%F1.cc1] {} {}
-// CHECK:STDOUT:   %F1.ref: %F1.type.fe6 = name_ref F1, %F1.decl.loc8 [concrete = constants.%F1.cc1]
-// CHECK:STDOUT:   %F2: %F1.type.fe6 = bind_alias F2, %F1.decl.loc8 [concrete = constants.%F1.cc1]
+// CHECK:STDOUT:   %F1.decl.loc11: %F1.type.fe6 = fn_decl @F1.2 [concrete = constants.%F1.cc1] {
+// CHECK:STDOUT:     %x.patt: %C2 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %C2 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %C2 = value_param runtime_param0
+// CHECK:STDOUT:     %C2.ref: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
+// CHECK:STDOUT:     %x: %C2 = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F1.ref: %F1.type.fe6 = name_ref F1, %F1.decl.loc11 [concrete = constants.%F1.cc1]
+// CHECK:STDOUT:   %F2: %F1.type.fe6 = bind_alias F2, %F1.decl.loc11 [concrete = constants.%F1.cc1]
+// CHECK:STDOUT:   %TestCall.decl: %TestCall.type = fn_decl @TestCall [concrete = constants.%TestCall] {
+// CHECK:STDOUT:     %x.patt: %C2 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %C2 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %C2 = value_param runtime_param0
+// CHECK:STDOUT:     %C2.ref: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
+// CHECK:STDOUT:     %x: %C2 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F1.1();
+// CHECK:STDOUT: class @C1 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F1.2();
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C2 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F1.1(%x.param_patt: %C1);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F1.2(%x.param_patt: %C2);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @TestCall(%x.param_patt: %C2) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%N [concrete = file.%N]
+// CHECK:STDOUT:   %F2.ref: %F1.type.fe6 = name_ref F2, file.%F2 [concrete = constants.%F1.cc1]
+// CHECK:STDOUT:   %x.ref: %C2 = name_ref x, %x
+// CHECK:STDOUT:   %F1.call: init %empty_tuple.type = call %F2.ref(%x.ref)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- poison.carbon
 // CHECK:STDOUT:

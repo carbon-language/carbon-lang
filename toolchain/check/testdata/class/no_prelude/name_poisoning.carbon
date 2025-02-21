@@ -14,10 +14,15 @@ library "[[@TEST_NAME]]";
 
 class C;
 
-// N.F uses N.C and not C.
+// `N.F` uses `N.C` and not `package.C`.
 namespace N;
-class N.C;
+class N.C {}
 fn N.F(x: C);
+
+fn TestCall(x: N.C) {
+  // `N.F` accepts an `N.C` not a `package.C`.
+  N.F(x);
+}
 
 // --- poison.carbon
 
@@ -26,7 +31,7 @@ library "[[@TEST_NAME]]";
 class C;
 
 namespace N;
-// Use C and poison N.C.
+// Use `package.C` and poison `N.C`.
 fn N.F(x: C);
 
 // --- fail_declare_after_poison.carbon
@@ -36,13 +41,13 @@ library "[[@TEST_NAME]]";
 class C;
 
 namespace N;
-// Use C and poison N.C.
+// Use `package.C` and poison `N.C`.
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+3]]:11: error: name `C` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F(x: C);
 // CHECK:STDERR:           ^
 fn N.F(x: C);
 
-// Failure: N.C declared after it was poisoned.
+// Failure: `N.C` declared after it was poisoned.
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N.C;
 // CHECK:STDERR:         ^
@@ -56,10 +61,10 @@ library "[[@TEST_NAME]]";
 class C;
 
 namespace N;
-// Use C and poison N.C.
+// Use `package.C` and poison `N.C`.
 fn N.F1() -> C;
 
-// Use N.C which was poisoned and not declared.
+// Use `N.C` which was poisoned and not declared.
 // CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:14: error: member name `C` not found in `N` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn N.F2() -> N.C;
 // CHECK:STDERR:              ^~~
@@ -73,7 +78,7 @@ library "[[@TEST_NAME]]";
 class C;
 
 namespace N;
-// Use C and poison N.C.
+// Use `package.C` and poison `N.C`.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:12: error: name `C` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F1(x: C);
 // CHECK:STDERR:            ^
@@ -86,7 +91,7 @@ fn N.F1(x: C);
 // CHECK:STDERR:
 class N.C;
 
-// Failure: N.C used after declaration failed.
+// Failure: `N.C` used after declaration failed.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:12: error: member name `C` not found in `N` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn N.F2(x: N.C);
 // CHECK:STDERR:            ^~~
@@ -118,10 +123,10 @@ class C1;
 class C2 {
   class C3 {
     class C4 {
-      // Use C1 and poison:
-      // * C2.C1
-      // * C2.C3.C1
-      // * C2.C3.C4.C1
+      // Use `package.C1` and poison:
+      // * `C2.C1`
+      // * `C2.C3.C1`
+      // * `C2.C3.C4.C1`
       // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:15: error: name `C1` used before it was declared [NameUseBeforeDecl]
       // CHECK:STDERR:       fn F(x: C1);
       // CHECK:STDERR:               ^~
@@ -145,11 +150,11 @@ class C2 {
     // CHECK:STDERR:               ^~
     class C1;
   }
-  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:10: note: declared here [NameUseBeforeDeclNote]
-  // CHECK:STDERR:   class  C1;
-  // CHECK:STDERR:          ^~
+  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
+  // CHECK:STDERR:   class C1;
+  // CHECK:STDERR:         ^~
   // CHECK:STDERR:
-  class  C1;
+  class C1;
 }
 
 // --- ignored_poison_in_import.carbon
@@ -164,7 +169,7 @@ class N.C;
 
 impl library "[[@TEST_NAME]]";
 
-// TODO: #4622 This should fail since N.C was poisoned in the api.
+// TODO: #4622 This should fail since `N.C` was poisoned in the api.
 class N.C {}
 
 // --- fail_poison_when_lookup_fails.carbon
@@ -172,7 +177,7 @@ class N.C {}
 library "[[@TEST_NAME]]";
 
 namespace N;
-// C poisoned when not found.
+// `package.C` and `N.C` poisoned when not found.
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:11: error: name `C` not found [NameNotFound]
 // CHECK:STDERR: fn N.F(x: C);
 // CHECK:STDERR:           ^
@@ -225,14 +230,14 @@ library "[[@TEST_NAME]]";
 class C1;
 
 class C2 {
-  // Use C1 and poison C2.C1.
+  // Use `package.C1` and poison `C2.C1`.
   // CHECK:STDERR: fail_declare_data_member_after_poison.carbon:[[@LINE+3]]:11: error: name `C1` used before it was declared [NameUseBeforeDecl]
   // CHECK:STDERR:   fn F(x: C1);
   // CHECK:STDERR:           ^~
   fn F(x: C1);
 
   class C2 {}
-  // Failure: C2.C1 declared after it was poisoned.
+  // Failure: `C2.C1` declared after it was poisoned.
   // CHECK:STDERR: fail_declare_data_member_after_poison.carbon:[[@LINE+4]]:7: note: declared here [NameUseBeforeDeclNote]
   // CHECK:STDERR:   var C1: C2;
   // CHECK:STDERR:       ^~~~~~
@@ -264,14 +269,20 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.f79: type = class_type @C.1 [concrete]
 // CHECK:STDOUT:   %C.9f4: type = class_type @C.2 [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %TestCall.type: type = fn_type @TestCall [concrete]
+// CHECK:STDOUT:   %TestCall: %TestCall.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     .TestCall = %TestCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C.1 [concrete = constants.%C.f79] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
@@ -287,13 +298,39 @@ class C {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc8 [concrete = constants.%C.9f4]
 // CHECK:STDOUT:     %x: %C.9f4 = bind_name x, %x.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %TestCall.decl: %TestCall.type = fn_decl @TestCall [concrete = constants.%TestCall] {
+// CHECK:STDOUT:     %x.patt: %C.9f4 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %C.9f4 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %C.9f4 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11: type = splice_block %C.ref [concrete = constants.%C.9f4] {
+// CHECK:STDOUT:       %N.ref.loc11: <namespace> = name_ref N, file.%N [concrete = file.%N]
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl.loc8 [concrete = constants.%C.9f4]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: %C.9f4 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2;
+// CHECK:STDOUT: class @C.2 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C.9f4
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param_patt: %C.9f4);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @TestCall(%x.param_patt: %C.9f4) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %N.ref.loc13: <namespace> = name_ref N, file.%N [concrete = file.%N]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %x.ref: %C.9f4 = name_ref x, %x
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%x.ref)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- poison.carbon
 // CHECK:STDOUT:
