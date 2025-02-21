@@ -452,6 +452,18 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   if (args_id == specific.args_id) {
+    auto& specific = eval_context.specifics().Get(specific_id);
+    // Don't resolve the declaration if the generic's eval block hasn't been set
+    // yet. This happens when building the eval block during import.
+    // TODO: something
+    if (!specific.decl_block_id.has_value() && eval_context.context()
+                                                   .generics()
+                                                   .Get(specific.generic_id)
+                                                   .decl_block_id.has_value()) {
+      ResolveSpecificDeclaration(eval_context.context(),
+                                 eval_context.fallback_loc(), specific_id);
+    }
+    return specific_id;
     // FIXME
     // A constant specific_id should always have a resolved declaration. The
     // specific_id from the instruction may coincidentally be canonical, and so
@@ -459,7 +471,7 @@ static auto GetConstantValue(EvalContext& eval_context,
     // ensure its declaration is resolved.
     // ResolveSpecificDeclaration(eval_context.context(),
     //                            eval_context.fallback_loc(), specific_id);
-    return specific_id;
+    // FIXME return specific_id;
   }
   return MakeSpecific(eval_context.context(), eval_context.fallback_loc(),
                       specific.generic_id, args_id);

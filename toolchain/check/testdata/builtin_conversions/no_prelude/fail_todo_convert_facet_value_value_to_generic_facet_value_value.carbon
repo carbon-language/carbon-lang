@@ -590,6 +590,10 @@ fn F() {
 // CHECK:STDOUT: specific @Eats(constants.%Food.as_type.fae) {
 // CHECK:STDOUT:   %Food.loc12_16.2 => constants.%Food.as_type.fae
 // CHECK:STDOUT:   %Food.patt.loc12_16.2 => constants.%Food.as_type.fae
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Eats.type => constants.%Eats.type.f54c3d.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self.4eb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2(constants.%T.fd4, constants.%Food.5fe) {
@@ -657,6 +661,10 @@ fn F() {
 // CHECK:STDOUT: specific @Eats(constants.%Grass) {
 // CHECK:STDOUT:   %Food.loc12_16.2 => constants.%Grass
 // CHECK:STDOUT:   %Food.patt.loc12_16.2 => constants.%Grass
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Eats.type => constants.%Eats.type.1ae
+// CHECK:STDOUT:   %Self.2 => constants.%Self.4eb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2(constants.%Animal.facet, constants.%Edible.facet) {

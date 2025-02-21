@@ -133,15 +133,9 @@ fn G() {
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {
-// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {
-// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- convert_class_value_to_generic_facet_value_value.carbon
 // CHECK:STDOUT:
@@ -389,10 +383,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%Scalar.loc6_19.2) {
-// CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%Scalar
-// CHECK:STDOUT:   %Scalar.patt.loc6_19.2 => constants.%Scalar
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(%Scalar.loc6_19.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%GenericParam
@@ -431,10 +422,7 @@ fn G() {
 // CHECK:STDOUT:   %U.as_type.loc17_52.2 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod2.%T.loc17_23.2) {
-// CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%T
-// CHECK:STDOUT:   %Scalar.patt.loc6_19.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(@CallGenericMethod2.%T.loc17_23.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Generic.facet.2ea) {}
 // CHECK:STDOUT:

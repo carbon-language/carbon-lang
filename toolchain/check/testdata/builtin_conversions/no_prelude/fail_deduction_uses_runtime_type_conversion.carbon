@@ -141,15 +141,9 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
-// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {
-// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduction_uses_runtime_type_conversion.carbon
 // CHECK:STDOUT:
@@ -443,15 +437,9 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -489,10 +477,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %HoldsType.loc16_43.2 => constants.%HoldsType.cc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc16_6.2) {
-// CHECK:STDOUT:   %T.loc6_17.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_17.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @HoldsType(@F.%T.loc16_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple) {
 // CHECK:STDOUT:   %T.loc6_17.2 => constants.%tuple

@@ -131,15 +131,9 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
-// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {
-// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_convert_facet_value_to_missing_impl.carbon
 // CHECK:STDOUT:
@@ -331,15 +325,9 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
 // CHECK:STDOUT:   %Dest => constants.%Dest

@@ -130,15 +130,9 @@ fn F() {
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {
-// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {
-// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- convert_facet_value_to_facet_value.carbon
 // CHECK:STDOUT:

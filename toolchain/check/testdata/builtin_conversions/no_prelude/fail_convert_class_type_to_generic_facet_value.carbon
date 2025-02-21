@@ -140,15 +140,9 @@ fn G() {
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
-// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {
-// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_convert_class_type_to_generic_facet_value.carbon
 // CHECK:STDOUT:
@@ -397,10 +391,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self.dee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%Scalar.loc4_19.2) {
-// CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%Scalar
-// CHECK:STDOUT:   %Scalar.patt.loc4_19.2 => constants.%Scalar
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(%Scalar.loc4_19.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%GenericParam
@@ -430,10 +421,7 @@ fn G() {
 // CHECK:STDOUT:   %U.patt.loc16_32.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc16_22.2) {
-// CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%T
-// CHECK:STDOUT:   %Scalar.patt.loc4_19.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc16_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%WrongGenericParam) {
 // CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%WrongGenericParam
@@ -453,15 +441,9 @@ fn G() {
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
 // CHECK:STDOUT:   %Dest => constants.%Dest

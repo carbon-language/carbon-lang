@@ -98,7 +98,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:     %.loc14: type = splice_block %C [concrete = <error>] {
+// CHECK:STDOUT:     %.loc24: type = splice_block %C [concrete = <error>] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%I.type, <error>) [concrete = <error>]
@@ -120,7 +120,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param_patt: %C.6fb = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.6fb = value_param runtime_param0
-// CHECK:STDOUT:     %.loc25: type = splice_block %C [concrete = constants.%C.6fb] {
+// CHECK:STDOUT:     %.loc28: type = splice_block %C [concrete = constants.%C.6fb] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
