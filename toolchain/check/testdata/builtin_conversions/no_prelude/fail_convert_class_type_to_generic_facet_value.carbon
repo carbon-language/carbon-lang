@@ -140,9 +140,15 @@ fn G() {
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {}
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {
+// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_convert_class_type_to_generic_facet_value.carbon
 // CHECK:STDOUT:
@@ -182,6 +188,10 @@ fn G() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.type.c3b: type = facet_type <@Generic, @Generic(%WrongGenericParam)> [concrete]
+// CHECK:STDOUT:   %F.type.96d: type = fn_type @F.1, @Generic(%WrongGenericParam) [concrete]
+// CHECK:STDOUT:   %F.86b: %F.type.96d = struct_value () [concrete]
+// CHECK:STDOUT:   %Generic.assoc_type.967: type = assoc_entity_type %Generic.type.c3b [concrete]
+// CHECK:STDOUT:   %assoc0.c10: %Generic.assoc_type.967 = assoc_entity element0, @Generic.%F.decl [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
@@ -387,7 +397,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self.dee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%Scalar.loc4_19.2) {}
+// CHECK:STDOUT: specific @Generic(%Scalar.loc4_19.2) {
+// CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%Scalar
+// CHECK:STDOUT:   %Scalar.patt.loc4_19.2 => constants.%Scalar
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%GenericParam
@@ -417,11 +430,22 @@ fn G() {
 // CHECK:STDOUT:   %U.patt.loc16_32.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc16_22.2) {}
+// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc16_22.2) {
+// CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   %Scalar.patt.loc4_19.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%WrongGenericParam) {
 // CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%WrongGenericParam
 // CHECK:STDOUT:   %Scalar.patt.loc4_19.2 => constants.%WrongGenericParam
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.c3b
+// CHECK:STDOUT:   %Self.2 => constants.%Self.dee
+// CHECK:STDOUT:   %F.type => constants.%F.type.96d
+// CHECK:STDOUT:   %F => constants.%F.86b
+// CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.967
+// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.c10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -429,9 +453,15 @@ fn G() {
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
+// CHECK:STDOUT: specific @ImplicitAs(%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
 // CHECK:STDOUT:   %Dest => constants.%Dest

@@ -452,6 +452,13 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   if (args_id == specific.args_id) {
+    // FIXME
+    // A constant specific_id should always have a resolved declaration. The
+    // specific_id from the instruction may coincidentally be canonical, and so
+    // constant evaluation gives the same value. In that case, we still need to
+    // ensure its declaration is resolved.
+    // ResolveSpecificDeclaration(eval_context.context(),
+    //                            eval_context.fallback_loc(), specific_id);
     return specific_id;
   }
   return MakeSpecific(eval_context.context(), eval_context.fallback_loc(),

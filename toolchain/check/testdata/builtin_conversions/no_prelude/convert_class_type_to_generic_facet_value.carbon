@@ -162,9 +162,15 @@ fn G() {
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {}
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {
+// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {}
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {
+// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_facet_type.carbon
 // CHECK:STDOUT:
@@ -405,7 +411,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%Scalar.loc6_19.2) {}
+// CHECK:STDOUT: specific @Generic(%Scalar.loc6_19.2) {
+// CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%Scalar
+// CHECK:STDOUT:   %Scalar.patt.loc6_19.2 => constants.%Scalar
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%GenericParam
@@ -437,7 +446,10 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc17_22.2) {}
+// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc17_22.2) {
+// CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%T
+// CHECK:STDOUT:   %Scalar.patt.loc6_19.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, @G.%.loc20) {
 // CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam
@@ -465,9 +477,18 @@ fn G() {
 // CHECK:STDOUT:   %U.patt.loc23_41.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@PassThroughToGenericMethod.%T.loc23_31.2) {}
+// CHECK:STDOUT: specific @Generic(@PassThroughToGenericMethod.%T.loc23_31.2) {
+// CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%T
+// CHECK:STDOUT:   %Scalar.patt.loc6_19.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(@PassThroughToGenericMethod.%T.loc23_31.2, @PassThroughToGenericMethod.%U.loc23_41.2) {}
+// CHECK:STDOUT: specific @CallGenericMethod(@PassThroughToGenericMethod.%T.loc23_31.2, @PassThroughToGenericMethod.%U.loc23_41.2) {
+// CHECK:STDOUT:   %T.loc17_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc17_22.2 => constants.%T
+// CHECK:STDOUT:   %Generic.type.loc17_45.2 => constants.%Generic.type.91ccba.2
+// CHECK:STDOUT:   %U.loc17_32.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc17_32.2 => constants.%U
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%GenericParam, @H.%.loc28) {
 // CHECK:STDOUT:   %T.loc23_31.2 => constants.%GenericParam
@@ -683,7 +704,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%Scalar.loc6_19.2) {}
+// CHECK:STDOUT: specific @Generic(%Scalar.loc6_19.2) {
+// CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%Scalar
+// CHECK:STDOUT:   %Scalar.patt.loc6_19.2 => constants.%Scalar
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%GenericParam
@@ -713,7 +737,10 @@ fn G() {
 // CHECK:STDOUT:   %U.patt.loc17_32.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc17_22.2) {}
+// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc17_22.2) {
+// CHECK:STDOUT:   %Scalar.loc6_19.2 => constants.%T
+// CHECK:STDOUT:   %Scalar.patt.loc6_19.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, @G.%.loc20_53) {
 // CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam

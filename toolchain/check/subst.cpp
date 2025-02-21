@@ -156,7 +156,10 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
     }
     auto& specific = context.specifics().Get(specific_id);
     auto args_id = pop_block_id(specific.args_id);
-    return context.specifics().GetOrAdd(specific.generic_id, args_id);
+    return MakeSpecific(context, SemIR::LocId::None, specific.generic_id,
+                        args_id);
+    // FIXME: delete? return context.specifics().GetOrAdd(specific.generic_id,
+    // args_id);
   };
 
   switch (kind) {

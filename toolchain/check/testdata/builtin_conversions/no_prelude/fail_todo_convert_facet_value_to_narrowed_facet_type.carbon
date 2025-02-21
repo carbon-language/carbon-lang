@@ -125,9 +125,15 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {}
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {
+// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {}
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc4_22.2) {
+// CHECK:STDOUT:   %T.loc4_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_convert_to_narrowed_facet_type.carbon
 // CHECK:STDOUT:

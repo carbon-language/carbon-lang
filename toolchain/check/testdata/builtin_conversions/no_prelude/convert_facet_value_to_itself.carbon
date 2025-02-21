@@ -127,9 +127,15 @@ fn F() {
 // CHECK:STDOUT:   %Self.as_type.loc5_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {}
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc4_22.2) {
+// CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
@@ -270,7 +276,10 @@ fn F() {
 // CHECK:STDOUT:   %T.patt.loc10_17.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @FeedAnimal(@HandleAnimal.%T.loc10_17.2) {}
+// CHECK:STDOUT: specific @FeedAnimal(@HandleAnimal.%T.loc10_17.2) {
+// CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc10_17.2 => constants.%Animal.facet
