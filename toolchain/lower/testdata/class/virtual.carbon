@@ -17,12 +17,12 @@ base class Base {
 
 base class Intermediate {
   extend base: Base;
-  virtual fn Fn();
+  virtual fn Fn[self: Self]() { }
 }
 
 class Derived {
   extend base: Intermediate;
-  impl fn Fn();
+  impl fn Fn[self: Self]() { }
 }
 
 // --- create.carbon
@@ -47,7 +47,7 @@ package MemberInit;
 
 base class Base {
   var m: i32;
-  virtual fn Fn();
+  virtual fn Fn[self: Self]() { }
 }
 
 fn Fn() {
@@ -62,9 +62,15 @@ fn Fn() {
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
 // CHECK:STDOUT: source_filename = "classes.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes()
+// CHECK:STDOUT: define void @_CFn.Intermediate.Classes(ptr %self) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Derived.Classes()
+// CHECK:STDOUT: define void @_CFn.Derived.Classes(ptr %self) !dbg !8 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -73,6 +79,12 @@ fn Fn() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "classes.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Intermediate.Classes", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Derived.Classes", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !8)
 // CHECK:STDOUT: ; ModuleID = 'create.carbon'
 // CHECK:STDOUT: source_filename = "create.carbon"
 // CHECK:STDOUT:
@@ -89,11 +101,11 @@ fn Fn() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CUse.Create(ptr %v) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CFn.Intermediate.Classes(), !dbg !10
+// CHECK:STDOUT:   call void @_CFn.Intermediate.Classes(ptr %v), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes()
+// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
@@ -121,23 +133,26 @@ fn Fn() {
 // CHECK:STDOUT: ; ModuleID = 'member_init.carbon'
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Base.MemberInit()
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CFn.MemberInit() !dbg !4 {
+// CHECK:STDOUT: define void @_CFn.Base.MemberInit(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !7
-// CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %v.var), !dbg !7
-// CHECK:STDOUT:   %.loc12_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   store ptr null, ptr %.loc12_24.2.vptr, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc12_23 = load i32, ptr %i.var, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc12_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   store i32 %.loc12_23, ptr %.loc12_24.5.m, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc15_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 5, ptr %.loc15_4.m, align 4, !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CFn.MemberInit() !dbg !8 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !9
+// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !9
+// CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %v.var), !dbg !9
+// CHECK:STDOUT:   %.loc12_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store ptr null, ptr %.loc12_24.2.vptr, align 8, !dbg !10
+// CHECK:STDOUT:   %.loc12_23 = load i32, ptr %i.var, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc12_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc12_23, ptr %.loc12_24.5.m, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc15_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !12
+// CHECK:STDOUT:   store i32 5, ptr %.loc15_4.m, align 4, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -155,11 +170,13 @@ fn Fn() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "member_init.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.MemberInit", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Base.MemberInit", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 17, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 23, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 9, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 6, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.MemberInit", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 10, column: 3, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 17, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 23, scope: !8)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 3, scope: !8)
+// CHECK:STDOUT: !13 = !DILocation(line: 9, column: 1, scope: !8)
