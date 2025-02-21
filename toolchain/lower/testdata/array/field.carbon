@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/array/field.carbon
 
 class A {
-  var v: [i32; 2];
+  var v: array(i32, 2);
 
   // TODO: The LLVM IR we create for this crashes LLVM instruction selection.
   // The gep indexes are completely bogus.

@@ -25,5 +25,5 @@ class Terrain {
     return var;
   }
 
-  var height: [[i32; 43]; 43];
+  var height: array(array(i32, 43), 43);
 }

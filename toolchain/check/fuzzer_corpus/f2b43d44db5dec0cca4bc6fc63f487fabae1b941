@@ -3,18 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 20
 
 package ExplorerTest;
 
 fn Main() -> i32 {
-  var ar: [i32; 4] = (0, 1,2,3);
-   var count : i32 = 0;
-   for( x: i32 in ar){
-       count = count +1;
-        for( x: i32 in ar){
-            count = count +1;
-        }
-   }
-   return count;
+  // CHECK:STDERR: COMPILATION ERROR: fail_negative_size.carbon:[[@LINE+1]]: Array size cannot be negative
+  var x: array(i32, -1) = ();
+  return x[0];
 }

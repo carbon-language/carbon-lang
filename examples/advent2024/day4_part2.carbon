@@ -11,7 +11,7 @@ import library "io_utils";
 
 fn Run() {
   var search: Wordsearch = Wordsearch.Read();
-  var mas: [i32; 3] = (0x4D, 0x41, 0x53);
+  var mas: array(i32, 3) = (0x4D, 0x41, 0x53);
   var found: i32 = 0;
 
   // TODO: Use for loops once they're implemented.

@@ -31,7 +31,7 @@ class Map {
            else self.kind[x][y];
   }
 
-  var kind: [[i32; 140]; 140];
+  var kind: array(array(i32, 140), 140);
 }
 
 class DisjointSetForest {
@@ -86,7 +86,7 @@ class DisjointSetForest {
 
   // TODO: Consider adding ranked choice.
   // TODO: Make this generic in the payload data.
-  var nodes: [{.next: i32, .weight: i32, .unions: i32}; 140 * 140];
+  var nodes: array({.next: i32, .weight: i32, .unions: i32}, 140 * 140);
 }
 
 fn MakeRegions(map: Map) -> DisjointSetForest {

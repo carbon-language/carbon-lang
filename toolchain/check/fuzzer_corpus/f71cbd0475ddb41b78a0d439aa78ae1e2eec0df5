@@ -3,11 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 0
+// CHECK:STDOUT: result: 3
 
 package ExplorerTest;
 
+
+
+
 fn Main() -> i32 {
-  var x: [[i32; 3]; 2] = ((0, 1, 2), (3, 4, 5));
-  return x[1][2] - 5;
+  var ar: array(i32, 4) = (0, 1,2,3);
+  var count : i32 = 0;
+  for( x: i32 in ar){
+      count = count +x;
+      if( x == 2){
+        break;
+      }
+  }
+  return count;
 }

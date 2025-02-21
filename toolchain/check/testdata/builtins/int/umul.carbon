@@ -14,8 +14,8 @@
 
 fn Mul(a: i32, b: i32) -> i32 = "int.umul";
 
-var arr: [i32; Mul(3, 2)];
-let arr_p: [i32; 6]* = &arr;
+var arr: array(i32, Mul(3, 2));
+let arr_p: array(i32, 6)* = &arr;
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return Mul(a, b);

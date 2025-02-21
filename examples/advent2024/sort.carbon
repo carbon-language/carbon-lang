@@ -7,13 +7,13 @@ library "sort";
 // TODO: Generalize this for other container types once we implement lowering
 // for generic functions.
 
-fn Swap(p: [i32; 1000]*, from: i32, to: i32) {
+fn Swap(p: array(i32, 1000)*, from: i32, to: i32) {
   var tmp: i32 = (*p)[from];
   (*p)[from] = (*p)[to];
   (*p)[to] = tmp;
 }
 
-fn Partition(p: [i32; 1000]*, from_in: i32, to_in: i32) -> i32 {
+fn Partition(p: array(i32, 1000)*, from_in: i32, to_in: i32) -> i32 {
   var pivot_index: i32 = from_in;
   var pivot: i32 = (*p)[pivot_index];
   var from: i32 = from_in + 1;
@@ -35,7 +35,7 @@ fn Partition(p: [i32; 1000]*, from_in: i32, to_in: i32) -> i32 {
   return from - 1;
 }
 
-fn Quicksort(p: [i32; 1000]*, from: i32, to: i32) {
+fn Quicksort(p: array(i32, 1000)*, from: i32, to: i32) {
   if (from + 1 >= to) { return; }
   var pivot: i32 = Partition(p, from, to);
   Quicksort(p, from, pivot);

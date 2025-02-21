@@ -7,7 +7,7 @@
 package ExplorerTest;
 
 fn Main() -> i32 {
-  var v: [i32; 2];
-  // CHECK:STDERR: COMPILATION ERROR: fail_array.carbon:[[@LINE+1]]: use of uninitialized variable v
-  return v[0];
+  var x: array(i32, 2) = (0, 1);
+  // CHECK:STDERR: RUNTIME ERROR: fail_index.carbon:[[@LINE+1]]: index 2 out of range in (0, 1)
+  return x[2];
 }

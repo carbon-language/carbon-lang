@@ -14,8 +14,8 @@
 
 fn Mod(a: i32, b: i32) -> i32 = "int.umod";
 
-var arr: [i32; Mod(5, 3)];
-let arr_p: [i32; 2]* = &arr;
+var arr: array(i32, Mod(5, 3));
+let arr_p: array(i32, 2)* = &arr;
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return Mod(a, b);

@@ -41,7 +41,7 @@ class Digits {
     Core.PrintChar(0x0A);
   }
 
-  var count: [[i64; 75]; 10];
+  var count: array(array(i64, 75), 10);
 }
 
 // TODO: Add a builtin to perform integer conversion / truncation.

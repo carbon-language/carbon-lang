@@ -110,7 +110,7 @@ TEST_F(TypedNodeTest, ModifierOrder) {
 
 TEST_F(TypedNodeTest, For) {
   auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
-    fn F(arr: [i32; 5]) {
+    fn F(arr: array(i32, 5)) {
       for (var v: i32 in arr) {
         Print(v);
       }

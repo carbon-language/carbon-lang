@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/array/function_param.carbon
 
-fn F(arr: [i32; 3], i: i32) -> i32 {
+fn F(arr: array(i32, 3), i: i32) -> i32 {
   return arr[i];
 }
 

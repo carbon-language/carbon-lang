@@ -14,8 +14,8 @@
 
 fn Div(a: i32, b: i32) -> i32 = "int.udiv";
 
-var arr: [i32; Div(3, 2)];
-let arr_p: [i32; 1]* = &arr;
+var arr: array(i32, Div(3, 2));
+let arr_p: array(i32, 1)* = &arr;
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return Div(a, b);

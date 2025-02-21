@@ -7,7 +7,7 @@
 package ExplorerTest;
 
 fn Main() -> i32 {
-  var x: [i32; 2] = (0, 1);
-  // CHECK:STDERR: RUNTIME ERROR: fail_index.carbon:[[@LINE+1]]: index 2 out of range in (0, 1)
-  return x[2];
+  // CHECK:STDERR: COMPILATION ERROR: fail_size_mismatch.carbon:[[@LINE+1]]: type error in initializer of variable: '(i32, i32, i32)' is not implicitly convertible to 'array(i32, 2)'
+  var x: array(i32, 2) = (0, 1, 2);
+  return x[0];
 }
