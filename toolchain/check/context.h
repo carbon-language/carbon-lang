@@ -69,6 +69,15 @@ class Context {
     SemIR::ConstantId interface_const_id;
   };
 
+  // During Choice typechecking, each alternative turns into a name binding on
+  // the Choice type, but this can't be done until the full Choice type is
+  // known. This represents each binding to be done at the end of checking the
+  // Choice type.
+  struct ChoiceDeferredBinding {
+    Parse::NodeId node_id;
+    NameComponent name_component;
+  };
+
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
@@ -189,6 +198,10 @@ class Context {
     return var_storage_map_;
   }
 
+  auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
+    return choice_deferred_bindings_;
+  }
+
   auto region_stack() -> RegionStack& { return region_stack_; }
 
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
@@ -261,18 +274,6 @@ class Context {
   // --------------------------------------------------------------------------
   // End of SemIR::File members.
   // --------------------------------------------------------------------------
-
-  // During Choice typechecking, each alternative turns into a name binding on
-  // the Choice type, but this can't be done until the full Choice type is
-  // known. This represents each binding to be done at the end of checking the
-  // Choice type.
-  struct ChoiceDeferredBinding {
-    Parse::NodeId node_id;
-    NameComponent name_component;
-  };
-  auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
-    return choice_deferred_bindings_;
-  }
 
  private:
   // Handles diagnostics.
