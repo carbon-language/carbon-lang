@@ -23,14 +23,15 @@ class B {
     // CHECK:STDERR:     fn A(x: B);
     // CHECK:STDERR:             ^
     fn A(x: B);
+    // TODO: Avoid ImplMissingFunction for functions that were declared after they were poisoned.
     // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+11]]:8: note: declared here [NameUseBeforeDeclNote]
     // CHECK:STDERR:     fn B();
     // CHECK:STDERR:        ^
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-9]]:3: error: missing implementation of B in impl of interface I [ImplMissingFunction]
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-10]]:3: error: missing implementation of B in impl of interface I [ImplMissingFunction]
     // CHECK:STDERR:   impl as I {
     // CHECK:STDERR:   ^~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-16]]:3: note: associated function B declared here [AssociatedFunctionHere]
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-17]]:3: note: associated function B declared here [AssociatedFunctionHere]
     // CHECK:STDERR:   fn B();
     // CHECK:STDERR:   ^~~~~~~
     // CHECK:STDERR:
