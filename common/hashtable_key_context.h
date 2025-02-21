@@ -50,7 +50,7 @@ auto HashtableEq(const LeftT& lhs, const RightT& rhs) -> bool;
 // properties of hashes produced by the `hashing.h` infrastructure.
 //
 // The default for comparison is `operator==`. The `KeyEq` method is always
-// called with a key *stored in the hashtable* as the second or "RHS" parameter.
+// called with a key *stored in the hashtable* as the second or "Rhs" parameter.
 // This is to allow simplifying the set of overloads needed for heterogeneous
 // contexts: only the first, LHS, parameter needs to support different lookup
 // key types.
@@ -218,12 +218,12 @@ auto TranslatingKeyContext<DerivedT>::KeyEq(const AnyKeyT& lhs_key,
   // Because we don't want to make no-op calls and potentially struggle with
   // temporary lifetimes at runtime we have to fully expand the 4 states.
   constexpr bool TranslateLhs = requires { self.TranslateKey(lhs_key); };
-  constexpr bool TranslateRHS = requires { self.TranslateKey(rhs_key); };
-  if constexpr (TranslateLhs && TranslateRHS) {
+  constexpr bool TranslateRhs = requires { self.TranslateKey(rhs_key); };
+  if constexpr (TranslateLhs && TranslateRhs) {
     return HashtableEq(self.TranslateKey(lhs_key), self.TranslateKey(rhs_key));
   } else if constexpr (TranslateLhs) {
     return HashtableEq(self.TranslateKey(lhs_key), rhs_key);
-  } else if constexpr (TranslateRHS) {
+  } else if constexpr (TranslateRhs) {
     return HashtableEq(lhs_key, self.TranslateKey(rhs_key));
   } else {
     return HashtableEq(lhs_key, rhs_key);

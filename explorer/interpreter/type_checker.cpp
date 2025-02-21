@@ -4256,9 +4256,9 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
                                   /*allow_user_defined_conversions=*/false));
       if (!lhs_converts_to_rhs && !rhs_converts_to_lhs) {
         return ProgramError(clause->source_loc())
-               << "type mismatch between values in `where LHS == RHS`\n"
+               << "type mismatch between values in `where LHS == Rhs`\n"
                << "  LHS type: " << *lhs_type << "\n"
-               << "  RHS type: " << *rhs_type;
+               << "  Rhs type: " << *rhs_type;
       }
       return Success();
     }
