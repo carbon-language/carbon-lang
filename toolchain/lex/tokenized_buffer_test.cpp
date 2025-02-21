@@ -1123,7 +1123,7 @@ TEST_F(LexerTest, DiagnosticInvalidDigit) {
 TEST_F(LexerTest, DiagnosticCR) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnsupportedCRLineEnding,
+                            DiagnosticKind::UnsupportedCrLineEnding,
                             DiagnosticLevel::Error, 1, 1, _)));
   compile_helper_.GetTokenizedBuffer("\r", &consumer);
 }
