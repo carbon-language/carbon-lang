@@ -79,12 +79,7 @@ class Context {
   auto TODO(SemIRLoc loc, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
-  auto VerifyOnFinish() -> void;
-
-  // Adds an exported name.
-  auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
-
-  auto Finalize() -> void;
+  auto VerifyOnFinish() const -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -159,6 +154,8 @@ class Context {
   }
 
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
+  auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
   auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
     return check_ir_map_;

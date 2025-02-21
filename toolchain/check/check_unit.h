@@ -159,6 +159,10 @@ class CheckUnit {
   // definition.
   auto CheckRequiredDefinitions() -> void;
 
+  // Does work after processing the parse tree, such as finishing the IR and
+  // checking for missing contents.
+  auto FinishRun() -> void;
+
   // Loops over all nodes in the tree. On some errors, this may return early,
   // for example if an unrecoverable state is encountered.
   // NOLINTNEXTLINE(readability-function-size)
