@@ -452,7 +452,7 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   if (args_id == specific.args_id) {
-    auto& specific = eval_context.specifics().Get(specific_id);
+    const auto& specific = eval_context.specifics().Get(specific_id);
     // A constant specific_id should always have a resolved declaration. The
     // specific_id from the instruction may coincidentally be canonical, and so
     // constant evaluation gives the same value. In that case, we still need to
