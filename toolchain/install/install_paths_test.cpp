@@ -75,8 +75,7 @@ class InstallPathsTest : public ::testing::Test {
     EXPECT_TRUE(llvm::sys::fs::is_directory(llvm_bin_path))
         << "path: " << llvm_bin_path;
 
-    for (llvm::StringRef llvm_bin :
-         {"lld", "ld.lld", "ld64.lld", "lld-link", "wasm-ld"}) {
+    for (llvm::StringRef llvm_bin : {"ld.lld", "ld64.lld"}) {
       llvm::SmallString<128> bin_path;
       bin_path.assign(llvm_bin_path);
       llvm::sys::path::append(bin_path, llvm_bin);

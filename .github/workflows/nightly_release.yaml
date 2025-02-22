@@ -12,7 +12,7 @@
 #
 # - Do some amount of testing prior to building and uploading the release.
 #   - Tempting to try to examine existing testing workflow, but maybe better to
-#     allow re-using any complex parts and do our own testing. That would, for
+#     allow reusing any complex parts and do our own testing. That would, for
 #     example, allow us to narrow or expand the set of tests uses for
 #     pre-release testing to potentially be different from continuous testing.
 #   - Some questions around what to do in the event of a failure... error? Where

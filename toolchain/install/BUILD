@@ -116,11 +116,11 @@ cc_binary(
     ],
 )
 
+# TODO: Add remaining aliases of LLD for Windows and WASM when we have support
+# for them wired up through the busybox.
 lld_aliases = [
     "ld.lld",
     "ld64.lld",
-    "lld-link",
-    "wasm-ld",
 ]
 
 filegroup(
@@ -156,17 +156,16 @@ install_dirs = {
         install_filegroup("core", "//core:prelude"),
     ],
     "lib/carbon/llvm/bin": [
-        install_target(
-            "lld",
-            "@llvm-project//lld:lld",
-            executable = True,
-        ),
         install_symlink(
             "clang",
             "../../carbon-busybox",
             is_driver = True,
         ),
-    ] + [install_symlink(name, "lld") for name in lld_aliases],
+    ] + [install_symlink(
+        name,
+        "../../carbon-busybox",
+        is_driver = True,
+    ) for name in lld_aliases],
     "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
         install_filegroup("include", ":clang_headers", "staging/include/"),
     ],

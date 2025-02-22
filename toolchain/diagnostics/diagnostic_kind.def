@@ -29,6 +29,7 @@ CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
 CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
 CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
+CARBON_DIAGNOSTIC_KIND(LLDFuzzingDisallowed)
 
 // ============================================================================
 // SourceBuffer diagnostics
@@ -183,6 +184,7 @@ CARBON_DIAGNOSTIC_KIND(ExplicitImportApi)
 CARBON_DIAGNOSTIC_KIND(RepeatedImport)
 CARBON_DIAGNOSTIC_KIND(FirstImported)
 CARBON_DIAGNOSTIC_KIND(ExportFromImpl)
+CARBON_DIAGNOSTIC_KIND(MissingOwningDeclarationInApi)
 CARBON_DIAGNOSTIC_KIND(MissingDefinitionInImpl)
 CARBON_DIAGNOSTIC_KIND(MissingGenericFunctionDefinition)
 CARBON_DIAGNOSTIC_KIND(MissingGenericFunctionDefinitionHere)

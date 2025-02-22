@@ -15,7 +15,6 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "common/command_line.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -44,59 +43,20 @@ ClangRunner::ClangRunner(const InstallPaths* install_paths,
                          llvm::StringRef target,
                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                          llvm::raw_ostream* vlog_stream)
-    : installation_(install_paths),
+    : ToolRunnerBase(install_paths, vlog_stream),
       target_(target),
       fs_(std::move(fs)),
-      vlog_stream_(vlog_stream),
       diagnostic_ids_(new clang::DiagnosticIDs()) {}
 
 auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
 
-  // If we have a verbose logging stream, and that stream is the same as
-  // `llvm::errs`, then add the `-v` flag so that the driver also prints verbose
-  // information.
-  bool inject_v_arg = vlog_stream_ == &llvm::errs();
-  std::array<llvm::StringRef, 1> v_arg_storage;
-  llvm::ArrayRef<llvm::StringRef> maybe_v_arg;
-  if (inject_v_arg) {
-    v_arg_storage[0] = "-v";
-    maybe_v_arg = v_arg_storage;
-  }
-
-  CARBON_VLOG("Running Clang driver with arguments: \n");
-
-  // Render the arguments into null-terminated C-strings for use by the Clang
-  // driver. Command lines can get quite long in build systems so this tries to
-  // minimize the memory allocation overhead.
-
-  // Provide the wrapped `clang` path in order to support subprocessing. We also
-  // set the install directory below.
   std::string clang_path = installation_->clang_path();
-  std::array<llvm::StringRef, 1> exe_arg = {clang_path};
-  auto args_range =
-      llvm::concat<const llvm::StringRef>(exe_arg, maybe_v_arg, args);
-  int total_size = 0;
-  for (llvm::StringRef arg : args_range) {
-    // Accumulate both the string size and a null terminator byte.
-    total_size += arg.size() + 1;
-  }
 
-  // Allocate one chunk of storage for the actual C-strings and a vector of
-  // pointers into the storage.
-  llvm::OwningArrayRef<char> cstr_arg_storage(total_size);
-  llvm::SmallVector<const char*, 64> cstr_args;
-  cstr_args.reserve(args.size() + inject_v_arg + 1);
-  for (ssize_t i = 0; llvm::StringRef arg : args_range) {
-    cstr_args.push_back(&cstr_arg_storage[i]);
-    memcpy(&cstr_arg_storage[i], arg.data(), arg.size());
-    i += arg.size();
-    cstr_arg_storage[i] = '\0';
-    ++i;
-  }
-  for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
-    CARBON_VLOG("    '{0}'\n", cstr_arg);
-  }
+  // Rebuild the args as C-string args.
+  llvm::OwningArrayRef<char> cstr_arg_storage;
+  llvm::SmallVector<const char*, 64> cstr_args =
+      BuildCStrArgs("Clang", clang_path, "-v", args, cstr_arg_storage);
 
   if (!args.empty() && args[0].starts_with("-cc1")) {
     CARBON_VLOG("Calling clang_main for cc1...");
