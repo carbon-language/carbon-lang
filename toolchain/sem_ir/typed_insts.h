@@ -814,6 +814,8 @@ struct GenericInterfaceType {
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
       {.ir_name = "impl_decl",
+       // TODO: Modeling impls as unique doesn't properly handle impl
+       // redeclarations.
        .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
@@ -1006,7 +1008,10 @@ struct NameRef {
 struct Namespace {
   static constexpr auto Kind =
       InstKind::Namespace.Define<Parse::AnyNamespaceId>(
-          {.ir_name = "namespace", .constant_kind = InstConstantKind::Unique});
+          {.ir_name = "namespace",
+           // TODO: Modeling namespaces as unique doesn't properly handle
+           // namespace redeclarations.
+           .constant_kind = InstConstantKind::Unique});
   // The file's package namespace is a well-known instruction to help `package.`
   // qualified names. It will always be immediately after singletons.
   static constexpr InstId PackageInstId = InstId(SingletonInstKinds.size());
@@ -1398,7 +1403,7 @@ struct Temporary {
       InstKind::Temporary.Define<Parse::NodeId>({.ir_name = "temporary"});
 
   TypeId type_id;
-  InstId storage_id;
+  DestInstId storage_id;
   InstId init_id;
 };
 
@@ -1406,7 +1411,8 @@ struct Temporary {
 struct TemporaryStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TemporaryStorage.Define<Parse::NodeId>(
-      {.ir_name = "temporary_storage"});
+      {.ir_name = "temporary_storage",
+       .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
 };
@@ -1514,7 +1520,7 @@ struct UnboundElementType {
 // form a reference to the array object.
 struct ValueAsRef {
   static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::IndexExprId>(
-      {.ir_name = "value_as_ref"});
+      {.ir_name = "value_as_ref", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstId value_id;

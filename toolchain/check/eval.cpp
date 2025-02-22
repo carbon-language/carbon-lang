@@ -483,6 +483,16 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   return info;
 }
 
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::FacetTypeId facet_type_id, Phase* phase)
+    -> SemIR::FacetTypeId {
+  SemIR::FacetTypeInfo info =
+      GetConstantFacetTypeInfo(eval_context, facet_type_id, phase);
+  info.Canonicalize();
+  // TODO: Return `facet_type_id` if we can detect nothing has changed.
+  return eval_context.facet_types().Add(info);
+}
+
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
 // has runtime phase.
@@ -638,34 +648,6 @@ static auto RebuildIfFieldsAreConstant(EvalContext& eval_context,
   return RebuildIfFieldsAreConstantImpl(
       eval_context, inst, [](...) { return true; }, std::identity{},
       each_field_id...);
-}
-
-// Performs an access into an aggregate, retrieving the specified element.
-static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
-    -> SemIR::ConstantId {
-  auto access_inst = inst.As<SemIR::AnyAggregateAccess>();
-  Phase phase = Phase::Concrete;
-  if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
-                                    &SemIR::AnyAggregateAccess::aggregate_id,
-                                    &phase)) {
-    if (auto aggregate =
-            eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(
-                access_inst.aggregate_id)) {
-      auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
-      auto index = static_cast<size_t>(access_inst.index.index);
-      CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-      // `Phase` is not used here. If this element is a concrete constant, then
-      // so is the result of indexing, even if the aggregate also contains a
-      // symbolic context.
-      return eval_context.GetConstantValue(elements[index]);
-    } else {
-      CARBON_CHECK(phase != Phase::Concrete,
-                   "Failed to evaluate template constant {0} arg0: {1}", inst,
-                   eval_context.insts().Get(access_inst.aggregate_id));
-    }
-    return MakeConstantResult(eval_context.context(), access_inst, phase);
-  }
-  return MakeNonConstantResult(phase);
 }
 
 // Performs an index into a homogeneous aggregate, retrieving the specified
@@ -1609,6 +1591,11 @@ class ConstantEvalResult {
   // Indicates that an error was produced by evaluation.
   static const ConstantEvalResult Error;
 
+  // Indicates that we encountered an instruction for which we've not
+  // implemented constant evaluation yet. Instruction is treated as not
+  // constant.
+  static const ConstantEvalResult TODO;
+
   // Returns whether the result of evaluation is that we should produce the
   // instruction itself as a new constant.
   auto is_new() const -> bool { return !result_id_.has_value(); }
@@ -1637,6 +1624,9 @@ class ConstantEvalResult {
 
 constexpr ConstantEvalResult ConstantEvalResult::Error =
     Existing(SemIR::ErrorInst::SingletonConstantId);
+
+constexpr ConstantEvalResult ConstantEvalResult::TODO =
+    ConstantEvalResult(SemIR::ConstantId::NotConstant);
 
 static auto EvalConstantInst(Context& context, SemIRLoc loc,
                              SemIR::ArrayType inst) -> ConstantEvalResult {
@@ -1681,8 +1671,6 @@ static auto EvalConstantInst(Context& context, SemIRLoc loc,
                                                : ConstantEvalResult::Error;
 }
 
-// Initializers evaluate to a value of the object representation.
-
 static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
                              SemIR::ArrayInit init) -> ConstantEvalResult {
   // TODO: Add an `ArrayValue` to represent a constant array object
@@ -1711,8 +1699,146 @@ static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
       .type_id = init.type_id, .elements_id = init.elements_id});
 }
 
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::FunctionDecl inst) -> ConstantEvalResult {
+  return ConstantEvalResult::New(SemIR::StructValue{
+      .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::ClassDecl inst) -> ConstantEvalResult {
+  // If the class has generic parameters, we don't produce a class type, but a
+  // callable whose return value is a class type.
+  if (context.classes().Get(inst.class_id).has_parameters()) {
+    return ConstantEvalResult::New(SemIR::StructValue{
+        .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+  }
+
+  // A non-generic class declaration evaluates to the class type.
+  return ConstantEvalResult::New(
+      SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
+                       .class_id = inst.class_id,
+                       .specific_id = SemIR::SpecificId::None});
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::InterfaceDecl inst) -> ConstantEvalResult {
+  // If the interface has generic parameters, we don't produce an interface
+  // type, but a callable whose return value is an interface type.
+  if (context.interfaces().Get(inst.interface_id).has_parameters()) {
+    return ConstantEvalResult::New(SemIR::StructValue{
+        .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+  }
+
+  // A non-generic interface declaration evaluates to a facet type.
+  return ConstantEvalResult::New(FacetTypeFromInterface(
+      context, inst.interface_id, SemIR::SpecificId::None));
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::SpecificConstant inst)
+    -> ConstantEvalResult {
+  // Pull the constant value out of the specific.
+  return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), inst.specific_id, inst.inst_id));
+}
+
+// Performs an access into an aggregate, retrieving the specified element.
+static auto PerformAggregateAccess(Context& context, SemIR::Inst inst)
+    -> ConstantEvalResult {
+  auto access_inst = inst.As<SemIR::AnyAggregateAccess>();
+  if (auto aggregate = context.insts().TryGetAs<SemIR::AnyAggregateValue>(
+          access_inst.aggregate_id)) {
+    auto elements = context.inst_blocks().Get(aggregate->elements_id);
+    auto index = static_cast<size_t>(access_inst.index.index);
+    CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+    // `Phase` is not used here. If this element is a concrete constant, then
+    // so is the result of indexing, even if the aggregate also contains a
+    // symbolic context.
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(elements[index]));
+  }
+
+  return ConstantEvalResult::New(inst);
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::ClassElementAccess inst)
+    -> ConstantEvalResult {
+  return PerformAggregateAccess(context, inst);
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::StructAccess inst)
+    -> ConstantEvalResult {
+  return PerformAggregateAccess(context, inst);
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::TupleAccess inst)
+    -> ConstantEvalResult {
+  return PerformAggregateAccess(context, inst);
+}
+
+static auto EvalConstantInst(Context& context, SemIRLoc loc,
+                             SemIR::ImplWitnessAccess inst)
+    -> ConstantEvalResult {
+  // This is PerformAggregateAccess followed by GetConstantInSpecific.
+  if (auto witness =
+          context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
+    auto elements = context.inst_blocks().Get(witness->elements_id);
+    auto index = static_cast<size_t>(inst.index.index);
+    CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+    auto element = elements[index];
+    if (!element.has_value()) {
+      // TODO: Perhaps this should be a `{}` value with incomplete type?
+      CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
+                        "accessing member from impl before the end of "
+                        "its definition");
+      // TODO: Add note pointing to the impl declaration.
+      context.emitter().Emit(loc, ImplAccessMemberBeforeComplete);
+      return ConstantEvalResult::Error;
+    }
+
+    LoadImportRef(context, element);
+    return ConstantEvalResult::Existing(GetConstantValueInSpecific(
+        context.sem_ir(), witness->specific_id, element));
+  }
+
+  return ConstantEvalResult::New(inst);
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::BindValue /*inst*/)
+    -> ConstantEvalResult {
+  // TODO: Handle this once we've decided how to represent constant values of
+  // reference expressions.
+  return ConstantEvalResult::TODO;
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::Deref /*inst*/)
+    -> ConstantEvalResult {
+  // TODO: Handle this.
+  return ConstantEvalResult::TODO;
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::Temporary /*inst*/)
+    -> ConstantEvalResult {
+  // TODO: Handle this. Can we just return the value of `init_id`?
+  return ConstantEvalResult::TODO;
+}
+
+static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
+                             SemIR::VtablePtr /*inst*/)
+    -> ConstantEvalResult {
+  // TODO: Handle this.
+  return ConstantEvalResult::TODO;
+}
+
 template <typename InstT>
-static auto PerformDefaultEval(EvalContext& eval_context, SemIR::InstId inst_id,
+static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                                SemIR::Inst inst) -> SemIR::ConstantId {
   constexpr auto ConstantKind = InstT::Kind.constant_kind();
   if constexpr (ConstantKind == SemIR::InstConstantKind::Never) {
@@ -1747,6 +1873,40 @@ static auto PerformDefaultEval(EvalContext& eval_context, SemIR::InstId inst_id,
   }
 }
 
+// Specialize evaluation for array indexing because we want to check the index
+// expression even if the array expression is non-constant.
+template <>
+auto TryEvalTypedInst<SemIR::ArrayIndex>(EvalContext& eval_context,
+                                         SemIR::InstId /*inst_id*/,
+                                         SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  return PerformArrayIndex(eval_context, inst.As<SemIR::ArrayIndex>());
+}
+
+// Specialize evaluation for function calls because we want to check the callee
+// expression even if an argument expression is non-constant, and because we
+// will eventually want to perform control flow handling here.
+template <>
+auto TryEvalTypedInst<SemIR::Call>(EvalContext& eval_context,
+                                   SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  return MakeConstantForCall(eval_context,
+                             eval_context.GetDiagnosticLoc(inst_id),
+                             inst.As<SemIR::Call>());
+}
+
+// ImportRefLoaded can have a constant value, but it's owned and maintained by
+// `import_ref.cpp`, not by us.
+// TODO: Rearrange how `ImportRefLoaded` instructions are created so we never
+// call this.
+template <>
+auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
+                                              SemIR::InstId /*inst_id*/,
+                                              SemIR::Inst /*inst*/)
+    -> SemIR::ConstantId {
+  return SemIR::ConstantId::NotConstant;
+}
+
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
 //
 // Tail call should not be diagnosed as recursion.
@@ -1760,243 +1920,160 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
   CARBON_KIND_SWITCH(inst) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:
-      return PerformDefaultEval<SemIR::AddrOf>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::AddrOf>(eval_context, inst_id, inst);
     case SemIR::ArrayType::Kind:
-      return PerformDefaultEval<SemIR::ArrayType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::ArrayType>(eval_context, inst_id, inst);
     case SemIR::AssociatedEntity::Kind:
-      return PerformDefaultEval<SemIR::AssociatedEntity>(eval_context, inst_id,
+      return TryEvalTypedInst<SemIR::AssociatedEntity>(eval_context, inst_id,
                                                          inst);
     case SemIR::AssociatedEntityType::Kind:
-      return PerformDefaultEval<SemIR::AssociatedEntityType>(eval_context,
+      return TryEvalTypedInst<SemIR::AssociatedEntityType>(eval_context,
                                                              inst_id, inst);
     case SemIR::BoundMethod::Kind:
-      return PerformDefaultEval<SemIR::BoundMethod>(eval_context, inst_id,
+      return TryEvalTypedInst<SemIR::BoundMethod>(eval_context, inst_id,
                                                     inst);
     case SemIR::ClassType::Kind:
-      return PerformDefaultEval<SemIR::ClassType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::ClassType>(eval_context, inst_id, inst);
     case SemIR::CompleteTypeWitness::Kind:
-      return PerformDefaultEval<SemIR::CompleteTypeWitness>(eval_context,
+      return TryEvalTypedInst<SemIR::CompleteTypeWitness>(eval_context,
                                                             inst_id, inst);
     case SemIR::FacetValue::Kind:
-      return PerformDefaultEval<SemIR::FacetValue>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::FacetValue>(eval_context, inst_id, inst);
     case SemIR::FunctionType::Kind:
-      return PerformDefaultEval<SemIR::FunctionType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::FunctionType>(eval_context, inst_id, inst);
     case SemIR::FunctionTypeWithSelfType::Kind:
-      return PerformDefaultEval<SemIR::FunctionTypeWithSelfType>(eval_context,
+      return TryEvalTypedInst<SemIR::FunctionTypeWithSelfType>(eval_context,
                                                                  inst_id, inst);
     case SemIR::GenericClassType::Kind:
-      return PerformDefaultEval<SemIR::GenericClassType>(eval_context, inst_id,
+      return TryEvalTypedInst<SemIR::GenericClassType>(eval_context, inst_id,
                                                          inst);
     case SemIR::GenericInterfaceType::Kind:
-      return PerformDefaultEval<SemIR::GenericInterfaceType>(eval_context,
+      return TryEvalTypedInst<SemIR::GenericInterfaceType>(eval_context,
                                                              inst_id, inst);
     case SemIR::ImplWitness::Kind:
-      return PerformDefaultEval<SemIR::ImplWitness>(eval_context, inst_id,
+      return TryEvalTypedInst<SemIR::ImplWitness>(eval_context, inst_id,
                                                     inst);
     case SemIR::IntType::Kind:
-      return PerformDefaultEval<SemIR::IntType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::IntType>(eval_context, inst_id, inst);
     case SemIR::PointerType::Kind:
-      return PerformDefaultEval<SemIR::PointerType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::PointerType>(eval_context, inst_id, inst);
     case SemIR::FloatType::Kind:
-      return PerformDefaultEval<SemIR::FloatType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::FloatType>(eval_context, inst_id, inst);
     case SemIR::SpecificFunction::Kind:
-      return PerformDefaultEval<SemIR::SpecificFunction>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::SpecificFunction>(eval_context, inst_id, inst);
     case SemIR::StructType::Kind:
-      return PerformDefaultEval<SemIR::StructType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::StructType>(eval_context, inst_id, inst);
     case SemIR::StructValue::Kind:
-      return PerformDefaultEval<SemIR::StructValue>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::StructValue>(eval_context, inst_id, inst);
     case SemIR::TupleType::Kind:
-      return PerformDefaultEval<SemIR::TupleType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::TupleType>(eval_context, inst_id, inst);
     case SemIR::TupleValue::Kind:
-      return PerformDefaultEval<SemIR::TupleValue>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::TupleValue>(eval_context, inst_id, inst);
     case SemIR::UnboundElementType::Kind:
-      return PerformDefaultEval<SemIR::UnboundElementType>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::UnboundElementType>(eval_context, inst_id, inst);
     case SemIR::ArrayInit::Kind:
-      return PerformDefaultEval<SemIR::ArrayInit>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::ArrayInit>(eval_context, inst_id, inst);
     case SemIR::ClassInit::Kind:
-      return PerformDefaultEval<SemIR::ClassInit>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::ClassInit>(eval_context, inst_id, inst);
     case SemIR::StructInit::Kind:
-      return PerformDefaultEval<SemIR::StructInit>(eval_context, inst_id, inst);
+      return TryEvalTypedInst<SemIR::StructInit>(eval_context, inst_id, inst);
     case SemIR::TupleInit::Kind:
-      return PerformDefaultEval<SemIR::TupleInit>(eval_context, inst_id, inst);
-
+      return TryEvalTypedInst<SemIR::TupleInit>(eval_context, inst_id, inst);
     case SemIR::Vtable::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::Vtable::virtual_functions_id);
+      return TryEvalTypedInst<SemIR::Vtable>(eval_context, inst_id, inst);
     case SemIR::AutoType::Kind:
+      return TryEvalTypedInst<SemIR::AutoType>(eval_context, inst_id, inst);
     case SemIR::BoolType::Kind:
+      return TryEvalTypedInst<SemIR::BoolType>(eval_context, inst_id, inst);
     case SemIR::BoundMethodType::Kind:
+      return TryEvalTypedInst<SemIR::BoundMethodType>(eval_context, inst_id, inst);
     case SemIR::ErrorInst::Kind:
+      return TryEvalTypedInst<SemIR::ErrorInst>(eval_context, inst_id, inst);
     case SemIR::IntLiteralType::Kind:
+      return TryEvalTypedInst<SemIR::IntLiteralType>(eval_context, inst_id, inst);
     case SemIR::LegacyFloatType::Kind:
+      return TryEvalTypedInst<SemIR::LegacyFloatType>(eval_context, inst_id, inst);
     case SemIR::NamespaceType::Kind:
+      return TryEvalTypedInst<SemIR::NamespaceType>(eval_context, inst_id, inst);
     case SemIR::SpecificFunctionType::Kind:
+      return TryEvalTypedInst<SemIR::SpecificFunctionType>(eval_context, inst_id, inst);
     case SemIR::StringType::Kind:
+      return TryEvalTypedInst<SemIR::StringType>(eval_context, inst_id, inst);
     case SemIR::TypeType::Kind:
+      return TryEvalTypedInst<SemIR::TypeType>(eval_context, inst_id, inst);
     case SemIR::VtableType::Kind:
+      return TryEvalTypedInst<SemIR::VtableType>(eval_context, inst_id, inst);
     case SemIR::WitnessType::Kind:
-      // Builtins are always concrete constants.
-      return MakeConstantResult(eval_context.context(), inst, Phase::Concrete);
-
-    case CARBON_KIND(SemIR::FunctionDecl fn_decl): {
-      return TransformIfFieldsAreConstant(
-          eval_context, fn_decl,
-          [&](SemIR::FunctionDecl result) {
-            return SemIR::StructValue{.type_id = result.type_id,
-                                      .elements_id = SemIR::InstBlockId::Empty};
-          },
-          &SemIR::FunctionDecl::type_id);
-    }
-
-    case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      // If the class has generic parameters, we don't produce a class type, but
-      // a callable whose return value is a class type.
-      if (eval_context.classes().Get(class_decl.class_id).has_parameters()) {
-        return TransformIfFieldsAreConstant(
-            eval_context, class_decl,
-            [&](SemIR::ClassDecl result) {
-              return SemIR::StructValue{
-                  .type_id = result.type_id,
-                  .elements_id = SemIR::InstBlockId::Empty};
-            },
-            &SemIR::ClassDecl::type_id);
-      }
-      // A non-generic class declaration evaluates to the class type.
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
-                           .class_id = class_decl.class_id,
-                           .specific_id = SemIR::SpecificId::None},
-          Phase::Concrete);
-    }
-
-    case CARBON_KIND(SemIR::FacetType facet_type): {
-      Phase phase = Phase::Concrete;
-      SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
-          eval_context, facet_type.facet_type_id, &phase);
-      info.Canonicalize();
-      // TODO: Reuse `inst` if we can detect that nothing has changed.
-      return MakeFacetTypeResult(eval_context.context(), info, phase);
-    }
-
-    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      // If the interface has generic parameters, we don't produce an interface
-      // type, but a callable whose return value is an interface type.
-      if (eval_context.interfaces()
-              .Get(interface_decl.interface_id)
-              .has_parameters()) {
-        return TransformIfFieldsAreConstant(
-            eval_context, interface_decl,
-            [&](SemIR::InterfaceDecl result) {
-              return SemIR::StructValue{
-                  .type_id = result.type_id,
-                  .elements_id = SemIR::InstBlockId::Empty};
-            },
-            &SemIR::InterfaceDecl::type_id);
-      }
-      // A non-generic interface declaration evaluates to a facet type.
-      return MakeConstantResult(
-          eval_context.context(),
-          FacetTypeFromInterface(eval_context.context(),
-                                 interface_decl.interface_id,
-                                 SemIR::SpecificId::None),
-          Phase::Concrete);
-    }
-
-    case CARBON_KIND(SemIR::SpecificConstant specific): {
-      // Pull the constant value out of the specific.
-      return SemIR::GetConstantValueInSpecific(
-          eval_context.sem_ir(), specific.specific_id, specific.inst_id);
-    }
-
-    // These cases are treated as being the unique canonical definition of the
-    // corresponding constant value.
-    // TODO: This doesn't properly handle redeclarations. Consider adding a
-    // corresponding `Value` inst for each of these cases, or returning the
-    // first declaration.
+      return TryEvalTypedInst<SemIR::WitnessType>(eval_context, inst_id, inst);
+    case SemIR::FunctionDecl::Kind:
+      return TryEvalTypedInst<SemIR::FunctionDecl>(eval_context, inst_id, inst);
+    case SemIR::ClassDecl::Kind:
+      return TryEvalTypedInst<SemIR::ClassDecl>(eval_context, inst_id, inst);
+    case SemIR::FacetType::Kind:
+      return TryEvalTypedInst<SemIR::FacetType>(eval_context, inst_id, inst);
+    case SemIR::InterfaceDecl::Kind:
+      return TryEvalTypedInst<SemIR::InterfaceDecl>(eval_context, inst_id,
+                                                      inst);
+    case SemIR::SpecificConstant::Kind:
+      return TryEvalTypedInst<SemIR::SpecificConstant>(eval_context, inst_id,
+                                                         inst);
     case SemIR::AdaptDecl::Kind:
+      return TryEvalTypedInst<SemIR::AdaptDecl>(eval_context, inst_id, inst);
     case SemIR::AssociatedConstantDecl::Kind:
+      return TryEvalTypedInst<SemIR::AssociatedConstantDecl>(eval_context,
+                                                               inst_id, inst);
     case SemIR::BaseDecl::Kind:
+      return TryEvalTypedInst<SemIR::BaseDecl>(eval_context, inst_id, inst);
     case SemIR::FieldDecl::Kind:
+      return TryEvalTypedInst<SemIR::FieldDecl>(eval_context, inst_id, inst);
     case SemIR::ImplDecl::Kind:
+      return TryEvalTypedInst<SemIR::ImplDecl>(eval_context, inst_id, inst);
     case SemIR::Namespace::Kind:
-      return SemIR::ConstantId::ForConcreteConstant(inst_id);
-
+      return TryEvalTypedInst<SemIR::Namespace>(eval_context, inst_id, inst);
     case SemIR::BoolLiteral::Kind:
+      return TryEvalTypedInst<SemIR::BoolLiteral>(eval_context, inst_id, inst);
     case SemIR::FloatLiteral::Kind:
+      return TryEvalTypedInst<SemIR::FloatLiteral>(eval_context, inst_id, inst);
     case SemIR::IntValue::Kind:
+      return TryEvalTypedInst<SemIR::IntValue>(eval_context, inst_id, inst);
     case SemIR::StringLiteral::Kind:
-      // Promote literals to the constant block.
-      // TODO: Convert literals into a canonical form. Currently we can form two
-      // different `i32` constants with the same value if they are represented
-      // by `APInt`s with different bit widths.
-      // TODO: Can the type of an IntValue or FloatLiteral be symbolic? If so,
-      // we may need to rebuild.
-      return MakeConstantResult(eval_context.context(), inst, Phase::Concrete);
-
-    // The elements of a constant aggregate can be accessed.
+      return TryEvalTypedInst<SemIR::StringLiteral>(eval_context, inst_id,
+                                                      inst);
     case SemIR::ClassElementAccess::Kind:
+      return TryEvalTypedInst<SemIR::ClassElementAccess>(eval_context,
+                                                           inst_id, inst);
     case SemIR::StructAccess::Kind:
+      return TryEvalTypedInst<SemIR::StructAccess>(eval_context, inst_id,
+                                                     inst);
     case SemIR::TupleAccess::Kind:
-      return PerformAggregateAccess(eval_context, inst);
+      return TryEvalTypedInst<SemIR::TupleAccess>(eval_context, inst_id,
+                                                    inst);
+    case SemIR::ImplWitnessAccess::Kind:
+      return TryEvalTypedInst<SemIR::ImplWitnessAccess>(eval_context, inst_id,
+                                                          inst);
+    case SemIR::ArrayIndex::Kind:
+      return TryEvalTypedInst<SemIR::ArrayIndex>(eval_context, inst_id, inst);
+    case SemIR::Call::Kind:
+      return TryEvalTypedInst<SemIR::Call>(eval_context, inst_id, inst);
 
-    case CARBON_KIND(SemIR::ImplWitnessAccess access_inst): {
-      // This is PerformAggregateAccess followed by GetConstantInSpecific.
-      Phase phase = Phase::Concrete;
-      if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
-                                        &SemIR::ImplWitnessAccess::witness_id,
-                                        &phase)) {
-        if (auto witness = eval_context.insts().TryGetAs<SemIR::ImplWitness>(
-                access_inst.witness_id)) {
-          auto elements = eval_context.inst_blocks().Get(witness->elements_id);
-          auto index = static_cast<size_t>(access_inst.index.index);
-          CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-          // `Phase` is not used here. If this element is a concrete constant,
-          // then so is the result of indexing, even if the aggregate also
-          // contains a symbolic context.
-
-          auto element = elements[index];
-          if (!element.has_value()) {
-            // TODO: Perhaps this should be a `{}` value with incomplete type?
-            CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
-                              "accessing member from impl before the end of "
-                              "its definition");
-            // TODO: Add note pointing to the impl declaration.
-            eval_context.emitter().Emit(eval_context.GetDiagnosticLoc(inst_id),
-                                        ImplAccessMemberBeforeComplete);
-            return SemIR::ErrorInst::SingletonConstantId;
-          }
-          LoadImportRef(eval_context.context(), element);
-          return GetConstantValueInSpecific(eval_context.sem_ir(),
-                                            witness->specific_id, element);
-        } else {
-          CARBON_CHECK(phase != Phase::Concrete,
-                       "Failed to evaluate template constant {0} arg0: {1}",
-                       inst, eval_context.insts().Get(access_inst.witness_id));
-        }
-        return MakeConstantResult(eval_context.context(), access_inst, phase);
-      }
-      return MakeNonConstantResult(phase);
-    }
-    case CARBON_KIND(SemIR::ArrayIndex index): {
-      return PerformArrayIndex(eval_context, index);
-    }
-
-    case CARBON_KIND(SemIR::Call call): {
-      return MakeConstantForCall(eval_context,
-                                 eval_context.GetDiagnosticLoc(inst_id), call);
-    }
-
-    // TODO: These need special handling.
     case SemIR::BindValue::Kind:
+      return TryEvalTypedInst<SemIR::BindValue>(eval_context, inst_id, inst);
     case SemIR::Deref::Kind:
+      return TryEvalTypedInst<SemIR::Deref>(eval_context, inst_id, inst);
     case SemIR::ImportRefLoaded::Kind:
+      return TryEvalTypedInst<SemIR::ImportRefLoaded>(eval_context, inst_id,
+                                                      inst);
     case SemIR::ReturnSlot::Kind:
+      return TryEvalTypedInst<SemIR::ReturnSlot>(eval_context, inst_id, inst);
     case SemIR::Temporary::Kind:
+      return TryEvalTypedInst<SemIR::Temporary>(eval_context, inst_id, inst);
     case SemIR::TemporaryStorage::Kind:
+      return TryEvalTypedInst<SemIR::TemporaryStorage>(eval_context, inst_id,
+                                                       inst);
     case SemIR::ValueAsRef::Kind:
+      return TryEvalTypedInst<SemIR::ValueAsRef>(eval_context, inst_id, inst);
     case SemIR::VtablePtr::Kind:
-      break;
+      return TryEvalTypedInst<SemIR::VtablePtr>(eval_context, inst_id, inst);
 
     case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
       // TODO: Disable constant evaluation of SymbolicBindingPattern once

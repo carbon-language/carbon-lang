@@ -134,7 +134,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %.loc16_16.3: %i32 = value_of_initializer %int.convert_checked.loc16 [concrete = constants.%int_-10.c17]
 // CHECK:STDOUT:   %.loc16_16.4: %i32 = converted %int.snegate, %.loc16_16.3 [concrete = constants.%int_-10.c17]
 // CHECK:STDOUT:   %.loc16_19.1: ref %i32 = array_index %c.ref, %.loc16_16.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc16_19.2: %i32 = bind_value %.loc16_19.1
+// CHECK:STDOUT:   %.loc16_19.2: %i32 = bind_value %.loc16_19.1 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%d.var, %.loc16_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

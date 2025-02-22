@@ -78,11 +78,13 @@ class AbsoluteInstId : public InstId {
 // instruction class.
 //
 // This behaves in most respects like an InstId field, but constant evaluation
-// of an instruction with a destination field will not evaluate this field.
+// of an instruction with a destination field will not evaluate this field, and
+// substitution will not substitute into it.
 //
-// TODO: Should this case also be treated specially by substitution? Multiple
-// instructions can refer to the same destination, so these don't have the tree
-// structure that substitution expects.
+// TODO: Decide on how substitution should handle this. Multiple instructions
+// can refer to the same destination, so these don't have the tree structure
+// that substitution expects, but we might need to substitute into the result of
+// an instruction.
 class DestInstId : public InstId {
  public:
   // Support implicit conversion from InstId so that InstId and DestInstId

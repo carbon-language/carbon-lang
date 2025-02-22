@@ -106,8 +106,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_10.1: %struct_type.a = struct_literal (%int_1.loc21)
 // CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc21_10.2: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc21_10.3: ref %Class = temporary %.loc21_10.2, <error>
-// CHECK:STDOUT:   %.loc21_12: ref %Class = converted %.loc21_10.1, %.loc21_10.3
+// CHECK:STDOUT:   %.loc21_10.3: ref %Class = temporary %.loc21_10.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_12: ref %Class = converted %.loc21_10.1, %.loc21_10.3 [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc26: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc26: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %.loc26_18.1: %struct_type.a.c = struct_literal (%int_1.loc26, %int_2.loc26)
@@ -120,16 +120,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc26_18.3: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc26_18.4: ref %i32 = class_element_access %.loc26_18.3, element0
 // CHECK:STDOUT:   %.loc26_18.5: init %i32 = initialize_from %.loc26_18.2 to %.loc26_18.4 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc26_18.6: ref %Class = temporary %.loc26_18.3, <error>
-// CHECK:STDOUT:   %.loc26_20: ref %Class = converted %.loc26_18.1, %.loc26_18.6
+// CHECK:STDOUT:   %.loc26_18.6: ref %Class = temporary %.loc26_18.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_20: ref %Class = converted %.loc26_18.1, %.loc26_18.6 [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc31: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %.loc31_26.1: %struct_type.a.b.c = struct_literal (%int_1.loc31, %int_2.loc31, %int_3)
 // CHECK:STDOUT:   %Class.ref.loc31: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc31_26.2: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc31_26.3: ref %Class = temporary %.loc31_26.2, <error>
-// CHECK:STDOUT:   %.loc31_28: ref %Class = converted %.loc31_26.1, %.loc31_26.3
+// CHECK:STDOUT:   %.loc31_26.3: ref %Class = temporary %.loc31_26.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc31_28: ref %Class = converted %.loc31_26.1, %.loc31_26.3 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -562,7 +562,6 @@ fn CallF() {
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type.057 = facet_value %.Self.as_type, %.Self.as_wit [symbolic]
-// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -613,7 +612,7 @@ fn CallF() {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc15_24.2: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc15_24: <error> = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %impl.elem0.loc15_24: <error> = impl_witness_access %.Self.as_wit, element0 [concrete = <error>]
 // CHECK:STDOUT:     %.loc15_30: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_18: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc15_24, <error>

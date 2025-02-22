@@ -129,7 +129,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.loc17_16.1: %i32 = value_of_initializer %int.convert_checked.loc17 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc17_16.2: %i32 = converted %int_1, %.loc17_16.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc17_17.1: ref %i32 = array_index %a.ref.loc17, %.loc17_16.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_17.2: %i32 = bind_value %.loc17_17.1
+// CHECK:STDOUT:   %.loc17_17.2: %i32 = bind_value %.loc17_17.1 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, %.loc17_17.2
 // CHECK:STDOUT:   %a.ref.loc23: ref %array_type = name_ref a, file.%a
 // CHECK:STDOUT:   %int_2147483647: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
@@ -142,7 +142,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.loc23_16.1: %i32 = value_of_initializer %int.convert_checked.loc23 [concrete = constants.%int_2147483647.a74]
 // CHECK:STDOUT:   %.loc23_16.2: %i32 = converted %int_2147483647, %.loc23_16.1 [concrete = constants.%int_2147483647.a74]
 // CHECK:STDOUT:   %.loc23_27.1: ref %i32 = array_index %a.ref.loc23, %.loc23_16.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc23_27.2: %i32 = bind_value %.loc23_27.1
+// CHECK:STDOUT:   %.loc23_27.2: %i32 = bind_value %.loc23_27.1 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%c.var, %.loc23_27.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
