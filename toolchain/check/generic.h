@@ -70,7 +70,9 @@ auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
 auto MakeSelfSpecific(Context& context, SemIRLoc loc,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
 
-// FIXME
+// Resolve the declaration of the given specific, by evaluating the eval block
+// of the corresponding generic and storing a corresponding value block in the
+// specific.
 auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
                                 SemIR::SpecificId specific_id) -> void;
 

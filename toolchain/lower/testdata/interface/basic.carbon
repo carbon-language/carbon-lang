@@ -16,14 +16,22 @@ interface I {
 // you can't pass a facet around at runtime, so make sure it works.
 fn F(T: I) -> I { return T; }
 
-interface J;
-
-// Declared-but-not-defined interfaces are still complete types.
-// CHECK:STDERR: basic.carbon:[[@LINE+7]]:6: error: parameter has incomplete type `J` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn G(T: J) {}
-// CHECK:STDERR:      ^~~~
-// CHECK:STDERR: basic.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface J;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
-fn G(T: J) {}
+// CHECK:STDOUT: ; ModuleID = 'basic.carbon'
+// CHECK:STDOUT: source_filename = "basic.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 19, scope: !4)

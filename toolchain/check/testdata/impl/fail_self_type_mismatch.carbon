@@ -11,13 +11,18 @@
 class C[T:! type](X:! T) {}
 
 interface I {
+  // This tests that inside the definition of `I`, `Self` has type `I`.
+
+  // Below, `C(Self)` deduces `T` to be the incomplete facet type `I`, which
+  // leads to the error.
+
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+10]]:11: error: forming value of incomplete type `I` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   fn F(c: C(Self));
   // CHECK:STDERR:           ^~~~~~~
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-9]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
   // CHECK:STDERR: interface I {
   // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-14]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: class C[T:! type](X:! T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -98,7 +103,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:     %.loc24: type = splice_block %C [concrete = <error>] {
+// CHECK:STDOUT:     %.loc29: type = splice_block %C [concrete = <error>] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%I.type, <error>) [concrete = <error>]
@@ -120,7 +125,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param_patt: %C.6fb = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.6fb = value_param runtime_param0
-// CHECK:STDOUT:     %.loc28: type = splice_block %C [concrete = constants.%C.6fb] {
+// CHECK:STDOUT:     %.loc33: type = splice_block %C [concrete = constants.%C.6fb] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
