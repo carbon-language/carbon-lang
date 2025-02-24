@@ -280,7 +280,7 @@ static auto BuildFunctionDecl(Context& context,
 
   if (virtual_modifier != SemIR::Function::VirtualModifier::None &&
       !self_param_id.has_value()) {
-    CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual non-instance method");
+    CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
     context.emitter().Build(node_id, VirtualWithoutSelf).Emit();
   }
   // Build the function entity. This will be merged into an existing function if
