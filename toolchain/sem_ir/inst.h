@@ -251,7 +251,7 @@ class Inst : public Printable<Inst> {
   auto SetType(TypeId type_id) -> void { type_id_ = type_id; }
 
   // Sets the arguments of this instruction.
-  auto SetArgs(int32_t arg0, int32_t arg1) {
+  auto SetArgs(int32_t arg0, int32_t arg1) -> void {
     arg0_ = arg0;
     arg1_ = arg1;
   }
