@@ -1368,7 +1368,8 @@ struct StructInit {
 struct StructLiteral {
   static constexpr auto Kind =
       InstKind::StructLiteral.Define<Parse::StructLiteralId>(
-          {.ir_name = "struct_literal"});
+          {.ir_name = "struct_literal",
+           .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1444,7 +1445,8 @@ struct TupleInit {
 struct TupleLiteral {
   static constexpr auto Kind =
       InstKind::TupleLiteral.Define<Parse::TupleLiteralId>(
-          {.ir_name = "tuple_literal"});
+          {.ir_name = "tuple_literal",
+           .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstBlockId elements_id;
