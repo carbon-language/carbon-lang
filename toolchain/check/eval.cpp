@@ -512,12 +512,12 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
 // Function template that can be called with an argument of type `T`. Used below
 // to detect which overloads of `GetConstantValue` exist.
 template <typename T>
-static void Accept(T) {}
+static void Accept(T /*arg*/) {}
 
 // Determines whether a `GetConstantValue` overload exists for a given ID type.
 // Note that we do not check whether `GetConstantValue` is *callable* with a
 // given ID type, because that would use the `InstId` overload for
-// `AbsoluteInstId`, which should be left alone.
+// `AbsoluteInstId` and similar wrapper types, which should be left alone.
 template <typename IdT>
 static constexpr bool HasGetConstantValueOverload = requires {
   Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
@@ -584,71 +584,6 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
   }
   inst->SetArgs(arg0, arg1);
   return true;
-}
-
-// If the specified fields of the given typed instruction have constant values,
-// replaces the fields with their constant values and builds a corresponding
-// constant value. Otherwise returns `ConstantId::NotConstant`. Returns
-// `ErrorInst::SingletonConstantId` if any subexpression is an error.
-//
-// The constant value is then checked by calling `validate_fn(typed_inst)`,
-// which should return a `bool` indicating whether the new constant is valid. If
-// validation passes, `transform_fn(typed_inst)` is called to produce the final
-// constant instruction, and a corresponding ConstantId for the new constant is
-// returned. If validation fails, it should produce a suitable error message.
-// `ErrorInst::SingletonConstantId` is returned.
-template <typename InstT, typename ValidateFn, typename TransformFn,
-          typename... EachFieldIdT>
-static auto RebuildIfFieldsAreConstantImpl(
-    EvalContext& eval_context, SemIR::Inst inst, ValidateFn validate_fn,
-    TransformFn transform_fn, EachFieldIdT InstT::*... each_field_id)
-    -> SemIR::ConstantId {
-  // Build a constant instruction by replacing each non-constant operand with
-  // its constant value.
-  auto typed_inst = inst.As<InstT>();
-  Phase phase = Phase::Concrete;
-  if ((ReplaceFieldWithConstantValue(eval_context, &typed_inst, each_field_id,
-                                     &phase) &&
-       ...)) {
-    if (phase == Phase::UnknownDueToError || !validate_fn(typed_inst)) {
-      return SemIR::ErrorInst::SingletonConstantId;
-    }
-    return MakeConstantResult(eval_context.context(), transform_fn(typed_inst),
-                              phase);
-  }
-  return MakeNonConstantResult(phase);
-}
-
-// Same as above but with an identity transform function.
-template <typename InstT, typename ValidateFn, typename... EachFieldIdT>
-static auto RebuildAndValidateIfFieldsAreConstant(
-    EvalContext& eval_context, SemIR::Inst inst, ValidateFn validate_fn,
-    EachFieldIdT InstT::*... each_field_id) -> SemIR::ConstantId {
-  return RebuildIfFieldsAreConstantImpl(eval_context, inst, validate_fn,
-                                        std::identity{}, each_field_id...);
-}
-
-// Same as above but with no validation step.
-template <typename InstT, typename TransformFn, typename... EachFieldIdT>
-static auto TransformIfFieldsAreConstant(EvalContext& eval_context,
-                                         SemIR::Inst inst,
-                                         TransformFn transform_fn,
-                                         EachFieldIdT InstT::*... each_field_id)
-    -> SemIR::ConstantId {
-  return RebuildIfFieldsAreConstantImpl(
-      eval_context, inst, [](...) { return true; }, transform_fn,
-      each_field_id...);
-}
-
-// Same as above but with no validation or transform step.
-template <typename InstT, typename... EachFieldIdT>
-static auto RebuildIfFieldsAreConstant(EvalContext& eval_context,
-                                       SemIR::Inst inst,
-                                       EachFieldIdT InstT::*... each_field_id)
-    -> SemIR::ConstantId {
-  return RebuildIfFieldsAreConstantImpl(
-      eval_context, inst, [](...) { return true; }, std::identity{},
-      each_field_id...);
 }
 
 // Performs an index into a homogeneous aggregate, retrieving the specified
