@@ -20,6 +20,7 @@ namespace N2.N1;
 alias N2.N3 = N1;
 
 class N2.N1.C {}
+class N1.C {}
 fn TestNamespaces() {
   var x: N2.N1.C;
   var y: N2.N3.C* = &x;
@@ -198,12 +199,13 @@ namespace N1.N3;
 // CHECK:STDOUT: --- no_poison.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %C.2a3: type = class_type @C.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C.0b8: type = class_type @C.2 [concrete]
 // CHECK:STDOUT:   %TestNamespaces.type: type = fn_type @TestNamespaces [concrete]
 // CHECK:STDOUT:   %TestNamespaces: %TestNamespaces.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.33b: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %ptr.33b: type = ptr_type %C.2a3 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -212,54 +214,65 @@ namespace N1.N3;
 // CHECK:STDOUT:     .N2 = %N2
 // CHECK:STDOUT:     .TestNamespaces = %TestNamespaces.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %N1.loc4: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %N1.loc4: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = %C.decl.loc12
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N2: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .N1 = %N1.loc8
 // CHECK:STDOUT:     .N3 = %N3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N1.loc8: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .C = %C.decl.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N1.ref: <namespace> = name_ref N1, %N1.loc8 [concrete = %N1.loc8]
 // CHECK:STDOUT:   %N3: <namespace> = bind_alias N3, %N1.loc8 [concrete = %N1.loc8]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C.1 [concrete = constants.%C.2a3] {} {}
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C.2 [concrete = constants.%C.0b8] {} {}
 // CHECK:STDOUT:   %TestNamespaces.decl: %TestNamespaces.type = fn_decl @TestNamespaces [concrete = constants.%TestNamespaces] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C.1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .Self = constants.%C.2a3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C.2 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C.0b8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestNamespaces() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %C = binding_pattern x
-// CHECK:STDOUT:     %.loc13_3: %C = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %C.2a3 = binding_pattern x
+// CHECK:STDOUT:     %.loc14_3: %C.2a3 = var_pattern %x.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %C = var x
-// CHECK:STDOUT:   %.loc13_15: type = splice_block %C.ref.loc13 [concrete = constants.%C] {
-// CHECK:STDOUT:     %N2.ref.loc13: <namespace> = name_ref N2, file.%N2 [concrete = file.%N2]
+// CHECK:STDOUT:   %x.var: ref %C.2a3 = var x
+// CHECK:STDOUT:   %.loc14_15: type = splice_block %C.ref.loc14 [concrete = constants.%C.2a3] {
+// CHECK:STDOUT:     %N2.ref.loc14: <namespace> = name_ref N2, file.%N2 [concrete = file.%N2]
 // CHECK:STDOUT:     %N1.ref: <namespace> = name_ref N1, file.%N1.loc8 [concrete = file.%N1.loc8]
-// CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, file.%C.decl.loc11 [concrete = constants.%C.2a3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %C = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %C.2a3 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %ptr.33b = binding_pattern y
-// CHECK:STDOUT:     %.loc14_3: %ptr.33b = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc15_3: %ptr.33b = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %ptr.33b = var y
-// CHECK:STDOUT:   %x.ref: ref %C = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: ref %C.2a3 = name_ref x, %x
 // CHECK:STDOUT:   %addr: %ptr.33b = addr_of %x.ref
 // CHECK:STDOUT:   assign %y.var, %addr
-// CHECK:STDOUT:   %.loc14_17: type = splice_block %ptr [concrete = constants.%ptr.33b] {
-// CHECK:STDOUT:     %N2.ref.loc14: <namespace> = name_ref N2, file.%N2 [concrete = file.%N2]
+// CHECK:STDOUT:   %.loc15_17: type = splice_block %ptr [concrete = constants.%ptr.33b] {
+// CHECK:STDOUT:     %N2.ref.loc15: <namespace> = name_ref N2, file.%N2 [concrete = file.%N2]
 // CHECK:STDOUT:     %N3.ref: <namespace> = name_ref N3, file.%N3 [concrete = file.%N1.loc8]
-// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr.33b]
+// CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, file.%C.decl.loc11 [concrete = constants.%C.2a3]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C.2a3 [concrete = constants.%ptr.33b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %ptr.33b = bind_name y, %y.var
 // CHECK:STDOUT:   return
