@@ -163,6 +163,9 @@ class CheckUnit {
   // checking for missing contents.
   auto FinishRun() -> void;
 
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void;
+
   // Loops over all nodes in the tree. On some errors, this may return early,
   // for example if an unrecoverable state is encountered.
   // NOLINTNEXTLINE(readability-function-size)

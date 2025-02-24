@@ -79,13 +79,6 @@ auto CheckUnit::Run() -> void {
 
   // Verify that Context cleanly finished.
   context_.VerifyOnFinish();
-
-#ifndef NDEBUG
-  if (auto verify = context_.sem_ir().Verify(); !verify.ok()) {
-    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", context_.sem_ir(),
-                 verify.error());
-  }
-#endif
 }
 
 auto CheckUnit::InitPackageScopeAndImports() -> void {

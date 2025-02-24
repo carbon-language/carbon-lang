@@ -89,6 +89,13 @@ auto Context::VerifyOnFinish() const -> void {
   // decl_introducer_state_stack_.
   scope_stack_.VerifyOnFinish();
   // TODO: Add verification for generic_region_stack_.
+
+#ifndef NDEBUG
+  if (auto verify = sem_ir_->Verify(); !verify.ok()) {
+    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir_,
+                 verify.error());
+  }
+#endif
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
