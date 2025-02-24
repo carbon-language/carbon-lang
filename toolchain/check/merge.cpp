@@ -480,6 +480,7 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                          allow_self_type_mismatch)) {
     return false;
   }
+  // Don't forward `allow_self_type_mismatch` here because it's extra cost, and `self` is only allowed in implicit params.
   if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_patterns_id,
                          prev_entity.loc, prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
