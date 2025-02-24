@@ -293,7 +293,7 @@ static auto MaybeApplyFileTestsFlag(llvm::StringRef factory_name) -> void {
 }
 
 // Loads tests from the manifest file, and registers them for execution. The
-// vector is taken as a parameter so that the address of entries is stable for
+// vector is taken as an output parameter so that the address of entries is stable for
 // the factory.
 static auto RegisterTests(FileTestFactory* test_factory,
                           llvm::StringRef exe_path,
