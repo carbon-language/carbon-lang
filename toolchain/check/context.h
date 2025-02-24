@@ -55,29 +55,6 @@ class Context {
   // add contextual notes as appropriate.
   using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
-  // Pre-computed parts of a binding pattern.
-  struct BindingPatternInfo {
-    // The corresponding AnyBindName inst.
-    SemIR::InstId bind_name_id;
-    // The region of insts that computes the type of the binding.
-    SemIR::ExprRegionId type_expr_region_id;
-  };
-
-  // An ongoing impl lookup, used to ensure termination.
-  struct ImplLookupStackEntry {
-    SemIR::ConstantId type_const_id;
-    SemIR::ConstantId interface_const_id;
-  };
-
-  // During Choice typechecking, each alternative turns into a name binding on
-  // the Choice type, but this can't be done until the full Choice type is
-  // known. This represents each binding to be done at the end of checking the
-  // Choice type.
-  struct ChoiceDeferredBinding {
-    Parse::NodeId node_id;
-    NameComponent name_component;
-  };
-
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
@@ -188,6 +165,14 @@ class Context {
     return import_ref_ids_;
   }
 
+  // Pre-computed parts of a binding pattern.
+  struct BindingPatternInfo {
+    // The corresponding AnyBindName inst.
+    SemIR::InstId bind_name_id;
+    // The region of insts that computes the type of the binding.
+    SemIR::ExprRegionId type_expr_region_id;
+  };
+
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
   auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
@@ -198,11 +183,26 @@ class Context {
     return var_storage_map_;
   }
 
+  // During Choice typechecking, each alternative turns into a name binding on
+  // the Choice type, but this can't be done until the full Choice type is
+  // known. This represents each binding to be done at the end of checking the
+  // Choice type.
+  struct ChoiceDeferredBinding {
+    Parse::NodeId node_id;
+    NameComponent name_component;
+  };
+
   auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
     return choice_deferred_bindings_;
   }
 
   auto region_stack() -> RegionStack& { return region_stack_; }
+
+  // An ongoing impl lookup, used to ensure termination.
+  struct ImplLookupStackEntry {
+    SemIR::ConstantId type_const_id;
+    SemIR::ConstantId interface_const_id;
+  };
 
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
