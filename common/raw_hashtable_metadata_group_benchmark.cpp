@@ -47,23 +47,23 @@ class BenchmarkSimdMetadataGroup : public MetadataGroup {
 
   static auto Load(uint8_t* metadata, ssize_t index)
       -> BenchmarkSimdMetadataGroup {
-    return BenchmarkSimdMetadataGroup(SIMDLoad(metadata, index));
+    return BenchmarkSimdMetadataGroup(SimdLoad(metadata, index));
   }
   auto Store(uint8_t* metadata, ssize_t index) const -> void {
-    SIMDStore(metadata, index);
+    SimdStore(metadata, index);
   }
 
-  auto ClearDeleted() -> void { SIMDClearDeleted(); }
+  auto ClearDeleted() -> void { SimdClearDeleted(); }
 
-  auto Match(uint8_t present_byte) const -> SIMDMatchRange {
-    return SIMDMatch(present_byte);
+  auto Match(uint8_t present_byte) const -> SimdMatchRange {
+    return SimdMatch(present_byte);
   }
-  auto MatchPresent() const -> SIMDMatchPresentRange {
-    return SIMDMatchPresent();
+  auto MatchPresent() const -> SimdMatchPresentRange {
+    return SimdMatchPresent();
   }
 
-  auto MatchEmpty() const -> MatchIndex { return SIMDMatchEmpty(); }
-  auto MatchDeleted() const -> MatchIndex { return SIMDMatchDeleted(); }
+  auto MatchEmpty() const -> MatchIndex { return SimdMatchEmpty(); }
+  auto MatchDeleted() const -> MatchIndex { return SimdMatchDeleted(); }
 };
 #endif
 
@@ -75,7 +75,7 @@ constexpr ssize_t BenchSize = 256;
 
 #if CARBON_NEON_SIMD_SUPPORT || CARBON_X86_SIMD_SUPPORT
 using PortableGroup = BenchmarkPortableMetadataGroup;
-using SIMDGroup = BenchmarkSimdMetadataGroup;
+using SimdGroup = BenchmarkSimdMetadataGroup;
 #endif
 
 struct BenchMetadata {
@@ -251,9 +251,9 @@ BENCHMARK(BM_LoadMatch<BenchKind::Deleted>);
 BENCHMARK(BM_LoadMatch<BenchKind::Random, PortableGroup>);
 BENCHMARK(BM_LoadMatch<BenchKind::Empty, PortableGroup>);
 BENCHMARK(BM_LoadMatch<BenchKind::Deleted, PortableGroup>);
-BENCHMARK(BM_LoadMatch<BenchKind::Random, SIMDGroup>);
-BENCHMARK(BM_LoadMatch<BenchKind::Empty, SIMDGroup>);
-BENCHMARK(BM_LoadMatch<BenchKind::Deleted, SIMDGroup>);
+BENCHMARK(BM_LoadMatch<BenchKind::Random, SimdGroup>);
+BENCHMARK(BM_LoadMatch<BenchKind::Empty, SimdGroup>);
+BENCHMARK(BM_LoadMatch<BenchKind::Deleted, SimdGroup>);
 #endif
 
 // Benchmark that measures the speed of a match that is only found after at
