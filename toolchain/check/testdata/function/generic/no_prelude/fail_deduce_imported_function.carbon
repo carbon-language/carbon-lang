@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/no_prelude/deduce_imported_function.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/no_prelude/fail_deduce_imported_function.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/no_prelude/deduce_imported_function.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/no_prelude/fail_deduce_imported_function.carbon
 
 // --- lib.carbon
 package Lib;
@@ -14,26 +14,26 @@ package Lib;
 interface Z {}
 fn A[T:! Z](x: {.a: T}) {}
 
-// --- deduce_imported_function.carbon
+// --- fail_deduce_imported_function.carbon
 
 import Lib;
 
 fn A[T:! Lib.Z](x: {.a: T}) {}
 
 fn B() {
-  // CHECK:STDERR: deduce_imported_function.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
   // CHECK:STDERR:   A({.b = {}});
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: deduce_imported_function.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn A[T:! Lib.Z](x: {.a: T}) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   A({.b = {}});
 
-  // CHECK:STDERR: deduce_imported_function.carbon:[[@LINE+8]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE+8]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
   // CHECK:STDERR:   Lib.A({.b = {}});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: deduce_imported_function.carbon:[[@LINE-17]]:1: in import [InImport]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE-17]]:1: in import [InImport]
   // CHECK:STDERR: lib.carbon:4:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn A[T:! Z](x: {.a: T}) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +111,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_22.2 => constants.%struct_type.a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_imported_function.carbon
+// CHECK:STDOUT: --- fail_deduce_imported_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
