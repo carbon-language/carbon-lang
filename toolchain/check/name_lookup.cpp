@@ -17,7 +17,9 @@ auto AddNameToLookup(Context& context, SemIR::NameId name_id,
   if (auto existing = context.scope_stack().LookupOrAddName(name_id, target_id,
                                                             scope_index);
       existing.has_value()) {
-    DiagnoseDuplicateName(context, target_id, existing);
+    // TODO: Add coverage to this use case and use the location of the name
+    // instead of the target.
+    DiagnoseDuplicateName(context, name_id, target_id, existing);
   }
 }
 
@@ -239,7 +241,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    RequireDefinedType(
+    RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
         loc_id, [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
@@ -254,21 +256,27 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    RequireDefinedType(
+    auto complete_id = RequireCompleteFacetType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-        loc_id, [&] {
-          CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
-                            "member access into undefined interface {0}",
+        loc_id, *base_as_facet_type, [&] {
+          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
+                            "member access into incomplete facet type {0}",
                             InstIdAsType);
           return context.emitter().Build(
-              loc_id, QualifiedExprInUndefinedInterfaceScope, base_id);
+              loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
         });
-    const auto& facet_type_info =
-        context.facet_types().Get(base_as_facet_type->facet_type_id);
-    for (auto interface : facet_type_info.impls_constraints) {
-      auto& interface_info = context.interfaces().Get(interface.interface_id);
-      scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
-                                    .specific_id = interface.specific_id});
+    if (complete_id.has_value()) {
+      const auto& resolved = context.complete_facet_types().Get(complete_id);
+      for (const auto& interface : resolved.required_interfaces) {
+        auto& interface_info = context.interfaces().Get(interface.interface_id);
+        scopes->push_back({.name_scope_id = interface_info.scope_id,
+                           .specific_id = interface.specific_id});
+      }
+    } else {
+      // Lookup into this scope should fail without producing an error since
+      // `RequireCompleteFacetType` has already issued a diagnostic.
+      scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
+                                    .specific_id = SemIR::SpecificId::None});
     }
     return true;
   }
@@ -482,26 +490,28 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
       scope_result.target_inst_id());
 }
 
-auto DiagnoseDuplicateName(Context& context, SemIRLoc dup_def,
-                           SemIRLoc prev_def) -> void {
+auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
+                           SemIRLoc dup_def, SemIRLoc prev_def) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
-                    "duplicate name being declared in the same scope");
+                    "duplicate name `{0}` being declared in the same scope",
+                    SemIR::NameId);
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
   context.emitter()
-      .Build(dup_def, NameDeclDuplicate)
+      .Build(dup_def, NameDeclDuplicate, name_id)
       .Note(prev_def, NameDeclPrevious)
       .Emit();
 }
 
-auto DiagnosePoisonedName(Context& context, SemIR::LocId poisoning_loc_id,
+auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
+                          SemIR::LocId poisoning_loc_id,
                           SemIR::LocId decl_name_loc_id) -> void {
   CARBON_CHECK(poisoning_loc_id.has_value(),
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
-                    "name used before it was declared");
+                    "name `{0}` used before it was declared", SemIR::NameId);
   CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
   context.emitter()
-      .Build(poisoning_loc_id, NameUseBeforeDecl)
+      .Build(poisoning_loc_id, NameUseBeforeDecl, name_id)
       .Note(decl_name_loc_id, NameUseBeforeDeclNote)
       .Emit();
 }

@@ -2,6 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load(
+    "@llvm-project//:vars.bzl",
+    "LLVM_VERSION_MAJOR",
+)
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
@@ -112,12 +116,17 @@ cc_binary(
     ],
 )
 
+# TODO: Add remaining aliases of LLD for Windows and WASM when we have support
+# for them wired up through the busybox.
 lld_aliases = [
     "ld.lld",
     "ld64.lld",
-    "lld-link",
-    "wasm-ld",
 ]
+
+filegroup(
+    name = "clang_headers",
+    srcs = ["@llvm-project//clang:builtin_headers_gen"],
+)
 
 # Given a root `prefix_root`, the hierarchy looks like:
 #
@@ -147,17 +156,19 @@ install_dirs = {
         install_filegroup("core", "//core:prelude"),
     ],
     "lib/carbon/llvm/bin": [
-        install_target(
-            "lld",
-            "@llvm-project//lld:lld",
-            executable = True,
-        ),
         install_symlink(
             "clang",
             "../../carbon-busybox",
             is_driver = True,
         ),
-    ] + [install_symlink(name, "lld") for name in lld_aliases],
+    ] + [install_symlink(
+        name,
+        "../../carbon-busybox",
+        is_driver = True,
+    ) for name in lld_aliases],
+    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
+        install_filegroup("include", ":clang_headers", "staging/include/"),
+    ],
 }
 
 make_install_filegroups(

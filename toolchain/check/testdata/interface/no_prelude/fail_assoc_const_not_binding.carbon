@@ -13,7 +13,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_tuple_pattern.carbon:[[@LINE+4]]:7: error: semantics TODO: `tuple pattern in let/var` [SemanticsTodo]
+  // CHECK:STDERR: fail_tuple_pattern.carbon:[[@LINE+4]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   let (T:! type, U:! type);
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -25,7 +25,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_tuple_pattern_with_default.carbon:[[@LINE+4]]:15: error: semantics TODO: `tuple pattern in let/var` [SemanticsTodo]
+  // CHECK:STDERR: fail_tuple_pattern_with_default.carbon:[[@LINE+4]]:15: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   default let (T:! type, U:! type) = ({}, {});
   // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

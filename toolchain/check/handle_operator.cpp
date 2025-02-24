@@ -6,6 +6,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
@@ -85,7 +86,8 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
   // TODO: Destroy the old value before reinitializing. This will require
   // building the destruction code before we build the RHS subexpression.
   rhs_id = Initialize(context, node_id, lhs_id, rhs_id);
-  context.AddInst<SemIR::Assign>(node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id});
+  AddInst<SemIR::Assign>(context, node_id,
+                         {.lhs_id = lhs_id, .rhs_id = rhs_id});
   // We model assignment as an expression, so we need to push a value for
   // it, even though it doesn't produce a value.
   // TODO: Consider changing our parse tree to model assignment as a
@@ -216,9 +218,10 @@ auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
-  context.AddInstAndPush<SemIR::PointerType>(
-      node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
-                .pointee_id = inner_type_id});
+  AddInstAndPush<SemIR::PointerType>(
+      context, node_id,
+      {.type_id = SemIR::TypeType::SingletonTypeId,
+       .pointee_id = inner_type_id});
   return true;
 }
 
@@ -244,9 +247,10 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
       value_id = SemIR::ErrorInst::SingletonInstId;
       break;
   }
-  context.AddInstAndPush<SemIR::AddrOf>(
-      node_id, SemIR::AddrOf{.type_id = GetPointerType(context, type_id),
-                             .lvalue_id = value_id});
+  AddInstAndPush<SemIR::AddrOf>(
+      context, node_id,
+      SemIR::AddrOf{.type_id = GetPointerType(context, type_id),
+                    .lvalue_id = value_id});
   return true;
 }
 
@@ -269,8 +273,8 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
     context.emitter().Emit(node_id, RepeatedConst);
   }
   auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
-  context.AddInstAndPush<SemIR::ConstType>(
-      node_id,
+  AddInstAndPush<SemIR::ConstType>(
+      context, node_id,
       {.type_id = SemIR::TypeType::SingletonTypeId, .inner_id = inner_type_id});
   return true;
 }
@@ -289,9 +293,10 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorNotId node_id)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
   value_id = ConvertToBoolValue(context, node_id, value_id);
-  context.AddInstAndPush<SemIR::UnaryOperatorNot>(
-      node_id, {.type_id = context.insts().Get(value_id).type_id(),
-                .operand_id = value_id});
+  AddInstAndPush<SemIR::UnaryOperatorNot>(
+      context, node_id,
+      {.type_id = context.insts().Get(value_id).type_id(),
+       .operand_id = value_id});
   return true;
 }
 
@@ -341,12 +346,12 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   SemIR::InstId branch_value_id =
-      is_or
-          ? context.AddInst<SemIR::UnaryOperatorNot>(
-                node_id, {.type_id = bool_type_id, .operand_id = cond_value_id})
-          : cond_value_id;
-  auto short_circuit_result_id = context.AddInst<SemIR::BoolLiteral>(
-      node_id,
+      is_or ? AddInst<SemIR::UnaryOperatorNot>(
+                  context, node_id,
+                  {.type_id = bool_type_id, .operand_id = cond_value_id})
+            : cond_value_id;
+  auto short_circuit_result_id = AddInst<SemIR::BoolLiteral>(
+      context, node_id,
       {.type_id = bool_type_id, .value = SemIR::BoolValue::From(is_or)});
 
   // Create a block for the right-hand side and for the continuation.
@@ -403,15 +408,16 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   // When the second operand is evaluated, the result of `and` and `or` is
   // its value.
   auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
-  context.AddInst<SemIR::BranchWithArg>(
-      node_id, {.target_id = resume_block_id, .arg_id = rhs_id});
+  AddInst<SemIR::BranchWithArg>(
+      context, node_id, {.target_id = resume_block_id, .arg_id = rhs_id});
   context.inst_block_stack().Pop();
   context.region_stack().AddToRegion(resume_block_id, node_id);
 
   // Collect the result from either the first or second operand.
-  auto result_id = context.AddInst<SemIR::BlockArg>(
-      node_id, {.type_id = context.insts().Get(rhs_id).type_id(),
-                .block_id = resume_block_id});
+  auto result_id = AddInst<SemIR::BlockArg>(
+      context, node_id,
+      {.type_id = context.insts().Get(rhs_id).type_id(),
+       .block_id = resume_block_id});
   SetBlockArgResultBeforeConstantUse(context, result_id, branch_value_id,
                                      rhs_id, short_circuit_result_id);
   context.node_stack().Push(node_id, result_id);

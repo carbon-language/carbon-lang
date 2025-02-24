@@ -159,6 +159,11 @@ class CheckUnit {
   // definition.
   auto CheckRequiredDefinitions() -> void;
 
+  // Checks that each required declaration is available. This applies for
+  // declarations that should exist in an owning library, for which an extern
+  // declaration exists that assigns ownership to the current API.
+  auto CheckRequiredDeclarations() -> void;
+
   // Loops over all nodes in the tree. On some errors, this may return early,
   // for example if an unrecoverable state is encountered.
   // NOLINTNEXTLINE(readability-function-size)

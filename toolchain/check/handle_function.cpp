@@ -13,6 +13,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/merge.h"
@@ -62,13 +63,13 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
         FullPatternStack::Kind::ExplicitParamList);
   }
 
-  auto return_slot_pattern_id =
-      context.AddPatternInst<SemIR::ReturnSlotPattern>(
-          node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
-  auto param_pattern_id = context.AddPatternInst<SemIR::OutParamPattern>(
-      node_id, {.type_id = type_id,
-                .subpattern_id = return_slot_pattern_id,
-                .runtime_index = SemIR::RuntimeParamIndex::Unknown});
+  auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
+      context, node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
+  auto param_pattern_id = AddPatternInst<SemIR::OutParamPattern>(
+      context, node_id,
+      {.type_id = type_id,
+       .subpattern_id = return_slot_pattern_id,
+       .runtime_index = SemIR::RuntimeParamIndex::Unknown});
   context.node_stack().Push(node_id, param_pattern_id);
   return true;
 }
@@ -138,7 +139,8 @@ static auto MergeFunctionRedecl(Context& context,
 
 // Check whether this is a redeclaration, merging if needed.
 static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           SemIR::InstId prev_id,
+                           SemIR::NameId name_id, SemIR::InstId prev_id,
+                           SemIR::LocId name_loc_id,
                            SemIR::FunctionDecl& function_decl,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
@@ -179,7 +181,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, function_info.latest_decl_id(), prev_id);
+    DiagnoseDuplicateName(context, name_id, name_loc_id, prev_id);
     return;
   }
 
@@ -258,7 +260,7 @@ static auto BuildFunctionDecl(Context& context,
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
   auto decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, function_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, function_decl));
 
   // Find self parameter pattern.
   // TODO: Do this during initial traversal of implicit params.
@@ -292,11 +294,12 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(context, name_context.poisoning_loc_id,
-                         name_context.loc_id);
+    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                         name_context.poisoning_loc_id, name_context.loc_id);
   } else {
-    TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
-                   function_info, is_definition);
+    TryMergeRedecl(context, node_id, name_context.name_id,
+                   name_context.prev_inst_id(), name_context.loc_id,
+                   function_decl, function_info, is_definition);
   }
 
   // Create a new function if this isn't a valid redeclaration.
@@ -315,7 +318,7 @@ static auto BuildFunctionDecl(Context& context,
                       context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
+  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
 
   // Diagnose 'definition of `abstract` function' using the canonical Function's
   // modifiers.
@@ -477,7 +480,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
           "missing `return` at end of function with declared return type");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      context.AddInst<SemIR::Return>(node_id, {});
+      AddInst<SemIR::Return>(context, node_id, {});
     }
   }
 

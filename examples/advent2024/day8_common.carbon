@@ -25,5 +25,5 @@ class Grid {
     return var;
   }
 
-  var data: [[i32; 50]; 50];
+  var data: array(array(i32, 50), 50);
 }

@@ -167,6 +167,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.130
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .v = %.loc13_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -35,13 +35,13 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(this) {
-  // `type` and the error type are both complete types.
-  types_.SetValueRepr(
-      TypeType::SingletonTypeId,
-      {.kind = ValueRepr::Copy, .type_id = TypeType::SingletonTypeId});
-  types_.SetValueRepr(
-      ErrorInst::SingletonTypeId,
-      {.kind = ValueRepr::Copy, .type_id = ErrorInst::SingletonTypeId});
+  // `type` and the error type are both complete & concrete types.
+  types_.SetComplete(TypeType::SingletonTypeId,
+                     {.value_repr = {.kind = ValueRepr::Copy,
+                                     .type_id = TypeType::SingletonTypeId}});
+  types_.SetComplete(ErrorInst::SingletonTypeId,
+                     {.value_repr = {.kind = ValueRepr::Copy,
+                                     .type_id = ErrorInst::SingletonTypeId}});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {
@@ -106,21 +106,21 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
           map.Add("types", types_.OutputYaml());
           map.Add("type_blocks", type_blocks_.OutputYaml());
-          map.Add(
-              "insts", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                int start = include_singletons ? 0 : SingletonInstKinds.size();
-                for (int i : llvm::seq(start, insts_.size())) {
-                  auto id = InstId(i);
-                  map.Add(PrintToString(id),
-                          Yaml::OutputScalar(insts_.Get(id)));
-                }
-              }));
+          map.Add("insts",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    for (auto [id, inst] : insts_.enumerate()) {
+                      if (!include_singletons && IsSingletonInstId(id)) {
+                        continue;
+                      }
+                      map.Add(PrintToString(id), Yaml::OutputScalar(inst));
+                    }
+                  }));
           map.Add("constant_values",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    int start =
-                        include_singletons ? 0 : SingletonInstKinds.size();
-                    for (int i : llvm::seq(start, insts_.size())) {
-                      auto id = InstId(i);
+                    for (auto [id, _] : insts_.enumerate()) {
+                      if (!include_singletons && IsSingletonInstId(id)) {
+                        continue;
+                      }
                       auto value = constant_values_.Get(id);
                       if (!value.has_value() || value.is_constant()) {
                         map.Add(PrintToString(id), Yaml::OutputScalar(value));
@@ -197,9 +197,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnSlotPattern::Kind:
-      case Vtable::Kind:
       case ReturnExpr::Kind:
+      case TuplePattern::Kind:
       case VarPattern::Kind:
+      case Vtable::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:

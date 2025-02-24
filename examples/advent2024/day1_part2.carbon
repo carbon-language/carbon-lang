@@ -10,8 +10,8 @@ import library "day1_common";
 import library "sort";
 
 fn Run() {
-  var a: [i32; 1000];
-  var b: [i32; 1000];
+  var a: array(i32, 1000);
+  var b: array(i32, 1000);
   var n: i32 = ReadInputs(&a, &b);
   Quicksort(&a, 0, n);
   Quicksort(&b, 0, n);

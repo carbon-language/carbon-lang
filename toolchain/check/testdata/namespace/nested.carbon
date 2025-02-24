@@ -43,10 +43,12 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Bar = %Bar
+// CHECK:STDOUT:     .Foo = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Wiz = %Wiz.decl
 // CHECK:STDOUT:     .Baz = %Baz.decl
+// CHECK:STDOUT:     .Foo = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Wiz.decl: %Wiz.type = fn_decl @Wiz [concrete = constants.%Wiz] {} {}
 // CHECK:STDOUT:   %Baz.decl: %Baz.type = fn_decl @Baz [concrete = constants.%Baz] {} {}

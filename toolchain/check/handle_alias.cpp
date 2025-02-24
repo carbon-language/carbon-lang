@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/parse/node_ids.h"
@@ -58,10 +59,10 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     alias_type_id = SemIR::ErrorInst::SingletonTypeId;
     alias_value_id = SemIR::ErrorInst::SingletonInstId;
   }
-  auto alias_id = context.AddInst<SemIR::BindAlias>(
-      name_context.loc_id, {.type_id = alias_type_id,
-                            .entity_name_id = entity_name_id,
-                            .value_id = alias_value_id});
+  auto alias_id = AddInst<SemIR::BindAlias>(context, name_context.loc_id,
+                                            {.type_id = alias_type_id,
+                                             .entity_name_id = entity_name_id,
+                                             .value_id = alias_value_id});
 
   // Add the name of the binding to the current scope.
   context.decl_name_stack().PopScope();

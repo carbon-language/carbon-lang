@@ -4,6 +4,8 @@
 
 #include "toolchain/check/subpattern.h"
 
+#include "toolchain/check/inst.h"
+
 namespace Carbon::Check {
 
 auto BeginSubpattern(Context& context) -> void {
@@ -16,8 +18,9 @@ auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
   if (context.region_stack().PeekRegion().size() > 1) {
     // End the exit block with a branch to a successor block, whose contents
     // will be determined later.
-    context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
-        {.target_id = context.inst_blocks().AddDefaultValue()}));
+    AddInst(context,
+            SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+                {.target_id = context.inst_blocks().AddDefaultValue()}));
   } else {
     // This single-block region will be inserted as a SpliceBlock, so we don't
     // need control flow out of it.
@@ -32,11 +35,13 @@ auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
        .result_id = result_id});
 }
 
-auto EndSubpatternAsEmpty(Context& context) -> void {
+auto EndSubpatternAsNonExpr(Context& context) -> void {
   auto block_id = context.inst_block_stack().Pop();
   CARBON_CHECK(block_id == context.region_stack().PeekRegion().back());
   CARBON_CHECK(context.region_stack().PeekRegion().size() == 1);
-  CARBON_CHECK(context.inst_blocks().Get(block_id).empty());
+  // TODO: Add `CARBON_CHECK(inst_blocks().Get(block_id).empty())`.
+  // Currently that can fail when ending a tuple pattern in a name binding
+  // decl in a class or interface.
   context.region_stack().PopAndDiscardRegion();
 }
 

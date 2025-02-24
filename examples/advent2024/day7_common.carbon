@@ -52,7 +52,7 @@ class Equation {
     return self.SolveFrom(1, self.operands[0], concat);
   }
 
-  var operands: [i64; 16];
+  var operands: array(i64, 16);
   var num_operands: i32;
   var result: i64;
 }

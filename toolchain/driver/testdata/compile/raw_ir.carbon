@@ -37,17 +37,28 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
-// CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
-// CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst40)':    {kind: none, type: type(inst23)}
-// CHECK:STDOUT:     'type(inst23)':    {kind: none, type: type(inst23)}
-// CHECK:STDOUT:     'type(symbolic_constant0)': {kind: copy, type: type(symbolic_constant0)}
-// CHECK:STDOUT:     'type(symbolic_constant2)': {kind: pointer, type: type(symbolic_constant6)}
-// CHECK:STDOUT:     'type(symbolic_constant6)': {kind: copy, type: type(symbolic_constant6)}
-// CHECK:STDOUT:     'type(inst(WitnessType))': {kind: copy, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     'type(symbolic_constant3)': {kind: copy, type: type(symbolic_constant3)}
-// CHECK:STDOUT:     'type(symbolic_constant5)': {kind: pointer, type: type(symbolic_constant6)}
+// CHECK:STDOUT:     'type(TypeType)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:     'type(Error)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:     'type(inst(NamespaceType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'type(inst40)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst23)}
+// CHECK:STDOUT:     'type(inst23)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst23)}
+// CHECK:STDOUT:     'type(symbolic_constant0)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant0)}
+// CHECK:STDOUT:     'type(symbolic_constant2)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant6)}
+// CHECK:STDOUT:     'type(symbolic_constant6)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant6)}
+// CHECK:STDOUT:     'type(inst(WitnessType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     'type(symbolic_constant3)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant3)}
+// CHECK:STDOUT:     'type(symbolic_constant5)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant6)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:     type_block1:
@@ -144,17 +155,17 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst61:          symbolic_constant9
 // CHECK:STDOUT:     inst62:          symbolic_constant10
 // CHECK:STDOUT:   symbolic_constants:
-// CHECK:STDOUT:     symbolic_constant0: {inst: inst14, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant1: {inst: inst16, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant2: {inst: inst28, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant3: {inst: inst14, generic: generic0, index: generic_inst_in_decl0, .Self: false}
-// CHECK:STDOUT:     symbolic_constant4: {inst: inst16, generic: generic0, index: generic_inst_in_decl1, .Self: false}
-// CHECK:STDOUT:     symbolic_constant5: {inst: inst28, generic: generic0, index: generic_inst_in_decl2, .Self: false}
-// CHECK:STDOUT:     symbolic_constant6: {inst: inst42, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant7: {inst: inst44, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant8: {inst: inst46, generic: generic<none>, index: generic_inst<none>, .Self: false}
-// CHECK:STDOUT:     symbolic_constant9: {inst: inst44, generic: generic0, index: generic_inst_in_def0, .Self: false}
-// CHECK:STDOUT:     symbolic_constant10: {inst: inst46, generic: generic0, index: generic_inst_in_def1, .Self: false}
+// CHECK:STDOUT:     symbolic_constant0: {inst: inst14, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant1: {inst: inst16, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant2: {inst: inst28, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant3: {inst: inst14, generic: generic0, index: generic_inst_in_decl0, kind: checked}
+// CHECK:STDOUT:     symbolic_constant4: {inst: inst16, generic: generic0, index: generic_inst_in_decl1, kind: checked}
+// CHECK:STDOUT:     symbolic_constant5: {inst: inst28, generic: generic0, index: generic_inst_in_decl2, kind: checked}
+// CHECK:STDOUT:     symbolic_constant6: {inst: inst42, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant7: {inst: inst44, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant8: {inst: inst46, generic: generic<none>, index: generic_inst<none>, kind: checked}
+// CHECK:STDOUT:     symbolic_constant9: {inst: inst44, generic: generic0, index: generic_inst_in_def0, kind: checked}
+// CHECK:STDOUT:     symbolic_constant10: {inst: inst46, generic: generic0, index: generic_inst_in_def1, kind: checked}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:

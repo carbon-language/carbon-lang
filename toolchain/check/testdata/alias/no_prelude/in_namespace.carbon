@@ -42,6 +42,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]

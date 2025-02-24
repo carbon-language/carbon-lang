@@ -169,6 +169,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
+// CHECK:STDOUT:   .A2 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc20
 // CHECK:STDOUT:   .b = %.loc21_8
 // CHECK:STDOUT:   extend %A2.ref

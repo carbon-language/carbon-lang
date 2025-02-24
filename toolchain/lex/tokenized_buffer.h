@@ -447,8 +447,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // The constructor is merely responsible for trivial initialization of
   // members. A working object of this type is built with `Lex::Lex` so that its
   // return can indicate if an error was encountered while lexing.
-  explicit TokenizedBuffer(SharedValueStores& value_stores,
-                           SourceBuffer& source)
+  explicit TokenizedBuffer(SharedValueStores& value_stores
+                           [[clang::lifetimebound]],
+                           SourceBuffer& source [[clang::lifetimebound]])
       : value_stores_(&value_stores), source_(&source) {}
 
   auto FindLineIndex(int32_t byte_offset) const -> LineIndex;

@@ -97,7 +97,12 @@ struct NodeIdOneOf : public NodeId {
   constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
 
-using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
+using AnyClassDeclId =
+    NodeIdOneOf<ClassDeclId, ClassDefinitionStartId,
+                // TODO: This may be wrong? But we have choice types produce a
+                // class, so they are a form of class decls. This avoids
+                // duplicating all of SemIR::ClassDecl.
+                ChoiceDefinitionStartId>;
 using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
                                       BuiltinFunctionDefinitionStartId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;

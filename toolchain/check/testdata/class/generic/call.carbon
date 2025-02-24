@@ -588,6 +588,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Outer.9d6
 // CHECK:STDOUT:     .Inner = %Inner.decl
+// CHECK:STDOUT:     .Outer = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -654,8 +656,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Inner.c71
+// CHECK:STDOUT:     .Outer = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .Inner = <poisoned>
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }

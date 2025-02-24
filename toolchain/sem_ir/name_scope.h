@@ -180,7 +180,6 @@ class NameScope : public Printable<NameScope> {
   // found, returns the corresponding EntryId. Otherwise, returns nullopt and
   // poisons the name so it can't be declared later. Names that are not
   // identifiers will not be poisoned.
-  // poisons the name so it can't be declared later.
   auto LookupOrPoison(LocId loc_id, NameId name_id) -> std::optional<EntryId>;
 
   auto extended_scopes() const -> llvm::ArrayRef<InstId> {

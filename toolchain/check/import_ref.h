@@ -31,7 +31,8 @@ auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
 
 // Verifies a new instruction is the same as a previous instruction.
 // prev_import_ir_inst should come from GetCanonicalImportIRInst.
-auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
+auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
+                                     SemIR::InstId prev_id,
                                      SemIR::ImportIRInst prev_import_ir_inst,
                                      SemIR::ImportIRId new_ir_id,
                                      const SemIR::File* new_import_ir,
@@ -47,6 +48,30 @@ auto ImportImplsFromApiFile(Context& context) -> void;
 // Load a specific impl declared in an imported IR.
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                 SemIR::ImplId impl_id) -> void;
+
+namespace Internal {
+
+// Checks that the provided imported location has a node kind that is
+// compatible with that of the given instruction.
+auto CheckCompatibleImportedNodeKind(Context& context,
+                                     SemIR::ImportIRInstId imported_loc_id,
+                                     SemIR::InstKind kind) -> void;
+}  // namespace Internal
+
+// Returns a LocIdAndInst for an instruction with an imported location. Checks
+// that the imported location is compatible with the kind of instruction being
+// created.
+template <typename InstT>
+  requires SemIR::Internal::HasNodeId<InstT>
+auto MakeImportedLocIdAndInst(Context& context,
+                              SemIR::ImportIRInstId imported_loc_id, InstT inst)
+    -> SemIR::LocIdAndInst {
+  if constexpr (!SemIR::Internal::HasUntypedNodeId<InstT>) {
+    Internal::CheckCompatibleImportedNodeKind(context, imported_loc_id,
+                                              InstT::Kind);
+  }
+  return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
+}
 
 }  // namespace Carbon::Check
 

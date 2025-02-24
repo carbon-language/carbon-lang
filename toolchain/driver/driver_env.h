@@ -20,13 +20,15 @@ struct DriverEnv {
   explicit DriverEnv(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                      const InstallPaths* installation, FILE* input_stream,
                      llvm::raw_pwrite_stream* output_stream,
-                     llvm::raw_pwrite_stream* error_stream, bool fuzzing)
+                     llvm::raw_pwrite_stream* error_stream, bool fuzzing,
+                     bool enable_leaking)
       : fs(std::move(fs)),
         installation(installation),
         input_stream(input_stream),
         output_stream(output_stream),
         error_stream(error_stream),
         fuzzing(fuzzing),
+        enable_leaking(enable_leaking),
         consumer(error_stream),
         emitter(&consumer) {}
 
@@ -47,6 +49,11 @@ struct DriverEnv {
   // error rather than perform operations that aren't well behaved during
   // fuzzing.
   bool fuzzing;
+
+  // Tracks whether the driver can leak resources, typically because it is being
+  // invoked as part of a single command line program execution. Defaults to
+  // `false` for safe and correct library execution.
+  bool enable_leaking = false;
 
   // A diagnostic consumer, to be able to connect output.
   StreamDiagnosticConsumer consumer;

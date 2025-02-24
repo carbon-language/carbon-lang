@@ -200,6 +200,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.fe1
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Get = %Get.decl
 // CHECK:STDOUT:     .GetNoDeduce = %GetNoDeduce.decl
 // CHECK:STDOUT:   }

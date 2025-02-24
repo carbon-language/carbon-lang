@@ -666,6 +666,7 @@ struct FacetType {
        .deduce_through = true});
 
   TypeId type_id;
+  // TODO: Rename this to facet_type_info_id.
   FacetTypeId facet_type_id;
 };
 
@@ -1447,6 +1448,18 @@ struct TupleLiteral {
       InstKind::TupleLiteral.Define<Parse::TupleLiteralId>(
           {.ir_name = "tuple_literal",
            .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstBlockId elements_id;
+};
+
+// A tuple pattern, such as `(x, y: i32)`.
+struct TuplePattern {
+  static constexpr auto Kind =
+      InstKind::TuplePattern.Define<Parse::TuplePatternId>(
+          {.ir_name = "tuple_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
   InstBlockId elements_id;

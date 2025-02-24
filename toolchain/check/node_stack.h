@@ -373,8 +373,8 @@ class NodeStack {
       }
     };
 
-    // TODO: Patterns should also produce an `InstId`, but currently
-    // `TuplePattern` produces an `InstBlockId`.
+    set_id_if_category_is(Parse::NodeCategory::Pattern,
+                          Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::Expr,
                           Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::MemberName |
@@ -394,29 +394,26 @@ class NodeStack {
   static constexpr auto NodeKindToIdKindSpecialCases(Parse::NodeKind node_kind)
       -> std::optional<Id::Kind> {
     switch (node_kind) {
-      case Parse::NodeKind::Addr:
       case Parse::NodeKind::CallExprStart:
-      case Parse::NodeKind::CompileTimeBindingPattern:
       case Parse::NodeKind::IfExprThen:
-      case Parse::NodeKind::LetBindingPattern:
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
-      case Parse::NodeKind::VarBindingPattern:
-      case Parse::NodeKind::VariablePattern:
       case Parse::NodeKind::WhereOperand:
         return Id::KindFor<SemIR::InstId>();
+      case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
-      case Parse::NodeKind::TuplePattern:
       case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
         return Id::KindFor<SemIR::FunctionId>();
+      case Parse::NodeKind::ChoiceDefinitionStart:
+        // TODO: Should we have a separate SemIR::ChoiceId?
       case Parse::NodeKind::ClassDefinitionStart:
         return Id::KindFor<SemIR::ClassId>();
       case Parse::NodeKind::InterfaceDefinitionStart:
@@ -429,10 +426,11 @@ class NodeStack {
       case Parse::NodeKind::DefaultLibrary:
       case Parse::NodeKind::LibraryName:
         return Id::KindFor<SemIR::LibraryNameId>();
-      case Parse::NodeKind::ArrayExprSemi:
       case Parse::NodeKind::BuiltinName:
+      case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::ExplicitParamListStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:
@@ -453,14 +451,14 @@ class NodeStack {
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:
       case Parse::NodeKind::AliasIntroducer:
-      case Parse::NodeKind::ArrayExprStart:
+      case Parse::NodeKind::ArrayExprComma:
+      case Parse::NodeKind::ArrayExprKeyword:
+      case Parse::NodeKind::ArrayExprOpenParen:
       case Parse::NodeKind::BaseColon:
       case Parse::NodeKind::BaseIntroducer:
       case Parse::NodeKind::BreakStatementStart:
       case Parse::NodeKind::CallExprComma:
       case Parse::NodeKind::ChoiceAlternativeListComma:
-      case Parse::NodeKind::ChoiceDefinitionStart:
-      case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::CodeBlock:
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:

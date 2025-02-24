@@ -8,11 +8,13 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -98,7 +100,6 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
     self_type_id = SemIR::ErrorInst::SingletonTypeId;
-    return false;
   }
 
   // Build the implicit access to the enclosing `Self`.
@@ -107,8 +108,8 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // is a class and found its `Self`, so additionally performing an unqualified
   // name lookup would be redundant work, but would avoid duplicating the
   // handling of the `Self` expression.
-  auto self_inst_id = context.AddInst(
-      node_id,
+  auto self_inst_id = AddInst(
+      context, node_id,
       SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
                      .name_id = SemIR::NameId::SelfType,
                      .value_id = context.types().GetInstId(self_type_id)});
@@ -140,13 +141,13 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     DiagnoseExtendImplOutsideClass(context, node_id);
     return false;
   }
-  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-
   // TODO: This is also valid in a mixin.
   if (!TryAsClassScope(context, parent_scope_id)) {
     DiagnoseExtendImplOutsideClass(context, node_id);
     return false;
   }
+
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
 
   if (params_node.has_value()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
@@ -299,6 +300,49 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
   return true;
 }
 
+// Checks that the constraint specified for the impl is valid and complete.
+// Returns a pointer to the interface that the impl implements. On error,
+// issues a diagnostic and returns nullptr.
+static auto CheckConstraintIsInterface(Context& context,
+                                       const SemIR::Impl& impl)
+    -> const SemIR::CompleteFacetType::RequiredInterface* {
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
+  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
+    return nullptr;
+  }
+  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  if (!facet_type) {
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
+                      InstIdAsType);
+    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
+                           impl.constraint_id);
+    return nullptr;
+  }
+
+  auto complete_id = RequireCompleteFacetType(
+      context, facet_type_id, context.insts().GetLocId(impl.constraint_id),
+      *facet_type, [&] {
+        CARBON_DIAGNOSTIC(ImplAsIncompleteFacetType, Error,
+                          "impl as incomplete facet type {0}", InstIdAsType);
+        return context.emitter().Build(impl.latest_decl_id(),
+                                       ImplAsIncompleteFacetType,
+                                       impl.constraint_id);
+      });
+  if (!complete_id.has_value()) {
+    return nullptr;
+  }
+  const auto& complete = context.complete_facet_types().Get(complete_id);
+  if (complete.num_to_impl != 1) {
+    CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
+                      "impl as {0} interfaces, expected 1", int);
+    context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
+                           complete.num_to_impl);
+    return nullptr;
+  }
+  return &complete.required_interfaces.front();
+}
+
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
@@ -314,15 +358,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
-  // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
-  // TODO: Do facet type resolution here, and enforce that the constraint
-  // extends a single interface.
-  // TODO: Determine `interface_id` and `specific_id` once and save it in the
-  // resolved facet type, instead of in multiple functions called below.
-  // TODO: Skip work below if facet type resolution fails, so we don't have a
-  // valid/non-error `interface_id` at all.
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -342,13 +379,20 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
   auto impl_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, impl_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, impl_decl));
 
-  SemIR::Impl impl_info = {
-      name_context.MakeEntityWithParamsBase(name, impl_decl_id,
-                                            /*is_extern=*/false,
-                                            SemIR::LibraryNameId::None),
-      {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
+  SemIR::Impl impl_info = {name_context.MakeEntityWithParamsBase(
+                               name, impl_decl_id,
+                               /*is_extern=*/false, SemIR::LibraryNameId::None),
+                           {.self_id = self_inst_id,
+                            .constraint_id = constraint_inst_id,
+                            .interface = SemIR::SpecificInterface::None}};
+
+  const SemIR::CompleteFacetType::RequiredInterface* required_interface =
+      CheckConstraintIsInterface(context, impl_info);
+  if (required_interface) {
+    impl_info.interface = *required_interface;
+  }
 
   // Add the impl declaration.
   bool invalid_redeclaration = false;
@@ -371,9 +415,15 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.has_value()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
-    impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
-    AddConstantsToImplWitnessFromConstraint(context, impl_info,
-                                            impl_info.witness_id);
+    if (required_interface) {
+      impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
+    } else {
+      impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
+      // TODO: We might also want to mark that the name scope for the impl has
+      // an error -- at least once we start making name lookups within the impl
+      // also look into the facet (eg, so you can name associated constants from
+      // within the impl).
+    }
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
@@ -383,15 +433,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Write the impl ID into the ImplDecl.
-  context.ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
+  ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
+      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
-      constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
-          context.insts().GetLocId(constraint_inst_id),
+      constraint_inst_id = AddInst<SemIR::SpecificConstant>(
+          context, context.insts().GetLocId(constraint_inst_id),
           {.type_id = type_id,
            .inst_id = constraint_inst_id,
            .specific_id =

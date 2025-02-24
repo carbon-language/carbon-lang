@@ -36,7 +36,7 @@ class Rules {
     return self.disallowed_before[b] & PageMask(a) == 0;
   }
 
-  var disallowed_before: [Core.UInt(100); 100];
+  var disallowed_before: array(Core.UInt(100), 100);
 };
 
 class PageList {
@@ -112,6 +112,6 @@ class PageList {
     return self.pages[self.num_pages / 2];
   }
 
-  var pages: [i32; 24];
+  var pages: array(i32, 24);
   var num_pages: i32;
 };

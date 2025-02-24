@@ -70,6 +70,12 @@ auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
 auto MakeSelfSpecific(Context& context, SemIRLoc loc,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
 
+// Resolve the declaration of the given specific, by evaluating the eval block
+// of the corresponding generic and storing a corresponding value block in the
+// specific.
+auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
+                                SemIR::SpecificId specific_id) -> void;
+
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
 // block in the specific. Returns false if a definition is not available.

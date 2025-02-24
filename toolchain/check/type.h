@@ -11,11 +11,6 @@
 
 namespace Carbon::Check {
 
-// Create a FacetType typed instruction object consisting of a single
-// interface.
-auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
-                            SemIR::SpecificId specific_id) -> SemIR::FacetType;
-
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after
 // `interface I { let T:! type; }`. The name of the interface is used for

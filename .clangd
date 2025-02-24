@@ -9,3 +9,13 @@ Diagnostics:
   # `unused-includes`: has false positives, reporting includes unused when
   #   they are used.
   Suppress: [unused-includes]
+
+---
+
+# Suppress common diagnostics for x-macro files.
+If:
+  PathMatch: .*\.def
+Diagnostics:
+  Suppress:
+    # The `#error` requiring a macro definition.
+    - pp_hash_error

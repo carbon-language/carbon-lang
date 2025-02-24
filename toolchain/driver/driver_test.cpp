@@ -15,6 +15,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
@@ -27,16 +28,6 @@ using ::testing::HasSubstr;
 using ::testing::StrEq;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
-
-// Reads a file to string.
-// TODO: Extract this to a helper and share it with other tests.
-static auto ReadFile(std::filesystem::path path) -> std::string {
-  std::ifstream proto_file(path);
-  std::stringstream buffer;
-  buffer << proto_file.rdbuf();
-  proto_file.close();
-  return buffer.str();
-}
 
 class DriverTest : public testing::Test {
  public:
@@ -222,7 +213,7 @@ TEST_F(DriverTest, FileOutput) {
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
-  EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));
+  EXPECT_THAT(*Testing::ReadFile("test.s"), ContainsRegex("Main:"));
 }
 
 }  // namespace

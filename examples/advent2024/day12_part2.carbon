@@ -9,15 +9,15 @@ import Core library "io";
 import library "day12_common";
 import library "io_utils";
 
-fn CountExtensions(map: Map, regions: DisjointSetForest*) -> [i32; 140 * 140] {
-  returned var extensions: [i32; 140 * 140];
+fn CountExtensions(map: Map, regions: DisjointSetForest*) -> array(i32, 140 * 140) {
+  returned var extensions: array(i32, 140 * 140);
   var i: i32 = 0;
   while (i < 140 * 140) {
     extensions[i] = 0;
     ++i;
   }
 
-  var ext: [{.same: (i32, i32), .adj: (i32, i32)}; 4] = (
+  var ext: array({.same: (i32, i32), .adj: (i32, i32)}, 4) = (
     {.same = (-1, 0), .adj = (0, -1)},
     {.same = (-1, 0), .adj = (0, 1)},
     {.same = (0, -1), .adj = (-1, 0)},
@@ -49,7 +49,7 @@ fn CountExtensions(map: Map, regions: DisjointSetForest*) -> [i32; 140 * 140] {
 fn Run() {
   var map: Map = Map.Read();
   var regions: DisjointSetForest = MakeRegions(map);
-  var ext: [i32; 140 * 140] = CountExtensions(map, &regions);
+  var ext: array(i32, 140 * 140) = CountExtensions(map, &regions);
 
   var total: i32 = 0;
 

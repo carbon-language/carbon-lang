@@ -110,6 +110,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
@@ -122,6 +123,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,6 +135,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C3
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc41
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
@@ -145,6 +148,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C4
+// CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc52
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }

@@ -123,6 +123,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .n = %.loc12_8
+// CHECK:STDOUT:   .Class = <poisoned>
 // CHECK:STDOUT:   .next = %.loc13_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

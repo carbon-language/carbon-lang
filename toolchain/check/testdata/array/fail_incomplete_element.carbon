@@ -11,13 +11,13 @@
 class Incomplete;
 
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `[Incomplete; 1]` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var a: [Incomplete; 1];
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~
+// CHECK:STDERR: var a: array(Incomplete, 1);
+// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var a: [Incomplete; 1];
+var a: array(Incomplete, 1);
 
 var p: Incomplete* = &a[0];
 
@@ -52,7 +52,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc20_22: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc20_27: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %Incomplete [concrete = constants.%array_type]

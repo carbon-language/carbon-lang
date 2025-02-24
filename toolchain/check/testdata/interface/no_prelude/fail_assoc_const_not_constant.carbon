@@ -54,6 +54,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .a = <unexpected>.inst19.loc20_7
+// CHECK:STDOUT:   .other = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }

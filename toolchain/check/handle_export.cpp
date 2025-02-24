@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
@@ -69,10 +70,11 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
     return true;
   }
 
-  auto export_id = context.AddInst<SemIR::ExportDecl>(
-      node_id, {.type_id = import_ref->type_id,
-                .entity_name_id = import_ref->entity_name_id,
-                .value_id = inst_id});
+  auto export_id =
+      AddInst<SemIR::ExportDecl>(context, node_id,
+                                 {.type_id = import_ref->type_id,
+                                  .entity_name_id = import_ref->entity_name_id,
+                                  .value_id = inst_id});
   context.AddExport(export_id);
 
   // Replace the ImportRef in name lookup, both for the above duplicate

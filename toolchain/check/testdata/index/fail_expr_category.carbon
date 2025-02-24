@@ -8,9 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_expr_category.carbon
 
-fn F() -> [i32; 3];
+fn F() -> array(i32, 3);
 
-fn G(b: [i32; 3]) {
+fn G(b: array(i32, 3)) {
   // Indexing an array value gives a value.
   // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   var pb: i32* = &b[0];

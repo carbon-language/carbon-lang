@@ -87,6 +87,11 @@ class InstallPaths {
   // The path to `clang`.
   auto clang_path() const -> std::string;
 
+  // The path to `lld' and various aliases of `lld`.
+  auto lld_path() const -> std::string;
+  auto ld_lld_path() const -> std::string;
+  auto ld64_lld_path() const -> std::string;
+
  private:
   friend class InstallPathsTestPeer;
 

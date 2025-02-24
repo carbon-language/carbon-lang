@@ -11,7 +11,7 @@
 interface I;
 
 class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:3: error: implementation of undefined interface I [ImplOfUndefinedInterface]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:3: error: impl as incomplete facet type `I` [ImplAsIncompleteFacetType]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -22,7 +22,7 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+10]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+10]]:3: error: member access into incomplete facet type `I` [QualifiedExprInIncompleteFacetTypeScope]
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-17]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -33,7 +33,7 @@ fn F(c: C) {
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+14]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+14]]:3: error: member access into incomplete facet type `I` [QualifiedExprInIncompleteFacetTypeScope]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-28]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -102,6 +102,8 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .I = <poisoned>
+// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend @impl.%I.ref
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
