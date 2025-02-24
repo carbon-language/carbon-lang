@@ -585,7 +585,9 @@ struct Converted {
       InstKind::Converted.Define<Parse::NodeId>({.ir_name = "converted"});
 
   TypeId type_id;
-  InstId original_id;
+  // The operand prior to being converted. This is tracked only for tooling
+  // purposes and has no associated semantics.
+  AbsoluteInstId original_id;
   InstId result_id;
 };
 
@@ -1107,9 +1109,7 @@ struct ValueParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
-          {.ir_name = "value_param_pattern",
-           .constant_kind = InstConstantKind::Never,
-           .is_lowered = false});
+          {.ir_name = "value_param_pattern", .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1313,7 +1313,7 @@ struct SpliceBlock {
       InstKind::SpliceBlock.Define<Parse::NodeId>({.ir_name = "splice_block"});
 
   TypeId type_id;
-  InstBlockId block_id;
+  AbsoluteInstBlockId block_id;
   InstId result_id;
 };
 

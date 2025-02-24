@@ -74,7 +74,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a [concrete = <error>]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %addr: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>

@@ -1242,7 +1242,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %C.ref: <error> = name_ref C, <error> [concrete = <error>]

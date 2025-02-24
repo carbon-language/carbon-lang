@@ -177,7 +177,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %u.patt: <error> = binding_pattern u
-// CHECK:STDOUT:     %u.param_patt: <error> = value_param_pattern %u.patt, runtime_param1
+// CHECK:STDOUT:     %u.param_patt: <error> = value_param_pattern %u.patt, runtime_param1 [concrete = <error>]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
