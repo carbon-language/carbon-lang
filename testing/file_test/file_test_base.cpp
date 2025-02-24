@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Implementation-wise, what this does is:
+// Implementation-wise, this:
 //
 // - Uses the registered `FileTestFactory` to construct `FileTestBase`
 //   instances.
