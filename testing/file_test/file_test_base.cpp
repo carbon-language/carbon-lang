@@ -79,13 +79,14 @@ struct FileTestInfo {
   // The test result, set after running.
   std::optional<ErrorOr<TestFile>> test_result;
 
-  // Whether autoupdate would change (or when autoupdating, already changed)
-  // test expectations.
+  // Whether running autoupdate would change (or when autoupdating, already
+  // changed) the test file. This may be true even if output passes test
+  // expectations.
   bool autoupdate_differs = false;
 };
 
 // Adapts a `FileTestBase` instance to gtest for outputting results.
-class FileTestCase : public ::testing::Test {
+class FileTestCase : public testing::Test {
  public:
   explicit FileTestCase(FileTestInfo* test_info) : test_info_(test_info) {}
 
@@ -293,8 +294,8 @@ static auto MaybeApplyFileTestsFlag(llvm::StringRef factory_name) -> void {
 }
 
 // Loads tests from the manifest file, and registers them for execution. The
-// vector is taken as an output parameter so that the address of entries is stable for
-// the factory.
+// vector is taken as an output parameter so that the address of entries is
+// stable for the factory.
 static auto RegisterTests(FileTestFactory* test_factory,
                           llvm::StringRef exe_path,
                           llvm::SmallVectorImpl<FileTestInfo>& tests)
