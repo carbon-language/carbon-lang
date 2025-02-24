@@ -225,16 +225,15 @@ static auto IsConstant(Phase phase) -> bool {
 }
 
 // Gets the phase in which the value of a constant will become available.
-static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
-    -> Phase {
+static auto GetPhase(const SemIR::ConstantValueStore& constant_values,
+                     SemIR::ConstantId constant_id) -> Phase {
   if (!constant_id.is_constant()) {
     return Phase::Runtime;
   } else if (constant_id == SemIR::ErrorInst::SingletonConstantId) {
     return Phase::UnknownDueToError;
   } else if (constant_id.is_concrete()) {
     return Phase::Concrete;
-  } else if (eval_context.constant_values().DependsOnGenericParameter(
-                 constant_id)) {
+  } else if (constant_values.DependsOnGenericParameter(constant_id)) {
     return Phase::Symbolic;
   } else {
     CARBON_CHECK(constant_id.is_symbolic());
@@ -255,7 +254,7 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
 static auto UpdatePhaseIgnorePeriodSelf(EvalContext& eval_context,
                                         SemIR::ConstantId constant_id,
                                         Phase* phase) {
-  Phase constant_phase = GetPhase(eval_context, constant_id);
+  Phase constant_phase = GetPhase(eval_context.constant_values(), constant_id);
   // Since LatestPhase(x, Phase::Concrete) == x, this is equivalent to replacing
   // Phase::PeriodSelfSymbolic with Phase::Concrete.
   if (constant_phase != Phase::PeriodSelfSymbolic) {
@@ -329,7 +328,8 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
   auto const_id = eval_context.GetConstantValue(inst_id);
-  *phase = LatestPhase(*phase, GetPhase(eval_context, const_id));
+  *phase =
+      LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
   return eval_context.constant_values().GetInstId(const_id);
 }
 
@@ -346,7 +346,8 @@ static auto GetConstantValue(EvalContext& /*eval_context*/,
 static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
                              Phase* phase) -> SemIR::TypeId {
   auto const_id = eval_context.GetConstantValue(type_id);
-  *phase = LatestPhase(*phase, GetPhase(eval_context, const_id));
+  *phase =
+      LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
   return eval_context.context().types().GetTypeIdForTypeConstantId(const_id);
 }
 
@@ -1837,9 +1838,51 @@ static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
   return ConstantEvalResult::TODO;
 }
 
+static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                             SemIR::AsCompatible inst) -> ConstantEvalResult {
+  // AsCompatible changes the type of the source instruction; its constant
+  // value, if there is one, needs to be modified to be of the same type.
+  auto value_id = context.constant_values().Get(inst.source_id);
+  CARBON_CHECK(value_id.is_constant());
+
+  auto from_phase = GetPhase(context.constant_values(), value_id);
+  auto to_phase = GetPhase(context.constant_values(),
+                           context.types().GetConstantId(inst.type_id));
+
+  auto value_inst =
+      context.insts().Get(context.constant_values().GetInstId(value_id));
+  value_inst.SetType(inst.type_id);
+
+  if (to_phase >= from_phase) {
+    // If moving from a concrete constant value to a symbolic type, the new
+    // constant value takes on the phase of the new type. We're adding the
+    // symbolic bit to the new constant value due to the presence of a
+    // symbolic type.
+    // `ConstantEvalResult::New` uses the phase of `inst` for the created
+    // instruction, which in this case will be `to_phase`.
+    return ConstantEvalResult::New(value_inst);
+  } else {
+    // If moving from a symbolic constant value to a concrete type, the new
+    // constant value has a phase that depends on what is in the value.
+    // Recompute that phase now.
+    EvalContext eval_context(context, SemIR::InstId::None);
+    auto kinds = value_inst.ArgKinds();
+    GetConstantValueForArg(eval_context, kinds.first, value_inst.arg0(),
+                           &to_phase);
+    GetConstantValueForArg(eval_context, kinds.second, value_inst.arg1(),
+                           &to_phase);
+    CARBON_CHECK(IsConstant(to_phase));
+    // We can't use `ConstantEvalResult::New` because it would use the wrong
+    // phase.
+    // TODO: Consider taking this path regardless of phase.
+    return ConstantEvalResult::Existing(
+        MakeConstantResult(context, value_inst, to_phase));
+  }
+}
+
 template <typename InstT>
 static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
-                               SemIR::Inst inst) -> SemIR::ConstantId {
+                             SemIR::Inst inst) -> SemIR::ConstantId {
   constexpr auto ConstantKind = InstT::Kind.constant_kind();
   if constexpr (ConstantKind == SemIR::InstConstantKind::Never) {
     return SemIR::ConstantId::NotConstant;
@@ -1907,6 +1950,9 @@ auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
   return SemIR::ConstantId::NotConstant;
 }
 
+// TODO: Disable constant evaluation of SymbolicBindingPattern once
+// DeduceGenericCallArguments no longer needs implicit params to have constant
+// values.
 template <>
 auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
                                                      SemIR::InstId /*inst_id*/,
@@ -1914,9 +1960,6 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
     -> SemIR::ConstantId {
   auto bind = inst.As<SemIR::SymbolicBindingPattern>();
 
-  // TODO: Disable constant evaluation of SymbolicBindingPattern once
-  // DeduceGenericCallArguments no longer needs implicit params to have
-  // constant values.
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
 
   // If we know which specific we're evaluating within and this is an
@@ -1935,6 +1978,8 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
 }
 
+// Symbolic bindings are a special case because they can reach into the eval
+// context and produce a context-specific value.
 template <>
 auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
                                                SemIR::InstId /*inst_id*/,
@@ -1972,10 +2017,6 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
-//
-// Tail call should not be diagnosed as recursion.
-// https://github.com/llvm/llvm-project/issues/125724
-// NOLINTNEXTLINE(misc-no-recursion): Tail call.
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -2143,41 +2184,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BindSymbolicName::Kind:
       return TryEvalTypedInst<SemIR::BindSymbolicName>(eval_context, inst_id, inst);
 
-    // AsCompatible changes the type of the source instruction; its constant
-    // value, if there is one, needs to be modified to be of the same type.
-    case CARBON_KIND(SemIR::AsCompatible inst): {
-      auto value = eval_context.GetConstantValue(inst.source_id);
-      if (!value.is_constant()) {
-        return value;
-      }
-
-      auto from_phase = Phase::Concrete;
-      auto value_inst_id =
-          GetConstantValue(eval_context, inst.source_id, &from_phase);
-
-      auto to_phase = Phase::Concrete;
-      auto type_id = GetConstantValue(eval_context, inst.type_id, &to_phase);
-
-      auto value_inst = eval_context.insts().Get(value_inst_id);
-      value_inst.SetType(type_id);
-
-      if (to_phase >= from_phase) {
-        // If moving from a concrete constant value to a symbolic type, the new
-        // constant value takes on the phase of the new type. We're adding the
-        // symbolic bit to the new constant value due to the presence of a
-        // symbolic type.
-        return MakeConstantResult(eval_context.context(), value_inst, to_phase);
-      } else {
-        // If moving from a symbolic constant value to a concrete type, the new
-        // constant value has a phase that depends on what is in the value. If
-        // there is anything symbolic within the value, then it's symbolic. We
-        // can't easily determine that here without evaluating a new constant
-        // value. See
-        // https://github.com/carbon-language/carbon-lang/pull/4881#discussion_r1939961372
-        [[clang::musttail]] return TryEvalInstInContext(
-            eval_context, SemIR::InstId::None, value_inst);
-      }
-    }
+    case SemIR::AsCompatible::Kind:
+      return TryEvalTypedInst<SemIR::AsCompatible>(eval_context, inst_id, inst);
 
     // These semantic wrappers don't change the constant value.
     case CARBON_KIND(SemIR::BindAlias typed_inst): {
@@ -2284,7 +2292,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // All other uses of unary `not` are non-constant.
     case CARBON_KIND(SemIR::UnaryOperatorNot typed_inst): {
       auto const_id = eval_context.GetConstantValue(typed_inst.operand_id);
-      auto phase = GetPhase(eval_context, const_id);
+      auto phase = GetPhase(eval_context.constant_values(), const_id);
       if (phase == Phase::Concrete) {
         auto value = eval_context.insts().GetAs<SemIR::BoolLiteral>(
             eval_context.constant_values().GetInstId(const_id));
