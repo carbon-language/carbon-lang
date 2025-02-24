@@ -109,6 +109,22 @@ struct AnyFloat {
   }
 };
 
+// Constraint that requires the type to be the type type.
+using Type = BuiltinType<TypeType::SingletonInstId>;
+
+// Constraint that requires the type to be a type value, whose type is type
+// type. Also accepts symbolic constant value types.
+struct AnyType {
+  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
+      -> bool {
+    if (BuiltinType<TypeType::SingletonInstId>::Check(sem_ir, state, type_id)) {
+      return true;
+    }
+    return sem_ir.types().GetAsInst(type_id).type_id() ==
+           TypeType::SingletonTypeId;
+  }
+};
+
 // Checks that the specified type matches the given type constraint.
 template <typename TypeConstraint>
 auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
@@ -129,9 +145,6 @@ auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
   }
   return false;
 }
-
-// Constraint that requires the type to be the type type.
-using Type = BuiltinType<TypeType::SingletonInstId>;
 
 }  // namespace
 
@@ -394,6 +407,10 @@ constexpr BuiltinInfo BoolEq = {"bool.eq",
 constexpr BuiltinInfo BoolNeq = {"bool.neq",
                                  ValidateSignature<auto(Bool, Bool)->Bool>};
 
+// "type.and": facet type combination.
+constexpr BuiltinInfo TypeAnd = {
+    "type.and", ValidateSignature<auto(AnyType, AnyType)->AnyType>};
+
 }  // namespace BuiltinFunctionInfo
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {
@@ -470,6 +487,9 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
   switch (*this) {
     case IntConvertChecked:
       // Checked integer conversions are compile-time only.
+      return true;
+
+    case TypeAnd:
       return true;
 
     case IntConvert:

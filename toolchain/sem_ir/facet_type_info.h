@@ -73,6 +73,20 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return std::nullopt;
   }
 
+  // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
+  // canonicalized, so that it can be further modified by the caller if desired.
+  static auto Combined(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
+      -> FacetTypeInfo {
+    FacetTypeInfo info;
+    llvm::append_range(info.impls_constraints, lhs.impls_constraints);
+    llvm::append_range(info.impls_constraints, rhs.impls_constraints);
+    llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
+    llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
+    info.other_requirements |= lhs.other_requirements;
+    info.other_requirements |= rhs.other_requirements;
+    return info;
+  }
+
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
     return lhs.impls_constraints == rhs.impls_constraints &&

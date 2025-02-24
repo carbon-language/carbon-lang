@@ -446,10 +446,13 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 
-// Facet type resolution
+// Facet type resolution.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
+
+// Facet type combination.
+CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
