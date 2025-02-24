@@ -1571,6 +1571,23 @@ constexpr ConstantEvalResult ConstantEvalResult::NotConstant =
 
 constexpr ConstantEvalResult ConstantEvalResult::TODO = NotConstant;
 
+// `EvalConstantInst` evaluates an instruction whose operands are all constant,
+// in a context unrelated to the enclosing evaluation. The function is given the
+// instruction after its operands, including its type, are replaced by their
+// evaluated value, and returns a `ConstantEvalResult` describing the result of
+// evaluating the instruction.
+//
+// An overload is provided for each type whose constant kind is one of the
+// following:
+//
+// - InstConstantKind::Indirect
+// - InstConstantKind::SymbolicOnly
+// - InstConstantKind::Conditional
+//
+// ... except for cases where the result of evaluation depends on the evaluation
+// context itself. Those cases are handled by explicit specialization of
+// `TryEvalTypedInst`.
+
 static auto EvalConstantInst(Context& context, SemIRLoc loc,
                              SemIR::ArrayType inst) -> ConstantEvalResult {
   auto bound_inst = context.insts().Get(inst.bound_id);
@@ -1618,8 +1635,8 @@ static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
                              SemIR::ArrayInit init) -> ConstantEvalResult {
   // TODO: Add an `ArrayValue` to represent a constant array object
   // representation instead of using a `TupleValue`.
-  return ConstantEvalResult::New(SemIR::TupleValue{
-      .type_id = init.type_id, .elements_id = init.inits_id});
+  return ConstantEvalResult::New(
+      SemIR::TupleValue{.type_id = init.type_id, .elements_id = init.inits_id});
 }
 
 static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
@@ -1712,14 +1729,12 @@ static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
 }
 
 static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                             SemIR::StructAccess inst)
-    -> ConstantEvalResult {
+                             SemIR::StructAccess inst) -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);
 }
 
 static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                             SemIR::TupleAccess inst)
-    -> ConstantEvalResult {
+                             SemIR::TupleAccess inst) -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);
 }
 
@@ -1752,30 +1767,26 @@ static auto EvalConstantInst(Context& context, SemIRLoc loc,
 }
 
 static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                             SemIR::BindValue /*inst*/)
-    -> ConstantEvalResult {
+                             SemIR::BindValue /*inst*/) -> ConstantEvalResult {
   // TODO: Handle this once we've decided how to represent constant values of
   // reference expressions.
   return ConstantEvalResult::TODO;
 }
 
 static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                             SemIR::Deref /*inst*/)
-    -> ConstantEvalResult {
+                             SemIR::Deref /*inst*/) -> ConstantEvalResult {
   // TODO: Handle this.
   return ConstantEvalResult::TODO;
 }
 
 static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                             SemIR::Temporary /*inst*/)
-    -> ConstantEvalResult {
+                             SemIR::Temporary /*inst*/) -> ConstantEvalResult {
   // TODO: Handle this. Can we just return the value of `init_id`?
   return ConstantEvalResult::TODO;
 }
 
 static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                             SemIR::VtablePtr /*inst*/)
-    -> ConstantEvalResult {
+                             SemIR::VtablePtr /*inst*/) -> ConstantEvalResult {
   // TODO: Handle this.
   return ConstantEvalResult::TODO;
 }
@@ -1797,10 +1808,8 @@ static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   // arguments.
   EvalContext eval_context(context, SemIR::InstId::None);
   auto kinds = value_inst.ArgKinds();
-  GetConstantValueForArg(eval_context, kinds.first, value_inst.arg0(),
-                          &phase);
-  GetConstantValueForArg(eval_context, kinds.second, value_inst.arg1(),
-                          &phase);
+  GetConstantValueForArg(eval_context, kinds.first, value_inst.arg0(), &phase);
+  GetConstantValueForArg(eval_context, kinds.second, value_inst.arg1(), &phase);
   CARBON_CHECK(IsConstant(phase));
 
   // We can't use `ConstantEvalResult::New` because it would use the wrong
@@ -1899,8 +1908,7 @@ static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
 }
 
 static auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                             SemIR::ConstType inst)
-    -> ConstantEvalResult {
+                             SemIR::ConstType inst) -> ConstantEvalResult {
   // `const (const T)` evaluates to `const T`.
   if (context.types().Is<SemIR::ConstType>(inst.inner_id)) {
     return ConstantEvalResult::Existing(
@@ -1946,6 +1954,25 @@ static auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
                inst);
 }
 
+// Evaluates an instruction of a known type in an evaluation context. The
+// default behavior of this function depends on the constant kind of the
+// instruction:
+//
+//  -  InstConstantKind::Never: returns ConstantId::NotConstant.
+//  -  InstConstantKind::Indirect, SymbolicOnly, Conditional: evaluates all the
+//     operands of the instruction, and calls `EvalConstantInst` to evaluate the
+//     resulting constant instruction.
+//  -  InstConstantKind::WheneverPossible, Always: evaluates all the operands of
+//     the instruction, and produces the resulting constant instruction as the
+//     result.
+//  -  InstConstantKind::Unique: returns the `inst_id` as the resulting
+//     constant.
+//
+// Returns an error constant ID if any of the nested evaluations fail, and
+// returns NotConstant if any of the nested evaluations is non-constant.
+//
+// This template is explicitly specialized for instructions that need special
+// handling.
 template <typename InstT>
 static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                              SemIR::Inst inst) -> SemIR::ConstantId {
@@ -2136,9 +2163,9 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  using EvalInstFn = auto (EvalContext& eval_context,
-                                        SemIR::InstId inst_id,
-                                        SemIR::Inst inst) -> SemIR::ConstantId;
+  using EvalInstFn =
+      auto(EvalContext & eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
+          ->SemIR::ConstantId;
   static constexpr EvalInstFn* EvalInstFns[] = {
 #define CARBON_SEM_IR_INST_KIND(Kind) &TryEvalTypedInst<SemIR::Kind>,
 #include "toolchain/sem_ir/inst_kind.def"
