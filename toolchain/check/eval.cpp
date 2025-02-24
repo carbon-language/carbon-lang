@@ -532,7 +532,7 @@ template <typename... Type>
 static auto GetConstantValueForArg(EvalContext& eval_context,
                                    SemIR::TypeEnum<Type...> kind, int32_t arg,
                                    Phase* phase) -> int32_t {
-  using Handler = auto(EvalContext&, int32_t arg, Phase* phase)->int32_t;
+  using Handler = auto(EvalContext&, int32_t arg, Phase * phase)->int32_t;
   static constexpr Handler* Handlers[] = {
       [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
         auto id = SemIR::Inst::FromRaw<Type>(arg);
