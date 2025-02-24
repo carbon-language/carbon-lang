@@ -1907,6 +1907,70 @@ auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
   return SemIR::ConstantId::NotConstant;
 }
 
+template <>
+auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
+                                                     SemIR::InstId /*inst_id*/,
+                                                     SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto bind = inst.As<SemIR::SymbolicBindingPattern>();
+
+  // TODO: Disable constant evaluation of SymbolicBindingPattern once
+  // DeduceGenericCallArguments no longer needs implicit params to have
+  // constant values.
+  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
+
+  // If we know which specific we're evaluating within and this is an
+  // argument of that specific, its constant value is the corresponding
+  // argument value.
+  if (auto value = eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+      value.has_value()) {
+    return value;
+  }
+
+  // The constant form of a symbolic binding is an idealized form of the
+  // original, with no equivalent value.
+  bind.entity_name_id =
+      eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+  // TODO: Propagate the `is_template` flag into the phase.
+  return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
+}
+
+template <>
+auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
+                                               SemIR::InstId /*inst_id*/,
+                                               SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto bind = inst.As<SemIR::BindSymbolicName>();
+
+  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
+
+  Phase phase;
+  if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
+    phase = Phase::PeriodSelfSymbolic;
+  } else {
+    // If we know which specific we're evaluating within and this is an
+    // argument of that specific, its constant value is the corresponding
+    // argument value.
+    if (auto value =
+            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+        value.has_value()) {
+      return value;
+    }
+    // TODO: Propagate the `is_template` flag into the phase.
+    phase = Phase::Symbolic;
+  }
+  // The constant form of a symbolic binding is an idealized form of the
+  // original, with no equivalent value.
+  bind.entity_name_id =
+      eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+  bind.value_id = SemIR::InstId::None;
+  if (!ReplaceFieldWithConstantValue(
+          eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase)) {
+    return MakeNonConstantResult(phase);
+  }
+  return MakeConstantResult(eval_context.context(), bind, phase);
+}
+
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
 //
 // Tail call should not be diagnosed as recursion.
@@ -2074,60 +2138,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return TryEvalTypedInst<SemIR::ValueAsRef>(eval_context, inst_id, inst);
     case SemIR::VtablePtr::Kind:
       return TryEvalTypedInst<SemIR::VtablePtr>(eval_context, inst_id, inst);
-
-    case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
-      // TODO: Disable constant evaluation of SymbolicBindingPattern once
-      // DeduceGenericCallArguments no longer needs implicit params to have
-      // constant values.
-      const auto& bind_name =
-          eval_context.entity_names().Get(bind.entity_name_id);
-
-      // If we know which specific we're evaluating within and this is an
-      // argument of that specific, its constant value is the corresponding
-      // argument value.
-      if (auto value =
-              eval_context.GetCompileTimeBindValue(bind_name.bind_index());
-          value.has_value()) {
-        return value;
-      }
-
-      // The constant form of a symbolic binding is an idealized form of the
-      // original, with no equivalent value.
-      bind.entity_name_id =
-          eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-      // TODO: Propagate the `is_template` flag into the phase.
-      return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
-    }
-    case CARBON_KIND(SemIR::BindSymbolicName bind): {
-      const auto& bind_name =
-          eval_context.entity_names().Get(bind.entity_name_id);
-
-      Phase phase;
-      if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
-        phase = Phase::PeriodSelfSymbolic;
-      } else {
-        // If we know which specific we're evaluating within and this is an
-        // argument of that specific, its constant value is the corresponding
-        // argument value.
-        if (auto value =
-                eval_context.GetCompileTimeBindValue(bind_name.bind_index());
-            value.has_value()) {
-          return value;
-        }
-        // TODO: Propagate the `is_template` flag into the phase.
-        phase = Phase::Symbolic;
-      }
-      // The constant form of a symbolic binding is an idealized form of the
-      // original, with no equivalent value.
-      bind.entity_name_id =
-          eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-      bind.value_id = SemIR::InstId::None;
-      if (!ReplaceFieldWithConstantValue(
-              eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase)) {
-        return MakeNonConstantResult(phase);
-      }
-      return MakeConstantResult(eval_context.context(), bind, phase);
-    }
+    case SemIR::SymbolicBindingPattern::Kind:
+      return TryEvalTypedInst<SemIR::SymbolicBindingPattern>(eval_context, inst_id, inst);
+    case SemIR::BindSymbolicName::Kind:
+      return TryEvalTypedInst<SemIR::BindSymbolicName>(eval_context, inst_id, inst);
 
     // AsCompatible changes the type of the source instruction; its constant
     // value, if there is one, needs to be modified to be of the same type.
