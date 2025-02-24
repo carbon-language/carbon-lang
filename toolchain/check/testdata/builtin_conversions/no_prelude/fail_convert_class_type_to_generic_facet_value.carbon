@@ -182,6 +182,10 @@ fn G() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.type.c3b: type = facet_type <@Generic, @Generic(%WrongGenericParam)> [concrete]
+// CHECK:STDOUT:   %F.type.96d: type = fn_type @F.1, @Generic(%WrongGenericParam) [concrete]
+// CHECK:STDOUT:   %F.86b: %F.type.96d = struct_value () [concrete]
+// CHECK:STDOUT:   %Generic.assoc_type.967: type = assoc_entity_type %Generic.type.c3b [concrete]
+// CHECK:STDOUT:   %assoc0.c10: %Generic.assoc_type.967 = assoc_entity element0, @Generic.%F.decl [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
@@ -422,6 +426,14 @@ fn G() {
 // CHECK:STDOUT: specific @Generic(constants.%WrongGenericParam) {
 // CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%WrongGenericParam
 // CHECK:STDOUT:   %Scalar.patt.loc4_19.2 => constants.%WrongGenericParam
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.c3b
+// CHECK:STDOUT:   %Self.2 => constants.%Self.dee
+// CHECK:STDOUT:   %F.type => constants.%F.type.96d
+// CHECK:STDOUT:   %F => constants.%F.86b
+// CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.967
+// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.c10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {

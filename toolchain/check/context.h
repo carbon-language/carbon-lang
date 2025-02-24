@@ -89,9 +89,6 @@ class Context {
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
-  // Prints the the formatted sem_ir to stderr.
-  LLVM_DUMP_METHOD auto DumpFormattedFile() const -> void;
-
   // Get the Lex::TokenKind of a node for diagnostics.
   auto token_kind(Parse::NodeId node_id) -> Lex::TokenKind {
     return tokens().GetKind(parse_tree().node_token(node_id));
@@ -227,6 +224,9 @@ class Context {
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }
+  auto complete_facet_types() -> SemIR::File::CompleteFacetTypeStore& {
+    return sem_ir().complete_facet_types();
+  }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
@@ -261,6 +261,18 @@ class Context {
   // --------------------------------------------------------------------------
   // End of SemIR::File members.
   // --------------------------------------------------------------------------
+
+  // During Choice typechecking, each alternative turns into a name binding on
+  // the Choice type, but this can't be done until the full Choice type is
+  // known. This represents each binding to be done at the end of checking the
+  // Choice type.
+  struct ChoiceDeferredBinding {
+    Parse::NodeId node_id;
+    NameComponent name_component;
+  };
+  auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
+    return choice_deferred_bindings_;
+  }
 
  private:
   // Handles diagnostics.
@@ -352,6 +364,14 @@ class Context {
   // VarStorage insts are allocated, emitted, and stored in the map after
   // processing the enclosing full-pattern.
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
+
+  // Each alternative in a Choice gets an entry here, they are stored in
+  // declaration order. The vector is consumed and emptied at the end of the
+  // Choice definition.
+  //
+  // TODO: This may need to be a stack of vectors if it becomes possible to
+  // define a Choice type inside an alternative's parameter set.
+  llvm::SmallVector<ChoiceDeferredBinding> choice_deferred_bindings_;
 
   // Stack of single-entry regions being built.
   RegionStack region_stack_;

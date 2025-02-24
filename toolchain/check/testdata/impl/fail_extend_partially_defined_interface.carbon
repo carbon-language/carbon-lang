@@ -10,7 +10,7 @@
 
 interface I {
   class C {
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+11]]:5: error: implementation of undefined interface I [ImplOfUndefinedInterface]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+11]]:5: error: impl as incomplete facet type `I` [ImplAsIncompleteFacetType]
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]

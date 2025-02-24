@@ -65,7 +65,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
               .Get(existing->name_scope_id)
               .is_closed_import()) {
         // The existing name is a package name, so this is a name conflict.
-        DiagnoseDuplicateName(context, name_context.loc_id, existing_inst_id);
+        DiagnoseDuplicateName(context, name_context.name_id,
+                              name_context.loc_id, existing_inst_id);
 
         // Treat this as a local namespace name from now on to avoid further
         // diagnostics.
@@ -79,7 +80,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
         SetNamespaceNodeId(context, existing_inst_id, node_id);
       }
     } else {
-      DiagnoseDuplicateName(context, name_context.loc_id, existing_inst_id);
+      DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
+                            existing_inst_id);
     }
   }
 

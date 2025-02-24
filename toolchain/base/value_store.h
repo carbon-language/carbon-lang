@@ -5,14 +5,17 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
+#include <memory>
 #include <type_traits>
 
 #include "common/check.h"
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/set.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator_range.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/yaml.h"
 
@@ -84,9 +87,8 @@ class ValueStore
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto i : llvm::seq(values_.size())) {
-        IdT id(i);
-        map.Add(PrintToString(id), Yaml::OutputScalar(Get(id)));
+      for (auto [id, value] : enumerate()) {
+        map.Add(PrintToString(id), Yaml::OutputScalar(value));
       }
     });
   }
@@ -99,6 +101,23 @@ class ValueStore
 
   auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
   auto size() const -> size_t { return values_.size(); }
+
+  // Makes an iterable range over pairs of the index and a reference to the
+  // value for each value in the store.
+  //
+  // The range is over references to the values in the store, even if used with
+  // `auto` to destructure the pair. In this example, the `value` is a
+  // `ConstRefType`:
+  // ```
+  // for (auto [id, value] : store.enumerate()) { ... }
+  // ```
+  auto enumerate() const -> auto {
+    auto index_to_id = [](auto pair) -> std::pair<IdT, ConstRefType> {
+      auto [index, value] = pair;
+      return std::pair<IdT, ConstRefType>(IdT(index), value);
+    };
+    return llvm::map_range(llvm::enumerate(values_), index_to_id);
+  }
 
  private:
   // Set inline size to 0 because these will typically be too large for the
@@ -196,6 +215,70 @@ auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
   }
   values_.Reserve(size);
 }
+
+// A ValueStore that builds a 1:1 relationship between two IDs.
+// * `RelatedIdT` represents a related ID that can be used to find values in the
+//   store.
+// * `IdT` is the actual ID of values in this store, and `IdT::ValueType` is the
+//   value type being stored.
+//
+// The value store builds a mapping so that either ID can be used later to find
+// a value. And the user can query if a related `RelatedIdT` has been used to
+// add a value to the store or not.
+//
+// When adding to the store, the user provides the related `RelatedIdT` along
+// with the value being stored, and gets back the ID of the value in the store.
+//
+// This store requires more storage space than normal ValueStore does, as it
+// requires storing a bit for presence of each `RelatedIdT`. And it allocates
+// memory for values for all IDs up largest ID present in the store, even if
+// they are not yet used.
+template <typename RelatedIdT, typename IdT>
+class RelationalValueStore {
+ public:
+  using ValueType = IdT::ValueType;
+  using ConstRefType = ValueStore<IdT>::ConstRefType;
+
+  // Given the related ID and a value, stores the value and returns a mapped ID
+  // to reference it in the store.
+  auto Add(RelatedIdT related_id, ValueType value) -> IdT {
+    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
+    IdT id(related_id.index);
+    if (static_cast<size_t>(id.index) >= values_.size()) {
+      values_.resize(id.index + 1);
+    }
+    auto& opt = values_[id.index];
+    CARBON_CHECK(!opt.has_value(),
+                 "Add with `related_id` that was already added to the store");
+    opt.emplace(std::move(value));
+    return id;
+  }
+
+  // Returns the ID of a value in the store if the `related_id` was previously
+  // used to add a value to the store, or None.
+  auto TryGetId(RelatedIdT related_id) const -> IdT {
+    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
+    if (static_cast<size_t>(related_id.index) >= values_.size()) {
+      return IdT::None;
+    }
+    auto& opt = values_[related_id.index];
+    if (!opt.has_value()) {
+      return IdT::None;
+    }
+    return IdT(related_id.index);
+  }
+
+  // Returns a value for an ID.
+  auto Get(IdT id) const -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
+    return *values_[id.index];
+  }
+
+ private:
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<std::optional<std::decay_t<ValueType>>, 0> values_;
+};
 
 }  // namespace Carbon
 

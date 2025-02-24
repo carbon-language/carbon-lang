@@ -169,7 +169,7 @@ struct NameQualifierWithParams {
 
   IdentifierNameBeforeParamsId name;
   std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
 };
 
@@ -190,7 +190,7 @@ struct DeclName {
       qualifiers;
   AnyNonExprIdentifierNameId name;
   std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  std::optional<ExplicitParamListId> params;
 };
 
 // Library, package, import, export
@@ -236,7 +236,7 @@ struct PackageDecl {
 
   PackageIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  std::optional<AnyPackageNameId> name;
+  AnyPackageNameId name;
   std::optional<LibrarySpecifierId> library;
   Lex::SemiTokenIndex token;
 };
@@ -356,13 +356,26 @@ using TuplePatternStart =
 using PatternListComma =
     LeafNode<NodeKind::PatternListComma, Lex::CommaTokenIndex>;
 
-// A parameter list or tuple pattern: `(a: i32, b: i32)`.
+// A tuple pattern that isn't an explicit parameter list: `(a: i32, b: i32)`.
 struct TuplePattern {
   static constexpr auto Kind =
       NodeKind::TuplePattern.Define({.category = NodeCategory::Pattern,
                                      .bracketed_by = TuplePatternStart::Kind});
 
   TuplePatternStartId left_paren;
+  CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
+  Lex::CloseParenTokenIndex token;
+};
+
+using ExplicitParamListStart =
+    LeafNode<NodeKind::ExplicitParamListStart, Lex::OpenParenTokenIndex>;
+
+// An explicit parameter list: `(a: i32, b: i32)`.
+struct ExplicitParamList {
+  static constexpr auto Kind = NodeKind::ExplicitParamList.Define(
+      {.bracketed_by = ExplicitParamListStart::Kind});
+
+  ExplicitParamListStartId left_paren;
   CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
   Lex::CloseParenTokenIndex token;
 };
@@ -590,6 +603,8 @@ struct ReturnStatement {
        .bracketed_by = ReturnStatementStart::Kind});
 
   ReturnStatementStartId introducer;
+  // TODO: This should be optional<OneOf<AnyExprId, ReturnVarModifierId>>,
+  // but we don't have support for OneOf between a node kind and a category.
   std::optional<AnyExprId> expr;
   std::optional<ReturnVarModifierId> var;
   Lex::SemiTokenIndex token;
@@ -604,8 +619,8 @@ struct ForIn {
       {.bracketed_by = VariableIntroducer::Kind, .child_count = 2});
 
   VariableIntroducerId introducer;
-  Lex::InTokenIndex token;
   AnyPatternId pattern;
+  Lex::InTokenIndex token;
 };
 
 // The `for (var ... in ...)` portion of a `for` statement.
@@ -790,29 +805,25 @@ struct MatchStatement {
 // Expression nodes
 // ----------------
 
-using ArrayExprStart =
-    LeafNode<NodeKind::ArrayExprStart, Lex::OpenSquareBracketTokenIndex>;
+using ArrayExprKeyword =
+    LeafNode<NodeKind::ArrayExprKeyword, Lex::ArrayTokenIndex>;
 
-// The start of an array type, `[i32;`.
-//
-// TODO: Consider flattening this into `ArrayExpr`.
-struct ArrayExprSemi {
-  static constexpr auto Kind = NodeKind::ArrayExprSemi.Define(
-      {.bracketed_by = ArrayExprStart::Kind, .child_count = 2});
+using ArrayExprOpenParen =
+    LeafNode<NodeKind::ArrayExprOpenParen, Lex::OpenParenTokenIndex>;
 
-  ArrayExprStartId left_square;
-  AnyExprId type;
-  Lex::SemiTokenIndex token;
-};
+using ArrayExprComma = LeafNode<NodeKind::ArrayExprComma, Lex::CommaTokenIndex>;
 
-// An array type, such as  `[i32; 3]` or `[i32;]`.
+// An array type, `array(T, N)`.
 struct ArrayExpr {
   static constexpr auto Kind = NodeKind::ArrayExpr.Define(
-      {.category = NodeCategory::Expr, .bracketed_by = ArrayExprSemi::Kind});
+      {.category = NodeCategory::Expr, .child_count = 5});
 
-  ArrayExprSemiId start;
-  std::optional<AnyExprId> bound;
-  Lex::CloseSquareBracketTokenIndex token;
+  ArrayExprKeywordId keyword;
+  ArrayExprOpenParenId start;
+  AnyExprId type;
+  ArrayExprCommaId comma;
+  AnyExprId bound;
+  Lex::CloseParenTokenIndex token;
 };
 
 // The opening portion of an indexing expression: `a[`.
@@ -1147,7 +1158,7 @@ struct ChoiceDefinition {
   ChoiceDefinitionStartId signature;
   struct Alternative {
     AnyNonExprIdentifierNameId name;
-    std::optional<TuplePatternId> parameters;
+    std::optional<ExplicitParamListId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
   Lex::CloseCurlyBraceTokenIndex token;

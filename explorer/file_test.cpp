@@ -58,16 +58,13 @@ class ExplorerFileTest : public FileTestBase {
                      output_stream, error_stream,
                      check_trace_output() ? output_stream : trace_stream_, *fs);
 
-    return {{.success = exit_code == EXIT_SUCCESS}};
-  }
-
-  auto ValidateRun() -> void override {
     // Skip trace test check as they use stdout stream instead of
     // trace_stream_ostream
-    if (absl::GetFlag(FLAGS_trace)) {
-      EXPECT_FALSE(trace_stream_.TakeStr().empty())
-          << "Tracing should always do something";
+    if (absl::GetFlag(FLAGS_trace) && trace_stream_.TakeStr().empty()) {
+      return Error("Tracing should always do something");
     }
+
+    return {{.success = exit_code == EXIT_SUCCESS}};
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {

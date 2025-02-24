@@ -10,25 +10,34 @@
 namespace Carbon::Parse {
 
 auto NodeCategory::Print(llvm::raw_ostream& out) const -> void {
-  if (!value_) {
-    out << "<none>";
-  } else {
-    llvm::ListSeparator sep("|");
-
-#define CARBON_NODE_CATEGORY(Name)   \
-  if (value_ & NodeCategory::Name) { \
-    out << sep << #Name;             \
+  llvm::ListSeparator sep("|");
+  auto value = value_;
+  do {
+    // The lowest set bit in the value, or 0 (`None`) if no bits are set.
+    auto lowest_bit = static_cast<RawEnumType>(value & -value);
+    switch (lowest_bit) {
+#define CARBON_NODE_CATEGORY(Name) \
+  case NodeCategory::Name: {       \
+    out << sep << #Name;           \
+    break;                         \
   }
-    CARBON_NODE_CATEGORY(Decl);
-    CARBON_NODE_CATEGORY(Expr);
-    CARBON_NODE_CATEGORY(ImplAs);
-    CARBON_NODE_CATEGORY(MemberExpr);
-    CARBON_NODE_CATEGORY(MemberName);
-    CARBON_NODE_CATEGORY(Modifier);
-    CARBON_NODE_CATEGORY(Pattern);
-    CARBON_NODE_CATEGORY(Statement);
+      CARBON_NODE_CATEGORY(Decl);
+      CARBON_NODE_CATEGORY(Expr);
+      CARBON_NODE_CATEGORY(ImplAs);
+      CARBON_NODE_CATEGORY(MemberExpr);
+      CARBON_NODE_CATEGORY(MemberName);
+      CARBON_NODE_CATEGORY(Modifier);
+      CARBON_NODE_CATEGORY(Pattern);
+      CARBON_NODE_CATEGORY(Statement);
+      CARBON_NODE_CATEGORY(IntConst);
+      CARBON_NODE_CATEGORY(Requirement);
+      CARBON_NODE_CATEGORY(NonExprIdentifierName);
+      CARBON_NODE_CATEGORY(PackageName);
+      CARBON_NODE_CATEGORY(None);
 #undef CARBON_NODE_CATEGORY
-  }
+    }
+    value &= ~lowest_bit;
+  } while (value);
 }
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {

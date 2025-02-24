@@ -171,4 +171,28 @@ auto InstallPaths::clang_path() const -> std::string {
   return path.str().str();
 }
 
+auto InstallPaths::lld_path() const -> std::string {
+  llvm::SmallString<256> path(prefix_);
+  // TODO: Adjust this to work equally well on Windows.
+  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
+                          "lib/carbon/llvm/bin/lld");
+  return path.str().str();
+}
+
+auto InstallPaths::ld_lld_path() const -> std::string {
+  llvm::SmallString<256> path(prefix_);
+  // TODO: Adjust this to work equally well on Windows.
+  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
+                          "lib/carbon/llvm/bin/ld.lld");
+  return path.str().str();
+}
+
+auto InstallPaths::ld64_lld_path() const -> std::string {
+  llvm::SmallString<256> path(prefix_);
+  // TODO: Adjust this to work equally well on Windows.
+  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
+                          "lib/carbon/llvm/bin/ld64.lld");
+  return path.str().str();
+}
+
 }  // namespace Carbon

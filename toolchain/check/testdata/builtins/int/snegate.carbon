@@ -14,8 +14,8 @@
 
 fn Negate(a: i32) -> i32 = "int.snegate";
 
-var arr: [i32; Negate(Negate(123))];
-let arr_p: [i32; 123]* = &arr;
+var arr: array(i32, Negate(Negate(123)));
+let arr_p: array(i32, 123)* = &arr;
 
 let n: i32 = Negate(1);
 
@@ -59,30 +59,30 @@ fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
 fn BadReturnType(a: i32) -> bool = "int.snegate";
 fn JustRight(a: i32) -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_few: [i32; TooFew()];
-// CHECK:STDERR:                    ^~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:25: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var too_few: array(i32, TooFew());
+// CHECK:STDERR:                         ^~~~~~~~
 // CHECK:STDERR:
-var too_few: [i32; TooFew()];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_many: [i32; TooMany(1, 2)];
-// CHECK:STDERR:                     ^~~~~~~~~~~~~
+var too_few: array(i32, TooFew());
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:26: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var too_many: array(i32, TooMany(1, 2));
+// CHECK:STDERR:                          ^~~~~~~~~~~~~
 // CHECK:STDERR:
-var too_many: [i32; TooMany(1, 2)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1)];
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~
+var too_many: array(i32, TooMany(1, 2));
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:33: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var bad_return_type: array(i32, BadReturnType(1));
+// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var bad_return_type: [i32; BadReturnType(1)];
+var bad_return_type: array(i32, BadReturnType(1));
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: var bad_call: [i32; JustRight(1, 2)];
-// CHECK:STDERR:                     ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:26: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: var bad_call: array(i32, JustRight(1, 2));
+// CHECK:STDERR:                          ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.snegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var bad_call: [i32; JustRight(1, 2)];
+var bad_call: array(i32, JustRight(1, 2));
 
 fn RuntimeCallIsValidTooFew(a: i32) -> i32 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]

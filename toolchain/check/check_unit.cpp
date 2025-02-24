@@ -20,6 +20,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Check {
 
@@ -76,6 +77,8 @@ auto CheckUnit::Run() -> void {
   }
 
   CheckRequiredDefinitions();
+
+  CheckRequiredDeclarations();
 
   context_.Finalize();
 
@@ -396,6 +399,44 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     traversal.Handle(parse_kind);
   }
   return true;
+}
+
+auto CheckUnit::CheckRequiredDeclarations() -> void {
+  for (const auto& function : context_.functions().array_ref()) {
+    if (!function.first_owning_decl_id.has_value() &&
+        function.extern_library_id == context_.sem_ir().library_id()) {
+      auto function_loc_id =
+          context_.insts().GetLocId(function.non_owning_decl_id);
+      CARBON_CHECK(function_loc_id.is_import_ir_inst_id());
+      auto import_ir_id = context_.sem_ir()
+                              .import_ir_insts()
+                              .Get(function_loc_id.import_ir_inst_id())
+                              .ir_id;
+      auto& import_ir = context_.import_irs().Get(import_ir_id);
+      if (import_ir.sem_ir->package_id().has_value() !=
+          context_.sem_ir().package_id().has_value()) {
+        continue;
+      }
+
+      CARBON_DIAGNOSTIC(
+          MissingOwningDeclarationInApi, Error,
+          "owning declaration required for non-owning declaration");
+      if (!import_ir.sem_ir->package_id().has_value() &&
+          !context_.sem_ir().package_id().has_value()) {
+        emitter_.Emit(function.non_owning_decl_id,
+                      MissingOwningDeclarationInApi);
+        continue;
+      }
+
+      if (import_ir.sem_ir->identifiers().Get(
+              import_ir.sem_ir->package_id().AsIdentifierId()) ==
+          context_.sem_ir().identifiers().Get(
+              context_.sem_ir().package_id().AsIdentifierId())) {
+        emitter_.Emit(function.non_owning_decl_id,
+                      MissingOwningDeclarationInApi);
+      }
+    }
+  }
 }
 
 auto CheckUnit::CheckRequiredDefinitions() -> void {

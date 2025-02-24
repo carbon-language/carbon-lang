@@ -25,7 +25,7 @@ fn TestAdd(a: i32, b: i32) -> i32 = "int.sadd";
 
 import Core library "core";
 
-var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = (Core.AsI32(1), Core.AsI32(2), Core.AsI32(3));
+var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))) = (Core.AsI32(1), Core.AsI32(2), Core.AsI32(3));
 
 // CHECK:STDOUT: --- core.carbon
 // CHECK:STDOUT:
@@ -210,34 +210,34 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:     %.loc4_1: %array_type = var_pattern %arr.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr.var: ref %array_type = var arr
-// CHECK:STDOUT:   %.loc4_77: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc4_82: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %Core.ref.loc4_16: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %Core.ref.loc4_21: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %AsIntLiteral.ref: %AsIntLiteral.type = name_ref AsIntLiteral, imports.%Core.AsIntLiteral [concrete = constants.%AsIntLiteral]
-// CHECK:STDOUT:     %Core.ref.loc4_34: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %Core.ref.loc4_39: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %TestAdd.ref: %TestAdd.type = name_ref TestAdd, imports.%Core.TestAdd [concrete = constants.%TestAdd]
-// CHECK:STDOUT:     %Core.ref.loc4_47: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %AsI32.ref.loc4_51: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
+// CHECK:STDOUT:     %Core.ref.loc4_52: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %AsI32.ref.loc4_56: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %int.convert_checked.loc4_59: init %i32.builtin = call %AsI32.ref.loc4_51(%int_1) [concrete = constants.%int_1.f38]
-// CHECK:STDOUT:     %Core.ref.loc4_62: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %AsI32.ref.loc4_66: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
+// CHECK:STDOUT:     %int.convert_checked.loc4_64: init %i32.builtin = call %AsI32.ref.loc4_56(%int_1) [concrete = constants.%int_1.f38]
+// CHECK:STDOUT:     %Core.ref.loc4_67: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %AsI32.ref.loc4_71: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:     %int.convert_checked.loc4_74: init %i32.builtin = call %AsI32.ref.loc4_66(%int_2) [concrete = constants.%int_2.5a1]
-// CHECK:STDOUT:     %.loc4_59.1: %i32.builtin = value_of_initializer %int.convert_checked.loc4_59 [concrete = constants.%int_1.f38]
-// CHECK:STDOUT:     %.loc4_59.2: %i32.builtin = converted %int.convert_checked.loc4_59, %.loc4_59.1 [concrete = constants.%int_1.f38]
-// CHECK:STDOUT:     %.loc4_74.1: %i32.builtin = value_of_initializer %int.convert_checked.loc4_74 [concrete = constants.%int_2.5a1]
-// CHECK:STDOUT:     %.loc4_74.2: %i32.builtin = converted %int.convert_checked.loc4_74, %.loc4_74.1 [concrete = constants.%int_2.5a1]
-// CHECK:STDOUT:     %int.sadd: init %i32.builtin = call %TestAdd.ref(%.loc4_59.2, %.loc4_74.2) [concrete = constants.%int_3.a0f]
-// CHECK:STDOUT:     %.loc4_75.1: %i32.builtin = value_of_initializer %int.sadd [concrete = constants.%int_3.a0f]
-// CHECK:STDOUT:     %.loc4_75.2: %i32.builtin = converted %int.sadd, %.loc4_75.1 [concrete = constants.%int_3.a0f]
-// CHECK:STDOUT:     %int.convert_checked.loc4_76: init Core.IntLiteral = call %AsIntLiteral.ref(%.loc4_75.2) [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_signed [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_signed, %.loc4_11.1 [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %.loc4_76.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_76 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %.loc4_76.2: Core.IntLiteral = converted %int.convert_checked.loc4_76, %.loc4_76.1 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc4_76.2, %i32.builtin [concrete = constants.%array_type]
+// CHECK:STDOUT:     %int.convert_checked.loc4_79: init %i32.builtin = call %AsI32.ref.loc4_71(%int_2) [concrete = constants.%int_2.5a1]
+// CHECK:STDOUT:     %.loc4_64.1: %i32.builtin = value_of_initializer %int.convert_checked.loc4_64 [concrete = constants.%int_1.f38]
+// CHECK:STDOUT:     %.loc4_64.2: %i32.builtin = converted %int.convert_checked.loc4_64, %.loc4_64.1 [concrete = constants.%int_1.f38]
+// CHECK:STDOUT:     %.loc4_79.1: %i32.builtin = value_of_initializer %int.convert_checked.loc4_79 [concrete = constants.%int_2.5a1]
+// CHECK:STDOUT:     %.loc4_79.2: %i32.builtin = converted %int.convert_checked.loc4_79, %.loc4_79.1 [concrete = constants.%int_2.5a1]
+// CHECK:STDOUT:     %int.sadd: init %i32.builtin = call %TestAdd.ref(%.loc4_64.2, %.loc4_79.2) [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:     %.loc4_80.1: %i32.builtin = value_of_initializer %int.sadd [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:     %.loc4_80.2: %i32.builtin = converted %int.sadd, %.loc4_80.1 [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:     %int.convert_checked.loc4_81: init Core.IntLiteral = call %AsIntLiteral.ref(%.loc4_80.2) [concrete = constants.%int_3.1ba]
+// CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_signed [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:     %.loc4_16.2: type = converted %int.make_type_signed, %.loc4_16.1 [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:     %.loc4_81.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_81 [concrete = constants.%int_3.1ba]
+// CHECK:STDOUT:     %.loc4_81.2: Core.IntLiteral = converted %int.convert_checked.loc4_81, %.loc4_81.1 [concrete = constants.%int_3.1ba]
+// CHECK:STDOUT:     %array_type: type = array_type %.loc4_81.2, %i32.builtin [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
 // CHECK:STDOUT: }
@@ -252,30 +252,30 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Core.ref.loc4_82: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %AsI32.ref.loc4_86: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
-// CHECK:STDOUT:   %int_1.loc4_93: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int.convert_checked.loc4_94: init %i32.builtin = call %AsI32.ref.loc4_86(%int_1.loc4_93) [concrete = constants.%int_1.f38]
-// CHECK:STDOUT:   %Core.ref.loc4_97: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %AsI32.ref.loc4_101: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
-// CHECK:STDOUT:   %int_2.loc4_108: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %int.convert_checked.loc4_109: init %i32.builtin = call %AsI32.ref.loc4_101(%int_2.loc4_108) [concrete = constants.%int_2.5a1]
-// CHECK:STDOUT:   %Core.ref.loc4_112: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %AsI32.ref.loc4_116: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
+// CHECK:STDOUT:   %Core.ref.loc4_87: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %AsI32.ref.loc4_91: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
+// CHECK:STDOUT:   %int_1.loc4_98: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int.convert_checked.loc4_99: init %i32.builtin = call %AsI32.ref.loc4_91(%int_1.loc4_98) [concrete = constants.%int_1.f38]
+// CHECK:STDOUT:   %Core.ref.loc4_102: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %AsI32.ref.loc4_106: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
+// CHECK:STDOUT:   %int_2.loc4_113: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
+// CHECK:STDOUT:   %int.convert_checked.loc4_114: init %i32.builtin = call %AsI32.ref.loc4_106(%int_2.loc4_113) [concrete = constants.%int_2.5a1]
+// CHECK:STDOUT:   %Core.ref.loc4_117: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %AsI32.ref.loc4_121: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %int.convert_checked.loc4_124: init %i32.builtin = call %AsI32.ref.loc4_116(%int_3) [concrete = constants.%int_3.a0f]
-// CHECK:STDOUT:   %.loc4_125.1: %tuple.type = tuple_literal (%int.convert_checked.loc4_94, %int.convert_checked.loc4_109, %int.convert_checked.loc4_124)
+// CHECK:STDOUT:   %int.convert_checked.loc4_129: init %i32.builtin = call %AsI32.ref.loc4_121(%int_3) [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:   %.loc4_130.1: %tuple.type = tuple_literal (%int.convert_checked.loc4_99, %int.convert_checked.loc4_114, %int.convert_checked.loc4_129)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc4_125.2: ref %i32.builtin = array_index file.%arr.var, %int_0
-// CHECK:STDOUT:   %.loc4_125.3: init %i32.builtin = initialize_from %int.convert_checked.loc4_94 to %.loc4_125.2 [concrete = constants.%int_1.f38]
-// CHECK:STDOUT:   %int_1.loc4_125: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc4_125.4: ref %i32.builtin = array_index file.%arr.var, %int_1.loc4_125
-// CHECK:STDOUT:   %.loc4_125.5: init %i32.builtin = initialize_from %int.convert_checked.loc4_109 to %.loc4_125.4 [concrete = constants.%int_2.5a1]
-// CHECK:STDOUT:   %int_2.loc4_125: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc4_125.6: ref %i32.builtin = array_index file.%arr.var, %int_2.loc4_125
-// CHECK:STDOUT:   %.loc4_125.7: init %i32.builtin = initialize_from %int.convert_checked.loc4_124 to %.loc4_125.6 [concrete = constants.%int_3.a0f]
-// CHECK:STDOUT:   %.loc4_125.8: init %array_type = array_init (%.loc4_125.3, %.loc4_125.5, %.loc4_125.7) to file.%arr.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_125.1, %.loc4_125.8 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc4_130.2: ref %i32.builtin = array_index file.%arr.var, %int_0
+// CHECK:STDOUT:   %.loc4_130.3: init %i32.builtin = initialize_from %int.convert_checked.loc4_99 to %.loc4_130.2 [concrete = constants.%int_1.f38]
+// CHECK:STDOUT:   %int_1.loc4_130: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc4_130.4: ref %i32.builtin = array_index file.%arr.var, %int_1.loc4_130
+// CHECK:STDOUT:   %.loc4_130.5: init %i32.builtin = initialize_from %int.convert_checked.loc4_114 to %.loc4_130.4 [concrete = constants.%int_2.5a1]
+// CHECK:STDOUT:   %int_2.loc4_130: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
+// CHECK:STDOUT:   %.loc4_130.6: ref %i32.builtin = array_index file.%arr.var, %int_2.loc4_130
+// CHECK:STDOUT:   %.loc4_130.7: init %i32.builtin = initialize_from %int.convert_checked.loc4_129 to %.loc4_130.6 [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:   %.loc4_130.8: init %array_type = array_init (%.loc4_130.3, %.loc4_130.5, %.loc4_130.7) to file.%arr.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_130.1, %.loc4_130.8 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

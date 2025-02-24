@@ -8,9 +8,6 @@
 package ExplorerTest;
 
 fn Main() -> i32 {
-  var arr: [i32; 2] = (0, 1);
-  var x: [i32;] = arr;
-  var index: i32 = 1;
-  x[index] = 0;
-  return x[0] + x[1];
+  var x: array(array(i32, 3), 2) = ((0, 1, 2), (3, 4, 5));
+  return x[1][2] - 5;
 }

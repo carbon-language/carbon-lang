@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
@@ -105,7 +106,8 @@ static auto BuildInterfaceDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a interface.
-      DiagnoseDuplicateName(context, name_context.loc_id, existing_id);
+      DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
+                            existing_id);
     }
   }
 

@@ -206,20 +206,30 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
     case SemIR::IdKind::For<SemIR::FacetTypeId>: {
       const auto& old_facet_type_info =
           context.facet_types().Get(SemIR::FacetTypeId(arg));
-      SemIR::FacetTypeInfo new_facet_type_info = old_facet_type_info;
+      SemIR::FacetTypeInfo new_facet_type_info;
       // Since these were added to a stack, we get them back in reverse order.
+      new_facet_type_info.rewrite_constraints.resize(
+          old_facet_type_info.rewrite_constraints.size(),
+          SemIR::FacetTypeInfo::RewriteConstraint::None);
       for (auto i : llvm::reverse(
                llvm::seq(old_facet_type_info.rewrite_constraints.size()))) {
         auto rhs_id = context.constant_values().Get(worklist.Pop());
         auto lhs_id = context.constant_values().Get(worklist.Pop());
-        new_facet_type_info.rewrite_constraints[i].rhs_const_id = rhs_id;
-        new_facet_type_info.rewrite_constraints[i].lhs_const_id = lhs_id;
+        new_facet_type_info.rewrite_constraints[i] = {.lhs_const_id = lhs_id,
+                                                      .rhs_const_id = rhs_id};
       }
+      new_facet_type_info.impls_constraints.resize(
+          old_facet_type_info.impls_constraints.size(),
+          SemIR::SpecificInterface::None);
       for (auto i : llvm::reverse(
                llvm::seq(old_facet_type_info.impls_constraints.size()))) {
-        new_facet_type_info.impls_constraints[i].specific_id =
-            pop_specific(old_facet_type_info.impls_constraints[i].specific_id);
+        const auto& old = old_facet_type_info.impls_constraints[i];
+        new_facet_type_info.impls_constraints[i] = {
+            .interface_id = old.interface_id,
+            .specific_id = pop_specific(old.specific_id)};
       }
+      new_facet_type_info.other_requirements =
+          old_facet_type_info.other_requirements;
       new_facet_type_info.Canonicalize();
       return context.facet_types().Add(new_facet_type_info).index;
     }

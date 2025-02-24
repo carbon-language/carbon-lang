@@ -46,14 +46,24 @@ symlink_file = rule(
 
 def _symlink_filegroup_impl(ctx):
     prefix = ctx.attr.out_prefix
+    remove_prefix = ctx.attr.remove_prefix
 
     outputs = []
     for f in ctx.files.srcs:
         # We normalize the path to be package-relative in order to ensure
-        # consistent paths across possible repositories.
-        relative_path = f.short_path.removeprefix(f.owner.package)
+        # consistent paths across possible repositories. After experimenting,
+        # incrementally removing these path fragments, in this order,
+        # effectively handles the full permutation of files across different
+        # repositories and both generated and source files.
+        relative_path = f.path
+        relative_path = relative_path.removeprefix(f.root.path + "/")
+        relative_path = relative_path.removeprefix(f.owner.workspace_root + "/")
+        relative_path = relative_path.removeprefix(f.owner.package + "/")
+        if not relative_path.startswith(remove_prefix):
+            fail("Missing `{0}` in `{1}`".format(remove_prefix, relative_path))
+        relative_path = relative_path.removeprefix(remove_prefix)
 
-        out = ctx.actions.declare_file(prefix + relative_path)
+        out = ctx.actions.declare_file(prefix + "/" + relative_path)
         outputs.append(out)
         ctx.actions.symlink(output = out, target_file = f)
 
@@ -72,6 +82,7 @@ symlink_filegroup = rule(
     implementation = _symlink_filegroup_impl,
     attrs = {
         "out_prefix": attr.string(mandatory = True),
+        "remove_prefix": attr.string(),
         "srcs": attr.label_list(mandatory = True),
     },
 )

@@ -26,9 +26,12 @@
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
-// CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
-// CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'type(TypeType)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:     'type(Error)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:     'type(inst(NamespaceType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:

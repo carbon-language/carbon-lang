@@ -48,7 +48,7 @@ library "[[@TEST_NAME]]";
 
 fn Function();
 
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:11: error: duplicate name `Function` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Function;
 // CHECK:STDERR:           ^~~~~~~~
 // CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
@@ -61,7 +61,7 @@ interface Function;
 
 class Class;
 
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+7]]:11: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+7]]:11: error: duplicate name `Class` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Class { }
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]

@@ -71,7 +71,7 @@ alias B = C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+8]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+8]]:7: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class B {}
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import [InImport]

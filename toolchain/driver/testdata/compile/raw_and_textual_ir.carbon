@@ -34,13 +34,20 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
-// CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
-// CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst33)':    {kind: none, type: type(inst13)}
-// CHECK:STDOUT:     'type(inst13)':    {kind: none, type: type(inst13)}
-// CHECK:STDOUT:     'type(inst21)':    {kind: pointer, type: type(inst35)}
-// CHECK:STDOUT:     'type(inst35)':    {kind: copy, type: type(inst35)}
+// CHECK:STDOUT:     'type(TypeType)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:     'type(Error)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:     'type(inst(NamespaceType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'type(inst33)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst13)}
+// CHECK:STDOUT:     'type(inst13)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst13)}
+// CHECK:STDOUT:     'type(inst21)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst35)}
+// CHECK:STDOUT:     'type(inst35)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst35)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:     type_block1:

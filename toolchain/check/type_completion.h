@@ -48,15 +48,13 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          Context::BuildDiagnosticFn diagnoser,
                          Context::BuildDiagnosticFn abstract_diagnoser) -> bool;
 
-// Like `RequireCompleteType`, but also require the type to be defined. A
-// defined type has known members. If the type is not defined, `diagnoser` is
-// used to diagnose the problem, and this function returns false.
-//
-// This is the same as `RequireCompleteType` except for facet types, which are
-// complete before they are fully defined.
-auto RequireDefinedType(Context& context, SemIR::TypeId type_id,
-                        SemIR::LocId loc_id,
-                        Context::BuildDiagnosticFn diagnoser) -> bool;
+// Like `RequireCompleteType`, but only for facet types. If it uses some
+// incomplete interface, diagnoses the problem and returns `None`.
+auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
+                              SemIR::LocId loc_id,
+                              const SemIR::FacetType& facet_type,
+                              Context::BuildDiagnosticFn diagnoser)
+    -> SemIR::CompleteFacetTypeId;
 
 // Returns the type `type_id` if it is a complete type, or produces an
 // incomplete type error and returns an error type. This is a convenience

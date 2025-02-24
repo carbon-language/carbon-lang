@@ -11,27 +11,23 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& /*context*/, Parse::ArrayExprStartId /*node_id*/)
+auto HandleParseNode(Context& /*context*/,
+                     Parse::ArrayExprOpenParenId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/,
+                     Parse::ArrayExprKeywordId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/, Parse::ArrayExprCommaId /*node_id*/)
     -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ArrayExprSemiId node_id) -> bool {
-  context.node_stack().Push(node_id);
-  return true;
-}
-
 auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
-  // TODO: Handle array type with undefined bound.
-  if (context.node_stack()
-          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::ArrayExprSemi>()) {
-    context.node_stack().PopAndIgnore();
-    return context.TODO(node_id, "HandleArrayExprWithoutBounds");
-  }
-
   auto bound_inst_id = context.node_stack().PopExpr();
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::ArrayExprSemi>();
   auto [element_type_node_id, element_type_inst_id] =
       context.node_stack().PopExprWithNodeId();
 
@@ -43,7 +39,7 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   // call to compile-time-only function" error.
   //
   // TODO: Should we support runtime-phase bounds in cases such as:
-  //   comptime fn F(n: i32) -> type { return [i32; n]; }
+  //   comptime fn F(n: i32) -> type { return array(i32; n); }
   if (!context.constant_values().Get(bound_inst_id).is_constant()) {
     CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "array bound is not a constant");
     context.emitter().Emit(bound_inst_id, InvalidArrayExpr);

@@ -145,7 +145,7 @@ fn F() {
   ({} as Wraps(C)) as (Wraps(C) as ComparableTo(Wraps(D)));
 }
 
-// --- fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
+// --- impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
@@ -166,10 +166,6 @@ impl C as ComparableTo(D) {}
 // T is always ComparableWith(T).
 impl forall [T:! type] T as ComparableWith(T) {}
 // If U is ComparableTo(T), U is ComparableWith(T).
-//
-// TODO: When we look for the impl of `D as ComparableTo(C)` here, we find that
-// it's not implemented. We then go to the next impl which does match, but
-// deduction generates an error here regardless.
 impl forall [T:! type, U:! ComparableTo(T)] U as ComparableWith(T) {}
 // If U is ComparableTo(T), T is ComparableWith(U).
 impl forall [T:! type, U:! ComparableTo(T)] T as ComparableWith(U) {}
@@ -178,19 +174,64 @@ fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
 
 fn F() {
   Compare({} as C, {} as C);
-  // CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+13]]:3: error: cannot implicitly convert from `type` to `ComparableTo(C)` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   Compare({} as C, {} as D);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+10]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableTo(C))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Compare({} as C, {} as D);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-14]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: impl forall [T:! type, U:! ComparableTo(T)] U as ComparableWith(T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Compare({} as C, {} as D);
   Compare({} as D, {} as C);
+}
+
+// --- deduce_cycle_without_symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface First {}
+interface Second {}
+
+// When answering a query "does T impl Second", we must avoid trying to deduce
+// parameters for this impl. Not only is doing so unnecessary, it would start a new
+// "does T impl Second" query, leading to a "cycle in impl lookup" error.
+impl forall [T:! Second] T as First {}
+impl forall [T:! type] T as Second {}
+
+class C {}
+
+fn F() {
+  ({} as C) as (C as Second);
+  ({} as C) as (C as First);
+}
+
+// --- fail_todo_deduce_cycle_with_symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface First(T:! type) {}
+interface Second {}
+
+// When answering a query "does T impl Second", we must avoid trying to deduce
+// parameters for this impl. Not only is doing so unnecessary, it would start a new
+// "does T impl Second" query, leading to a "cycle in impl lookup" error.
+impl forall [T:! Second, U:! type] T as First(U) {}
+impl forall [T:! type] T as Second {}
+
+class C {}
+
+// TODO: See the TODO in impl_lookup.cpp to reject impls where the interface
+// does not match the query.
+fn F() {
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE+7]]:17: error: cycle found in lookup of interface <TODO: interface name> for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as C) as (C as Second);
+  // CHECK:STDERR:                 ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE-11]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as C) as (C as Second);
+
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE+10]]:17: error: cycle found in lookup of interface <TODO: interface name> for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as C) as (C as First(C));
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE-20]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_deduce_cycle_with_symbolic.carbon:[[@LINE-23]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: impl forall [T:! Second, U:! type] T as First(U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as C) as (C as First(C));
 }

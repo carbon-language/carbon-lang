@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type.h"
@@ -207,8 +208,12 @@ enum class Phase : uint8_t {
   // reference to `.Self`.
   PeriodSelfSymbolic,
   // Evaluation phase is symbolic because the expression involves a reference to
-  // a symbolic binding.
-  Symbolic,
+  // a non-template symbolic binding other than `.Self`.
+  CheckedSymbolic,
+  // Evaluation phase is symbolic because the expression involves a reference to
+  // a template parameter, or otherwise depends on something template dependent.
+  // The expression might also reference non-template symbolic bindings.
+  TemplateSymbolic,
   // The evaluation phase is unknown because evaluation encountered an
   // already-diagnosed semantic or syntax error. This is treated as being
   // potentially constant, but with an unknown phase.
@@ -225,14 +230,16 @@ static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
     return Phase::Runtime;
   } else if (constant_id == SemIR::ErrorInst::SingletonConstantId) {
     return Phase::UnknownDueToError;
-  } else if (constant_id.is_concrete()) {
-    return Phase::Concrete;
-  } else if (eval_context.constant_values().DependsOnGenericParameter(
-                 constant_id)) {
-    return Phase::Symbolic;
-  } else {
-    CARBON_CHECK(constant_id.is_symbolic());
-    return Phase::PeriodSelfSymbolic;
+  }
+  switch (eval_context.constant_values().GetDependence(constant_id)) {
+    case SemIR::ConstantDependence::None:
+      return Phase::Concrete;
+    case SemIR::ConstantDependence::PeriodSelf:
+      return Phase::PeriodSelfSymbolic;
+    case SemIR::ConstantDependence::Checked:
+      return Phase::CheckedSymbolic;
+    case SemIR::ConstantDependence::Template:
+      return Phase::TemplateSymbolic;
   }
 }
 
@@ -263,13 +270,16 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
   switch (phase) {
     case Phase::Concrete:
       return context.constants().GetOrAdd(inst,
-                                          SemIR::ConstantStore::IsConcrete);
+                                          SemIR::ConstantDependence::None);
     case Phase::PeriodSelfSymbolic:
       return context.constants().GetOrAdd(
-          inst, SemIR::ConstantStore::IsPeriodSelfSymbolic);
-    case Phase::Symbolic:
+          inst, SemIR::ConstantDependence::PeriodSelf);
+    case Phase::CheckedSymbolic:
       return context.constants().GetOrAdd(inst,
-                                          SemIR::ConstantStore::IsSymbolic);
+                                          SemIR::ConstantDependence::Checked);
+    case Phase::TemplateSymbolic:
+      return context.constants().GetOrAdd(inst,
+                                          SemIR::ConstantDependence::Template);
     case Phase::UnknownDueToError:
       return SemIR::ErrorInst::SingletonConstantId;
     case Phase::Runtime:
@@ -442,6 +452,24 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   if (args_id == specific.args_id) {
+    const auto& specific = eval_context.specifics().Get(specific_id);
+    // A constant specific_id should always have a resolved declaration. The
+    // specific_id from the instruction may coincidentally be canonical, and so
+    // constant evaluation gives the same value. In that case, we still need to
+    // ensure its declaration is resolved.
+    //
+    // However, don't resolve the declaration if the generic's eval block hasn't
+    // been set yet. This happens when building the eval block during import.
+    //
+    // TODO: Change importing of generic eval blocks to be less fragile and
+    // remove this `if` so we unconditionally call `ResolveSpecificDeclaration`.
+    if (!specific.decl_block_id.has_value() && eval_context.context()
+                                                   .generics()
+                                                   .Get(specific.generic_id)
+                                                   .decl_block_id.has_value()) {
+      ResolveSpecificDeclaration(eval_context.context(),
+                                 eval_context.fallback_loc(), specific_id);
+    }
     return specific_id;
   }
   return MakeSpecific(eval_context.context(), eval_context.fallback_loc(),
@@ -453,19 +481,27 @@ static auto GetConstantValue(EvalContext& eval_context,
 static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::FacetTypeId facet_type_id,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info = eval_context.facet_types().Get(facet_type_id);
-  for (auto& interface : info.impls_constraints) {
-    interface.specific_id =
-        GetConstantValue(eval_context, interface.specific_id, phase);
+  const auto& orig = eval_context.facet_types().Get(facet_type_id);
+  SemIR::FacetTypeInfo info;
+  info.impls_constraints.reserve(orig.impls_constraints.size());
+  for (const auto& interface : orig.impls_constraints) {
+    info.impls_constraints.push_back(
+        {.interface_id = interface.interface_id,
+         .specific_id =
+             GetConstantValue(eval_context, interface.specific_id, phase)});
   }
-  for (auto& rewrite : info.rewrite_constraints) {
-    rewrite.lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
-    rewrite.rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
+  info.rewrite_constraints.reserve(orig.rewrite_constraints.size());
+  for (const auto& rewrite : orig.rewrite_constraints) {
+    auto lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
+    auto rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
     // `where` requirements using `.Self` should not be considered symbolic
-    UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.lhs_const_id, phase);
-    UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.rhs_const_id, phase);
+    UpdatePhaseIgnorePeriodSelf(eval_context, lhs_const_id, phase);
+    UpdatePhaseIgnorePeriodSelf(eval_context, rhs_const_id, phase);
+    info.rewrite_constraints.push_back(
+        {.lhs_const_id = lhs_const_id, .rhs_const_id = rhs_const_id});
   }
   // TODO: Process other requirements.
+  info.other_requirements = orig.other_requirements;
   return info;
 }
 
@@ -1308,13 +1344,13 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
 
     // Integer conversions.
     case SemIR::BuiltinFunctionKind::IntConvert: {
-      if (phase == Phase::Symbolic) {
+      if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
       return PerformIntConvert(context, arg_ids[0], call.type_id);
     }
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
-      if (phase == Phase::Symbolic) {
+      if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
       return PerformCheckedIntConvert(context, loc, arg_ids[0], call.type_id);
@@ -1873,8 +1909,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // original, with no equivalent value.
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-      // TODO: Propagate the `is_template` flag into the phase.
-      return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
+      return MakeConstantResult(eval_context.context(), bind,
+                                bind_name.is_template ? Phase::TemplateSymbolic
+                                                      : Phase::CheckedSymbolic);
     }
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
       const auto& bind_name =
@@ -1892,8 +1929,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
             value.has_value()) {
           return value;
         }
-        // TODO: Propagate the `is_template` flag into the phase.
-        phase = Phase::Symbolic;
+        phase = bind_name.is_template ? Phase::TemplateSymbolic
+                                      : Phase::CheckedSymbolic;
       }
       // The constant form of a symbolic binding is an idealized form of the
       // original, with no equivalent value.
@@ -2136,6 +2173,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::ReturnSlotPattern::Kind:
     case SemIR::StructLiteral::Kind:
     case SemIR::TupleLiteral::Kind:
+    case SemIR::TuplePattern::Kind:
     case SemIR::ValueParam::Kind:
     case SemIR::VarPattern::Kind:
     case SemIR::VarStorage::Kind:

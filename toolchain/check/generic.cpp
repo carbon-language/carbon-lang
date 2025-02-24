@@ -11,6 +11,7 @@
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -20,8 +21,6 @@ namespace Carbon::Check {
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId;
-static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
-                                       SemIR::SpecificId specific_id) -> void;
 
 auto StartGenericDecl(Context& context) -> void {
   context.generic_region_stack().Push();
@@ -46,12 +45,16 @@ auto StartGenericDefinition(Context& context) -> void {
 static auto AddGenericConstantInstToEvalBlock(
     Context& context, SemIR::GenericId generic_id,
     SemIR::GenericInstIndex::Region region, SemIR::InstId const_inst_id,
-    SemIR::InstId generic_inst_id) -> SemIR::ConstantId {
+    SemIR::InstId generic_inst_id, SemIR::ConstantDependence dependence)
+    -> SemIR::ConstantId {
   auto index = SemIR::GenericInstIndex(
       region, context.inst_block_stack().PeekCurrentBlockContents().size());
   context.inst_block_stack().AddInstId(generic_inst_id);
   return context.constant_values().AddSymbolicConstant(
-      {.inst_id = const_inst_id, .generic_id = generic_id, .index = index});
+      {.inst_id = const_inst_id,
+       .generic_id = generic_id,
+       .index = index,
+       .dependence = dependence});
 }
 
 namespace {
@@ -136,8 +139,11 @@ class RebuildGenericConstantInEvalBlockCallbacks final
   // constant.
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto const_inst_id =
-        context_.constant_values().GetConstantInstId(orig_inst_id);
+    auto& orig_symbolic_const = context_.constant_values().GetSymbolicConstant(
+        context_.constant_values().Get(orig_inst_id));
+    auto const_inst_id = orig_symbolic_const.inst_id;
+    auto dependence = orig_symbolic_const.dependence;
+
     // We might already have an instruction in the eval block if a transitive
     // operand of this instruction has the same constant value.
     auto result = constants_in_generic_.Insert(const_inst_id, [&] {
@@ -149,7 +155,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       auto inst_id = context_.sem_ir().insts().AddInNoBlock(
           SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
       auto const_id = AddGenericConstantInstToEvalBlock(
-          context_, generic_id_, region_, const_inst_id, inst_id);
+          context_, generic_id_, region_, const_inst_id, inst_id, dependence);
       context_.constant_values().Set(inst_id, const_id);
       return inst_id;
     });
@@ -406,8 +412,8 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
   context.generic_region_stack().Pop();
 }
 
-static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
-                                       SemIR::SpecificId specific_id) -> void {
+auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
+                                SemIR::SpecificId specific_id) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   if (!context.specifics().Get(specific_id).decl_block_id.has_value()) {

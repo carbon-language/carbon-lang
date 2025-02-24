@@ -25,9 +25,10 @@ class Driver {
   explicit Driver(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                   const InstallPaths* installation, FILE* input_stream,
                   llvm::raw_pwrite_stream* output_stream,
-                  llvm::raw_pwrite_stream* error_stream, bool fuzzing = false)
+                  llvm::raw_pwrite_stream* error_stream, bool fuzzing = false,
+                  bool enable_leaking = false)
       : driver_env_(std::move(fs), installation, input_stream, output_stream,
-                    error_stream, fuzzing) {}
+                    error_stream, fuzzing, enable_leaking) {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
