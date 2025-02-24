@@ -23,7 +23,7 @@ struct Operator {
 // operator fails.
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
-                        Context::BuildDiagnosticFn missing_impl_diagnoser =
+                        BuildSemIRLocDiagnosticFn missing_impl_diagnoser =
                             nullptr) -> SemIR::InstId;
 
 // Checks and builds SemIR for a binary operator expression. For example,
@@ -32,7 +32,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 // fails.
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         Context::BuildDiagnosticFn missing_impl_diagnoser =
+                         BuildSemIRLocDiagnosticFn missing_impl_diagnoser =
                              nullptr) -> SemIR::InstId;
 
 }  // namespace Carbon::Check

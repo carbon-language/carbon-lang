@@ -184,7 +184,7 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
 static auto PerformImplLookup(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
-    Context::BuildDiagnosticFn missing_impl_diagnoser = nullptr)
+    BuildSemIRLocDiagnosticFn missing_impl_diagnoser = nullptr)
     -> SemIR::InstId {
   auto interface_type =
       GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
@@ -528,7 +528,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id,
-    Context::BuildDiagnosticFn missing_impl_diagnoser) -> SemIR::InstId {
+    BuildSemIRLocDiagnosticFn missing_impl_diagnoser) -> SemIR::InstId {
   auto base_type_id = context.insts().Get(base_id).type_id();
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 

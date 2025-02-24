@@ -256,7 +256,7 @@ class DeductionContext {
 }  // namespace
 
 static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
-                            Context::DiagnosticBuilder& diag) -> void {
+                            SemIRLocDiagnosticBuilder& diag) -> void {
   CARBON_DIAGNOSTIC(DeductionGenericHere, Note,
                     "while deducing parameters of generic declared here");
   diag.Note(context.generics().Get(generic_id).decl_id, DeductionGenericHere);

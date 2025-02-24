@@ -91,6 +91,7 @@ cc_library(
         "//common:array_stack",
         "//common:check",
         "//common:map",
+        "//common:ostream",
         "//common:raw_string_ostream",
         "//common:set",
         "//common:vlog",

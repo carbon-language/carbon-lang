@@ -26,7 +26,7 @@ namespace Carbon::Check {
 
 // Adds the location of the associated function to a diagnostic.
 static auto NoteAssociatedFunction(Context& context,
-                                   Context::DiagnosticBuilder& builder,
+                                   SemIRLocDiagnosticBuilder& builder,
                                    SemIR::FunctionId function_id) -> void {
   CARBON_DIAGNOSTIC(AssociatedFunctionHere, Note,
                     "associated function {0} declared here", SemIR::NameId);
