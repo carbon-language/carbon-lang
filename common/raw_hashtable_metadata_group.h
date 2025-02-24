@@ -375,8 +375,8 @@ class MetadataGroup : public Printable<MetadataGroup> {
   static constexpr bool FastByteClear = Size == 8;
 
   // Most and least significant bits set.
-  static constexpr uint64_t MSBs = 0x8080'8080'8080'8080ULL;
-  static constexpr uint64_t LSBs = 0x0101'0101'0101'0101ULL;
+  static constexpr uint64_t Msbs = 0x8080'8080'8080'8080ULL;
+  static constexpr uint64_t Lsbs = 0x0101'0101'0101'0101ULL;
 
   using MatchIndex =
       BitIndex<std::conditional_t<ByteEncoding, uint64_t, uint32_t>,
@@ -390,7 +390,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // deferring the masking operation where useful. When that optimization
   // doesn't apply, these will be the same type.
   using SimdMatchRange =
-      BitIndexRange<MatchIndex, /*ByteEncodingMask=*/ByteEncoding ? MSBs : 0>;
+      BitIndexRange<MatchIndex, /*ByteEncodingMask=*/ByteEncoding ? Msbs : 0>;
   using SimdMatchPresentRange = BitIndexRange<MatchIndex>;
 
   // The public API range types can be either the portable or SIMD variations,
@@ -798,10 +798,10 @@ inline auto MetadataGroup::PortableClearDeleted() -> void {
     // need to preserve are those of present bytes. The most significant bit of
     // every present byte is set, so we take the most significant bit of each
     // byte, shift it into the least significant bit position, and bit-or it
-    // with the compliment of `LSBs`. This will have ones for every bit but the
+    // with the compliment of `Lsbs`. This will have ones for every bit but the
     // least significant bits, and ones for the least significant bits of every
     // present byte.
-    metadata_int &= (~LSBs | metadata_int >> 7);
+    metadata_int &= (~Lsbs | metadata_int >> 7);
   }
 }
 
@@ -834,13 +834,13 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // algorithm has a critical path height of 4 operations, and does 6
   // operations total on AArch64. The operation dependency graph is:
   //
-  //          group | MSBs        LSBs * match_byte + MSBs
+  //          group | Msbs        Lsbs * match_byte + Msbs
   //                 \                /
   //                 match_bits ^ broadcast
   //                            |
-  //   group & MSBs        MSBs - match_bits
+  //   group & Msbs        Msbs - match_bits
   //          \                /
-  //        group_MSBs & match_bits
+  //        group_Msbs & match_bits
   //
   // This diagram and the operation count are specific to AArch64 where we have
   // a fused *integer* multiply-add operation.
@@ -856,13 +856,13 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // and so always has this bit set as well, which means the xor below, in
   // addition to zeroing the low 7 bits of any byte that matches the tag, also
   // clears the high bit of every byte.
-  uint64_t match_bits = metadata_ints[0] | MSBs;
+  uint64_t match_bits = metadata_ints[0] | Msbs;
   // Broadcast the match byte to all bytes, and mask in the present bits in the
-  // MSBs of each byte. We structure this as a multiply and an add because we
+  // Msbs of each byte. We structure this as a multiply and an add because we
   // know that the add cannot carry, and this way it can be lowered using
   // combined multiply-add instructions if available.
-  uint64_t broadcast = LSBs * tag + MSBs;
-  CARBON_DCHECK(broadcast == (LSBs * tag | MSBs),
+  uint64_t broadcast = Lsbs * tag + Msbs;
+  CARBON_DCHECK(broadcast == (Lsbs * tag | Msbs),
                 "Unexpected carry from addition!");
 
   // Xor the broadcast byte pattern. This makes bytes with matches become 0, and
@@ -872,11 +872,11 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   match_bits = match_bits ^ broadcast;
   // Subtract each byte of `match_bits` from `0x80` bytes. After this, the high
   // bit will be set only for those bytes that were zero.
-  match_bits = MSBs - match_bits;
+  match_bits = Msbs - match_bits;
   // Zero everything but the high bits, and also zero the high bits of any bytes
   // for "not present" slots in the original group. This avoids false positives
   // for `Empty` and `Deleted` bytes in the metadata.
-  match_bits &= (metadata_ints[0] & MSBs);
+  match_bits &= (metadata_ints[0] & Msbs);
 
   // At this point, `match_bits` has the high bit set for bytes where the
   // original group byte equals `tag` plus the high bit.
@@ -905,7 +905,7 @@ inline auto MetadataGroup::PortableMatchPresent() const -> MatchRange {
 
   // Want to keep the high bit of each byte, which indicates whether that byte
   // represents a present slot.
-  uint64_t match_bits = metadata_ints[0] & MSBs;
+  uint64_t match_bits = metadata_ints[0] & Msbs;
 
   CARBON_DCHECK(VerifyPortableRangeBits(
       match_bits, [&](uint8_t byte) { return (byte & PresentMask) != 0; }));
@@ -937,7 +937,7 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
   //   cause the high bit to be set.
   uint64_t match_bits = metadata_ints[0] | (metadata_ints[0] << 7);
   // This inverts the high bits of the bytes, and clears the remaining bits.
-  match_bits = ~match_bits & MSBs;
+  match_bits = ~match_bits & Msbs;
 
   // The high bits of the bytes of `match_bits` are set if the corresponding
   // metadata byte is `Empty`.
@@ -971,7 +971,7 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
   //   shifting left by 7 will have the high bit set.
   uint64_t match_bits = metadata_ints[0] | (~metadata_ints[0] << 7);
   // This inverts the high bits of the bytes, and clears the remaining bits.
-  match_bits = ~match_bits & MSBs;
+  match_bits = ~match_bits & Msbs;
 
   // The high bits of the bytes of `match_bits` are set if the corresponding
   // metadata byte is `Deleted`.
@@ -1020,7 +1020,7 @@ inline auto MetadataGroup::SimdClearDeleted() -> void {
   // code. This is reasonably fast, but unfortunate because it forces the group
   // out of a SIMD register and into a general purpose register, which can have
   // high latency.
-  metadata_ints[0] &= (~LSBs | metadata_ints[0] >> 7);
+  metadata_ints[0] &= (~Lsbs | metadata_ints[0] >> 7);
 #elif CARBON_X86_SIMD_SUPPORT
   // For each byte, use `metadata_vec` if the byte's high bit is set (indicating
   // it is present), otherwise (it is empty or deleted) replace it with zero
@@ -1038,10 +1038,10 @@ inline auto MetadataGroup::SimdMatch(uint8_t tag) const -> SimdMatchRange {
   // Broadcast byte we want to match to every byte in the vector.
   auto match_byte_vec = vdup_n_u8(tag | PresentMask);
   // Result bytes have all bits set for the bytes that match, so we have to
-  // clear everything but MSBs next.
+  // clear everything but Msbs next.
   auto match_byte_cmp_vec = vceq_u8(metadata_vec, match_byte_vec);
   uint64_t match_bits = vreinterpret_u64_u8(match_byte_cmp_vec)[0];
-  // Note that the range will lazily mask to the MSBs as part of incrementing.
+  // Note that the range will lazily mask to the Msbs as part of incrementing.
   result = SimdMatchRange(match_bits);
 #elif CARBON_X86_SIMD_SUPPORT
   result = X86SimdMatch(tag | PresentMask);
@@ -1059,7 +1059,7 @@ inline auto MetadataGroup::SimdMatchPresent() const -> SimdMatchPresentRange {
   uint64_t match_bits = vreinterpret_u64_u8(metadata_vec)[0];
   // Even though the Neon SIMD range will do its own masking, we have to mask
   // here so that `empty` is correct.
-  result = SimdMatchPresentRange(match_bits & MSBs);
+  result = SimdMatchPresentRange(match_bits & Msbs);
 #elif CARBON_X86_SIMD_SUPPORT
   // We arranged the byte vector so that present bytes have the high bit set,
   // which this instruction extracts.
@@ -1079,10 +1079,10 @@ inline auto MetadataGroup::SimdMatchEmpty() const -> MatchIndex {
   auto cmp_vec = vceqz_u8(metadata_vec);
   uint64_t metadata_bits = vreinterpret_u64_u8(cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
-  // test can often be folded into masking the bits with `MSBs` when we do that
+  // test can often be folded into masking the bits with `Msbs` when we do that
   // mask in the scalar domain rather than the SIMD domain. So we do the mask
   // here rather than above prior to extracting the match bits.
-  result = MatchIndex(metadata_bits & MSBs);
+  result = MatchIndex(metadata_bits & Msbs);
 #elif CARBON_X86_SIMD_SUPPORT
   // Even though we only need the first match rather than all matches, we don't
   // have a more efficient way to compute this on x86 and so we reuse the
@@ -1104,10 +1104,10 @@ inline auto MetadataGroup::SimdMatchDeleted() const -> MatchIndex {
   auto cmp_vec = vceq_u8(metadata_vec, vdup_n_u8(Deleted));
   uint64_t match_bits = vreinterpret_u64_u8(cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
-  // test can often be folded into masking the bits with `MSBs` when we do that
+  // test can often be folded into masking the bits with `Msbs` when we do that
   // mask in the scalar domain rather than the SIMD domain. So we do the mask
   // here rather than above prior to extracting the match bits.
-  result = MatchIndex(match_bits & MSBs);
+  result = MatchIndex(match_bits & Msbs);
 #elif CARBON_X86_SIMD_SUPPORT
   // Even though we only need the first match rather than all matches, we don't
   // have a more efficient way to compute this on x86 and so we reuse the
