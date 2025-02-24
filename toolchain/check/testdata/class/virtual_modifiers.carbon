@@ -244,12 +244,12 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 abstract class T1 {
-  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual non-instance method [VirtualWithoutSelf]
+  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual class function [VirtualWithoutSelf]
   // CHECK:STDERR:   virtual fn F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
   virtual fn F();
-  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual non-instance method [VirtualWithoutSelf]
+  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual class function [VirtualWithoutSelf]
   // CHECK:STDERR:   abstract fn G();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -258,7 +258,7 @@ abstract class T1 {
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual non-instance method [VirtualWithoutSelf]
+  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual class function [VirtualWithoutSelf]
   // CHECK:STDERR:   impl fn F();
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
