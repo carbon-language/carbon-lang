@@ -76,9 +76,6 @@ auto CheckUnit::Run() -> void {
   }
 
   FinishRun();
-
-  // Verify that Context cleanly finished.
-  context_.VerifyOnFinish();
 }
 
 auto CheckUnit::InitPackageScopeAndImports() -> void {
@@ -404,6 +401,9 @@ auto CheckUnit::FinishRun() -> void {
   context_.global_init().Finalize();
 
   context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
+
+  // Verify that Context cleanly finished.
+  context_.VerifyOnFinish();
 }
 
 auto CheckUnit::CheckRequiredDefinitions() -> void {
