@@ -15,7 +15,8 @@ fn H[T:! type](x: T) {
 }
 
 fn G[T:! type](x: T) -> T {
-  // TODO: call crashing.
+  // TODO: the call below is crashing because proper type resolution to
+  // use the G specific, not the G generic is not done yet.
   // H(T);
   return x;
 }
