@@ -224,6 +224,15 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         .Emit();
   };
 
+  if (allow_self_type_mismatch &&
+      SemIR::Function::GetNameFromPatternId(
+          context.sem_ir(), new_param_pattern_id) == SemIR::NameId::SelfValue &&
+      SemIR::Function::GetNameFromPatternId(context.sem_ir(),
+                                            prev_param_pattern_id) ==
+          SemIR::NameId::SelfValue) {
+    return true;
+  }
+
   auto new_param_pattern = context.insts().Get(new_param_pattern_id);
   auto prev_param_pattern = context.insts().Get(prev_param_pattern_id);
   if (new_param_pattern.kind() != prev_param_pattern.kind()) {
@@ -233,14 +242,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
 
   auto prev_param_type_id = SemIR::GetTypeInSpecific(
       context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
-  if ((!allow_self_type_mismatch ||
-       (SemIR::Function::GetNameFromPatternId(context.sem_ir(),
-                                              new_param_pattern_id) !=
-            SemIR::NameId::SelfValue ||
-        SemIR::Function::GetNameFromPatternId(context.sem_ir(),
-                                              prev_param_pattern_id) !=
-            SemIR::NameId::SelfValue)) &&
-      !context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
+  if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
                                                   prev_param_type_id)) {
     if (!diagnose) {
       return false;
