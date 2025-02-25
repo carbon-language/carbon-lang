@@ -239,12 +239,12 @@ class Inst : public Printable<Inst> {
     return ArgKinds(kind());
   }
 
-  // Gets the first argument of the instruction. InvalidIndex if there is no
-  // such argument.
+  // Gets the first argument of the instruction. NoneIndex if there is no such
+  // argument.
   auto arg0() const -> int32_t { return arg0_; }
 
-  // Gets the second argument of the instruction. InvalidIndex if there is no
-  // such argument.
+  // Gets the second argument of the instruction. NoneIndex if there is no such
+  // argument.
   auto arg1() const -> int32_t { return arg1_; }
 
   // Sets the type of this instruction.
