@@ -20,6 +20,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Check {
 
@@ -385,25 +386,42 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   return true;
 }
 
-auto CheckUnit::FinishRun() -> void {
-  CheckRequiredDefinitions();
+auto CheckUnit::CheckRequiredDeclarations() -> void {
+  for (const auto& function : context_.functions().array_ref()) {
+    if (!function.first_owning_decl_id.has_value() &&
+        function.extern_library_id == context_.sem_ir().library_id()) {
+      auto function_loc_id =
+          context_.insts().GetLocId(function.non_owning_decl_id);
+      CARBON_CHECK(function_loc_id.is_import_ir_inst_id());
+      auto import_ir_id = context_.sem_ir()
+                              .import_ir_insts()
+                              .Get(function_loc_id.import_ir_inst_id())
+                              .ir_id;
+      auto& import_ir = context_.import_irs().Get(import_ir_id);
+      if (import_ir.sem_ir->package_id().has_value() !=
+          context_.sem_ir().package_id().has_value()) {
+        continue;
+      }
 
-  // Pop information for the file-level scope.
-  context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
-  context_.scope_stack().Pop();
+      CARBON_DIAGNOSTIC(
+          MissingOwningDeclarationInApi, Error,
+          "owning declaration required for non-owning declaration");
+      if (!import_ir.sem_ir->package_id().has_value() &&
+          !context_.sem_ir().package_id().has_value()) {
+        emitter_.Emit(function.non_owning_decl_id,
+                      MissingOwningDeclarationInApi);
+        continue;
+      }
 
-  // Finalizes the list of exports on the IR.
-  context_.inst_blocks().Set(SemIR::InstBlockId::Exports, context_.exports());
-  // Finalizes the ImportRef inst block.
-  context_.inst_blocks().Set(SemIR::InstBlockId::ImportRefs,
-                             context_.import_ref_ids());
-  // Finalizes __global_init.
-  context_.global_init().Finalize();
-
-  context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
-
-  // Verify that Context cleanly finished.
-  context_.VerifyOnFinish();
+      if (import_ir.sem_ir->identifiers().Get(
+              import_ir.sem_ir->package_id().AsIdentifierId()) ==
+          context_.sem_ir().identifiers().Get(
+              context_.sem_ir().package_id().AsIdentifierId())) {
+        emitter_.Emit(function.non_owning_decl_id,
+                      MissingOwningDeclarationInApi);
+      }
+    }
+  }
 }
 
 auto CheckUnit::CheckRequiredDefinitions() -> void {
@@ -470,6 +488,28 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
     }
   }
+}
+
+auto CheckUnit::FinishRun() -> void {
+  CheckRequiredDeclarations();
+  CheckRequiredDefinitions();
+
+  // Pop information for the file-level scope.
+  context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
+  context_.scope_stack().Pop();
+
+  // Finalizes the list of exports on the IR.
+  context_.inst_blocks().Set(SemIR::InstBlockId::Exports, context_.exports());
+  // Finalizes the ImportRef inst block.
+  context_.inst_blocks().Set(SemIR::InstBlockId::ImportRefs,
+                             context_.import_ref_ids());
+  // Finalizes __global_init.
+  context_.global_init().Finalize();
+
+  context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
+
+  // Verify that Context cleanly finished.
+  context_.VerifyOnFinish();
 }
 
 }  // namespace Carbon::Check

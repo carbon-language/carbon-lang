@@ -651,6 +651,7 @@ struct FacetType {
        .deduce_through = true});
 
   TypeId type_id;
+  // TODO: Rename this to facet_type_info_id.
   FacetTypeId facet_type_id;
 };
 

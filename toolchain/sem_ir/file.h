@@ -153,6 +153,7 @@ class File : public Printable<File> {
   auto associated_constants() const -> const ValueStore<AssociatedConstantId>& {
     return associated_constants_;
   }
+  // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }

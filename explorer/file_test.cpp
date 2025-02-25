@@ -19,8 +19,8 @@ namespace {
 class ExplorerFileTest : public FileTestBase {
  public:
   explicit ExplorerFileTest(llvm::StringRef /*exe_path*/,
-                            std::mutex* output_mutex, llvm::StringRef test_name)
-      : FileTestBase(output_mutex, test_name),
+                            llvm::StringRef test_name)
+      : FileTestBase(test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
     CARBON_CHECK(prelude_line_re_.ok(), "{0}", prelude_line_re_.error());
@@ -95,6 +95,9 @@ class ExplorerFileTest : public FileTestBase {
       RE2::GlobalReplace(&check_line, timing_re_, R"(\1{{\\d+}}\2)");
     }
   }
+
+  // Cannot execute in parallel.
+  auto AllowParallelRun() const -> bool override { return false; }
 
  private:
   // Trace output is directly checked for a few tests.

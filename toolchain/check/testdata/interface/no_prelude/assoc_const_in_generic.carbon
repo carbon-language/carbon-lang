@@ -35,8 +35,8 @@ fn H() {
 // CHECK:STDOUT:   %Self: %I.type.325 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 2 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 2 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T) [symbolic]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.type.2ae: type = fn_type @F, @I(%T) [symbolic]
+// CHECK:STDOUT:   %F.bb2: %F.type.2ae = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.955: type = assoc_entity_type %I.type.325 [symbolic]
 // CHECK:STDOUT:   %assoc0.fef: %I.assoc_type.955 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -48,9 +48,11 @@ fn H() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %I.type.885: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
-// CHECK:STDOUT:   %complete_type.788: <witness> = complete_type_witness %I.type.885 [concrete]
+// CHECK:STDOUT:   %F.type.684: type = fn_type @F, @I(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %F.a8d: %F.type.684 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type.67f: type = assoc_entity_type %I.type.885 [concrete]
 // CHECK:STDOUT:   %assoc0.639: %I.assoc_type.67f = assoc_entity element0, @I.%F.decl [concrete]
+// CHECK:STDOUT:   %complete_type.788: <witness> = complete_type_witness %I.type.885 [concrete]
 // CHECK:STDOUT:   %complete_type.973: <witness> = complete_type_witness %I.assoc_type.67f [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,14 +86,14 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc11_13.2)> [symbolic = %I.type (constants.%I.type.325)]
 // CHECK:STDOUT:   %Self.2: %I.type.325 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F: @I.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type.2ae)]
+// CHECK:STDOUT:   %F: @I.%F.type (%F.type.2ae) = struct_value () [symbolic = %F (constants.%F.bb2)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I.%I.type (%I.type.325) [symbolic = %I.assoc_type (constants.%I.assoc_type.955)]
 // CHECK:STDOUT:   %assoc0.loc12_22.2: @I.%I.assoc_type (%I.assoc_type.955) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc12_22.2 (constants.%assoc0.fef)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = @I.%F (constants.%F)] {
+// CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.2ae) = fn_decl @F [symbolic = @I.%F (constants.%F.bb2)] {
 // CHECK:STDOUT:       %U.patt.loc12_8.2: type = symbolic_binding_pattern U, 2 [symbolic = %U.patt.loc12_8.1 (constants.%U.patt)]
 // CHECK:STDOUT:       %U.param_patt: type = value_param_pattern %U.patt.loc12_8.2, runtime_param<none> [symbolic = %U.patt.loc12_8.1 (constants.%U.patt)]
 // CHECK:STDOUT:       %return.patt: @F.%U.loc12_8.1 (%U) = return_slot_pattern
@@ -158,8 +160,8 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
 // CHECK:STDOUT:   %Self.2 => constants.%Self
-// CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F => constants.%F
+// CHECK:STDOUT:   %F.type => constants.%F.type.2ae
+// CHECK:STDOUT:   %F => constants.%F.bb2
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.955
 // CHECK:STDOUT:   %assoc0.loc12_22.2 => constants.%assoc0.fef
 // CHECK:STDOUT: }
@@ -193,5 +195,13 @@ fn H() {
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%empty_struct_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %I.type => constants.%I.type.885
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %F.type => constants.%F.type.684
+// CHECK:STDOUT:   %F => constants.%F.a8d
+// CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.67f
+// CHECK:STDOUT:   %assoc0.loc12_22.2 => constants.%assoc0.639
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
