@@ -39,7 +39,7 @@ static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
 }
 
 // Produces a note that the given function has no explicit return type.
-static auto NoteNoReturnTypeProvided(DiagnosticBuilder& diag,
+static auto NoteNoReturnTypeProvided(SemIRLocDiagnosticBuilder& diag,
                                      const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeOmittedNote, Note,
                     "there was no return type provided");
@@ -63,7 +63,7 @@ static auto NoteReturnType(Context& context, SemIRLocDiagnosticBuilder& diag,
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
-static auto NoteReturnedVar(DiagnosticBuilder& diag,
+static auto NoteReturnedVar(SemIRLocDiagnosticBuilder& diag,
                             SemIR::InstId returned_var_id) {
   CARBON_DIAGNOSTIC(ReturnedVarHere, Note, "`returned var` was declared here");
   diag.Note(returned_var_id, ReturnedVarHere);
