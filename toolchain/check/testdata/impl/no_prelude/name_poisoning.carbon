@@ -17,10 +17,10 @@ interface I;
 // `N.F` uses `N.I` and not `package.I`.
 namespace N;
 interface N.I {}
-fn N.F(x: I*);
+fn N.F(x:! I) {}
 
-fn TestCall(x: N.I*) {
-  // `N.F` accepts an `N.I*` not a `package.I*`.
+fn TestCall(x:! N.I) {
+  // `N.F` accepts an `N.I` not a `package.I`.
   N.F(x);
 }
 
@@ -241,12 +241,14 @@ class N.C {
 // CHECK:STDOUT:   %I.type.733: type = facet_type <@I.1> [concrete]
 // CHECK:STDOUT:   %I.type.4da: type = facet_type <@I.2> [concrete]
 // CHECK:STDOUT:   %Self: %I.type.4da = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %ptr: type = ptr_type %I.type.4da [concrete]
+// CHECK:STDOUT:   %x: %I.type.4da = bind_symbolic_name x, 0 [symbolic]
+// CHECK:STDOUT:   %x.patt: %I.type.4da = symbolic_binding_pattern x, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TestCall.type: type = fn_type @TestCall [concrete]
 // CHECK:STDOUT:   %TestCall: %TestCall.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%x) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -262,27 +264,23 @@ class N.C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc8: type = interface_decl @I.2 [concrete = constants.%I.type.4da] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %ptr = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %ptr = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.patt.loc9_8.1: %I.type.4da = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc9_8.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %x.param_patt: %I.type.4da = value_param_pattern %x.patt.loc9_8.1, runtime_param<none> [symbolic = %x.patt.loc9_8.2 (constants.%x.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %ptr = value_param runtime_param0
-// CHECK:STDOUT:     %.loc9: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl.loc8 [concrete = constants.%I.type.4da]
-// CHECK:STDOUT:       %ptr: type = ptr_type %I.type.4da [concrete = constants.%ptr]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %ptr = bind_name x, %x.param
+// CHECK:STDOUT:     %x.param: %I.type.4da = value_param runtime_param<none>
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl.loc8 [concrete = constants.%I.type.4da]
+// CHECK:STDOUT:     %x.loc9_8.1: %I.type.4da = bind_symbolic_name x, 0, %x.param [symbolic = %x.loc9_8.2 (constants.%x)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestCall.decl: %TestCall.type = fn_decl @TestCall [concrete = constants.%TestCall] {
-// CHECK:STDOUT:     %x.patt: %ptr = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %ptr = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.patt.loc11_13.1: %I.type.4da = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc11_13.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %x.param_patt: %I.type.4da = value_param_pattern %x.patt.loc11_13.1, runtime_param<none> [symbolic = %x.patt.loc11_13.2 (constants.%x.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %ptr = value_param runtime_param0
-// CHECK:STDOUT:     %.loc11: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %x.param: %I.type.4da = value_param runtime_param<none>
+// CHECK:STDOUT:     %.loc11: type = splice_block %I.ref [concrete = constants.%I.type.4da] {
 // CHECK:STDOUT:       %N.ref.loc11: <namespace> = name_ref N, file.%N [concrete = file.%N]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl.loc8 [concrete = constants.%I.type.4da]
-// CHECK:STDOUT:       %ptr: type = ptr_type %I.type.4da [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %ptr = bind_name x, %x.param
+// CHECK:STDOUT:     %x.loc11_13.1: %I.type.4da = bind_symbolic_name x, 0, %x.param [symbolic = %x.loc11_13.2 (constants.%x)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -296,16 +294,49 @@ class N.C {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param_patt: %ptr);
+// CHECK:STDOUT: generic fn @F(%x.loc9_8.1: %I.type.4da) {
+// CHECK:STDOUT:   %x.loc9_8.2: %I.type.4da = bind_symbolic_name x, 0 [symbolic = %x.loc9_8.2 (constants.%x)]
+// CHECK:STDOUT:   %x.patt.loc9_8.2: %I.type.4da = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc9_8.2 (constants.%x.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestCall(%x.param_patt: %ptr) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %N.ref.loc13: <namespace> = name_ref N, file.%N [concrete = file.%N]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %x.ref: %ptr = name_ref x, %x
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%x.ref)
-// CHECK:STDOUT:   return
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%x.param_patt: %I.type.4da) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @TestCall(%x.loc11_13.1: %I.type.4da) {
+// CHECK:STDOUT:   %x.loc11_13.2: %I.type.4da = bind_symbolic_name x, 0 [symbolic = %x.loc11_13.2 (constants.%x)]
+// CHECK:STDOUT:   %x.patt.loc11_13.2: %I.type.4da = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc11_13.2 (constants.%x.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.specific_fn.loc13_4.2: <specific function> = specific_function constants.%F, @F(%x.loc11_13.2) [symbolic = %F.specific_fn.loc13_4.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%x.param_patt: %I.type.4da) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %N.ref.loc13: <namespace> = name_ref N, file.%N [concrete = file.%N]
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:     %x.ref: %I.type.4da = name_ref x, %x.loc11_13.1 [symbolic = %x.loc11_13.2 (constants.%x)]
+// CHECK:STDOUT:     %F.specific_fn.loc13_4.1: <specific function> = specific_function %F.ref, @F(constants.%x) [symbolic = %F.specific_fn.loc13_4.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc13_4.1()
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%x) {
+// CHECK:STDOUT:   %x.loc9_8.2 => constants.%x
+// CHECK:STDOUT:   %x.patt.loc9_8.2 => constants.%x
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @TestCall(constants.%x) {
+// CHECK:STDOUT:   %x.loc11_13.2 => constants.%x
+// CHECK:STDOUT:   %x.patt.loc11_13.2 => constants.%x
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(@TestCall.%x.loc11_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- poison.carbon
 // CHECK:STDOUT:
