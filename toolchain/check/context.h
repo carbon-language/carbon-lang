@@ -166,15 +166,14 @@ class Context {
   }
 
   // Pre-computed parts of a binding pattern.
+  // TODO: Consider putting this behind a narrower API to guard against emitting
+  // multiple times.
   struct BindingPatternInfo {
     // The corresponding AnyBindName inst.
     SemIR::InstId bind_name_id;
     // The region of insts that computes the type of the binding.
     SemIR::ExprRegionId type_expr_region_id;
   };
-
-  // TODO: Consider putting this behind a narrower API to guard against emitting
-  // multiple times.
   auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
     return bind_name_map_;
   }
@@ -191,7 +190,6 @@ class Context {
     Parse::NodeId node_id;
     NameComponent name_component;
   };
-
   auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
     return choice_deferred_bindings_;
   }
@@ -203,7 +201,6 @@ class Context {
     SemIR::ConstantId type_const_id;
     SemIR::ConstantId interface_const_id;
   };
-
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
   }
