@@ -300,6 +300,11 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorNotId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::PrefixOperatorPartialId node_id)
+    -> bool {
+  return context.TODO(node_id, "partial operator");
+}
+
 auto HandleParseNode(Context& context, Parse::PrefixOperatorPlusPlusId node_id)
     -> bool {
   return HandleUnaryOperator(context, node_id, {"Inc"});

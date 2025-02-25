@@ -164,6 +164,7 @@ auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
       return PrecedenceGroup(If);
 
     case Lex::TokenKind::Const:
+    case Lex::TokenKind::Partial:
       return PrecedenceGroup(TypePrefix);
 
     default:
@@ -243,6 +244,7 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     case Lex::TokenKind::Const:
     case Lex::TokenKind::MinusMinus:
     case Lex::TokenKind::Not:
+    case Lex::TokenKind::Partial:
     case Lex::TokenKind::PlusPlus:
       break;
 
