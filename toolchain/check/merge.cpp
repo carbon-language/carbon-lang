@@ -224,12 +224,13 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         .Emit();
   };
 
-  if (allow_self_type_mismatch &&
-      SemIR::Function::GetNameFromPatternId(
-          context.sem_ir(), new_param_pattern_id) == SemIR::NameId::SelfValue &&
-      SemIR::Function::GetNameFromPatternId(context.sem_ir(),
-                                            prev_param_pattern_id) ==
-          SemIR::NameId::SelfValue) {
+  auto new_name_id = SemIR::Function::GetNameFromPatternId(
+      context.sem_ir(), new_param_pattern_id);
+  auto prev_name_id = SemIR::Function::GetNameFromPatternId(
+      context.sem_ir(), prev_param_pattern_id);
+
+  if (allow_self_type_mismatch && new_name_id == SemIR::NameId::SelfValue &&
+      prev_name_id == SemIR::NameId::SelfValue) {
     return true;
   }
 
@@ -279,11 +280,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return false;
   }
 
-  auto new_entity_name = context.entity_names().Get(
-      new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id);
-  auto prev_entity_name = context.entity_names().Get(
-      prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id);
-  if (new_entity_name.name_id != prev_entity_name.name_id) {
+  if (new_name_id != prev_name_id) {
     emit_diagnostic();
     return false;
   }
