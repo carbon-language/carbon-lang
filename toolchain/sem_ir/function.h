@@ -115,7 +115,9 @@ struct CalleeFunction {
 };
 
 // Returns information for the function corresponding to callee_id.
-auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction;
+auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
+                       SpecificId specific_id = SpecificId::None)
+    -> CalleeFunction;
 
 }  // namespace Carbon::SemIR
 

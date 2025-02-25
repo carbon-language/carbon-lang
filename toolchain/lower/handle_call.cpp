@@ -419,8 +419,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  auto callee_function =
-      SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+  auto callee_function = SemIR::GetCalleeFunction(
+      context.sem_ir(), inst.callee_id, context.specific_id());
   CARBON_CHECK(callee_function.function_id.has_value());
 
   if (auto builtin_kind = context.sem_ir()
@@ -437,7 +437,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  if (SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst.type_id)
+  auto inst_type_id =
+      callee_function.resolved_specific_id.has_value()
+          ? SemIR::GetTypeInSpecific(context.sem_ir(),
+                                     callee_function.resolved_specific_id,
+                                     inst.type_id)
+          : inst.type_id;
+
+  if (SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst_type_id)
           .has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
