@@ -1563,13 +1563,13 @@ it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
 ### Destructors
 
 Every non-abstract type is _destructible_, meaning has a defined destructor
-function called when the lifetime of a value of that type ends, such as when a
+method called when the lifetime of a value of that type ends, such as when a
 variable goes out of scope. The destructor for a class may be customized using
-the `destructor` keyword:
+the `destroy` method:
 
 ```carbon
 class MyClass {
-  destructor [self: Self] { ... }
+  fn destroy[self: Self]() { ... }
 }
 ```
 
@@ -1578,12 +1578,12 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  destructor [addr self: Self*] { ... }
+  fn destroy[addr self: Self*]() { ... }
 }
 ```
 
-If a class has no `destructor` declaration, it gets the default destructor,
-which is equivalent to `destructor [self: Self] { }`.
+If a class has no `destroy` method, it gets the default destructor, which is
+equivalent to `fn destroy[self: Self] { }`.
 
 The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
@@ -1601,9 +1601,9 @@ Destructors may be declared in class scope and then defined out-of-line:
 
 ```carbon
 class MyClass {
-  destructor [addr self: Self*];
+  fn destroy[addr self: Self*]();
 }
-destructor MyClass [addr self: Self*] { ... }
+fn MyClass.destroy[addr self: Self*]() { ... }
 ```
 
 It is illegal to delete an instance of a derived class through a pointer to one
@@ -1615,12 +1615,12 @@ must be `impl`:
 
 ```carbon
 base class MyBaseClass {
-  virtual destructor [addr self: Self*] { ... }
+  virtual fn destroy[addr self: Self*]() { ... }
 }
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  impl destructor [addr self: Self*] { ... }
+  impl fn destroy[addr self: Self*]() { ... }
 }
 ```
 
