@@ -93,6 +93,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
                               GetFunction(sem_ir().global_ctor_id()),
                               /*Priority=*/0);
   }
+
   return std::move(llvm_module_);
 }
 
