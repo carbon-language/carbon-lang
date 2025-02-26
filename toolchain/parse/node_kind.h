@@ -196,7 +196,7 @@ class NodeKind::Definition : public NodeKind {
 
   // This is factored out and non-constexpr to improve the compile-time error
   // message if the check below fails.
-  auto MustSpecifyEitherBracketingNodeOrChildCount() {
+  auto MustSpecifyEitherBracketingNodeOrChildCount() -> void {
     CARBON_FATAL("Must specify either bracketing node or fixed child count.");
   }
 

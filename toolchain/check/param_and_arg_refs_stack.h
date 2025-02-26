@@ -69,7 +69,7 @@ class ParamAndArgRefsStack {
   }
 
   // Runs verification that the processing cleanly finished.
-  auto VerifyOnFinish() -> void { stack_.VerifyOnFinish(); }
+  auto VerifyOnFinish() const -> void { stack_.VerifyOnFinish(); }
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void {

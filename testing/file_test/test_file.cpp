@@ -301,7 +301,7 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
 // Converts a `FileCheck`-style expectation string into a single complete regex
 // string by escaping all regex characters outside of the designated `{{...}}`
 // regex sequences, and switching those to a normal regex sub-pattern syntax.
-static void ConvertExpectationStringToRegex(std::string& str) {
+static auto ConvertExpectationStringToRegex(std::string& str) -> void {
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
       case '(':

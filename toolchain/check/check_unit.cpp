@@ -76,22 +76,7 @@ auto CheckUnit::Run() -> void {
     return;
   }
 
-  CheckRequiredDefinitions();
-
-  CheckRequiredDeclarations();
-
-  context_.Finalize();
-
-  context_.VerifyOnFinish();
-
-  context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
-
-#ifndef NDEBUG
-  if (auto verify = context_.sem_ir().Verify(); !verify.ok()) {
-    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", context_.sem_ir(),
-                 verify.error());
-  }
-#endif
+  FinishRun();
 }
 
 auto CheckUnit::InitPackageScopeAndImports() -> void {
@@ -503,6 +488,28 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
     }
   }
+}
+
+auto CheckUnit::FinishRun() -> void {
+  CheckRequiredDeclarations();
+  CheckRequiredDefinitions();
+
+  // Pop information for the file-level scope.
+  context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
+  context_.scope_stack().Pop();
+
+  // Finalizes the list of exports on the IR.
+  context_.inst_blocks().Set(SemIR::InstBlockId::Exports, context_.exports());
+  // Finalizes the ImportRef inst block.
+  context_.inst_blocks().Set(SemIR::InstBlockId::ImportRefs,
+                             context_.import_ref_ids());
+  // Finalizes __global_init.
+  context_.global_init().Finalize();
+
+  context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
+
+  // Verify that Context cleanly finished.
+  context_.VerifyOnFinish();
 }
 
 }  // namespace Carbon::Check

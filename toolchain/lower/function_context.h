@@ -62,7 +62,7 @@ class FunctionContext {
   }
 
   // Sets the value for the given instruction.
-  auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
+  auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {
     bool added = locals_.Insert(inst_id, value).is_inserted();
     CARBON_CHECK(added, "Duplicate local insert: {0} {1}", inst_id,
                  sem_ir().insts().Get(inst_id));
@@ -102,7 +102,7 @@ class FunctionContext {
 
   // Sets the instruction after static allocas. This should be called once,
   // after the first alloca is created.
-  auto SetInstructionAfterAllocas(llvm::Instruction* after_allocas) {
+  auto SetInstructionAfterAllocas(llvm::Instruction* after_allocas) -> void {
     CARBON_CHECK(!after_allocas_);
     after_allocas_ = after_allocas;
   }

@@ -172,6 +172,10 @@ interface A {}
 class D {}
 impl D as A {}
 // TODO: This should be a compile-time binding, once that is supported.
+// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+11]]:35: error: semantics TODO: `impl lookup for a FacetType with no interface (using `where .Self impls ...` instead?)` [SemanticsTodo]
+// CHECK:STDERR: let B: type where .Self impls A = D;
+// CHECK:STDERR:                                   ^
+// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+7]]:35: error: cannot implicitly convert from `type` to `type where...` [ImplicitAsConversionFailure]
 // CHECK:STDERR: let B: type where .Self impls A = D;
 // CHECK:STDERR:                                   ^
@@ -1422,15 +1426,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_13.1: type = splice_block %.loc15_13.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:   %.loc19_13.1: type = splice_block %.loc19_13.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:     %.loc15_13.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc19_13.2: type = where_expr %.Self [concrete = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %A.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_35: %type_where = converted @__global_init.%D.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_35: %type_where = converted @__global_init.%D.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %B: %type_where = bind_name B, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
