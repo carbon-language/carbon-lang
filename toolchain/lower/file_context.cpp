@@ -266,8 +266,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     }
     auto param_type_id =
         SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_pattern.type_id);
-    CARBON_CHECK(!param_type_id.AsConstantId().is_symbolic() &&
-                 "Found symbolic type id after resolution");
+    CARBON_CHECK(
+        !param_type_id.AsConstantId().is_symbolic(),
+        "Found symbolic type id after resolution when lowering type {0}.",
+        param_pattern.type_id);
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
