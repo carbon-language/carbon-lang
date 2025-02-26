@@ -77,7 +77,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // canonicalized, so that it can be further modified by the caller if desired.
   static auto Combined(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> FacetTypeInfo {
-    FacetTypeInfo info;
+    auto info = FacetTypeInfo{.other_requirements = false};
     llvm::append_range(info.impls_constraints, lhs.impls_constraints);
     llvm::append_range(info.impls_constraints, rhs.impls_constraints);
     llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
