@@ -314,7 +314,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.d38: %Convert.type.010 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.06a: type = assoc_entity_type %ImplicitAs.type.94e [concrete]
 // CHECK:STDOUT:   %assoc0.69d: %ImplicitAs.assoc_type.06a = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
-// CHECK:STDOUT:   %impl_witness.39cb: <witness> = impl_witness (@impl.2.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.39cb: <witness> = impl_witness (@impl.837.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.fff: type = fn_type @Convert.3 [concrete]
 // CHECK:STDOUT:   %Convert.606: %Convert.type.fff = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.a04: %ImplicitAs.type.94e = facet_value %C.808, %impl_witness.39cb [concrete]
@@ -322,7 +322,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.bound.92d: <bound method> = bound_method %int_1.5b8, %Convert.cb5 [concrete]
 // CHECK:STDOUT:   %int_1.f38: %i32.builtin = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.8be: type = class_type @C, @C(%int_1.f38) [concrete]
-// CHECK:STDOUT:   %impl_witness.ecb: <witness> = impl_witness (@impl.3.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.ecb: <witness> = impl_witness (@impl.511.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.89f: type = fn_type @Convert.4 [concrete]
 // CHECK:STDOUT:   %Convert.689: %Convert.type.89f = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.827: %ImplicitAs.type.94e = facet_value %C.8be, %impl_witness.ecb [concrete]
@@ -330,7 +330,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.bound.1b9: <bound method> = bound_method %int_2.ecc, %Convert.cb5 [concrete]
 // CHECK:STDOUT:   %int_2.5a1: %i32.builtin = int_value 2 [concrete]
 // CHECK:STDOUT:   %C.c17: type = class_type @C, @C(%int_2.5a1) [concrete]
-// CHECK:STDOUT:   %impl_witness.8b8: <witness> = impl_witness (@impl.4.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.8b8: <witness> = impl_witness (@impl.141.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.e90: type = fn_type @Convert.5 [concrete]
 // CHECK:STDOUT:   %Convert.ec9: %Convert.type.e90 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.f40: %ImplicitAs.type.94e = facet_value %C.c17, %impl_witness.8b8 [concrete]
@@ -338,7 +338,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.bound.b6b: <bound method> = bound_method %int_3.1ba, %Convert.cb5 [concrete]
 // CHECK:STDOUT:   %int_3.a0f: %i32.builtin = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.414: type = class_type @C, @C(%int_3.a0f) [concrete]
-// CHECK:STDOUT:   %impl_witness.1c0: <witness> = impl_witness (@impl.5.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.1c0: <witness> = impl_witness (@impl.e6b.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.5db: type = fn_type @Convert.6 [concrete]
 // CHECK:STDOUT:   %Convert.193: %Convert.type.5db = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.4b0: %ImplicitAs.type.94e = facet_value %C.414, %impl_witness.1c0 [concrete]
@@ -346,7 +346,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.bound.626: <bound method> = bound_method %int_4.0c1, %Convert.cb5 [concrete]
 // CHECK:STDOUT:   %int_4.4f1: %i32.builtin = int_value 4 [concrete]
 // CHECK:STDOUT:   %C.488: type = class_type @C, @C(%int_4.4f1) [concrete]
-// CHECK:STDOUT:   %impl_witness.7c9: <witness> = impl_witness (@impl.6.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.7c9: <witness> = impl_witness (@impl.056.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.4e7: type = fn_type @Convert.7 [concrete]
 // CHECK:STDOUT:   %Convert.52a: %Convert.type.4e7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.e09: %ImplicitAs.type.94e = facet_value %C.488, %impl_witness.7c9 [concrete]
@@ -354,7 +354,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.bound.910: <bound method> = bound_method %int_5.64b, %Convert.cb5 [concrete]
 // CHECK:STDOUT:   %int_5.967: %i32.builtin = int_value 5 [concrete]
 // CHECK:STDOUT:   %C.3e2: type = class_type @C, @C(%int_5.967) [concrete]
-// CHECK:STDOUT:   %impl_witness.4b9: <witness> = impl_witness (@impl.7.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.4b9: <witness> = impl_witness (@impl.154.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.658: type = fn_type @Convert.8 [concrete]
 // CHECK:STDOUT:   %Convert.9b6: %Convert.type.658 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.210: %ImplicitAs.type.94e = facet_value %C.3e2, %impl_witness.4b9 [concrete]
@@ -362,7 +362,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.bound.e3a: <bound method> = bound_method %int_6.462, %Convert.cb5 [concrete]
 // CHECK:STDOUT:   %int_6.ec5: %i32.builtin = int_value 6 [concrete]
 // CHECK:STDOUT:   %C.78c: type = class_type @C, @C(%int_6.ec5) [concrete]
-// CHECK:STDOUT:   %impl_witness.4bf: <witness> = impl_witness (@impl.8.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.4bf: <witness> = impl_witness (@impl.a6d.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.623: type = fn_type @Convert.9 [concrete]
 // CHECK:STDOUT:   %Convert.8c9: %Convert.type.623 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.e67: %ImplicitAs.type.94e = facet_value %C.78c, %impl_witness.4bf [concrete]
@@ -370,7 +370,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.bound.06a: <bound method> = bound_method %int_7.29f, %Convert.cb5 [concrete]
 // CHECK:STDOUT:   %int_7.6ae: %i32.builtin = int_value 7 [concrete]
 // CHECK:STDOUT:   %C.6aa: type = class_type @C, @C(%int_7.6ae) [concrete]
-// CHECK:STDOUT:   %impl_witness.74c: <witness> = impl_witness (@impl.9.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.74c: <witness> = impl_witness (@impl.ebc.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.3f8: type = fn_type @Convert.10 [concrete]
 // CHECK:STDOUT:   %Convert.71a: %Convert.type.3f8 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.367: %ImplicitAs.type.94e = facet_value %C.6aa, %impl_witness.74c [concrete]
@@ -425,7 +425,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.837 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -439,8 +439,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc10: <witness> = impl_witness (@impl.2.%Convert.decl) [concrete = constants.%impl_witness.39cb]
-// CHECK:STDOUT:   impl_decl @impl.3 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc10: <witness> = impl_witness (@impl.837.%Convert.decl) [concrete = constants.%impl_witness.39cb]
+// CHECK:STDOUT:   impl_decl @impl.511 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -454,8 +454,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc11: <witness> = impl_witness (@impl.3.%Convert.decl) [concrete = constants.%impl_witness.ecb]
-// CHECK:STDOUT:   impl_decl @impl.4 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc11: <witness> = impl_witness (@impl.511.%Convert.decl) [concrete = constants.%impl_witness.ecb]
+// CHECK:STDOUT:   impl_decl @impl.141 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -469,8 +469,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness (@impl.4.%Convert.decl) [concrete = constants.%impl_witness.8b8]
-// CHECK:STDOUT:   impl_decl @impl.5 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness (@impl.141.%Convert.decl) [concrete = constants.%impl_witness.8b8]
+// CHECK:STDOUT:   impl_decl @impl.e6b [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -484,8 +484,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness (@impl.5.%Convert.decl) [concrete = constants.%impl_witness.1c0]
-// CHECK:STDOUT:   impl_decl @impl.6 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness (@impl.e6b.%Convert.decl) [concrete = constants.%impl_witness.1c0]
+// CHECK:STDOUT:   impl_decl @impl.056 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -499,8 +499,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness (@impl.6.%Convert.decl) [concrete = constants.%impl_witness.7c9]
-// CHECK:STDOUT:   impl_decl @impl.7 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness (@impl.056.%Convert.decl) [concrete = constants.%impl_witness.7c9]
+// CHECK:STDOUT:   impl_decl @impl.154 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -514,8 +514,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.7.%Convert.decl) [concrete = constants.%impl_witness.4b9]
-// CHECK:STDOUT:   impl_decl @impl.8 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.154.%Convert.decl) [concrete = constants.%impl_witness.4b9]
+// CHECK:STDOUT:   impl_decl @impl.a6d [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -529,8 +529,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.8.%Convert.decl) [concrete = constants.%impl_witness.4bf]
-// CHECK:STDOUT:   impl_decl @impl.9 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.a6d.%Convert.decl) [concrete = constants.%impl_witness.4bf]
+// CHECK:STDOUT:   impl_decl @impl.ebc [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
 // CHECK:STDOUT:     %impl.elem0: %.624 = impl_witness_access constants.%impl_witness.39c7, element0 [concrete = constants.%Convert.cb5]
@@ -544,7 +544,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.94e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.9.%Convert.decl) [concrete = constants.%impl_witness.74c]
+// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.ebc.%Convert.decl) [concrete = constants.%impl_witness.74c]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.f6b058.1: type) [from "core.carbon"] {
@@ -567,12 +567,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%Core.import_ref.872 as imports.%Core.import_ref.4d9 [from "core.carbon"] {
+// CHECK:STDOUT: impl @impl.68b: imports.%Core.import_ref.872 as imports.%Core.import_ref.4d9 [from "core.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Core.import_ref.de9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.837: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.fff = fn_decl @Convert.3 [concrete = constants.%Convert.606] {
 // CHECK:STDOUT:     %self.patt: %C.808 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.808 = value_param_pattern %self.patt, runtime_param0
@@ -581,7 +581,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.808 = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.2.%C [concrete = constants.%C.808]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.837.%C [concrete = constants.%C.808]
 // CHECK:STDOUT:     %self: %C.808 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -594,7 +594,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.511: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.89f = fn_decl @Convert.4 [concrete = constants.%Convert.689] {
 // CHECK:STDOUT:     %self.patt: %C.8be = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.8be = value_param_pattern %self.patt, runtime_param0
@@ -603,7 +603,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.8be = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.3.%C [concrete = constants.%C.8be]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.511.%C [concrete = constants.%C.8be]
 // CHECK:STDOUT:     %self: %C.8be = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -616,7 +616,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.141: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.e90 = fn_decl @Convert.5 [concrete = constants.%Convert.ec9] {
 // CHECK:STDOUT:     %self.patt: %C.c17 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.c17 = value_param_pattern %self.patt, runtime_param0
@@ -625,7 +625,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.c17 = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.4.%C [concrete = constants.%C.c17]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.141.%C [concrete = constants.%C.c17]
 // CHECK:STDOUT:     %self: %C.c17 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -638,7 +638,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.5: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.e6b: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.5db = fn_decl @Convert.6 [concrete = constants.%Convert.193] {
 // CHECK:STDOUT:     %self.patt: %C.414 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.414 = value_param_pattern %self.patt, runtime_param0
@@ -647,7 +647,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.414 = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.5.%C [concrete = constants.%C.414]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.e6b.%C [concrete = constants.%C.414]
 // CHECK:STDOUT:     %self: %C.414 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -660,7 +660,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.6: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.056: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4e7 = fn_decl @Convert.7 [concrete = constants.%Convert.52a] {
 // CHECK:STDOUT:     %self.patt: %C.488 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.488 = value_param_pattern %self.patt, runtime_param0
@@ -669,7 +669,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.488 = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.6.%C [concrete = constants.%C.488]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.056.%C [concrete = constants.%C.488]
 // CHECK:STDOUT:     %self: %C.488 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -682,7 +682,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.7: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.154: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.658 = fn_decl @Convert.8 [concrete = constants.%Convert.9b6] {
 // CHECK:STDOUT:     %self.patt: %C.3e2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.3e2 = value_param_pattern %self.patt, runtime_param0
@@ -691,7 +691,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.3e2 = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.7.%C [concrete = constants.%C.3e2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.154.%C [concrete = constants.%C.3e2]
 // CHECK:STDOUT:     %self: %C.3e2 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -704,7 +704,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.8: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.a6d: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.623 = fn_decl @Convert.9 [concrete = constants.%Convert.8c9] {
 // CHECK:STDOUT:     %self.patt: %C.78c = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.78c = value_param_pattern %self.patt, runtime_param0
@@ -713,7 +713,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.78c = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.8.%C [concrete = constants.%C.78c]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.a6d.%C [concrete = constants.%C.78c]
 // CHECK:STDOUT:     %self: %C.78c = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -726,7 +726,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.9: %C as %ImplicitAs.type {
+// CHECK:STDOUT: impl @impl.ebc: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.3f8 = fn_decl @Convert.10 [concrete = constants.%Convert.71a] {
 // CHECK:STDOUT:     %self.patt: %C.6aa = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.6aa = value_param_pattern %self.patt, runtime_param0
@@ -735,7 +735,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %self.param: %C.6aa = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.9.%C [concrete = constants.%C.6aa]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.ebc.%C [concrete = constants.%C.6aa]
 // CHECK:STDOUT:     %self: %C.6aa = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -1276,47 +1276,47 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%Core.import_ref.872 as imports.%Core.import_ref.4d9 [from "core.carbon"] {
+// CHECK:STDOUT: impl @impl.68b: imports.%Core.import_ref.872 as imports.%Core.import_ref.4d9 [from "core.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Core.import_ref.de9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: imports.%P.import_ref.624 as imports.%P.import_ref.b769fa.1 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.b24: imports.%P.import_ref.624 as imports.%P.import_ref.b769fa.1 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.316
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: imports.%P.import_ref.8ff as imports.%P.import_ref.b769fa.2 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.277: imports.%P.import_ref.8ff as imports.%P.import_ref.b769fa.2 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.776
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: imports.%P.import_ref.f4d as imports.%P.import_ref.b769fa.3 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.b5f: imports.%P.import_ref.f4d as imports.%P.import_ref.b769fa.3 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.848
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.5: imports.%P.import_ref.dd2 as imports.%P.import_ref.b769fa.4 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.90b: imports.%P.import_ref.dd2 as imports.%P.import_ref.b769fa.4 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.036
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.6: imports.%P.import_ref.2c7 as imports.%P.import_ref.b769fa.5 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.161: imports.%P.import_ref.2c7 as imports.%P.import_ref.b769fa.5 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.e33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.7: imports.%P.import_ref.759 as imports.%P.import_ref.b769fa.6 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.54a: imports.%P.import_ref.759 as imports.%P.import_ref.b769fa.6 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.1aa
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.8: imports.%P.import_ref.56e as imports.%P.import_ref.b769fa.7 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.d71: imports.%P.import_ref.56e as imports.%P.import_ref.b769fa.7 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.058
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.9: imports.%P.import_ref.8ba as imports.%P.import_ref.b769fa.8 [from "library.carbon"] {
+// CHECK:STDOUT: impl @impl.16b: imports.%P.import_ref.8ba as imports.%P.import_ref.b769fa.8 [from "library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%P.import_ref.d6f
 // CHECK:STDOUT: }

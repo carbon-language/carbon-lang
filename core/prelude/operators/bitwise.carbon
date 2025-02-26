@@ -87,3 +87,6 @@ impl IntLiteral() as LeftShift {
 impl IntLiteral() as RightShift {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
+
+interface Hello {}
+impl forall [Tello:! type] Tello as Hello {}

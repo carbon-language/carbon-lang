@@ -50,7 +50,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %assoc1: %Simple.assoc_type = assoc_entity element1, @Simple.%G.decl [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %impl_witness.5b2: <witness> = impl_witness (@impl.1.%F.decl, @impl.1.%G.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.5b2: <witness> = impl_witness (@impl.006.%F.decl, @impl.006.%G.decl) [concrete]
 // CHECK:STDOUT:   %F.type.758: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.df1: %F.type.758 = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type.c98: type = fn_type @G.2 [concrete]
@@ -88,12 +88,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [concrete = constants.%Simple.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.006 [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%F.decl, @impl.1.%G.decl) [concrete = constants.%impl_witness.5b2]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.006.%F.decl, @impl.006.%G.decl) [concrete = constants.%impl_witness.5b2]
 // CHECK:STDOUT:   %NonInstanceCall.decl: %NonInstanceCall.type = fn_decl @NonInstanceCall [concrete = constants.%NonInstanceCall] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
@@ -167,7 +167,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %i32 as %Simple.ref {
+// CHECK:STDOUT: impl @impl.006: %i32 as %Simple.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.758 = fn_decl @F.2 [concrete = constants.%F.df1] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type.c98 = fn_decl @G.2 [concrete = constants.%G.e73] {
 // CHECK:STDOUT:     %self.patt: %i32 = binding_pattern self

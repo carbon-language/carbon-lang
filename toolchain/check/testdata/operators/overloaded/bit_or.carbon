@@ -40,14 +40,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitOr.type: type = facet_type <@BitOr> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Op.type.9bb: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %impl_witness.e68: <witness> = impl_witness (@impl.1.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.e68: <witness> = impl_witness (@impl.8f6.%Op.decl) [concrete]
 // CHECK:STDOUT:   %Op.type.951: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.59a: %Op.type.951 = struct_value () [concrete]
 // CHECK:STDOUT:   %BitOr.facet: %BitOr.type = facet_value %C, %impl_witness.e68 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %BitOrAssign.type: type = facet_type <@BitOrAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.099: type = fn_type @Op.3 [concrete]
-// CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (@impl.2.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (@impl.04f.%Op.decl) [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.8ba: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.b27: %Op.type.8ba = struct_value () [concrete]
@@ -80,18 +80,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.8f6 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitOr.ref: type = name_ref BitOr, imports.%Core.BitOr [concrete = constants.%BitOr.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.1.%Op.decl) [concrete = constants.%impl_witness.e68]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.8f6.%Op.decl) [concrete = constants.%impl_witness.e68]
+// CHECK:STDOUT:   impl_decl @impl.04f [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitOrAssign.ref: type = name_ref BitOrAssign, imports.%Core.BitOrAssign [concrete = constants.%BitOrAssign.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.2.%Op.decl) [concrete = constants.%impl_witness.85b]
+// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.04f.%Op.decl) [concrete = constants.%impl_witness.85b]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -128,7 +128,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %BitOr.ref {
+// CHECK:STDOUT: impl @impl.8f6: %C.ref as %BitOr.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.951 = fn_decl @Op.2 [concrete = constants.%Op.59a] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
@@ -154,7 +154,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C.ref as %BitOrAssign.ref {
+// CHECK:STDOUT: impl @impl.04f: %C.ref as %BitOrAssign.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.8ba = fn_decl @Op.4 [concrete = constants.%Op.b27] {
 // CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, runtime_param0

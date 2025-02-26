@@ -86,7 +86,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %LessOrEquivalent.type.859: type = fn_type @LessOrEquivalent.1 [concrete]
 // CHECK:STDOUT:   %Greater.type.270: type = fn_type @Greater.1 [concrete]
 // CHECK:STDOUT:   %GreaterOrEquivalent.type.8af: type = fn_type @GreaterOrEquivalent.1 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Less.decl, @impl.1.%LessOrEquivalent.decl, @impl.1.%Greater.decl, @impl.1.%GreaterOrEquivalent.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.d54.%Less.decl, @impl.d54.%LessOrEquivalent.decl, @impl.d54.%Greater.decl, @impl.d54.%GreaterOrEquivalent.decl) [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Less.type.25a: type = fn_type @Less.2 [concrete]
@@ -133,12 +133,12 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.d54 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, imports.%Core.Ordered [concrete = constants.%Ordered.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Less.decl, @impl.1.%LessOrEquivalent.decl, @impl.1.%Greater.decl, @impl.1.%GreaterOrEquivalent.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.d54.%Less.decl, @impl.d54.%LessOrEquivalent.decl, @impl.d54.%Greater.decl, @impl.d54.%GreaterOrEquivalent.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [concrete = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -221,7 +221,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %Ordered.ref {
+// CHECK:STDOUT: impl @impl.d54: %C.ref as %Ordered.ref {
 // CHECK:STDOUT:   %Less.decl: %Less.type.25a = fn_decl @Less.2 [concrete = constants.%Less.738] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
