@@ -116,6 +116,12 @@ class FileContext {
       llvm::Function* llvm_function,
       SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
+  // Builds a functions body. Common functionality for all functions.
+  auto BuildFunctionBody(
+      SemIR::FunctionId function_id, const SemIR::Function& function,
+      llvm::Function* llvm_function,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
+
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
                          const llvm::Function* llvm_function)

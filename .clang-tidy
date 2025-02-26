@@ -65,6 +65,9 @@ WarningsAsErrors: '*'
 # - '-google-readability-function-size'
 # # Suggests usernames on TODOs, which we don't want.
 # - '-google-readability-todo'
+# # Extremely slow. TODO: Re-enable once
+# # https://github.com/llvm/llvm-project/issues/128797 is fixed.
+# - '-misc-confusable-identifiers'
 # # Overlaps with `-Wno-missing-prototypes`.
 # - '-misc-use-internal-linkage'
 # # Suggests `std::array`, which we could migrate to, but conflicts with the
@@ -107,11 +110,12 @@ Checks:
   -bugprone-macro-parentheses, -bugprone-narrowing-conversions,
   -bugprone-switch-missing-default-case, -bugprone-unchecked-optional-access,
   -google-readability-function-size, -google-readability-todo,
-  -misc-use-internal-linkage, -modernize-avoid-c-arrays,
-  -modernize-use-designated-initializers, -modernize-use-nodiscard,
-  -performance-unnecessary-value-param, -readability-enum-initial-value,
-  -readability-function-cognitive-complexity, -readability-magic-numbers,
-  -readability-redundant-member-init, -readability-suspicious-call-argument
+  -misc-confusable-identifiers, -misc-use-internal-linkage,
+  -modernize-avoid-c-arrays, -modernize-use-designated-initializers,
+  -modernize-use-nodiscard, -performance-unnecessary-value-param,
+  -readability-enum-initial-value, -readability-function-cognitive-complexity,
+  -readability-magic-numbers, -readability-redundant-member-init,
+  -readability-suspicious-call-argument
 CheckOptions:
   # Don't warn on structs; done by ignoring when there are only public members.
   - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic

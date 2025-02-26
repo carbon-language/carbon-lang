@@ -481,6 +481,31 @@ struct FloatKind : public IdBase<FloatKind> {
   auto Print(llvm::raw_ostream& out) const -> void { out << "float"; }
 };
 
+// An X-macro for special names. Uses should look like:
+//
+//   #define CARBON_SPECIAL_NAME_ID_FOR_XYZ(Name) ...
+//   CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_XYZ)
+//   #undef CARBON_SPECIAL_NAME_ID_FOR_XYZ
+#define CARBON_SPECIAL_NAME_ID(X)                                \
+  /* The name of `base`. */                                      \
+  X(Base)                                                        \
+  /* The name of the discriminant field (if any) in a choice. */ \
+  X(ChoiceDiscriminant)                                          \
+  /* The name of the package `Core`. */                          \
+  X(Core)                                                        \
+  /* The name of `package`. */                                   \
+  X(PackageNamespace)                                            \
+  /* The name of `.Self`. */                                     \
+  X(PeriodSelf)                                                  \
+  /* The name of the return slot in a function. */               \
+  X(ReturnSlot)                                                  \
+  /* The name of `Self`. */                                      \
+  X(SelfType)                                                    \
+  /* The name of `self`. */                                      \
+  X(SelfValue)                                                   \
+  /* The name of `vptr`. */                                      \
+  X(Vptr)
+
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.
 struct NameId : public IdBase<NameId> {
@@ -491,24 +516,19 @@ struct NameId : public IdBase<NameId> {
 
   // An ID with no value.
   static const NameId None;
-  // The name of `base`.
-  static const NameId Base;
-  // The name of the package `Core`.
-  static const NameId Core;
-  // The name of `package`.
-  static const NameId PackageNamespace;
-  // The name of `.Self`.
-  static const NameId PeriodSelf;
-  // The name of the return slot in a function.
-  static const NameId ReturnSlot;
-  // The name of `Self`.
-  static const NameId SelfType;
-  // The name of `self`.
-  static const NameId SelfValue;
-  // The name of `vptr`.
-  static const NameId Vptr;
-  // The name of the discriminant field (if any) in a choice.
-  static const NameId ChoiceDiscriminant;
+
+  // An enum of special names.
+  enum class SpecialNameId : uint8_t {
+#define CARBON_SPECIAL_NAME_ID_FOR_ENUM(Name) Name,
+    CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_ENUM)
+#undef CARBON_SPECIAL_NAME_ID_FOR_ENUM
+  };
+
+  // For each SpecialNameId, provide a matching `NameId` instance for
+  // convenience.
+#define CARBON_SPECIAL_NAME_ID_FOR_DECL(Name) static const NameId Name;
+  CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_DECL)
+#undef CARBON_SPECIAL_NAME_ID_FOR_DECL
 
   // The number of non-index (<0) that exist, and will need storage in name
   // lookup.
@@ -529,22 +549,31 @@ struct NameId : public IdBase<NameId> {
     return index >= 0 ? IdentifierId(index) : IdentifierId::None;
   }
 
+  // Expose special names for `switch`.
+  constexpr auto AsSpecialNameId() const -> std::optional<SpecialNameId> {
+    if (index >= NoneIndex) {
+      return std::nullopt;
+    }
+    return static_cast<SpecialNameId>(NoneIndex - 1 - index);
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr NameId NameId::None = NameId(NoneIndex);
-constexpr NameId NameId::Base = NameId(NoneIndex - 1);
-constexpr NameId NameId::Core = NameId(NoneIndex - 2);
-constexpr NameId NameId::PackageNamespace = NameId(NoneIndex - 3);
-constexpr NameId NameId::PeriodSelf = NameId(NoneIndex - 4);
-constexpr NameId NameId::ReturnSlot = NameId(NoneIndex - 5);
-constexpr NameId NameId::SelfType = NameId(NoneIndex - 6);
-constexpr NameId NameId::SelfValue = NameId(NoneIndex - 7);
-constexpr NameId NameId::Vptr = NameId(NoneIndex - 8);
-constexpr NameId NameId::ChoiceDiscriminant = NameId(NoneIndex - 9);
-constexpr int NameId::NonIndexValueCount = 10;
-// Enforce the link between SpecialValueCount and the last special value.
-static_assert(NameId::NonIndexValueCount == -NameId::ChoiceDiscriminant.index);
+
+// Define the special `static const NameId` values.
+#define CARBON_SPECIAL_NAME_ID_FOR_DEF(Name) \
+  constexpr NameId NameId::Name =            \
+      NameId(NoneIndex - 1 - static_cast<int>(NameId::SpecialNameId::Name));
+CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_DEF)
+#undef CARBON_SPECIAL_NAME_ID_FOR_DEF
+
+// Count non-index values, including `None` and special names.
+#define CARBON_SPECIAL_NAME_ID_FOR_COUNT(...) +1
+constexpr int NameId::NonIndexValueCount =
+    1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
+#undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase<NameScopeId> {
