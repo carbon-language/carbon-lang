@@ -323,7 +323,7 @@ auto DeductionContext::Deduce() -> bool {
 
     auto param_type_id = context().insts().Get(param_id).type_id();
     // If the parameter has a symbolic type, deduce against that.
-    if (param_type_id.AsConstantId().is_symbolic()) {
+    if (param_type_id.is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),
           context().types().GetInstId(context().insts().Get(arg_id).type_id()),
           needs_substitution);
@@ -549,8 +549,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // that incorrectly.
     auto arg_type_id = context().insts().Get(deduced_arg_id).type_id();
     auto binding_type_id = context().insts().Get(binding_id).type_id();
-    if (!arg_type_id.AsConstantId().is_symbolic() &&
-        binding_type_id.AsConstantId().is_symbolic()) {
+    if (!arg_type_id.is_symbolic() && binding_type_id.is_symbolic()) {
       auto param_type_const_id = SubstConstant(
           context(), binding_type_id.AsConstantId(), substitutions_);
       CARBON_CHECK(param_type_const_id.has_value());

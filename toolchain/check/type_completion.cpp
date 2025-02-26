@@ -557,7 +557,7 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
 
   // For a symbolic type, create an instruction to require the corresponding
   // specific type to be complete.
-  if (type_id.AsConstantId().is_symbolic()) {
+  if (type_id.is_symbolic()) {
     // TODO: Deduplicate these.
     AddInstInNoBlock(
         context,

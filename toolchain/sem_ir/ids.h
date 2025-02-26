@@ -735,6 +735,11 @@ struct TypeId : public IdBase<TypeId> {
   // Returns the constant ID that defines the type.
   auto AsConstantId() const -> ConstantId { return ConstantId(index); }
 
+  // Returns whether this represents a symbolic type. Requires has_value.
+  auto is_symbolic() const -> bool { return AsConstantId().is_symbolic(); }
+  // Returns whether this represents a concrete type. Requires has_value.
+  auto is_concrete() const -> bool { return AsConstantId().is_concrete(); }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
