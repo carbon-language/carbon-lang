@@ -9,7 +9,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
-#include "toolchain/check/import_ref.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -516,18 +515,15 @@ static auto GetEntityNameForGenericBinding(Context& context,
                                            SemIR::InstId binding_id)
     -> std::string {
   // Move the `binding_id` to its original imported SemIR inst if needed.
-  const SemIR::File* sem_ir = &context.sem_ir();
-  if (sem_ir->insts().Is<SemIR::ImportRefLoaded>(binding_id)) {
-    auto imported = GetCanonicalImportIRInst(context, binding_id);
-    sem_ir = sem_ir->import_irs().Get(imported.ir_id).sem_ir;
-    binding_id = imported.inst_id;
+  if (context.insts().Is<SemIR::ImportRefLoaded>(binding_id)) {
+    binding_id = context.constant_values().GetConstantInstId(binding_id);
   }
 
   if (auto bind_name =
-          sem_ir->insts().TryGetAs<SemIR::AnyBindName>(binding_id)) {
+          context.insts().TryGetAs<SemIR::AnyBindName>(binding_id)) {
     auto name_id =
-        sem_ir->entity_names().Get(bind_name->entity_name_id).name_id;
-    return sem_ir->names().GetFormatted(name_id).str();
+        context.entity_names().Get(bind_name->entity_name_id).name_id;
+    return context.names().GetFormatted(name_id).str();
   } else {
     CARBON_FATAL("Instruction without entity name in generic binding position");
   }
