@@ -23,7 +23,7 @@ auto CheckFunctionTypeMatches(Context& context,
   // Also, build that thunk.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
                               DeclParams(prev_function), prev_specific_id,
-                              check_syntax, /*diagnose=*/true, check_self)) {
+                              /*diagnose=*/true, check_syntax, check_self)) {
     return false;
   }
 

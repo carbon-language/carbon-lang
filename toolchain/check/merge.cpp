@@ -464,9 +464,8 @@ static auto CheckRedeclParamSyntax(Context& context,
 
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            SemIR::SpecificId prev_specific_id,
-                            bool check_syntax, bool diagnose, bool check_self)
-    -> bool {
+                            SemIR::SpecificId prev_specific_id, bool diagnose,
+                            bool check_syntax, bool check_self) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;

@@ -34,11 +34,20 @@ struct SuspendedFunction {
 // implicit conversions from the original declaration.
 // `check_self` is false if the self declaration does not have to match (for
 // instance in impls of virtual functions).
-auto CheckFunctionTypeMatches(
-    Context& context, const SemIR::Function& new_function,
-    const SemIR::Function& prev_function,
-    SemIR::SpecificId prev_specific_id = SemIR::SpecificId::None,
-    bool check_syntax = true, bool check_self = true) -> bool;
+auto CheckFunctionTypeMatches(Context& context,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
+                              SemIR::SpecificId prev_specific_id,
+                              bool check_syntax, bool check_self) -> bool;
+
+inline auto CheckFunctionTypeMatches(Context& context,
+                                     const SemIR::Function& new_function,
+                                     const SemIR::Function& prev_function)
+    -> bool {
+  return CheckFunctionTypeMatches(context, new_function, prev_function,
+                                  SemIR::SpecificId::None,
+                                  /*check_syntax=*/true, /*check_self=*/true);
+}
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if

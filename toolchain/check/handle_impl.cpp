@@ -254,7 +254,8 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
                               DeclParams(prev_impl), SemIR::SpecificId::None,
-                              /*check_syntax=*/true, /*diagnose=*/false)) {
+                              /*diagnose=*/false, /*check_syntax=*/true,
+                              /*check_self=*/true)) {
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
