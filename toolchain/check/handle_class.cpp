@@ -737,7 +737,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
             CheckFunctionTypeMatches(context, override_fn, fn,
                                      SemIR::SpecificId::None,
                                      /*check_syntax=*/false,
-                                     /*allow_self_type_mismatch=*/true);
+                                     /*check_self=*/false);
             fn_decl_id = override_fn_decl_id;
           }
         }

@@ -33,7 +33,7 @@ auto CheckFunctionTypeMatches(
     Context& context, const SemIR::Function& new_function,
     const SemIR::Function& prev_function,
     SemIR::SpecificId prev_specific_id = SemIR::SpecificId::None,
-    bool check_syntax = true, bool allow_self_type_mismatch = false) -> bool;
+    bool check_syntax = true, bool check_self = true) -> bool;
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if

@@ -14,8 +14,7 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
                               SemIR::SpecificId prev_specific_id,
-                              bool check_syntax, bool allow_self_type_mismatch)
-    -> bool {
+                              bool check_syntax, bool check_self) -> bool {
   // TODO: When check_syntax is false, the functions should be allowed to have
   // different signatures as long as we can synthesize a suitable thunk. i.e.,
   // when there's an implicit conversion from the original parameter types to
@@ -24,8 +23,7 @@ auto CheckFunctionTypeMatches(Context& context,
   // Also, build that thunk.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
                               DeclParams(prev_function), prev_specific_id,
-                              check_syntax, /*diagnose=*/true,
-                              allow_self_type_mismatch)) {
+                              check_syntax, /*diagnose=*/true, check_self)) {
     return false;
   }
 

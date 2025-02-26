@@ -202,7 +202,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId new_param_pattern_id,
                              SemIR::InstId prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
-                             bool allow_self_type_mismatch) -> bool {
+                             bool check_self) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -229,7 +229,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   auto prev_name_id = SemIR::Function::GetNameFromPatternId(
       context.sem_ir(), prev_param_pattern_id);
 
-  if (allow_self_type_mismatch && new_name_id == SemIR::NameId::SelfValue &&
+  if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
       prev_name_id == SemIR::NameId::SelfValue) {
     return true;
   }
@@ -295,7 +295,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
                               SemIR::SpecificId prev_specific_id, bool diagnose,
-                              bool allow_self_type_mismatch) -> bool {
+                              bool check_self) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
@@ -353,8 +353,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
-                          prev_specific_id, diagnose,
-                          allow_self_type_mismatch)) {
+                          prev_specific_id, diagnose, check_self)) {
       return false;
     }
   }
@@ -466,25 +465,24 @@ static auto CheckRedeclParamSyntax(Context& context,
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
                             SemIR::SpecificId prev_specific_id,
-                            bool check_syntax, bool diagnose,
-                            bool allow_self_type_mismatch) -> bool {
+                            bool check_syntax, bool diagnose, bool check_self)
+    -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
   }
-  if (!CheckRedeclParams(context, new_entity.loc,
-                         new_entity.implicit_param_patterns_id, prev_entity.loc,
-                         prev_entity.implicit_param_patterns_id,
-                         /*is_implicit_param=*/true, prev_specific_id, diagnose,
-                         allow_self_type_mismatch)) {
+  if (!CheckRedeclParams(
+          context, new_entity.loc, new_entity.implicit_param_patterns_id,
+          prev_entity.loc, prev_entity.implicit_param_patterns_id,
+          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_self)) {
     return false;
   }
-  // Don't forward `allow_self_type_mismatch` here because it's extra cost, and
-  // `self` is only allowed in implicit params.
+  // Don't forward `check_self` here because it's extra cost, and `self` is only
+  // allowed in implicit params.
   if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_patterns_id,
                          prev_entity.loc, prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose, /*allow_self_type_mismatch=*/false)) {
+                         diagnose, /*check_self=*/true)) {
     return false;
   }
   if (check_syntax &&

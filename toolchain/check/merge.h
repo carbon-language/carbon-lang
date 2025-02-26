@@ -100,8 +100,8 @@ auto CheckRedeclParamsMatch(
     Context& context, const DeclParams& new_entity,
     const DeclParams& prev_entity,
     SemIR::SpecificId prev_specific_id = SemIR::SpecificId::None,
-    bool check_syntax = true, bool diagnose = true,
-    bool allow_self_type_mismatch = false) -> bool;
+    bool check_syntax = true, bool diagnose = true, bool check_self = true)
+    -> bool;
 
 }  // namespace Carbon::Check
 
