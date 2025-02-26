@@ -102,6 +102,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
                               GetFunction(sem_ir().global_ctor_id()),
                               /*Priority=*/0);
   }
+
   return std::move(llvm_module_);
 }
 
@@ -374,11 +375,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       param_value = llvm_function->getArg(param_index);
       ++param_index;
     } else {
-      param_value = llvm::PoisonValue::get(
-          GetType(specific_id.has_value()
-                      ? SemIR::GetTypeInSpecific(sem_ir(), specific_id,
-                                                 param_inst.type_id)
-                      : param_inst.type_id));
+      param_value = llvm::PoisonValue::get(GetType(
+          SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_inst.type_id)));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);
