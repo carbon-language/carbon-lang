@@ -88,7 +88,7 @@ impl IntLiteral() as RightShift {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
 
-// Operations for `type`. These need to be here because IntLiteral has no
+// Operations for `type`. These need to be here because `type` has no
 // associated library of its own.
 
 // Facet type combination.

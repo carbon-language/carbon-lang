@@ -1326,14 +1326,14 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context, SemIRLoc loc,
 
     case SemIR::BuiltinFunctionKind::TypeAnd: {
       CARBON_CHECK(arg_ids.size() == 2);
-      auto facet_type_ids = std::to_array<SemIR::FacetTypeId>({
-          SemIR::FacetTypeId::None,
-          SemIR::FacetTypeId::None,
-      });
-      for (auto [i, arg_id] : llvm::enumerate(arg_ids)) {
+      auto lhs_facet_type_id = SemIR::FacetTypeId::None;
+      auto rhs_facet_type_id = SemIR::FacetTypeId::None;
+      for (auto [facet_type_id, arg_id] :
+           llvm::zip(std::to_array({&lhs_facet_type_id, &rhs_facet_type_id}),
+                     arg_ids)) {
         if (auto facet_type =
                 context.insts().TryGetAs<SemIR::FacetType>(arg_id)) {
-          facet_type_ids[i] = facet_type->facet_type_id;
+          *facet_type_id = facet_type->facet_type_id;
         } else {
           CARBON_DIAGNOSTIC(
               FacetTypeRequiredForTypeAndOperator, Error,
@@ -1343,18 +1343,17 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context, SemIRLoc loc,
       }
       // Allow errors to be diagnosed for both sides of the operator before
       // returning here if any error occurred on either side.
-      if (llvm::any_of(facet_type_ids,
-                       [](SemIR::FacetTypeId id) { return !id.has_value(); })) {
-        return SemIR::ConstantId::NotConstant;
+      if (!lhs_facet_type_id.has_value() || !rhs_facet_type_id.has_value()) {
+        return SemIR::ErrorInst::SingletonConstantId;
       }
       // Reuse one of the argument instructions if nothing has changed.
-      if (facet_type_ids[0] == facet_type_ids[1]) {
+      if (lhs_facet_type_id == rhs_facet_type_id) {
         return context.types().GetConstantId(
             context.types().GetTypeIdForTypeInstId(arg_ids[0]));
       }
-      auto info = SemIR::FacetTypeInfo::Combined(
-          context.facet_types().Get(facet_type_ids[0]),
-          context.facet_types().Get(facet_type_ids[1]));
+      auto info = SemIR::FacetTypeInfo::Combine(
+          context.facet_types().Get(lhs_facet_type_id),
+          context.facet_types().Get(rhs_facet_type_id));
       info.Canonicalize();
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
