@@ -335,8 +335,6 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id,
   // For non-generics we do not lower. For generics, the llvm function was
   // created via GetOrCreateFunction prior to this when building the
   // declaration.
-  CARBON_CHECK(llvm_function, "The llvm function must exist");
-
   BuildFunctionBody(function_id, function, llvm_function, specific_id);
 }
 
