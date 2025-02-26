@@ -575,9 +575,6 @@ constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
-// Double-check the special value mapping and constexpr evaluation.
-static_assert(NameId::SpecialNameId::Vptr == *NameId::Vptr.AsSpecialNameId());
-
 // The ID of a name scope.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";

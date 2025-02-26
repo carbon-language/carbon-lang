@@ -77,6 +77,9 @@ auto IntKind::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+// Double-check the special value mapping and constexpr evaluation.
+static_assert(NameId::SpecialNameId::Vptr == *NameId::Vptr.AsSpecialNameId());
+
 auto NameId::ForIdentifier(IdentifierId id) -> NameId {
   if (id.index >= 0) {
     return NameId(id.index);
