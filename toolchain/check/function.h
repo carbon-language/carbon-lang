@@ -29,6 +29,11 @@ struct SuspendedFunction {
 // Checks that `new_function` has the same parameter types and return type as
 // `prev_function`, or if `prev_function_id` is specified, a specific version of
 // `prev_function`. Prints a suitable diagnostic and returns false if not.
+//
+// `check_syntax` is false if the redeclaration can be called via a thunk with
+// implicit conversions from the original declaration.
+// `check_self` is false if the self declaration does not have to match (for
+// instance in impls of virtual functions).
 auto CheckFunctionTypeMatches(
     Context& context, const SemIR::Function& new_function,
     const SemIR::Function& prev_function,
