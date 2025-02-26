@@ -46,7 +46,8 @@ enum class InstConstantKind : int8_t {
   // This instruction never defines a constant value, but can evaluate to a
   // constant value of a different kind. For example, `UnaryOperatorNot` never
   // defines a constant value; if its operand is a concrete constant, its
-  // constant value will instead be a `BoolLiteral`. This is the default.
+  // constant value will instead be a `BoolLiteral`, and if its operand is not a
+  // concrete constant, the result is non-constant. This is the default.
   Indirect,
   // This instruction may define a symbolic constant, depending on its operands,
   // but never a concrete constant. For example, a `Call` instruction can define
@@ -69,8 +70,11 @@ enum class InstConstantKind : int8_t {
   // same as `WheneverPossible`, except that the operands are known in advance
   // to always be constant. For example, `IntValue`.
   Always,
-  // This instruction is a unique constant. This is used for declarations whose
-  // constant identity is simply themselves.
+  // This instruction is itself a unique constant. This is used for declarations
+  // whose constant identity is simply themselves. The `ConstantId` for this
+  // instruction will always be a concrete constant whose `InstId` refers
+  // directly back to the instruction, rather than to a separate instrinction in
+  // the constants block.
   // TODO: Decide if this is the model we want for these cases.
   Unique,
 };

@@ -564,7 +564,7 @@ static constexpr bool HasGetConstantValueOverload = requires {
 // kind `kind`, returns the constant value to use for that field, if it has a
 // constant phase. `*phase` is updated to include the new constant value. If
 // the resulting phase is not constant, the returned value is not useful and
-// will typically be `InvalidIndex`.
+// will typically be `NoneIndex`.
 template <typename... Type>
 static auto GetConstantValueForArg(EvalContext& eval_context,
                                    SemIR::TypeEnum<Type...> kind, int32_t arg,
@@ -1548,8 +1548,9 @@ static auto MakeFacetTypeResult(Context& context,
 class ConstantEvalResult {
  public:
   // Produce a new constant as the result of an evaluation. The phase of the
-  // produced constant must be the same as the phase of the operands in the
-  // evaluation.
+  // produced constant must be the same as the greatest phase of the operands in
+  // the evaluation. This will typically be the case if the evaluation uses all
+  // of its operands.
   static auto New(SemIR::Inst inst) -> ConstantEvalResult {
     return ConstantEvalResult(inst);
   }
@@ -1574,11 +1575,13 @@ class ConstantEvalResult {
   // constant.
   static const ConstantEvalResult TODO;
 
-  // Returns whether the result of evaluation is that we should produce the
-  // instruction itself as a new constant.
+  // Returns whether the result of evaluation is that we should produce a new
+  // constant described by `new_inst()` rather than an existing `ConstantId`
+  // described by `existing()`.
   auto is_new() const -> bool { return !result_id_.has_value(); }
 
-  // Returns whether the result of evaluation is an existing constant.
+  // Returns the existing constant that this the instruction evaluates to, or
+  // `None` if this is evaluation produces a new constant.
   auto existing() const -> SemIR::ConstantId { return result_id_; }
 
   // Returns the new constant instruction that is the result of evaluation.
