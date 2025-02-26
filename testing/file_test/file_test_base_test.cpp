@@ -17,9 +17,8 @@ namespace {
 
 class FileTestBaseTest : public FileTestBase {
  public:
-  FileTestBaseTest(llvm::StringRef /*exe_path*/, std::mutex* output_mutex,
-                   llvm::StringRef test_name)
-      : FileTestBase(output_mutex, test_name) {}
+  FileTestBaseTest(llvm::StringRef /*exe_path*/, llvm::StringRef test_name)
+      : FileTestBase(test_name) {}
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,

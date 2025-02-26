@@ -51,9 +51,9 @@ struct PrecedenceGroup::OperatorPriorityTable {
     ConsistencyCheck();
   }
 
-  constexpr void MarkHigherThan(
+  constexpr auto MarkHigherThan(
       std::initializer_list<PrecedenceLevel> higher_group,
-      std::initializer_list<PrecedenceLevel> lower_group) {
+      std::initializer_list<PrecedenceLevel> lower_group) -> void {
     for (auto higher : higher_group) {
       for (auto lower : lower_group) {
         table[higher][lower] = OperatorPriority::LeftFirst;
@@ -61,7 +61,7 @@ struct PrecedenceGroup::OperatorPriorityTable {
     }
   }
 
-  constexpr void MakeTransitivelyClosed() {
+  constexpr auto MakeTransitivelyClosed() -> void {
     // A naive algorithm compiles acceptably fast for now (~0.5s). This should
     // be revisited if we see compile time problems after adding precedence
     // groups; it's easy to do this faster.
@@ -85,7 +85,7 @@ struct PrecedenceGroup::OperatorPriorityTable {
     } while (changed);
   }
 
-  constexpr void MakeSymmetric() {
+  constexpr auto MakeSymmetric() -> void {
     for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
       for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
         if (table[a][b] == OperatorPriority::LeftFirst) {
@@ -97,7 +97,7 @@ struct PrecedenceGroup::OperatorPriorityTable {
     }
   }
 
-  constexpr void AddAssociativityRules() {
+  constexpr auto AddAssociativityRules() -> void {
     // Associativity rules occupy the diagonal
 
     // For prefix operators, RightFirst would mean `@@x` is `@(@x)` and
@@ -122,7 +122,7 @@ struct PrecedenceGroup::OperatorPriorityTable {
     // For other operators, we require explicit parentheses.
   }
 
-  constexpr void ConsistencyCheck() {
+  constexpr auto ConsistencyCheck() -> void {
     for (int8_t level = 0; level != NumPrecedenceLevels; ++level) {
       if (level != Highest) {
         CARBON_CHECK(table[Highest][level] == OperatorPriority::LeftFirst &&
@@ -164,6 +164,7 @@ auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
       return PrecedenceGroup(If);
 
     case Lex::TokenKind::Const:
+    case Lex::TokenKind::Partial:
       return PrecedenceGroup(TypePrefix);
 
     default:
@@ -243,6 +244,7 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     case Lex::TokenKind::Const:
     case Lex::TokenKind::MinusMinus:
     case Lex::TokenKind::Not:
+    case Lex::TokenKind::Partial:
     case Lex::TokenKind::PlusPlus:
       break;
 

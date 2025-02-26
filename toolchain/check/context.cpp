@@ -75,7 +75,7 @@ auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
   return false;
 }
 
-auto Context::VerifyOnFinish() -> void {
+auto Context::VerifyOnFinish() const -> void {
   // Information in all the various context objects should be cleaned up as
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
@@ -89,19 +89,13 @@ auto Context::VerifyOnFinish() -> void {
   // decl_introducer_state_stack_.
   scope_stack_.VerifyOnFinish();
   // TODO: Add verification for generic_region_stack_.
-}
 
-auto Context::Finalize() -> void {
-  // Pop information for the file-level scope.
-  sem_ir().set_top_inst_block_id(inst_block_stack().Pop());
-  scope_stack().Pop();
-
-  // Finalizes the list of exports on the IR.
-  inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
-  // Finalizes the ImportRef inst block.
-  inst_blocks().Set(SemIR::InstBlockId::ImportRefs, import_ref_ids_);
-  // Finalizes __global_init.
-  global_init_.Finalize();
+#ifndef NDEBUG
+  if (auto verify = sem_ir_->Verify(); !verify.ok()) {
+    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir_,
+                 verify.error());
+  }
+#endif
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

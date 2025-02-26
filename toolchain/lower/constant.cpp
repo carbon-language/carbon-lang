@@ -72,7 +72,7 @@ class ConstantContext {
 
   // Sets the index of the constant we most recently lowered. This is used to
   // check we don't look at constants that we've not lowered yet.
-  auto SetLastLoweredConstantIndex(int32_t index) {
+  auto SetLastLoweredConstantIndex(int32_t index) -> void {
     last_lowered_constant_index_ = index;
   }
 

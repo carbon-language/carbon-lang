@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto ScopeStack::VerifyOnFinish() -> void {
+auto ScopeStack::VerifyOnFinish() const -> void {
   CARBON_CHECK(scope_stack_.empty(), "{0}", scope_stack_.size());
 }
 

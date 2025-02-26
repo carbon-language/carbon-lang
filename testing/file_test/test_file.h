@@ -23,7 +23,7 @@ namespace Carbon::Testing {
 struct TestFile {
   // Represents a split within the test file.
   struct Split {
-    friend void PrintTo(const Split& f, std::ostream* os) {
+    friend auto PrintTo(const Split& f, std::ostream* os) -> void {
       // Print content escaped.
       llvm::raw_os_ostream os_wrap(*os);
       os_wrap << "Split(" << f.filename << ", \"" << FormatEscaped(f.content)
