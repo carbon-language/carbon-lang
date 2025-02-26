@@ -24,6 +24,8 @@ interface ImplicitAs(Dest:! type) {
 // --- fail_impl_simple_cycle.carbon
 library "[[@TEST_NAME]]";
 
+import Core;
+
 interface Z {}
 
 // This creates a dependency cycle with itself.
@@ -34,14 +36,95 @@ class Point {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:21: error: cycle found in lookup of interface <TODO: interface name> for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:21: error: cycle found in search for impl of `Z` for type `Point` [ImplLookupCycle]
   // CHECK:STDERR:   ({} as Point) as (Point as Z);
   // CHECK:STDERR:                     ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-10]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [T:! Z] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as Point) as (Point as Z);
+}
+
+// --- fail_impl_simple_where_cycle.carbon
+library "[[@TEST_NAME]]";
+
+import Core;
+
+interface Z {}
+
+// This creates a dependency cycle with itself.
+impl forall [T:! type where .Self impls Z] T as Z {}
+
+class Point {
+  impl as Z {}
+}
+
+fn F() {
+  // TODO: A cycle should be found in the `impl forall T as Z` above.
+  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+4]]:21: error: semantics TODO: `impl lookup for a FacetType with no interface (using `where .Self impls ...` instead?)` [SemanticsTodo]
+  // CHECK:STDERR:   ({} as Point) as (Point as Z);
+  // CHECK:STDERR:                     ^~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as Point) as (Point as Z);
+}
+
+// --- fail_impl_simple_two_interfaces.carbon
+library "[[@TEST_NAME]]";
+
+import Core;
+
+interface Z {}
+interface Y {}
+
+// This creates a dependency cycle with itself.
+// CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:18: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
+// CHECK:STDERR:                  ^~~~~
+// CHECK:STDERR:
+impl forall [T:! Z & Y] T as Z {}
+
+class Point {
+  impl as Z {}
+}
+
+fn F() {
+  // TODO: A cycle should be found in the `impl forall T as Z` above.
+  ({} as Point) as (Point as Z);
+}
+
+// --- fail_impl_long_cycle.carbon
+library "[[@TEST_NAME]]";
+
+import Core;
+
+interface X {}
+interface Y {}
+interface Z {}
+
+// This creates a dependency cycle with itself.
+impl forall [T:! X] T as Y {}
+impl forall [T:! Y] T as Z {}
+impl forall [T:! Z] T as X {}
+
+class C {}
+impl C as Z {}
+
+fn F() {
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+13]]:17: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as C) as (C as Z);
+  // CHECK:STDERR:                 ^~~~~~
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-10]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [T:! Y] T as Z {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-14]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [T:! X] T as Y {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-15]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [T:! Z] T as X {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  ({} as C) as (C as Z);
 }
 
 // --- fail_impl_cycle_one_generic_param.carbon
@@ -62,10 +145,10 @@ impl C as ComparableWith(D) {}
 fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in lookup of interface <TODO: interface name> for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as C, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-13]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -84,13 +167,13 @@ fn F() {
   // CHECK:STDERR:
   Compare({} as C, {} as C);
 
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+13]]:3: error: cycle found in lookup of interface <TODO: interface name> for type `D` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+13]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as C, {} as D);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-35]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-38]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-38]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-34]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]

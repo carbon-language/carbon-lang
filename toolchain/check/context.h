@@ -5,12 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
+#include <string>
+
 #include "common/map.h"
-#include "llvm/ADT/FoldingSet.h"
+#include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
@@ -18,8 +19,8 @@
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
-#include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -47,16 +48,8 @@ namespace Carbon::Check {
 //   (for example, shared with lowering).
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
-  using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
-
-  // A function that forms a diagnostic for some kind of problem. The
-  // DiagnosticBuilder is returned rather than emitted so that the caller can
-  // add contextual notes as appropriate.
-  using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
-
   // Stores references for work.
-  explicit Context(DiagnosticEmitter* emitter,
+  explicit Context(DiagnosticEmitter<SemIRLoc>* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
@@ -75,7 +68,7 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto emitter() -> DiagnosticEmitter& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return tree_and_subtrees_getter_();
@@ -197,6 +190,8 @@ class Context {
   struct ImplLookupStackEntry {
     SemIR::ConstantId type_const_id;
     SemIR::ConstantId interface_const_id;
+    // The location of the impl being looked at for the stack entry.
+    SemIR::InstId impl_loc = SemIR::InstId::None;
   };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
@@ -271,7 +266,7 @@ class Context {
 
  private:
   // Handles diagnostics.
-  DiagnosticEmitter* emitter_;
+  DiagnosticEmitter<SemIRLoc>* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
