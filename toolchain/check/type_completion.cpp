@@ -316,13 +316,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
             {.interface_id = interface_id,
              .specific_id = impl_interface.specific_id});
       }
-      // TODO: Sort and deduplicate result.required_interfaces. For now, we have
-      // at most one.
-      if (result.required_interfaces.size() > 1) {
-        context_.TODO(loc_,
-                      "FacetType with more than one required interface. Sort "
-                      "and deduplicate");
-      }
+      result.CanonicalizeRequiredInterfaces();
 
       // TODO: Distinguish interfaces that are required but would not be
       // implemented, such as those from `where .Self impls I`.

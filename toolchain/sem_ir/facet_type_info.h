@@ -114,6 +114,10 @@ struct CompleteFacetType {
   int num_to_impl;
 
   // TODO: Which interfaces to perform name lookup into.
+
+  // Sorts and deduplicates `required_interfaces`. Call after building the sets
+  // of interfaces, and then don't mutate them value afterwards.
+  auto CanonicalizeRequiredInterfaces() -> void;
 };
 
 // See common/hashing.h.
