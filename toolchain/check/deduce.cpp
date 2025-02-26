@@ -505,9 +505,6 @@ auto DeductionContext::Deduce() -> bool {
 
 // Gets the entity name of a generic binding. The generic binding may be an
 // imported instruction.
-//
-// Returns a string because the diagnostics machinery can't handle ids from
-// other `SemIR::File`s.
 static auto GetEntityNameForGenericBinding(Context& context,
                                            SemIR::InstId binding_id)
     -> SemIR::NameId {
