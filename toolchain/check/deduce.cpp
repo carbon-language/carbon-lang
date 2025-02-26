@@ -508,9 +508,6 @@ auto DeductionContext::Deduce() -> bool {
 //
 // Returns a string because the diagnostics machinery can't handle ids from
 // other `SemIR::File`s.
-//
-// TODO: It would be nicer if we can return the `SemIR::File*` and `NameId`
-// here, and have the diagnostic do the formatting to a string.
 static auto GetEntityNameForGenericBinding(Context& context,
                                            SemIR::InstId binding_id)
     -> SemIR::NameId {
