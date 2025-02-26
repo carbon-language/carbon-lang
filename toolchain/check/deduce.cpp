@@ -508,7 +508,8 @@ auto DeductionContext::Deduce() -> bool {
 static auto GetEntityNameForGenericBinding(Context& context,
                                            SemIR::InstId binding_id)
     -> SemIR::NameId {
-  // Move the `binding_id` to its original imported SemIR inst if needed.
+  // If `binding_id` is imported, it may not have an entity name. Get a
+  // canonical local instruction from its constant value which does.
   if (context.insts().Is<SemIR::ImportRefLoaded>(binding_id)) {
     binding_id = context.constant_values().GetConstantInstId(binding_id);
   }
