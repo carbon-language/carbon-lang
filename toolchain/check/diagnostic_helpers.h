@@ -44,14 +44,12 @@ class SemIRLoc {
   bool token_only_;
 };
 
-using SemIRLocDiagnosticBuilder =
-    DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder;
+using DiagnosticBuilder = DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder;
 
 // A function that forms a diagnostic for some kind of problem. The
-// SemIRLocDiagnosticBuilder is returned rather than emitted so that the caller
+// DiagnosticBuilder is returned rather than emitted so that the caller
 // can add contextual notes as appropriate.
-using BuildSemIRLocDiagnosticFn =
-    llvm::function_ref<auto()->SemIRLocDiagnosticBuilder>;
+using MakeDiagnosticBuilderFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
 inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
   return SemIRLoc(loc_id, true);
