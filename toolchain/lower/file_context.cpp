@@ -326,7 +326,9 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                                     llvm::Function* llvm_function,
                                     SemIR::SpecificId specific_id) -> void {
   const auto& body_block_ids = function.body_block_ids;
-  CARBON_DCHECK(llvm_function && !body_block_ids.empty());
+  CARBON_DCHECK(llvm_function && "LLVM Function not found when lowering body.");
+  CARBON_DCHECK(!body_block_ids.empty(),
+                "No function body blocks found during lowering.");
 
   FunctionContext function_lowering(*this, llvm_function,
                                     BuildDISubprogram(function, llvm_function),
