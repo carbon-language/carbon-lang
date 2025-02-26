@@ -575,8 +575,6 @@ constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
-// Enforce the link between NonIndexValueCount and the last special value.
-static_assert(NameId::NonIndexValueCount == -NameId::Vptr.index);
 // Double-check the special value mapping and constexpr evaluation.
 static_assert(NameId::SpecialNameId::Vptr == *NameId::Vptr.AsSpecialNameId());
 
