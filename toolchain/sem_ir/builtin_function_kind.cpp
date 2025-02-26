@@ -489,9 +489,6 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       // Checked integer conversions are compile-time only.
       return true;
 
-    case TypeAnd:
-      return true;
-
     case IntConvert:
     case IntSNegate:
     case IntComplement:
@@ -514,6 +511,9 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       // Integer operations are compile-time-only if they involve integer
       // literal types. See AnyIntLiteralTypes comment for explanation.
       return AnyIntLiteralTypes(sem_ir, arg_ids, return_type_id);
+
+    case TypeAnd:
+      return true;
 
     default:
       // TODO: Should the sized MakeType functions be compile-time only? We
