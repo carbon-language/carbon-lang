@@ -103,7 +103,6 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // Build each impl scope.
   for (auto [impl_id, impl_info] : sem_ir->impls().enumerate()) {
     auto impl_scope = GetScopeFor(impl_id);
-    // TODO: Provide a location for the impl for use as a disambiguator.
     auto impl_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, impl_id);
     // TODO: Invent a name based on the self and constraint types.
     GetScopeInfo(impl_scope).name =

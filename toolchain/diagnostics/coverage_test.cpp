@@ -37,8 +37,8 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
     DiagnosticKind::TooManyTokens,
-    DiagnosticKind::UnsupportedCRLineEnding,
-    DiagnosticKind::UnsupportedLFCRLineEnding,
+    DiagnosticKind::UnsupportedCrLineEnding,
+    DiagnosticKind::UnsupportedLfCrLineEnding,
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     DiagnosticKind::TooManyDigits,

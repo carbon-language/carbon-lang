@@ -144,7 +144,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc36: %.type.b6a92a.3 = fn_decl @.3 [concrete = constants.%.d852be.3] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %x: <error> = bind_name x, %x.param

@@ -227,6 +227,8 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
     -> llvm::Constant* {
   if constexpr (InstT::Kind.constant_kind() == SemIR::InstConstantKind::Never ||
                 InstT::Kind.constant_kind() ==
+                    SemIR::InstConstantKind::Indirect ||
+                InstT::Kind.constant_kind() ==
                     SemIR::InstConstantKind::SymbolicOnly) {
     CARBON_FATAL("Unexpected constant instruction kind {0}", inst);
   } else if constexpr (!InstT::Kind.is_lowered()) {

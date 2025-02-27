@@ -472,7 +472,7 @@ class N.C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F2.decl: %F2.type = fn_decl @F2 [concrete = constants.%F2] {
 // CHECK:STDOUT:     %x.patt.loc14_9.1: <error> = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc14_9.2 (constants.%x.patt.e01)]
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc14_9.1, runtime_param<none> [symbolic = %x.patt.loc14_9.2 (constants.%x.patt.e01)]
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc14_9.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -544,7 +544,7 @@ class N.C {
 // CHECK:STDOUT:   %I.decl.loc17: type = interface_decl @I.2 [concrete = constants.%I.type.4da] {} {}
 // CHECK:STDOUT:   %F2.decl: %F2.type = fn_decl @F2 [concrete = constants.%F2] {
 // CHECK:STDOUT:     %x.patt.loc23_9.1: <error> = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc23_9.2 (constants.%x.patt.e01)]
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc23_9.1, runtime_param<none> [symbolic = %x.patt.loc23_9.2 (constants.%x.patt.e01)]
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc23_9.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -811,7 +811,7 @@ class N.C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.patt.loc13_8.1: <error> = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc13_8.2 (constants.%x.patt)]
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc13_8.1, runtime_param<none> [symbolic = %x.patt.loc13_8.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc13_8.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %I.ref: <error> = name_ref I, <error> [concrete = <error>]
