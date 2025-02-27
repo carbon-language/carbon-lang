@@ -27,8 +27,8 @@ var b: i32 = a[1];
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [concrete]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
 // CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
@@ -107,7 +107,7 @@ var b: i32 = a[1];
 // CHECK:STDOUT:   %.loc16_16.1: %i32 = value_of_initializer %int.convert_checked.loc16 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc16_16.2: %i32 = converted %int_1, %.loc16_16.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc16_17.1: ref %i32 = array_index %a.ref, %.loc16_16.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc16_17.2: %i32 = bind_value %.loc16_17.1
+// CHECK:STDOUT:   %.loc16_17.2: %i32 = bind_value %.loc16_17.1 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, %.loc16_17.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

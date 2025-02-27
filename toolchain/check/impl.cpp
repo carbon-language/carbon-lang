@@ -72,8 +72,8 @@ static auto CheckAssociatedFunctionImplementation(
   if (!CheckFunctionTypeMatches(
           context, context.functions().Get(impl_function_decl->function_id),
           context.functions().Get(interface_function_type.function_id),
-          interface_function_specific_id,
-          /*check_syntax=*/false)) {
+          interface_function_specific_id, /*check_syntax=*/false,
+          /*check_self=*/true)) {
     return SemIR::ErrorInst::SingletonInstId;
   }
   return impl_decl_id;

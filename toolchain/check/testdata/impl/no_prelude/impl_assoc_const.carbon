@@ -355,13 +355,13 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     .I3 = %I3.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I3.decl: type = interface_decl @I3 [concrete = constants.%I3.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.b46 [concrete] {} {
 // CHECK:STDOUT:     %.loc9_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I3.ref: type = name_ref I3, file.%I3.decl [concrete = constants.%I3.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness (<error>) [concrete = constants.%impl_witness.85b]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.add [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I3.ref: type = name_ref I3, file.%I3.decl [concrete = constants.%I3.type]
@@ -397,9 +397,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   assoc_const T3:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %.loc9_7.2 as %I3.ref;
+// CHECK:STDOUT: impl @impl.b46: %.loc9_7.2 as %I3.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %.loc10_7.2 as %.loc10_15 {
+// CHECK:STDOUT: impl @impl.add: %.loc10_7.2 as %.loc10_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness.loc10
 // CHECK:STDOUT: }
@@ -433,7 +433,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     .J = %J.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.2d9 [concrete] {} {
 // CHECK:STDOUT:     %.loc9_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
@@ -451,7 +451,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness (constants.%empty_struct_type) [concrete = constants.%impl_witness.6de]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.bd6 [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
@@ -487,9 +487,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   assoc_const U:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %.loc9_7.2 as %.loc9_14;
+// CHECK:STDOUT: impl @impl.2d9: %.loc9_7.2 as %.loc9_14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %.loc10_7.2 as %.loc10_14 {
+// CHECK:STDOUT: impl @impl.bd6: %.loc10_7.2 as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness.loc10
 // CHECK:STDOUT: }
@@ -529,7 +529,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     .BAD4 = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I4.decl: type = interface_decl @I4 [concrete = constants.%I4.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.de506c.1 [concrete] {} {
 // CHECK:STDOUT:     %.loc17_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc17_7.2: type = converted %.loc17_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I4.ref: type = name_ref I4, file.%I4.decl [concrete = constants.%I4.type]
@@ -563,7 +563,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.de506c.2 [concrete] {} {
 // CHECK:STDOUT:     %.loc31_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc31_7.2: type = converted %.loc31_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I4.ref: type = name_ref I4, file.%I4.decl [concrete = constants.%I4.type]
@@ -631,9 +631,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   assoc_const T6:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %.loc17_7.2 as %.loc17_15;
+// CHECK:STDOUT: impl @impl.de506c.1: %.loc17_7.2 as %.loc17_15;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %.loc31_7.2 as %.loc31_15 {
+// CHECK:STDOUT: impl @impl.de506c.2: %.loc31_7.2 as %.loc31_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -674,7 +674,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     .K = %K.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %K.decl: type = interface_decl @K [concrete = constants.%K.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.138 [concrete] {} {
 // CHECK:STDOUT:     %.loc5_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_7.2: type = converted %.loc5_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
@@ -692,7 +692,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc5: <witness> = impl_witness (constants.%empty_struct_type) [concrete = constants.%impl_witness.6de]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.4b0 [concrete] {} {
 // CHECK:STDOUT:     %.loc17_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc17_7.2: type = converted %.loc17_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
@@ -716,9 +716,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   assoc_const V:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %.loc5_7.2 as %.loc5_14;
+// CHECK:STDOUT: impl @impl.138: %.loc5_7.2 as %.loc5_14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %.loc17_7.2 as %K.ref {
+// CHECK:STDOUT: impl @impl.4b0: %.loc17_7.2 as %K.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness.loc17
 // CHECK:STDOUT: }

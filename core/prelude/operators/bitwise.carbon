@@ -87,3 +87,11 @@ impl IntLiteral() as LeftShift {
 impl IntLiteral() as RightShift {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
+
+// Operations for `type`. These need to be here because `type` has no
+// associated library of its own.
+
+// Facet type combination.
+impl forall [T:! type] T as BitAnd {
+  fn Op[self: Self](other: Self) -> Self = "type.and";
+}

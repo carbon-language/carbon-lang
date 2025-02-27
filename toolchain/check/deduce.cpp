@@ -323,7 +323,7 @@ auto DeductionContext::Deduce() -> bool {
 
     auto param_type_id = context().insts().Get(param_id).type_id();
     // If the parameter has a symbolic type, deduce against that.
-    if (param_type_id.AsConstantId().is_symbolic()) {
+    if (param_type_id.is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),
           context().types().GetInstId(context().insts().Get(arg_id).type_id()),
           needs_substitution);
@@ -506,6 +506,24 @@ auto DeductionContext::Deduce() -> bool {
   return true;
 }
 
+// Gets the entity name of a generic binding. The generic binding may be an
+// imported instruction.
+static auto GetEntityNameForGenericBinding(Context& context,
+                                           SemIR::InstId binding_id)
+    -> SemIR::NameId {
+  // If `binding_id` is imported (or referenced indirectly perhaps in the
+  // future), it may not have an entity name. Get a canonical local instruction
+  // from its constant value which does.
+  binding_id = context.constant_values().GetConstantInstId(binding_id);
+
+  if (auto bind_name =
+          context.insts().TryGetAs<SemIR::AnyBindName>(binding_id)) {
+    return context.entity_names().Get(bind_name->entity_name_id).name_id;
+  } else {
+    CARBON_FATAL("Instruction without entity name in generic binding position");
+  }
+}
+
 auto DeductionContext::CheckDeductionIsComplete() -> bool {
   // Check we deduced an argument value for every parameter, and convert each
   // argument to match the final parameter type after substituting any deduced
@@ -518,16 +536,12 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
         context().generics().Get(generic_id_).bindings_id)[binding_index];
     if (!deduced_arg_id.has_value()) {
       if (diagnose_) {
-        auto entity_name_id = context()
-                                  .insts()
-                                  .GetAs<SemIR::AnyBindName>(binding_id)
-                                  .entity_name_id;
         CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
                           "cannot deduce value for generic parameter `{0}`",
                           SemIR::NameId);
         auto diag = context().emitter().Build(
             loc_id_, DeductionIncomplete,
-            context().entity_names().Get(entity_name_id).name_id);
+            GetEntityNameForGenericBinding(context(), binding_id));
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
       }
@@ -552,8 +566,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // that incorrectly.
     auto arg_type_id = context().insts().Get(deduced_arg_id).type_id();
     auto binding_type_id = context().insts().Get(binding_id).type_id();
-    if (!arg_type_id.AsConstantId().is_symbolic() &&
-        binding_type_id.AsConstantId().is_symbolic()) {
+    if (arg_type_id.is_concrete() && binding_type_id.is_symbolic()) {
       auto param_type_const_id = SubstConstant(
           context(), binding_type_id.AsConstantId(), substitutions_);
       CARBON_CHECK(param_type_const_id.has_value());

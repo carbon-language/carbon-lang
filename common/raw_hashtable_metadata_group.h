@@ -303,14 +303,14 @@ class BitIndexRange
 // auto MetadataGroup::Operation(...) -> ... {
 //   ... portable_result;
 //   ... simd_result;
-//   if constexpr (!UseSIMD || DebugSIMD) {
+//   if constexpr (!UseSimd || DebugSimd) {
 //     portable_result = PortableOperation(...);
 //   }
-//   if (UseSIMD || DebugSIMD) {
-//     simd_result = SIMDOperation(...)
+//   if (UseSimd || DebugSimd) {
+//     simd_result = SimdOperation(...)
 //     CARBON_DCHECK(result == portable_result, "{0}", ...);
 //   }
-//   return UseSIMD ? simd_result : portable_result;
+//   return UseSimd ? simd_result : portable_result;
 // }
 // ```
 class MetadataGroup : public Printable<MetadataGroup> {
@@ -344,7 +344,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // Whether to use a SIMD implementation. Even when we *support* a SIMD
   // implementation, we do not always have to use it in the event that it is
   // less efficient than the portable version.
-  static constexpr bool UseSIMD =
+  static constexpr bool UseSimd =
 #if CARBON_X86_SIMD_SUPPORT
       true;
 #else
@@ -375,8 +375,8 @@ class MetadataGroup : public Printable<MetadataGroup> {
   static constexpr bool FastByteClear = Size == 8;
 
   // Most and least significant bits set.
-  static constexpr uint64_t MSBs = 0x8080'8080'8080'8080ULL;
-  static constexpr uint64_t LSBs = 0x0101'0101'0101'0101ULL;
+  static constexpr uint64_t Msbs = 0x8080'8080'8080'8080ULL;
+  static constexpr uint64_t Lsbs = 0x0101'0101'0101'0101ULL;
 
   using MatchIndex =
       BitIndex<std::conditional_t<ByteEncoding, uint64_t, uint32_t>,
@@ -389,16 +389,16 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // We use specialized match range types for SIMD implementations to allow
   // deferring the masking operation where useful. When that optimization
   // doesn't apply, these will be the same type.
-  using SIMDMatchRange =
-      BitIndexRange<MatchIndex, /*ByteEncodingMask=*/ByteEncoding ? MSBs : 0>;
-  using SIMDMatchPresentRange = BitIndexRange<MatchIndex>;
+  using SimdMatchRange =
+      BitIndexRange<MatchIndex, /*ByteEncodingMask=*/ByteEncoding ? Msbs : 0>;
+  using SimdMatchPresentRange = BitIndexRange<MatchIndex>;
 
   // The public API range types can be either the portable or SIMD variations,
   // selected here.
   using MatchRange =
-      std::conditional_t<UseSIMD, SIMDMatchRange, PortableMatchRange>;
+      std::conditional_t<UseSimd, SimdMatchRange, PortableMatchRange>;
   using MatchPresentRange =
-      std::conditional_t<UseSIMD, SIMDMatchPresentRange, PortableMatchRange>;
+      std::conditional_t<UseSimd, SimdMatchPresentRange, PortableMatchRange>;
 
   union {
     uint8_t metadata_bytes[Size];
@@ -477,13 +477,13 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // Two classes only defined in the benchmark code are allowed to directly call
   // the portable and SIMD implementations for benchmarking purposes.
   friend class BenchmarkPortableMetadataGroup;
-  friend class BenchmarkSIMDMetadataGroup;
+  friend class BenchmarkSimdMetadataGroup;
 
   // All SIMD variants that we have an implementation for should be enabled for
   // debugging. This lets us maintain a SIMD implementation even if it is not
   // used due to performance reasons, and easily re-enable it if the performance
   // changes.
-  static constexpr bool DebugSIMD =
+  static constexpr bool DebugSimd =
 #if !defined(NDEBUG) && (CARBON_NEON_SIMD_SUPPORT || CARBON_X86_SIMD_SUPPORT)
       true;
 #else
@@ -553,23 +553,23 @@ class MetadataGroup : public Printable<MetadataGroup> {
   //
   // These routines don't directly verify their results as we can build simpler
   // debug checks by comparing them against the verified portable results.
-  static auto SIMDLoad(const uint8_t* metadata, ssize_t index) -> MetadataGroup;
-  auto SIMDStore(uint8_t* metadata, ssize_t index) const -> void;
+  static auto SimdLoad(const uint8_t* metadata, ssize_t index) -> MetadataGroup;
+  auto SimdStore(uint8_t* metadata, ssize_t index) const -> void;
 
-  auto SIMDClearDeleted() -> void;
+  auto SimdClearDeleted() -> void;
 
-  auto SIMDMatch(uint8_t tag) const -> SIMDMatchRange;
-  auto SIMDMatchPresent() const -> SIMDMatchPresentRange;
+  auto SimdMatch(uint8_t tag) const -> SimdMatchRange;
+  auto SimdMatchPresent() const -> SimdMatchPresentRange;
 
-  auto SIMDMatchEmpty() const -> MatchIndex;
-  auto SIMDMatchDeleted() const -> MatchIndex;
+  auto SimdMatchEmpty() const -> MatchIndex;
+  auto SimdMatchDeleted() const -> MatchIndex;
 
-  static auto SIMDCompareEqual(MetadataGroup lhs, MetadataGroup rhs) -> bool;
+  static auto SimdCompareEqual(MetadataGroup lhs, MetadataGroup rhs) -> bool;
 
 #if CARBON_X86_SIMD_SUPPORT
   // A common routine for x86 SIMD matching that can be used for matching
   // present, empty, and deleted bytes with equal efficiency.
-  auto X86SIMDMatch(uint8_t match_byte) const -> SIMDMatchRange;
+  auto X86SimdMatch(uint8_t match_byte) const -> SimdMatchRange;
 #endif
 };
 
@@ -581,23 +581,23 @@ inline constexpr ssize_t GroupMask = MetadataGroup::Mask;
 inline auto MetadataGroup::Load(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup portable_g;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_g = PortableLoad(metadata, index);
-    if constexpr (!UseSIMD) {
+    if constexpr (!UseSimd) {
       return portable_g;
     }
   }
-  MetadataGroup g = SIMDLoad(metadata, index);
+  MetadataGroup g = SimdLoad(metadata, index);
   CARBON_DCHECK(g == portable_g);
   return g;
 }
 
 inline auto MetadataGroup::Store(uint8_t* metadata, ssize_t index) const
     -> void {
-  if constexpr (!UseSIMD) {
+  if constexpr (!UseSimd) {
     std::memcpy(metadata + index, &metadata_bytes, Size);
   } else {
-    SIMDStore(metadata, index);
+    SimdStore(metadata, index);
   }
   CARBON_DCHECK(0 == std::memcmp(metadata + index, &metadata_bytes, Size));
 }
@@ -615,17 +615,17 @@ inline auto MetadataGroup::ClearByte(ssize_t byte_index) -> void {
 inline auto MetadataGroup::ClearDeleted() -> void {
   MetadataGroup portable_g = *this;
   MetadataGroup simd_g = *this;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_g.PortableClearDeleted();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
-    simd_g.SIMDClearDeleted();
+  if constexpr (UseSimd || DebugSimd) {
+    simd_g.SimdClearDeleted();
     CARBON_DCHECK(
         simd_g == portable_g,
         "SIMD cleared group '{0}' doesn't match portable cleared group '{1}'",
         simd_g, portable_g);
   }
-  *this = UseSIMD ? simd_g : portable_g;
+  *this = UseSimd ? simd_g : portable_g;
 }
 
 inline auto MetadataGroup::Match(uint8_t tag) const -> MatchRange {
@@ -635,78 +635,78 @@ inline auto MetadataGroup::Match(uint8_t tag) const -> MatchRange {
   CARBON_DCHECK((tag & PresentMask) == 0, "{0:x}", tag);
 
   PortableMatchRange portable_result;
-  SIMDMatchRange simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  SimdMatchRange simd_result;
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatch(tag);
   }
-  if constexpr (UseSIMD || DebugSIMD) {
-    simd_result = SIMDMatch(tag);
+  if constexpr (UseSimd || DebugSimd) {
+    simd_result = SimdMatch(tag);
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
   // Return whichever result we're using.
-  return ConstexprTernary<UseSIMD>(simd_result, portable_result);
+  return ConstexprTernary<UseSimd>(simd_result, portable_result);
 }
 
 inline auto MetadataGroup::MatchPresent() const -> MatchPresentRange {
   PortableMatchRange portable_result;
-  SIMDMatchPresentRange simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  SimdMatchPresentRange simd_result;
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatchPresent();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
-    simd_result = SIMDMatchPresent();
+  if constexpr (UseSimd || DebugSimd) {
+    simd_result = SimdMatchPresent();
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
   // Return whichever result we're using.
-  return ConstexprTernary<UseSIMD>(simd_result, portable_result);
+  return ConstexprTernary<UseSimd>(simd_result, portable_result);
 }
 
 inline auto MetadataGroup::MatchEmpty() const -> MatchIndex {
   MatchIndex portable_result;
   MatchIndex simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatchEmpty();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
-    simd_result = SIMDMatchEmpty();
+  if constexpr (UseSimd || DebugSimd) {
+    simd_result = SimdMatchEmpty();
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
-  return UseSIMD ? simd_result : portable_result;
+  return UseSimd ? simd_result : portable_result;
 }
 
 inline auto MetadataGroup::MatchDeleted() const -> MatchIndex {
   MatchIndex portable_result;
   MatchIndex simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableMatchDeleted();
   }
-  if constexpr (UseSIMD || DebugSIMD) {
-    simd_result = SIMDMatchDeleted();
+  if constexpr (UseSimd || DebugSimd) {
+    simd_result = SimdMatchDeleted();
     CARBON_DCHECK(simd_result == portable_result,
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
-  return UseSIMD ? simd_result : portable_result;
+  return UseSimd ? simd_result : portable_result;
 }
 
 inline auto MetadataGroup::CompareEqual(MetadataGroup lhs, MetadataGroup rhs)
     -> bool {
   bool portable_result;
   bool simd_result;
-  if constexpr (!UseSIMD || DebugSIMD) {
+  if constexpr (!UseSimd || DebugSimd) {
     portable_result = PortableCompareEqual(lhs, rhs);
   }
-  if constexpr (UseSIMD || DebugSIMD) {
-    simd_result = SIMDCompareEqual(lhs, rhs);
+  if constexpr (UseSimd || DebugSimd) {
+    simd_result = SimdCompareEqual(lhs, rhs);
     CARBON_DCHECK(simd_result == portable_result);
   }
-  return UseSIMD ? simd_result : portable_result;
+  return UseSimd ? simd_result : portable_result;
 }
 
 inline auto MetadataGroup::VerifyIndexBits(
@@ -798,10 +798,10 @@ inline auto MetadataGroup::PortableClearDeleted() -> void {
     // need to preserve are those of present bytes. The most significant bit of
     // every present byte is set, so we take the most significant bit of each
     // byte, shift it into the least significant bit position, and bit-or it
-    // with the compliment of `LSBs`. This will have ones for every bit but the
+    // with the compliment of `Lsbs`. This will have ones for every bit but the
     // least significant bits, and ones for the least significant bits of every
     // present byte.
-    metadata_int &= (~LSBs | metadata_int >> 7);
+    metadata_int &= (~Lsbs | metadata_int >> 7);
   }
 }
 
@@ -834,13 +834,13 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // algorithm has a critical path height of 4 operations, and does 6
   // operations total on AArch64. The operation dependency graph is:
   //
-  //          group | MSBs        LSBs * match_byte + MSBs
+  //          group | Msbs        Lsbs * match_byte + Msbs
   //                 \                /
   //                 match_bits ^ broadcast
   //                            |
-  //   group & MSBs        MSBs - match_bits
+  //   group & Msbs        Msbs - match_bits
   //          \                /
-  //        group_MSBs & match_bits
+  //        group_Msbs & match_bits
   //
   // This diagram and the operation count are specific to AArch64 where we have
   // a fused *integer* multiply-add operation.
@@ -856,13 +856,13 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // and so always has this bit set as well, which means the xor below, in
   // addition to zeroing the low 7 bits of any byte that matches the tag, also
   // clears the high bit of every byte.
-  uint64_t match_bits = metadata_ints[0] | MSBs;
+  uint64_t match_bits = metadata_ints[0] | Msbs;
   // Broadcast the match byte to all bytes, and mask in the present bits in the
-  // MSBs of each byte. We structure this as a multiply and an add because we
+  // Msbs of each byte. We structure this as a multiply and an add because we
   // know that the add cannot carry, and this way it can be lowered using
   // combined multiply-add instructions if available.
-  uint64_t broadcast = LSBs * tag + MSBs;
-  CARBON_DCHECK(broadcast == (LSBs * tag | MSBs),
+  uint64_t broadcast = Lsbs * tag + Msbs;
+  CARBON_DCHECK(broadcast == (Lsbs * tag | Msbs),
                 "Unexpected carry from addition!");
 
   // Xor the broadcast byte pattern. This makes bytes with matches become 0, and
@@ -872,11 +872,11 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   match_bits = match_bits ^ broadcast;
   // Subtract each byte of `match_bits` from `0x80` bytes. After this, the high
   // bit will be set only for those bytes that were zero.
-  match_bits = MSBs - match_bits;
+  match_bits = Msbs - match_bits;
   // Zero everything but the high bits, and also zero the high bits of any bytes
   // for "not present" slots in the original group. This avoids false positives
   // for `Empty` and `Deleted` bytes in the metadata.
-  match_bits &= (metadata_ints[0] & MSBs);
+  match_bits &= (metadata_ints[0] & Msbs);
 
   // At this point, `match_bits` has the high bit set for bytes where the
   // original group byte equals `tag` plus the high bit.
@@ -905,7 +905,7 @@ inline auto MetadataGroup::PortableMatchPresent() const -> MatchRange {
 
   // Want to keep the high bit of each byte, which indicates whether that byte
   // represents a present slot.
-  uint64_t match_bits = metadata_ints[0] & MSBs;
+  uint64_t match_bits = metadata_ints[0] & Msbs;
 
   CARBON_DCHECK(VerifyPortableRangeBits(
       match_bits, [&](uint8_t byte) { return (byte & PresentMask) != 0; }));
@@ -937,7 +937,7 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
   //   cause the high bit to be set.
   uint64_t match_bits = metadata_ints[0] | (metadata_ints[0] << 7);
   // This inverts the high bits of the bytes, and clears the remaining bits.
-  match_bits = ~match_bits & MSBs;
+  match_bits = ~match_bits & Msbs;
 
   // The high bits of the bytes of `match_bits` are set if the corresponding
   // metadata byte is `Empty`.
@@ -971,7 +971,7 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
   //   shifting left by 7 will have the high bit set.
   uint64_t match_bits = metadata_ints[0] | (~metadata_ints[0] << 7);
   // This inverts the high bits of the bytes, and clears the remaining bits.
-  match_bits = ~match_bits & MSBs;
+  match_bits = ~match_bits & Msbs;
 
   // The high bits of the bytes of `match_bits` are set if the corresponding
   // metadata byte is `Deleted`.
@@ -985,7 +985,7 @@ inline auto MetadataGroup::PortableCompareEqual(MetadataGroup lhs,
   return llvm::equal(lhs.metadata_bytes, rhs.metadata_bytes);
 }
 
-inline auto MetadataGroup::SIMDLoad(const uint8_t* metadata, ssize_t index)
+inline auto MetadataGroup::SimdLoad(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup g;
 #if CARBON_NEON_SIMD_SUPPORT
@@ -994,33 +994,33 @@ inline auto MetadataGroup::SIMDLoad(const uint8_t* metadata, ssize_t index)
   g.metadata_vec =
       _mm_load_si128(reinterpret_cast<const __m128i*>(metadata + index));
 #else
-  static_assert(!UseSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd, "Unimplemented SIMD operation");
   static_cast<void>(metadata);
   static_cast<void>(index);
 #endif
   return g;
 }
 
-inline auto MetadataGroup::SIMDStore(uint8_t* metadata, ssize_t index) const
+inline auto MetadataGroup::SimdStore(uint8_t* metadata, ssize_t index) const
     -> void {
 #if CARBON_NEON_SIMD_SUPPORT
   vst1_u8(metadata + index, metadata_vec);
 #elif CARBON_X86_SIMD_SUPPORT
   _mm_store_si128(reinterpret_cast<__m128i*>(metadata + index), metadata_vec);
 #else
-  static_assert(!UseSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd, "Unimplemented SIMD operation");
   static_cast<void>(metadata);
   static_cast<void>(index);
 #endif
 }
 
-inline auto MetadataGroup::SIMDClearDeleted() -> void {
+inline auto MetadataGroup::SimdClearDeleted() -> void {
 #if CARBON_NEON_SIMD_SUPPORT
   // There is no good Neon operation to implement this, so do it using integer
   // code. This is reasonably fast, but unfortunate because it forces the group
   // out of a SIMD register and into a general purpose register, which can have
   // high latency.
-  metadata_ints[0] &= (~LSBs | metadata_ints[0] >> 7);
+  metadata_ints[0] &= (~Lsbs | metadata_ints[0] >> 7);
 #elif CARBON_X86_SIMD_SUPPORT
   // For each byte, use `metadata_vec` if the byte's high bit is set (indicating
   // it is present), otherwise (it is empty or deleted) replace it with zero
@@ -1028,49 +1028,49 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
   metadata_vec =
       _mm_blendv_epi8(_mm_setzero_si128(), metadata_vec, metadata_vec);
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
 }
 
-inline auto MetadataGroup::SIMDMatch(uint8_t tag) const -> SIMDMatchRange {
-  SIMDMatchRange result;
+inline auto MetadataGroup::SimdMatch(uint8_t tag) const -> SimdMatchRange {
+  SimdMatchRange result;
 #if CARBON_NEON_SIMD_SUPPORT
   // Broadcast byte we want to match to every byte in the vector.
   auto match_byte_vec = vdup_n_u8(tag | PresentMask);
   // Result bytes have all bits set for the bytes that match, so we have to
-  // clear everything but MSBs next.
+  // clear everything but Msbs next.
   auto match_byte_cmp_vec = vceq_u8(metadata_vec, match_byte_vec);
   uint64_t match_bits = vreinterpret_u64_u8(match_byte_cmp_vec)[0];
-  // Note that the range will lazily mask to the MSBs as part of incrementing.
-  result = SIMDMatchRange(match_bits);
+  // Note that the range will lazily mask to the Msbs as part of incrementing.
+  result = SimdMatchRange(match_bits);
 #elif CARBON_X86_SIMD_SUPPORT
-  result = X86SIMDMatch(tag | PresentMask);
+  result = X86SimdMatch(tag | PresentMask);
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
   static_cast<void>(tag);
 #endif
   return result;
 }
 
-inline auto MetadataGroup::SIMDMatchPresent() const -> SIMDMatchPresentRange {
-  SIMDMatchPresentRange result;
+inline auto MetadataGroup::SimdMatchPresent() const -> SimdMatchPresentRange {
+  SimdMatchPresentRange result;
 #if CARBON_NEON_SIMD_SUPPORT
   // Just extract the metadata directly.
   uint64_t match_bits = vreinterpret_u64_u8(metadata_vec)[0];
   // Even though the Neon SIMD range will do its own masking, we have to mask
   // here so that `empty` is correct.
-  result = SIMDMatchPresentRange(match_bits & MSBs);
+  result = SimdMatchPresentRange(match_bits & Msbs);
 #elif CARBON_X86_SIMD_SUPPORT
   // We arranged the byte vector so that present bytes have the high bit set,
   // which this instruction extracts.
-  result = SIMDMatchPresentRange(_mm_movemask_epi8(metadata_vec));
+  result = SimdMatchPresentRange(_mm_movemask_epi8(metadata_vec));
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
   return result;
 }
 
-inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
+inline auto MetadataGroup::SimdMatchEmpty() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
   // Compare all bytes with zero, as that is the empty byte value. Result will
@@ -1079,23 +1079,23 @@ inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
   auto cmp_vec = vceqz_u8(metadata_vec);
   uint64_t metadata_bits = vreinterpret_u64_u8(cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
-  // test can often be folded into masking the bits with `MSBs` when we do that
+  // test can often be folded into masking the bits with `Msbs` when we do that
   // mask in the scalar domain rather than the SIMD domain. So we do the mask
   // here rather than above prior to extracting the match bits.
-  result = MatchIndex(metadata_bits & MSBs);
+  result = MatchIndex(metadata_bits & Msbs);
 #elif CARBON_X86_SIMD_SUPPORT
   // Even though we only need the first match rather than all matches, we don't
   // have a more efficient way to compute this on x86 and so we reuse the
   // general match infrastructure that computes all matches in a bit-encoding.
   // We then convert it into a `MatchIndex` that just finds the first one.
-  result = static_cast<MatchIndex>(X86SIMDMatch(Empty));
+  result = static_cast<MatchIndex>(X86SimdMatch(Empty));
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
   return result;
 }
 
-inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
+inline auto MetadataGroup::SimdMatchDeleted() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
   // Broadcast the `Deleted` byte across the vector and compare the bytes of
@@ -1104,23 +1104,23 @@ inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
   auto cmp_vec = vceq_u8(metadata_vec, vdup_n_u8(Deleted));
   uint64_t match_bits = vreinterpret_u64_u8(cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
-  // test can often be folded into masking the bits with `MSBs` when we do that
+  // test can often be folded into masking the bits with `Msbs` when we do that
   // mask in the scalar domain rather than the SIMD domain. So we do the mask
   // here rather than above prior to extracting the match bits.
-  result = MatchIndex(match_bits & MSBs);
+  result = MatchIndex(match_bits & Msbs);
 #elif CARBON_X86_SIMD_SUPPORT
   // Even though we only need the first match rather than all matches, we don't
   // have a more efficient way to compute this on x86 and so we reuse the
   // general match infrastructure that computes all matches in a bit-encoding.
   // We then convert it into a `MatchIndex` that just finds the first one.
-  result = static_cast<MatchIndex>(X86SIMDMatch(Deleted));
+  result = static_cast<MatchIndex>(X86SimdMatch(Deleted));
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
 #endif
   return result;
 }
 
-inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
+inline auto MetadataGroup::SimdCompareEqual(MetadataGroup lhs,
                                             MetadataGroup rhs) -> bool {
 #if CARBON_NEON_SIMD_SUPPORT
   return vreinterpret_u64_u8(vceq_u8(lhs.metadata_vec, rhs.metadata_vec))[0] ==
@@ -1141,7 +1141,7 @@ inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
                                           rhs.metadata_vec)) == 0x0000'ffffU;
 #endif
 #else
-  static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
+  static_assert(!UseSimd && !DebugSimd, "Unimplemented SIMD operation");
   static_cast<void>(lhs);
   static_cast<void>(rhs);
   return false;
@@ -1149,7 +1149,7 @@ inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
 }
 
 #if CARBON_X86_SIMD_SUPPORT
-inline auto MetadataGroup::X86SIMDMatch(uint8_t match_byte) const
+inline auto MetadataGroup::X86SimdMatch(uint8_t match_byte) const
     -> MatchRange {
   // Broadcast the byte we're matching against to all bytes in a vector, and
   // compare those bytes with the metadata vector bytes.

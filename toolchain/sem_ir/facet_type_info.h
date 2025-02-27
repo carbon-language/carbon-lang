@@ -25,6 +25,20 @@ constexpr SpecificInterface SpecificInterface::None = {
     .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
 
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
+  // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
+  // canonicalized, so that it can be further modified by the caller if desired.
+  static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
+      -> FacetTypeInfo {
+    FacetTypeInfo info = {.other_requirements = false};
+    llvm::append_range(info.impls_constraints, lhs.impls_constraints);
+    llvm::append_range(info.impls_constraints, rhs.impls_constraints);
+    llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
+    llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
+    info.other_requirements |= lhs.other_requirements;
+    info.other_requirements |= rhs.other_requirements;
+    return info;
+  }
+
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
   // https://github.com/carbon-language/carbon-lang/issues/2409.

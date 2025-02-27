@@ -57,7 +57,7 @@ fn G() {
 // CHECK:STDOUT:   %F.118: %F.type.4cf = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.assoc_type.9f1: type = assoc_entity_type %Generic.type.769 [concrete]
 // CHECK:STDOUT:   %assoc0.9b7: %Generic.assoc_type.9f1 = assoc_entity element0, @Generic.%F.decl [concrete]
-// CHECK:STDOUT:   %impl_witness.b42: <witness> = impl_witness (@impl.1.%F.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.b42: <witness> = impl_witness (@impl.046.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.17b: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.a56: %F.type.17b = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.facet.b0a: %Generic.type.769 = facet_value %ImplsGeneric, %impl_witness.b42 [concrete]
@@ -67,7 +67,7 @@ fn G() {
 // CHECK:STDOUT:   %G.17f: %G.type.0c6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Other.assoc_type: type = assoc_entity_type %Other.type [concrete]
 // CHECK:STDOUT:   %assoc0.5ce: %Other.assoc_type = assoc_entity element0, @Other.%G.decl [concrete]
-// CHECK:STDOUT:   %impl_witness.51c: <witness> = impl_witness (@impl.2.%G.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.51c: <witness> = impl_witness (@impl.728.%G.decl) [concrete]
 // CHECK:STDOUT:   %G.type.58d: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.b67: %G.type.58d = struct_value () [concrete]
 // CHECK:STDOUT:   %Other.facet: %Other.type = facet_value %ImplsGeneric, %impl_witness.51c [concrete]
@@ -124,19 +124,19 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
 // CHECK:STDOUT:   %ImplsGeneric.decl: type = class_decl @ImplsGeneric [concrete = constants.%ImplsGeneric] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.046 [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:     %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
 // CHECK:STDOUT:     %Generic.type: type = facet_type <@Generic, @Generic(constants.%GenericParam)> [concrete = constants.%Generic.type.769]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (@impl.1.%F.decl) [concrete = constants.%impl_witness.b42]
+// CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (@impl.046.%F.decl) [concrete = constants.%impl_witness.b42]
 // CHECK:STDOUT:   %Other.decl: type = interface_decl @Other [concrete = constants.%Other.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.728 [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Other.ref: type = name_ref Other, file.%Other.decl [concrete = constants.%Other.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc25: <witness> = impl_witness (@impl.2.%G.decl) [concrete = constants.%impl_witness.51c]
+// CHECK:STDOUT:   %impl_witness.loc25: <witness> = impl_witness (@impl.728.%G.decl) [concrete = constants.%impl_witness.51c]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %T.patt.loc29_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc29_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc29_22.1, runtime_param<none> [symbolic = %T.patt.loc29_22.2 (constants.%T.patt)]
@@ -191,7 +191,7 @@ fn G() {
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %ImplsGeneric.ref as %Generic.type {
+// CHECK:STDOUT: impl @impl.046: %ImplsGeneric.ref as %Generic.type {
 // CHECK:STDOUT:   %F.decl: %F.type.17b = fn_decl @F.2 [concrete = constants.%F.a56] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -199,7 +199,7 @@ fn G() {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %ImplsGeneric.ref as %Other.ref {
+// CHECK:STDOUT: impl @impl.728: %ImplsGeneric.ref as %Other.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.58d = fn_decl @G.2 [concrete = constants.%G.b67] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -83,18 +83,18 @@ abstract protected class WrongOrder { }
 abstract base class AbstractAndBase {}
 
 abstract class AbstractWithDefinition {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:19: error: definition of `abstract` function [DefinedAbstractFunction]
-  // CHECK:STDERR:   abstract fn F() {}
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
+  // CHECK:STDERR:   abstract fn F[self: Self]() {}
+  // CHECK:STDERR:                               ^
   // CHECK:STDERR:
-  abstract fn F() {}
-  abstract fn G();
+  abstract fn F[self: Self]() {}
+  abstract fn G[self: Self]();
 }
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
-// CHECK:STDERR: fn AbstractWithDefinition.G() {
-// CHECK:STDERR:                               ^
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:43: error: definition of `abstract` function [DefinedAbstractFunction]
+// CHECK:STDERR: fn AbstractWithDefinition.G[self: Self]() {
+// CHECK:STDERR:                                           ^
 // CHECK:STDERR:
-fn AbstractWithDefinition.G() {
+fn AbstractWithDefinition.G[self: Self]() {
 }
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
@@ -115,9 +115,9 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %.9a5: <vtable> = vtable (%F, %G) [concrete]
-// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -151,7 +151,14 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [concrete = constants.%WrongOrder] {} {}
 // CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [concrete = constants.%AbstractAndBase] {} {}
 // CHECK:STDOUT:   %AbstractWithDefinition.decl: type = class_decl @AbstractWithDefinition [concrete = constants.%AbstractWithDefinition] {} {}
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
+// CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param.loc97: %AbstractWithDefinition = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref.loc97: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
+// CHECK:STDOUT:     %self.loc97: %AbstractWithDefinition = bind_name self, %self.param.loc97
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
@@ -195,8 +202,22 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractWithDefinition {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %AbstractWithDefinition = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
+// CHECK:STDOUT:     %self: %AbstractWithDefinition = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
+// CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param.loc91: %AbstractWithDefinition = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref.loc91: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
+// CHECK:STDOUT:     %self.loc91: %AbstractWithDefinition = bind_name self, %self.param.loc91
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc92: <vtable> = vtable (%F.decl, %G.decl) [concrete = constants.%.9a5]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -207,12 +228,12 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @F() {
+// CHECK:STDOUT: abstract fn @F[%self.param_patt: %AbstractWithDefinition]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @G() {
+// CHECK:STDOUT: abstract fn @G[%self.param_patt: %AbstractWithDefinition]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

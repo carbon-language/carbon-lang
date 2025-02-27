@@ -19,6 +19,16 @@ manifest(
 )
 
 cc_library(
+    name = "node_category",
+    srcs = ["node_category.cpp"],
+    hdrs = ["node_category.h"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "node_kind",
     srcs = ["node_kind.cpp"],
     hdrs = [
@@ -28,6 +38,7 @@ cc_library(
     ],
     textual_hdrs = ["node_kind.def"],
     deps = [
+        ":node_category",
         "//common:check",
         "//common:enum_base",
         "//common:ostream",

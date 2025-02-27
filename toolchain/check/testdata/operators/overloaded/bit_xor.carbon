@@ -40,14 +40,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitXor.type: type = facet_type <@BitXor> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Op.type.e96: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %impl_witness.01d: <witness> = impl_witness (@impl.1.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.01d: <witness> = impl_witness (@impl.2e5.%Op.decl) [concrete]
 // CHECK:STDOUT:   %Op.type.672: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.442: %Op.type.672 = struct_value () [concrete]
 // CHECK:STDOUT:   %BitXor.facet: %BitXor.type = facet_value %C, %impl_witness.01d [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %BitXorAssign.type: type = facet_type <@BitXorAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.58d: type = fn_type @Op.3 [concrete]
-// CHECK:STDOUT:   %impl_witness.8dc: <witness> = impl_witness (@impl.2.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.8dc: <witness> = impl_witness (@impl.9ba.%Op.decl) [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.8ab: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.67d: %Op.type.8ab = struct_value () [concrete]
@@ -80,18 +80,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.2e5 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitXor.ref: type = name_ref BitXor, imports.%Core.BitXor [concrete = constants.%BitXor.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.1.%Op.decl) [concrete = constants.%impl_witness.01d]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.2e5.%Op.decl) [concrete = constants.%impl_witness.01d]
+// CHECK:STDOUT:   impl_decl @impl.9ba [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitXorAssign.ref: type = name_ref BitXorAssign, imports.%Core.BitXorAssign [concrete = constants.%BitXorAssign.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.2.%Op.decl) [concrete = constants.%impl_witness.8dc]
+// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.9ba.%Op.decl) [concrete = constants.%impl_witness.8dc]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -128,7 +128,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %BitXor.ref {
+// CHECK:STDOUT: impl @impl.2e5: %C.ref as %BitXor.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.672 = fn_decl @Op.2 [concrete = constants.%Op.442] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
@@ -154,7 +154,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C.ref as %BitXorAssign.ref {
+// CHECK:STDOUT: impl @impl.9ba: %C.ref as %BitXorAssign.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.8ab = fn_decl @Op.4 [concrete = constants.%Op.67d] {
 // CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, runtime_param0

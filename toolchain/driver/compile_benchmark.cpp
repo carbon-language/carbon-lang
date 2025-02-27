@@ -93,7 +93,7 @@ static auto ComputeFileCount(int target_lines) -> int {
 }
 
 template <Phase P>
-static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
+static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   CompileBenchmark bench;
   int target_lines = state.range(0);
   int num_files = ComputeFileCount(target_lines);
@@ -106,7 +106,7 @@ static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
   double total_tokens = 0.0;
   double total_lines = 0.0;
   for (std::string& source : sources) {
-    source = bench.gen().GenAPIFileDenseDecls(target_lines,
+    source = bench.gen().GenApiFileDenseDecls(target_lines,
                                               SourceGen::DenseDeclParams{});
     total_bytes += source.size();
     total_tokens += compile_helper.GetTokenizedBuffer(source).size();
@@ -151,13 +151,13 @@ static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
 
 // Benchmark from 256-line test cases through 256k line test cases, and for each
 // phase of compilation.
-BENCHMARK(BM_CompileAPIFileDenseDecls<Phase::Lex>)
+BENCHMARK(BM_CompileApiFileDenseDecls<Phase::Lex>)
     ->RangeMultiplier(4)
     ->Range(256, static_cast<int64_t>(256 * 1024));
-BENCHMARK(BM_CompileAPIFileDenseDecls<Phase::Parse>)
+BENCHMARK(BM_CompileApiFileDenseDecls<Phase::Parse>)
     ->RangeMultiplier(4)
     ->Range(256, static_cast<int64_t>(256 * 1024));
-BENCHMARK(BM_CompileAPIFileDenseDecls<Phase::Check>)
+BENCHMARK(BM_CompileApiFileDenseDecls<Phase::Check>)
     ->RangeMultiplier(4)
     ->Range(256, static_cast<int64_t>(256 * 1024));
 
