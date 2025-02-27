@@ -98,17 +98,15 @@ struct DeclParams {
 // `diagnose` is true, and returns false.
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            SemIR::SpecificId prev_specific_id,
-                            bool check_syntax, bool check_self, bool diagnose)
-    -> bool;
+                            SemIR::SpecificId prev_specific_id, bool diagnose,
+                            bool check_syntax, bool check_self) -> bool;
 
 inline auto CheckRedeclParamsMatch(Context& context,
                                    const DeclParams& new_entity,
                                    const DeclParams& prev_entity) -> bool {
   return CheckRedeclParamsMatch(context, new_entity, prev_entity,
                                 SemIR::SpecificId::None, /*diagnose=*/true,
-                                /*check_syntax=*/true,
-                                /*check_self=*/true);
+                                /*check_syntax=*/true, /*check_self=*/true);
 }
 
 }  // namespace Carbon::Check
