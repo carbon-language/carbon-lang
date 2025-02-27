@@ -224,6 +224,24 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         .Emit();
   };
 
+  auto new_param_pattern = context.insts().Get(new_param_pattern_id);
+  auto prev_param_pattern = context.insts().Get(prev_param_pattern_id);
+  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
+    emit_diagnostic();
+    return false;
+  }
+
+  if (new_param_pattern.Is<SemIR::AddrPattern>()) {
+    new_param_pattern = context.insts().Get(
+        new_param_pattern.As<SemIR::AddrPattern>().inner_id);
+    prev_param_pattern = context.insts().Get(
+        prev_param_pattern.As<SemIR::AddrPattern>().inner_id);
+    if (new_param_pattern.kind() != prev_param_pattern.kind()) {
+      emit_diagnostic();
+      return false;
+    }
+  }
+
   auto new_name_id = SemIR::Function::GetNameFromPatternId(
       context.sem_ir(), new_param_pattern_id);
   auto prev_name_id = SemIR::Function::GetNameFromPatternId(
@@ -232,13 +250,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
       prev_name_id == SemIR::NameId::SelfValue) {
     return true;
-  }
-
-  auto new_param_pattern = context.insts().Get(new_param_pattern_id);
-  auto prev_param_pattern = context.insts().Get(prev_param_pattern_id);
-  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
-    emit_diagnostic();
-    return false;
   }
 
   auto prev_param_type_id = SemIR::GetTypeInSpecific(
@@ -258,17 +269,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
         .Emit();
     return false;
-  }
-
-  if (new_param_pattern.Is<SemIR::AddrPattern>()) {
-    new_param_pattern = context.insts().Get(
-        new_param_pattern.As<SemIR::AddrPattern>().inner_id);
-    prev_param_pattern = context.insts().Get(
-        prev_param_pattern.As<SemIR::AddrPattern>().inner_id);
-    if (new_param_pattern.kind() != prev_param_pattern.kind()) {
-      emit_diagnostic();
-      return false;
-    }
   }
 
   new_param_pattern = context.insts().Get(
