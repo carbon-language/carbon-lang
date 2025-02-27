@@ -242,10 +242,10 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
   }
 
-  auto new_name_id = SemIR::Function::GetNameFromPatternId(
-      context.sem_ir(), new_param_pattern_id);
-  auto prev_name_id = SemIR::Function::GetNameFromPatternId(
-      context.sem_ir(), prev_param_pattern_id);
+  auto new_name_id = context.entity_names().Get(
+      new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id).name_id;
+  auto prev_name_id = context.entity_names().Get(
+      prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id).name_id;
 
   if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
       prev_name_id == SemIR::NameId::SelfValue) {
