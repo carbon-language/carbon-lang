@@ -322,15 +322,15 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id,
   }
 
   llvm::Function* llvm_function;
-  if (!specific_id.has_value()) {
+  if (specific_id.has_value()) {
+    llvm_function = specific_functions_[specific_id.index];
+  } else {
     llvm_function = GetFunction(function_id);
     if (!llvm_function) {
       // We chose not to lower this function at all, for example because it's a
       // generic function.
       return;
     }
-  } else {
-    llvm_function = specific_functions_[specific_id.index];
   }
 
   // For non-generics we do not lower. For generics, the llvm function was
