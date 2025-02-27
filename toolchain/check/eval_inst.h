@@ -16,8 +16,15 @@ class ConstantEvalResult {
   // produced constant must be the same as the greatest phase of the operands in
   // the evaluation. This will typically be the case if the evaluation uses all
   // of its operands.
-  static auto New(SemIR::Inst inst) -> ConstantEvalResult {
-    return ConstantEvalResult(inst);
+  static auto NewSamePhase(SemIR::Inst inst) -> ConstantEvalResult {
+    return ConstantEvalResult(inst, /*same_phase_as_inst=*/true);
+  }
+
+  // Produce a new constant as the result of an evaluation. The constant may
+  // have any phase. Use `NewSamePhase` instead where possible, as it avoids a
+  // phase recomputation.
+  static auto NewAnyPhase(SemIR::Inst inst) -> ConstantEvalResult {
+    return ConstantEvalResult(inst, /*same_phase_as_inst=*/false);
   }
 
   // Produce an existing constant as the result of an evaluation.
@@ -55,17 +62,27 @@ class ConstantEvalResult {
     return new_inst_;
   }
 
+  // Whether the new constant instruction is known to have the same phase as the
+  // evaluated instruction. Requires `is_new()`.
+  auto same_phase_as_inst() const -> bool {
+    CARBON_CHECK(is_new());
+    return same_phase_as_inst_;
+  }
+
  private:
   constexpr explicit ConstantEvalResult(SemIR::ConstantId raw_id)
-      : result_id_(raw_id) {}
+      : result_id_(raw_id), same_phase_as_inst_(false) {}
 
-  explicit ConstantEvalResult(SemIR::Inst inst)
-      : result_id_(SemIR::ConstantId::None), new_inst_(inst) {}
+  explicit ConstantEvalResult(SemIR::Inst inst, bool same_phase_as_inst)
+      : result_id_(SemIR::ConstantId::None),
+        new_inst_(inst),
+        same_phase_as_inst_(same_phase_as_inst) {}
 
   SemIR::ConstantId result_id_;
   union {
     SemIR::Inst new_inst_;
   };
+  bool same_phase_as_inst_;
 };
 
 constexpr ConstantEvalResult ConstantEvalResult::Error =

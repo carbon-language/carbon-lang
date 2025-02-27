@@ -1528,33 +1528,33 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   return SemIR::ConstantId::NotConstant;
 }
 
-// TODO: This overload uses machinery that is local to this file. Find a way of
-// expressing this that doesn't couple this logic to the evaluation machinery.
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::AsCompatible inst) -> ConstantEvalResult {
-  // AsCompatible changes the type of the source instruction; its constant
-  // value, if there is one, needs to be modified to be of the same type.
-  auto value_id = context.constant_values().Get(inst.source_id);
-  CARBON_CHECK(value_id.is_constant());
-
-  auto value_inst =
-      context.insts().Get(context.constant_values().GetInstId(value_id));
-  auto phase = GetPhase(context.constant_values(),
-                        context.types().GetConstantId(inst.type_id));
-  value_inst.SetType(inst.type_id);
-
-  // Finish computing the new phase by incorporating the phases of the
-  // arguments.
+// Given an instruction, compute its phase based on its operands.
+static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
   EvalContext eval_context(context, SemIR::InstId::None);
-  auto kinds = value_inst.ArgKinds();
-  GetConstantValueForArg(eval_context, kinds.first, value_inst.arg0(), &phase);
-  GetConstantValueForArg(eval_context, kinds.second, value_inst.arg1(), &phase);
-  CARBON_CHECK(IsConstant(phase));
 
-  // We can't use `ConstantEvalResult::New` because it would use the wrong
-  // phase, so manually build a new constant.
-  return ConstantEvalResult::Existing(
-      MakeConstantResult(context, value_inst, phase));
+  auto phase = GetPhase(context.constant_values(),
+                        context.types().GetConstantId(inst.type_id()));
+  auto kinds = inst.ArgKinds();
+  GetConstantValueForArg(eval_context, kinds.first, inst.arg0(), &phase);
+  GetConstantValueForArg(eval_context, kinds.second, inst.arg1(), &phase);
+  CARBON_CHECK(IsConstant(phase));
+  return phase;
+}
+
+// Convert a ConstantEvalResult to a ConstantId. Factored out of
+// TryEvalTypedInst to avoid repeated instantiation of common code.
+static auto ConvertEvalResultToConstantId(Context& context,
+                                          ConstantEvalResult result,
+                                          Phase orig_phase)
+    -> SemIR::ConstantId {
+  if (result.is_new()) {
+    return MakeConstantResult(
+        context, result.new_inst(),
+        result.same_phase_as_inst()
+            ? orig_phase
+            : ComputeInstPhase(context, result.new_inst()));
+  }
+  return result.existing();
 }
 
 // Evaluates an instruction of a known type in an evaluation context. The
@@ -1600,14 +1600,12 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else {
-      ConstantEvalResult result = EvalConstantInst(
-          eval_context.context(), eval_context.GetDiagnosticLoc({inst_id}),
-          inst.As<InstT>());
-      if (result.is_new()) {
-        return MakeConstantResult(eval_context.context(), result.new_inst(),
-                                  phase);
-      }
-      return result.existing();
+      return ConvertEvalResultToConstantId(
+          eval_context.context(),
+          EvalConstantInst(eval_context.context(),
+                           eval_context.GetDiagnosticLoc({inst_id}),
+                           inst.As<InstT>()),
+          phase);
     }
   }
 }
