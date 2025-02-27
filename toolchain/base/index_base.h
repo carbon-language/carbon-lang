@@ -71,7 +71,7 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
 };
 
 template <typename IdT>
-constexpr const IdT& IdBase<IdT>::None = IdT(AnyIdBase::NoneIndex);
+constexpr const IdT& IdBase<IdT>::None = IdT(NoneIndex);
 
 // A lightweight handle to an item that behaves like an index.
 //
