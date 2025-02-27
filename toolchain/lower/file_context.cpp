@@ -88,8 +88,9 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
 
   // Lower function definitions for generics.
-  // TODO: this cannot be a range-based loop, as new definitions can be added
-  // while building.
+  // This cannot be a range-based loop, as new definitions can be added
+  // while building other definitions.
+  // NOLINTNEXTLINE
   for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
     auto [function_id, specific_id] = specific_function_definitions_[i];
     BuildFunctionDefinition(function_id, specific_id);
