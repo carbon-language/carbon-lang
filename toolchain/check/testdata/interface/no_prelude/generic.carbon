@@ -88,7 +88,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %F.e46: %F.type.18c = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.assoc_type.480: type = assoc_entity_type %WithAssocFn.type.683 [concrete]
 // CHECK:STDOUT:   %assoc0.136: %WithAssocFn.assoc_type.480 = assoc_entity element0, @WithAssocFn.%F.decl [concrete]
-// CHECK:STDOUT:   %impl_witness.49b: <witness> = impl_witness (@impl.2.%F.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.49b: <witness> = impl_witness (@impl.90b.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.005: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.317: %F.type.005 = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.683 = facet_value %C, %impl_witness.49b [concrete]
@@ -228,12 +228,12 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %Self.ref as %Simple.type {
+// CHECK:STDOUT: impl @impl.763: %Self.ref as %Simple.type {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = @C.%impl_witness.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %Self.ref as %WithAssocFn.type {
+// CHECK:STDOUT: impl @impl.90b: %Self.ref as %WithAssocFn.type {
 // CHECK:STDOUT:   %F.decl: %F.type.005 = fn_decl @F.2 [concrete = constants.%F.317] {
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, runtime_param0
@@ -258,20 +258,20 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.763 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.ref: %Simple.type.3b3 = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.51f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness () [concrete = constants.%impl_witness.1bc]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.90b [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.ref: %WithAssocFn.type.509 = name_ref WithAssocFn, file.%WithAssocFn.decl [concrete = constants.%WithAssocFn.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.type: type = facet_type <@WithAssocFn, @WithAssocFn(constants.%C)> [concrete = constants.%WithAssocFn.type.683]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.2.%F.decl) [concrete = constants.%impl_witness.49b]
+// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.90b.%F.decl) [concrete = constants.%impl_witness.49b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

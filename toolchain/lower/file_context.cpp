@@ -88,9 +88,10 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
 
   // Lower function definitions for generics.
-  // TODO: this needs to be an iterator as new definitions can be added
-  // while building.
-  for (size_t i = 0; i < specific_function_definitions_.size(); ++i) {
+  // This cannot be a range-based loop, as new definitions can be added
+  // while building other definitions.
+  // NOLINTNEXTLINE
+  for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
     auto [function_id, specific_id] = specific_function_definitions_[i];
     BuildFunctionDefinition(function_id, specific_id);
   }
@@ -335,22 +336,20 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id,
   }
 
   llvm::Function* llvm_function;
-  if (!specific_id.has_value()) {
+  if (specific_id.has_value()) {
+    llvm_function = specific_functions_[specific_id.index];
+  } else {
     llvm_function = GetFunction(function_id);
     if (!llvm_function) {
       // We chose not to lower this function at all, for example because it's a
       // generic function.
       return;
     }
-  } else {
-    llvm_function = specific_functions_[specific_id.index];
   }
 
   // For non-generics we do not lower. For generics, the llvm function was
   // created via GetOrCreateFunction prior to this when building the
   // declaration.
-  CARBON_CHECK(llvm_function, "The llvm function must exist");
-
   BuildFunctionBody(function_id, function, llvm_function, specific_id);
 }
 
@@ -359,7 +358,9 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                                     llvm::Function* llvm_function,
                                     SemIR::SpecificId specific_id) -> void {
   const auto& body_block_ids = function.body_block_ids;
-  CARBON_DCHECK(llvm_function && !body_block_ids.empty());
+  CARBON_DCHECK(llvm_function, "LLVM Function not found when lowering body.");
+  CARBON_DCHECK(!body_block_ids.empty(),
+                "No function body blocks found during lowering.");
 
   FunctionContext function_lowering(*this, llvm_function, specific_id,
                                     BuildDISubprogram(function, llvm_function),
@@ -388,11 +389,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       param_value = llvm_function->getArg(param_index);
       ++param_index;
     } else {
-      param_value = llvm::PoisonValue::get(
-          GetType(specific_id.has_value()
-                      ? SemIR::GetTypeInSpecific(sem_ir(), specific_id,
-                                                 param_inst.type_id)
-                      : param_inst.type_id));
+      param_value = llvm::PoisonValue::get(GetType(
+          SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_inst.type_id)));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);

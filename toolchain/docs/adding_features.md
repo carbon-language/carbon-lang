@@ -332,7 +332,7 @@ Adding an instruction will generally also require a handler in the Lower step.
 Most new instructions will automatically be formatted reasonably by the SemIR
 formatter. If not, then add a `FormatInst` overload to
 [`sem_ir/formatter.cpp`](/toolchain/sem_ir/formatter.cpp). If only the arguments
-need custom formatting, then a `FormatInstRHS` overload can be implemented
+need custom formatting, then a `FormatInstRhs` overload can be implemented
 instead.
 
 If the resulting SemIR needs a new built-in, add it to

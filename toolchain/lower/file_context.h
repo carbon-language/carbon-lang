@@ -165,7 +165,7 @@ class FileContext {
 
   // Maps which specific functions are generics that need to have their
   // definitions lowered after the lowering of other definitions.
-  // This list may grow while lowing generic definitions from this list.
+  // This list may grow while lowering generic definitions from this list.
   // The list uses the `SpecificId` to index into specific_functions_.
   llvm::SmallVector<std::pair<SemIR::FunctionId, SemIR::SpecificId>, 10>
       specific_function_definitions_;

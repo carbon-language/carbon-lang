@@ -64,8 +64,8 @@ CARBON_DIAGNOSTIC_KIND(UnicodeEscapeSurrogate)
 CARBON_DIAGNOSTIC_KIND(UnicodeEscapeTooLarge)
 CARBON_DIAGNOSTIC_KIND(UnknownBaseSpecifier)
 CARBON_DIAGNOSTIC_KIND(UnknownEscapeSequence)
-CARBON_DIAGNOSTIC_KIND(UnsupportedCRLineEnding)
-CARBON_DIAGNOSTIC_KIND(UnsupportedLFCRLineEnding)
+CARBON_DIAGNOSTIC_KIND(UnsupportedCrLineEnding)
+CARBON_DIAGNOSTIC_KIND(UnsupportedLfCrLineEnding)
 CARBON_DIAGNOSTIC_KIND(UnmatchedOpening)
 CARBON_DIAGNOSTIC_KIND(UnmatchedClosing)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedCharacters)
@@ -256,6 +256,7 @@ CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
+CARBON_DIAGNOSTIC_KIND(VirtualWithoutSelf)
 
 // Deduction.
 CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)
@@ -290,6 +291,7 @@ CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplAssociatedConstantNeedsValue)
 CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
 CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
@@ -446,10 +448,13 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 
-// Facet type resolution
+// Facet type resolution.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
+
+// Facet type combination.
+CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)

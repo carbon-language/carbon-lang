@@ -262,7 +262,7 @@ Aggregate [^:]*: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-NodeIdInCategory MemberExpr\|MemberName\|IntConst: kind IdentifierNameNotBeforeParams consumed
+NodeIdInCategory IntConst\|MemberExpr\|MemberName: kind IdentifierNameNotBeforeParams consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
 Aggregate [^:]*: success
 )Trace"));

@@ -51,8 +51,6 @@ ABSL_FLAG(std::vector<std::string>, file_tests, {},
           "A comma-separated list of repo-relative names of test files. "
           "Similar to and overrides `--gtest_filter`, but doesn't require the "
           "test class name to be known.");
-ABSL_FLAG(std::string, test_targets_file, "",
-          "A path to a file containing repo-relative names of test files.");
 ABSL_FLAG(bool, autoupdate, false,
           "Instead of verifying files match test output, autoupdate files "
           "based on test output.");
@@ -300,11 +298,9 @@ static auto RegisterTests(FileTestFactory* test_factory,
                           llvm::StringRef exe_path,
                           llvm::SmallVectorImpl<FileTestInfo>& tests)
     -> ErrorOr<Success> {
-  if (absl::GetFlag(FLAGS_test_targets_file).empty()) {
-    return Error("Missing --test_targets_file.");
-  }
+  GetFileTestManifestPath();
   CARBON_ASSIGN_OR_RETURN(auto test_manifest,
-                          ReadFile(absl::GetFlag(FLAGS_test_targets_file)));
+                          ReadFile(GetFileTestManifestPath()));
 
   // Prepare the vector first, so that the location of entries won't change.
   for (const auto& test_name :

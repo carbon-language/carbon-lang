@@ -7,6 +7,9 @@ load("rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
+# Used to access a `#define` with the manifest file, produced by rules.bzl.
+exports_files(["file_test_manifest.cpp"])
+
 cc_library(
     name = "autoupdate",
     testonly = 1,

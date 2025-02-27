@@ -23,7 +23,7 @@ using ::testing::Eq;
 using ::testing::Le;
 using ::testing::Ne;
 
-TEST(HashingTest, HashCodeAPI) {
+TEST(HashingTest, HashCodeApi) {
   // Manually compute a few hash codes where we can exercise the underlying API.
   HashCode empty = HashValue("");
   HashCode a = HashValue("a");
