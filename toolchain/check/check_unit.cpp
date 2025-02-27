@@ -132,6 +132,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
   ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
+                 unit_and_imports_->unit->cpp_ast,
                  unit_and_imports_->cpp_import_names, fs_);
 }
 

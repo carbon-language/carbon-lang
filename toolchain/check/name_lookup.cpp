@@ -6,9 +6,11 @@
 
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
 
@@ -150,6 +152,18 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
                                    scope.import_ir_scopes(), name_id),
         SemIR::AccessKind::Public);
   }
+
+  if (scope.is_cpp_scope()) {
+    SemIR::InstId imported_inst_id =
+        ImportNameFromCpp(context, loc_id, scope_id, name_id);
+    if (imported_inst_id.has_value()) {
+      SemIR::ScopeLookupResult result = SemIR::ScopeLookupResult::MakeFound(
+          imported_inst_id, SemIR::AccessKind::Public);
+      scope.AddRequired({.name_id = name_id, .result = result});
+      return result;
+    }
+  }
+
   return SemIR::ScopeLookupResult::MakeNotFound();
 }
 

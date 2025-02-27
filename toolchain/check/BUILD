@@ -110,6 +110,7 @@ cc_library(
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:frontend",
+        "@llvm-project//clang:sema",
         "@llvm-project//clang:tooling",
         "@llvm-project//llvm:Support",
     ],
