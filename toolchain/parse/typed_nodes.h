@@ -131,13 +131,19 @@ using EmptyDecl =
 // to be followed by parameters.
 using IdentifierNameBeforeParams =
     LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
+using KeywordNameBeforeParams =
+    LeafNode<NodeKind::KeywordNameBeforeParams, Lex::TokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in a non-expression context, such as a declaration, that is known
 // to not be followed by parameters.
 using IdentifierNameNotBeforeParams =
     LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
+using KeywordNameNotBeforeParams =
+    LeafNode<NodeKind::KeywordNameNotBeforeParams, Lex::TokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
 using IdentifierNameExpr =
@@ -188,7 +194,7 @@ struct DeclName {
   llvm::SmallVector<
       NodeIdOneOf<NameQualifierWithParams, NameQualifierWithoutParams>>
       qualifiers;
-  AnyNonExprIdentifierNameId name;
+  AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> params;
 };
@@ -1157,7 +1163,7 @@ struct ChoiceDefinition {
 
   ChoiceDefinitionStartId signature;
   struct Alternative {
-    AnyNonExprIdentifierNameId name;
+    AnyNonExprNameId name;
     std::optional<ExplicitParamListId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;

@@ -152,6 +152,16 @@ auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context,
+                     Parse::KeywordNameNotBeforeParamsId node_id) -> bool {
+  return context.TODO(node_id, "KeywordNameNotBeforeParamsId");
+}
+
+auto HandleParseNode(Context& context, Parse::KeywordNameBeforeParamsId node_id)
+    -> bool {
+  return context.TODO(node_id, "KeywordNameBeforeParamsId");
+}
+
 auto HandleParseNode(Context& context, Parse::BaseNameId node_id) -> bool {
   context.node_stack().Push(node_id, SemIR::NameId::Base);
   return true;
