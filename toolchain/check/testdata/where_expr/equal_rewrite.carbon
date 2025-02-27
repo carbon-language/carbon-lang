@@ -1335,7 +1335,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %RewriteTypeMismatch.decl: %RewriteTypeMismatch.type = fn_decl @RewriteTypeMismatch [concrete = constants.%RewriteTypeMismatch] {
 // CHECK:STDOUT:     %X.patt.loc16_24.1: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc16_24.1, runtime_param<none> [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc16_24.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc16_30.1: type = splice_block %.loc16_30.2 [concrete = <error>] {

@@ -15,6 +15,7 @@ load("//bazel/manifest:defs.bzl", "manifest")
 def file_test(
         name,
         tests,
+        srcs = [],
         data = [],
         args = [],
         prebuilt_binary = None,
@@ -28,6 +29,7 @@ def file_test(
     Args:
       name: The base name of the tests.
       tests: The list of test files to use as data, typically a glob.
+      srcs: Passed to cc_test.
       data: Passed to cc_test.
       args: Passed to cc_test.
       prebuilt_binary: If set, specifies a prebuilt test binary to use instead
@@ -42,13 +44,16 @@ def file_test(
         srcs = tests,
         testonly = 1,
     )
-    args = ["--test_targets_file=$(rootpath :{0})".format(tests_file)] + args
     data = [":" + tests_file] + tests + data
 
     if prebuilt_binary:
+        # TODO: The prebuilt_binary support is only used by explorer. We should
+        # remove this once explorer is removed, and think about better factoring
+        # approaches if we need it later for toolchain.
+        args = ["--explorer_test_targets_file=$(rootpath :{0})".format(tests_file)] + args
         native.sh_test(
             name = name,
-            srcs = [prebuilt_binary],
+            srcs = srcs + [prebuilt_binary],
             data = data,
             args = args,
             env = cc_env(),
@@ -57,8 +62,10 @@ def file_test(
     else:
         cc_test(
             name = name,
+            srcs = srcs + ["//testing/file_test:file_test_manifest.cpp"],
             data = data,
             args = args,
             env = cc_env(),
+            local_defines = ["CARBON_FILE_TEST_MANIFEST='\"$(rootpath :{0})\"'".format(tests_file)],
             **kwargs
         )

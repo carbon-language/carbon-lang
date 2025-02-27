@@ -134,7 +134,7 @@ auto ResolveFacetTypeImplWitness(
       // If the associated constant has a symbolic type, convert the rewrite
       // value to that type now we know the value of `Self`.
       SemIR::TypeId assoc_const_type_id = decl->type_id;
-      if (context.types().GetConstantId(assoc_const_type_id).is_symbolic()) {
+      if (assoc_const_type_id.is_symbolic()) {
         // Get the type of the associated constant in this interface with this
         // value for `Self`.
         assoc_const_type_id = GetTypeForSpecificAssociatedEntity(

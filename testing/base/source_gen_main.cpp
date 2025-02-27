@@ -95,7 +95,7 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   }
 
   SourceGen gen(language);
-  *output << gen.GenAPIFileDenseDecls(lines, SourceGen::DenseDeclParams{});
+  *output << gen.GenApiFileDenseDecls(lines, SourceGen::DenseDeclParams{});
   output->flush();
   return true;
 }

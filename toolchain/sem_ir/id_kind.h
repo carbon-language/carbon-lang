@@ -139,7 +139,7 @@ using IdKind = TypeEnum<
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,
     // From sem_ir/ids.h.
-    InstId, AbsoluteInstId, AnyRawId, ConstantId, EntityNameId,
+    InstId, AbsoluteInstId, DestInstId, AnyRawId, ConstantId, EntityNameId,
     CompileTimeBindIndex, RuntimeParamIndex, FacetTypeId, FunctionId, ClassId,
     InterfaceId, AssociatedConstantId, ImplId, GenericId, SpecificId,
     ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId, NameScopeId,

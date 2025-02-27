@@ -62,9 +62,9 @@ impl C as I where .V = () {}
 library "[[@TEST_NAME]]";
 
 interface I(N:! Core.IntLiteral()) {
-  // CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+3]]:17: error: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+3]]:11: error: array bound of -1 is negative [ArrayBoundNegative]
   // CHECK:STDERR:   let V:! array(Self, N);
-  // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR:           ^~~~~~~~~~~~~~
   let V:! array(Self, N);
 }
 
@@ -563,7 +563,6 @@ fn CallF() {
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic_self]
 // CHECK:STDOUT:   %I.facet: %I.type.057 = facet_value %.Self.as_type, %.Self.as_wit [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access %.Self.as_wit, element0 [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -614,7 +613,7 @@ fn CallF() {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc15_24.2: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic_self = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc15_24: <error> = impl_witness_access %.Self.as_wit, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:     %impl.elem0.loc15_24: <error> = impl_witness_access %.Self.as_wit, element0 [concrete = <error>]
 // CHECK:STDOUT:     %.loc15_30: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_18: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc15_24, <error>

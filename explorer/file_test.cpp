@@ -12,6 +12,8 @@ ABSL_FLAG(bool, trace, false,
           "Set to true to run tests with tracing enabled, even if they don't "
           "otherwise specify it. This does not result in checking trace output "
           "contents; it essentially only verifies there's not a crash bug.");
+ABSL_FLAG(std::string, explorer_test_targets_file, "",
+          "A path to a file containing repo-relative names of test files.");
 
 namespace Carbon::Testing {
 namespace {
@@ -111,6 +113,11 @@ class ExplorerFileTest : public FileTestBase {
 };
 
 }  // namespace
+
+// Explorer uses a non-standard approach to getting the manifest path.
+auto GetFileTestManifestPath() -> std::filesystem::path {
+  return absl::GetFlag(FLAGS_explorer_test_targets_file);
+}
 
 CARBON_FILE_TEST_FACTORY(ExplorerFileTest)
 

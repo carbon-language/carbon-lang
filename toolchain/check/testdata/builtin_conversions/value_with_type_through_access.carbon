@@ -524,7 +524,7 @@ fn G() {
 // CHECK:STDOUT:     %x.patt: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %Class = value_param runtime_param<none>
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
@@ -723,7 +723,7 @@ fn G() {
 // CHECK:STDOUT:     %x.patt: @F.%HoldsType.loc12_40.2 (%HoldsType) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @F.%HoldsType.loc12_40.2 (%HoldsType) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %array_type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc12_23: type = splice_block %array_type [concrete = constants.%array_type] {

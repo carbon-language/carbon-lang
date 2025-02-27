@@ -180,13 +180,13 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: <error> = name_ref a_ref, imports.%Implicit.a_ref
+// CHECK:STDOUT:   %a_ref.ref: <error> = name_ref a_ref, imports.%Implicit.a_ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %b_ref.ref: <error> = name_ref b_ref, imports.%Implicit.b_ref
+// CHECK:STDOUT:   %b_ref.ref: <error> = name_ref b_ref, imports.%Implicit.b_ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %c_ref.ref: <error> = name_ref c_ref, imports.%Implicit.c_ref
+// CHECK:STDOUT:   %c_ref.ref: <error> = name_ref c_ref, imports.%Implicit.c_ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %d_ref.ref: <error> = name_ref d_ref, imports.%Implicit.d_ref
+// CHECK:STDOUT:   %d_ref.ref: <error> = name_ref d_ref, imports.%Implicit.d_ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
