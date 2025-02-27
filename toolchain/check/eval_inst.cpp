@@ -77,6 +77,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc, SemIR::ArrayType inst)
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::BindAlias inst)
     -> ConstantEvalResult {
+  // An alias evaluates to the value it's bound to.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.value_id));
 }
@@ -130,6 +131,7 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::ConstType inst)
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::Converted inst)
     -> ConstantEvalResult {
+  // A conversion evaluates to the result of the conversion.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.result_id));
 }
@@ -142,6 +144,7 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::ExportDecl inst) -> ConstantEvalResult {
+  // An export instruction evaluates to the exported declaration.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.value_id));
 }
@@ -174,6 +177,9 @@ auto EvalConstantInst(Context& context, SemIRLoc loc, SemIR::FloatType inst)
 
 auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
                       SemIR::FunctionDecl inst) -> ConstantEvalResult {
+  // A function declaration evaluates to a function object, which is an empty
+  // object of function type.
+  // TODO: Eventually we may need to handle captures here.
   return ConstantEvalResult::New(SemIR::StructValue{
       .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
 }
@@ -213,6 +219,8 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::InitializeFrom inst) -> ConstantEvalResult {
+  // Initialization is not performed in-place during constant evaluation, so
+  // just return the value of the initializer.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.src_id));
 }
@@ -239,6 +247,7 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::NameRef inst)
     -> ConstantEvalResult {
+  // A name reference evaluates to the value the name resolves to.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.value_id));
 }
@@ -280,6 +289,9 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::SpliceBlock inst) -> ConstantEvalResult {
+  // SpliceBlock evaluates to the result value that is (typically) within the
+  // block. This can be constant even if the block contains other non-constant
+  // instructions.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.result_id));
 }
@@ -328,6 +340,9 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::ValueOfInitializer inst) -> ConstantEvalResult {
+  // Values of value expressions and initializing expressions are represented in
+  // the same way during constant evaluation, so just return the value of the
+  // operand.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.init_id));
 }
