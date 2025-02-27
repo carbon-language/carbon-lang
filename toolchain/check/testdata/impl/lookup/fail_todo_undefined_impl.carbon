@@ -55,7 +55,7 @@ impl C as I {
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet.b45: %I.type = facet_value %C, %impl_witness.85b [concrete]
 // CHECK:STDOUT:   %.575: type = fn_type_with_self_type %F.type.cf0, %I.facet.b45 [concrete]
-// CHECK:STDOUT:   %impl_witness.054: <witness> = impl_witness (@impl.2.%F.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.054: <witness> = impl_witness (@impl.770.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet.4ac: %I.type = facet_value %C, %impl_witness.054 [concrete]
@@ -88,11 +88,11 @@ impl C as I {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.770 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.2.%F.decl) [concrete = constants.%impl_witness.054]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.770.%F.decl) [concrete = constants.%impl_witness.054]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -106,9 +106,9 @@ impl C as I {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %Self.ref as %I.ref;
+// CHECK:STDOUT: impl @impl.a21: %Self.ref as %I.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C.ref as %I.ref {
+// CHECK:STDOUT: impl @impl.770: %C.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.5d6 = fn_decl @F.3 [concrete = constants.%F.a2e] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -117,7 +117,7 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.a21 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -129,7 +129,7 @@ impl C as I {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   .F = <poisoned>
-// CHECK:STDOUT:   extend @impl.1.%I.ref
+// CHECK:STDOUT:   extend @impl.a21.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {

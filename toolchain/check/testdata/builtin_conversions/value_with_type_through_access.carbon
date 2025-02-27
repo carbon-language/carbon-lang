@@ -524,7 +524,7 @@ fn G() {
 // CHECK:STDOUT:     %x.patt: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %Class = value_param runtime_param<none>
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
@@ -670,8 +670,8 @@ fn G() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.1(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [concrete]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
 // CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
@@ -723,7 +723,7 @@ fn G() {
 // CHECK:STDOUT:     %x.patt: @F.%HoldsType.loc12_40.2 (%HoldsType) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @F.%HoldsType.loc12_40.2 (%HoldsType) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %array_type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc12_23: type = splice_block %array_type [concrete = constants.%array_type] {

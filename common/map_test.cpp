@@ -124,7 +124,7 @@ TYPED_TEST(MapTest, Basic) {
       m, MakeKeyValues([](int k) { return k * 100 + 1; }, llvm::seq(1, 512)));
 }
 
-TYPED_TEST(MapTest, FactoryAPI) {
+TYPED_TEST(MapTest, FactoryApi) {
   TypeParam m;
   EXPECT_TRUE(m.Insert(1, [] { return 100; }).is_inserted());
   ASSERT_TRUE(m.Contains(1));

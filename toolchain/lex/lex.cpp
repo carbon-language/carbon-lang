@@ -230,23 +230,23 @@ class [[clang::internal_linkage]] Lexer {
 #if CARBON_USE_SIMD
 namespace {
 #if __ARM_NEON
-using SIMDMaskT = uint8x16_t;
+using SimdMaskT = uint8x16_t;
 #elif __x86_64__
-using SIMDMaskT = __m128i;
+using SimdMaskT = __m128i;
 #else
 #error "Unsupported SIMD architecture!"
 #endif
-using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
+using SimdMaskArrayT = std::array<SimdMaskT, sizeof(SimdMaskT) + 1>;
 }  // namespace
 // A table of masks to include 0-16 bytes of an SSE register.
-static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
-  SIMDMaskArrayT masks = {};
+static constexpr SimdMaskArrayT PrefixMasks = []() constexpr {
+  SimdMaskArrayT masks = {};
   for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
     masks[i] =
         // The SIMD types and constexpr require a C-style cast.
         // NOLINTNEXTLINE(google-readability-casting)
-        (SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
-                    ((sizeof(SIMDMaskT) - i) * 8));
+        (SimdMaskT)(std::numeric_limits<unsigned __int128>::max() >>
+                    ((sizeof(SimdMaskT) - i) * 8));
   }
   return masks;
 }();
@@ -829,17 +829,17 @@ auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
     return;
   }
 
-  CARBON_DIAGNOSTIC(UnsupportedLFCRLineEnding, Error,
+  CARBON_DIAGNOSTIC(UnsupportedLfCrLineEnding, Error,
                     "the LF+CR line ending is not supported, only LF and CR+LF "
                     "are supported");
-  CARBON_DIAGNOSTIC(UnsupportedCRLineEnding, Error,
+  CARBON_DIAGNOSTIC(UnsupportedCrLineEnding, Error,
                     "a raw CR line ending is not supported, only LF and CR+LF "
                     "are supported");
   bool is_lfcr = position > 0 && source_text[position - 1] == '\n';
   // TODO: This diagnostic has an unfortunate snippet -- we should tweak the
   // snippet rendering to gracefully handle CRs.
   emitter_.Emit(source_text.begin() + position,
-                is_lfcr ? UnsupportedLFCRLineEnding : UnsupportedCRLineEnding);
+                is_lfcr ? UnsupportedLfCrLineEnding : UnsupportedCrLineEnding);
 
   // Recover by treating the CR as a horizontal whitespace. This should make our
   // whitespace rules largely work and parse cleanly without disrupting the line

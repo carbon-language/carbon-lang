@@ -95,7 +95,7 @@ TYPED_TEST(SetTest, Basic) {
   ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 512)));
 }
 
-TYPED_TEST(SetTest, FactoryAPI) {
+TYPED_TEST(SetTest, FactoryApi) {
   using SetT = TypeParam;
   SetT s;
   EXPECT_TRUE(s.Insert(1, [](int k, void* key_storage) {

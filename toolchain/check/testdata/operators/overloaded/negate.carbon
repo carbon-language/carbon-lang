@@ -32,7 +32,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
 // CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.c34.%Op.decl) [concrete]
 // CHECK:STDOUT:   %Op.type.67d: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.64c: %Op.type.67d = struct_value () [concrete]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %C, %impl_witness [concrete]
@@ -59,12 +59,12 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.c34 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Negate.ref: type = name_ref Negate, imports.%Core.Negate [concrete = constants.%Negate.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.c34.%Op.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -80,7 +80,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %Negate.ref {
+// CHECK:STDOUT: impl @impl.c34: %C.ref as %Negate.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.67d = fn_decl @Op.2 [concrete = constants.%Op.64c] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0

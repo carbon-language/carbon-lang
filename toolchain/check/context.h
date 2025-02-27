@@ -5,12 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
+#include <string>
+
 #include "common/map.h"
-#include "llvm/ADT/FoldingSet.h"
+#include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
@@ -18,8 +19,8 @@
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
-#include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -47,30 +48,8 @@ namespace Carbon::Check {
 //   (for example, shared with lowering).
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
-  using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
-
-  // A function that forms a diagnostic for some kind of problem. The
-  // DiagnosticBuilder is returned rather than emitted so that the caller can
-  // add contextual notes as appropriate.
-  using BuildDiagnosticFn = llvm::function_ref<auto()->DiagnosticBuilder>;
-
-  // Pre-computed parts of a binding pattern.
-  struct BindingPatternInfo {
-    // The corresponding AnyBindName inst.
-    SemIR::InstId bind_name_id;
-    // The region of insts that computes the type of the binding.
-    SemIR::ExprRegionId type_expr_region_id;
-  };
-
-  // An ongoing impl lookup, used to ensure termination.
-  struct ImplLookupStackEntry {
-    SemIR::ConstantId type_const_id;
-    SemIR::ConstantId interface_const_id;
-  };
-
   // Stores references for work.
-  explicit Context(DiagnosticEmitter* emitter,
+  explicit Context(DiagnosticEmitter<SemIRLoc>* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
@@ -79,12 +58,7 @@ class Context {
   auto TODO(SemIRLoc loc, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
-  auto VerifyOnFinish() -> void;
-
-  // Adds an exported name.
-  auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
-
-  auto Finalize() -> void;
+  auto VerifyOnFinish() const -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -94,7 +68,7 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto emitter() -> DiagnosticEmitter& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return tree_and_subtrees_getter_();
@@ -160,6 +134,8 @@ class Context {
 
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
 
+  auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
+
   auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
     return check_ir_map_;
   }
@@ -179,8 +155,15 @@ class Context {
     return import_ref_ids_;
   }
 
+  // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
+  struct BindingPatternInfo {
+    // The corresponding AnyBindName inst.
+    SemIR::InstId bind_name_id;
+    // The region of insts that computes the type of the binding.
+    SemIR::ExprRegionId type_expr_region_id;
+  };
   auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
     return bind_name_map_;
   }
@@ -189,8 +172,27 @@ class Context {
     return var_storage_map_;
   }
 
+  // During Choice typechecking, each alternative turns into a name binding on
+  // the Choice type, but this can't be done until the full Choice type is
+  // known. This represents each binding to be done at the end of checking the
+  // Choice type.
+  struct ChoiceDeferredBinding {
+    Parse::NodeId node_id;
+    NameComponent name_component;
+  };
+  auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
+    return choice_deferred_bindings_;
+  }
+
   auto region_stack() -> RegionStack& { return region_stack_; }
 
+  // An ongoing impl lookup, used to ensure termination.
+  struct ImplLookupStackEntry {
+    SemIR::ConstantId type_const_id;
+    SemIR::ConstantId interface_const_id;
+    // The location of the impl being looked at for the stack entry.
+    SemIR::InstId impl_loc = SemIR::InstId::None;
+  };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
   }
@@ -262,21 +264,9 @@ class Context {
   // End of SemIR::File members.
   // --------------------------------------------------------------------------
 
-  // During Choice typechecking, each alternative turns into a name binding on
-  // the Choice type, but this can't be done until the full Choice type is
-  // known. This represents each binding to be done at the end of checking the
-  // Choice type.
-  struct ChoiceDeferredBinding {
-    Parse::NodeId node_id;
-    NameComponent name_component;
-  };
-  auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
-    return choice_deferred_bindings_;
-  }
-
  private:
   // Handles diagnostics.
-  DiagnosticEmitter* emitter_;
+  DiagnosticEmitter<SemIRLoc>* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;

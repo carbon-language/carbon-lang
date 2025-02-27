@@ -79,7 +79,8 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
 // could also be a builtin name ID which is equivalent cross-IR.
 static auto CopyNameFromImportIR(Context& context,
                                  const SemIR::File& import_sem_ir,
-                                 SemIR::NameId import_name_id) {
+                                 SemIR::NameId import_name_id)
+    -> SemIR::NameId {
   if (auto import_identifier_id = import_name_id.AsIdentifierId();
       import_identifier_id.has_value()) {
     auto name = import_sem_ir.identifiers().Get(import_identifier_id);

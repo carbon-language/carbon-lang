@@ -85,7 +85,7 @@ TEST_F(TreeTest, AsAndTryAs) {
   EXPECT_TRUE(*any_decl_id == any_decl_id2);
 }
 
-TEST_F(TreeTest, PrintPostorderAsYAML) {
+TEST_F(TreeTest, PrintPostorderAsYaml) {
   auto [tokens, tree_and_subtrees] =
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());
@@ -114,7 +114,7 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
               IsYaml(ElementsAre(root)));
 }
 
-TEST_F(TreeTest, PrintPreorderAsYAML) {
+TEST_F(TreeTest, PrintPreorderAsYaml) {
   auto [tokens, tree_and_subtrees] =
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());

@@ -239,19 +239,19 @@ class Inst : public Printable<Inst> {
     return ArgKinds(kind());
   }
 
-  // Gets the first argument of the instruction. InvalidIndex if there is no
-  // such argument.
+  // Gets the first argument of the instruction. NoneIndex if there is no such
+  // argument.
   auto arg0() const -> int32_t { return arg0_; }
 
-  // Gets the second argument of the instruction. InvalidIndex if there is no
-  // such argument.
+  // Gets the second argument of the instruction. NoneIndex if there is no such
+  // argument.
   auto arg1() const -> int32_t { return arg1_; }
 
   // Sets the type of this instruction.
   auto SetType(TypeId type_id) -> void { type_id_ = type_id; }
 
   // Sets the arguments of this instruction.
-  auto SetArgs(int32_t arg0, int32_t arg1) {
+  auto SetArgs(int32_t arg0, int32_t arg1) -> void {
     arg0_ = arg0;
     arg1_ = arg1;
   }
@@ -286,7 +286,8 @@ class Inst : public Printable<Inst> {
   // Raw constructor, used for testing.
   explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
       : Inst(kind.AsInt(), type_id, arg0, arg1) {}
-  explicit Inst(int32_t kind, TypeId type_id, int32_t arg0, int32_t arg1)
+  explicit constexpr Inst(int32_t kind, TypeId type_id, int32_t arg0,
+                          int32_t arg1)
       : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
 
   int32_t kind_;

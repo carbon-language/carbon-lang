@@ -72,7 +72,7 @@ class ConstantContext {
 
   // Sets the index of the constant we most recently lowered. This is used to
   // check we don't look at constants that we've not lowered yet.
-  auto SetLastLoweredConstantIndex(int32_t index) {
+  auto SetLastLoweredConstantIndex(int32_t index) -> void {
     last_lowered_constant_index_ = index;
   }
 
@@ -226,6 +226,8 @@ template <typename InstT>
 static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
     -> llvm::Constant* {
   if constexpr (InstT::Kind.constant_kind() == SemIR::InstConstantKind::Never ||
+                InstT::Kind.constant_kind() ==
+                    SemIR::InstConstantKind::Indirect ||
                 InstT::Kind.constant_kind() ==
                     SemIR::InstConstantKind::SymbolicOnly) {
     CARBON_FATAL("Unexpected constant instruction kind {0}", inst);

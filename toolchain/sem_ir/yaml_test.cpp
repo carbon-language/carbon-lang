@@ -29,7 +29,7 @@ using ::testing::SizeIs;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
 
-TEST(SemIRTest, YAML) {
+TEST(SemIRTest, Yaml) {
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   CARBON_CHECK(fs->addFile(

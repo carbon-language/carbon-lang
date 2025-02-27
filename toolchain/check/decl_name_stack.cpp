@@ -158,7 +158,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
         // scope. Otherwise, it's in some other entity, such as a class.
         if (access_kind == SemIR::AccessKind::Public &&
             name_context.initial_scope_index == ScopeIndex::Package) {
-          context_->AddExport(target_id);
+          context_->exports().push_back(target_id);
         }
 
         name_scope.AddRequired({.name_id = name_context.name_id,

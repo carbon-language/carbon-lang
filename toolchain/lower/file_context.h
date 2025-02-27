@@ -11,6 +11,7 @@
 #include "llvm/IR/Module.h"
 #include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
@@ -105,6 +106,12 @@ class FileContext {
   // declaration with no definition, does nothing.
   auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
 
+  // Builds a functions body. Common functionality for all functions.
+  auto BuildFunctionBody(
+      SemIR::FunctionId function_id, const SemIR::Function& function,
+      llvm::Function* llvm_function,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
+
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
                          const llvm::Function* llvm_function)
@@ -151,6 +158,12 @@ class FileContext {
   // Maps specific callables to lowered functions. Vector indexes correspond to
   // `SpecificId` indexes. We resize this directly to the correct size.
   llvm::SmallVector<llvm::Function*, 0> specific_functions_;
+
+  // Maps which specific functions are generics that need to have their
+  // definitions lowered after the lowering of other definitions.
+  // This list may grow while lowering generic definitions from this list.
+  // The list uses the `SpecificId` to index into specific_functions_.
+  llvm::SmallVector<SemIR::SpecificId, 10> specific_function_definitions_;
 
   // Provides lowered versions of types.
   // Vector indexes correspond to `TypeId` indexes for non-symbolic types. We

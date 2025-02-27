@@ -32,7 +32,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %BitComplement.type: type = facet_type <@BitComplement> [concrete]
 // CHECK:STDOUT:   %Op.type.f25: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.5a3.%Op.decl) [concrete]
 // CHECK:STDOUT:   %Op.type.544: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.bf2: %Op.type.544 = struct_value () [concrete]
 // CHECK:STDOUT:   %BitComplement.facet: %BitComplement.type = facet_value %C, %impl_witness [concrete]
@@ -59,12 +59,12 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.5a3 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, imports.%Core.BitComplement [concrete = constants.%BitComplement.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.5a3.%Op.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -80,7 +80,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %BitComplement.ref {
+// CHECK:STDOUT: impl @impl.5a3: %C.ref as %BitComplement.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.544 = fn_decl @Op.2 [concrete = constants.%Op.bf2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0

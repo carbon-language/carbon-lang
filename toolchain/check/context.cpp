@@ -4,43 +4,11 @@
 
 #include "toolchain/check/context.h"
 
-#include <optional>
-#include <string>
-#include <utility>
-
 #include "common/check.h"
-#include "common/vlog.h"
-#include "llvm/ADT/Sequence.h"
-#include "toolchain/check/convert.h"
-#include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/eval.h"
-#include "toolchain/check/generic.h"
-#include "toolchain/check/generic_region_stack.h"
-#include "toolchain/check/import.h"
-#include "toolchain/check/import_ref.h"
-#include "toolchain/check/inst_block_stack.h"
-#include "toolchain/check/interface.h"
-#include "toolchain/check/merge.h"
-#include "toolchain/check/type_completion.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/format_providers.h"
-#include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/node_ids.h"
-#include "toolchain/parse/node_kind.h"
-#include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/formatter.h"
-#include "toolchain/sem_ir/generic.h"
-#include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/import_ir.h"
-#include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/inst_kind.h"
-#include "toolchain/sem_ir/name_scope.h"
-#include "toolchain/sem_ir/type_info.h"
-#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
-Context::Context(DiagnosticEmitter* emitter,
+Context::Context(DiagnosticEmitter<SemIRLoc>* emitter,
                  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                  SemIR::File* sem_ir, int imported_ir_count, int total_ir_count,
                  llvm::raw_ostream* vlog_stream)
@@ -75,7 +43,7 @@ auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
   return false;
 }
 
-auto Context::VerifyOnFinish() -> void {
+auto Context::VerifyOnFinish() const -> void {
   // Information in all the various context objects should be cleaned up as
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
@@ -89,19 +57,13 @@ auto Context::VerifyOnFinish() -> void {
   // decl_introducer_state_stack_.
   scope_stack_.VerifyOnFinish();
   // TODO: Add verification for generic_region_stack_.
-}
 
-auto Context::Finalize() -> void {
-  // Pop information for the file-level scope.
-  sem_ir().set_top_inst_block_id(inst_block_stack().Pop());
-  scope_stack().Pop();
-
-  // Finalizes the list of exports on the IR.
-  inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
-  // Finalizes the ImportRef inst block.
-  inst_blocks().Set(SemIR::InstBlockId::ImportRefs, import_ref_ids_);
-  // Finalizes __global_init.
-  global_init_.Finalize();
+#ifndef NDEBUG
+  if (auto verify = sem_ir_->Verify(); !verify.ok()) {
+    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir_,
+                 verify.error());
+  }
+#endif
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

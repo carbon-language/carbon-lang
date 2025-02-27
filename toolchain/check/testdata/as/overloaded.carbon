@@ -35,19 +35,19 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %As.generic: %As.type.90f = struct_value () [concrete]
 // CHECK:STDOUT:   %As.type.602: type = facet_type <@As, @As(%X)> [concrete]
 // CHECK:STDOUT:   %Convert.type.35b: type = fn_type @Convert.1, @As(%X) [concrete]
-// CHECK:STDOUT:   %impl_witness.491: <witness> = impl_witness (@impl.1.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.491: <witness> = impl_witness (@impl.d8c.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.0e3: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.311: %Convert.type.0e3 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.e45: %As.type.602 = facet_value %i32, %impl_witness.491 [concrete]
 // CHECK:STDOUT:   %As.type.fd4: type = facet_type <@As, @As(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.1, @As(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.662: <witness> = impl_witness (@impl.2.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.662: <witness> = impl_witness (@impl.18a.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.c23: type = fn_type @Convert.3 [concrete]
 // CHECK:STDOUT:   %Convert.8bb: %Convert.type.c23 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.831: %As.type.fd4 = facet_value %X, %impl_witness.662 [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.5(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.7, @impl.5(%int_32) [concrete]
+// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.686(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.7, @impl.686(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.5e2: %As.type.fd4 = facet_value Core.IntLiteral, %impl_witness.882 [concrete]
 // CHECK:STDOUT:   %.214: type = fn_type_with_self_type %Convert.type.99b, %As.facet.5e2 [concrete]
@@ -77,7 +77,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.d8c [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -85,8 +85,8 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%X)> [concrete = constants.%As.type.602]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.1.%Convert.decl) [concrete = constants.%impl_witness.491]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.d8c.%Convert.decl) [concrete = constants.%impl_witness.491]
+// CHECK:STDOUT:   impl_decl @impl.18a [concrete] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %As.ref: %As.type.90f = name_ref As, imports.%Core.As [concrete = constants.%As.generic]
@@ -94,7 +94,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [concrete = constants.%As.type.fd4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.2.%Convert.decl) [concrete = constants.%impl_witness.662]
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.18a.%Convert.decl) [concrete = constants.%impl_witness.662]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:   }
@@ -105,7 +105,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %n: %i32 = bind_name n, @__global_init.%.loc23_32.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %i32 as %As.type {
+// CHECK:STDOUT: impl @impl.d8c: %i32 as %As.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.0e3 = fn_decl @Convert.2 [concrete = constants.%Convert.311] {
 // CHECK:STDOUT:     %self.patt: %i32 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %i32 = value_param_pattern %self.patt, runtime_param0
@@ -129,7 +129,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   witness = file.%impl_witness.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %X.ref as %As.type {
+// CHECK:STDOUT: impl @impl.18a: %X.ref as %As.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.c23 = fn_decl @Convert.3 [concrete = constants.%Convert.8bb] {
 // CHECK:STDOUT:     %self.patt: %X = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %X = value_param_pattern %self.patt, runtime_param0
