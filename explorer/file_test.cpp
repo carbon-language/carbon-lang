@@ -3,10 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
 #include "common/raw_string_ostream.h"
 #include "explorer/main.h"
 #include "re2/re2.h"
+#include "testing/base/file_helpers.h"
 #include "testing/file_test/file_test_base.h"
+#include "testing/file_test/manifest.h"
 
 ABSL_FLAG(bool, trace, false,
           "Set to true to run tests with tracing enabled, even if they don't "
@@ -115,8 +118,13 @@ class ExplorerFileTest : public FileTestBase {
 }  // namespace
 
 // Explorer uses a non-standard approach to getting the manifest path.
-auto GetFileTestManifestPath() -> std::filesystem::path {
-  return absl::GetFlag(FLAGS_explorer_test_targets_file);
+auto GetFileTestManifest() -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> manifest;
+  auto content = ReadFile(absl::GetFlag(FLAGS_explorer_test_targets_file));
+  for (const auto& line : absl::StrSplit(*content, "\n", absl::SkipEmpty())) {
+    manifest.push_back(std::string(line));
+  }
+  return manifest;
 }
 
 CARBON_FILE_TEST_FACTORY(ExplorerFileTest)
