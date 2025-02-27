@@ -23,7 +23,7 @@ namespace {
 // component subdirectories.
 class ToolchainFileTest : public FileTestBase {
  public:
-  explicit ToolchainFileTest(llvm::StringRef exe_path, std::mutex* output_mutex,
+  explicit ToolchainFileTest(llvm::StringRef exe_path,
                              llvm::StringRef test_name);
 
   // Adds a replacement for `core_package_dir`.
@@ -89,9 +89,8 @@ static auto GetComponent(llvm::StringRef test_name) -> llvm::StringRef {
 }
 
 ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
-                                     std::mutex* output_mutex,
                                      llvm::StringRef test_name)
-    : FileTestBase(output_mutex, test_name),
+    : FileTestBase(test_name),
       component_(GetComponent(test_name)),
       installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 

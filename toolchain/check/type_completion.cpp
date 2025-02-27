@@ -29,7 +29,7 @@ namespace {
 class TypeCompleter {
  public:
   TypeCompleter(Context& context, SemIRLoc loc,
-                Context::BuildDiagnosticFn diagnoser)
+                MakeDiagnosticBuilderFn diagnoser)
       : context_(context), loc_(loc), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
@@ -160,7 +160,7 @@ class TypeCompleter {
   Context& context_;
   llvm::SmallVector<WorkItem> work_list_;
   SemIRLoc loc_;
-  Context::BuildDiagnosticFn diagnoser_;
+  MakeDiagnosticBuilderFn diagnoser_;
 };
 }  // namespace
 
@@ -535,7 +535,7 @@ auto TypeCompleter::BuildInfo(SemIR::TypeId type_id, SemIR::Inst inst) const
 }
 
 auto TryToCompleteType(Context& context, SemIR::TypeId type_id, SemIRLoc loc,
-                       Context::BuildDiagnosticFn diagnoser) -> bool {
+                       MakeDiagnosticBuilderFn diagnoser) -> bool {
   return TypeCompleter(context, loc, diagnoser).Complete(type_id);
 }
 
@@ -547,8 +547,8 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void {
 }
 
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id,
-                         Context::BuildDiagnosticFn diagnoser) -> bool {
+                         SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
+    -> bool {
   CARBON_CHECK(diagnoser);
 
   if (!TypeCompleter(context, loc_id, diagnoser).Complete(type_id)) {
@@ -573,8 +573,8 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
 
 // Adds a note to a diagnostic explaining that a class is abstract.
 static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
-                              bool direct_use,
-                              Context::DiagnosticBuilder& builder) -> void {
+                              bool direct_use, DiagnosticBuilder& builder)
+    -> void {
   const auto& class_info = context.classes().Get(class_id);
   CARBON_CHECK(
       class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
@@ -588,10 +588,8 @@ static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id,
-                         Context::BuildDiagnosticFn diagnoser,
-                         Context::BuildDiagnosticFn abstract_diagnoser)
-    -> bool {
+                         SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser,
+                         MakeDiagnosticBuilderFn abstract_diagnoser) -> bool {
   // TODO: For symbolic types, should add a RequireConcreteType instruction,
   // like RequireCompleteType.
   CARBON_CHECK(abstract_diagnoser);
@@ -623,7 +621,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
                               SemIR::LocId loc_id,
                               const SemIR::FacetType& facet_type,
-                              Context::BuildDiagnosticFn diagnoser)
+                              MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::CompleteFacetTypeId {
   if (!RequireCompleteType(context, type_id, loc_id, diagnoser)) {
     return SemIR::CompleteFacetTypeId::None;
@@ -633,7 +631,7 @@ auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,
-                    SemIR::LocId loc_id, Context::BuildDiagnosticFn diagnoser)
+                    SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::TypeId {
   return RequireCompleteType(context, type_id, loc_id, diagnoser)
              ? type_id
@@ -644,8 +642,8 @@ auto AsCompleteType(Context& context, SemIR::TypeId type_id,
 // incomplete or abstract type error and returns an error type. This is a
 // convenience wrapper around `RequireConcreteType`.
 auto AsConcreteType(Context& context, SemIR::TypeId type_id,
-                    SemIR::LocId loc_id, Context::BuildDiagnosticFn diagnoser,
-                    Context::BuildDiagnosticFn abstract_diagnoser)
+                    SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser,
+                    MakeDiagnosticBuilderFn abstract_diagnoser)
     -> SemIR::TypeId {
   return RequireConcreteType(context, type_id, loc_id, diagnoser,
                              abstract_diagnoser)
@@ -654,7 +652,7 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
 }
 
 auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
-                         Context::DiagnosticBuilder& builder) -> void {
+                         DiagnosticBuilder& builder) -> void {
   const auto& class_info = context.classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
   if (class_info.has_definition_started()) {
@@ -669,7 +667,7 @@ auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
 }
 
 auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
-                            Context::DiagnosticBuilder& builder) -> void {
+                            DiagnosticBuilder& builder) -> void {
   const auto& interface_info = context.interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {

@@ -75,7 +75,7 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
                                  {.type_id = import_ref->type_id,
                                   .entity_name_id = import_ref->entity_name_id,
                                   .value_id = inst_id});
-  context.AddExport(export_id);
+  context.exports().push_back(export_id);
 
   // Replace the ImportRef in name lookup, both for the above duplicate
   // diagnostic and so that cross-package imports can find it easily.

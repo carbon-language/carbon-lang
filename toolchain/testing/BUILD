@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -55,7 +54,6 @@ file_test(
     size = "small",
     timeout = "moderate",  # Taking >60 seconds in GitHub actions
     srcs = ["file_test.cpp"],
-    env = cc_env(),
     tests = [":all_testdata"],
     deps = [
         "//common:all_llvm_targets",

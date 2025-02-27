@@ -113,6 +113,76 @@ static auto FindAssociatedImportIRs(Context& context,
   return result;
 }
 
+// Returns true if a cycle was found and diagnosed.
+static auto FindAndDiagnoseImplLookupCycle(
+    Context& context,
+    const llvm::SmallVector<Context::ImplLookupStackEntry>& stack,
+    SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
+    SemIR::ConstantId interface_const_id) -> bool {
+  // Deduction of the interface parameters can do further impl lookups, and we
+  // need to ensure we terminate.
+  //
+  // https://docs.carbon-lang.dev/docs/design/generics/details.html#acyclic-rule
+  // - We look for violations of the acyclic rule by seeing if a previous lookup
+  //   had all the same type inputs.
+  // - The `interface_const_id` encodes the entire facet type being looked up,
+  //   including any specific parameters for a generic interface.
+  //
+  // TODO: Implement the termination rule, which requires looking at the
+  // complexity of the types on the top of (or throughout?) the stack:
+  // https://docs.carbon-lang.dev/docs/design/generics/details.html#termination-rule
+  for (auto [i, entry] : llvm::enumerate(stack)) {
+    if (entry.type_const_id == type_const_id &&
+        entry.interface_const_id == interface_const_id) {
+      auto facet_type_type_id =
+          context.types().GetTypeIdForTypeConstantId(interface_const_id);
+      CARBON_DIAGNOSTIC(ImplLookupCycle, Error,
+                        "cycle found in search for impl of {0} for type {1}",
+                        SemIR::TypeId, SemIR::TypeId);
+      auto builder = context.emitter().Build(
+          loc_id, ImplLookupCycle, facet_type_type_id,
+          context.types().GetTypeIdForTypeConstantId(type_const_id));
+      for (const auto& active_entry : llvm::drop_begin(stack, i)) {
+        if (active_entry.impl_loc.has_value()) {
+          CARBON_DIAGNOSTIC(ImplLookupCycleNote, Note,
+                            "determining if this impl clause matches", );
+          builder.Note(active_entry.impl_loc, ImplLookupCycleNote);
+        }
+      }
+      builder.Emit();
+      return true;
+    }
+  }
+  return false;
+}
+
+// Gets the `SemIR::InterfaceId` for a facet type (as a constant value).
+//
+// The facet type requires only one `InterfaceId` right now. But in the future,
+// a facet type may include more than a single interface. For now that is
+// unhandled with a TODO.
+static auto GetInterfaceIdFromConstantId(Context& context, SemIR::LocId loc_id,
+                                         SemIR::ConstantId interface_const_id)
+    -> SemIR::InterfaceId {
+  auto facet_type_inst_id =
+      context.constant_values().GetInstId(interface_const_id);
+  auto facet_type_id =
+      context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id).facet_type_id;
+  const auto& facet_type_info = context.facet_types().Get(facet_type_id);
+  if (facet_type_info.impls_constraints.empty()) {
+    context.TODO(loc_id,
+                 "impl lookup for a FacetType with no interface (using "
+                 "`where .Self impls ...` instead?)");
+    return SemIR::InterfaceId::None;
+  }
+  if (facet_type_info.impls_constraints.size() > 1) {
+    context.TODO(loc_id,
+                 "impl lookup for a FacetType with more than one interface");
+    return SemIR::InterfaceId::None;
+  }
+  return facet_type_info.impls_constraints[0].interface_id;
+}
+
 static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId type_const_id,
                                 SemIR::ConstantId interface_const_id,
@@ -199,74 +269,34 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  auto& stack = context.impl_lookup_stack();
-  // Deduction of the interface parameters can do further impl lookups, and we
-  // need to ensure we terminate.
-  //
-  // https://docs.carbon-lang.dev/docs/design/generics/details.html#acyclic-rule
-  // - We look for violations of the acyclic rule by seeing if a previous lookup
-  //   had all the same type inputs.
-  // - The `interface_const_id` encodes the entire facet type being looked up,
-  //   including any specific parameters for a generic interface.
-  //
-  // TODO: Implement the termination rule, which requires looking at the
-  // complexity of the types on the top of (or throughout?) the stack:
-  // https://docs.carbon-lang.dev/docs/design/generics/details.html#termination-rule
-  for (auto entry : stack) {
-    if (entry.type_const_id == type_const_id &&
-        entry.interface_const_id == interface_const_id) {
-      CARBON_DIAGNOSTIC(ImplLookupCycle, Error,
-                        "cycle found in lookup of interface {0} for type {1}",
-                        std::string, SemIR::TypeId);
-      context.emitter()
-          .Build(loc_id, ImplLookupCycle, "<TODO: interface name>",
-                 context.types().GetTypeIdForTypeConstantId(type_const_id))
-          .Emit();
-      return SemIR::ErrorInst::SingletonInstId;
-    }
+  if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
+                                     loc_id, type_const_id,
+                                     interface_const_id)) {
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // The `interface_id` is the single interface in the `interface_const_id`
-  // facet type. In the future, a facet type may include more than a single
-  // interface, but for now that is unhandled with a TODO.
-  auto interface_id = [&] {
-    auto facet_type_inst_id =
-        context.constant_values().GetInstId(interface_const_id);
-    auto facet_type_id = context.insts()
-                             .GetAs<SemIR::FacetType>(facet_type_inst_id)
-                             .facet_type_id;
-    const auto& facet_type_info = context.facet_types().Get(facet_type_id);
-    if (facet_type_info.impls_constraints.empty()) {
-      context.TODO(loc_id,
-                   "impl lookup for a FacetType with no interface (using "
-                   "`where .Self impls ...` instead?)");
-      return SemIR::InterfaceId::None;
-    }
-    if (facet_type_info.impls_constraints.size() > 1) {
-      context.TODO(loc_id,
-                   "impl lookup for a FacetType with more than one interface");
-      return SemIR::InterfaceId::None;
-    }
-    return facet_type_info.impls_constraints[0].interface_id;
-  }();
+  auto interface_id =
+      GetInterfaceIdFromConstantId(context, loc_id, interface_const_id);
 
-  auto witness_id = SemIR::InstId::None;
+  auto result_witness_id = SemIR::InstId::None;
 
+  auto& stack = context.impl_lookup_stack();
   stack.push_back({
       .type_const_id = type_const_id,
       .interface_const_id = interface_const_id,
   });
   for (const auto& impl : context.impls().array_ref()) {
-    witness_id = GetWitnessIdForImpl(context, loc_id, type_const_id,
-                                     interface_const_id, interface_id, impl);
-    if (witness_id.has_value()) {
+    stack.back().impl_loc = impl.definition_id;
+    result_witness_id = GetWitnessIdForImpl(
+        context, loc_id, type_const_id, interface_const_id, interface_id, impl);
+    if (result_witness_id.has_value()) {
       // We found a matching impl, don't keep looking.
       break;
     }
   }
   stack.pop_back();
 
-  return witness_id;
+  return result_witness_id;
 }
 
 }  // namespace Carbon::Check

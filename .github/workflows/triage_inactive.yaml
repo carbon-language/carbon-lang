@@ -29,8 +29,8 @@ jobs:
           stale-issue-message: >
             We triage inactive PRs and issues in order to make it easier to find
             active work. If this issue should remain active or becomes active
-            again, please comment or remove the `inactive` label. The `long
-            term` label can also be added for issues which are expected to take
+            again, please comment or remove the `inactive` label. The `long term
+            issue` label can also be added for issues which are expected to take
             time.
 
 
@@ -56,7 +56,8 @@ jobs:
           stale-issue-label: 'inactive'
           stale-pr-label: 'inactive'
           exempt-issue-labels:
-            'long term,design idea,design update,good first issue,leads question'
+            'long term issue,design idea,design update,good first issue,leads
+            question'
           days-before-stale: 90
           days-before-close: 14
           days-before-issue-close: -1

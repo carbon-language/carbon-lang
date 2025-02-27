@@ -40,14 +40,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %RightShift.type: type = facet_type <@RightShift> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Op.type.4f4: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %impl_witness.404: <witness> = impl_witness (@impl.1.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.404: <witness> = impl_witness (@impl.3c1.%Op.decl) [concrete]
 // CHECK:STDOUT:   %Op.type.092: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.79a: %Op.type.092 = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShift.facet: %RightShift.type = facet_value %C, %impl_witness.404 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftAssign.type: type = facet_type <@RightShiftAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.6f6: type = fn_type @Op.3 [concrete]
-// CHECK:STDOUT:   %impl_witness.686: <witness> = impl_witness (@impl.2.%Op.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.686: <witness> = impl_witness (@impl.4f0.%Op.decl) [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.aab: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.7b2: %Op.type.aab = struct_value () [concrete]
@@ -80,18 +80,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.3c1 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %RightShift.ref: type = name_ref RightShift, imports.%Core.RightShift [concrete = constants.%RightShift.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.1.%Op.decl) [concrete = constants.%impl_witness.404]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.3c1.%Op.decl) [concrete = constants.%impl_witness.404]
+// CHECK:STDOUT:   impl_decl @impl.4f0 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %RightShiftAssign.ref: type = name_ref RightShiftAssign, imports.%Core.RightShiftAssign [concrete = constants.%RightShiftAssign.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.2.%Op.decl) [concrete = constants.%impl_witness.686]
+// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.4f0.%Op.decl) [concrete = constants.%impl_witness.686]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -128,7 +128,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %RightShift.ref {
+// CHECK:STDOUT: impl @impl.3c1: %C.ref as %RightShift.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.092 = fn_decl @Op.2 [concrete = constants.%Op.79a] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
@@ -154,7 +154,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C.ref as %RightShiftAssign.ref {
+// CHECK:STDOUT: impl @impl.4f0: %C.ref as %RightShiftAssign.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.aab = fn_decl @Op.4 [concrete = constants.%Op.7b2] {
 // CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, runtime_param0

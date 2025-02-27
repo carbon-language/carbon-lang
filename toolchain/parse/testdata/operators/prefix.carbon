@@ -11,6 +11,9 @@
 var n: i8 = -n;
 var b: bool = not true;
 
+var c: const bool;
+var d: partial C*;
+
 // CHECK:STDOUT: - filename: prefix.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -32,5 +35,20 @@ var b: bool = not true;
 // CHECK:STDOUT:         {kind: 'BoolLiteralTrue', text: 'true'},
 // CHECK:STDOUT:       {kind: 'PrefixOperatorNot', text: 'not', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'c'},
+// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
+// CHECK:STDOUT:           {kind: 'PrefixOperatorConst', text: 'const', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'd'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'C'},
+// CHECK:STDOUT:             {kind: 'PrefixOperatorPartial', text: 'partial', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

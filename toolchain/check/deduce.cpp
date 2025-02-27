@@ -256,7 +256,7 @@ class DeductionContext {
 }  // namespace
 
 static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
-                            Context::DiagnosticBuilder& diag) -> void {
+                            DiagnosticBuilder& diag) -> void {
   CARBON_DIAGNOSTIC(DeductionGenericHere, Note,
                     "while deducing parameters of generic declared here");
   diag.Note(context.generics().Get(generic_id).decl_id, DeductionGenericHere);
@@ -333,8 +333,11 @@ auto DeductionContext::Deduce() -> bool {
       // So we do this conversion here, even though we will later try convert
       // again when we have deduced all of the bindings.
       DiagnosticAnnotationScope annotate_diagnostics(
-          &context().emitter(),
-          [&](auto& builder) { NoteInitializingParam(param_id, builder); });
+          &context().emitter(), [&](auto& builder) {
+            if (diagnose_) {
+              NoteInitializingParam(param_id, builder);
+            }
+          });
       // TODO: The call logic should reuse the conversion here (if any) instead
       // of doing the same conversion again. At the moment we throw away the
       // converted arg_id.
@@ -503,6 +506,25 @@ auto DeductionContext::Deduce() -> bool {
   return true;
 }
 
+// Gets the entity name of a generic binding. The generic binding may be an
+// imported instruction.
+static auto GetEntityNameForGenericBinding(Context& context,
+                                           SemIR::InstId binding_id)
+    -> SemIR::NameId {
+  // If `binding_id` is imported, it may not have an entity name. Get a
+  // canonical local instruction from its constant value which does.
+  if (context.insts().Is<SemIR::ImportRefLoaded>(binding_id)) {
+    binding_id = context.constant_values().GetConstantInstId(binding_id);
+  }
+
+  if (auto bind_name =
+          context.insts().TryGetAs<SemIR::AnyBindName>(binding_id)) {
+    return context.entity_names().Get(bind_name->entity_name_id).name_id;
+  } else {
+    CARBON_FATAL("Instruction without entity name in generic binding position");
+  }
+}
+
 auto DeductionContext::CheckDeductionIsComplete() -> bool {
   // Check we deduced an argument value for every parameter, and convert each
   // argument to match the final parameter type after substituting any deduced
@@ -515,16 +537,12 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
         context().generics().Get(generic_id_).bindings_id)[binding_index];
     if (!deduced_arg_id.has_value()) {
       if (diagnose_) {
-        auto entity_name_id = context()
-                                  .insts()
-                                  .GetAs<SemIR::AnyBindName>(binding_id)
-                                  .entity_name_id;
         CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
                           "cannot deduce value for generic parameter `{0}`",
                           SemIR::NameId);
         auto diag = context().emitter().Build(
             loc_id_, DeductionIncomplete,
-            context().entity_names().Get(entity_name_id).name_id);
+            GetEntityNameForGenericBinding(context(), binding_id));
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
       }
@@ -558,8 +576,11 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
           context().types().GetTypeIdForTypeConstantId(param_type_const_id);
 
       DiagnosticAnnotationScope annotate_diagnostics(
-          &context().emitter(),
-          [&](auto& builder) { NoteInitializingParam(binding_id, builder); });
+          &context().emitter(), [&](auto& builder) {
+            if (diagnose_) {
+              NoteInitializingParam(binding_id, builder);
+            }
+          });
       auto converted_arg_id =
           diagnose_ ? ConvertToValueOfType(context(), loc_id_, deduced_arg_id,
                                            binding_type_id)

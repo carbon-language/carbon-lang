@@ -49,12 +49,12 @@ impl AC as AI {}
 // CHECK:STDOUT:   %AI: type = bind_alias AI, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %AC: type = bind_alias AC, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.7704ae.1 [concrete] {} {
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness () [concrete = constants.%impl_witness]
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.7704ae.2 [concrete] {} {
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -69,12 +69,12 @@ impl AC as AI {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %AC.ref as %AI.ref {
+// CHECK:STDOUT: impl @impl.7704ae.1: %AC.ref as %AI.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %AC.ref as %AI.ref {
+// CHECK:STDOUT: impl @impl.7704ae.2: %AC.ref as %AI.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness.loc26
 // CHECK:STDOUT: }

@@ -64,7 +64,7 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
 // types, which would make getting the right overload resolution complex.
 template <typename InstT>
 static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
-                            InstT inst) {
+                            InstT inst) -> void {
   if constexpr (!InstT::Kind.is_lowered()) {
     CARBON_FATAL(
         "Encountered an instruction that isn't expected to lower. It's "

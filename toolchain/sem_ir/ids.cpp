@@ -77,6 +77,9 @@ auto IntKind::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+// Double-check the special value mapping and constexpr evaluation.
+static_assert(NameId::SpecialNameId::Vptr == *NameId::Vptr.AsSpecialNameId());
+
 auto NameId::ForIdentifier(IdentifierId id) -> NameId {
   if (id.index >= 0) {
     return NameId(id.index);
@@ -105,25 +108,16 @@ auto NameId::Print(llvm::raw_ostream& out) const -> void {
     return;
   }
   out << Label << "(";
-  if (*this == Base) {
-    out << "Base";
-  } else if (*this == Core) {
-    out << "Core";
-  } else if (*this == PackageNamespace) {
-    out << "PackageNamespace";
-  } else if (*this == PeriodSelf) {
-    out << "PeriodSelf";
-  } else if (*this == ReturnSlot) {
-    out << "ReturnSlot";
-  } else if (*this == SelfType) {
-    out << "SelfType";
-  } else if (*this == SelfValue) {
-    out << "SelfValue";
-  } else if (*this == Vptr) {
-    out << "Vptr";
-  } else {
-    CARBON_FATAL("Unknown index {0}", index);
-    IdBase::Print(out);
+  auto special_name_id = AsSpecialNameId();
+  CARBON_CHECK(special_name_id, "Unknown index {0}", index);
+
+  switch (*special_name_id) {
+#define CARBON_SPECIAL_NAME_ID_FOR_PRINT(Name) \
+  case SpecialNameId::Name:                    \
+    out << #Name;                              \
+    break;
+    CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_PRINT)
+#undef CARBON_SPECIAL_NAME_ID_FOR_PRINT
   }
   out << ")";
 }

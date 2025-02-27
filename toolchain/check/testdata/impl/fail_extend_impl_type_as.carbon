@@ -90,20 +90,20 @@ class E {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %i32 as %I.ref {
+// CHECK:STDOUT: impl @impl.154: %i32 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %D.ref as %I.ref;
+// CHECK:STDOUT: impl @impl.ca7: %D.ref as %I.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: %Self.ref as %I.ref {
+// CHECK:STDOUT: impl @impl.c98: %Self.ref as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = @E.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.154 [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -119,7 +119,7 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   impl_decl @impl.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.ca7 [concrete] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -131,11 +131,11 @@ class E {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   extend @impl.2.%I.ref
+// CHECK:STDOUT:   extend @impl.ca7.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
-// CHECK:STDOUT:   impl_decl @impl.3 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.c98 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -146,6 +146,6 @@ class E {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   extend @impl.3.%I.ref
+// CHECK:STDOUT:   extend @impl.c98.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

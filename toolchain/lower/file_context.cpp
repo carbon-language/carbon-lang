@@ -4,6 +4,7 @@
 
 #include "toolchain/lower/file_context.h"
 
+#include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
@@ -184,6 +185,8 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
   // TODO: Add this function to a list of specific functions whose definitions
   // we need to emit.
   specific_functions_[specific_id.index] = result;
+  // TODO: Should this be a pair of <function_id, specific_id> ?
+  specific_function_definitions_.push_back(specific_id);
   return result;
 }
 
@@ -315,12 +318,21 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
+  BuildFunctionBody(function_id, function, llvm_function);
+}
+
+auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
+                                    const SemIR::Function& function,
+                                    llvm::Function* llvm_function,
+                                    SemIR::SpecificId specific_id) -> void {
+  const auto& body_block_ids = function.body_block_ids;
+  CARBON_DCHECK(llvm_function, "LLVM Function not found when lowering body.");
+  CARBON_DCHECK(!body_block_ids.empty(),
+                "No function body blocks found during lowering.");
+
   FunctionContext function_lowering(*this, llvm_function,
                                     BuildDISubprogram(function, llvm_function),
                                     vlog_stream_);
-
-  // TODO: Pass in a specific ID for generic functions.
-  const auto specific_id = SemIR::SpecificId::None;
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM

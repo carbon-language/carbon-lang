@@ -12,6 +12,8 @@ ABSL_FLAG(bool, trace, false,
           "Set to true to run tests with tracing enabled, even if they don't "
           "otherwise specify it. This does not result in checking trace output "
           "contents; it essentially only verifies there's not a crash bug.");
+ABSL_FLAG(std::string, explorer_test_targets_file, "",
+          "A path to a file containing repo-relative names of test files.");
 
 namespace Carbon::Testing {
 namespace {
@@ -19,8 +21,8 @@ namespace {
 class ExplorerFileTest : public FileTestBase {
  public:
   explicit ExplorerFileTest(llvm::StringRef /*exe_path*/,
-                            std::mutex* output_mutex, llvm::StringRef test_name)
-      : FileTestBase(output_mutex, test_name),
+                            llvm::StringRef test_name)
+      : FileTestBase(test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
     CARBON_CHECK(prelude_line_re_.ok(), "{0}", prelude_line_re_.error());
@@ -96,6 +98,9 @@ class ExplorerFileTest : public FileTestBase {
     }
   }
 
+  // Cannot execute in parallel.
+  auto AllowParallelRun() const -> bool override { return false; }
+
  private:
   // Trace output is directly checked for a few tests.
   auto check_trace_output() -> bool {
@@ -108,6 +113,11 @@ class ExplorerFileTest : public FileTestBase {
 };
 
 }  // namespace
+
+// Explorer uses a non-standard approach to getting the manifest path.
+auto GetFileTestManifestPath() -> std::filesystem::path {
+  return absl::GetFlag(FLAGS_explorer_test_targets_file);
+}
 
 CARBON_FILE_TEST_FACTORY(ExplorerFileTest)
 

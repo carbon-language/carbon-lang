@@ -156,7 +156,8 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                      std::string name = "",
-                     SemIR::LocId loc_id = SemIR::LocId::None) -> void;
+                     std::variant<SemIR::LocId, uint64_t>
+                         loc_id_or_fingerprint = SemIR::LocId::None) -> void;
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
