@@ -46,7 +46,7 @@ class FunctionContext {
 
   // Returns a value for the given instruction.
   auto GetValue(SemIR::InstId inst_id) -> llvm::Value* {
-    // TODO: if(specific_id_.has_value()) update inst_id first.
+    // TODO: if(specific_id_.has_value()) may need to update inst_id first.
 
     // All builtins are types, with the same empty lowered value.
     if (SemIR::IsSingletonInstId(inst_id)) {

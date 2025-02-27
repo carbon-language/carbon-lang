@@ -103,6 +103,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
                               GetFunction(sem_ir().global_ctor_id()),
                               /*Priority=*/0);
   }
+
   return std::move(llvm_module_);
 }
 
@@ -220,7 +221,6 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   // TODO nit: add is_symbolic() to type_id to forward to
   // type_id.AsConstantId().is_symbolic(). Update call below too.
-
   auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
     if (!type_id.has_value()) {
       return nullptr;
