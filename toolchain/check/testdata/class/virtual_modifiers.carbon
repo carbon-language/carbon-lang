@@ -1853,10 +1853,10 @@ class T2 {
 // CHECK:STDOUT:   %F1.decl: %F1.type.b0d = fn_decl @F1.2 [concrete = constants.%F1.0ce] {
 // CHECK:STDOUT:     %self.patt: %ptr.63e = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.63e = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc10_14: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc17_14: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.63e = value_param runtime_param0
-// CHECK:STDOUT:     %.loc10_29: type = splice_block %ptr [concrete = constants.%ptr.63e] {
+// CHECK:STDOUT:     %.loc17_29: type = splice_block %ptr [concrete = constants.%ptr.63e] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T2 [concrete = constants.%T2]
 // CHECK:STDOUT:       %ptr: type = ptr_type %T2 [concrete = constants.%ptr.63e]
 // CHECK:STDOUT:     }
