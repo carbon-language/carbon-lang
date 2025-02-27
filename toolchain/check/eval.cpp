@@ -1331,11 +1331,15 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context, SemIRLoc loc,
           *facet_type_id = facet_type->facet_type_id;
         } else {
           CARBON_DIAGNOSTIC(FacetTypeRequiredForTypeAndOperator, Error,
-                            "non-facet type combined with `&` operator");
+                            "non-facet type {0} combined with `&` operator",
+                            SemIR::TypeId);
           // TODO: Find a location for the lhs or rhs specifically, instead of
           // the whole thing. If that's not possible we can change the text to
           // say if it's referring to the left or the right side for the error.
-          context.emitter().Emit(loc, FacetTypeRequiredForTypeAndOperator);
+          // The `arg_id` instruction has no location in it for some reason.
+          context.emitter().Emit(
+              loc, FacetTypeRequiredForTypeAndOperator,
+              context.types().GetTypeIdForTypeInstId(arg_id));
         }
       }
       // Allow errors to be diagnosed for both sides of the operator before

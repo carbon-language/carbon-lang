@@ -34,21 +34,21 @@ interface A {}
 class C {}
 
 fn F() {
-  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (A & C));
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (A & C));
-  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (C & A));
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (C & A));
-  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+8]]:23: error: non-facet type combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+8]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (C & C));
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (C & C));
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
