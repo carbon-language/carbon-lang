@@ -204,6 +204,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::AnyBindingPattern binding_pattern,
                                       SemIR::LocId /*pattern_loc_id*/,
                                       MatchContext::WorkItem entry) -> void {
+  if (kind_ == MatchKind::Caller) {
+    CARBON_CHECK(binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind,
+                 "Found runtime binding pattern during caller pattern match");
+    return;
+  }
   // We're logically consuming this map entry, so we invalidate it in order
   // to avoid accidentally consuming it twice.
   auto [bind_name_id, type_expr_region_id] =
@@ -212,6 +217,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
   InsertHere(context, type_expr_region_id);
   auto value_id = SemIR::InstId::None;
+  // FIXME change to if Local?
   switch (kind_) {
     case MatchKind::Local: {
       value_id = ConvertToValueOrRefOfType(
@@ -224,7 +230,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Caller:
-      CARBON_FATAL("Found binding pattern during caller pattern match");
+      CARBON_FATAL();
   }
   auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
   CARBON_CHECK(!bind_name.value_id.has_value());
@@ -570,14 +576,6 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   // Check type conversions per-element.
   for (auto [arg_id, param_pattern_id] : llvm::reverse(llvm::zip_equal(
            arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id)))) {
-    auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
-        context.sem_ir(), param_pattern_id);
-    if (!param_pattern_info ||
-        !param_pattern_info->inst.runtime_index.has_value()) {
-      // Not a runtime parameter: we don't pass an argument.
-      continue;
-    }
-
     match.AddWork({.pattern_id = param_pattern_id, .scrutinee_id = arg_id});
   }
 
