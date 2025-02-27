@@ -186,7 +186,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0: %.e6d = impl_witness_access constants.%impl_witness.ec3, element0 [concrete = constants.%Op.0c9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(<error>)
+// CHECK:STDOUT:   %.loc30: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc30
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,7 +198,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.499 = impl_witness_access constants.%impl_witness.95d, element0 [concrete = constants.%Op.d8e]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(<error>, %b.ref)
+// CHECK:STDOUT:   %.loc41: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc41
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -128,6 +128,10 @@ class MatchContext {
   SemIR::RuntimeParamIndex next_index_;
 
   // The pending results that will be returned by the current `DoWork` call.
+  // It represents the contents of the `Call` arguments block when kind_
+  // is Caller, or the `Call` parameters block when kind_ is Callee
+  // (it is empty when kind_ is Local). Consequently, it is populated
+  // only by DoEmitPatternMatch for *ParamPattern insts.
   llvm::SmallVector<SemIR::InstId> results_;
 
   // The kind of pattern match being performed.
@@ -255,10 +259,10 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       context.emitter().Emit(
           TokenOnly(context.insts().GetLocId(entry.scrutinee_id)),
           AddrSelfIsNonRef);
-      // FIXME is it possible to clean this up, so results_ is always in Param
-      // handlers?
-      results_.push_back(SemIR::ErrorInst::SingletonInstId);
-      return;
+      // Add fake reference expression to preserve invariants.
+      auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
+      scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(
+          context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
   }
   auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
   auto new_scrutinee = AddInst<SemIR::AddrOf>(
@@ -460,7 +464,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::ErrorInst::SingletonInstId) {
-    results_.push_back(SemIR::ErrorInst::SingletonInstId);
     return;
   }
   DiagnosticAnnotationScope annotate_diagnostics(
