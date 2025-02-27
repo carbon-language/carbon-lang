@@ -155,7 +155,6 @@ fn foo(bar);
 // CHECK:STDERR:
 fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 
-
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
