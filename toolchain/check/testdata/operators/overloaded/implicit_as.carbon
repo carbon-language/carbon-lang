@@ -135,13 +135,11 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: %Source.type = fn_decl @Source [concrete = constants.%Source] {
 // CHECK:STDOUT:     %T.patt.loc27_11.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc27_11.1, runtime_param<none> [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %return.patt: @Source.%T.loc27_11.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Source.%T.loc27_11.2 (%T) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc27_24: type = name_ref T, %T.loc27_11.1 [symbolic = %T.loc27_11.2 (constants.%T)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc27_11.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc27_11.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc27_11.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc27_11.2 (constants.%T)]
 // CHECK:STDOUT:     %return.param: ref @Source.%T.loc27_11.2 (%T) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Source.%T.loc27_11.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -240,7 +238,7 @@ fn Test() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Source.%T.loc27_11.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %Source.specific_fn.loc27_35.2 (constants.%Source.specific_fn.ff0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type) -> @Source.%T.loc27_11.2 (%T) {
+// CHECK:STDOUT:   fn(%T.patt.loc27_11.1: type) -> @Source.%T.loc27_11.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [concrete = constants.%Source]
 // CHECK:STDOUT:     %T.ref.loc27_42: type = name_ref T, %T.loc27_11.1 [symbolic = %T.loc27_11.2 (constants.%T)]

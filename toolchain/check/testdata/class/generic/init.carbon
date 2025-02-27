@@ -87,22 +87,18 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_13.1, runtime_param<none> [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [concrete = constants.%InitFromStructGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8_26.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_26.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_26.1, runtime_param<none> [symbolic = %T.patt.loc8_26.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%T.loc8_26.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @InitFromStructGeneric.%T.loc8_26.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_45: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc8_26.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_26.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_26.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_26.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @InitFromStructGeneric.%T.loc8_26.2 (%T) = value_param runtime_param0
 // CHECK:STDOUT:     %T.ref.loc8_39: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
 // CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.loc8_26.2 (%T) = bind_name x, %x.param
@@ -166,7 +162,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @InitFromStructGeneric.%T.loc8_26.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k.b21)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1), @InitFromStructGeneric.%T.loc8_26.2 (%T) [symbolic = %Class.elem (constants.%Class.elem.e26)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T)) -> @InitFromStructGeneric.%T.loc8_26.2 (%T) {
+// CHECK:STDOUT:   fn(%T.patt.loc8_26.1: type, %x.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T)) -> @InitFromStructGeneric.%T.loc8_26.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = binding_pattern v
@@ -296,22 +292,18 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Adapt.decl: %Adapt.type = class_decl @Adapt [concrete = constants.%Adapt.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_13.1, runtime_param<none> [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedGeneric.decl: %InitFromAdaptedGeneric.type = fn_decl @InitFromAdaptedGeneric [concrete = constants.%InitFromAdaptedGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8_27.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_27.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_27.1, runtime_param<none> [symbolic = %T.patt.loc8_27.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_46: type = name_ref T, %T.loc8_27.1 [symbolic = %T.loc8_27.2 (constants.%T)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc8_27.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_27.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_27.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_27.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = value_param runtime_param0
 // CHECK:STDOUT:     %T.ref.loc8_40: type = name_ref T, %T.loc8_27.1 [symbolic = %T.loc8_27.2 (constants.%T)]
 // CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = bind_name x, %x.param
@@ -366,7 +358,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Adapt.loc9_23.2: type = class_type @Adapt, @Adapt(%T.loc8_27.2) [symbolic = %Adapt.loc9_23.2 (constants.%Adapt.2e4)]
 // CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @InitFromAdaptedGeneric.%Adapt.loc9_23.2 (%Adapt.2e4) [symbolic = %require_complete.loc9 (constants.%require_complete.26c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T)) -> @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) {
+// CHECK:STDOUT:   fn(%T.patt.loc8_27.1: type, %x.param_patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T)) -> @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [concrete = constants.%Adapt.generic]

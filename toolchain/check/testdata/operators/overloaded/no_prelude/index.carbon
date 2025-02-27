@@ -174,10 +174,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.68b = interface_decl @IndexWith [concrete = constants.%IndexWith.generic] {
 // CHECK:STDOUT:     %SubscriptType.patt.loc4_21.1: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt.loc4_21.2 (constants.%SubscriptType.patt)]
-// CHECK:STDOUT:     %SubscriptType.param_patt: type = value_param_pattern %SubscriptType.patt.loc4_21.1, runtime_param<none> [symbolic = %SubscriptType.patt.loc4_21.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SubscriptType.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %SubscriptType.loc4_21.1: type = bind_symbolic_name SubscriptType, 0, %SubscriptType.param [symbolic = %SubscriptType.loc4_21.2 (constants.%SubscriptType)]
+// CHECK:STDOUT:     %SubscriptType.loc4_21.1: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType.loc4_21.2 (constants.%SubscriptType)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -292,12 +290,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     import Core//core_wrong_arg_count
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.504 = import_ref Core//core_wrong_arg_count, IndexWith, loaded [concrete = constants.%IndexWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.3b819a.1: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:   %Core.import_ref.68a = import_ref Core//core_wrong_arg_count, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %Core.import_ref.68a = import_ref Core//core_wrong_arg_count, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.25c: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.349) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%assoc0 (constants.%assoc0.9bc)]
 // CHECK:STDOUT:   %Core.At: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, At, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
-// CHECK:STDOUT:   %Core.import_ref.3b819a.2: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst26 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst24 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Core.import_ref.e99: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -320,7 +318,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @IndexWith(imports.%Core.import_ref.3b819a.1: type) [from "core_wrong_arg_count.carbon"] {
+// CHECK:STDOUT: generic interface @IndexWith(imports.%Core.import_ref.5ab3ec.1: type) [from "core_wrong_arg_count.carbon"] {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:
@@ -369,7 +367,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @At.1(imports.%Core.import_ref.3b819a.2: type, imports.%Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2)) [from "core_wrong_arg_count.carbon"] {
+// CHECK:STDOUT: generic fn @At.1(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2)) [from "core_wrong_arg_count.carbon"] {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.bd2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.bd2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]

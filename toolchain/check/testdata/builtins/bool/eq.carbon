@@ -113,15 +113,13 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %B.patt.loc6_9.1: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
-// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc6_9.1, runtime_param<none> [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc6_13.2: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:       %.loc6_13.3: type = converted %bool.make_type, %.loc6_13.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %B.loc6_9.1: bool = bind_symbolic_name B, 0, %B.param [symbolic = %B.loc6_9.2 (constants.%B)]
+// CHECK:STDOUT:     %B.loc6_9.1: bool = bind_symbolic_name B, 0 [symbolic = %B.loc6_9.2 (constants.%B)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: %True.type = fn_decl @True [concrete = constants.%True] {
 // CHECK:STDOUT:     %return.patt: %C.a14 = return_slot_pattern
@@ -324,15 +322,13 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %B.patt.loc4_9.1: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
-// CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc4_9.1, runtime_param<none> [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %B.param: bool = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc4_13.2: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:       %.loc4_13.3: type = converted %bool.make_type, %.loc4_13.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %B.loc4_9.1: bool = bind_symbolic_name B, 0, %B.param [symbolic = %B.loc4_9.2 (constants.%B)]
+// CHECK:STDOUT:     %B.loc4_9.1: bool = bind_symbolic_name B, 0 [symbolic = %B.loc4_9.2 (constants.%B)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: %True.type = fn_decl @True [concrete = constants.%True] {
 // CHECK:STDOUT:     %return.patt: %C.a14 = return_slot_pattern

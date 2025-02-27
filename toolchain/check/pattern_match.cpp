@@ -207,7 +207,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                     {.bind_name_id = SemIR::InstId::None,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
   InsertHere(context, type_expr_region_id);
-  auto value_id = entry.scrutinee_id;
+  auto value_id = SemIR::InstId::None;
   switch (kind_) {
     case MatchKind::Local: {
       value_id = ConvertToValueOrRefOfType(
@@ -216,11 +216,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      if (context.insts()
-              .GetAs<SemIR::AnyParam>(value_id)
-              .runtime_index.has_value()) {
-        results_.push_back(value_id);
-      }
+      value_id = entry.scrutinee_id;
       break;
     }
     case MatchKind::Caller:
@@ -259,6 +255,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       context.emitter().Emit(
           TokenOnly(context.insts().GetLocId(entry.scrutinee_id)),
           AddrSelfIsNonRef);
+      // FIXME is it possible to clean this up, so results_ is always in Param
+      // handlers?
       results_.push_back(SemIR::ErrorInst::SingletonInstId);
       return;
   }
@@ -300,12 +298,14 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
         param_pattern.runtime_index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
+      auto param_id = AddInst<SemIR::ValueParam>(
+          context, pattern_loc_id,
+          {.type_id = param_pattern.type_id,
+           .runtime_index = param_pattern.runtime_index,
+           .pretty_name_id = GetPrettyName(context, param_pattern)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
-               .scrutinee_id = AddInst<SemIR::ValueParam>(
-                   context, pattern_loc_id,
-                   {.type_id = param_pattern.type_id,
-                    .runtime_index = param_pattern.runtime_index,
-                    .pretty_name_id = GetPrettyName(context, param_pattern)})});
+               .scrutinee_id = param_id});
+      results_.push_back(param_id);
       break;
     }
     case MatchKind::Local: {
@@ -337,12 +337,14 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
         param_pattern.runtime_index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
+      auto param_id = AddInst<SemIR::OutParam>(
+          context, pattern_loc_id,
+          {.type_id = param_pattern.type_id,
+           .runtime_index = param_pattern.runtime_index,
+           .pretty_name_id = GetPrettyName(context, param_pattern)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
-               .scrutinee_id = AddInst<SemIR::OutParam>(
-                   context, pattern_loc_id,
-                   {.type_id = param_pattern.type_id,
-                    .runtime_index = param_pattern.runtime_index,
-                    .pretty_name_id = GetPrettyName(context, param_pattern)})});
+               .scrutinee_id = param_id});
+      results_.push_back(param_id);
       break;
     }
     case MatchKind::Local: {
@@ -365,7 +367,6 @@ auto MatchContext::DoEmitPatternMatch(
           .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
           .has_value();
   CARBON_CHECK(!already_in_lookup);
-  results_.push_back(entry.scrutinee_id);
 }
 
 auto MatchContext::DoEmitPatternMatch(Context& context,
@@ -566,10 +567,10 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   // Check type conversions per-element.
   for (auto [arg_id, param_pattern_id] : llvm::reverse(llvm::zip_equal(
            arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id)))) {
-    auto runtime_index = SemIR::Function::GetParamPatternInfoFromPatternId(
-                             context.sem_ir(), param_pattern_id)
-                             .inst.runtime_index;
-    if (!runtime_index.has_value()) {
+    auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
+        context.sem_ir(), param_pattern_id);
+    if (!param_pattern_info ||
+        !param_pattern_info->inst.runtime_index.has_value()) {
       // Not a runtime parameter: we don't pass an argument.
       continue;
     }

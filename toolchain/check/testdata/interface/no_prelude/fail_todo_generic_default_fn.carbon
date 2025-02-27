@@ -47,10 +47,8 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type.dac = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_13.1, runtime_param<none> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [symbolic = constants.%.075] {
 // CHECK:STDOUT:     %self.patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = binding_pattern self
@@ -58,8 +56,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %return.patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc23_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc23_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc23_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc23_35.1: @.1.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc23_35: @.1.%I.type (%I.type.325) = name_ref Self, %.loc23_35.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc23_35: type = facet_access_type %Self.ref.loc23_35 [symbolic = %Self.as_type.loc23_24.2 (constants.%Self.as_type)]

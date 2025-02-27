@@ -80,10 +80,8 @@ fn G() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [concrete = constants.%Wrap.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_12.1, runtime_param<none> [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_12.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}

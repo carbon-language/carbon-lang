@@ -122,10 +122,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Action.decl: %Action.type.29c = interface_decl @Action [concrete = constants.%Action.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_18.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_18.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_18.1, runtime_param<none> [symbolic = %T.patt.loc4_18.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_18.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_18.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_18.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_18.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
@@ -289,19 +287,19 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.C = import_ref Main//action, C, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//action, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst46 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst44 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.318: @Action.%Action.assoc_type (%Action.assoc_type.8f9) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.905ab9.2)]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//action, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.71c: <witness> = import_ref Main//action, loc12_21, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst39 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.984: type = import_ref Main//action, loc12_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.bb2: type = import_ref Main//action, loc12_19, loaded [concrete = constants.%Action.type.cb0]
 // CHECK:STDOUT:   %Main.import_ref.7b5 = import_ref Main//action, loc13_11, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.835: @Action.%Action.type (%Action.type.cca) = import_ref Main//action, inst26 [no loc], loaded [symbolic = @Action.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.835: @Action.%Action.type (%Action.type.cca) = import_ref Main//action, inst24 [no loc], loaded [symbolic = @Action.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.0e3753.1 = import_ref Main//action, loc5_10, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -326,7 +324,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Action(imports.%Main.import_ref.f6b058.1: type) [from "action.carbon"] {
+// CHECK:STDOUT: generic interface @Action(imports.%Main.import_ref.5ab3ec.1: type) [from "action.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -366,7 +364,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.da3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(imports.%Main.import_ref.f6b058.2: type, imports.%Main.import_ref.835: @Action.%Action.type (%Action.type.cca)) [from "action.carbon"] {
+// CHECK:STDOUT: generic fn @Op.1(imports.%Main.import_ref.5ab3ec.2: type, imports.%Main.import_ref.835: @Action.%Action.type (%Action.type.cca)) [from "action.carbon"] {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -447,22 +445,22 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//action, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.F = import_ref Main//action, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst46 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst44 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.318: @Action.%Action.assoc_type (%Action.assoc_type.8f9) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.905ab9.2)]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//action, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7a1 = import_ref Main//action, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst39 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.984: type = import_ref Main//action, loc12_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.bb2: type = import_ref Main//action, loc12_19, loaded [concrete = constants.%Action.type.cb0]
 // CHECK:STDOUT:   %Main.import_ref.7b5 = import_ref Main//action, loc13_11, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.835: @Action.%Action.type (%Action.type.cca) = import_ref Main//action, inst26 [no loc], loaded [symbolic = @Action.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.835: @Action.%Action.type (%Action.type.cca) = import_ref Main//action, inst24 [no loc], loaded [symbolic = @Action.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.0e3753.1 = import_ref Main//action, loc5_10, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst49 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst47 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -486,7 +484,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Action(imports.%Main.import_ref.f6b058.1: type) [from "action.carbon"] {
+// CHECK:STDOUT: generic interface @Action(imports.%Main.import_ref.5ab3ec.1: type) [from "action.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -533,7 +531,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(imports.%Main.import_ref.f6b058.2: type, imports.%Main.import_ref.835: @Action.%Action.type (%Action.type.cca)) [from "action.carbon"] {
+// CHECK:STDOUT: generic fn @Op(imports.%Main.import_ref.5ab3ec.2: type, imports.%Main.import_ref.835: @Action.%Action.type (%Action.type.cca)) [from "action.carbon"] {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -619,10 +617,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Factory.decl: %Factory.type.1a8 = interface_decl @Factory [concrete = constants.%Factory.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_19.1, runtime_param<none> [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_19.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_19.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
@@ -772,19 +768,19 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.A: type = import_ref Main//factory, A, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//factory, B, loaded [concrete = constants.%B]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst52 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst50 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8d5: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.35472f.2)]
 // CHECK:STDOUT:   %Main.Make = import_ref Main//factory, Make, unloaded
 // CHECK:STDOUT:   %Main.import_ref.72b: <witness> = import_ref Main//factory, loc11_22, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst47 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst45 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.984: type = import_ref Main//factory, loc11_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.bd2: type = import_ref Main//factory, loc11_20, loaded [concrete = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   %Main.import_ref.a27 = import_ref Main//factory, loc12_17, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst26 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst24 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.21018a.1 = import_ref Main//factory, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -812,7 +808,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Factory(imports.%Main.import_ref.f6b058.1: type) [from "factory.carbon"] {
+// CHECK:STDOUT: generic interface @Factory(imports.%Main.import_ref.5ab3ec.1: type) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -852,7 +848,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.da3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make.1(imports.%Main.import_ref.f6b058.2: type, imports.%Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96)) [from "factory.carbon"] {
+// CHECK:STDOUT: generic fn @Make.1(imports.%Main.import_ref.5ab3ec.2: type, imports.%Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%T (%T);
@@ -936,19 +932,19 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.A: type = import_ref Main//factory, A, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.B = import_ref Main//factory, B, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst52 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst50 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8d5: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.35472f.2)]
 // CHECK:STDOUT:   %Main.Make = import_ref Main//factory, Make, unloaded
 // CHECK:STDOUT:   %Main.import_ref.3e9 = import_ref Main//factory, loc11_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst47 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst45 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.984: type = import_ref Main//factory, loc11_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.bd2: type = import_ref Main//factory, loc11_20, loaded [concrete = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   %Main.import_ref.a27 = import_ref Main//factory, loc12_17, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst26 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst24 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.21018a.1 = import_ref Main//factory, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -978,7 +974,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Factory(imports.%Main.import_ref.f6b058.1: type) [from "factory.carbon"] {
+// CHECK:STDOUT: generic interface @Factory(imports.%Main.import_ref.5ab3ec.1: type) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -1026,7 +1022,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(imports.%Main.import_ref.f6b058.2: type, imports.%Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96)) [from "factory.carbon"] {
+// CHECK:STDOUT: generic fn @Make(imports.%Main.import_ref.5ab3ec.2: type, imports.%Main.import_ref.91b: @Factory.%Factory.type (%Factory.type.c96)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T);

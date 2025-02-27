@@ -80,20 +80,16 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %a.patt.loc4_9.1: %i32 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt.loc4_9.1, runtime_param<none> [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc4_9.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc5: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %C.262 = symbolic_binding_pattern b, 0 [symbolic = constants.%b.patt]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc6, runtime_param<none> [symbolic = constants.%b.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param.loc5: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc5_20.1: type = splice_block %C.loc5 [concrete = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref.loc5: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc5: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
@@ -105,13 +101,11 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc5_20.3: %i32 = converted %int_1000.loc5, %.loc5_20.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C.loc5: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc5_9.1: %C.262 = bind_symbolic_name b, 0, %b.param.loc5 [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT:     %b.loc5_9.1: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc6: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %C.262 = symbolic_binding_pattern b, 0 [symbolic = constants.%b.patt]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc6, runtime_param<none> [symbolic = constants.%b.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param.loc6: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6_20.1: type = splice_block %C.loc6 [concrete = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref.loc6: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc6: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
@@ -123,7 +117,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc6_20.3: %i32 = converted %int_1000.loc6, %.loc6_20.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C.loc6: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc6: %C.262 = bind_symbolic_name b, 0, %b.param.loc6 [symbolic = constants.%b]
+// CHECK:STDOUT:     %b.loc6: %C.262 = bind_symbolic_name b, 0 [symbolic = constants.%b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,20 +217,16 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %a.patt.loc4_9.1: %i32 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt.loc4_9.1, runtime_param<none> [symbolic = %a.patt.loc4_9.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc4_9.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc5_9.1: %C.262 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc5_9.1, runtime_param<none> [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %C [concrete = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
@@ -248,13 +238,11 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc5_19.3: %i32 = converted %int_1000, %.loc5_19.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc5_9.1: %C.262 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT:     %b.loc5_9.1: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
 // CHECK:STDOUT:     %b.patt.loc13_9.1: %C.262 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc13_9.2 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %C.262 = value_param_pattern %b.patt.loc13_9.1, runtime_param<none> [symbolic = %b.patt.loc13_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %C.262 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc13_20.1: type = splice_block %C [concrete = constants.%C.262] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
@@ -266,7 +254,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc13_20.3: %i32 = converted %int_1000, %.loc13_20.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc13_9.1: %C.262 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc13_9.2 (constants.%b)]
+// CHECK:STDOUT:     %b.loc13_9.1: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc13_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

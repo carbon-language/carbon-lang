@@ -47,10 +47,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_13.1, runtime_param<none> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
@@ -58,8 +56,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %n.patt: %T = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %T = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:     %self.param.loc16: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %.loc16_28.1: type = splice_block %Self.ref.loc16 [symbolic = constants.%Class] {
 // CHECK:STDOUT:       %.loc16_28.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = constants.%Class]

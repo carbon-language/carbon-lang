@@ -965,10 +965,7 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
       pattern_inst = resolver.import_insts().Get(pattern_id);
       GetLocalConstantId(resolver, pattern_inst.type_id());
     }
-    pattern_id = resolver.import_insts()
-                     .GetAs<SemIR::ValueParamPattern>(pattern_id)
-                     .subpattern_id;
-    pattern_inst = resolver.import_insts().Get(pattern_id);
+    // to be wrapped in ValueParamPattern.
     // If the parameter is a symbolic binding, build the
     // SymbolicBindingPattern constant.
     if (pattern_inst.Is<SemIR::SymbolicBindingPattern>()) {
@@ -1016,10 +1013,14 @@ static auto GetLocalParamPatternsId(ImportContext& context,
       param_pattern_id = addr_inst->inner_id;
     }
 
-    auto param_pattern = context.import_insts().GetAs<SemIR::ValueParamPattern>(
-        param_pattern_id);
+    auto param_pattern =
+        context.import_insts().TryGetAs<SemIR::ValueParamPattern>(
+            param_pattern_id);
+    auto binding_id = addr_pattern_id;
+    if (param_pattern) {
+      binding_id = param_pattern->subpattern_id;
+    }
 
-    auto binding_id = param_pattern.subpattern_id;
     auto binding =
         context.import_insts().GetAs<SemIR::AnyBindingPattern>(binding_id);
 
@@ -1058,13 +1059,16 @@ static auto GetLocalParamPatternsId(ImportContext& context,
         CARBON_FATAL("Unexpected kind: ", binding.kind);
       }
     }
-    new_param_id = AddInstInNoBlock(
-        context.local_context(),
-        MakeImportedLocIdAndInst<SemIR::ValueParamPattern>(
-            context.local_context(), AddImportIRInst(context, param_pattern_id),
-            {.type_id = type_id,
-             .subpattern_id = new_param_id,
-             .runtime_index = param_pattern.runtime_index}));
+    if (param_pattern) {
+      new_param_id = AddInstInNoBlock(
+          context.local_context(),
+          MakeImportedLocIdAndInst<SemIR::ValueParamPattern>(
+              context.local_context(),
+              AddImportIRInst(context, param_pattern_id),
+              {.type_id = type_id,
+               .subpattern_id = new_param_id,
+               .runtime_index = param_pattern->runtime_index}));
+    }
     if (addr_inst) {
       type_id = context.local_context().types().GetTypeIdForTypeConstantId(
           GetLocalConstantIdChecked(context, addr_inst->type_id));

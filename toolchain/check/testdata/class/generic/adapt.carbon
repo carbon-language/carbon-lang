@@ -164,10 +164,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_9.1, runtime_param<none> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
@@ -295,12 +293,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.f6b: type = import_ref Main//adapt_specific_type, loc4_9, loaded [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//adapt_specific_type, loc4_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b5f: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.433)]
-// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//adapt_specific_type, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//adapt_specific_type, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %.22b]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst45 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst43 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -336,7 +334,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.feb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.f6b: type) [from "adapt_specific_type.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.5ab: type) [from "adapt_specific_type.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -434,10 +432,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_9.1, runtime_param<none> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
@@ -567,10 +563,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc7_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_9.1, runtime_param<none> [symbolic = %T.patt.loc7_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc7_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT: }
@@ -668,12 +662,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.f6b: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b5f: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.433)]
-// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//extend_adapt_specific_type_library, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//extend_adapt_specific_type_library, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %.22b]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst45 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.19d12e.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.239]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -711,7 +705,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   extend imports.%Main.import_ref.19d12e.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.f6b: type) [from "extend_adapt_specific_type_library.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.5ab: type) [from "extend_adapt_specific_type_library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -796,10 +790,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Adapter.decl: %Adapter.type = class_decl @Adapter [concrete = constants.%Adapter.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_15.1, runtime_param<none> [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Convert.decl: %Convert.type = fn_decl @Convert [concrete = constants.%Convert] {
 // CHECK:STDOUT:     %a.patt: %Adapter.e4c = binding_pattern a
@@ -901,9 +893,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.f6b: type = import_ref Main//adapt_generic_type, loc4_15, loaded [symbolic = @Adapter.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//adapt_generic_type, loc4_15, loaded [symbolic = @Adapter.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fb3: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.f87)]
-// CHECK:STDOUT:   %Main.import_ref.9a3 = import_ref Main//adapt_generic_type, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.9a3 = import_ref Main//adapt_generic_type, inst25 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -957,7 +949,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Adapter(imports.%Main.import_ref.f6b: type) [from "adapt_generic_type.carbon"] {
+// CHECK:STDOUT: generic class @Adapter(imports.%Main.import_ref.5ab: type) [from "adapt_generic_type.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

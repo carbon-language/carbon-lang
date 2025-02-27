@@ -121,14 +121,12 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [concrete = constants.%A.generic] {
 // CHECK:STDOUT:     %N.patt.loc6_9.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_9.2 (constants.%N.patt.8e2)]
-// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc6_9.1, runtime_param<none> [symbolic = %N.patt.loc6_9.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int.2, @Int.2(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc6_9.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_9.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc6_9.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc6_9.2 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %ptr.b65 = binding_pattern a

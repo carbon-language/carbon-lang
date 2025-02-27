@@ -92,10 +92,8 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_22.1, runtime_param<none> [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_22.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_22.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,10 +229,8 @@ fn G() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Generic.decl: %Generic.type.c21 = interface_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %Scalar.patt.loc6_19.1: type = symbolic_binding_pattern Scalar, 0 [symbolic = %Scalar.patt.loc6_19.2 (constants.%Scalar.patt)]
-// CHECK:STDOUT:     %Scalar.param_patt: type = value_param_pattern %Scalar.patt.loc6_19.1, runtime_param<none> [symbolic = %Scalar.patt.loc6_19.2 (constants.%Scalar.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Scalar.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Scalar.loc6_19.1: type = bind_symbolic_name Scalar, 0, %Scalar.param [symbolic = %Scalar.loc6_19.2 (constants.%Scalar)]
+// CHECK:STDOUT:     %Scalar.loc6_19.1: type = bind_symbolic_name Scalar, 0 [symbolic = %Scalar.loc6_19.2 (constants.%Scalar)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
 // CHECK:STDOUT:   %ImplsGeneric.decl: type = class_decl @ImplsGeneric [concrete = constants.%ImplsGeneric] {} {}
@@ -247,36 +243,28 @@ fn G() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %T.patt.loc17_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc17_22.1, runtime_param<none> [symbolic = %T.patt.loc17_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc17_32.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = value_param_pattern %U.patt.loc17_32.1, runtime_param<none> [symbolic = %U.patt.loc17_32.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc17_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc17_22.2 (constants.%T)]
-// CHECK:STDOUT:     %U.param: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc17_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc17_22.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc17: type = splice_block %Generic.type.loc17_45.1 [symbolic = %Generic.type.loc17_45.2 (constants.%Generic.type.91ccba.2)] {
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc17_22.1 [symbolic = %T.loc17_22.2 (constants.%T)]
 // CHECK:STDOUT:       %Generic.type.loc17_45.1: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc17_45.2 (constants.%Generic.type.91ccba.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc17_32.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = bind_symbolic_name U, 1 [symbolic = %U.loc17_32.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT:   %PassThroughToGenericMethod.decl: %PassThroughToGenericMethod.type = fn_decl @PassThroughToGenericMethod [concrete = constants.%PassThroughToGenericMethod] {
 // CHECK:STDOUT:     %T.patt.loc23_31.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc23_31.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc23_31.1, runtime_param<none> [symbolic = %T.patt.loc23_31.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc23_41.1: @PassThroughToGenericMethod.%Generic.type.loc23_54.2 (%Generic.type.91ccba.2) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc23_41.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: @PassThroughToGenericMethod.%Generic.type.loc23_54.2 (%Generic.type.91ccba.2) = value_param_pattern %U.patt.loc23_41.1, runtime_param<none> [symbolic = %U.patt.loc23_41.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc23_31.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc23_31.2 (constants.%T)]
-// CHECK:STDOUT:     %U.param: @PassThroughToGenericMethod.%Generic.type.loc23_54.2 (%Generic.type.91ccba.2) = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc23_31.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_31.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc23: type = splice_block %Generic.type.loc23_54.1 [symbolic = %Generic.type.loc23_54.2 (constants.%Generic.type.91ccba.2)] {
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %T.ref.loc23: type = name_ref T, %T.loc23_31.1 [symbolic = %T.loc23_31.2 (constants.%T)]
 // CHECK:STDOUT:       %Generic.type.loc23_54.1: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc23_54.2 (constants.%Generic.type.91ccba.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc23_41.1: @PassThroughToGenericMethod.%Generic.type.loc23_54.2 (%Generic.type.91ccba.2) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc23_41.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc23_41.1: @PassThroughToGenericMethod.%Generic.type.loc23_54.2 (%Generic.type.91ccba.2) = bind_symbolic_name U, 1 [symbolic = %U.loc23_41.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }
@@ -347,7 +335,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2)) {
+// CHECK:STDOUT:   fn(%T.patt.loc17_22.1: type, %U.patt.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -375,7 +363,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn.loc24_3.2: <specific function> = specific_function constants.%CallGenericMethod, @CallGenericMethod(%T.loc23_31.2, %U.loc23_41.2) [symbolic = %CallGenericMethod.specific_fn.loc24_3.2 (constants.%CallGenericMethod.specific_fn.a24)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: @PassThroughToGenericMethod.%Generic.type.loc23_54.2 (%Generic.type.91ccba.2)) {
+// CHECK:STDOUT:   fn(%T.patt.loc23_31.1: type, %U.patt.loc23_41.1: @PassThroughToGenericMethod.%Generic.type.loc23_54.2 (%Generic.type.91ccba.2)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %CallGenericMethod.ref: %CallGenericMethod.type = name_ref CallGenericMethod, file.%CallGenericMethod.decl [concrete = constants.%CallGenericMethod]
 // CHECK:STDOUT:     %T.ref.loc24: type = name_ref T, %T.loc23_31.1 [symbolic = %T.loc23_31.2 (constants.%T)]
@@ -547,10 +535,8 @@ fn G() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Generic.decl: %Generic.type.c21 = interface_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %Scalar.patt.loc6_19.1: type = symbolic_binding_pattern Scalar, 0 [symbolic = %Scalar.patt.loc6_19.2 (constants.%Scalar.patt)]
-// CHECK:STDOUT:     %Scalar.param_patt: type = value_param_pattern %Scalar.patt.loc6_19.1, runtime_param<none> [symbolic = %Scalar.patt.loc6_19.2 (constants.%Scalar.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Scalar.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Scalar.loc6_19.1: type = bind_symbolic_name Scalar, 0, %Scalar.param [symbolic = %Scalar.loc6_19.2 (constants.%Scalar)]
+// CHECK:STDOUT:     %Scalar.loc6_19.1: type = bind_symbolic_name Scalar, 0 [symbolic = %Scalar.loc6_19.2 (constants.%Scalar)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
 // CHECK:STDOUT:   %ImplsGeneric.decl: type = class_decl @ImplsGeneric [concrete = constants.%ImplsGeneric] {} {}
@@ -563,21 +549,17 @@ fn G() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %T.patt.loc17_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc17_22.1, runtime_param<none> [symbolic = %T.patt.loc17_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc17_32.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = value_param_pattern %U.patt.loc17_32.1, runtime_param<none> [symbolic = %U.patt.loc17_32.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %t.patt: @CallGenericMethod.%T.loc17_22.2 (%T) = binding_pattern t
 // CHECK:STDOUT:     %t.param_patt: @CallGenericMethod.%T.loc17_22.2 (%T) = value_param_pattern %t.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc17_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc17_22.2 (constants.%T)]
-// CHECK:STDOUT:     %U.param: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc17_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc17_22.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc17: type = splice_block %Generic.type.loc17_45.1 [symbolic = %Generic.type.loc17_45.2 (constants.%Generic.type.91ccba.2)] {
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %T.ref.loc17_44: type = name_ref T, %T.loc17_22.1 [symbolic = %T.loc17_22.2 (constants.%T)]
 // CHECK:STDOUT:       %Generic.type.loc17_45.1: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc17_45.2 (constants.%Generic.type.91ccba.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc17_32.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2) = bind_symbolic_name U, 1 [symbolic = %U.loc17_32.2 (constants.%U)]
 // CHECK:STDOUT:     %t.param: @CallGenericMethod.%T.loc17_22.2 (%T) = value_param runtime_param0
 // CHECK:STDOUT:     %T.ref.loc17_51: type = name_ref T, %T.loc17_22.1 [symbolic = %T.loc17_22.2 (constants.%T)]
 // CHECK:STDOUT:     %t: @CallGenericMethod.%T.loc17_22.2 (%T) = bind_name t, %t.param
@@ -652,7 +634,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGenericMethod.%T.loc17_22.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%U.param_patt: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2), %t.param_patt: @CallGenericMethod.%T.loc17_22.2 (%T)) {
+// CHECK:STDOUT:   fn[%T.patt.loc17_22.1: type](%U.patt.loc17_32.1: @CallGenericMethod.%Generic.type.loc17_45.2 (%Generic.type.91ccba.2), %t.param_patt: @CallGenericMethod.%T.loc17_22.2 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
