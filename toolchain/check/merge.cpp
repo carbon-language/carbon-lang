@@ -201,8 +201,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              int32_t param_index,
                              SemIR::InstId new_param_pattern_id,
                              SemIR::InstId prev_param_pattern_id,
-                             SemIR::SpecificId prev_specific_id, bool diagnose)
-    -> bool {
+                             SemIR::SpecificId prev_specific_id, bool diagnose,
+                             bool check_self) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -231,25 +231,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return false;
   }
 
-  auto prev_param_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
-  if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
-                                                  prev_param_type_id)) {
-    if (!diagnose) {
-      return false;
-    }
-    CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
-                      "type {3} of {0:implicit |}parameter {1} in "
-                      "redeclaration differs from previous parameter type {2}",
-                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
-    context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
-               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
-        .Emit();
-    return false;
-  }
-
   if (new_param_pattern.Is<SemIR::AddrPattern>()) {
     new_param_pattern = context.insts().Get(
         new_param_pattern.As<SemIR::AddrPattern>().inner_id);
@@ -270,11 +251,40 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return false;
   }
 
-  auto new_entity_name = context.entity_names().Get(
-      new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id);
-  auto prev_entity_name = context.entity_names().Get(
-      prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id);
-  if (new_entity_name.name_id != prev_entity_name.name_id) {
+  auto new_name_id =
+      context.entity_names()
+          .Get(new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
+          .name_id;
+  auto prev_name_id =
+      context.entity_names()
+          .Get(prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
+          .name_id;
+
+  if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
+      prev_name_id == SemIR::NameId::SelfValue) {
+    return true;
+  }
+
+  auto prev_param_type_id = SemIR::GetTypeInSpecific(
+      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
+  if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
+                                                  prev_param_type_id)) {
+    if (!diagnose) {
+      return false;
+    }
+    CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
+                      "type {3} of {0:implicit |}parameter {1} in "
+                      "redeclaration differs from previous parameter type {2}",
+                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+    context.emitter()
+        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
+               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
+        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Emit();
+    return false;
+  }
+
+  if (new_name_id != prev_name_id) {
     emit_diagnostic();
     return false;
   }
@@ -288,8 +298,8 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
-                              SemIR::SpecificId prev_specific_id, bool diagnose)
-    -> bool {
+                              SemIR::SpecificId prev_specific_id, bool diagnose,
+                              bool check_self) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
@@ -347,7 +357,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
-                          prev_specific_id, diagnose)) {
+                          prev_specific_id, diagnose, check_self)) {
       return false;
     }
   }
@@ -458,8 +468,8 @@ static auto CheckRedeclParamSyntax(Context& context,
 
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            SemIR::SpecificId prev_specific_id,
-                            bool check_syntax, bool diagnose) -> bool {
+                            SemIR::SpecificId prev_specific_id, bool diagnose,
+                            bool check_syntax, bool check_self) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -467,13 +477,15 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(
           context, new_entity.loc, new_entity.implicit_param_patterns_id,
           prev_entity.loc, prev_entity.implicit_param_patterns_id,
-          /*is_implicit_param=*/true, prev_specific_id, diagnose)) {
+          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_self)) {
     return false;
   }
+  // Don't forward `check_self` here because it's extra cost, and `self` is only
+  // allowed in implicit params.
   if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_patterns_id,
                          prev_entity.loc, prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose)) {
+                         diagnose, /*check_self=*/true)) {
     return false;
   }
   if (check_syntax &&

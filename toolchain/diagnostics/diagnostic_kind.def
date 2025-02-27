@@ -256,6 +256,7 @@ CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
+CARBON_DIAGNOSTIC_KIND(VirtualWithoutSelf)
 
 // Deduction.
 CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)

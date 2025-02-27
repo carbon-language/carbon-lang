@@ -29,11 +29,25 @@ struct SuspendedFunction {
 // Checks that `new_function` has the same parameter types and return type as
 // `prev_function`, or if `prev_function_id` is specified, a specific version of
 // `prev_function`. Prints a suitable diagnostic and returns false if not.
-auto CheckFunctionTypeMatches(
-    Context& context, const SemIR::Function& new_function,
-    const SemIR::Function& prev_function,
-    SemIR::SpecificId prev_specific_id = SemIR::SpecificId::None,
-    bool check_syntax = true) -> bool;
+//
+// `check_syntax` is false if the redeclaration can be called via a thunk with
+// implicit conversions from the original declaration.
+// `check_self` is false if the self declaration does not have to match (for
+// instance in impls of virtual functions).
+auto CheckFunctionTypeMatches(Context& context,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
+                              SemIR::SpecificId prev_specific_id,
+                              bool check_syntax, bool check_self) -> bool;
+
+inline auto CheckFunctionTypeMatches(Context& context,
+                                     const SemIR::Function& new_function,
+                                     const SemIR::Function& prev_function)
+    -> bool {
+  return CheckFunctionTypeMatches(context, new_function, prev_function,
+                                  SemIR::SpecificId::None,
+                                  /*check_syntax=*/true, /*check_self=*/true);
+}
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if
