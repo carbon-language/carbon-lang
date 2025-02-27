@@ -242,10 +242,23 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
   }
 
-  auto new_name_id = context.entity_names().Get(
-      new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id).name_id;
-  auto prev_name_id = context.entity_names().Get(
-      prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id).name_id;
+  new_param_pattern = context.insts().Get(
+      new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
+  prev_param_pattern = context.insts().Get(
+      prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
+  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
+    emit_diagnostic();
+    return false;
+  }
+
+  auto new_name_id =
+      context.entity_names()
+          .Get(new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
+          .name_id;
+  auto prev_name_id =
+      context.entity_names()
+          .Get(prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
+          .name_id;
 
   if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
       prev_name_id == SemIR::NameId::SelfValue) {
@@ -268,15 +281,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                param_index + 1, prev_param_type_id, new_param_pattern.type_id())
         .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
         .Emit();
-    return false;
-  }
-
-  new_param_pattern = context.insts().Get(
-      new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
-  prev_param_pattern = context.insts().Get(
-      prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
-  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
-    emit_diagnostic();
     return false;
   }
 
