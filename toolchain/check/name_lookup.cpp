@@ -7,6 +7,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/member_access.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 
@@ -99,6 +100,27 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
                                             .specific_id = specific_id},
                                 /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
+      // In an interface definition, replace associated entity `M` with
+      // `Self.M` (where the `Self` is the `Self` of the interface).
+      const auto& scope = context.name_scopes().Get(lookup_scope_id);
+      if (scope.is_interface_definition()) {
+        SemIR::InstId target_inst_id =
+            non_lexical_result.scope_result.target_inst_id();
+        // FIXME: Any reason to check the constant value instead of the
+        // instruction itself? Or the type is an `SemIR::AssociatedEntityType`?
+        if (auto inst = context.insts().TryGetAs<SemIR::AssociatedEntity>(
+                target_inst_id)) {
+          auto interface_decl =
+              context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
+          const auto& interface =
+              context.interfaces().Get(interface_decl.interface_id);
+          // FIXME: pass in missing_impl_diagnoser
+          SemIR::InstId result_inst_id = PerformCompoundMemberAccess(
+              context, node_id, interface.self_param_id, target_inst_id);
+          non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
+              result_inst_id, non_lexical_result.scope_result.access_kind());
+        }
+      }
       return non_lexical_result;
     }
   }
