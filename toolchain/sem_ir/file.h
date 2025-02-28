@@ -306,7 +306,8 @@ class File : public Printable<File> {
   // List of Cpp imports.
   ValueStore<ImportCppId> import_cpps_;
 
-  // The Clang AST to used when looking up `Cpp` names.
+  // The Clang AST to use when looking up `Cpp` names. Null if there are no
+  // `Cpp` imports.
   clang::ASTUnit* cpp_ast_ = nullptr;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
