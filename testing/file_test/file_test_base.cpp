@@ -371,8 +371,8 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     // output.
     std::unique_lock<std::mutex> output_lock;
 
-    if (((*test.test_result)->capture_console_output ||
-         !test_instance->AllowParallelRun())) {
+    if ((*test.test_result)->capture_console_output ||
+         !test_instance->AllowParallelRun()) {
       output_lock = std::unique_lock<std::mutex>(output_mutex);
     }
 
