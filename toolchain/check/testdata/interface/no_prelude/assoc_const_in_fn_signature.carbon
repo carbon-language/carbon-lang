@@ -8,12 +8,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/assoc_const_in_fn_signature.carbon
 
-interface J {
-  let U:! type;
-}
-
-fn G(V:! J, W:! V.(J.U));
-
 interface I {
   let T:! type;
   // CHECK:STDERR: assoc_const_in_fn_signature.carbon:[[@LINE+4]]:13: error: cannot access member of interface `I` in type `I` that does not implement that interface [MissingImplInMemberAccess]
