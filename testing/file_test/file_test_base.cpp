@@ -358,10 +358,6 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
                           std::mutex& output_mutex) -> bool {
   std::unique_ptr<FileTestBase> test_instance(test.factory_fn());
 
-  // Add a crash trace entry with the single-file test command.
-  std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
-  llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
-
   if (absl::GetFlag(FLAGS_dump_output)) {
     std::unique_lock<std::mutex> lock(output_mutex);
     llvm::errs() << "\n--- Dumping: " << test.test_name << "\n\n";
@@ -381,6 +377,11 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     }
 
     auto run_test_file = [&] {
+      // Add a crash trace entry with the single-file test command.
+      std::string test_command =
+          GetBazelCommand(BazelMode::Test, test.test_name);
+      llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
+
       if (auto err =
               RunTestFile(*test_instance, absl::GetFlag(FLAGS_dump_output),
                           **test.test_result);
