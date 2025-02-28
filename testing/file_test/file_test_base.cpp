@@ -352,6 +352,21 @@ static auto SingleThreaded(llvm::ArrayRef<FileTestInfo> tests) -> bool {
   return false;
 }
 
+// Runs the test in the section that would be inside a lock, possibly inside a
+// CrashRecoveryContext.
+static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
+    -> void {
+  // Add a crash trace entry with the single-file test command.
+  std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
+  llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
+
+  if (auto err = RunTestFile(test_instance, absl::GetFlag(FLAGS_dump_output),
+                             **test.test_result);
+      !err.ok()) {
+    test.test_result = std::move(err).error();
+  }
+}
+
 // Runs a single test. Uses a CrashRecoveryContext, and returns false on a
 // crash.
 static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
@@ -372,32 +387,19 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     std::unique_lock<std::mutex> output_lock;
 
     if ((*test.test_result)->capture_console_output ||
-         !test_instance->AllowParallelRun()) {
+        !test_instance->AllowParallelRun()) {
       output_lock = std::unique_lock<std::mutex>(output_mutex);
     }
 
-    auto run_test_file = [&] {
-      // Add a crash trace entry with the single-file test command.
-      std::string test_command =
-          GetBazelCommand(BazelMode::Test, test.test_name);
-      llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
-
-      if (auto err =
-              RunTestFile(*test_instance, absl::GetFlag(FLAGS_dump_output),
-                          **test.test_result);
-          !err.ok()) {
-        test.test_result = std::move(err).error();
-      }
-    };
     if (single_threaded) {
-      run_test_file();
+      RunSingleTestHelper(test, *test_instance);
     } else {
       // Use a crash recovery context to try to get a stack trace when
       // multiple threads may crash in parallel, which otherwise leads to the
       // program aborting without printing a stack trace.
       llvm::CrashRecoveryContext crc;
       crc.DumpStackAndCleanupOnFailure = true;
-      if (!crc.RunSafely(run_test_file)) {
+      if (!crc.RunSafely([&] { RunSingleTestHelper(test, *test_instance); })) {
         return false;
       }
     }
@@ -446,23 +448,22 @@ auto FileTestEventListener::OnTestProgramStart(
                  << " thread(s)\n";
   }
 
-  // Guard access to both `llvm::errs` and `crashed`.
-  bool crashed = false;
+  // Guard access to output (stdout and stderr).
   std::mutex output_mutex;
+  std::atomic<bool> crashed = false;
 
   for (auto& test : tests_) {
     if (!test.registered_test->should_run()) {
       continue;
     }
 
-    pool->async([&single_threaded, &output_mutex, &crashed, &test] {
+    pool->async([&] {
       // If any thread crashed, don't try running more.
-      if (std::unique_lock<std::mutex> lock(output_mutex); crashed) {
+      if (crashed) {
         return;
       }
 
       if (!RunSingleTest(test, single_threaded, output_mutex)) {
-        std::unique_lock<std::mutex> lock(output_mutex);
         crashed = true;
       }
     });
