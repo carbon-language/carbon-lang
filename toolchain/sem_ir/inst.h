@@ -286,7 +286,8 @@ class Inst : public Printable<Inst> {
   // Raw constructor, used for testing.
   explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
       : Inst(kind.AsInt(), type_id, arg0, arg1) {}
-  explicit Inst(int32_t kind, TypeId type_id, int32_t arg0, int32_t arg1)
+  explicit constexpr Inst(int32_t kind, TypeId type_id, int32_t arg0,
+                          int32_t arg1)
       : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
 
   int32_t kind_;

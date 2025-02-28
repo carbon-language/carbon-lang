@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/autoupdate.h"
+#include "testing/file_test/manifest.h"
 
 namespace Carbon::Testing {
 
@@ -132,11 +133,6 @@ struct FileTestFactory {
 // The `CARBON_FILE_TEST_FACTOR` macro below provides a standard, convenient way
 // to implement this function.
 extern auto GetFileTestFactory() -> FileTestFactory;
-
-// Returns the manifest path, which is provided by rules.bzl and
-// file_test_manifest.cpp. This is exposed so that the explorer sharding
-// approach can use a different implementation.
-auto GetFileTestManifestPath() -> std::filesystem::path;
 
 // Provides a standard GetFileTestFactory implementation.
 #define CARBON_FILE_TEST_FACTORY(Name)                                       \

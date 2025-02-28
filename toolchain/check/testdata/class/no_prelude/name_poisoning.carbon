@@ -481,7 +481,7 @@ class C {
 // CHECK:STDOUT:   %C.decl.loc18: type = class_decl @C.2 [concrete = constants.%C.9f4] {} {}
 // CHECK:STDOUT:   %F2.decl: %F2.type = fn_decl @F2 [concrete = constants.%F2] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -680,7 +680,7 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %C.ref: <error> = name_ref C, <error> [concrete = <error>]

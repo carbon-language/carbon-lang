@@ -86,7 +86,7 @@ TEST_F(LexerTest, TracksLinesAndColumns) {
       }));
 }
 
-TEST_F(LexerTest, TracksLinesAndColumnsCRLF) {
+TEST_F(LexerTest, TracksLinesAndColumnsCrLf) {
   auto& buffer = compile_helper_.GetTokenizedBuffer(
       "\r\n  ;;\r\n   ;;;\r\n   x\"foo\" '''baz\r\n  a\r\n ''' y");
   EXPECT_FALSE(buffer.has_errors());
@@ -146,7 +146,7 @@ TEST_F(LexerTest, InvalidCR) {
       }));
 }
 
-TEST_F(LexerTest, InvalidLFCR) {
+TEST_F(LexerTest, InvalidLfCr) {
   auto& buffer = compile_helper_.GetTokenizedBuffer("\n ;;\n\r ;\n   x");
   EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(
@@ -1123,15 +1123,15 @@ TEST_F(LexerTest, DiagnosticInvalidDigit) {
 TEST_F(LexerTest, DiagnosticCR) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnsupportedCRLineEnding,
+                            DiagnosticKind::UnsupportedCrLineEnding,
                             DiagnosticLevel::Error, 1, 1, _)));
   compile_helper_.GetTokenizedBuffer("\r", &consumer);
 }
 
-TEST_F(LexerTest, DiagnosticLFCR) {
+TEST_F(LexerTest, DiagnosticLfCr) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnsupportedLFCRLineEnding,
+                            DiagnosticKind::UnsupportedLfCrLineEnding,
                             DiagnosticLevel::Error, 2, 1, _)));
   compile_helper_.GetTokenizedBuffer("\n\r", &consumer);
 }

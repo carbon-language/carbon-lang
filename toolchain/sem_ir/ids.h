@@ -74,6 +74,28 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
+// An ID of an instruction that is used as the destination of an initializing
+// expression. This should only be used as the type of a field within a typed
+// instruction class.
+//
+// This behaves in most respects like an InstId field, but constant evaluation
+// of an instruction with a destination field will not evaluate this field, and
+// substitution will not substitute into it.
+//
+// TODO: Decide on how substitution should handle this. Multiple instructions
+// can refer to the same destination, so these don't have the tree structure
+// that substitution expects, but we might need to substitute into the result of
+// an instruction.
+class DestInstId : public InstId {
+ public:
+  // Support implicit conversion from InstId so that InstId and DestInstId
+  // have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr DestInstId(InstId inst_id) : InstId(inst_id) {}
+
+  using InstId::InstId;
+};
+
 // The ID of a constant value of an expression. An expression is either:
 //
 // - a concrete constant, whose value does not depend on any generic parameters,
@@ -110,17 +132,17 @@ struct ConstantId : public IdBase<ConstantId> {
   using IdBase::IdBase;
 
   // Returns whether this represents a constant. Requires has_value.
-  auto is_constant() const -> bool {
+  constexpr auto is_constant() const -> bool {
     CARBON_DCHECK(has_value());
     return *this != ConstantId::NotConstant;
   }
   // Returns whether this represents a symbolic constant. Requires has_value.
-  auto is_symbolic() const -> bool {
+  constexpr auto is_symbolic() const -> bool {
     CARBON_DCHECK(has_value());
     return index <= FirstSymbolicIndex;
   }
   // Returns whether this represents a concrete constant. Requires has_value.
-  auto is_concrete() const -> bool {
+  constexpr auto is_concrete() const -> bool {
     CARBON_DCHECK(has_value());
     return index >= 0;
   }

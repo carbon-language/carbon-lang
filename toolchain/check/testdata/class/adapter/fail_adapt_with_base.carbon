@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/adapter/fail_adapt_with_base.carbon
 class Simple {};
 base class AdaptWithVirtual {
-  virtual fn F();
+  virtual fn F[self: Self]();
   // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+7]]:3: error: adapter with virtual function [AdaptWithVirtual]
   // CHECK:STDERR:   adapt Simple;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-4]]:3: note: first virtual function declaration is here [AdaptWithVirtualHere]
-  // CHECK:STDERR:   virtual fn F();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[self: Self]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   adapt Simple;
 }
@@ -58,7 +58,14 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithVirtual {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %self.patt: %AdaptWithVirtual = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %AdaptWithVirtual = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %AdaptWithVirtual = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AdaptWithVirtual [concrete = constants.%AdaptWithVirtual]
+// CHECK:STDOUT:     %self: %AdaptWithVirtual = bind_name self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple]
 // CHECK:STDOUT:   adapt_decl %Simple.ref [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
@@ -69,5 +76,5 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   .Simple = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F();
+// CHECK:STDOUT: virtual fn @F[%self.param_patt: %AdaptWithVirtual]();
 // CHECK:STDOUT:

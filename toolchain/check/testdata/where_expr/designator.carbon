@@ -275,7 +275,7 @@ class D {
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %PeriodMismatch.decl: %PeriodMismatch.type = fn_decl @PeriodMismatch [concrete = constants.%PeriodMismatch] {
 // CHECK:STDOUT:     %W.patt.loc12_19.1: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: <error> = value_param_pattern %W.patt.loc12_19.1, runtime_param<none> [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: <error> = value_param_pattern %W.patt.loc12_19.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %W.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc12_25.1: type = splice_block %.loc12_25.2 [concrete = <error>] {

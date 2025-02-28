@@ -8,7 +8,10 @@
       "program": "bazel-bin/toolchain/testing/file_test",
       "programArgs": "--file_tests=${relativeFile}",
       "cwd": "${workspaceFolder}",
-      "env": { "TEST_TMPDIR": "/tmp" }
+      "env": {
+        "TEST_TARGET": "//toolchain/testing:file_test",
+        "TEST_TMPDIR": "/tmp"
+      }
     },
     {
       "type": "by-gdb",

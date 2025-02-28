@@ -255,7 +255,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
@@ -290,7 +290,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -362,7 +362,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
@@ -397,7 +397,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -431,7 +431,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr [concrete = <error>] {
@@ -471,7 +471,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -509,7 +509,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {

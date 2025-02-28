@@ -309,7 +309,7 @@ static auto EstimateAvgClassDefLines(SourceGen::ClassParams params) -> double {
   return avg;
 }
 
-auto SourceGen::GenAPIFileDenseDecls(int target_lines,
+auto SourceGen::GenApiFileDenseDecls(int target_lines,
                                      const DenseDeclParams& params)
     -> std::string {
   RawStringOstream source;

@@ -135,6 +135,10 @@ class NameScope : public Printable<NameScope> {
     using IdBase::IdBase;
   };
 
+  // Disallow copy, allow move.
+  NameScope(NameScope&& other) = default;
+  auto operator=(NameScope&& other) -> NameScope& = default;
+
   explicit NameScope(InstId inst_id, NameId name_id,
                      NameScopeId parent_scope_id)
       : inst_id_(inst_id),

@@ -11,6 +11,18 @@
 
 namespace Carbon::Check {
 
+// Enforces that an integer type has a valid bit width.
+auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
+    -> bool;
+
+// Enforces that the bit width is 64 for a float.
+auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
+                           SemIR::InstId inst_id) -> bool;
+
+// Enforces that a float type has a valid bit width.
+auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
+    -> bool;
+
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after
 // `interface I { let T:! type; }`. The name of the interface is used for

@@ -103,7 +103,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc19_16: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc19_19.1: ref %i32 = array_index %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_19.2: %i32 = bind_value %.loc19_19.1
+// CHECK:STDOUT:   %.loc19_19.2: %i32 = bind_value %.loc19_19.1 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, %.loc19_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

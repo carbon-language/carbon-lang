@@ -41,10 +41,10 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_42.c68, %int_42.c68) [concrete]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete]
 // CHECK:STDOUT:   %impl_witness.0f6: <witness> = impl_witness (imports.%Core.import_ref.c15) [concrete]
-// CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.13 [concrete]
+// CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.14 [concrete]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value Core.IntLiteral, %impl_witness.0f6 [concrete]
 // CHECK:STDOUT:   %.45d: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [concrete]
-// CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.14 [concrete]
+// CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.15 [concrete]
 // CHECK:STDOUT:   %Op.bba: %Op.type.1be = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %Op.bba [concrete]
 // CHECK:STDOUT:   %int_-10.06d: Core.IntLiteral = int_value -10 [concrete]
@@ -134,7 +134,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %.loc16_16.3: %i32 = value_of_initializer %int.convert_checked.loc16 [concrete = constants.%int_-10.c17]
 // CHECK:STDOUT:   %.loc16_16.4: %i32 = converted %int.snegate, %.loc16_16.3 [concrete = constants.%int_-10.c17]
 // CHECK:STDOUT:   %.loc16_19.1: ref %i32 = array_index %c.ref, %.loc16_16.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc16_19.2: %i32 = bind_value %.loc16_19.1
+// CHECK:STDOUT:   %.loc16_19.2: %i32 = bind_value %.loc16_19.1 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%d.var, %.loc16_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

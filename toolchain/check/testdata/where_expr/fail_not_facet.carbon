@@ -67,7 +67,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc8_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<none> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_14.1: type = splice_block %.loc8_14.2 [concrete = <error>] {
@@ -121,7 +121,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %U.patt.loc8_6.1: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<none> [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_23.1: type = splice_block %.loc8_23.2 [concrete = <error>] {

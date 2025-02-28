@@ -25,6 +25,20 @@ constexpr SpecificInterface SpecificInterface::None = {
     .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
 
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
+  // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
+  // canonicalized, so that it can be further modified by the caller if desired.
+  static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
+      -> FacetTypeInfo {
+    FacetTypeInfo info = {.other_requirements = false};
+    llvm::append_range(info.impls_constraints, lhs.impls_constraints);
+    llvm::append_range(info.impls_constraints, rhs.impls_constraints);
+    llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
+    llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
+    info.other_requirements |= lhs.other_requirements;
+    info.other_requirements |= rhs.other_requirements;
+    return info;
+  }
+
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
   // https://github.com/carbon-language/carbon-lang/issues/2409.
@@ -62,8 +76,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // TODO: Update callers to be able to deal with facet types that aren't a
-  // single interface and then remove this function.
+  // In some cases, a facet type is expected to represent a single interface.
+  // For example, an interface declaration or an associated constant are
+  // associated with a facet type that will always be a single interface.
   auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
     // We are ignoring other requirements for the moment, since this function is
     // (hopefully) temporary.
@@ -100,6 +115,10 @@ struct CompleteFacetType {
   int num_to_impl;
 
   // TODO: Which interfaces to perform name lookup into.
+
+  // Sorts and deduplicates `required_interfaces`. Call after building the sets
+  // of interfaces, and then don't mutate them value afterwards.
+  auto CanonicalizeRequiredInterfaces() -> void;
 };
 
 // See common/hashing.h.

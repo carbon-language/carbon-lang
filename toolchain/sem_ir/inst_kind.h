@@ -7,10 +7,7 @@
 
 #include <cstdint>
 
-#include "common/check.h"
 #include "common/enum_base.h"
-#include "llvm/ADT/FoldingSet.h"
-
 namespace Carbon::SemIR {
 
 // Whether an instruction defines a type.
@@ -35,28 +32,51 @@ enum class InstValueKind : int8_t {
   Typed,
 };
 
-// Whether an instruction can be used to define a constant value. This specifies
-// whether the instruction can be added to the `constants()` list. Note that
-// even instructions that cannot define a constant value can still have an
-// associated `constant_value()`, but the constant value will be a different
-// kind of instruction.
+// Whether an instruction can have a constant value, and whether it can be used
+// to define a constant value.
+//
+// This specifies whether an instruction of this kind can have a corresponding
+// constant value in the `constant_values()` list, and whether an instruction of
+// this kind can be added to the `constants()` list.
 enum class InstConstantKind : int8_t {
-  // This instruction never defines a constant value. For example,
-  // `UnaryOperatorNot` never defines a constant value; if its operand is a
-  // concrete constant, its constant value will instead be a `BoolLiteral`. This
-  // is also used for instructions that don't produce a value at all.
+  // This instruction is never constant. Its constant value is always
+  // `NotConstant`. This is also used for instructions that don't produce a
+  // value at all and aren't used as constants.
   Never,
-  // This instruction may be a symbolic constant, depending on its operands, but
-  // is never a concrete constant. For example, a `Call` instruction can be a
-  // symbolic constant but never a concrete constant.
+  // This instruction never defines a constant value, but can evaluate to a
+  // constant value of a different kind. For example, `UnaryOperatorNot` never
+  // defines a constant value; if its operand is a concrete constant, its
+  // constant value will instead be a `BoolLiteral`, and if its operand is not a
+  // concrete constant, the result is non-constant. This is the default.
+  Indirect,
+  // This instruction may define a symbolic constant, depending on its operands,
+  // but never a concrete constant. For example, a `Call` instruction can define
+  // a symbolic constant but never a concrete constant. The instruction may have
+  // a concrete constant value of a different kind.
   SymbolicOnly,
   // This instruction can define a symbolic or concrete constant, but might not
-  // have a constant value, depending on its operands. For example, a
-  // `TupleValue` can define a constant if its operands are constants.
+  // have a constant value, might have a constant value that is not defined by
+  // itself, or might result in a compile-time error, depending on its operands.
+  // For example, `ArrayType` is a compile-time constant if its operands are
+  // constant and its array bound is within a valid range.
   Conditional,
-  // This instruction always has a constant value of the same kind. For example,
-  // `IntValue`.
+  // This instruction defines a symbolic or concrete constant whenever its
+  // operands are constant. Otherwise, it is non-constant. For example, a
+  // `TupleValue` defines a constant if and only if its operands are constants.
+  // Constant evaluation support for types with this constant kind is provided
+  // automatically.
+  WheneverPossible,
+  // This instruction always has a constant value of the same kind. This is the
+  // same as `WheneverPossible`, except that the operands are known in advance
+  // to always be constant. For example, `IntValue`.
   Always,
+  // This instruction is itself a unique constant. This is used for declarations
+  // whose constant identity is simply themselves. The `ConstantId` for this
+  // instruction will always be a concrete constant whose `InstId` refers
+  // directly back to the instruction, rather than to a separate instrinction in
+  // the constants block.
+  // TODO: Decide if this is the model we want for these cases.
+  Unique,
 };
 
 // Whether an instruction is a terminator or part of the terminator sequence.
@@ -91,7 +111,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   struct DefinitionInfo {
     llvm::StringLiteral ir_name;
     InstIsType is_type = InstIsType::Never;
-    InstConstantKind constant_kind = InstConstantKind::Never;
+    InstConstantKind constant_kind = InstConstantKind::Indirect;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
@@ -142,10 +162,6 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   auto deduce_through() const -> bool {
     return definition_info(*this).deduce_through;
   }
-
-  // Compute a fingerprint for this instruction kind, allowing its use as part
-  // of the key in a `FoldingSet`.
-  auto Profile(llvm::FoldingSetNodeID& id) -> void { id.AddInteger(AsInt()); }
 
  private:
   // Returns the DefinitionInfo for the kind.
