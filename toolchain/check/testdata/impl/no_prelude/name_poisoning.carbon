@@ -8,23 +8,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/name_poisoning.carbon
 
-// --- poison.carbon
-
-library "[[@TEST_NAME]]";
-
-interface I;
-
-namespace N;
-// Use `package.I` and poison `N.I`.
-fn N.F(x:! I);
-
-// --- poison.impl.carbon
-
-impl library "[[@TEST_NAME]]";
-
-// TODO: #4622 This should fail since `N.I` was poisoned in the api.
-interface N.I;
-
 // --- using_poisoned_name_in_impl.carbon
 
 library "[[@TEST_NAME]]";
@@ -40,77 +23,6 @@ class N.C {
   }
 }
 
-// CHECK:STDOUT: --- poison.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %x: %I.type = bind_symbolic_name x, 0 [symbolic]
-// CHECK:STDOUT:   %x.patt: %I.type = symbolic_binding_pattern x, 0 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .I = %I.decl
-// CHECK:STDOUT:     .N = %N
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .I = <poisoned>
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt.loc8_8.1: %I.type = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc8_8.2 (constants.%x.patt)]
-// CHECK:STDOUT:     %x.param_patt: %I.type = value_param_pattern %x.patt.loc8_8.1, runtime_param<none> [symbolic = %x.patt.loc8_8.2 (constants.%x.patt)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %I.type = value_param runtime_param<none>
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %x.loc8_8.1: %I.type = bind_symbolic_name x, 0, %x.param [symbolic = %x.loc8_8.2 (constants.%x)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @I;
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%x.loc8_8.1: %I.type) {
-// CHECK:STDOUT:   %x.loc8_8.2: %I.type = bind_symbolic_name x, 0 [symbolic = %x.loc8_8.2 (constants.%x)]
-// CHECK:STDOUT:   %x.patt.loc8_8.2: %I.type = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc8_8.2 (constants.%x.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param_patt: %I.type);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%x) {
-// CHECK:STDOUT:   %x.loc8_8.2 => constants.%x
-// CHECK:STDOUT:   %x.patt.loc8_8.2 => constants.%x
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- poison.impl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.I = import_ref Main//poison, I, unloaded
-// CHECK:STDOUT:   %Main.N: <namespace> = import_ref Main//poison, N, loaded
-// CHECK:STDOUT:   %N: <namespace> = namespace %Main.N, [concrete] {
-// CHECK:STDOUT:     .F = %Main.F
-// CHECK:STDOUT:     .I = file.%I.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .I = imports.%Main.I
-// CHECK:STDOUT:     .N = imports.%N
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @I;
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- using_poisoned_name_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

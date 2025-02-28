@@ -162,6 +162,13 @@ import library "poison";
 // This doesn't fail.
 interface N.I;
 
+// --- poison.impl.carbon
+
+impl library "[[@TEST_NAME]]";
+
+// TODO: #4622 This should fail since `N.I` was poisoned in the api.
+interface N.I;
+
 // --- fail_poison_when_lookup_fails.carbon
 
 library "[[@TEST_NAME]]";
@@ -736,6 +743,33 @@ fn F() {
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @I;
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- poison.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.I = import_ref Main//poison, I, unloaded
+// CHECK:STDOUT:   %Main.N: <namespace> = import_ref Main//poison, N, loaded
+// CHECK:STDOUT:   %N: <namespace> = namespace %Main.N, [concrete] {
+// CHECK:STDOUT:     .F = %Main.F
+// CHECK:STDOUT:     .I = file.%I.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .N = imports.%N
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
