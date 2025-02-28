@@ -46,7 +46,7 @@ class FunctionContext {
   // Returns a value for the given instruction.
   auto GetValue(SemIR::InstId inst_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
-    if (inst_id.is_builtin()) {
+    if (SemIR::IsSingletonInstId(inst_id)) {
       return GetTypeAsValue();
     }
 
@@ -57,11 +57,12 @@ class FunctionContext {
     if (auto result = file_context_->global_variables().Lookup(inst_id)) {
       return result.value();
     }
+
     return file_context_->GetGlobal(inst_id);
   }
 
   // Sets the value for the given instruction.
-  auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
+  auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {
     bool added = locals_.Insert(inst_id, value).is_inserted();
     CARBON_CHECK(added, "Duplicate local insert: {0} {1}", inst_id,
                  sem_ir().insts().Get(inst_id));
@@ -88,6 +89,24 @@ class FunctionContext {
     return file_context_->GetTypeAsValue();
   }
 
+  // Returns a lowered value to use for a value of int literal type.
+  auto GetIntLiteralAsValue() -> llvm::Constant* {
+    return file_context_->GetIntLiteralAsValue();
+  }
+
+  // Returns the instruction immediately after all the existing static allocas.
+  // This is the insert point for future static allocas.
+  auto GetInstructionAfterAllocas() const -> llvm::Instruction* {
+    return after_allocas_;
+  }
+
+  // Sets the instruction after static allocas. This should be called once,
+  // after the first alloca is created.
+  auto SetInstructionAfterAllocas(llvm::Instruction* after_allocas) -> void {
+    CARBON_CHECK(!after_allocas_);
+    after_allocas_ = after_allocas;
+  }
+
   // Create a synthetic block that corresponds to no SemIR::InstBlockId. Such
   // a block should only ever have a single predecessor, and is used when we
   // need multiple `llvm::BasicBlock`s to model the linear control flow in a
@@ -110,6 +129,7 @@ class FunctionContext {
     return file_context_->llvm_context();
   }
   auto llvm_module() -> llvm::Module& { return file_context_->llvm_module(); }
+  auto llvm_function() -> llvm::Function& { return *function_; }
   auto builder() -> llvm::IRBuilderBase& { return builder_; }
   auto sem_ir() -> const SemIR::File& { return file_context_->sem_ir(); }
 
@@ -122,7 +142,7 @@ class FunctionContext {
         : inst_namer_(inst_namer) {}
 
     // Sets the instruction we are currently emitting.
-    void SetCurrentInstId(SemIR::InstId inst_id) { inst_id_ = inst_id; }
+    auto SetCurrentInstId(SemIR::InstId inst_id) -> void { inst_id_ = inst_id; }
 
    private:
     auto InsertHelper(llvm::Instruction* inst, const llvm::Twine& name,
@@ -133,7 +153,7 @@ class FunctionContext {
     const SemIR::InstNamer* inst_namer_;
 
     // The current instruction ID.
-    SemIR::InstId inst_id_ = SemIR::InstId::Invalid;
+    SemIR::InstId inst_id_ = SemIR::InstId::None;
   };
 
   // Emits a value copy for type `type_id` from `source_id` to `dest_id`.
@@ -154,7 +174,13 @@ class FunctionContext {
   // The IR function we're generating.
   llvm::Function* function_;
 
+  // Builder for creating code in this function. The insertion point is held at
+  // the location of the current SemIR instruction.
   llvm::IRBuilder<llvm::ConstantFolder, Inserter> builder_;
+
+  // The instruction after all allocas. This is used as the insert point for new
+  // allocas.
+  llvm::Instruction* after_allocas_ = nullptr;
 
   llvm::DISubprogram* di_subprogram_;
 

@@ -13,11 +13,11 @@ namespace Carbon::SemIR {
 
 static auto GetFoundationType(const File& file, SpecificId specific_id,
                               InstId inst_id) -> TypeId {
-  if (!inst_id.is_valid()) {
-    return TypeId::Invalid;
+  if (!inst_id.has_value()) {
+    return TypeId::None;
   }
-  if (inst_id == SemIR::InstId::BuiltinErrorInst) {
-    return TypeId::Error;
+  if (inst_id == SemIR::ErrorInst::SingletonInstId) {
+    return ErrorInst::SingletonTypeId;
   }
   return TypeId::ForTypeConstant(GetConstantValueInSpecific(
       file, specific_id,
@@ -36,13 +36,13 @@ auto Class::GetBaseType(const File& file, SpecificId specific_id) const
 
 auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
     -> TypeId {
-  if (!complete_type_witness_id.is_valid()) {
-    return TypeId::Invalid;
+  if (!complete_type_witness_id.has_value()) {
+    return TypeId::None;
   }
   auto witness_id =
       GetConstantValueInSpecific(file, specific_id, complete_type_witness_id);
-  if (witness_id == ConstantId::Error) {
-    return TypeId::Error;
+  if (witness_id == ErrorInst::SingletonConstantId) {
+    return ErrorInst::SingletonTypeId;
   }
   return file.insts()
       .GetAs<CompleteTypeWitness>(file.constant_values().GetInstId(witness_id))

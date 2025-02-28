@@ -18,7 +18,7 @@ auto HandleRequirementBegin(Context& context) -> void {
       context.PositionKind(static_cast<Lookahead>(2)) ==
           Lex::TokenKind::Equal) {
     auto period = context.Consume();
-    context.AddNode(NodeKind::IdentifierName, context.Consume(),
+    context.AddNode(NodeKind::IdentifierNameNotBeforeParams, context.Consume(),
                     /*has_error=*/false);
     context.AddNode(NodeKind::DesignatorExpr, period, /*has_error=*/false);
     state.token = context.Consume();

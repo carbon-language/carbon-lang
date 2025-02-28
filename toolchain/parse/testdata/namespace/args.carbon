@@ -15,9 +15,9 @@ namespace Foo();
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

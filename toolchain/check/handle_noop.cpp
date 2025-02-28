@@ -13,18 +13,19 @@ auto HandleParseNode(Context& /*context*/, Parse::EmptyDeclId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::InvalidParseId node_id) -> bool {
-  return context.TODO(node_id, "HandleInvalidParse");
+auto HandleParseNode(Context& /*context*/, Parse::InvalidParseId /*node_id*/)
+    -> bool {
+  CARBON_FATAL("Unreachable until we support checking error parse nodes");
 }
 
-auto HandleParseNode(Context& context, Parse::InvalidParseStartId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleInvalidParseStart");
+auto HandleParseNode(Context& /*context*/,
+                     Parse::InvalidParseStartId /*node_id*/) -> bool {
+  CARBON_FATAL("Unreachable until we support checking error parse nodes");
 }
 
-auto HandleParseNode(Context& context, Parse::InvalidParseSubtreeId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleInvalidParseSubtree");
+auto HandleParseNode(Context& /*context*/,
+                     Parse::InvalidParseSubtreeId /*node_id*/) -> bool {
+  CARBON_FATAL("Unreachable until we support checking error parse nodes");
 }
 
 auto HandleParseNode(Context& /*context*/, Parse::PlaceholderId /*node_id*/)

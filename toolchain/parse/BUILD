@@ -19,6 +19,16 @@ manifest(
 )
 
 cc_library(
+    name = "node_category",
+    srcs = ["node_category.cpp"],
+    hdrs = ["node_category.h"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "node_kind",
     srcs = ["node_kind.cpp"],
     hdrs = [
@@ -28,6 +38,7 @@ cc_library(
     ],
     textual_hdrs = ["node_kind.def"],
     deps = [
+        ":node_category",
         "//common:check",
         "//common:enum_base",
         "//common:ostream",
@@ -68,6 +79,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
@@ -88,6 +100,7 @@ cc_library(
     ],
     deps = [
         ":context",
+        ":dump",
         ":node_kind",
         ":state",
         ":tree",
@@ -100,6 +113,19 @@ cc_library(
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
     ],
+)
+
+cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
+    deps = [
+        ":tree",
+        "//common:ostream",
+        "//toolchain/lex:dump",
+    ],
+    # Always link dump methods.
+    alwayslink = 1,
 )
 
 cc_library(
@@ -128,6 +154,7 @@ cc_library(
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:value_store",
+        "//toolchain/lex:token_index",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
@@ -142,8 +169,8 @@ cc_test(
         ":parse",
         ":tree",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
@@ -170,16 +197,6 @@ cc_fuzz_test(
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "tree_node_diagnostic_converter",
-    hdrs = ["tree_node_diagnostic_converter.h"],
-    deps = [
-        ":tree",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lex:tokenized_buffer",
     ],
 )
 

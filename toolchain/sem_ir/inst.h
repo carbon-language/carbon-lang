@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "common/hashing.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/int.h"
@@ -88,15 +89,14 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
   }
   // A name that can be streamed to an llvm::raw_ostream.
   static auto DebugName() -> std::string {
-    std::string str;
-    llvm::raw_string_ostream out(str);
+    RawStringOstream out;
     out << "{";
     llvm::ListSeparator sep;
     for (auto kind : InstCat::Kinds) {
       out << sep << kind;
     }
     out << "}";
-    return out.str();
+    return out.TakeStr();
   }
 };
 
@@ -134,9 +134,9 @@ class Inst : public Printable<Inst> {
     // Error uses a self-referential type so that it's not accidentally treated
     // as a normal type. Every other builtin is a type, including the
     // self-referential TypeType.
-    auto type_id =
-        kind == InstKind::ErrorInst ? TypeId::Error : TypeId::TypeType;
-    return Inst(kind, type_id, InstId::InvalidIndex, InstId::InvalidIndex);
+    auto type_id = kind == InstKind::ErrorInst ? ErrorInst::SingletonTypeId
+                                               : TypeType::SingletonTypeId;
+    return Inst(kind, type_id, InstId::NoneIndex, InstId::NoneIndex);
   }
 
   template <typename TypedInst>
@@ -145,9 +145,9 @@ class Inst : public Printable<Inst> {
   Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
       : kind_(),
-        type_id_(TypeId::Invalid),
-        arg0_(InstId::InvalidIndex),
-        arg1_(InstId::InvalidIndex) {
+        type_id_(TypeId::None),
+        arg0_(InstId::NoneIndex),
+        arg1_(InstId::NoneIndex) {
     if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
       kind_ = typed_inst.kind.AsInt();
     } else {
@@ -239,21 +239,36 @@ class Inst : public Printable<Inst> {
     return ArgKinds(kind());
   }
 
-  // Gets the first argument of the instruction. InvalidIndex if there is no
-  // such argument.
+  // Gets the first argument of the instruction. NoneIndex if there is no such
+  // argument.
   auto arg0() const -> int32_t { return arg0_; }
 
-  // Gets the second argument of the instruction. InvalidIndex if there is no
-  // such argument.
+  // Gets the second argument of the instruction. NoneIndex if there is no such
+  // argument.
   auto arg1() const -> int32_t { return arg1_; }
 
   // Sets the type of this instruction.
   auto SetType(TypeId type_id) -> void { type_id_ = type_id; }
 
   // Sets the arguments of this instruction.
-  auto SetArgs(int32_t arg0, int32_t arg1) {
+  auto SetArgs(int32_t arg0, int32_t arg1) -> void {
     arg0_ = arg0;
     arg1_ = arg1;
+  }
+
+  // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
+  static constexpr auto ToRaw(AnyIdBase base) -> int32_t { return base.index; }
+  static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
+
+  // Convert a field from its raw representation.
+  template <typename T>
+    requires IdKind::Contains<T>
+  static constexpr auto FromRaw(int32_t raw) -> T {
+    return T(raw);
+  }
+  template <>
+  constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
+    return IntId::MakeRaw(raw);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -271,23 +286,9 @@ class Inst : public Printable<Inst> {
   // Raw constructor, used for testing.
   explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
       : Inst(kind.AsInt(), type_id, arg0, arg1) {}
-  explicit Inst(int32_t kind, TypeId type_id, int32_t arg0, int32_t arg1)
+  explicit constexpr Inst(int32_t kind, TypeId type_id, int32_t arg0,
+                          int32_t arg1)
       : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
-
-  // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
-  static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
-  static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
-
-  // Convert a field from its raw representation.
-  template <typename T>
-    requires IdKind::Contains<T>
-  static constexpr auto FromRaw(int32_t raw) -> T {
-    return T(raw);
-  }
-  template <>
-  constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
-    return IntId::MakeRaw(raw);
-  }
 
   int32_t kind_;
   TypeId type_id_;
@@ -322,7 +323,7 @@ struct LocIdAndInst {
   // constants block.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(LocId::Invalid, inst, /*is_unchecked=*/true);
+    return LocIdAndInst(LocId::None, inst, /*is_unchecked=*/true);
   }
 
   // Unsafely form a pair of a location and an instruction. Used in the cases
@@ -397,7 +398,7 @@ class InstStore {
   // of that type. Otherwise returns nullopt.
   template <typename InstT>
   auto TryGetAsIfValid(InstId inst_id) const -> std::optional<InstT> {
-    if (!inst_id.is_valid()) {
+    if (!inst_id.has_value()) {
       return std::nullopt;
     }
     return TryGetAs<InstT>(inst_id);
@@ -439,6 +440,7 @@ class InstStore {
 
   auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
+  auto enumerate() const -> auto { return values_.enumerate(); }
 
  private:
   llvm::SmallVector<LocId> loc_ids_;
@@ -471,7 +473,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Returns the contents of the specified block, or an empty array if the block
   // is invalid.
   auto GetOrEmpty(InstBlockId block_id) const -> llvm::ArrayRef<InstId> {
-    return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
+    return block_id.has_value() ? Get(block_id) : llvm::ArrayRef<InstId>();
   }
 };
 

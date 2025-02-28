@@ -9,17 +9,18 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if_expr/fail_top_level_if.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+11]]:6: error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+12]]:6: error: expected `(` after `if` [ExpectedParenAfter]
   // CHECK:STDERR:   if true then 1 else 2;
   // CHECK:STDERR:      ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+7]]:11: error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+8]]:11: error: expected braced code block [ExpectedCodeBlock]
   // CHECK:STDERR:   if true then 1 else 2;
   // CHECK:STDERR:           ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+3]]:11: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+4]]:11: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   if true then 1 else 2;
   // CHECK:STDERR:           ^~~~
+  // CHECK:STDERR:
   if true then 1 else 2;
 }
 
@@ -27,9 +28,9 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IfConditionStart', text: 'if', has_error: yes},
 // CHECK:STDOUT:           {kind: 'BoolLiteralTrue', text: 'true'},

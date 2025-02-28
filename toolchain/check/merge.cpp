@@ -5,6 +5,7 @@
 #include "toolchain/check/merge.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
@@ -91,13 +92,11 @@ auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
   context.emitter().Build(loc, ExternRequiresDeclInApiFile).Emit();
 }
 
-// Checks to see if a structurally valid redeclaration is allowed in context.
-// These all still merge.
-auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
-                          SemIR::NameId name_id, RedeclInfo new_decl,
-                          RedeclInfo prev_decl, SemIR::ImportIRId import_ir_id)
-    -> void {
-  if (!import_ir_id.is_valid()) {
+auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
+                             SemIR::NameId name_id, RedeclInfo new_decl,
+                             RedeclInfo prev_decl,
+                             SemIR::ImportIRId import_ir_id) -> void {
+  if (!import_ir_id.has_value()) {
     // Check for disallowed redeclarations in the same file.
     if (!new_decl.is_definition) {
       DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
@@ -137,7 +136,7 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 
   // Check for disallowed redeclarations cross-library.
-  if (new_decl.is_extern && context.IsImplFile()) {
+  if (new_decl.is_extern && context.sem_ir().is_impl()) {
     // We continue after issuing the "missing API declaration" diagnostic,
     // because it may still be helpful to note other issues with the
     // declarations.
@@ -148,8 +147,8 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
                            prev_decl.loc);
     return;
   }
-  if (!prev_decl.extern_library_id.is_valid()) {
-    if (new_decl.extern_library_id.is_valid()) {
+  if (!prev_decl.extern_library_id.has_value()) {
+    if (new_decl.extern_library_id.has_value()) {
       DiagnoseExternLibraryInImporter(context, decl_kind, name_id, new_decl.loc,
                                       prev_decl.loc);
     } else {
@@ -169,8 +168,11 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void {
   auto& scope = context.name_scopes().Get(scope_id);
-  if (auto lookup = scope.name_map.Lookup(name_id)) {
-    scope.names[lookup.value()].inst_id = new_inst_id;
+  auto entry_id = scope.Lookup(name_id);
+  if (entry_id) {
+    auto& result = scope.GetEntry(*entry_id).result;
+    result = SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+        new_inst_id, result.access_kind());
   }
 }
 
@@ -180,10 +182,11 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
     -> bool {
   for (auto param_patterns_id :
        {info.implicit_param_patterns_id, info.param_patterns_id}) {
-    if (param_patterns_id.is_valid() &&
+    if (param_patterns_id.has_value() &&
         param_patterns_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_patterns_id)) {
-        if (context.insts().Get(param_id).type_id() == SemIR::TypeId::Error) {
+        if (context.insts().Get(param_id).type_id() ==
+            SemIR::ErrorInst::SingletonTypeId) {
           return true;
         }
       }
@@ -198,8 +201,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              int32_t param_index,
                              SemIR::InstId new_param_pattern_id,
                              SemIR::InstId prev_param_pattern_id,
-                             SemIR::SpecificId prev_specific_id, bool diagnose)
-    -> bool {
+                             SemIR::SpecificId prev_specific_id, bool diagnose,
+                             bool check_self) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -228,25 +231,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return false;
   }
 
-  auto prev_param_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
-  if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
-                                                  prev_param_type_id)) {
-    if (!diagnose) {
-      return false;
-    }
-    CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
-                      "type {3} of {0:implicit |}parameter {1} in "
-                      "redeclaration differs from previous parameter type {2}",
-                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
-    context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
-               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
-        .Emit();
-    return false;
-  }
-
   if (new_param_pattern.Is<SemIR::AddrPattern>()) {
     new_param_pattern = context.insts().Get(
         new_param_pattern.As<SemIR::AddrPattern>().inner_id);
@@ -267,11 +251,40 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return false;
   }
 
-  auto new_entity_name = context.entity_names().Get(
-      new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id);
-  auto prev_entity_name = context.entity_names().Get(
-      prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id);
-  if (new_entity_name.name_id != prev_entity_name.name_id) {
+  auto new_name_id =
+      context.entity_names()
+          .Get(new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
+          .name_id;
+  auto prev_name_id =
+      context.entity_names()
+          .Get(prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
+          .name_id;
+
+  if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
+      prev_name_id == SemIR::NameId::SelfValue) {
+    return true;
+  }
+
+  auto prev_param_type_id = SemIR::GetTypeInSpecific(
+      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
+  if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
+                                                  prev_param_type_id)) {
+    if (!diagnose) {
+      return false;
+    }
+    CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
+                      "type {3} of {0:implicit |}parameter {1} in "
+                      "redeclaration differs from previous parameter type {2}",
+                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+    context.emitter()
+        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
+               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
+        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Emit();
+    return false;
+  }
+
+  if (new_name_id != prev_name_id) {
     emit_diagnostic();
     return false;
   }
@@ -285,15 +298,15 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
-                              SemIR::SpecificId prev_specific_id, bool diagnose)
-    -> bool {
+                              SemIR::SpecificId prev_specific_id, bool diagnose,
+                              bool check_self) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
   }
 
   // If exactly one of the parameter lists was present, they differ.
-  if (new_param_patterns_id.is_valid() != prev_param_patterns_id.is_valid()) {
+  if (new_param_patterns_id.has_value() != prev_param_patterns_id.has_value()) {
     if (!diagnose) {
       return false;
     }
@@ -307,15 +320,15 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                       BoolAsSelect, BoolAsSelect);
     context.emitter()
         .Build(new_decl_loc, RedeclParamListDiffers, is_implicit_param,
-               new_param_patterns_id.is_valid())
+               new_param_patterns_id.has_value())
         .Note(prev_decl_loc, RedeclParamListPrevious, is_implicit_param,
-              prev_param_patterns_id.is_valid())
+              prev_param_patterns_id.has_value())
         .Emit();
     return false;
   }
 
-  CARBON_CHECK(new_param_patterns_id.is_valid() &&
-               prev_param_patterns_id.is_valid());
+  CARBON_CHECK(new_param_patterns_id.has_value() &&
+               prev_param_patterns_id.has_value());
   const auto new_param_pattern_ids =
       context.inst_blocks().Get(new_param_patterns_id);
   const auto prev_param_pattern_ids =
@@ -344,7 +357,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
-                          prev_specific_id, diagnose)) {
+                          prev_specific_id, diagnose, check_self)) {
       return false;
     }
   }
@@ -379,31 +392,51 @@ static auto CheckRedeclParamSyntax(Context& context,
                                    Parse::NodeId prev_last_param_node_id,
                                    bool diagnose) -> bool {
   // Parse nodes may not always be available to compare.
-  // TODO: Support cross-file syntax checks. Right now imports provide invalid
-  // nodes, and we'll need to follow the declaration to its original file to
-  // get the parse tree.
-  if (!new_first_param_node_id.is_valid() ||
-      !prev_first_param_node_id.is_valid()) {
+  // TODO: Support cross-file syntax checks. Right now imports provide
+  // `NodeId::None`, and we'll need to follow the declaration to its original
+  // file to get the parse tree.
+  if (!new_first_param_node_id.has_value() ||
+      !prev_first_param_node_id.has_value()) {
     return true;
   }
-  CARBON_CHECK(new_last_param_node_id.is_valid(),
-               "new_last_param_node_id.is_valid should match "
-               "new_first_param_node_id.is_valid");
-  CARBON_CHECK(prev_last_param_node_id.is_valid(),
-               "prev_last_param_node_id.is_valid should match "
-               "prev_first_param_node_id.is_valid");
+  CARBON_CHECK(new_last_param_node_id.has_value(),
+               "new_last_param_node_id.has_value should match "
+               "new_first_param_node_id.has_value");
+  CARBON_CHECK(prev_last_param_node_id.has_value(),
+               "prev_last_param_node_id.has_value should match "
+               "prev_first_param_node_id.has_value");
+  Parse::Tree::PostorderIterator new_iter(new_first_param_node_id);
+  Parse::Tree::PostorderIterator new_end(new_last_param_node_id);
+  Parse::Tree::PostorderIterator prev_iter(prev_first_param_node_id);
+  Parse::Tree::PostorderIterator prev_end(prev_last_param_node_id);
+  // Done when one past the last node to check.
+  ++new_end;
+  ++prev_end;
 
-  auto new_range = Parse::Tree::PostorderIterator::MakeRange(
-      new_first_param_node_id, new_last_param_node_id);
-  auto prev_range = Parse::Tree::PostorderIterator::MakeRange(
-      prev_first_param_node_id, prev_last_param_node_id);
-
-  // zip is using the shortest range. If they differ in length, there should be
-  // some difference inside the range because the range includes parameter
-  // brackets. As a consequence, we don't explicitly handle different range
-  // sizes here.
-  for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
+  // Compare up to the shortest length.
+  for (; new_iter != new_end && prev_iter != prev_end;
+       ++new_iter, ++prev_iter) {
+    auto new_node_id = *new_iter;
+    auto prev_node_id = *prev_iter;
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
+      // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
+      auto new_node_kind = context.parse_tree().node_kind(new_node_id);
+      auto prev_node_kind = context.parse_tree().node_kind(prev_node_id);
+      if (new_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+          prev_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
+          context.parse_tree().node_kind(prev_iter[1]) ==
+              Parse::NodeKind::TypeImplAs) {
+        ++prev_iter;
+        continue;
+      }
+      if (prev_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+          new_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
+          context.parse_tree().node_kind(new_iter[1]) ==
+              Parse::NodeKind::TypeImplAs) {
+        ++new_iter;
+        continue;
+      }
       if (!diagnose) {
         return false;
       }
@@ -418,14 +451,25 @@ static auto CheckRedeclParamSyntax(Context& context,
       return false;
     }
   }
+  // The prefixes are the same, but the lengths may still be different. This is
+  // only relevant for `impl` declarations where the final bracketing node is
+  // not included in the range of nodes being compared, and in those cases
+  // `diagnose` is false.
+  if (new_iter != new_end) {
+    CARBON_CHECK(!diagnose);
+    return false;
+  } else if (prev_iter != prev_end) {
+    CARBON_CHECK(!diagnose);
+    return false;
+  }
 
   return true;
 }
 
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            SemIR::SpecificId prev_specific_id,
-                            bool check_syntax, bool diagnose) -> bool {
+                            SemIR::SpecificId prev_specific_id, bool diagnose,
+                            bool check_syntax, bool check_self) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -433,13 +477,15 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(
           context, new_entity.loc, new_entity.implicit_param_patterns_id,
           prev_entity.loc, prev_entity.implicit_param_patterns_id,
-          /*is_implicit_param=*/true, prev_specific_id, diagnose)) {
+          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_self)) {
     return false;
   }
+  // Don't forward `check_self` here because it's extra cost, and `self` is only
+  // allowed in implicit params.
   if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_patterns_id,
                          prev_entity.loc, prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose)) {
+                         diagnose, /*check_self=*/true)) {
     return false;
   }
   if (check_syntax &&

@@ -17,6 +17,7 @@
 #include "toolchain/lex/helpers.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
+#include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
@@ -83,10 +84,8 @@ class [[clang::internal_linkage]] Lexer {
         DiagnosticConsumer& consumer)
       : buffer_(value_stores, source),
         consumer_(consumer),
-        converter_(&buffer_),
-        emitter_(converter_, consumer_),
-        token_converter_(&buffer_),
-        token_emitter_(token_converter_, consumer_) {}
+        emitter_(&consumer_, &buffer_),
+        token_emitter_(&consumer_, &buffer_) {}
 
   // Find all line endings and create the line data structures.
   //
@@ -157,6 +156,11 @@ class [[clang::internal_linkage]] Lexer {
 
   auto LexComment(llvm::StringRef source_text, ssize_t& position) -> void;
 
+  // Determines whether a real literal can be formed at the current location.
+  // This is the case unless the preceding token is `.` or `->` and there is no
+  // intervening whitespace.
+  auto CanFormRealLiteral() -> bool;
+
   auto LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
       -> LexResult;
 
@@ -218,33 +222,31 @@ class [[clang::internal_linkage]] Lexer {
 
   ErrorTrackingDiagnosticConsumer consumer_;
 
-  TokenizedBuffer::SourceBufferDiagnosticConverter converter_;
-  LexerDiagnosticEmitter emitter_;
+  TokenizedBuffer::SourcePointerDiagnosticEmitter emitter_;
 
-  TokenDiagnosticConverter token_converter_;
-  TokenDiagnosticEmitter token_emitter_;
+  TokenizedBuffer::TokenDiagnosticEmitter token_emitter_;
 };
 
 #if CARBON_USE_SIMD
 namespace {
 #if __ARM_NEON
-using SIMDMaskT = uint8x16_t;
+using SimdMaskT = uint8x16_t;
 #elif __x86_64__
-using SIMDMaskT = __m128i;
+using SimdMaskT = __m128i;
 #else
 #error "Unsupported SIMD architecture!"
 #endif
-using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
+using SimdMaskArrayT = std::array<SimdMaskT, sizeof(SimdMaskT) + 1>;
 }  // namespace
 // A table of masks to include 0-16 bytes of an SSE register.
-static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
-  SIMDMaskArrayT masks = {};
+static constexpr SimdMaskArrayT PrefixMasks = []() constexpr {
+  SimdMaskArrayT masks = {};
   for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
     masks[i] =
         // The SIMD types and constexpr require a C-style cast.
         // NOLINTNEXTLINE(google-readability-casting)
-        (SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
-                    ((sizeof(SIMDMaskT) - i) * 8));
+        (SimdMaskT)(std::numeric_limits<unsigned __int128>::max() >>
+                    ((sizeof(SimdMaskT) - i) * 8));
   }
   return masks;
 }();
@@ -523,7 +525,7 @@ CARBON_DISPATCH_LEX_TOKEN(LexHash)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-// A custom dispatch functions that pre-select the symbol token to lex.
+// A set of custom dispatch functions that pre-select the symbol token to lex.
 #define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
   static auto Dispatch##LexMethod##SymbolToken(                              \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
@@ -660,6 +662,7 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
     // that because this is a must-tail return, this cannot fail to tail-call
     // and will not grow the stack. This is in essence a loop with dynamic
     // tail dispatch to the next stage of the loop.
+    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
     [[clang::musttail]] return DispatchTable[static_cast<unsigned char>(
         source_text[position])](lexer, source_text, position);
   }
@@ -826,17 +829,17 @@ auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
     return;
   }
 
-  CARBON_DIAGNOSTIC(UnsupportedLFCRLineEnding, Error,
+  CARBON_DIAGNOSTIC(UnsupportedLfCrLineEnding, Error,
                     "the LF+CR line ending is not supported, only LF and CR+LF "
                     "are supported");
-  CARBON_DIAGNOSTIC(UnsupportedCRLineEnding, Error,
+  CARBON_DIAGNOSTIC(UnsupportedCrLineEnding, Error,
                     "a raw CR line ending is not supported, only LF and CR+LF "
                     "are supported");
   bool is_lfcr = position > 0 && source_text[position - 1] == '\n';
   // TODO: This diagnostic has an unfortunate snippet -- we should tweak the
   // snippet rendering to gracefully handle CRs.
   emitter_.Emit(source_text.begin() + position,
-                is_lfcr ? UnsupportedLFCRLineEnding : UnsupportedCRLineEnding);
+                is_lfcr ? UnsupportedLfCrLineEnding : UnsupportedCrLineEnding);
 
   // Recover by treating the CR as a horizontal whitespace. This should make our
   // whitespace rules largely work and parse cleanly without disrupting the line
@@ -997,10 +1000,20 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   current_line_info()->indent = position - line_start;
 }
 
+auto Lexer::CanFormRealLiteral() -> bool {
+  // When a numeric literal immediately follows a `.` or `->` token, with no
+  // intervening whitespace, a real literal is never formed.
+  if (has_leading_space_) {
+    return true;
+  }
+  auto kind = buffer_.GetKind(buffer_.tokens().end()[-1]);
+  return kind != TokenKind::Period && kind != TokenKind::MinusGreater;
+}
+
 auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
   std::optional<NumericLiteral> literal =
-      NumericLiteral::Lex(source_text.substr(position));
+      NumericLiteral::Lex(source_text.substr(position), CanFormRealLiteral());
   if (!literal) {
     return LexError(source_text, position);
   }
@@ -1132,7 +1145,7 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
   if (LLVM_UNLIKELY(opening_token_info.kind() != kind.opening_symbol())) {
     has_mismatched_brackets_ = true;
-    buffer_.GetTokenInfo(token).set_opening_token_index(TokenIndex::Invalid);
+    buffer_.GetTokenInfo(token).set_opening_token_index(TokenIndex::None);
     return token;
   }
 
@@ -1396,13 +1409,12 @@ auto Lexer::Finalize() -> void {
   // many identifiers to fit an `IdentifierId` into a `token_payload_`, and
   // likewise for `IntId` and so on. If we start adding any of those IDs prior
   // to lexing, we may need to also limit the number of those IDs here.
-  if (buffer_.token_infos_.size() > TokenizedBuffer::MaxTokens) {
+  if (buffer_.token_infos_.size() > TokenIndex::Max) {
     CARBON_DIAGNOSTIC(TooManyTokens, Error,
                       "too many tokens in source file; try splitting into "
                       "multiple source files");
     // Subtract one to leave room for the `FileEnd` token.
-    token_emitter_.Emit(TokenIndex(TokenizedBuffer::MaxTokens - 1),
-                        TooManyTokens);
+    token_emitter_.Emit(TokenIndex(TokenIndex::Max - 1), TooManyTokens);
     // TODO: Convert tokens after the token limit to error tokens to avoid
     // misinterpretation by consumers of the tokenized buffer.
   }
@@ -1514,7 +1526,7 @@ class Lexer::ErrorRecoveryBuffer {
 };
 
 // Issue an UnmatchedOpening diagnostic.
-static auto DiagnoseUnmatchedOpening(TokenDiagnosticEmitter& emitter,
+static auto DiagnoseUnmatchedOpening(DiagnosticEmitter<TokenIndex>& emitter,
                                      TokenIndex opening_token) -> void {
   CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
                     "opening symbol without a corresponding closing symbol");
@@ -1555,9 +1567,8 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     }
 
     // Find the innermost matching opening symbol.
-    auto opening_it = std::find_if(
-        open_groups_.rbegin(), open_groups_.rend(),
-        [&](TokenIndex opening_token) {
+    auto opening_it = llvm::find_if(
+        llvm::reverse(open_groups_), [&](TokenIndex opening_token) {
           return buffer_.GetTokenInfo(opening_token).kind().closing_symbol() ==
                  kind;
         });

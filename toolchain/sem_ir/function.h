@@ -15,7 +15,7 @@ namespace Carbon::SemIR {
 // Function-specific fields.
 struct FunctionFields {
   // Kinds of virtual modifiers that can apply to functions.
-  enum class VirtualModifier { None, Virtual, Abstract, Impl };
+  enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
 
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
@@ -30,6 +30,10 @@ struct FunctionFields {
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
   VirtualModifier virtual_modifier;
+
+  // The implicit self parameter, if any, in implicit_param_patterns_id from
+  // EntityWithParamsBase.
+  InstId self_param_id = SemIR::InstId::None;
 
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
@@ -51,10 +55,16 @@ struct FunctionFields {
 struct Function : public EntityWithParamsBase,
                   public FunctionFields,
                   public Printable<Function> {
+  struct ParamPatternInfo {
+    InstId inst_id;
+    AnyParamPattern inst;
+    EntityNameId entity_name_id;
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
-    if (return_slot_pattern_id.is_valid()) {
+    if (return_slot_pattern_id.has_value()) {
       out << ", return_slot_pattern: " << return_slot_pattern_id;
     }
     if (!body_block_ids.empty()) {
@@ -69,42 +79,36 @@ struct Function : public EntityWithParamsBase,
   // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
   // corresponding instruction, its ID, and the entity_name_id of the underlying
   // binding pattern.
-  struct ParamPatternInfo {
-    InstId inst_id;
-    AnyParamPattern inst;
-    EntityNameId entity_name_id;
-
-    auto GetNameId(const File& sem_ir) -> NameId;
-  };
-
   static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                InstId param_pattern_id)
       -> ParamPatternInfo;
 
-  // Gets the name from the name binding instruction, or invalid if this pattern
+  // Gets the name from the name binding instruction, or `None` if this pattern
   // has been replaced with BuiltinErrorInst.
   static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
       -> SemIR::NameId;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
-  // specified.  Returns `Invalid` if no return type was specified, in which
+  // specified.  Returns `None` if no return type was specified, in which
   // case the effective return type is an empty tuple.
   auto GetDeclaredReturnType(const File& file,
-                             SpecificId specific_id = SpecificId::Invalid) const
+                             SpecificId specific_id = SpecificId::None) const
       -> TypeId;
 };
 
 class File;
 
 struct CalleeFunction {
-  // The function. Invalid if not a function.
+  // The function. `None` if not a function.
   SemIR::FunctionId function_id;
   // The specific that contains the function.
   SemIR::SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SemIR::SpecificId resolved_specific_id;
-  // The bound `self` parameter. Invalid if not a method.
+  // The bound `Self` type. `None` if not a bound interface member.
+  SemIR::InstId self_type_id;
+  // The bound `self` parameter. `None` if not a method.
   SemIR::InstId self_id;
   // True if an error instruction was found.
   bool is_error;

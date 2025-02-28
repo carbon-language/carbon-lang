@@ -6,7 +6,7 @@
 
 namespace Carbon {
 
-void CodegenOptions::Build(CommandLine::CommandBuilder& b) {
+auto CodegenOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringOption(
       {
           .name = "target",

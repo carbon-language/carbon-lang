@@ -54,7 +54,7 @@ namespace Carbon::Testing {
 // identifiers that should be generalized.
 class SourceGen {
  public:
-  enum class Language {
+  enum class Language : uint8_t {
     Carbon,
     Cpp,
   };
@@ -188,7 +188,7 @@ class SourceGen {
   // `target_lines`. Long term, the goal is to get as close as we can to any
   // automatically formatted code while still keeping the stability of
   // benchmarking.
-  auto GenAPIFileDenseDecls(int target_lines, const DenseDeclParams& params)
+  auto GenApiFileDenseDecls(int target_lines, const DenseDeclParams& params)
       -> std::string;
 
   // Get some number of randomly shuffled identifiers.

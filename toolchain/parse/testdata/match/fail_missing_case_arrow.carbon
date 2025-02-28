@@ -15,9 +15,10 @@ fn f() -> i32 {
     // CHECK:STDERR:                 ^
     // CHECK:STDERR:
     case x: i32 { return 2; }
-    // CHECK:STDERR: fail_missing_case_arrow.carbon:[[@LINE+3]]:29: error: expected `=>` introducing statement block [ExpectedMatchCaseArrow]
+    // CHECK:STDERR: fail_missing_case_arrow.carbon:[[@LINE+4]]:29: error: expected `=>` introducing statement block [ExpectedMatchCaseArrow]
     // CHECK:STDERR:     case x: i32 if (x == 3) { return 3; }
     // CHECK:STDERR:                             ^
+    // CHECK:STDERR:
     case x: i32 if (x == 3) { return 3; }
   }
   return 0;
@@ -27,9 +28,9 @@ fn f() -> i32 {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'f'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'f'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
@@ -39,16 +40,16 @@ fn f() -> i32 {
 // CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'MatchCaseEqualGreater', text: '{', has_error: yes},
 // CHECK:STDOUT:           {kind: 'MatchCaseStart', text: '{', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'MatchCase', text: '{', has_error: yes, subtree_size: 7},
 // CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'MatchCaseGuardIntroducer', text: 'if'},
 // CHECK:STDOUT:               {kind: 'MatchCaseGuardStart', text: '('},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'x'},

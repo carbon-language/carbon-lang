@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -20,12 +21,12 @@
 
 namespace Carbon::Parse {
 
-Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
-                 Lex::TokenDiagnosticEmitter& emitter,
-                 llvm::raw_ostream* vlog_stream)
-    : tree_(&tree),
-      tokens_(&tokens),
-      emitter_(&emitter),
+Context::Context(Tree* tree, Lex::TokenizedBuffer* tokens,
+                 DiagnosticConsumer* consumer, llvm::raw_ostream* vlog_stream)
+    : tree_(tree),
+      tokens_(tokens),
+      err_tracker_(*consumer),
+      emitter_(&err_tracker_, this),
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
@@ -45,8 +46,8 @@ auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
   CARBON_CHECK(position >= 0 && position < tree_->size(),
                "position: {0} size: {1}", position, tree_->size());
   auto* node_impl = &tree_->node_impls_[position];
-  CARBON_CHECK(node_impl->kind == NodeKind::Placeholder);
-  *node_impl = {.kind = kind, .has_error = has_error, .token = token};
+  CARBON_CHECK(node_impl->kind() == NodeKind::Placeholder);
+  *node_impl = Tree::NodeImpl(kind, has_error, token);
 }
 
 auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
@@ -58,8 +59,8 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
                       Lex::TokenKind);
-    emitter_->Emit(*position_, ExpectedParenAfter,
-                   tokens().GetKind(default_token));
+    emitter_.Emit(*position_, ExpectedParenAfter,
+                  tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
     return std::nullopt;
   }
@@ -79,8 +80,8 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
     // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
                       "unexpected tokens before `{0}`", Lex::TokenKind);
-    emitter_->Emit(*position_, ExpectedCloseSymbol,
-                   open_token_kind.closing_symbol());
+    emitter_.Emit(*position_, ExpectedCloseSymbol,
+                  open_token_kind.closing_symbol());
 
     SkipTo(tokens().GetMatchedClosingToken(expected_open));
     AddNode(close_kind, Consume(), /*has_error=*/true);
@@ -289,7 +290,7 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
       } else if (tokens().HasTrailingWhitespace(*position_)) {
         pos.value = -1;
       }
-      emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace, pos);
+      emitter_.Emit(*position_, BinaryOperatorRequiresWhitespace, pos);
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -302,14 +303,14 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
           UnaryOperatorHasWhitespace, Error,
           "whitespace is not allowed {0:after|before} this unary operator",
           BoolAsSelect);
-      emitter_->Emit(*position_, UnaryOperatorHasWhitespace, prefix);
+      emitter_.Emit(*position_, UnaryOperatorHasWhitespace, prefix);
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(
           UnaryOperatorRequiresWhitespace, Error,
           "whitespace is required {0:before|after} this unary operator",
           BoolAsSelect);
-      emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
+      emitter_.Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
     }
   }
 }
@@ -321,7 +322,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     if (!already_has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
                         "expected `,` or `{0}`", Lex::TokenKind);
-      emitter_->Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
+      emitter_.Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
       ReturnErrorOnState();
     }
 
@@ -390,7 +391,7 @@ auto Context::ParseLibraryName(bool accept_default)
   if (accept_default) {
     if (auto default_token = ConsumeIf(Lex::TokenKind::Default)) {
       AddLeafNode(NodeKind::DefaultLibrary, *default_token);
-      return StringLiteralValueId::Invalid;
+      return StringLiteralValueId::None;
     }
   }
 
@@ -481,7 +482,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 
 auto Context::PrintTokenForStackDump(llvm::raw_ostream& output,
                                      Lex::TokenIndex token) const -> void {
-  output << " @ " << tokens_->GetLineNumber(tokens_->GetLine(token)) << ":"
+  output << " @ " << tokens_->GetLineNumber(token) << ":"
          << tokens_->GetColumnNumber(token) << ": token " << token << " : "
          << tokens_->GetKind(token) << "\n";
 }

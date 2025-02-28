@@ -25,16 +25,17 @@ struct DeferredDefinition;
 
 // The index of a deferred function definition within the parse tree's deferred
 // definition store.
-struct DeferredDefinitionIndex : public IndexBase {
+struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
+  static constexpr llvm::StringLiteral Label = "deferred_def";
   using ValueType = DeferredDefinition;
 
-  static const DeferredDefinitionIndex Invalid;
+  static const DeferredDefinitionIndex None;
 
   using IndexBase::IndexBase;
 };
 
-constexpr DeferredDefinitionIndex DeferredDefinitionIndex::Invalid =
-    DeferredDefinitionIndex(InvalidIndex);
+constexpr DeferredDefinitionIndex DeferredDefinitionIndex::None =
+    DeferredDefinitionIndex(NoneIndex);
 
 // A function whose definition is deferred because it is defined inline in a
 // class or similar scope.
@@ -46,10 +47,9 @@ struct DeferredDefinition {
   // The node that starts the function definition.
   FunctionDefinitionStartId start_id;
   // The function definition node.
-  FunctionDefinitionId definition_id = NodeId::Invalid;
+  FunctionDefinitionId definition_id = NodeId::None;
   // The index of the next method that is not nested within this one.
-  DeferredDefinitionIndex next_definition_index =
-      DeferredDefinitionIndex::Invalid;
+  DeferredDefinitionIndex next_definition_index = DeferredDefinitionIndex::None;
 };
 
 // Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
@@ -84,8 +84,9 @@ class Tree : public Printable<Tree> {
   // to the node for diagnostics.
   struct PackagingNames {
     ImportDeclId node_id;
-    IdentifierId package_id = IdentifierId::Invalid;
-    StringLiteralValueId library_id = StringLiteralValueId::Invalid;
+    PackageNameId package_id = PackageNameId::None;
+    // TODO: Move LibraryNameId to Base and use it here.
+    StringLiteralValueId library_id = StringLiteralValueId::None;
     // Whether an import is exported. This is on the file's packaging
     // declaration even though it doesn't apply, for consistency in structure.
     bool is_export = false;
@@ -118,14 +119,14 @@ class Tree : public Printable<Tree> {
   // Tests whether a particular node contains an error and may not match the
   // full expected structure of the grammar.
   auto node_has_error(NodeId n) const -> bool {
-    CARBON_DCHECK(n.is_valid());
-    return node_impls_[n.index].has_error;
+    CARBON_DCHECK(n.has_value());
+    return node_impls_[n.index].has_error();
   }
 
   // Returns the kind of the given parse tree node.
   auto node_kind(NodeId n) const -> NodeKind {
-    CARBON_DCHECK(n.is_valid());
-    return node_impls_[n.index].kind;
+    CARBON_DCHECK(n.has_value());
+    return node_impls_[n.index].kind();
   }
 
   // Returns the token the given parse tree node models.
@@ -148,7 +149,7 @@ class Tree : public Printable<Tree> {
   // the constraint on `T`.
   template <typename T>
   auto TryAs(NodeId n) const -> std::optional<T> {
-    CARBON_DCHECK(n.is_valid());
+    CARBON_DCHECK(n.has_value());
     if (ConvertTo<T>::AllowedFor(node_kind(n))) {
       return T(n);
     } else {
@@ -160,7 +161,7 @@ class Tree : public Printable<Tree> {
   // `node_kind(n)` matches the constraint on `T`.
   template <typename T>
   auto As(NodeId n) const -> T {
-    CARBON_DCHECK(n.is_valid());
+    CARBON_DCHECK(n.has_value());
     CARBON_CHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
     return T(n);
   }
@@ -189,6 +190,8 @@ class Tree : public Printable<Tree> {
   // CHECK so that it can be used within a debugger.
   auto Verify() const -> ErrorOr<Success>;
 
+  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
+
  private:
   friend class Context;
   friend class TypedNodesTestPeer;
@@ -198,12 +201,24 @@ class Tree : public Printable<Tree> {
 
   // The in-memory representation of data used for a particular node in the
   // tree.
-  struct NodeImpl {
-    // The kind of this node. Note that this is only a single byte.
-    NodeKind kind;
+  class NodeImpl {
+   public:
+    explicit NodeImpl(NodeKind kind, bool has_error, Lex::TokenIndex token)
+        : kind_(kind), has_error_(has_error), token_index_(token.index) {
+      CARBON_DCHECK(token.index >= 0, "Unexpected token for node: {0}", token);
+    }
 
-    // We have 3 bytes of padding here that we can pack flags or other compact
-    // data into.
+    auto kind() const -> NodeKind { return kind_; }
+    auto set_kind(NodeKind kind) -> void { kind_ = kind; }
+    auto has_error() const -> bool { return has_error_; }
+    auto token() const -> Lex::TokenIndex {
+      return Lex::TokenIndex(token_index_);
+    }
+
+   private:
+    // The kind of this node. Note that this is only a single byte.
+    NodeKind kind_;
+    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
 
     // Whether this node is or contains a parse error.
     //
@@ -218,20 +233,20 @@ class Tree : public Printable<Tree> {
     // optional (and will depend on the particular parse implementation
     // strategy). The goal is that you can rely on grammar-based structural
     // invariants *until* you encounter a node with this set.
-    bool has_error;
+    bool has_error_ : 1;
 
     // The token root of this node.
-    Lex::TokenIndex token;
+    unsigned token_index_ : Lex::TokenIndex::Bits;
   };
 
-  static_assert(sizeof(NodeImpl) == 8,
+  static_assert(sizeof(NodeImpl) == 4,
                 "Unexpected size of node implementation!");
 
   // Sets the kind of a node. This is intended to allow putting the tree into a
   // state where verification can fail, in order to make the failure path of
   // `Verify` testable.
   auto SetNodeKindForTesting(NodeId node_id, NodeKind kind) -> void {
-    node_impls_[node_id.index].kind = kind;
+    node_impls_[node_id.index].set_kind(kind);
   }
 
   // Depth-first postorder sequence of node implementation data.
@@ -275,21 +290,25 @@ class Tree::PostorderIterator
 
   PostorderIterator() = delete;
 
-  auto operator==(const PostorderIterator& rhs) const -> bool {
-    return node_ == rhs.node_;
+  friend auto operator==(const PostorderIterator& lhs,
+                         const PostorderIterator& rhs) -> bool {
+    return lhs.node_ == rhs.node_;
   }
   // While we don't want users to directly leverage the index of `NodeId` for
   // ordering, when we're explicitly walking in postorder, that becomes
   // reasonable so add the ordering here and reach down for the index
   // explicitly.
-  auto operator<=>(const PostorderIterator& rhs) const -> std::strong_ordering {
-    return node_.index <=> rhs.node_.index;
+  friend auto operator<=>(const PostorderIterator& lhs,
+                          const PostorderIterator& rhs)
+      -> std::strong_ordering {
+    return lhs.node_.index <=> rhs.node_.index;
   }
 
   auto operator*() const -> NodeId { return node_; }
 
-  auto operator-(const PostorderIterator& rhs) const -> int {
-    return node_.index - rhs.node_.index;
+  friend auto operator-(const PostorderIterator& lhs,
+                        const PostorderIterator& rhs) -> int {
+    return lhs.node_.index - rhs.node_.index;
   }
 
   auto operator+=(int offset) -> PostorderIterator& {

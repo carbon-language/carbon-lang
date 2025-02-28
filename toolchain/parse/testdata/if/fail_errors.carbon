@@ -25,22 +25,23 @@ fn F() {
   // CHECK:STDERR:
   if (b c) {}
   if (d)
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+7]]:1: error: expected braced code block [ExpectedCodeBlock]
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+8]]:1: error: expected braced code block [ExpectedCodeBlock]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:1: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:1: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 }
 
 // CHECK:STDOUT: - filename: fail_errors.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IfConditionStart', text: 'if', has_error: yes},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},

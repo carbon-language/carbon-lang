@@ -123,10 +123,9 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 ## Project status
 
-Carbon Language is currently an experimental project. You can see the demo
-interpreter for Carbon on
-[compiler-explorer.com](http://carbon.compiler-explorer.com/). We are also hard
-at work on a toolchain implementation with compiler and linker.
+Carbon Language is currently an experimental project. We are hard at work on a
+toolchain implementation with compiler and linker. You can try out the current
+state at [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
 We want to better understand whether we can build a language that meets our
 successor language criteria, and whether the resulting language can gather a
@@ -153,8 +152,9 @@ and the language:
     Carbon (and eventually C++ code as well) into standard executable code. This
     is where most of our current implementation efforts are directed.
 
-If you're interested in contributing, we're currently focused on
-[developing the Carbon toolchain until it can support Carbon ↔ C++ interop](/docs/project/roadmap.md#objective-for-2024-a-working-toolchain-that-supports-c-interop).
+If you're interested in contributing, we're currently focused on developing the
+Carbon toolchain until it can
+[support Carbon ↔ C++ interop](/docs/project/roadmap.md#access-most-non-template-c-apis-in-carbon).
 Beyond that, we plan to continue developing the design and toolchain until we
 can ship the
 [0.1 language](/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation)
@@ -267,8 +267,7 @@ semantics onto C++ such as Rust-inspired
 
 ## Getting started
 
-To try out Carbon immediately in your browser, you can use the demo interpreter
-for Carbon on:
+To try out Carbon immediately in your browser, you can use the toolchain at:
 [carbon.compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
 We are developing a traditional toolchain for Carbon that can compile and link
@@ -291,7 +290,7 @@ wget https://github.com/carbon-language/carbon-lang/releases/download/v${VERSION
 tar -xvf carbon_toolchain-${VERSION}.tar.gz
 
 # Create a simple Carbon source file:
-echo "fn Run() { Core.Print(42); }" > forty_two.carbon
+echo "import Core library \"io\"; fn Run() { Core.Print(42); }" > forty_two.carbon
 
 # Compile to an object file:
 ./carbon_toolchain-${VERSION}/bin/carbon compile \
@@ -365,17 +364,20 @@ Carbon focused talks from the community:
 ### 2024
 
 -   Generic implementation strategies in Carbon and Clang, LLVM Developers'
-    Meeting
-    ([slides](https://chandlerc.blog/slides/2024-llvm-generic-implementation/#/))
+    Meeting ([video](https://youtu.be/j0BL52NdjAU),
+    [slides](https://chandlerc.blog/slides/2024-llvm-generic-implementation/#/))
 -   The Carbon Language: Road to 0.1, NDC {TechTown}
-    ([slides](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1))
+    ([video](https://youtu.be/bBvLmDJrzvI),
+    [slides](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1))
 -   How designing Carbon with C++ interop taught me about C++ variadics and
     overloads, CppNorth ([video](https://youtu.be/8SGMy9ENGz8),
     [slides](https://chandlerc.blog/slides/2024-cppnorth-design-stories))
 -   Generic Arity: Definition-Checked Variadics in Carbon, C++Now
-    ([video](https://youtu.be/Y_px536l_80))
+    ([video](https://youtu.be/Y_px536l_80),
+    [slides](https://docs.google.com/presentation/d/10aM1mFMN6Cd5ZkE4OfeiZtSnkVNbo33N-V0et21umww/edit))
 -   Carbon: An experiment in different tradeoffs, panel session, EuroLLVM
-    ([video](https://youtu.be/Za_KWj5RMR8))
+    ([video](https://youtu.be/Za_KWj5RMR8),
+    [slides](https://llvm.org/devmtg/2024-04/slides/LightningTalks/Smith-Carbons-high-level-semanticIR.pdf))
     -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
 -   Carbon's high-level semantic IR lightning talk, EuroLLVM
     ([video](https://youtu.be/vIWT4RhUcyw))
@@ -397,9 +399,11 @@ Carbon focused talks from the community:
 ### 2022
 
 -   Carbon Language: Syntax and trade-offs, Core C++
-    ([video](https://youtu.be/9Y2ivB8VaIs))
+    ([video](https://youtu.be/9Y2ivB8VaIs),
+    [slides](https://docs.google.com/presentation/d/1znvL12xCuEfcsP6tpPdrQPnh-UoPFOLnC_RVXZteYaM/edit))
 -   Carbon Language: An experimental successor to C++, CppNorth
-    ([video](https://youtu.be/omrY53kbVoA))
+    ([video](https://youtu.be/omrY53kbVoA),
+    [slides](https://chandlerc.blog/slides/2022-07-19-cppnorth-keynote/#/))
 
 ## Join us
 

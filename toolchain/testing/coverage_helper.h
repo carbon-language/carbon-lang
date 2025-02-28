@@ -21,15 +21,17 @@ namespace Carbon::Testing {
 //
 // should_be_covered should return false when a kind is either untestable or not
 // yet tested.
+//
+// TODO: Switch `kind_pattern` to `llvm::StringLiteral` if
+// `llvm::StringLiteral::c_str` is added.
 template <typename KindT>
 auto TestKindCoverage(const std::string& manifest_path,
-                      llvm::StringLiteral kind_pattern,
-                      llvm::ArrayRef<KindT> kinds,
+                      const char* kind_pattern, llvm::ArrayRef<KindT> kinds,
                       llvm::ArrayRef<KindT> untested_kinds) {
   std::ifstream manifest_in(manifest_path.c_str());
   ASSERT_TRUE(manifest_in.good());
 
-  RE2 kind_re(kind_pattern.data());
+  RE2 kind_re(kind_pattern);
   ASSERT_TRUE(kind_re.ok()) << kind_re.error();
 
   Set<std::string> covered_kinds;
@@ -64,14 +66,14 @@ auto TestKindCoverage(const std::string& manifest_path,
 
   constexpr llvm::StringLiteral Bullet = "\n  - ";
 
-  std::sort(missing_kinds.begin(), missing_kinds.end());
+  llvm::sort(missing_kinds);
   EXPECT_TRUE(missing_kinds.empty()) << "Some kinds have no tests:" << Bullet
                                      << llvm::join(missing_kinds, Bullet);
 
   llvm::SmallVector<std::string> unexpected_matches;
   covered_kinds.ForEach(
       [&](const std::string& match) { unexpected_matches.push_back(match); });
-  std::sort(unexpected_matches.begin(), unexpected_matches.end());
+  llvm::sort(unexpected_matches);
   EXPECT_TRUE(unexpected_matches.empty())
       << "Matched things that aren't in the kind list:" << Bullet
       << llvm::join(unexpected_matches, Bullet);

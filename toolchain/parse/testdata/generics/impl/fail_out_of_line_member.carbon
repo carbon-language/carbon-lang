@@ -30,21 +30,22 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+3]]:6: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+4]]:6: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
 // CHECK:STDERR: fn C.(Self as Interface).F() {}
 // CHECK:STDERR:      ^
+// CHECK:STDERR:
 fn C.(Self as Interface).F() {}
 
 // CHECK:STDOUT: - filename: fail_out_of_line_member.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Interface'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Interface'},
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
@@ -53,16 +54,16 @@ fn C.(Self as Interface).F() {}
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: '}', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'C'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
@@ -70,15 +71,15 @@ fn C.(Self as Interface).F() {}
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:         {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:             {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImplDefinition', text: '}', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 15},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'C'},
-// CHECK:STDOUT:       {kind: 'NameQualifier', text: '.', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
+// CHECK:STDOUT:       {kind: 'NameQualifierWithoutParams', text: '.', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: '}', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

@@ -7,17 +7,9 @@
 #include <limits>
 
 #include "llvm/Support/ErrorOr.h"
+#include "toolchain/diagnostics/file_diagnostics.h"
 
 namespace Carbon {
-
-namespace {
-struct FilenameConverter : DiagnosticConverter<llvm::StringRef> {
-  auto ConvertLoc(llvm::StringRef filename, ContextFnT /*context_fn*/) const
-      -> DiagnosticLoc override {
-    return {.filename = filename};
-  }
-};
-}  // namespace
 
 auto SourceBuffer::MakeFromStdin(DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
@@ -29,8 +21,7 @@ auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
                                 llvm::StringRef filename,
                                 DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
-  FilenameConverter converter;
-  DiagnosticEmitter<llvm::StringRef> emitter(converter, consumer);
+  FileDiagnosticEmitter emitter(&consumer);
 
   llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>> file =
       fs.openFileForRead(filename);
@@ -60,12 +51,20 @@ auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
       filename, is_regular_file, consumer);
 }
 
+auto SourceBuffer::MakeFromStringCopy(llvm::StringRef filename,
+                                      llvm::StringRef text,
+                                      DiagnosticConsumer& consumer)
+    -> std::optional<SourceBuffer> {
+  return MakeFromMemoryBuffer(
+      llvm::MemoryBuffer::getMemBufferCopy(text, filename), filename,
+      /*is_regular_file=*/true, consumer);
+}
+
 auto SourceBuffer::MakeFromMemoryBuffer(
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
     llvm::StringRef filename, bool is_regular_file,
     DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {
-  FilenameConverter converter;
-  DiagnosticEmitter<llvm::StringRef> emitter(converter, consumer);
+  FileDiagnosticEmitter emitter(&consumer);
 
   if (buffer.getError()) {
     CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "error reading file: {0}",

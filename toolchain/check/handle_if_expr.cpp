@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/literal.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -20,13 +20,13 @@ auto HandleParseNode(Context& context, Parse::IfExprIfId node_id) -> bool {
   cond_value_id = ConvertToBoolValue(context, if_node, cond_value_id);
   context.node_stack().Push(cond_node, cond_value_id);
   auto then_block_id =
-      context.AddDominatedBlockAndBranchIf(if_node, cond_value_id);
-  auto else_block_id = context.AddDominatedBlockAndBranch(if_node);
+      AddDominatedBlockAndBranchIf(context, if_node, cond_value_id);
+  auto else_block_id = AddDominatedBlockAndBranch(context, if_node);
 
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
-  context.AddCurrentCodeBlockToFunction(node_id);
+  context.region_stack().AddToRegion(then_block_id, node_id);
 
   context.node_stack().Push(if_node, else_block_id);
   return true;
@@ -38,7 +38,7 @@ static auto DecayIntLiteralToSizedInt(Context& context, Parse::NodeId node_id,
                                       SemIR::InstId operand_id)
     -> SemIR::InstId {
   if (context.types().GetInstId(context.insts().Get(operand_id).type_id()) ==
-      SemIR::InstId::BuiltinIntLiteralType) {
+      SemIR::IntLiteralType::SingletonInstId) {
     operand_id = ConvertToValueOfType(
         context, node_id, operand_id,
         MakeIntType(context, node_id, SemIR::IntKind::Signed,
@@ -57,13 +57,18 @@ auto HandleParseNode(Context& context, Parse::IfExprThenId node_id) -> bool {
 
   // Start emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
-  context.AddCurrentCodeBlockToFunction(node_id);
+  context.region_stack().AddToRegion(else_block_id, node_id);
 
   context.node_stack().Push(node_id, then_value_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::IfExprElseId node_id) -> bool {
+  if (context.return_scope_stack().empty()) {
+    context.TODO(node_id,
+                 "Control flow expressions are currently only supported inside "
+                 "functions.");
+  }
   // Alias node_id for if/then/else consistency.
   auto& else_node = node_id;
 
@@ -81,11 +86,10 @@ auto HandleParseNode(Context& context, Parse::IfExprElseId node_id) -> bool {
       ConvertToValueOfType(context, else_node, else_value_id, result_type_id);
 
   // Create a resumption block and branches to it.
-  auto chosen_value_id = context.AddConvergenceBlockWithArgAndPush(
-      if_node, {else_value_id, then_value_id});
-  context.SetBlockArgResultBeforeConstantUse(chosen_value_id, cond_value_id,
-                                             then_value_id, else_value_id);
-  context.AddCurrentCodeBlockToFunction(node_id);
+  auto chosen_value_id = AddConvergenceBlockWithArgAndPush(
+      context, if_node, {else_value_id, then_value_id});
+  SetBlockArgResultBeforeConstantUse(context, chosen_value_id, cond_value_id,
+                                     then_value_id, else_value_id);
 
   // Push the result value.
   context.node_stack().Push(else_node, chosen_value_id);

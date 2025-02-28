@@ -37,4 +37,24 @@ auto NodeStack::PrintForStackDump(int indent, llvm::raw_ostream& output) const
   }
 }
 
+// NOLINTNEXTLINE(readability-function-size)
+auto NodeStack::CheckIdKindTable() -> void {
+#define CARBON_PARSE_NODE_KIND(Name)                                     \
+  {                                                                      \
+    constexpr auto from_category =                                       \
+        NodeCategoryToIdKind(Parse::Name::Kind.category(), true);        \
+    constexpr auto from_kind =                                           \
+        NodeKindToIdKindSpecialCases(Parse::Name::Kind);                 \
+    static_assert(from_category || from_kind,                            \
+                  "Id::Kind not specified for " #Name                    \
+                  "; add to NodeStack::NodeKindToIdKindSpecialCases or " \
+                  "specify a node category in typed_nodes.h");           \
+    static_assert(!from_category || !from_kind,                          \
+                  "Special case Id::Kind specified for " #Name           \
+                  ", but node category has an Id::Kind; remove from "    \
+                  "NodeStack::NodeKindToIdKindSpecialCases");            \
+  }
+#include "toolchain/parse/node_kind.def"
+}
+
 }  // namespace Carbon::Check

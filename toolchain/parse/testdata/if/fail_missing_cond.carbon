@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_missing_cond.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:6: error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:6: error: expected `(` after `if` [ExpectedParenAfter]
   // CHECK:STDERR:   if {
   // CHECK:STDERR:      ^
+  // CHECK:STDERR:
   if {
   }
 }
@@ -20,9 +21,9 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IfConditionStart', text: 'if', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '{', has_error: yes},

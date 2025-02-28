@@ -59,20 +59,21 @@ export import library "lib";
 
 impl package Pkg;
 
-// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+3]]:1: error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+4]]:1: error: `export` is only allowed in API files [ExportFromImpl]
 // CHECK:STDERR: export import library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 export import library "lib";
 
 // CHECK:STDOUT: - filename: fail_package.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Bar'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Bar'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -80,7 +81,7 @@ export import library "lib";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
@@ -93,7 +94,7 @@ export import library "lib";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
@@ -106,7 +107,7 @@ export import library "lib";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
@@ -114,7 +115,7 @@ export import library "lib";
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'C'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
@@ -136,7 +137,7 @@ export import library "lib";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},

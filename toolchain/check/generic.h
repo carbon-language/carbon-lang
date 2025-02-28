@@ -22,9 +22,17 @@ auto StartGenericDefinition(Context& context) -> void;
 auto DiscardGenericDecl(Context& context) -> void;
 
 // Finish processing a potentially generic declaration and produce a
-// corresponding generic object. Returns SemIR::GenericId::Invalid if this
+// corresponding generic object. Returns SemIR::GenericId::None if this
 // declaration is not actually generic.
-auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
+auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId;
+
+// Builds eval block for the declaration.
+auto FinishGenericDecl(Context& context, SemIRLoc loc,
+                       SemIR::GenericId generic_id) -> void;
+
+// BuildGeneric() and FinishGenericDecl() combined. Normally you would call this
+// function unless the caller has work to do between the two steps.
+auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId;
 
 // Merge a redeclaration of an entity that might be a generic into the original
@@ -44,34 +52,40 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
                              llvm::ArrayRef<SemIR::InstId> const_ids)
     -> SemIR::InstBlockId;
 
-// Builds a new specific, or finds an existing one if this generic has already
-// been referenced with these arguments. Performs substitution into the
-// declaration, but not the definition, of the generic.
-//
-// `args_id` should be a canonical instruction block referring to constants.
-auto MakeSpecific(Context& context, SemIR::GenericId generic_id,
+// Builds a new specific with a given argument list, or finds an existing one if
+// this generic has already been referenced with these arguments. Performs
+// substitution into the declaration, but not the definition, of the generic.
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
+                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId;
+
+// Builds a new specific or finds an existing one in the case where the argument
+// list has already been converted into an instruction block. `args_id` should
+// be a canonical instruction block referring to constants.
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId;
 
-// Builds a new specific if the given generic is valid. Otherwise returns an
-// invalid specific.
-inline auto MakeSpecificIfGeneric(Context& context, SemIR::GenericId generic_id,
-                                  SemIR::InstBlockId args_id)
-    -> SemIR::SpecificId {
-  return generic_id.is_valid() ? MakeSpecific(context, generic_id, args_id)
-                               : SemIR::SpecificId::Invalid;
-}
-
 // Builds the specific that describes how the generic should refer to itself.
-// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. For an
-// invalid `generic_id`, returns an invalid specific ID.
-auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
-    -> SemIR::SpecificId;
+// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If
+// `generic_id` is `None`, returns `None`.
+auto MakeSelfSpecific(Context& context, SemIRLoc loc,
+                      SemIR::GenericId generic_id) -> SemIR::SpecificId;
+
+// Resolve the declaration of the given specific, by evaluating the eval block
+// of the corresponding generic and storing a corresponding value block in the
+// specific.
+auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
+                                SemIR::SpecificId specific_id) -> void;
 
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
 // block in the specific. Returns false if a definition is not available.
-auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
-    -> bool;
+auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
+                               SemIR::SpecificId specific_id) -> bool;
+
+// Returns an instruction describing the entity named by the given specific.
+// This is used to name the entity in diagnostics.
+auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

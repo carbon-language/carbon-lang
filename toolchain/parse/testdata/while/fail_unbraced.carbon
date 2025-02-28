@@ -11,9 +11,10 @@
 
 fn F() {
   while (a)
-    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+3]]:5: error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+4]]:5: error: expected braced code block [ExpectedCodeBlock]
     // CHECK:STDERR:     break;
     // CHECK:STDERR:     ^~~~~
+    // CHECK:STDERR:
     break;
 }
 
@@ -21,9 +22,9 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'WhileConditionStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},

@@ -18,18 +18,19 @@ let : i32 = 4;
 
 // --- fail_complietime_binding.carbon
 
-// CHECK:STDERR: fail_complietime_binding.carbon:[[@LINE+3]]:5: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_complietime_binding.carbon:[[@LINE+4]]:5: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: let :! bool = true;
 // CHECK:STDERR:     ^~
+// CHECK:STDERR:
 let :! bool = true;
 
 // CHECK:STDOUT: - filename: fail_runtime_binding.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: ':', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: ':', has_error: yes},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'IntLiteral', text: '4'},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 7},
@@ -39,7 +40,7 @@ let :! bool = true;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: ':!', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: ':!', has_error: yes},
 // CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},

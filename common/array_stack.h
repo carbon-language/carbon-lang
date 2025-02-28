@@ -47,6 +47,11 @@ class ArrayStack {
     return llvm::ArrayRef(values_).slice(array_offsets_.back());
   }
 
+  auto PeekArray() -> llvm::MutableArrayRef<ValueT> {
+    CARBON_CHECK(!array_offsets_.empty());
+    return llvm::MutableArrayRef(values_).slice(array_offsets_.back());
+  }
+
   // Returns the array at a specific index.
   auto PeekArrayAt(int index) const -> llvm::ArrayRef<ValueT> {
     auto ref = llvm::ArrayRef(values_).slice(array_offsets_[index]);
@@ -78,7 +83,7 @@ class ArrayStack {
   auto AppendToTop(llvm::ArrayRef<ValueT> values) -> void {
     CARBON_CHECK(!array_offsets_.empty(),
                  "Must call PushArray before PushValues.");
-    values_.append(values.begin(), values.end());
+    llvm::append_range(values_, values);
   }
 
   // Returns the current number of values in all arrays.

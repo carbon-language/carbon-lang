@@ -31,9 +31,10 @@ fn F() {
   // CHECK:STDERR:       ^~
   // CHECK:STDERR:
   a + ++a;
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:5: error: parentheses are required around this unary `if` operator [UnaryOperatorRequiresParentheses]
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:5: error: parentheses are required around this unary `if` operator [UnaryOperatorRequiresParentheses]
   // CHECK:STDERR:   ++if c then a else b;
   // CHECK:STDERR:     ^~
+  // CHECK:STDERR:
   ++if c then a else b;
 }
 
@@ -41,15 +42,16 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
 // CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'a'},
@@ -78,6 +80,6 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'IfExprElse', text: 'else', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'PrefixOperatorPlusPlus', text: '++', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 39},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 40},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

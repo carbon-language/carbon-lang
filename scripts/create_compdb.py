@@ -23,12 +23,13 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import argparse
 import subprocess
 
 import scripts_utils
 
 
-def _build_generated_files(bazel: str) -> None:
+def _build_generated_files(bazel: str, logtostderr: bool) -> None:
     print("Building the generated files so that tools can find them...")
 
     # Collect the generated file labels. Include some rules which generate
@@ -36,14 +37,17 @@ def _build_generated_files(bazel: str) -> None:
     kinds_query = (
         "filter("
         ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
-        ' kind("generated file", deps(//...))'
+        # tree_sitter is excluded here because it causes the query to failure on
+        # `@platforms`.
+        ' kind("generated file", deps(//... except //utils/tree_sitter/...))'
         ")"
-        " union "
-        'kind("cc_proto_library", deps(//...))'
     )
+    log_to = None
+    if not logtostderr:
+        log_to = subprocess.DEVNULL
     generated_file_labels = subprocess.check_output(
         [bazel, "query", "--keep_going", "--output=label", kinds_query],
-        stderr=subprocess.DEVNULL,
+        stderr=log_to,
         encoding="utf-8",
     ).splitlines()
     print(f"Found {len(generated_file_labels)} generated files...")
@@ -57,10 +61,21 @@ def _build_generated_files(bazel: str) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        allow_abbrev=False,
+    )
+    parser.add_argument(
+        "--alsologtostderr",
+        action="store_true",
+        help="Prints subcommand errors to stderr (default: False)",
+    )
+
+    args = parser.parse_args()
     scripts_utils.chdir_repo_root()
     bazel = scripts_utils.locate_bazel()
 
-    _build_generated_files(bazel)
+    _build_generated_files(bazel, args.alsologtostderr)
 
     print("Generating compile_commands.json (may take a few minutes)...")
     subprocess.run([bazel, "run", "@hedron_compile_commands//:refresh_all"])

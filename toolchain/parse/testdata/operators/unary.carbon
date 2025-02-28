@@ -11,9 +11,10 @@
 // --- fail_space_before.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_space_before.carbon:[[@LINE+3]]:16: error: whitespace is required before this unary operator [UnaryOperatorRequiresWhitespace]
+  // CHECK:STDERR: fail_space_before.carbon:[[@LINE+4]]:16: error: whitespace is required before this unary operator [UnaryOperatorRequiresWhitespace]
   // CHECK:STDERR:   if (false) {}--0;
   // CHECK:STDERR:                ^~
+  // CHECK:STDERR:
   if (false) {}--0;
 }
 
@@ -27,9 +28,9 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
 // CHECK:STDOUT:           {kind: 'BoolLiteralFalse', text: 'false'},
@@ -47,9 +48,9 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
 // CHECK:STDOUT:           {kind: 'BoolLiteralFalse', text: 'false'},

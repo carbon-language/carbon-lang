@@ -15,6 +15,7 @@
 #include "toolchain/driver/format_subcommand.h"
 #include "toolchain/driver/language_server_subcommand.h"
 #include "toolchain/driver/link_subcommand.h"
+#include "toolchain/driver/lld_subcommand.h"
 
 namespace Carbon {
 
@@ -24,14 +25,16 @@ struct Options {
 
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
-  bool verbose;
-  bool fuzzing;
+  bool verbose = false;
+  bool fuzzing = false;
+  bool include_diagnostic_kind = false;
 
   ClangSubcommand clang;
   CompileSubcommand compile;
   FormatSubcommand format;
   LanguageServerSubcommand language_server;
   LinkSubcommand link;
+  LldSubcommand lld;
 
   // On success, this is set to the subcommand to run.
   DriverSubcommand* selected_subcommand = nullptr;
@@ -73,30 +76,49 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&fuzzing); });
 
+  b.AddFlag(
+      {
+          .name = "include-diagnostic-kind",
+          .help = R"""(
+When printing diagnostics, include the diagnostic kind as part of output. This
+applies to each message that forms a diagnostic, not just the primary message.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
+
   clang.AddTo(b, &selected_subcommand);
   compile.AddTo(b, &selected_subcommand);
   format.AddTo(b, &selected_subcommand);
   language_server.AddTo(b, &selected_subcommand);
   link.AddTo(b, &selected_subcommand);
+  lld.AddTo(b, &selected_subcommand);
 
   b.RequiresSubcommand();
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   if (driver_env_.installation->error()) {
-    driver_env_.error_stream << "error: " << *driver_env_.installation->error()
-                             << "\n";
+    CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);
+    driver_env_.emitter.Emit(DriverInstallInvalid,
+                             driver_env_.installation->error()->str());
     return {.success = false};
   }
 
   Options options;
 
   ErrorOr<CommandLine::ParseResult> result = CommandLine::Parse(
-      args, driver_env_.output_stream, Options::Info,
+      args, *driver_env_.output_stream, Options::Info,
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 
+  // Regardless of whether the parse succeeded, try to use the diagnostic kind
+  // flag.
+  driver_env_.consumer.set_include_diagnostic_kind(
+      options.include_diagnostic_kind);
+
   if (!result.ok()) {
-    driver_env_.error_stream << "error: " << result.error() << "\n";
+    CARBON_DIAGNOSTIC(DriverCommandLineParseFailed, Error, "{0}", std::string);
+    driver_env_.emitter.Emit(DriverCommandLineParseFailed,
+                             PrintToString(result.error()));
     return {.success = false};
   } else if (*result == CommandLine::ParseResult::MetaSuccess) {
     return {.success = true};
@@ -104,16 +126,14 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
 
   if (options.verbose) {
     // Note this implies streamed output in order to interleave.
-    driver_env_.vlog_stream = &driver_env_.error_stream;
+    driver_env_.vlog_stream = driver_env_.error_stream;
   }
   if (options.fuzzing) {
-    SetFuzzing();
+    driver_env_.fuzzing = true;
   }
 
   CARBON_CHECK(options.selected_subcommand != nullptr);
   return options.selected_subcommand->Run(driver_env_);
 }
-
-auto Driver::SetFuzzing() -> void { driver_env_.fuzzing = true; }
 
 }  // namespace Carbon

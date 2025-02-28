@@ -30,28 +30,28 @@ auto IntStore::CanonicalizeUnsigned(llvm::APInt value) -> llvm::APInt {
 auto IntStore::AddLarge(int64_t value) -> IntId {
   auto ap_id =
       values_.Add(llvm::APInt(CanonicalBitWidth(64), value, /*isSigned=*/true));
-  return MakeIndexOrInvalid(ap_id.index);
+  return MakeIndexOrNone(ap_id.index);
 }
 
 auto IntStore::AddSignedLarge(llvm::APInt value) -> IntId {
   auto ap_id = values_.Add(CanonicalizeSigned(value));
-  return MakeIndexOrInvalid(ap_id.index);
+  return MakeIndexOrNone(ap_id.index);
 }
 
 auto IntStore::AddUnsignedLarge(llvm::APInt value) -> IntId {
   auto ap_id = values_.Add(CanonicalizeUnsigned(value));
-  return MakeIndexOrInvalid(ap_id.index);
+  return MakeIndexOrNone(ap_id.index);
 }
 
 auto IntStore::LookupLarge(int64_t value) const -> IntId {
   auto ap_id = values_.Lookup(
       llvm::APInt(CanonicalBitWidth(64), value, /*isSigned=*/true));
-  return MakeIndexOrInvalid(ap_id.index);
+  return MakeIndexOrNone(ap_id.index);
 }
 
 auto IntStore::LookupSignedLarge(llvm::APInt value) const -> IntId {
   auto ap_id = values_.Lookup(CanonicalizeSigned(value));
-  return MakeIndexOrInvalid(ap_id.index);
+  return MakeIndexOrNone(ap_id.index);
 }
 
 auto IntStore::OutputYaml() const -> Yaml::OutputMapping {

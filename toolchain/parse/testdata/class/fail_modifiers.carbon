@@ -27,9 +27,10 @@ impl class
 // --- fail_extend_adapt_base.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_adapt_base.carbon:[[@LINE+3]]:16: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_extend_adapt_base.carbon:[[@LINE+4]]:16: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   extend adapt base B;
   // CHECK:STDERR:                ^~~~
+  // CHECK:STDERR:
   extend adapt base B;
 }
 
@@ -38,7 +39,7 @@ class C {
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:       {kind: 'VirtualModifier', text: 'virtual'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'B'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'B'},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: 'B', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -55,7 +56,7 @@ class C {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'C'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
 // CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},

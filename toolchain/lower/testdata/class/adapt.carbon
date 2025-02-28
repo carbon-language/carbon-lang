@@ -80,15 +80,20 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: define i32 @_CUse.Main() !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %pa.var), !dbg !16
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !17
 // CHECK:STDOUT:   %GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !18
 // CHECK:STDOUT:   ret i32 %GetB.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -109,7 +114,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !13 = !DILocation(line: 22, column: 12, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 5, scope: !12)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 7, scope: !15)
+// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 3, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 27, column: 25, scope: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 28, column: 10, scope: !15)
 // CHECK:STDOUT: !19 = !DILocation(line: 28, column: 3, scope: !15)

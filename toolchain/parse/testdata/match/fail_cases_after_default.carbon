@@ -22,9 +22,10 @@ fn f() -> i32 {
     // CHECK:STDERR:     ^~~~~~~
     // CHECK:STDERR:
     default => { return 3; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+3]]:5: error: unreachable case; `case` occurs after the `default` [UnreachableMatchCase]
+    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+4]]:5: error: unreachable case; `case` occurs after the `default` [UnreachableMatchCase]
     // CHECK:STDERR:     case (a: i32) if (a == 4) => { return 4; }
     // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR:
     case (a: i32) if (a == 4) => { return 4; }
   }
   return 0;
@@ -34,19 +35,20 @@ fn f() -> i32 {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'f'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'f'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'x'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:           {kind: 'MatchIntroducer', text: 'match'},
 // CHECK:STDOUT:             {kind: 'MatchConditionStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'x'},
@@ -63,6 +65,6 @@ fn f() -> i32 {
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 31},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 32},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

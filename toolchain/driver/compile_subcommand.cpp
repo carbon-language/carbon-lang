@@ -11,6 +11,7 @@
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
@@ -21,28 +22,6 @@
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
-
-auto operator<<(llvm::raw_ostream& out, CompileOptions::Phase phase)
-    -> llvm::raw_ostream& {
-  switch (phase) {
-    case CompileOptions::Phase::Lex:
-      out << "lex";
-      break;
-    case CompileOptions::Phase::Parse:
-      out << "parse";
-      break;
-    case CompileOptions::Phase::Check:
-      out << "check";
-      break;
-    case CompileOptions::Phase::Lower:
-      out << "lower";
-      break;
-    case CompileOptions::Phase::CodeGen:
-      out << "codegen";
-      break;
-  }
-  return out;
-}
 
 auto CompileOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
@@ -128,15 +107,6 @@ of a binary object file instead. Ignored for other `--output` values.
       },
       [&](auto& arg_b) { arg_b.Set(&force_obj_output); });
 
-  b.AddFlag(
-      {
-          .name = "include-diagnostic-kind",
-          .help = R"""(
-When printing diagnostics, include the diagnostic kind as part of output. This
-applies to each message that forms a diagnostic, not just the primary message.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
   b.AddFlag(
       {
           .name = "stream-errors",
@@ -296,33 +266,48 @@ can be written to standard output as these phases progress.
 
 CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
-auto CompileSubcommand::ValidateOptions(DriverEnv& driver_env) const -> bool {
+// Returns a string for printing the phase in a diagnostic.
+static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
+  switch (phase) {
+    case CompileOptions::Phase::Lex:
+      return "lex";
+    case CompileOptions::Phase::Parse:
+      return "parse";
+    case CompileOptions::Phase::Check:
+      return "check";
+    case CompileOptions::Phase::Lower:
+      return "lower";
+    case CompileOptions::Phase::CodeGen:
+      return "codegen";
+  }
+}
+
+auto CompileSubcommand::ValidateOptions(NoLocDiagnosticEmitter& emitter) const
+    -> bool {
+  CARBON_DIAGNOSTIC(
+      CompilePhaseFlagConflict, Error,
+      "requested dumping {0} but compile phase is limited to `{1}`",
+      std::string, std::string);
   using Phase = CompileOptions::Phase;
   switch (options_.phase) {
     case Phase::Lex:
       if (options_.dump_parse_tree) {
-        driver_env.error_stream
-            << "error: requested dumping the parse tree but compile "
-               "phase is limited to '"
-            << options_.phase << "'\n";
+        emitter.Emit(CompilePhaseFlagConflict, "parse tree",
+                     PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
     case Phase::Parse:
       if (options_.dump_sem_ir) {
-        driver_env.error_stream
-            << "error: requested dumping the SemIR but compile phase "
-               "is limited to '"
-            << options_.phase << "'\n";
+        emitter.Emit(CompilePhaseFlagConflict, "SemIR",
+                     PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
-        driver_env.error_stream
-            << "error: requested dumping the LLVM IR but compile "
-               "phase is limited to '"
-            << options_.phase << "'\n";
+        emitter.Emit(CompilePhaseFlagConflict, "LLVM IR",
+                     PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
@@ -336,228 +321,33 @@ auto CompileSubcommand::ValidateOptions(DriverEnv& driver_env) const -> bool {
 
 namespace {
 // Ties together information for a file being compiled.
-// TODO: Refactor this because it's a long class to have function definitions
-// inline.
 class CompilationUnit {
  public:
   explicit CompilationUnit(DriverEnv& driver_env, const CompileOptions& options,
                            DiagnosticConsumer* consumer,
-                           llvm::StringRef input_filename)
-      : driver_env_(&driver_env),
-        options_(options),
-        input_filename_(input_filename),
-        vlog_stream_(driver_env_->vlog_stream) {
-    if (vlog_stream_ != nullptr || options_.stream_errors) {
-      consumer_ = consumer;
-    } else {
-      sorting_consumer_ = SortingDiagnosticConsumer(*consumer);
-      consumer_ = &*sorting_consumer_;
-    }
-    if (options_.dump_mem_usage && IncludeInDumps()) {
-      mem_usage_ = MemUsage();
-    }
-    if (options_.dump_timings && IncludeInDumps()) {
-      timings_ = Timings();
-    }
-  }
+                           llvm::StringRef input_filename);
 
   // Loads source and lexes it. Returns true on success.
-  auto RunLex() -> void {
-    CARBON_CHECK(!tokens_, "Called RunLex twice");
-
-    LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
-      source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
-                                                  input_filename_, *consumer_);
-    });
-    if (mem_usage_) {
-      mem_usage_->Add("source_", source_->text().size(),
-                      source_->text().size());
-    }
-    if (!source_) {
-      success_ = false;
-      return;
-    }
-    CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
-
-    LogCall("Lex::Lex", "lex",
-            [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
-    if (options_.dump_tokens && IncludeInDumps()) {
-      consumer_->Flush();
-      tokens_->Print(driver_env_->output_stream,
-                     options_.omit_file_boundary_tokens);
-    }
-    if (mem_usage_) {
-      mem_usage_->Collect("tokens_", *tokens_);
-    }
-    CARBON_VLOG("*** Lex::TokenizedBuffer ***\n{0}", tokens_);
-    if (tokens_->has_errors()) {
-      success_ = false;
-    }
-  }
+  auto RunLex() -> void;
 
   // Parses tokens. Returns true on success.
-  auto RunParse() -> void {
-    CARBON_CHECK(tokens_, "Must call RunLex first");
-    CARBON_CHECK(!parse_tree_, "Called RunParse twice");
-
-    LogCall("Parse::Parse", "parse", [&] {
-      parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
-    });
-    if (options_.dump_parse_tree && IncludeInDumps()) {
-      consumer_->Flush();
-      const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
-      if (options_.preorder_parse_tree) {
-        tree_and_subtrees.PrintPreorder(driver_env_->output_stream);
-      } else {
-        tree_and_subtrees.Print(driver_env_->output_stream);
-      }
-    }
-    if (mem_usage_) {
-      mem_usage_->Collect("parse_tree_", *parse_tree_);
-    }
-    CARBON_VLOG("*** Parse::Tree ***\n{0}", parse_tree_);
-    if (parse_tree_->has_errors()) {
-      success_ = false;
-    }
-  }
-
-  auto PreCheck() -> Parse::NodeLocConverter& {
-    CARBON_CHECK(parse_tree_, "Must call RunParse first");
-    CARBON_CHECK(!node_converter_, "Called PreCheck twice");
-
-    get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
-      return this->GetParseTreeAndSubtrees();
-    };
-    node_converter_.emplace(&*tokens_, source_->filename(),
-                            *get_parse_tree_and_subtrees_);
-    return *node_converter_;
-  }
+  auto RunParse() -> void;
 
   // Returns information needed to check this unit.
-  auto GetCheckUnit(SemIR::CheckIRId check_ir_id,
-                    llvm::ArrayRef<Parse::NodeLocConverter*> node_converters)
-      -> Check::Unit {
-    CARBON_CHECK(node_converter_, "Must call PreCheck first");
-    CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
-
-    sem_ir_.emplace(check_ir_id, parse_tree_->packaging_decl(), value_stores_,
-                    input_filename_);
-    if (mem_usage_) {
-      mem_usage_->Collect("sem_ir_", *sem_ir_);
-    }
-
-    sem_ir_converter_.emplace(node_converters, &*sem_ir_);
-    return {.consumer = consumer_,
-            .value_stores = &value_stores_,
-            .timings = timings_ ? &*timings_ : nullptr,
-            .tokens = &*tokens_,
-            .parse_tree = &*parse_tree_,
-            .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
-            .sem_ir = &*sem_ir_,
-            .node_converter = &*node_converter_,
-            .sem_ir_converter = &*sem_ir_converter_};
-  }
+  auto GetCheckUnit(SemIR::CheckIRId check_ir_id) -> Check::Unit;
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
-  auto PostCheck() -> void {
-    CARBON_CHECK(sem_ir_converter_, "Must call GetCheckUnit first");
-
-    // We've finished all steps that can produce diagnostics. Emit the
-    // diagnostics now, so that the developer sees them sooner and doesn't need
-    // to wait for code generation.
-    consumer_->Flush();
-
-    if (options_.dump_raw_sem_ir && IncludeInDumps()) {
-      CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
-      sem_ir_->Print(driver_env_->output_stream, options_.builtin_sem_ir);
-      if (options_.dump_sem_ir) {
-        driver_env_->output_stream << "\n";
-      }
-    }
-
-    bool print = options_.dump_sem_ir && IncludeInDumps();
-    if (vlog_stream_ || print) {
-      // Omit entities imported from files that we are not dumping.
-      auto should_format_entity = [&](SemIR::InstId entity_inst_id) -> bool {
-        auto loc_id = sem_ir_->insts().GetLocId(entity_inst_id);
-        if (!loc_id.is_import_ir_inst_id()) {
-          return true;
-        }
-        auto import_ir_id =
-            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
-        const auto* import_file =
-            sem_ir_->import_irs().Get(import_ir_id).sem_ir;
-        CARBON_CHECK(import_file);
-        return IncludeInDumps(import_file->filename());
-      };
-
-      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_,
-                                 should_format_entity);
-      if (vlog_stream_) {
-        CARBON_VLOG("*** SemIR::File ***\n");
-        formatter.Print(*vlog_stream_);
-      }
-      if (print) {
-        formatter.Print(driver_env_->output_stream);
-      }
-    }
-    if (sem_ir_->has_errors()) {
-      success_ = false;
-    }
-  }
+  auto PostCheck() -> void;
 
   // Lower SemIR to LLVM IR.
-  auto RunLower() -> void {
-    CARBON_CHECK(sem_ir_converter_, "Must call PostCheck first");
-    CARBON_CHECK(!module_, "Called RunLower twice");
+  auto RunLower(std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+                    tree_and_subtrees_getters_for_debug_info) -> void;
 
-    LogCall("Lower::LowerToLLVM", "lower", [&] {
-      llvm_context_ = std::make_unique<llvm::LLVMContext>();
-      // TODO: Consider disabling instruction naming by default if we're not
-      // producing textual LLVM IR.
-      SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
-      module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
-                                   *sem_ir_converter_, input_filename_,
-                                   *sem_ir_, &inst_namer, vlog_stream_);
-    });
-    if (vlog_stream_) {
-      CARBON_VLOG("*** llvm::Module ***\n");
-      module_->print(*vlog_stream_, /*AAW=*/nullptr,
-                     /*ShouldPreserveUseListOrder=*/false,
-                     /*IsForDebug=*/true);
-    }
-    if (options_.dump_llvm_ir && IncludeInDumps()) {
-      module_->print(driver_env_->output_stream, /*AAW=*/nullptr,
-                     /*ShouldPreserveUseListOrder=*/true);
-    }
-  }
-
-  auto RunCodeGen() -> void {
-    CARBON_CHECK(module_, "Must call RunLower first");
-    LogCall("CodeGen", "codegen", [&] { success_ = RunCodeGenHelper(); });
-  }
+  auto RunCodeGen() -> void;
 
   // Runs post-compile logic. This is always called, and called after all other
   // actions on the CompilationUnit.
-  auto PostCompile() -> void {
-    if (options_.dump_shared_values && IncludeInDumps()) {
-      Yaml::Print(driver_env_->output_stream,
-                  value_stores_.OutputYaml(input_filename_));
-    }
-    if (mem_usage_) {
-      mem_usage_->Collect("value_stores_", value_stores_);
-      Yaml::Print(driver_env_->output_stream,
-                  mem_usage_->OutputYaml(input_filename_));
-    }
-    if (timings_) {
-      Yaml::Print(driver_env_->output_stream,
-                  timings_->OutputYaml(input_filename_));
-    }
-
-    // The diagnostics consumer must be flushed before compilation artifacts are
-    // destructed, because diagnostics can refer to their state.
-    consumer_->Flush();
-  }
+  auto PostCompile() -> void;
 
   // Flushes diagnostics, specifically as part of generating stack trace
   // information.
@@ -566,112 +356,30 @@ class CompilationUnit {
   auto input_filename() -> llvm::StringRef { return input_filename_; }
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
+  auto get_trees_and_subtrees() -> Parse::GetTreeAndSubtreesFn {
+    return *tree_and_subtrees_getter_;
+  }
 
  private:
   // Do codegen. Returns true on success.
-  auto RunCodeGenHelper() -> bool {
-    std::optional<CodeGen> codegen = CodeGen::Make(
-        *module_, options_.codegen_options.target, driver_env_->error_stream);
-    if (!codegen) {
-      return false;
-    }
-    if (vlog_stream_) {
-      CARBON_VLOG("*** Assembly ***\n");
-      codegen->EmitAssembly(*vlog_stream_);
-    }
-
-    if (options_.output_filename == "-") {
-      // TODO: The output file name, forcing object output, and requesting
-      // textual assembly output are all somewhat linked flags. We should add
-      // some validation that they are used correctly.
-      if (options_.force_obj_output) {
-        if (!codegen->EmitObject(driver_env_->output_stream)) {
-          return false;
-        }
-      } else {
-        if (!codegen->EmitAssembly(driver_env_->output_stream)) {
-          return false;
-        }
-      }
-    } else {
-      llvm::SmallString<256> output_filename = options_.output_filename;
-      if (output_filename.empty()) {
-        if (!source_->is_regular_file()) {
-          // Don't invent file names like `-.o` or `/dev/stdin.o`.
-          driver_env_->error_stream
-              << "error: output file name must be specified for input `"
-              << input_filename_ << "` that is not a regular file\n";
-          return false;
-        }
-        output_filename = input_filename_;
-        llvm::sys::path::replace_extension(output_filename,
-                                           options_.asm_output ? ".s" : ".o");
-      } else {
-        // TODO: Handle the case where multiple input files were specified
-        // along with an output file name. That should either be an error or
-        // should produce a single LLVM IR module containing all inputs.
-        // Currently each unit overwrites the output from the previous one in
-        // this case.
-      }
-      CARBON_VLOG("Writing output to: {0}\n", output_filename);
-
-      std::error_code ec;
-      llvm::raw_fd_ostream output_file(output_filename, ec,
-                                       llvm::sys::fs::OF_None);
-      if (ec) {
-        driver_env_->error_stream << "error: could not open output file '"
-                                  << output_filename << "': " << ec.message()
-                                  << "\n";
-        return false;
-      }
-      if (options_.asm_output) {
-        if (!codegen->EmitAssembly(output_file)) {
-          return false;
-        }
-      } else {
-        if (!codegen->EmitObject(output_file)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
+  auto RunCodeGenHelper() -> bool;
 
   // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
   // significant overhead. Avoid constructing it when unused.
-  auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees& {
-    if (!parse_tree_and_subtrees_) {
-      parse_tree_and_subtrees_ = Parse::TreeAndSubtrees(*tokens_, *parse_tree_);
-      if (mem_usage_) {
-        mem_usage_->Collect("parse_tree_and_subtrees_",
-                            *parse_tree_and_subtrees_);
-      }
-    }
-    return *parse_tree_and_subtrees_;
-  }
+  auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees&;
 
   // Wraps a call with log statements to indicate start and end. Typically logs
   // with the actual function name, but marks timings with the appropriate
   // phase.
   auto LogCall(llvm::StringLiteral logging_label,
-               llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
-      -> void {
-    CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
-    Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
-    fn();
-    CARBON_VLOG("*** {0} done ***\n", logging_label);
-  }
+               llvm::StringLiteral timing_label,
+               llvm::function_ref<auto()->void> fn) -> void;
 
   // Returns true if the current input file can be dumped.
-  auto IncludeInDumps() const -> bool {
-    return IncludeInDumps(input_filename_);
-  }
+  auto IncludeInDumps() const -> bool;
 
   // Returns true if the specified input file can be dumped.
-  auto IncludeInDumps(llvm::StringRef filename) const -> bool {
-    return options_.exclude_dump_file_prefix.empty() ||
-           !filename.starts_with(options_.exclude_dump_file_prefix);
-  }
+  auto IncludeInDumps(llvm::StringRef filename) const -> bool;
 
   DriverEnv* driver_env_;
   SharedValueStores value_stores_;
@@ -701,18 +409,327 @@ class CompilationUnit {
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
-  std::optional<std::function<const Parse::TreeAndSubtrees&()>>
-      get_parse_tree_and_subtrees_;
-  std::optional<Parse::NodeLocConverter> node_converter_;
-  std::optional<Check::SemIRDiagnosticConverter> sem_ir_converter_;
+  std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
+      tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
 };
+
+CompilationUnit::CompilationUnit(DriverEnv& driver_env,
+                                 const CompileOptions& options,
+                                 DiagnosticConsumer* consumer,
+                                 llvm::StringRef input_filename)
+    : driver_env_(&driver_env),
+      options_(options),
+      input_filename_(input_filename),
+      vlog_stream_(driver_env_->vlog_stream) {
+  if (vlog_stream_ != nullptr || options_.stream_errors) {
+    consumer_ = consumer;
+  } else {
+    sorting_consumer_ = SortingDiagnosticConsumer(*consumer);
+    consumer_ = &*sorting_consumer_;
+  }
+  if (options_.dump_mem_usage && IncludeInDumps()) {
+    mem_usage_ = MemUsage();
+  }
+  if (options_.dump_timings && IncludeInDumps()) {
+    timings_ = Timings();
+  }
+}
+
+auto CompilationUnit::RunLex() -> void {
+  CARBON_CHECK(!tokens_, "Called RunLex twice");
+
+  LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
+    source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
+                                                input_filename_, *consumer_);
+  });
+
+  if (!source_) {
+    success_ = false;
+    return;
+  }
+
+  if (mem_usage_) {
+    mem_usage_->Add("source_", source_->text().size(), source_->text().size());
+  }
+
+  CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
+
+  LogCall("Lex::Lex", "lex",
+          [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
+  if (options_.dump_tokens && IncludeInDumps()) {
+    consumer_->Flush();
+    tokens_->Print(*driver_env_->output_stream,
+                   options_.omit_file_boundary_tokens);
+  }
+  if (mem_usage_) {
+    mem_usage_->Collect("tokens_", *tokens_);
+  }
+  CARBON_VLOG("*** Lex::TokenizedBuffer ***\n{0}", tokens_);
+  if (tokens_->has_errors()) {
+    success_ = false;
+  }
+}
+
+auto CompilationUnit::RunParse() -> void {
+  LogCall("Parse::Parse", "parse", [&] {
+    parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
+  });
+  if (options_.dump_parse_tree && IncludeInDumps()) {
+    consumer_->Flush();
+    const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
+    if (options_.preorder_parse_tree) {
+      tree_and_subtrees.PrintPreorder(*driver_env_->output_stream);
+    } else {
+      tree_and_subtrees.Print(*driver_env_->output_stream);
+    }
+  }
+  if (mem_usage_) {
+    mem_usage_->Collect("parse_tree_", *parse_tree_);
+  }
+  CARBON_VLOG("*** Parse::Tree ***\n{0}", parse_tree_);
+  if (parse_tree_->has_errors()) {
+    success_ = false;
+  }
+}
+
+auto CompilationUnit::GetCheckUnit(SemIR::CheckIRId check_ir_id)
+    -> Check::Unit {
+  CARBON_CHECK(parse_tree_, "Must call RunParse first");
+  CARBON_CHECK(!sem_ir_, "Called GetCheckUnit twice");
+
+  tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
+    return this->GetParseTreeAndSubtrees();
+  };
+  sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
+                  value_stores_, input_filename_);
+  return {.consumer = consumer_,
+          .value_stores = &value_stores_,
+          .timings = timings_ ? &*timings_ : nullptr,
+          .tree_and_subtrees_getter = *tree_and_subtrees_getter_,
+          .sem_ir = &*sem_ir_};
+}
+
+auto CompilationUnit::PostCheck() -> void {
+  CARBON_CHECK(sem_ir_, "Must call GetCheckUnit first");
+
+  // We've finished all steps that can produce diagnostics. Emit the
+  // diagnostics now, so that the developer sees them sooner and doesn't need
+  // to wait for code generation.
+  consumer_->Flush();
+
+  if (mem_usage_) {
+    mem_usage_->Collect("sem_ir_", *sem_ir_);
+  }
+
+  if (options_.dump_raw_sem_ir && IncludeInDumps()) {
+    CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
+    sem_ir_->Print(*driver_env_->output_stream, options_.builtin_sem_ir);
+    if (options_.dump_sem_ir) {
+      *driver_env_->output_stream << "\n";
+    }
+  }
+
+  bool print = options_.dump_sem_ir && IncludeInDumps();
+  if (vlog_stream_ || print) {
+    // Omit entities imported from files that we are not dumping.
+    auto should_format_entity = [&](SemIR::InstId entity_inst_id) -> bool {
+      // TODO: Reuse `GetCanonicalImportIRInst`. Currently it depends on
+      // `Check::Context`, which we don't have access to here.
+      const SemIR::File* file = &*sem_ir_;
+      while (true) {
+        auto loc_id = file->insts().GetLocId(entity_inst_id);
+        if (!loc_id.is_import_ir_inst_id()) {
+          return true;
+        }
+        auto import_ir_inst =
+            file->import_ir_insts().Get(loc_id.import_ir_inst_id());
+        const auto* import_file =
+            file->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+        CARBON_CHECK(import_file);
+        if (!IncludeInDumps(import_file->filename())) {
+          return false;
+        }
+        file = import_file;
+        entity_inst_id = import_ir_inst.inst_id;
+      }
+    };
+
+    SemIR::Formatter formatter(&*sem_ir_, should_format_entity);
+    if (vlog_stream_) {
+      CARBON_VLOG("*** SemIR::File ***\n");
+      formatter.Print(*vlog_stream_);
+    }
+    if (print) {
+      formatter.Print(*driver_env_->output_stream);
+    }
+  }
+  if (sem_ir_->has_errors()) {
+    success_ = false;
+  }
+}
+
+auto CompilationUnit::RunLower(
+    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+        tree_and_subtrees_getters_for_debug_info) -> void {
+  LogCall("Lower::LowerToLLVM", "lower", [&] {
+    llvm_context_ = std::make_unique<llvm::LLVMContext>();
+    // TODO: Consider disabling instruction naming by default if we're not
+    // producing textual LLVM IR.
+    SemIR::InstNamer inst_namer(&*sem_ir_);
+    module_ = Lower::LowerToLLVM(
+        *llvm_context_, tree_and_subtrees_getters_for_debug_info,
+        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
+  });
+  if (vlog_stream_) {
+    CARBON_VLOG("*** llvm::Module ***\n");
+    module_->print(*vlog_stream_, /*AAW=*/nullptr,
+                   /*ShouldPreserveUseListOrder=*/false,
+                   /*IsForDebug=*/true);
+  }
+  if (options_.dump_llvm_ir && IncludeInDumps()) {
+    module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
+                   /*ShouldPreserveUseListOrder=*/true);
+  }
+}
+
+auto CompilationUnit::RunCodeGen() -> void {
+  CARBON_CHECK(module_, "Must call RunLower first");
+  LogCall("CodeGen", "codegen", [&] { success_ = RunCodeGenHelper(); });
+}
+
+auto CompilationUnit::PostCompile() -> void {
+  if (options_.dump_shared_values && IncludeInDumps()) {
+    Yaml::Print(*driver_env_->output_stream,
+                value_stores_.OutputYaml(input_filename_));
+  }
+  if (mem_usage_) {
+    mem_usage_->Collect("value_stores_", value_stores_);
+    Yaml::Print(*driver_env_->output_stream,
+                mem_usage_->OutputYaml(input_filename_));
+  }
+  if (timings_) {
+    Yaml::Print(*driver_env_->output_stream,
+                timings_->OutputYaml(input_filename_));
+  }
+
+  // The diagnostics consumer must be flushed before compilation artifacts are
+  // destructed, because diagnostics can refer to their state.
+  consumer_->Flush();
+}
+
+auto CompilationUnit::RunCodeGenHelper() -> bool {
+  std::optional<CodeGen> codegen = CodeGen::Make(
+      *module_, options_.codegen_options.target, *driver_env_->error_stream);
+  if (!codegen) {
+    return false;
+  }
+  if (vlog_stream_) {
+    CARBON_VLOG("*** Assembly ***\n");
+    codegen->EmitAssembly(*vlog_stream_);
+  }
+
+  if (options_.output_filename == "-") {
+    // TODO: The output file name, forcing object output, and requesting
+    // textual assembly output are all somewhat linked flags. We should add
+    // some validation that they are used correctly.
+    if (options_.force_obj_output) {
+      if (!codegen->EmitObject(*driver_env_->output_stream)) {
+        return false;
+      }
+    } else {
+      if (!codegen->EmitAssembly(*driver_env_->output_stream)) {
+        return false;
+      }
+    }
+  } else {
+    llvm::SmallString<256> output_filename = options_.output_filename;
+    if (output_filename.empty()) {
+      if (!source_->is_regular_file()) {
+        // Don't invent file names like `-.o` or `/dev/stdin.o`.
+        // TODO: Consider rephrasing the diagnostic to use the file as the
+        // `Emit` location.
+        CARBON_DIAGNOSTIC(CompileInputNotRegularFile, Error,
+                          "output file name must be specified for input `{0}` "
+                          "that is not a regular file",
+                          std::string);
+        driver_env_->emitter.Emit(CompileInputNotRegularFile, input_filename_);
+        return false;
+      }
+      output_filename = input_filename_;
+      llvm::sys::path::replace_extension(output_filename,
+                                         options_.asm_output ? ".s" : ".o");
+    } else {
+      // TODO: Handle the case where multiple input files were specified
+      // along with an output file name. That should either be an error or
+      // should produce a single LLVM IR module containing all inputs.
+      // Currently each unit overwrites the output from the previous one in
+      // this case.
+    }
+    CARBON_VLOG("Writing output to: {0}\n", output_filename);
+
+    std::error_code ec;
+    llvm::raw_fd_ostream output_file(output_filename, ec,
+                                     llvm::sys::fs::OF_None);
+    if (ec) {
+      // TODO: Consider rephrasing the diagnostic to use the file as the `Emit`
+      // location.
+      CARBON_DIAGNOSTIC(CompileOutputFileOpenError, Error,
+                        "could not open output file `{0}`: {1}", std::string,
+                        std::string);
+      driver_env_->emitter.Emit(CompileOutputFileOpenError,
+                                output_filename.str().str(), ec.message());
+      return false;
+    }
+    if (options_.asm_output) {
+      if (!codegen->EmitAssembly(output_file)) {
+        return false;
+      }
+    } else {
+      if (!codegen->EmitObject(output_file)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+auto CompilationUnit::GetParseTreeAndSubtrees()
+    -> const Parse::TreeAndSubtrees& {
+  if (!parse_tree_and_subtrees_) {
+    parse_tree_and_subtrees_ = Parse::TreeAndSubtrees(*tokens_, *parse_tree_);
+    if (mem_usage_) {
+      mem_usage_->Collect("parse_tree_and_subtrees_",
+                          *parse_tree_and_subtrees_);
+    }
+  }
+  return *parse_tree_and_subtrees_;
+}
+
+auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
+                              llvm::StringLiteral timing_label,
+                              llvm::function_ref<auto()->void> fn) -> void {
+  CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
+  Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
+  fn();
+  CARBON_VLOG("*** {0} done ***\n", logging_label);
+}
+
+auto CompilationUnit::IncludeInDumps() const -> bool {
+  return IncludeInDumps(input_filename_);
+}
+
+auto CompilationUnit::IncludeInDumps(llvm::StringRef filename) const -> bool {
+  return options_.exclude_dump_file_prefix.empty() ||
+         !filename.starts_with(options_.exclude_dump_file_prefix);
+}
+
 }  // namespace
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  if (!ValidateOptions(driver_env)) {
+  if (!ValidateOptions(driver_env.emitter)) {
     return {.success = false};
   }
 
@@ -725,27 +742,28 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
-      driver_env.error_stream << "error: " << find.error() << "\n";
+      // TODO: Change ReadPreludeManifest to produce diagnostics.
+      CARBON_DIAGNOSTIC(CompilePreludeManifestError, Error, "{0}", std::string);
+      driver_env.emitter.Emit(CompilePreludeManifestError,
+                              PrintToString(find.error()));
       return {.success = false};
     }
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
-  StreamDiagnosticConsumer stream_consumer(driver_env.error_stream,
-                                           options_.include_diagnostic_kind);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   units.reserve(prelude.size() + options_.input_filenames.size());
 
   // Add the prelude files.
   for (const auto& input_filename : prelude) {
     units.push_back(std::make_unique<CompilationUnit>(
-        driver_env, options_, &stream_consumer, input_filename));
+        driver_env, options_, &driver_env.consumer, input_filename));
   }
 
   // Add the input source files.
   for (const auto& input_filename : options_.input_filenames) {
     units.push_back(std::make_unique<CompilationUnit>(
-        driver_env, options_, &stream_consumer, input_filename));
+        driver_env, options_, &driver_env.consumer, input_filename));
   }
 
   auto on_exit = llvm::make_scope_exit([&]() {
@@ -755,7 +773,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       unit->PostCompile();
     }
 
-    stream_consumer.Flush();
+    driver_env.consumer.Flush();
   });
 
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
@@ -767,14 +785,14 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       out << "Flushing diagnostics\n";
     } else {
       out << "Pending diagnostics:\n";
-      stream_consumer.set_stream(&out);
+      driver_env.consumer.set_stream(&out);
     }
 
     for (auto& unit : units) {
       unit->FlushForStackTrace();
     }
-    stream_consumer.Flush();
-    stream_consumer.set_stream(&driver_env.error_stream);
+    driver_env.consumer.Flush();
+    driver_env.consumer.set_stream(driver_env.error_stream);
   });
 
   // Returns a DriverResult object. Called whenever Compile returns.
@@ -809,31 +827,20 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return make_result();
   }
 
-  // Pre-check assigns IR IDs and constructs node converters.
-  llvm::SmallVector<Parse::NodeLocConverter*> node_converters;
-  // This size may not match due to units that are missing source, but that's an
-  // error case and not worth extra work.
-  node_converters.reserve(units.size());
-  for (auto& unit : units) {
-    if (unit->has_source()) {
-      node_converters.push_back(&unit->PreCheck());
-    }
-  }
-
   // Gather Check::Units.
   llvm::SmallVector<Check::Unit> check_units;
-  check_units.reserve(node_converters.size());
+  check_units.reserve(units.size());
   for (auto& unit : units) {
     if (unit->has_source()) {
       SemIR::CheckIRId check_ir_id(check_units.size());
-      check_units.push_back(unit->GetCheckUnit(check_ir_id, node_converters));
+      check_units.push_back(unit->GetCheckUnit(check_ir_id));
     }
   }
 
   // Execute the actual checking.
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
-  Check::CheckParseTrees(check_units, options_.prelude_import,
-                         driver_env.vlog_stream);
+  Check::CheckParseTrees(check_units, options_.prelude_import, driver_env.fs,
+                         driver_env.vlog_stream, driver_env.fuzzing);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
   for (auto& unit : units) {
@@ -848,13 +855,28 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Unlike previous steps, errors block further progress.
   if (llvm::any_of(units, [&](const auto& unit) { return !unit->success(); })) {
     CARBON_VLOG_TO(driver_env.vlog_stream,
-                   "*** Stopping before lowering due to errors ***");
+                   "*** Stopping before lowering due to errors ***\n");
     return make_result();
   }
 
   // Lower.
+  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
+  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+      tree_and_subtrees_getters_for_debug_info;
+  if (options_.include_debug_info) {
+    // This size may not match due to units that are missing source, but that's
+    // an error case and not worth extra work.
+    tree_and_subtrees_getters.reserve(units.size());
+    for (auto& unit : units) {
+      if (unit->has_source()) {
+        tree_and_subtrees_getters.push_back(unit->get_trees_and_subtrees());
+      }
+    }
+    tree_and_subtrees_getters_for_debug_info = {};
+    tree_and_subtrees_getters_for_debug_info = tree_and_subtrees_getters;
+  }
   for (const auto& unit : units) {
-    unit->RunLower();
+    unit->RunLower(tree_and_subtrees_getters_for_debug_info);
   }
   if (options_.phase == CompileOptions::Phase::Lower) {
     return make_result();

@@ -10,9 +10,10 @@
 
 fn foo() -> i32 {
   // TODO: Should we allow this?
-  // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+3]]:8: error: expected `var` declaration [ExpectedVariableDecl]
+  // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+4]]:8: error: expected `var` declaration [ExpectedVariableDecl]
   // CHECK:STDERR:   for (returned var x: i32 in y) {
   // CHECK:STDERR:        ^~~~~~~~
+  // CHECK:STDERR:
   for (returned var x: i32 in y) {
     return var;
   }
@@ -22,9 +23,9 @@ fn foo() -> i32 {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'foo'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'foo'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},

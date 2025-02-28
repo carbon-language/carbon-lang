@@ -21,7 +21,6 @@ cc_library(
     hdrs = [
         "diagnostic.h",
         "diagnostic_consumer.h",
-        "diagnostic_converter.h",
         "diagnostic_emitter.h",
     ],
     deps = [
@@ -78,6 +77,15 @@ cc_test(
         "//toolchain/testing:coverage_helper",
         "@abseil-cpp//absl/flags:flag",
         "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "file_diagnostics",
+    hdrs = ["file_diagnostics.h"],
+    deps = [
+        ":diagnostic_emitter",
+        "@llvm-project//llvm:Support",
     ],
 )
 

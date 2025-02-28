@@ -20,9 +20,9 @@ namespace Carbon {
 // example in a template argument list:
 //   CARBON_CHECK((inst.IsOneOf<Call, TupleLiteral>()),
 //                "Unexpected inst {0}", inst);
-#define CARBON_CHECK(condition, ...) \
-  (condition) ? (void)0              \
-              : CARBON_INTERNAL_CHECK(condition __VA_OPT__(, ) __VA_ARGS__)
+#define CARBON_CHECK(condition, ...)         \
+  CARBON_INTERNAL_CHECK_CONDITION(condition) \
+  ? (void)0 : CARBON_INTERNAL_CHECK(condition __VA_OPT__(, ) __VA_ARGS__)
 
 // DCHECK calls CHECK in debug mode, and does nothing otherwise.
 #ifndef NDEBUG
@@ -35,9 +35,9 @@ namespace Carbon {
 // prefix it with a short-circuit operator, and we still emit the (dead) call to
 // the check implementation. But we use a special implementation that reduces
 // the compile time cost.
-#define CARBON_DCHECK(condition, ...) \
-  (true || (condition))               \
-      ? (void)0                       \
+#define CARBON_DCHECK(condition, ...)                  \
+  (true || CARBON_INTERNAL_CHECK_CONDITION(condition)) \
+      ? (void)0                                        \
       : CARBON_INTERNAL_DEAD_DCHECK(condition __VA_OPT__(, ) __VA_ARGS__)
 #endif
 

@@ -14,7 +14,7 @@ fn foo {}
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'foo'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

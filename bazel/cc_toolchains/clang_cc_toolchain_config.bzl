@@ -156,7 +156,6 @@ def _impl(ctx):
                             "--system-header-prefix=clang-tools-extra/",
                             "--system-header-prefix=clang/",
                             "--system-header-prefix=gmock/",
-                            "--system-header-prefix=google/protobuf/",
                             "--system-header-prefix=gtest/",
                             "--system-header-prefix=libfuzzer/",
                             "--system-header-prefix=llvm/",
@@ -366,7 +365,7 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-g", "-gsimple-template-names"],
+                        flags = ["-g"],
                     ),
                     flag_group(
                         flags = ["-gsplit-dwarf"],
@@ -404,7 +403,11 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-glldb", "-gpubnames"],
+                        flags = [
+                            "-glldb",
+                            "-gpubnames",
+                            "-gsimple-template-names",
+                        ],
                     ),
                 ]),
             ),
@@ -424,7 +427,6 @@ def _impl(ctx):
                     ),
                     flag_group(
                         flags = ["-ggnu-pubnames"],
-                        expand_if_available = "per_object_debug_info_file",
                     ),
                 ]),
             ),
@@ -433,7 +435,6 @@ def _impl(ctx):
                 flag_groups = [
                     flag_group(
                         flags = ["-Wl,--gdb-index"],
-                        expand_if_available = "per_object_debug_info_file",
                     ),
                 ],
             ),

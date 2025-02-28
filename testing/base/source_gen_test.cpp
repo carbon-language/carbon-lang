@@ -147,7 +147,8 @@ auto TestCompile(llvm::StringRef source) -> bool {
       new llvm::vfs::InMemoryFileSystem;
   InstallPaths installation(
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
-  Driver driver(fs, &installation, llvm::outs(), llvm::errs());
+  Driver driver(fs, &installation, /*input_stream=*/nullptr, &llvm::outs(),
+                &llvm::errs());
 
   AddPreludeFilesToVfs(installation, fs);
 
@@ -156,11 +157,11 @@ auto TestCompile(llvm::StringRef source) -> bool {
   return driver.RunCommand({"compile", "--phase=check", "test.carbon"}).success;
 }
 
-TEST(SourceGenTest, GenAPIFileDenseDeclsTest) {
+TEST(SourceGenTest, GenApiFileDenseDeclsTest) {
   SourceGen gen;
 
   std::string source =
-      gen.GenAPIFileDenseDecls(1000, SourceGen::DenseDeclParams{});
+      gen.GenApiFileDenseDecls(1000, SourceGen::DenseDeclParams{});
   // Should be within 1% of the requested line count.
   EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(950), Le(1050))));
 
@@ -168,13 +169,13 @@ TEST(SourceGenTest, GenAPIFileDenseDeclsTest) {
   EXPECT_TRUE(TestCompile(source));
 }
 
-TEST(SourceGenTest, GenAPIFileDenseDeclsCppTest) {
+TEST(SourceGenTest, GenApiFileDenseDeclsCppTest) {
   SourceGen gen(SourceGen::Language::Cpp);
 
   // Generate a 1000-line file which is enough to have a reasonably accurate
   // line count estimate and have a few classes.
   std::string source =
-      gen.GenAPIFileDenseDecls(1000, SourceGen::DenseDeclParams{});
+      gen.GenApiFileDenseDecls(1000, SourceGen::DenseDeclParams{});
   // Should be within 10% of the requested line count.
   EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(900), Le(1100))));
 

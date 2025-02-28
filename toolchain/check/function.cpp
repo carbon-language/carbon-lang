@@ -5,6 +5,7 @@
 #include "toolchain/check/function.h"
 
 #include "toolchain/check/merge.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -13,10 +14,16 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
                               SemIR::SpecificId prev_specific_id,
-                              bool check_syntax) -> bool {
+                              bool check_syntax, bool check_self) -> bool {
+  // TODO: When check_syntax is false, the functions should be allowed to have
+  // different signatures as long as we can synthesize a suitable thunk. i.e.,
+  // when there's an implicit conversion from the original parameter types to
+  // the overriding parameter types, and from the overriding return type to the
+  // original return type.
+  // Also, build that thunk.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
                               DeclParams(prev_function), prev_specific_id,
-                              check_syntax)) {
+                              /*diagnose=*/true, check_syntax, check_self)) {
     return false;
   }
 
@@ -26,8 +33,8 @@ auto CheckFunctionTypeMatches(Context& context,
       new_function.GetDeclaredReturnType(context.sem_ir());
   auto prev_return_type_id =
       prev_function.GetDeclaredReturnType(context.sem_ir(), prev_specific_id);
-  if (new_return_type_id == SemIR::TypeId::Error ||
-      prev_return_type_id == SemIR::TypeId::Error) {
+  if (new_return_type_id == SemIR::ErrorInst::SingletonTypeId ||
+      prev_return_type_id == SemIR::ErrorInst::SingletonTypeId) {
     return false;
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
@@ -40,13 +47,13 @@ auto CheckFunctionTypeMatches(Context& context,
         FunctionRedeclReturnTypeDiffersNoReturn, Error,
         "function redeclaration differs because no return type is provided");
     auto diag =
-        new_return_type_id.is_valid()
+        new_return_type_id.has_value()
             ? context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffers,
                                       new_return_type_id)
             : context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffersNoReturn);
-    if (prev_return_type_id.is_valid()) {
+    if (prev_return_type_id.has_value()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
                         "previously declared with return type {0}",
                         SemIR::TypeId);
@@ -65,7 +72,7 @@ auto CheckFunctionTypeMatches(Context& context,
   return true;
 }
 
-auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
+auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
                              SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo {
@@ -78,21 +85,21 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "function returns incomplete type {0}", SemIR::TypeId);
-      return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
+      return context.emitter().Build(loc_id, IncompleteTypeInFunctionReturnType,
                                      return_info.type_id);
     };
     auto diagnose_abstract_return_type = [&] {
       CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
                         "function returns abstract type {0}", SemIR::TypeId);
-      return context.emitter().Build(loc, AbstractTypeInFunctionReturnType,
+      return context.emitter().Build(loc_id, AbstractTypeInFunctionReturnType,
                                      return_info.type_id);
     };
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
-    if (context.TryToCompleteType(return_info.type_id,
-                                  diagnose_incomplete_return_type,
-                                  diagnose_abstract_return_type)) {
+    if (RequireConcreteType(context, return_info.type_id, loc_id,
+                            diagnose_incomplete_return_type,
+                            diagnose_abstract_return_type)) {
       return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
                                                        function, specific_id);
     }

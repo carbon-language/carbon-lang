@@ -10,21 +10,22 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: error: the `package` declaration must be the first non-comment line [PackageTooLate]
+// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+7]]:1: error: the `package` declaration must be the first non-comment line [PackageTooLate]
 // CHECK:STDERR: package B;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: note: first non-comment line is here [FirstNonCommentLine]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
+// CHECK:STDERR:
 package B;
 
 // CHECK:STDOUT: - filename: fail_after_decl.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'A'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'A'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},

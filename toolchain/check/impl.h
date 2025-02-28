@@ -10,8 +10,18 @@
 
 namespace Carbon::Check {
 
-// Builds and returns a witness for the impl `impl_id`.
-auto BuildImplWitness(Context& context, SemIR::ImplId impl_id) -> SemIR::InstId;
+// Returns the initial witness value for a new impl declaration.
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
+    -> SemIR::InstId;
+
+// Update `impl`'s witness at the start of a definition.
+auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
+
+// Adds the function members to the witness for `impl`.
+auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void;
+
+// Sets all unset members of the witness for `impl` to the error instruction.
+auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
 
 }  // namespace Carbon::Check
 

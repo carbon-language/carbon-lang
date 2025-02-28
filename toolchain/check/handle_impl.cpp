@@ -8,9 +8,13 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -37,20 +41,14 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 
   // This might be a generic impl.
   StartGenericDecl(context);
-
-  // Push a pattern block for the signature of the `forall` (if any).
-  // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
-  // and only push a pattern block in `forall` case.
-  context.pattern_block_stack().Push();
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
-  auto params_id =
-      context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
-  context.node_stack().Push(node_id, params_id);
+auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
+  // Push a pattern block for the signature of the `forall`.
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
   return true;
 }
 
@@ -63,7 +61,7 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  context.AddNameToLookup(SemIR::NameId::SelfType, self_id);
+  AddNameToLookup(context, SemIR::NameId::SelfType, self_id);
   return true;
 }
 
@@ -72,14 +70,14 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
 // TODO: Should this be somewhere more central?
 static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<SemIR::ClassDecl> {
-  if (!scope_id.is_valid()) {
+  if (!scope_id.has_value()) {
     return std::nullopt;
   }
   auto& scope = context.name_scopes().Get(scope_id);
-  if (!scope.inst_id.is_valid()) {
+  if (!scope.inst_id().has_value()) {
     return std::nullopt;
   }
-  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id);
+  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
 }
 
 static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
@@ -91,17 +89,17 @@ static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
 
   // TODO: This is also valid in a mixin.
 
-  return SemIR::TypeId::Invalid;
+  return SemIR::TypeId::None;
 }
 
 auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     -> bool {
   auto self_type_id = GetDefaultSelfType(context);
-  if (!self_type_id.is_valid()) {
+  if (!self_type_id.has_value()) {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
-    self_type_id = SemIR::TypeId::Error;
+    self_type_id = SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Build the implicit access to the enclosing `Self`.
@@ -110,9 +108,9 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // is a class and found its `Self`, so additionally performing an unqualified
   // name lookup would be redundant work, but would avoid duplicating the
   // handling of the `Self` expression.
-  auto self_inst_id = context.AddInst(
-      node_id,
-      SemIR::NameRef{.type_id = SemIR::TypeId::TypeType,
+  auto self_inst_id = AddInst(
+      context, node_id,
+      SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
                      .name_id = SemIR::NameId::SelfType,
                      .value_id = context.types().GetInstId(self_type_id)});
 
@@ -122,31 +120,41 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   return true;
 }
 
+static auto DiagnoseExtendImplOutsideClass(Context& context,
+                                           Parse::AnyImplDeclId node_id)
+    -> void {
+  CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
+                    "`extend impl` can only be used in a class");
+  context.emitter().Emit(node_id, ExtendImplOutsideClass);
+}
+
 // Process an `extend impl` declaration by extending the impl scope with the
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
-                       Parse::AnyImplDeclId node_id,
+                       Parse::AnyImplDeclId node_id, SemIR::ImplId impl_id,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node,
                        SemIR::InstId constraint_inst_id,
-                       SemIR::TypeId constraint_id) -> void {
+                       SemIR::TypeId constraint_id) -> bool {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
-  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-
+  if (!parent_scope_id.has_value()) {
+    DiagnoseExtendImplOutsideClass(context, node_id);
+    return false;
+  }
   // TODO: This is also valid in a mixin.
   if (!TryAsClassScope(context, parent_scope_id)) {
-    CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
-                      "`extend impl` can only be used in a class");
-    context.emitter().Emit(node_id, ExtendImplOutsideClass);
-    return;
+    DiagnoseExtendImplOutsideClass(context, node_id);
+    return false;
   }
 
-  if (params_node.is_valid()) {
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+
+  if (params_node.has_value()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
                       "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
-    parent_scope.has_error = true;
-    return;
+    parent_scope.set_has_error();
+    return false;
   }
 
   if (context.parse_tree().node_kind(self_type_node) ==
@@ -158,8 +166,8 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // If the explicit self type is not the default, just bail out.
     if (self_type_id != GetDefaultSelfType(context)) {
       diag.Emit();
-      parent_scope.has_error = true;
-      return;
+      parent_scope.set_has_error();
+      return false;
     }
 
     // The explicit self type is the same as the default self type, so suggest
@@ -176,18 +184,16 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 
   if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
     context.TODO(node_id, "extending non-facet-type constraint");
-    parent_scope.has_error = true;
-    return;
+    parent_scope.set_has_error();
+    return false;
   }
-  parent_scope.has_error |= !context.TryToDefineType(constraint_id, [&] {
-    CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                      "`extend impl` requires a definition for facet type {0}",
-                      InstIdAsType);
-    return context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                   constraint_inst_id);
-  });
+  const auto& impl = context.impls().Get(impl_id);
+  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+    parent_scope.set_has_error();
+  }
 
-  parent_scope.extended_scopes.push_back(constraint_inst_id);
+  parent_scope.AddExtendedScope(constraint_inst_id);
+  return true;
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no
@@ -196,34 +202,47 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
     -> NameComponent {
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
-      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
+      context.node_stack()
+          .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
 
   if (implicit_param_patterns_id) {
-    // Emit the `forall` match. This shouldn't produce any `Call` params,
+    context.node_stack()
+        .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
+    // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
     auto call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
-                           SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
-    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty);
+                           SemIR::InstBlockId::None, SemIR::InstId::None);
+    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
+                 llvm::all_of(context.inst_blocks().Get(call_params_id),
+                              [](SemIR::InstId inst_id) {
+                                return inst_id ==
+                                       SemIR::ErrorInst::SingletonInstId;
+                              }));
   }
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
-  Parse::NodeId last_param_node_id = end_of_decl_node_id;
+  // Subtracting 1 since we don't want to include the final `{` or `;` of the
+  // declaration when performing syntactic match.
+  Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
+  --last_param_iter;
 
   return {
-      .name_loc_id = Parse::NodeId::Invalid,
-      .name_id = SemIR::NameId::Invalid,
+      .name_loc_id = Parse::NodeId::None,
+      .name_id = SemIR::NameId::None,
       .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
+      .last_param_node_id = *last_param_iter,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
-          implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
-      .params_loc_id = Parse::NodeId::Invalid,
-      .param_patterns_id = SemIR::InstBlockId::Invalid,
-      .call_params_id = SemIR::InstBlockId::Invalid,
-      .return_slot_pattern_id = SemIR::InstId::Invalid,
-      .pattern_block_id = context.pattern_block_stack().Pop(),
+          implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
+      .params_loc_id = Parse::NodeId::None,
+      .param_patterns_id = SemIR::InstBlockId::None,
+      .call_params_id = SemIR::InstBlockId::None,
+      .return_slot_pattern_id = SemIR::InstId::None,
+      .pattern_block_id = implicit_param_patterns_id
+                              ? context.pattern_block_stack().Pop()
+                              : SemIR::InstBlockId::None,
   };
 }
 
@@ -231,24 +250,98 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
                             SemIR::ImplId prev_impl_id) -> bool {
   auto& prev_impl = context.impls().Get(prev_impl_id);
 
-  // TODO: Following #3763, disallow redeclarations in different scopes.
-
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
-                              DeclParams(prev_impl), SemIR::SpecificId::Invalid,
-                              /*check_syntax=*/true, /*diagnose=*/false)) {
+                              DeclParams(prev_impl), SemIR::SpecificId::None,
+                              /*diagnose=*/false, /*check_syntax=*/true,
+                              /*check_self=*/true)) {
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
+  return true;
+}
 
-  // TODO: CheckIsAllowedRedecl. We don't have a suitable NameId; decide if we
-  // need to treat the `T as I` as a kind of name.
+static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
+                              SemIR::ImplId prev_impl_id) -> bool {
+  auto& prev_impl = context.impls().Get(prev_impl_id);
 
-  // TODO: Merge information from the new declaration into the old one as
-  // needed.
+  // TODO: Following #3763, disallow redeclarations in different scopes.
+
+  // Following #4672, disallowing defining non-extern declarations in another
+  // file.
+  if (auto import_ref =
+          context.insts().TryGetAs<SemIR::AnyImportRef>(prev_impl.self_id)) {
+    // TODO: Handle extern.
+    CARBON_DIAGNOSTIC(RedeclImportedImpl, Error,
+                      "redeclaration of imported impl");
+    // TODO: Note imported declaration
+    context.emitter().Emit(new_impl.latest_decl_id(), RedeclImportedImpl);
+    return false;
+  }
+
+  if (prev_impl.has_definition_started()) {
+    // Impls aren't merged in order to avoid generic region lookup into a
+    // mismatching table.
+    CARBON_DIAGNOSTIC(ImplRedefinition, Error,
+                      "redefinition of `impl {0} as {1}`", InstIdAsRawType,
+                      InstIdAsRawType);
+    CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
+                      "previous definition was here");
+    context.emitter()
+        .Build(new_impl.latest_decl_id(), ImplRedefinition, new_impl.self_id,
+               new_impl.constraint_id)
+        .Note(prev_impl.definition_id, ImplPreviousDefinition)
+        .Emit();
+    return false;
+  }
+
+  // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
   return true;
+}
+
+// Checks that the constraint specified for the impl is valid and complete.
+// Returns a pointer to the interface that the impl implements. On error,
+// issues a diagnostic and returns nullptr.
+static auto CheckConstraintIsInterface(Context& context,
+                                       const SemIR::Impl& impl)
+    -> const SemIR::CompleteFacetType::RequiredInterface* {
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
+  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
+    return nullptr;
+  }
+  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  if (!facet_type) {
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
+                      InstIdAsType);
+    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
+                           impl.constraint_id);
+    return nullptr;
+  }
+
+  auto complete_id = RequireCompleteFacetType(
+      context, facet_type_id, context.insts().GetLocId(impl.constraint_id),
+      *facet_type, [&] {
+        CARBON_DIAGNOSTIC(ImplAsIncompleteFacetType, Error,
+                          "impl as incomplete facet type {0}", InstIdAsType);
+        return context.emitter().Build(impl.latest_decl_id(),
+                                       ImplAsIncompleteFacetType,
+                                       impl.constraint_id);
+      });
+  if (!complete_id.has_value()) {
+    return nullptr;
+  }
+  const auto& complete = context.complete_facet_types().Get(complete_id);
+  if (complete.num_to_impl != 1) {
+    CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
+                      "impl as {0} interfaces, expected 1", int);
+    context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
+                           complete.num_to_impl);
+    return nullptr;
+  }
+  return &complete.required_interfaces.front();
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the
@@ -260,13 +353,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
-  auto self_type_id = context.GetTypeIdForTypeInst(self_inst_id);
+  auto self_type_id = context.types().GetTypeIdForTypeInstId(self_inst_id);
   // Pop the `impl` introducer and any `forall` parameters as a "name".
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
-  // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
 
@@ -285,57 +377,90 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check for an orphan `impl`.
 
   // Add the impl declaration.
-  SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::Invalid,
+  SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
   auto impl_decl_id =
-      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, impl_decl));
+      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, impl_decl));
 
-  SemIR::Impl impl_info = {
-      name_context.MakeEntityWithParamsBase(name, impl_decl_id,
-                                            /*is_extern=*/false,
-                                            SemIR::LibraryNameId::Invalid),
-      {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
+  SemIR::Impl impl_info = {name_context.MakeEntityWithParamsBase(
+                               name, impl_decl_id,
+                               /*is_extern=*/false, SemIR::LibraryNameId::None),
+                           {.self_id = self_inst_id,
+                            .constraint_id = constraint_inst_id,
+                            .interface = SemIR::SpecificInterface::None}};
+
+  const SemIR::CompleteFacetType::RequiredInterface* required_interface =
+      CheckConstraintIsInterface(context, impl_info);
+  if (required_interface) {
+    impl_info.interface = *required_interface;
+  }
 
   // Add the impl declaration.
+  bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
+  // TODO: Detect two impl declarations with the same self type and interface,
+  // and issue an error if they don't match.
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
-      impl_decl.impl_id = prev_impl_id;
+      if (IsValidImplRedecl(context, impl_info, prev_impl_id)) {
+        impl_decl.impl_id = prev_impl_id;
+      } else {
+        // IsValidImplRedecl() has issued a diagnostic, avoid generating more
+        // diagnostics for this declaration.
+        invalid_redeclaration = true;
+      }
       break;
     }
   }
 
   // Create a new impl if this isn't a valid redeclaration.
-  if (!impl_decl.impl_id.is_valid()) {
-    impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
+  if (!impl_decl.impl_id.has_value()) {
+    impl_info.generic_id = BuildGeneric(context, impl_decl_id);
+    if (required_interface) {
+      impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
+    } else {
+      impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
+      // TODO: We might also want to mark that the name scope for the impl has
+      // an error -- at least once we start making name lookups within the impl
+      // also look into the facet (eg, so you can name associated constants from
+      // within the impl).
+    }
+    FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
-    FinishGenericRedecl(context, impl_decl_id,
-                        context.impls().Get(impl_decl.impl_id).generic_id);
+    const auto& first_impl = context.impls().Get(impl_decl.impl_id);
+    FinishGenericRedecl(context, impl_decl_id, first_impl.generic_id);
   }
 
   // Write the impl ID into the ImplDecl.
-  context.ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
+  ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
+      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
-    if (impl_info.generic_id.is_valid()) {
+    if (impl_info.generic_id.has_value()) {
       SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
-      constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
-          context.insts().GetLocId(constraint_inst_id),
+      constraint_inst_id = AddInst<SemIR::SpecificConstant>(
+          context, context.insts().GetLocId(constraint_inst_id),
           {.type_id = type_id,
            .inst_id = constraint_inst_id,
            .specific_id =
                context.generics().GetSelfSpecific(impl_info.generic_id)});
     }
-    ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
-               name.implicit_params_loc_id, constraint_inst_id,
-               constraint_type_id);
+    if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
+                    self_type_node, self_type_id, name.implicit_params_loc_id,
+                    constraint_inst_id, constraint_type_id)) {
+      // Don't allow the invalid impl to be used.
+      context.impls().Get(impl_decl.impl_id).witness_id =
+          SemIR::ErrorInst::SingletonInstId;
+    }
   }
 
-  if (!is_definition && context.IsImplFile()) {
+  // Impl definitions are required in the same file as the declaration. We skip
+  // this requirement if we've already issued an invalid redeclaration error.
+  if (!is_definition && !invalid_redeclaration) {
     context.definitions_required().push_back(impl_decl_id);
   }
 
@@ -354,29 +479,17 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       BuildImplDecl(context, node_id, /*is_definition=*/true);
   auto& impl_info = context.impls().Get(impl_id);
 
-  if (impl_info.is_defined()) {
-    CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "redefinition of `impl {0} as {1}`", InstIdAsRawType,
-                      InstIdAsRawType);
-    CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
-                      "previous definition was here");
-    context.emitter()
-        .Build(node_id, ImplRedefinition, impl_info.self_id,
-               impl_info.constraint_id)
-        .Note(impl_info.definition_id, ImplPreviousDefinition)
-        .Emit();
-  } else {
-    impl_info.definition_id = impl_decl_id;
-    impl_info.scope_id = context.name_scopes().Add(
-        impl_decl_id, SemIR::NameId::Invalid,
-        context.decl_name_stack().PeekParentScopeId());
-  }
+  CARBON_CHECK(!impl_info.has_definition_started());
+  impl_info.definition_id = impl_decl_id;
+  impl_info.scope_id =
+      context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
+                                context.decl_name_stack().PeekParentScopeId());
 
   context.scope_stack().Push(
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);
-
+  ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 
@@ -399,10 +512,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
   auto& impl_info = context.impls().Get(impl_id);
-  if (!impl_info.is_defined()) {
-    impl_info.witness_id = BuildImplWitness(context, impl_id);
-  }
-
+  CARBON_CHECK(!impl_info.is_defined());
+  FinishImplWitness(context, impl_info);
+  impl_info.defined = true;
   FinishGenericDefinition(context, impl_info.generic_id);
 
   context.inst_block_stack().Pop();

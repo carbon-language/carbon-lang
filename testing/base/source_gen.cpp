@@ -6,6 +6,7 @@
 
 #include <numeric>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
@@ -206,7 +207,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   int num_declared_types =
       num_types * type_use_params.declared_types_weight / type_weight_sum;
   for ([[maybe_unused]] auto _ : llvm::seq(num_declared_types / num_classes)) {
-    type_names_.append(class_names_.begin(), class_names_.end());
+    llvm::append_range(type_names_, class_names_);
   }
   // Now append the remainder number of class names. This is where the class
   // names being un-shuffled is essential. We're going to have one extra
@@ -308,11 +309,10 @@ static auto EstimateAvgClassDefLines(SourceGen::ClassParams params) -> double {
   return avg;
 }
 
-auto SourceGen::GenAPIFileDenseDecls(int target_lines,
+auto SourceGen::GenApiFileDenseDecls(int target_lines,
                                      const DenseDeclParams& params)
     -> std::string {
-  std::string source;
-  llvm::raw_string_ostream os(source);
+  RawStringOstream source;
 
   // Figure out how many classes fit in our target lines, each separated by a
   // blank line. We need to account the comment lines below to start the file.
@@ -327,27 +327,29 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines,
   int expected_lines =
       NumFileCommentLines + num_classes * (avg_class_lines + 1);
 
-  os << "// Generated " << (!IsCpp() ? "Carbon" : "C++") << " source file.\n";
-  os << llvm::formatv("// {0} target lines: {1} classes, {2} expected lines",
-                      target_lines, num_classes, expected_lines)
-     << "\n";
-  os << "//\n// Generating as an API file with dense declarations.\n";
+  source << "// Generated " << (!IsCpp() ? "Carbon" : "C++")
+         << " source file.\n";
+  source << llvm::formatv(
+                "// {0} target lines: {1} classes, {2} expected lines",
+                target_lines, num_classes, expected_lines)
+         << "\n";
+  source << "//\n// Generating as an API file with dense declarations.\n";
 
   // Carbon uses an implicitly imported prelude to get builtin types, but C++
   // requires header files so include those.
   if (IsCpp()) {
-    os << "\n";
+    source << "\n";
     // Header for specific integer types like `std::int64_t`.
-    os << "#include <cstdint>\n";
+    source << "#include <cstdint>\n";
     // Header for `std::pair`.
-    os << "#include <utility>\n";
+    source << "#include <utility>\n";
   }
 
   auto class_gen_state = ClassGenState(*this, num_classes, params.class_params,
                                        params.type_use_params);
   for ([[maybe_unused]] int _ : llvm::seq(num_classes)) {
-    os << "\n";
-    GenerateClassDef(params.class_params, class_gen_state, os);
+    source << "\n";
+    GenerateClassDef(params.class_params, class_gen_state, source);
   }
 
   // Make sure we consumed all the state.
@@ -358,7 +360,7 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines,
   CARBON_CHECK(class_gen_state.class_names().empty());
   CARBON_CHECK(class_gen_state.type_names().empty());
 
-  return source;
+  return source.TakeStr();
 }
 
 auto SourceGen::GetShuffledIdentifiers(int number, int min_length,
@@ -389,8 +391,8 @@ auto SourceGen::GetIdentifiers(int number, int min_length, int max_length,
       number, min_length, max_length, uniform,
       [this](int length, int length_count,
              llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-        auto length_idents = GetSingleLengthIdentifiers(length, length_count);
-        dest.append(length_idents.begin(), length_idents.end());
+        llvm::append_range(dest,
+                           GetSingleLengthIdentifiers(length, length_count));
       });
 
   return idents;

@@ -8,6 +8,7 @@
 #include "common/array_stack.h"
 #include "common/set.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/file.h"
@@ -19,8 +20,10 @@ namespace Carbon::Check {
 // checking within.
 class ScopeStack {
  public:
-  explicit ScopeStack(const CanonicalValueStore<IdentifierId>& identifiers)
-      : lexical_lookup_(identifiers) {}
+  explicit ScopeStack(const SemIR::File* sem_ir)
+      : sem_ir_(sem_ir),
+        lexical_lookup_(sem_ir->identifiers()),
+        full_pattern_stack_(&lexical_lookup_) {}
 
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
@@ -36,7 +39,7 @@ class ScopeStack {
 
     // The value corresponding to the current `returned var`, if any. Will be
     // set and unset as `returned var`s are declared and go out of scope.
-    SemIR::InstId returned_var = SemIR::InstId::Invalid;
+    SemIR::InstId returned_var = SemIR::InstId::None;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -54,13 +57,13 @@ class ScopeStack {
   // Information about a scope that has been temporarily removed from the stack.
   struct SuspendedScope;
 
-  // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
+  // Pushes a scope onto scope_stack_. NameScopeId::None is used for new
   // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
   // given namespace may contain a mix of both successful and failed name
   // imports.
-  auto Push(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-            SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
-            SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
+  auto Push(SemIR::InstId scope_inst_id = SemIR::InstId::None,
+            SemIR::NameScopeId scope_id = SemIR::NameScopeId::None,
+            SemIR::SpecificId specific_id = SemIR::SpecificId::None,
             bool lexical_lookup_has_load_error = false) -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from
@@ -83,7 +86,7 @@ class ScopeStack {
   // Returns the name scope associated with the current lexical scope, if any.
   auto PeekNameScopeId() const -> SemIR::NameScopeId { return Peek().scope_id; }
 
-  // Returns the instruction associated with the current scope, or Invalid if
+  // Returns the instruction associated with the current scope, or `None` if
   // there is no such instruction, such as for a block scope.
   auto PeekInstId() const -> SemIR::InstId { return Peek().scope_inst_id; }
 
@@ -98,22 +101,23 @@ class ScopeStack {
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
-  auto GetCurrentScopeAs(const SemIR::File& sem_ir) -> std::optional<InstT> {
+  auto GetCurrentScopeAs() -> std::optional<InstT> {
     auto inst_id = PeekInstId();
-    if (!inst_id.is_valid()) {
+    if (!inst_id.has_value()) {
       return std::nullopt;
     }
-    return sem_ir.insts().TryGetAs<InstT>(inst_id);
+    return sem_ir_->insts().TryGetAs<InstT>(inst_id);
   }
 
   // If there is no `returned var` in scope, sets the given instruction to be
-  // the current `returned var` and returns an invalid instruction ID. If there
+  // the current `returned var` and returns an `None`. If there
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Looks up the name `name_id` in the current scope. Returns the existing
-  // lookup result, if any.
-  auto LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId;
+  // Looks up the name `name_id` in the current scope and enclosing scopes, but
+  // do not look past `scope_index`. Returns the existing lookup result, if any.
+  auto LookupInLexicalScopesWithin(SemIR::NameId name_id,
+                                   ScopeIndex scope_index) -> SemIR::InstId;
 
   // Looks up the name `name_id` in the current scope and related lexical
   // scopes. Returns the innermost lexical lookup result, if any, along with a
@@ -122,10 +126,12 @@ class ScopeStack {
   auto LookupInLexicalScopes(SemIR::NameId name_id)
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
-  // Looks up the name `name_id` in the current scope. Returns the existing
-  // instruction if any, and otherwise adds the name with the value `target_id`
-  // and returns Invalid.
-  auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
+  // Looks up the name `name_id` in the current scope, or in `scope_index` if
+  // specified. Returns the existing instruction if the name is already declared
+  // in that scope or any unfinished scope within it, and otherwise adds the
+  // name with the value `target_id` and returns `None`.
+  auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
+                       ScopeIndex scope_index = ScopeIndex::None)
       -> SemIR::InstId;
 
   // Prepares to add a compile-time binding in the current scope, and returns
@@ -149,7 +155,7 @@ class ScopeStack {
   auto Restore(SuspendedScope scope) -> void;
 
   // Runs verification that the processing cleanly finished.
-  auto VerifyOnFinish() -> void;
+  auto VerifyOnFinish() const -> void;
 
   auto return_scope_stack() -> llvm::SmallVector<ReturnScope>& {
     return return_scope_stack_;
@@ -162,6 +168,8 @@ class ScopeStack {
   auto compile_time_bindings_stack() -> ArrayStack<SemIR::InstId>& {
     return compile_time_binding_stack_;
   }
+
+  auto full_pattern_stack() -> FullPatternStack& { return full_pattern_stack_; }
 
  private:
   // An entry in scope_stack_.
@@ -219,6 +227,9 @@ class ScopeStack {
   auto VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
                                       const ScopeStackEntry& scope) -> void;
 
+  // The current file.
+  const SemIR::File* sem_ir_;
+
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;
 
@@ -241,6 +252,9 @@ class ScopeStack {
 
   // Tracks lexical lookup results.
   LexicalLookup lexical_lookup_;
+
+  // Stack of full-patterns currently being checked.
+  FullPatternStack full_pattern_stack_;
 };
 
 struct ScopeStack::SuspendedScope {

@@ -35,7 +35,7 @@ class CopyOnWriteBlock {
   // with `size` elements.
   explicit CopyOnWriteBlock(SemIR::File& file, UninitializedBlock uninit)
       : file_(file),
-        source_id_(BlockIdType::Invalid),
+        source_id_(BlockIdType::None),
         id_((file_.*ValueStore)().AddUninitialized(uninit.size)) {}
 
   // Gets a block ID containing the resulting elements. Note that further
@@ -52,13 +52,13 @@ class CopyOnWriteBlock {
   // Sets the element at index `i` within the block. Lazily allocates a new
   // block when the value changes for the first time.
   auto Set(int i, typename BlockIdType::ElementType value) -> void {
-    if (source_id_.is_valid() && (file_.*ValueStore)().Get(id_)[i] == value) {
+    if (source_id_.has_value() && (file_.*ValueStore)().Get(id_)[i] == value) {
       return;
     }
     if (id_ == source_id_) {
       id_ = (file_.*ValueStore)().Add((file_.*ValueStore)().Get(source_id_));
     }
-    (file_.*ValueStore)().Get(id_)[i] = value;
+    (file_.*ValueStore)().GetMutable(id_)[i] = value;
   }
 
  private:

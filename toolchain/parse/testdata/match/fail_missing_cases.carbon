@@ -10,9 +10,10 @@
 
 
 fn f() -> i32 {
-  // CHECK:STDERR: fail_missing_cases.carbon:[[@LINE+3]]:14: error: expected cases [ExpectedMatchCases]
+  // CHECK:STDERR: fail_missing_cases.carbon:[[@LINE+4]]:14: error: expected cases [ExpectedMatchCases]
   // CHECK:STDERR:   match (3) {}
   // CHECK:STDERR:              ^
+  // CHECK:STDERR:
   match (3) {}
   return 0;
 }
@@ -21,9 +22,9 @@ fn f() -> i32 {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'f'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'f'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},

@@ -50,107 +50,108 @@ export library "export_library";
 
 // --- fail_import_modifiers.carbon
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `impl` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: impl import ImplImport;
-// CHECK:STDERR: ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:6: error: imported API 'ImplImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:6: error: imported API 'ImplImport' not found [ImportNotFound]
 // CHECK:STDERR: impl import ImplImport;
 // CHECK:STDERR:      ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `impl` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: impl import ImplImport;
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 impl import ImplImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `extend` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: extend import ExtendImport;
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:8: error: imported API 'ExtendImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:8: error: imported API 'ExtendImport' not found [ImportNotFound]
 // CHECK:STDERR: extend import ExtendImport;
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `extend` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: extend import ExtendImport;
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 extend import ExtendImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `virtual` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: virtual import VirtualImport;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:9: error: imported API 'VirtualImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:9: error: imported API 'VirtualImport' not found [ImportNotFound]
 // CHECK:STDERR: virtual import VirtualImport;
 // CHECK:STDERR:         ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `virtual` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: virtual import VirtualImport;
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 virtual import VirtualImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `base` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: base import BaseImport;
-// CHECK:STDERR: ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:6: error: imported API 'BaseImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:6: error: imported API 'BaseImport' not found [ImportNotFound]
 // CHECK:STDERR: base import BaseImport;
 // CHECK:STDERR:      ^~~~~~
 // CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `base` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: base import BaseImport;
+// CHECK:STDERR: ^~~~
+// CHECK:STDERR:
 base import BaseImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+7]]:1: error: `private` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:9: error: imported API 'PrivateImport' not found [ImportNotFound]
+// CHECK:STDERR: private import PrivateImport;
+// CHECK:STDERR:         ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `private` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: private import PrivateImport;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+3]]:9: error: imported API 'PrivateImport' not found [ImportNotFound]
-// CHECK:STDERR: private import PrivateImport;
-// CHECK:STDERR:         ^~~~~~
 private import PrivateImport;
 
 // CHECK:STDOUT: --- fail_export_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_virtual_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_private_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_library.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %ImplImport: <namespace> = namespace file.%ImplImport.import, [template] {
+// CHECK:STDOUT:   %ImplImport: <namespace> = namespace file.%ImplImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace file.%ExtendImport.import, [template] {
+// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace file.%ExtendImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace file.%VirtualImport.import, [template] {
+// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace file.%VirtualImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %BaseImport: <namespace> = namespace file.%BaseImport.import, [template] {
+// CHECK:STDOUT:   %BaseImport: <namespace> = namespace file.%BaseImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace file.%PrivateImport.import, [template] {
+// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace file.%PrivateImport.import, [concrete] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .ImplImport = imports.%ImplImport
 // CHECK:STDOUT:     .ExtendImport = imports.%ExtendImport
 // CHECK:STDOUT:     .VirtualImport = imports.%VirtualImport

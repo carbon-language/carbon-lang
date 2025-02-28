@@ -13,48 +13,24 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Program.h"
 #include "llvm/TargetParser/Host.h"
+#include "testing/base/capture_std_streams.h"
+#include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
-#include "testing/base/test_raw_ostream.h"
 
 namespace Carbon {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-// While these are marked as "internal" APIs, they seem to work and be pretty
-// widely used for their exact documented behavior.
-using ::testing::internal::CaptureStderr;
-using ::testing::internal::CaptureStdout;
-using ::testing::internal::GetCapturedStderr;
-using ::testing::internal::GetCapturedStdout;
-
-// Calls the provided lambda with `stderr` and `stdout` captured and saved into
-// the provided output parameters. The lambda's result is returned. It is
-// important to not put anything inside the lambda whose output would be useful
-// in interpreting test errors such as Google Test assertions as their output
-// will end up captured as well.
-template <typename CallableT>
-static auto RunWithCapturedOutput(std::string& out, std::string& err,
-                                  CallableT callable) {
-  CaptureStderr();
-  CaptureStdout();
-  auto result = callable();
-  // No need to flush stderr.
-  err = GetCapturedStderr();
-  llvm::outs().flush();
-  out = GetCapturedStdout();
-  return result;
-}
-
 TEST(ClangRunnerTest, Version) {
-  TestRawOstream test_os;
+  RawStringOstream test_os;
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   std::string target = llvm::sys::getDefaultTargetTriple();
@@ -63,8 +39,8 @@ TEST(ClangRunnerTest, Version) {
 
   std::string out;
   std::string err;
-  EXPECT_TRUE(RunWithCapturedOutput(out, err,
-                                    [&] { return runner.Run({"--version"}); }));
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err, [&] { return runner.Run({"--version"}); }));
   // The arguments to Clang should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
 
@@ -81,38 +57,6 @@ TEST(ClangRunnerTest, Version) {
                              install_paths.llvm_install_bin()));
 }
 
-// Utility to write a test file. We don't need the full power provided here yet,
-// but we anticipate adding more tests such as compiling basic C++ code in the
-// future and this provides a basis for building those tests.
-static auto WriteTestFile(llvm::StringRef name_suffix, llvm::Twine contents)
-    -> std::filesystem::path {
-  std::filesystem::path test_tmpdir;
-  if (char* tmpdir_env = getenv("TEST_TMPDIR"); tmpdir_env != nullptr) {
-    test_tmpdir = std::string(tmpdir_env);
-  } else {
-    test_tmpdir = std::filesystem::temp_directory_path();
-  }
-
-  const auto* unit_test = ::testing::UnitTest::GetInstance();
-  const auto* test_info = unit_test->current_test_info();
-  std::filesystem::path test_file =
-      test_tmpdir / llvm::formatv("{0}_{1}_{2}", test_info->test_suite_name(),
-                                  test_info->name(), name_suffix)
-                        .str();
-  // Make debugging a bit easier by cleaning up any files from previous runs.
-  // This is only necessary when not run in Bazel's test environment.
-  std::filesystem::remove(test_file);
-  CARBON_CHECK(!std::filesystem::exists(test_file));
-
-  {
-    std::error_code ec;
-    llvm::raw_fd_ostream test_file_stream(test_file.string(), ec);
-    CARBON_CHECK(!ec, "Test file error: {0}", ec.message());
-    test_file_stream << contents;
-  }
-  return test_file;
-}
-
 // It's hard to write a portable and reliable unittest for all the layers of the
 // Clang driver because they work hard to interact with the underlying
 // filesystem and operating system. For now, we just check that a link command
@@ -122,26 +66,26 @@ static auto WriteTestFile(llvm::StringRef name_suffix, llvm::Twine contents)
 // test more complete Clang functionality here.
 TEST(ClangRunnerTest, LinkCommandEcho) {
   // Just create some empty files to use in a synthetic link command below.
-  std::filesystem::path foo_file = WriteTestFile("foo.o", "");
-  std::filesystem::path bar_file = WriteTestFile("bar.o", "");
+  std::filesystem::path foo_file = *Testing::WriteTestFile("foo.o", "");
+  std::filesystem::path bar_file = *Testing::WriteTestFile("bar.o", "");
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
-  std::string verbose_out;
-  llvm::raw_string_ostream verbose_os(verbose_out);
+  RawStringOstream verbose_out;
   std::string target = llvm::sys::getDefaultTargetTriple();
   auto vfs = llvm::vfs::getRealFileSystem();
-  ClangRunner runner(&install_paths, target, vfs, &verbose_os);
+  ClangRunner runner(&install_paths, target, vfs, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_TRUE(RunWithCapturedOutput(out, err,
-                                    [&] {
-                                      return runner.Run({"-###", "-o", "binary",
-                                                         foo_file.string(),
-                                                         bar_file.string()});
-                                    }))
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err,
+      [&] {
+        return runner.Run(
+            {"-###", "-o", "binary", foo_file.string(), bar_file.string()});
+      }))
       << "Verbose output from runner:\n"
-      << verbose_out << "\n";
+      << verbose_out.TakeStr() << "\n";
+  verbose_out.clear();
 
   // Because we use `-###' above, we should just see the command that the Clang
   // driver would have run in a subprocess. This will be very architecture
@@ -156,30 +100,98 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
 
 TEST(ClangRunnerTest, DashC) {
   std::filesystem::path test_file =
-      WriteTestFile("test.cpp", "int test() { return 0; }");
-  std::filesystem::path test_output = WriteTestFile("test.o", "");
+      *Testing::WriteTestFile("test.cpp", "int test() { return 0; }");
+  std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
-  std::string verbose_out;
-  llvm::raw_string_ostream verbose_os(verbose_out);
+  RawStringOstream verbose_out;
   std::string target = llvm::sys::getDefaultTargetTriple();
   auto vfs = llvm::vfs::getRealFileSystem();
-  ClangRunner runner(&install_paths, target, vfs, &verbose_os);
+  ClangRunner runner(&install_paths, target, vfs, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_TRUE(RunWithCapturedOutput(out, err,
-                                    [&] {
-                                      return runner.Run(
-                                          {"-c", test_file.string(), "-o",
-                                           test_output.string()});
-                                    }))
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err,
+      [&] {
+        return runner.Run(
+            {"-c", test_file.string(), "-o", test_output.string()});
+      }))
       << "Verbose output from runner:\n"
-      << verbose_out << "\n";
+      << verbose_out.TakeStr() << "\n";
+  verbose_out.clear();
 
   // No output should be produced.
   EXPECT_THAT(out, StrEq(""));
   EXPECT_THAT(err, StrEq(""));
+}
+
+TEST(ClangRunnerTest, BuitinHeaders) {
+  std::filesystem::path test_file = *Testing::WriteTestFile("test.c", R"cpp(
+#include <stdalign.h>
+
+#ifndef alignas
+#error included the wrong header
+#endif
+  )cpp");
+  std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
+
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
+  RawStringOstream verbose_out;
+  std::string target = llvm::sys::getDefaultTargetTriple();
+  auto vfs = llvm::vfs::getRealFileSystem();
+  ClangRunner runner(&install_paths, target, vfs, &verbose_out);
+  std::string out;
+  std::string err;
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err,
+      [&] {
+        return runner.Run(
+            {"-c", test_file.string(), "-o", test_output.string()});
+      }))
+      << "Verbose output from runner:\n"
+      << verbose_out.TakeStr() << "\n";
+  verbose_out.clear();
+
+  // No output should be produced.
+  EXPECT_THAT(out, StrEq(""));
+  EXPECT_THAT(err, StrEq(""));
+}
+
+TEST(ClangRunnerTest, CompileMultipleFiles) {
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
+
+  // Memory leaks and other errors from running Clang can at times only manifest
+  // with repeated compilations. Use a lambda to just do a series of compiles.
+  auto compile = [&](llvm::StringRef filename, llvm::StringRef source) {
+    std::string output_file = std::string(filename.split('.').first) + ".o";
+    std::filesystem::path file = *Testing::WriteTestFile(filename, source);
+    std::filesystem::path output = *Testing::WriteTestFile(output_file, "");
+
+    RawStringOstream verbose_out;
+    std::string target = llvm::sys::getDefaultTargetTriple();
+    auto vfs = llvm::vfs::getRealFileSystem();
+    ClangRunner runner(&install_paths, target, vfs, &verbose_out);
+    std::string out;
+    std::string err;
+    EXPECT_TRUE(Testing::CallWithCapturedOutput(
+        out, err,
+        [&] {
+          return runner.Run({"-c", file.string(), "-o", output.string()});
+        }))
+        << "Verbose output from runner:\n"
+        << verbose_out.TakeStr() << "\n";
+    verbose_out.clear();
+
+    EXPECT_THAT(out, StrEq(""));
+    EXPECT_THAT(err, StrEq(""));
+  };
+
+  compile("test1.cpp", "int test1() { return 0; }");
+  compile("test2.cpp", "int test2() { return 0; }");
+  compile("test3.cpp", "int test3() { return 0; }");
 }
 
 }  // namespace

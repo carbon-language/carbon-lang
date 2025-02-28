@@ -19,7 +19,7 @@
 //     Defines a parse node for a postfix operator, with the Name as token.
 //   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)
 //     Defines a parse node that corresponds to a token that is a single-token
-//     literal. The token is wrapped for LexTokenKinds.
+//     literal.
 //   - CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)
 //     A token-based modifier. The Name is the TokenKind, and will be appended
 //     with "Modifier" for the parse kind.
@@ -31,13 +31,14 @@
 
 #if !defined(CARBON_PARSE_NODE_KIND)
 #error "Must define CARBON_PARSE_NODE_KIND family x-macros to use this file."
+#define CARBON_PARSE_NODE_KIND(Name)
 #endif
 
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR
 #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) \
   CARBON_PARSE_NODE_KIND(PrefixOperator##Name)
@@ -46,8 +47,8 @@
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_INFIX_OPERATOR
 #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) \
   CARBON_PARSE_NODE_KIND(InfixOperator##Name)
@@ -56,8 +57,8 @@
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR
 #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) \
   CARBON_PARSE_NODE_KIND(PostfixOperator##Name)
@@ -66,18 +67,18 @@
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle literal cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind) <code>
 #ifndef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
-#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKinds) \
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind) \
   CARBON_PARSE_NODE_KIND(Name)
 #endif
 
 // This is expected to be used with something like:
 //
 //   // Use x-macros to handle modifier cases.
-//   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) <code>
+//   #define CARBON_PARSE_NODE_KIND(Name)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) <code>
 #ifndef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) \
   CARBON_PARSE_NODE_KIND(Name##Modifier)
@@ -94,7 +95,8 @@ CARBON_PARSE_NODE_KIND(Placeholder)
 
 CARBON_PARSE_NODE_KIND(EmptyDecl)
 
-CARBON_PARSE_NODE_KIND(IdentifierName)
+CARBON_PARSE_NODE_KIND(IdentifierNameNotBeforeParams)
+CARBON_PARSE_NODE_KIND(IdentifierNameBeforeParams)
 
 CARBON_PARSE_NODE_KIND(IdentifierNameExpr)
 
@@ -104,7 +106,9 @@ CARBON_PARSE_NODE_KIND(SelfTypeNameExpr)
 
 CARBON_PARSE_NODE_KIND(BaseName)
 CARBON_PARSE_NODE_KIND(PackageExpr)
-CARBON_PARSE_NODE_KIND(PackageName)
+CARBON_PARSE_NODE_KIND(CoreNameExpr)
+CARBON_PARSE_NODE_KIND(IdentifierPackageName)
+CARBON_PARSE_NODE_KIND(CorePackageName)
 CARBON_PARSE_NODE_KIND(LibraryName)
 
 CARBON_PARSE_NODE_KIND(PackageIntroducer)
@@ -119,7 +123,8 @@ CARBON_PARSE_NODE_KIND(LibraryDecl)
 
 CARBON_PARSE_NODE_KIND(LibrarySpecifier)
 
-CARBON_PARSE_NODE_KIND(NameQualifier)
+CARBON_PARSE_NODE_KIND(NameQualifierWithParams)
+CARBON_PARSE_NODE_KIND(NameQualifierWithoutParams)
 
 CARBON_PARSE_NODE_KIND(ExportIntroducer)
 CARBON_PARSE_NODE_KIND(ExportDecl)
@@ -147,17 +152,21 @@ CARBON_PARSE_NODE_KIND(TuplePatternStart)
 CARBON_PARSE_NODE_KIND(PatternListComma)
 CARBON_PARSE_NODE_KIND(TuplePattern)
 
+CARBON_PARSE_NODE_KIND(ExplicitParamListStart)
+CARBON_PARSE_NODE_KIND(ExplicitParamList)
 CARBON_PARSE_NODE_KIND(ImplicitParamListStart)
 CARBON_PARSE_NODE_KIND(ImplicitParamList)
 
-CARBON_PARSE_NODE_KIND(ArrayExprStart)
-CARBON_PARSE_NODE_KIND(ArrayExprSemi)
+CARBON_PARSE_NODE_KIND(ArrayExprOpenParen)
+CARBON_PARSE_NODE_KIND(ArrayExprKeyword)
+CARBON_PARSE_NODE_KIND(ArrayExprComma)
 CARBON_PARSE_NODE_KIND(ArrayExpr)
 
-CARBON_PARSE_NODE_KIND(BindingPattern)
+CARBON_PARSE_NODE_KIND(LetBindingPattern)
+CARBON_PARSE_NODE_KIND(VarBindingPattern)
+CARBON_PARSE_NODE_KIND(TemplateBindingName)
 CARBON_PARSE_NODE_KIND(CompileTimeBindingPattern)
 CARBON_PARSE_NODE_KIND(Addr)
-CARBON_PARSE_NODE_KIND(Template)
 
 CARBON_PARSE_NODE_KIND(LetIntroducer)
 CARBON_PARSE_NODE_KIND(LetInitializer)
@@ -167,6 +176,7 @@ CARBON_PARSE_NODE_KIND(VariableIntroducer)
 CARBON_PARSE_NODE_KIND(ReturnedModifier)
 CARBON_PARSE_NODE_KIND(VariableInitializer)
 CARBON_PARSE_NODE_KIND(VariableDecl)
+CARBON_PARSE_NODE_KIND(VariablePattern)
 
 CARBON_PARSE_NODE_KIND(ExprStatement)
 
@@ -234,6 +244,7 @@ CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Const)
 CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Not)
 CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Minus)
 CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(MinusMinus)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Partial)
 CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(PlusPlus)
 CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Star)
 
@@ -334,7 +345,7 @@ CARBON_PARSE_NODE_KIND(ImplIntroducer)
 CARBON_PARSE_NODE_KIND(ImplDefinitionStart)
 CARBON_PARSE_NODE_KIND(ImplDefinition)
 CARBON_PARSE_NODE_KIND(ImplDecl)
-CARBON_PARSE_NODE_KIND(ImplForall)
+CARBON_PARSE_NODE_KIND(Forall)
 CARBON_PARSE_NODE_KIND(TypeImplAs)
 CARBON_PARSE_NODE_KIND(DefaultSelfImplAs)
 

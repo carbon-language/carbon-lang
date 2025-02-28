@@ -12,25 +12,58 @@
 
 namespace Carbon::SemIR {
 
+// The kinds of symbolic bindings that a constant might depend on. These are
+// ordered from least to most dependent, so that the dependence of an operation
+// can typically be computed by taking the maximum of the dependences of its
+// operands.
+enum class ConstantDependence : uint8_t {
+  // This constant's value is known concretely, and does not depend on any
+  // symbolic binding.
+  None,
+  // The only symbolic binding that this constant depends on is `.Self`.
+  PeriodSelf,
+  // The only symbolic bindings that this constant depends on are checked
+  // generic bindings.
+  Checked,
+  // This symbolic binding depends on a template-dependent value, such as a
+  // template parameter.
+  Template,
+};
+
 // Information about a symbolic constant value. These are indexed by
 // `ConstantId`s for which `is_symbolic` is true.
 struct SymbolicConstant : Printable<SymbolicConstant> {
   // The constant instruction that defines the value of this symbolic constant.
   InstId inst_id;
-  // The enclosing generic. If this is invalid, then this is an abstract
+  // The enclosing generic. If this is `None`, then this is an abstract
   // symbolic constant, such as a constant instruction in the constants block,
   // rather than one associated with a particular generic.
   GenericId generic_id;
   // The index of this symbolic constant within the generic's list of symbolic
-  // constants, or invalid if `generic_id` is invalid.
+  // constants, or `None` if `generic_id` is `None`.
   GenericInstIndex index;
-  // True if this is constant is symbolic just because it uses `.Self`.
-  bool period_self_only;
+  // The kind of dependence this symbolic constant exhibits. Should never be
+  // `Concrete`.
+  ConstantDependence dependence;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index
-        << ", .Self: " << (period_self_only ? "true" : "false") << "}";
+        << ", index: " << index << ", kind: ";
+    switch (dependence) {
+      case ConstantDependence::None:
+        out << "<error: concrete>";
+        break;
+      case ConstantDependence::PeriodSelf:
+        out << "self";
+        break;
+      case ConstantDependence::Checked:
+        out << "checked";
+        break;
+      case ConstantDependence::Template:
+        out << "template";
+        break;
+    }
+    out << "}";
   }
 };
 
@@ -61,25 +94,26 @@ class ConstantValueStore {
   }
 
   // Gets the instruction ID that defines the value of the given constant.
-  // Returns Invalid if the constant ID is non-constant. Requires is_valid.
+  // Returns `None` if the constant ID is non-constant. Requires
+  // `const_id.has_value()`.
   auto GetInstId(ConstantId const_id) const -> InstId {
-    if (const_id.is_template()) {
-      return const_id.template_inst_id();
+    if (const_id.is_concrete()) {
+      return const_id.concrete_inst_id();
     }
     if (const_id.is_symbolic()) {
       return GetSymbolicConstant(const_id).inst_id;
     }
-    return InstId::Invalid;
+    return InstId::None;
   }
 
   // Gets the instruction ID that defines the value of the given constant.
-  // Returns Invalid if the constant ID is non-constant or invalid.
+  // Returns `None` if the constant ID is non-constant or `None`.
   auto GetInstIdIfValid(ConstantId const_id) const -> InstId {
-    return const_id.is_valid() ? GetInstId(const_id) : InstId::Invalid;
+    return const_id.has_value() ? GetInstId(const_id) : InstId::None;
   }
 
   // Given an instruction, returns the unique constant instruction that is
-  // equivalent to it. Returns Invalid for a non-constant instruction.
+  // equivalent to it. Returns `None` for a non-constant instruction.
   auto GetConstantInstId(InstId inst_id) const -> InstId {
     return GetInstId(Get(inst_id));
   }
@@ -105,11 +139,16 @@ class ConstantValueStore {
     return symbolic_constants_[const_id.symbolic_index()];
   }
 
+  // Get the dependence of the given constant.
+  auto GetDependence(ConstantId const_id) const -> ConstantDependence {
+    return const_id.is_symbolic() ? GetSymbolicConstant(const_id).dependence
+                                  : ConstantDependence::None;
+  }
+
   // Returns true for symbolic constants other than those that are only symbolic
   // because they depend on `.Self`.
   auto DependsOnGenericParameter(ConstantId const_id) const -> bool {
-    return const_id.is_symbolic() &&
-           !GetSymbolicConstant(const_id).period_self_only;
+    return GetDependence(const_id) > ConstantDependence::PeriodSelf;
   }
 
   // Collects memory usage of members.
@@ -120,10 +159,15 @@ class ConstantValueStore {
                       symbolic_constants_);
   }
 
-  // Returns the constant values mapping as an ArrayRef whose keys are
-  // instruction indexes. Some of the elements in this mapping may be Invalid or
-  // NotConstant.
-  auto array_ref() const -> llvm::ArrayRef<ConstantId> { return values_; }
+  // Makes an iterable range over pairs of the instruction id and constant value
+  // id for each value in the store.
+  auto enumerate() const -> auto {
+    auto index_to_id = [](auto pair) -> std::pair<InstId, ConstantId> {
+      auto [index, value] = pair;
+      return std::pair<InstId, ConstantId>(InstId(index), value);
+    };
+    return llvm::map_range(llvm::enumerate(values_), index_to_id);
+  }
 
   // Returns the symbolic constants mapping as an ArrayRef whose keys are
   // symbolic indexes of constants.
@@ -143,7 +187,7 @@ class ConstantValueStore {
   llvm::SmallVector<ConstantId, 0> values_;
 
   // A mapping from a symbolic constant ID index to information about the
-  // symbolic constant. For a template constant, the only information that we
+  // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
@@ -160,8 +204,7 @@ class ConstantStore {
   //
   // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
-  enum PhaseKind : uint8_t { IsTemplate, IsPeriodSelfSymbolic, IsSymbolic };
-  auto GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId;
+  auto GetOrAdd(Inst inst, ConstantDependence dependence) -> ConstantId;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

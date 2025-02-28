@@ -50,8 +50,10 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
     return values_.Get(id);
   }
 
-  // Returns the requested block.
-  auto Get(IdT id) -> llvm::MutableArrayRef<ElementType> {
+  // Returns a mutable view of the requested block. This operation should be
+  // avoided where possible; we generally want blocks to be immutable once
+  // created.
+  auto GetMutable(IdT id) -> llvm::MutableArrayRef<ElementType> {
     return values_.Get(id);
   }
 
@@ -79,13 +81,11 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto block_index : llvm::seq(values_.size())) {
-        auto block_id = IdT(block_index);
+      for (auto [block_id, block] : values_.enumerate()) {
         map.Add(PrintToString(block_id),
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                  auto block = Get(block_id);
-                  for (auto i : llvm::seq(block.size())) {
-                    map.Add(llvm::itostr(i), Yaml::OutputScalar(block[i]));
+                  for (auto [i, elem_id] : llvm::enumerate(block)) {
+                    map.Add(llvm::itostr(i), Yaml::OutputScalar(elem_id));
                   }
                 }));
       }

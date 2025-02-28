@@ -4,6 +4,7 @@
 
 #include "toolchain/lower/mangler.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
@@ -31,15 +32,19 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       os << prefix;
     }
     if (name_scope_id == SemIR::NameScopeId::Package) {
-      if (auto package_id = sem_ir().package_id(); package_id.is_valid()) {
-        os << sem_ir().identifiers().Get(package_id);
+      auto package_id = sem_ir().package_id();
+      if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+        os << sem_ir().identifiers().Get(ident_id);
       } else {
-        os << "Main";
+        // TODO: Handle name conflicts between special package names and raw
+        // identifier package names. Note that any change here will also require
+        // a change to namespace mangling for imported packages.
+        os << package_id.AsSpecialName();
       }
       continue;
     }
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
-    CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
+    CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id())) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
@@ -110,7 +115,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         break;
       }
       case SemIR::Namespace::Kind: {
-        os << names().GetAsStringIfIdentifier(name_scope.name_id);
+        os << names().GetIRBaseName(name_scope.name_id());
         break;
       }
       default:
@@ -119,7 +124,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     }
     if (!name_scope.is_imported_package()) {
       names_to_render.push_back(
-          {.name_scope_id = name_scope.parent_scope_id, .prefix = '.'});
+          {.name_scope_id = name_scope.parent_scope_id(), .prefix = '.'});
     }
   }
 }
@@ -128,24 +133,29 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
                      SemIR::SpecificId specific_id) -> std::string {
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
-    CARBON_CHECK(!specific_id.is_valid(), "entry point should not be generic");
+    CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
-  std::string result;
-  llvm::raw_string_ostream os(result);
+  RawStringOstream os;
   os << "_C";
 
   os << names().GetAsStringIfIdentifier(function.name_id);
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
-  // TODO: Add proper support for generic entities. The ID we emit here will not
-  // be consistent across object files.
-  if (specific_id.is_valid()) {
-    os << "." << specific_id.index;
+  // TODO: Add proper support for mangling generic entities. For now we use a
+  // fingerprint of the specific arguments, which should be stable across files,
+  // but isn't necessarily stable across toolchain changes.
+  if (specific_id.has_value()) {
+    os << ".";
+    llvm::write_hex(
+        os,
+        fingerprinter_.GetOrCompute(
+            &sem_ir(), sem_ir().specifics().Get(specific_id).args_id),
+        llvm::HexPrintStyle::Lower, 16);
   }
 
-  return os.str();
+  return os.TakeStr();
 }
 
 }  // namespace Carbon::Lower

@@ -11,17 +11,17 @@
 #include <fstream>
 #include <utility>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
-#include "testing/base/test_raw_ostream.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
@@ -29,22 +29,13 @@ using ::testing::StrEq;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
 
-// Reads a file to string.
-// TODO: Extract this to a helper and share it with other tests.
-static auto ReadFile(std::filesystem::path path) -> std::string {
-  std::ifstream proto_file(path);
-  std::stringstream buffer;
-  buffer << proto_file.rdbuf();
-  proto_file.close();
-  return buffer.str();
-}
-
 class DriverTest : public testing::Test {
- protected:
+ public:
   DriverTest()
       : installation_(
             InstallPaths::MakeForBazelRunfiles(Testing::GetExePath())),
-        driver_(fs_, &installation_, test_output_stream_, test_error_stream_) {
+        driver_(fs_, &installation_, /*input_stream=*/nullptr,
+                &test_output_stream_, &test_error_stream_) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir_env != nullptr);
     test_tmpdir_ = tmpdir_env;
@@ -94,8 +85,8 @@ class DriverTest : public testing::Test {
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs_ =
       new llvm::vfs::InMemoryFileSystem;
   const InstallPaths installation_;
-  TestRawOstream test_output_stream_;
-  TestRawOstream test_error_stream_;
+  RawStringOstream test_output_stream_;
+  RawStringOstream test_error_stream_;
 
   // Some tests work directly with files in the test temporary directory.
   std::filesystem::path test_tmpdir_;
@@ -121,6 +112,17 @@ TEST_F(DriverTest, CompileCommandErrors) {
       test_error_stream_.TakeStr(),
       StrEq("error: not all required positional arguments were provided; first "
             "missing and required positional argument: `FILE`\n"));
+
+  // Pass non-existing file
+  EXPECT_FALSE(driver_
+                   .RunCommand({"compile", "--dump-mem-usage",
+                                "non-existing-file.carbon"})
+                   .success);
+  EXPECT_THAT(
+      test_error_stream_.TakeStr(),
+      ContainsRegex("No such file or directory[\\n]*non-existing-file.carbon"));
+  // Flush output stream, because it's ok that it's not empty here.
+  test_output_stream_.TakeStr();
 
   // Invalid output filename. No reliably error message here.
   // TODO: Likely want a different filename on Windows.
@@ -211,7 +213,7 @@ TEST_F(DriverTest, FileOutput) {
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
-  EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));
+  EXPECT_THAT(*Testing::ReadFile("test.s"), ContainsRegex("Main:"));
 }
 
 }  // namespace

@@ -17,13 +17,16 @@ namespace Carbon::Check {
 //
 // `ScopeIndex` values are comparable. Lower `ScopeIndex` values correspond to
 // scopes entered earlier in the file.
-struct ScopeIndex : public IndexBase, public Printable<ScopeIndex> {
+struct ScopeIndex : public IndexBase<ScopeIndex> {
+  static constexpr llvm::StringLiteral Label = "scope";
   static const ScopeIndex Package;
+  static const ScopeIndex None;
 
   using IndexBase::IndexBase;
 };
 
 constexpr ScopeIndex ScopeIndex::Package = ScopeIndex(0);
+constexpr ScopeIndex ScopeIndex::None = ScopeIndex(NoneIndex);
 
 }  // namespace Carbon::Check
 

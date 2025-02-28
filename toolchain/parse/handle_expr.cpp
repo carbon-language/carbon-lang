@@ -149,13 +149,24 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(State::ParenExpr);
       break;
     }
-    case Lex::TokenKind::OpenSquareBracket: {
+    case Lex::TokenKind::Array: {
       context.PushState(state);
       context.PushState(State::ArrayExpr);
       break;
     }
     case Lex::TokenKind::Package: {
       context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
+      if (context.PositionKind() != Lex::TokenKind::Period) {
+        CARBON_DIAGNOSTIC(ExpectedPeriodAfterPackage, Error,
+                          "expected `.` after `package` expression");
+        context.emitter().Emit(*context.position(), ExpectedPeriodAfterPackage);
+        state.has_error = true;
+      }
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::Core: {
+      context.AddLeafNode(NodeKind::CoreNameExpr, context.Consume());
       context.PushState(state);
       break;
     }
@@ -173,8 +184,9 @@ auto HandleExprInPostfix(Context& context) -> void {
       // For periods, we look at the next token to form a designator like
       // `.Member` or `.Self`.
       auto period = context.Consume();
-      if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                          NodeKind::IdentifierName)) {
+      if (context.ConsumeAndAddLeafNodeIf(
+              Lex::TokenKind::Identifier,
+              NodeKind::IdentifierNameNotBeforeParams)) {
         // OK, `.` identifier.
       } else if (context.ConsumeAndAddLeafNodeIf(
                      Lex::TokenKind::SelfTypeIdentifier,
@@ -187,8 +199,8 @@ auto HandleExprInPostfix(Context& context) -> void {
                                ExpectedIdentifierOrSelfAfterPeriod);
         // Only consume if it is a number or word.
         if (context.PositionKind().is_keyword()) {
-          context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
-                              /*has_error=*/true);
+          context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams,
+                              context.Consume(), /*has_error=*/true);
         } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
           context.AddInvalidParse(context.Consume());
         } else {
@@ -343,10 +355,10 @@ auto HandleExprLoop(Context& context) -> void {
   } else {
     NodeKind node_kind;
     switch (operator_kind) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
-  case Lex::TokenKind::Name:                               \
-    node_kind = NodeKind::PostfixOperator##Name;           \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) \
+  case Lex::TokenKind::Name:                          \
+    node_kind = NodeKind::PostfixOperator##Name;      \
     break;
 #include "toolchain/parse/node_kind.def"
 
@@ -374,8 +386,8 @@ auto HandleExprLoopForInfixOperator(Context& context) -> void {
   auto state = context.PopState();
 
   switch (auto token_kind = context.tokens().GetKind(state.token)) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...)                      \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name)                           \
   case Lex::TokenKind::Name:                                                  \
     HandleExprLoopForOperator(context, state, NodeKind::InfixOperator##Name); \
     break;
@@ -390,8 +402,8 @@ auto HandleExprLoopForPrefixOperator(Context& context) -> void {
   auto state = context.PopState();
 
   switch (auto token_kind = context.tokens().GetKind(state.token)) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...)                      \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name)                           \
   case Lex::TokenKind::Name:                                                   \
     HandleExprLoopForOperator(context, state, NodeKind::PrefixOperator##Name); \
     break;

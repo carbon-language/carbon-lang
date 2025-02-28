@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -19,11 +20,8 @@ cc_library(
     name = "clang_runner",
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
-    data = [
-        "//toolchain/install:install_data.no_driver",
-    ],
     deps = [
-        "//common:command_line",
+        ":tool_runner_base",
         "//common:ostream",
         "//common:vlog",
         "//toolchain/install:install_paths",
@@ -41,14 +39,17 @@ cc_test(
     name = "clang_runner_test",
     size = "small",
     srcs = ["clang_runner_test.cpp"],
+    env = cc_env(),
     deps = [
         ":clang_runner",
         "//common:all_llvm_targets",
         "//common:check",
         "//common:ostream",
+        "//common:raw_string_ostream",
+        "//testing/base:capture_std_streams",
+        "//testing/base:file_helpers",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
         "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
@@ -74,6 +75,7 @@ cc_binary(
 
 sh_test(
     name = "compile_benchmark_test",
+    size = "small",
     srcs = [":compile_benchmark"],
     args = [
         "--benchmark_min_time=1x",
@@ -99,6 +101,8 @@ cc_library(
         "language_server_subcommand.h",
         "link_subcommand.cpp",
         "link_subcommand.h",
+        "lld_subcommand.cpp",
+        "lld_subcommand.h",
     ],
     hdrs = [
         "driver.h",
@@ -110,8 +114,11 @@ cc_library(
     textual_hdrs = ["flags.def"],
     deps = [
         ":clang_runner",
+        ":lld_runner",
         "//common:command_line",
+        "//common:error",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//common:version",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
@@ -128,6 +135,7 @@ cc_library(
         "//toolchain/lower",
         "//toolchain/parse",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:dump",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst_namer",
@@ -142,12 +150,14 @@ cc_test(
     name = "driver_test",
     size = "small",
     srcs = ["driver_test.cpp"],
+    env = cc_env(),
     deps = [
         ":driver",
         "//common:all_llvm_targets",
+        "//common:raw_string_ostream",
+        "//testing/base:file_helpers",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/install:install_paths",
         "//toolchain/lex:tokenized_buffer_test_helpers",
@@ -166,8 +176,62 @@ cc_fuzz_test(
     deps = [
         ":driver",
         "//common:exe_path",
-        "//testing/base:test_raw_ostream",
+        "//common:raw_string_ostream",
         "//testing/fuzzing:libfuzzer_header",
+        "//toolchain/install:install_paths",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "lld_runner",
+    srcs = ["lld_runner.cpp"],
+    hdrs = ["lld_runner.h"],
+    deps = [
+        ":tool_runner_base",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/install:install_paths",
+        "@llvm-project//lld:Common",
+        "@llvm-project//lld:ELF",
+        "@llvm-project//lld:MachO",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "lld_runner_test",
+    size = "small",
+    srcs = ["lld_runner_test.cpp"],
+    env = cc_env(),
+    deps = [
+        ":clang_runner",
+        ":lld_runner",
+        "//common:all_llvm_targets",
+        "//common:check",
+        "//common:ostream",
+        "//common:raw_string_ostream",
+        "//testing/base:capture_std_streams",
+        "//testing/base:file_helpers",
+        "//testing/base:global_exe_path",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Object",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
+    ],
+)
+
+cc_library(
+    name = "tool_runner_base",
+    srcs = ["tool_runner_base.cpp"],
+    hdrs = ["tool_runner_base.h"],
+    data = [
+        "//toolchain/install:install_data.no_driver",
+    ],
+    deps = [
+        "//common:ostream",
+        "//common:vlog",
         "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",
     ],

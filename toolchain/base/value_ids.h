@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -21,8 +22,7 @@ namespace Carbon {
 //
 // These values are not canonicalized, because we don't expect them to repeat
 // and don't use them in SemIR values.
-class Real : public Printable<Real> {
- public:
+struct Real : public Printable<Real> {
   auto Print(llvm::raw_ostream& output_stream) const -> void {
     mantissa.print(output_stream, /*isSigned=*/false);
     output_stream << "*" << (is_decimal ? "10" : "2") << "^" << exponent;
@@ -43,57 +43,81 @@ class Real : public Printable<Real> {
 
 // Corresponds to a float value represented by an APFloat. This is used for
 // floating-point values in SemIR.
-struct FloatId : public IdBase, public Printable<FloatId> {
+struct FloatId : public IdBase<FloatId> {
+  static constexpr llvm::StringLiteral Label = "float";
   using ValueType = llvm::APFloat;
-  static const FloatId Invalid;
+  static const FloatId None;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "float";
-    IdBase::Print(out);
-  }
 };
-constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
+constexpr FloatId FloatId::None(FloatId::NoneIndex);
 
 // Corresponds to a Real value.
-struct RealId : public IdBase, public Printable<RealId> {
+struct RealId : public IdBase<RealId> {
+  static constexpr llvm::StringLiteral Label = "real";
   using ValueType = Real;
-  static const RealId Invalid;
+  static const RealId None;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "real";
-    IdBase::Print(out);
-  }
 };
-constexpr RealId RealId::Invalid(RealId::InvalidIndex);
+constexpr RealId RealId::None(RealId::NoneIndex);
 
 // Corresponds to StringRefs for identifiers.
 //
-// `NameId` relies on the values of this type other than `Invalid` all being
+// `NameId` relies on the values of this type other than `None` all being
 // non-negative.
-struct IdentifierId : public IdBase, public Printable<IdentifierId> {
+struct IdentifierId : public IdBase<IdentifierId> {
+  static constexpr llvm::StringLiteral Label = "identifier";
   using ValueType = llvm::StringRef;
-  static const IdentifierId Invalid;
+  static const IdentifierId None;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "identifier";
-    IdBase::Print(out);
+};
+constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
+
+// The name of a package, which is either an identifier or the special `Core`
+// package name.
+//
+// TODO: Consider also treating `Main` and `Cpp` as special package names.
+struct PackageNameId : public IdBase<PackageNameId> {
+  static constexpr llvm::StringLiteral Label = "package";
+  static const PackageNameId None;
+  static const PackageNameId Core;
+
+  // Returns the PackageNameId corresponding to a particular IdentifierId.
+  static auto ForIdentifier(IdentifierId id) -> PackageNameId {
+    return PackageNameId(id.index);
+  }
+
+  using IdBase::IdBase;
+
+  // Returns the IdentifierId corresponding to this PackageNameId, or `None` if
+  // this is a special package name.
+  auto AsIdentifierId() const -> IdentifierId {
+    return index >= 0 ? IdentifierId(index) : IdentifierId::None;
+  }
+
+  // Returns the special package name corresponding to this PackageNameId.
+  // Requires that this name is not an identifier name.
+  auto AsSpecialName() const -> llvm::StringLiteral {
+    if (*this == None) {
+      return "Main";
+    }
+    if (*this == Core) {
+      return "Core";
+    }
+    CARBON_FATAL("Unknown special package name kind {0}", *this);
   }
 };
-constexpr IdentifierId IdentifierId::Invalid(IdentifierId::InvalidIndex);
+constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);
+constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex - 1);
 
 // Corresponds to StringRefs for string literals.
-struct StringLiteralValueId : public IdBase,
-                              public Printable<StringLiteralValueId> {
+struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
+  static constexpr llvm::StringLiteral Label = "string";
   using ValueType = llvm::StringRef;
-  static const StringLiteralValueId Invalid;
+  static const StringLiteralValueId None;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "string";
-    IdBase::Print(out);
-  }
 };
-constexpr StringLiteralValueId StringLiteralValueId::Invalid(
-    StringLiteralValueId::InvalidIndex);
+constexpr StringLiteralValueId StringLiteralValueId::None(
+    StringLiteralValueId::NoneIndex);
 
 }  // namespace Carbon
 

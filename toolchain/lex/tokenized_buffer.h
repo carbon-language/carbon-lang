@@ -37,41 +37,28 @@ class TokenizedBuffer;
 // same line or the relative position of different lines within the source.
 //
 // All other APIs to query a `LineIndex` are on the `TokenizedBuffer`.
-struct LineIndex : public IndexBase {
-  static const LineIndex Invalid;
+struct LineIndex : public IndexBase<LineIndex> {
+  static constexpr llvm::StringLiteral Label = "line";
+  static const LineIndex None;
   using IndexBase::IndexBase;
 };
 
-constexpr LineIndex LineIndex::Invalid(InvalidIndex);
+constexpr LineIndex LineIndex::None(NoneIndex);
 
 // Indices for comments within the buffer.
-struct CommentIndex : public IndexBase {
-  static const CommentIndex Invalid;
+struct CommentIndex : public IndexBase<CommentIndex> {
+  static constexpr llvm::StringLiteral Label = "comment";
+  static const CommentIndex None;
   using IndexBase::IndexBase;
 };
 
-constexpr CommentIndex CommentIndex::Invalid(InvalidIndex);
+constexpr CommentIndex CommentIndex::None(NoneIndex);
 
 // Random-access iterator over comments within the buffer.
 using CommentIterator = IndexIterator<CommentIndex>;
 
 // Random-access iterator over tokens within the buffer.
 using TokenIterator = IndexIterator<TokenIndex>;
-
-// A diagnostic location converter that maps token locations into source
-// buffer locations.
-class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
- public:
-  explicit TokenDiagnosticConverter(const TokenizedBuffer* buffer)
-      : buffer_(buffer) {}
-
-  // Map the given token into a diagnostic location.
-  auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
-      -> DiagnosticLoc override;
-
- private:
-  const TokenizedBuffer* buffer_;
-};
 
 // A buffer of tokenized Carbon source code.
 //
@@ -83,10 +70,6 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
-  // The maximum number of tokens that can be stored in the buffer, including
-  // the FileStart and FileEnd tokens.
-  static constexpr int MaxTokens = 1 << 23;
-
   // A comment, which can be a block of lines.
   //
   // This is the API version of `CommentData`.
@@ -154,9 +137,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // For example, a closing paren inserted to match an unmatched paren.
   auto IsRecoveryToken(TokenIndex token) const -> bool;
 
-  // Returns the 1-based line number.
-  auto GetLineNumber(LineIndex line) const -> int;
-
   // Returns the 1-based indentation column number.
   auto GetIndentColumnNumber(LineIndex line) const -> int;
 
@@ -165,6 +145,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the previous line handle.
   auto GetPrevLine(LineIndex line) const -> LineIndex;
+
+  auto GetByteOffset(TokenIndex token) const -> int32_t {
+    return GetTokenInfo(token).byte_offset();
+  }
 
   // Returns true if the token comes after the comment.
   auto IsAfterComment(TokenIndex token, CommentIndex comment_index) const
@@ -191,6 +175,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
+
+  // Converts a token to a diagnostic location.
+  auto TokenToDiagnosticLoc(TokenIndex token) const -> ConvertedDiagnosticLoc;
 
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
@@ -219,24 +206,42 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
  private:
   friend class Lexer;
-  friend class TokenDiagnosticConverter;
 
-  // A diagnostic location converter that maps token locations into source
-  // buffer locations.
-  class SourceBufferDiagnosticConverter
-      : public DiagnosticConverter<const char*> {
+  class SourcePointerDiagnosticEmitter : public DiagnosticEmitter<const char*> {
    public:
-    explicit SourceBufferDiagnosticConverter(const TokenizedBuffer* buffer)
-        : buffer_(buffer) {}
+    explicit SourcePointerDiagnosticEmitter(DiagnosticConsumer* consumer,
+                                            const TokenizedBuffer* tokens)
+        : DiagnosticEmitter(consumer), tokens_(tokens) {}
 
-    // Map the given position within the source buffer into a diagnostic
-    // location.
-    auto ConvertLoc(const char* loc, ContextFnT context_fn) const
-        -> DiagnosticLoc override;
+   protected:
+    auto ConvertLoc(const char* loc, ContextFnT /*context_fn*/) const
+        -> ConvertedDiagnosticLoc override {
+      return tokens_->SourcePointerToDiagnosticLoc(loc);
+    }
 
    private:
-    const TokenizedBuffer* buffer_;
+    const TokenizedBuffer* tokens_;
   };
+
+  class TokenDiagnosticEmitter : public DiagnosticEmitter<TokenIndex> {
+   public:
+    explicit TokenDiagnosticEmitter(DiagnosticConsumer* consumer,
+                                    const TokenizedBuffer* tokens)
+        : DiagnosticEmitter(consumer), tokens_(tokens) {}
+
+   protected:
+    auto ConvertLoc(TokenIndex token, ContextFnT /*context_fn*/) const
+        -> ConvertedDiagnosticLoc override {
+      return tokens_->TokenToDiagnosticLoc(token);
+    }
+
+   private:
+    const TokenizedBuffer* tokens_;
+  };
+
+  // Converts a pointer into the source to a diagnostic location.
+  auto SourcePointerToDiagnosticLoc(const char* loc) const
+      -> ConvertedDiagnosticLoc;
 
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.
@@ -282,7 +287,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   class TokenInfo {
    public:
     // The kind for this token.
-    auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
+    auto kind() const -> TokenKind { return kind_; }
 
     // Whether this token is preceded by whitespace. We only store the preceding
     // state, and look at the next token to check for trailing whitespace.
@@ -365,6 +370,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
     // Make sure we have enough payload bits to represent token-associated IDs.
     static_assert(PayloadBits >= IntId::TokenIdBits);
+    static_assert(PayloadBits >= TokenIndex::Bits);
 
     // Constructor for a TokenKind that carries no payload, or where the payload
     // will be set later.
@@ -398,13 +404,12 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Payload values are typically ID types for which we create at most one per
     // token, so we ensure that `token_payload_` is large enough to fit any
     // token index. Stores to this field may overflow, but we produce an error
-    // in `Lexer::Finalize` if the file has more than `MaxTokens` tokens, so
-    // this value never overflows if lexing succeeds.
-    TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
+    // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
+    // so this value never overflows if lexing succeeds.
+    TokenKind kind_;
+    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
     bool has_leading_space_ : 1;
     unsigned token_payload_ : PayloadBits;
-    static_assert(MaxTokens <= 1 << PayloadBits,
-                  "Not enough payload bits to store a token index");
 
     // Separate storage for the byte offset, this is hot while lexing but then
     // generally cold.
@@ -442,8 +447,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // The constructor is merely responsible for trivial initialization of
   // members. A working object of this type is built with `Lex::Lex` so that its
   // return can indicate if an error was encountered while lexing.
-  explicit TokenizedBuffer(SharedValueStores& value_stores,
-                           SourceBuffer& source)
+  explicit TokenizedBuffer(SharedValueStores& value_stores
+                           [[clang::lifetimebound]],
+                           SourceBuffer& source [[clang::lifetimebound]])
       : value_stores_(&value_stores), source_(&source) {}
 
   auto FindLineIndex(int32_t byte_offset) const -> LineIndex;
@@ -485,13 +491,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // contain true for the tokens that were synthesized for recovery.
   llvm::BitVector recovery_tokens_;
 };
-
-// A diagnostic emitter that uses positions within a source buffer's text as
-// its source of location information.
-using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
-
-// A diagnostic emitter that uses tokens as its source of location information.
-using TokenDiagnosticEmitter = DiagnosticEmitter<TokenIndex>;
 
 inline auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
   return GetTokenInfo(token).kind();

@@ -12,15 +12,16 @@
 // CHECK:STDERR: fn F() -> {.class: i32};
 // CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+4]]:13: error: semantics TODO: `Error recovery from keyword name.` [SemanticsTodo]
+// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+4]]:13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F() -> {.class: i32};
 // CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
 fn F() -> {.class: i32};
 
-// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+3]]:19: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+4]]:19: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
 // CHECK:STDERR: fn G() { return {.return = 5}; };
 // CHECK:STDERR:                   ^~~~~~
+// CHECK:STDERR:
 fn G() { return {.return = 5}; };
 
 // CHECK:STDOUT: --- fail_keyword_name.carbon

@@ -237,7 +237,7 @@ auto operator<<(llvm::raw_ostream& output, ParseResult result)
 
 // Actions are stored in data structures so we use an owning closure to model
 // them.
-using ActionT = std::function<void()>;
+using ActionT = std::function<auto()->void>;
 
 // The core argument info used to render help and other descriptive
 // information. This is used for both options and positional arguments.
@@ -294,23 +294,26 @@ class ArgBuilder {
  public:
   // When marked as required, if an argument is not provided explicitly in the
   // command line the parse will produce an error.
-  void Required(bool is_required);
+  auto Required(bool is_required) -> void;
 
   // An argument can be hidden from the help output.
-  void HelpHidden(bool is_help_hidden);
+  auto HelpHidden(bool is_help_hidden) -> void;
 
   // Sets a meta-action to run when this argument is parsed. This is used to
   // set up arguments like `--help` or `--version` that can be entirely
   // handled during parsing and rather than produce parsed information about
   // the command line, override that for some custom behavior.
   template <typename T>
-  void MetaAction(T action);
+  auto MetaAction(T action) -> void;
 
  protected:
-  friend CommandBuilder;
+  friend class CommandBuilder;
   // `arg` must not be null.
   explicit ArgBuilder(Arg* arg);
 
+  auto arg() -> Arg* { return arg_; }
+
+ private:
   Arg* arg_;
 };
 
@@ -320,12 +323,12 @@ class FlagBuilder : public ArgBuilder {
   // Flags can be defaulted to true. However, flags always have *some*
   // default, this merely customizes which value is default. If uncustomized,
   // the default of a flag is false.
-  void Default(bool flag_value);
+  auto Default(bool flag_value) -> void;
 
   // Configures the argument to store a parsed value in the provided storage.
   //
   // This must be called on the builder.
-  void Set(bool* flag);
+  auto Set(bool* flag) -> void;
 
  private:
   using ArgBuilder::ArgBuilder;
@@ -342,7 +345,7 @@ class IntegerArgBuilder : public ArgBuilder {
   // below, this value will be used whenever the argument occurs without an
   // explicit value, but unless the argument is parsed nothing will be
   // appended.
-  void Default(int integer_value);
+  auto Default(int integer_value) -> void;
 
   // Configures the argument to store a parsed value in the provided storage.
   // Each time the argument is parsed, it will write a new value to this
@@ -350,7 +353,7 @@ class IntegerArgBuilder : public ArgBuilder {
   //
   // Exactly one of this method or `Append` below must be configured for the
   // argument.
-  void Set(int* integer);
+  auto Set(int* integer) -> void;
 
   // Configures the argument to append a parsed value to the provided
   // container. Each time the argument is parsed, a new value will be
@@ -358,7 +361,7 @@ class IntegerArgBuilder : public ArgBuilder {
   //
   // Exactly one of this method or `Set` above must be configured for the
   // argument.
-  void Append(llvm::SmallVectorImpl<int>* sequence);
+  auto Append(llvm::SmallVectorImpl<int>* sequence) -> void;
 
  private:
   using ArgBuilder::ArgBuilder;
@@ -375,7 +378,7 @@ class StringArgBuilder : public ArgBuilder {
   // below, this value will be used whenever the argument occurs without an
   // explicit value, but unless the argument is parsed nothing will be
   // appended.
-  void Default(llvm::StringRef string_value);
+  auto Default(llvm::StringRef string_value) -> void;
 
   // Configures the argument to store a parsed value in the provided storage.
   // Each time the argument is parsed, it will write a new value to this
@@ -383,7 +386,7 @@ class StringArgBuilder : public ArgBuilder {
   //
   // Exactly one of this method or `Append` below must be configured for the
   // argument.
-  void Set(llvm::StringRef* string);
+  auto Set(llvm::StringRef* string) -> void;
 
   // Configures the argument to append a parsed value to the provided
   // container. Each time the argument is parsed, a new value will be
@@ -391,7 +394,7 @@ class StringArgBuilder : public ArgBuilder {
   //
   // Exactly one of this method or `Set` above must be configured for the
   // argument.
-  void Append(llvm::SmallVectorImpl<llvm::StringRef>* sequence);
+  auto Append(llvm::SmallVectorImpl<llvm::StringRef>* sequence) -> void;
 
  private:
   using ArgBuilder::ArgBuilder;
@@ -460,7 +463,7 @@ class OneOfArgBuilder : public ArgBuilder {
   // optional, and also will cause that value to be stored into the result
   // even if the argument is not parsed explicitly.
   template <typename T, typename U, size_t N>
-  void SetOneOf(const OneOfValueT<U> (&values)[N], T* result);
+  auto SetOneOf(const OneOfValueT<U> (&values)[N], T* result) -> void;
 
   // Configures the argument to append a parsed value to the provided
   // container. Each time the argument is parsed, a new value will be
@@ -488,15 +491,15 @@ class OneOfArgBuilder : public ArgBuilder {
   // However, appending one-of arguments cannot use a default. The values must
   // always be explicitly parsed.
   template <typename T, typename U, size_t N>
-  void AppendOneOf(const OneOfValueT<U> (&values)[N],
-                   llvm::SmallVectorImpl<T>* sequence);
+  auto AppendOneOf(const OneOfValueT<U> (&values)[N],
+                   llvm::SmallVectorImpl<T>* sequence) -> void;
 
  private:
   using ArgBuilder::ArgBuilder;
 
   template <typename U, size_t N, typename MatchT, size_t... Indices>
-  void OneOfImpl(const OneOfValueT<U> (&input_values)[N], MatchT match,
-                 std::index_sequence<Indices...> /*indices*/);
+  auto OneOfImpl(const OneOfValueT<U> (&input_values)[N], MatchT match,
+                 std::index_sequence<Indices...> /*indices*/) -> void;
 };
 
 // The extended info for a command, including for a subcommand.
@@ -590,37 +593,45 @@ class CommandBuilder {
  public:
   using Kind = CommandKind;
 
-  void AddFlag(const ArgInfo& info,
-               llvm::function_ref<void(FlagBuilder&)> build);
-  void AddIntegerOption(const ArgInfo& info,
-                        llvm::function_ref<void(IntegerArgBuilder&)> build);
-  void AddStringOption(const ArgInfo& info,
-                       llvm::function_ref<void(StringArgBuilder&)> build);
-  void AddOneOfOption(const ArgInfo& info,
-                      llvm::function_ref<void(OneOfArgBuilder&)> build);
-  void AddMetaActionOption(const ArgInfo& info,
-                           llvm::function_ref<void(ArgBuilder&)> build);
+  auto AddFlag(const ArgInfo& info,
+               llvm::function_ref<auto(FlagBuilder&)->void> build) -> void;
+  auto AddIntegerOption(
+      const ArgInfo& info,
+      llvm::function_ref<auto(IntegerArgBuilder&)->void> build) -> void;
+  auto AddStringOption(const ArgInfo& info,
+                       llvm::function_ref<auto(StringArgBuilder&)->void> build)
+      -> void;
+  auto AddOneOfOption(const ArgInfo& info,
+                      llvm::function_ref<auto(OneOfArgBuilder&)->void> build)
+      -> void;
+  auto AddMetaActionOption(const ArgInfo& info,
+                           llvm::function_ref<auto(ArgBuilder&)->void> build)
+      -> void;
 
-  void AddIntegerPositionalArg(
-      const ArgInfo& info, llvm::function_ref<void(IntegerArgBuilder&)> build);
-  void AddStringPositionalArg(
-      const ArgInfo& info, llvm::function_ref<void(StringArgBuilder&)> build);
-  void AddOneOfPositionalArg(const ArgInfo& info,
-                             llvm::function_ref<void(OneOfArgBuilder&)> build);
+  auto AddIntegerPositionalArg(
+      const ArgInfo& info,
+      llvm::function_ref<auto(IntegerArgBuilder&)->void> build) -> void;
+  auto AddStringPositionalArg(
+      const ArgInfo& info,
+      llvm::function_ref<auto(StringArgBuilder&)->void> build) -> void;
+  auto AddOneOfPositionalArg(
+      const ArgInfo& info,
+      llvm::function_ref<auto(OneOfArgBuilder&)->void> build) -> void;
 
-  void AddSubcommand(const CommandInfo& info,
-                     llvm::function_ref<void(CommandBuilder&)> build);
+  auto AddSubcommand(const CommandInfo& info,
+                     llvm::function_ref<auto(CommandBuilder&)->void> build)
+      -> void;
 
   // Subcommands can be hidden from the help listing of their parents with
   // this setting. Hiding a subcommand doesn't disable its own help, it just
   // removes it from the listing.
-  void HelpHidden(bool is_help_hidden);
+  auto HelpHidden(bool is_help_hidden) -> void;
 
   // Exactly one of these three should be called to select and configure the
   // kind of the built command.
-  void RequiresSubcommand();
-  void Do(ActionT action);
-  void Meta(ActionT meta_action);
+  auto RequiresSubcommand() -> void;
+  auto Do(ActionT action) -> void;
+  auto Meta(ActionT meta_action) -> void;
 
  private:
   friend Parser;
@@ -629,9 +640,9 @@ class CommandBuilder {
   explicit CommandBuilder(Command* command, MetaPrinter* meta_printer);
 
   auto AddArgImpl(const ArgInfo& info, ArgKind kind) -> Arg*;
-  void AddPositionalArgImpl(const ArgInfo& info, ArgKind kind,
-                            llvm::function_ref<void(Arg&)> build);
-  void Finalize();
+  auto AddPositionalArgImpl(const ArgInfo& info, ArgKind kind,
+                            llvm::function_ref<auto(Arg&)->void> build) -> void;
+  auto Finalize() -> void;
 
   Command* command_;
   MetaPrinter* meta_printer_;
@@ -655,7 +666,7 @@ class CommandBuilder {
 // to `out`.
 auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
            llvm::raw_ostream& out, CommandInfo command_info,
-           llvm::function_ref<void(CommandBuilder&)> build)
+           llvm::function_ref<auto(CommandBuilder&)->void> build)
     -> ErrorOr<ParseResult>;
 
 // Implementation details only below.
@@ -664,8 +675,8 @@ auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
 struct Arg {
   using Kind = ArgKind;
   using ValueActionT =
-      std::function<bool(const Arg& arg, llvm::StringRef value_string)>;
-  using DefaultActionT = std::function<void(const Arg& arg)>;
+      std::function<auto(const Arg& arg, llvm::StringRef value_string)->bool>;
+  using DefaultActionT = std::function<auto(const Arg& arg)->void>;
 
   explicit Arg(ArgInfo info);
   ~Arg();
@@ -730,7 +741,7 @@ struct Command {
 };
 
 template <typename T>
-void ArgBuilder::MetaAction(T action) {
+auto ArgBuilder::MetaAction(T action) -> void {
   CARBON_CHECK(!arg_->meta_action, "Cannot set a meta action twice!");
   arg_->meta_action = std::move(action);
 }
@@ -754,19 +765,20 @@ auto OneOfArgBuilder::OneOfValue(llvm::StringRef str, T value)
 }
 
 template <typename T, typename U, size_t N>
-void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N], T* result) {
+auto OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N], T* result)
+    -> void {
   static_assert(N > 0, "Must include at least one value.");
-  arg_->is_append = false;
+  arg()->is_append = false;
   OneOfImpl(
       values, [result](T value) { *result = value; },
       std::make_index_sequence<N>{});
 }
 
 template <typename T, typename U, size_t N>
-void OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
-                                  llvm::SmallVectorImpl<T>* sequence) {
+auto OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
+                                  llvm::SmallVectorImpl<T>* sequence) -> void {
   static_assert(N > 0, "Must include at least one value.");
-  arg_->is_append = true;
+  arg()->is_append = true;
   OneOfImpl(
       values, [sequence](T value) { sequence->push_back(value); },
       std::make_index_sequence<N>{});
@@ -784,20 +796,21 @@ void OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
 // lambdas that do the type-aware operations and storing those into type-erased
 // function objects.
 template <typename U, size_t N, typename MatchT, size_t... Indices>
-void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
+auto OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
                                 MatchT match,
-                                std::index_sequence<Indices...> /*indices*/) {
+                                std::index_sequence<Indices...> /*indices*/)
+    -> void {
   std::array<llvm::StringRef, N> value_strings = {input_values[Indices].str...};
   std::array<U, N> values = {input_values[Indices].value...};
 
   // Directly copy the value strings into a heap-allocated array in the
   // argument.
-  new (&arg_->value_strings)
+  new (&arg()->value_strings)
       llvm::OwningArrayRef<llvm::StringRef>(value_strings);
 
   // And build a type-erased action that maps a specific value string to a value
   // by index.
-  new (&arg_->value_action) Arg::ValueActionT(
+  new (&arg()->value_action) Arg::ValueActionT(
       [values, match](const Arg& arg, llvm::StringRef value_string) -> bool {
         for (int i : llvm::seq<int>(0, N)) {
           if (value_string == arg.value_strings[i]) {
@@ -810,11 +823,11 @@ void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
 
   // Fold over all the input values to see if there is a default.
   if ((input_values[Indices].is_default || ...)) {
-    CARBON_CHECK(!arg_->is_append, "Can't append default.");
+    CARBON_CHECK(!arg()->is_append, "Can't append default.");
     CARBON_CHECK((input_values[Indices].is_default + ... + 0) == 1,
                  "Cannot default more than one value.");
 
-    arg_->has_default = true;
+    arg()->has_default = true;
 
     // First build a lambda that configures the default using an index. We'll
     // call this below, this lambda isn't the one that is stored.
@@ -822,12 +835,12 @@ void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
       // Now that we have the desired default index, build a lambda and store it
       // as the default action. This lambda is stored and so it captures the
       // necessary information explicitly and by value.
-      new (&arg_->default_action)
+      new (&arg()->default_action)
           Arg::DefaultActionT([value = default_value.value,
                                match](const Arg& /*arg*/) { match(value); });
 
       // Also store the index itself for use when printing help.
-      arg_->default_value_index = index;
+      arg()->default_value_index = index;
     };
 
     // Now we fold across the inputs and in the one case that is the default, we

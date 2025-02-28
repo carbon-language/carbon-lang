@@ -10,6 +10,7 @@
 #include <concepts>
 #include <type_traits>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -22,7 +23,7 @@ using ::testing::Eq;
 using ::testing::Le;
 using ::testing::Ne;
 
-TEST(HashingTest, HashCodeAPI) {
+TEST(HashingTest, HashCodeApi) {
   // Manually compute a few hash codes where we can exercise the underlying API.
   HashCode empty = HashValue("");
   HashCode a = HashValue("a");
@@ -469,15 +470,14 @@ TEST(HashingTest, TupleRecursion) {
 constexpr uint64_t TestSeed = 42ULL * 1024;
 
 auto ToHexBytes(llvm::StringRef s) -> std::string {
-  std::string rendered;
-  llvm::raw_string_ostream os(rendered);
-  os << "{";
+  RawStringOstream rendered;
+  rendered << "{";
   llvm::ListSeparator sep(", ");
   for (const char c : s) {
-    os << sep << llvm::formatv("{0:x2}", static_cast<uint8_t>(c));
+    rendered << sep << llvm::formatv("{0:x2}", static_cast<uint8_t>(c));
   }
-  os << "}";
-  return rendered;
+  rendered << "}";
+  return rendered.TakeStr();
 }
 
 template <typename T>
@@ -592,9 +592,9 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
 
   // Now we sort by the extracted bit sequence so we can efficiently scan for
   // colliding bit patterns.
-  std::sort(
-      bits_and_indices.begin(), bits_and_indices.end(),
-      [](const auto& lhs, const auto& rhs) { return lhs.bits < rhs.bits; });
+  llvm::sort(bits_and_indices, [](const auto& lhs, const auto& rhs) {
+    return lhs.bits < rhs.bits;
+  });
 
   // Scan the sorted bit sequences we've extracted looking for collisions. We
   // count the total collisions, but we also track the number of individual
@@ -635,16 +635,15 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
   }
 
   // Sort by collision count for each hash.
-  std::sort(bits_and_indices.begin(), bits_and_indices.end(),
-            [&](const auto& lhs, const auto& rhs) {
-              return collision_counts[collision_map[lhs.index]] <
-                     collision_counts[collision_map[rhs.index]];
-            });
+  llvm::sort(bits_and_indices, [&](const auto& lhs, const auto& rhs) {
+    return collision_counts[collision_map[lhs.index]] <
+           collision_counts[collision_map[rhs.index]];
+  });
 
   // And compute the median and max.
   int median = collision_counts
       [collision_map[bits_and_indices[bits_and_indices.size() / 2].index]];
-  int max = *std::max_element(collision_counts.begin(), collision_counts.end());
+  int max = *llvm::max_element(collision_counts);
   CARBON_CHECK(max ==
                collision_counts[collision_map[bits_and_indices.back().index]]);
   return {.total = total, .median = median, .max = max};
@@ -672,11 +671,9 @@ auto AllByteStringsHashedAndSorted() {
     hashes.push_back({HashValue(s, TestSeed), s});
   }
 
-  std::sort(hashes.begin(), hashes.end(),
-            [](const HashedString& lhs, const HashedString& rhs) {
-              return static_cast<uint64_t>(lhs.hash) <
-                     static_cast<uint64_t>(rhs.hash);
-            });
+  llvm::sort(hashes, [](const HashedString& lhs, const HashedString& rhs) {
+    return static_cast<uint64_t>(lhs.hash) < static_cast<uint64_t>(rhs.hash);
+  });
   CheckNoDuplicateValues(hashes);
 
   return hashes;
@@ -832,11 +829,9 @@ struct SparseHashTest : ::testing::Test {
       }
     }
 
-    std::sort(hashes.begin(), hashes.end(),
-              [](const HashedString& lhs, const HashedString& rhs) {
-                return static_cast<uint64_t>(lhs.hash) <
-                       static_cast<uint64_t>(rhs.hash);
-              });
+    llvm::sort(hashes, [](const HashedString& lhs, const HashedString& rhs) {
+      return static_cast<uint64_t>(lhs.hash) < static_cast<uint64_t>(rhs.hash);
+    });
     CheckNoDuplicateValues(hashes);
 
     return hashes;

@@ -5,8 +5,10 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -18,9 +20,6 @@ auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Export>();
   // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
   context.decl_name_stack().PushScopeAndStartName();
-  // The parser supports patterns after `export`, so we need a pattern block
-  // to handle them.
-  context.pattern_block_stack().Push();
   return true;
 }
 
@@ -39,8 +38,8 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   }
 
   auto inst_id = name_context.prev_inst_id();
-  if (!inst_id.is_valid()) {
-    context.DiagnoseNameNotFound(node_id, name_context.name_id_for_new_inst());
+  if (!inst_id.has_value()) {
+    DiagnoseNameNotFound(context, node_id, name_context.name_id_for_new_inst());
     return true;
   }
 
@@ -71,20 +70,22 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
     return true;
   }
 
-  auto export_id = context.AddInst<SemIR::ExportDecl>(
-      node_id, {.type_id = import_ref->type_id,
-                .entity_name_id = import_ref->entity_name_id,
-                .value_id = inst_id});
-  context.AddExport(export_id);
+  auto export_id =
+      AddInst<SemIR::ExportDecl>(context, node_id,
+                                 {.type_id = import_ref->type_id,
+                                  .entity_name_id = import_ref->entity_name_id,
+                                  .value_id = inst_id});
+  context.exports().push_back(export_id);
 
   // Replace the ImportRef in name lookup, both for the above duplicate
   // diagnostic and so that cross-package imports can find it easily.
   auto entity_name = context.entity_names().Get(import_ref->entity_name_id);
   auto& parent_scope = context.name_scopes().Get(entity_name.parent_scope_id);
-  auto lookup = parent_scope.name_map.Lookup(entity_name.name_id);
-  auto& scope_inst_id = parent_scope.names[lookup.value()].inst_id;
-  CARBON_CHECK(scope_inst_id == inst_id);
-  scope_inst_id = export_id;
+  auto& scope_result =
+      parent_scope.GetEntry(*parent_scope.Lookup(entity_name.name_id)).result;
+  CARBON_CHECK(scope_result.target_inst_id() == inst_id);
+  scope_result = SemIR::ScopeLookupResult::MakeFound(
+      export_id, scope_result.access_kind());
 
   return true;
 }

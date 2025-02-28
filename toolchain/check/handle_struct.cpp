@@ -6,6 +6,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
@@ -108,7 +110,7 @@ static auto PopFieldNameNodes(Context& context, size_t field_count)
   while (true) {
     auto [name_node, _] =
         context.node_stack().PopWithNodeIdIf<Parse::NodeCategory::MemberName>();
-    if (name_node.is_valid()) {
+    if (name_node.has_value()) {
       nodes.push_back(name_node);
     } else {
       break;
@@ -139,13 +141,13 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
                              /*is_struct_type_literal=*/false)) {
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
   } else {
-    auto type_id = context.GetStructType(
-        context.struct_type_fields().AddCanonical(fields));
+    auto type_id = GetStructType(
+        context, context.struct_type_fields().AddCanonical(fields));
 
-    auto value_id = context.AddInst<SemIR::StructLiteral>(
-        node_id, {.type_id = type_id, .elements_id = elements_id});
+    auto value_id = AddInst<SemIR::StructLiteral>(
+        context, node_id, {.type_id = type_id, .elements_id = elements_id});
     context.node_stack().Push(node_id, value_id);
   }
 
@@ -165,11 +167,12 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
                              /*is_struct_type_literal=*/true)) {
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
   } else {
     auto fields_id = context.struct_type_fields().AddCanonical(fields);
-    context.AddInstAndPush<SemIR::StructType>(
-        node_id, {.type_id = SemIR::TypeId::TypeType, .fields_id = fields_id});
+    AddInstAndPush<SemIR::StructType>(
+        context, node_id,
+        {.type_id = SemIR::TypeType::SingletonTypeId, .fields_id = fields_id});
   }
 
   context.struct_type_fields_stack().PopArray();

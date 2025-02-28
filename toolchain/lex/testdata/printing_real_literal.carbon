@@ -11,4 +11,4 @@
 // CHECK:STDOUT:   tokens:
 
 2.5
-// CHECK:STDOUT:   - { index: 1, kind: 'RealLiteral', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '2.5', value: `25*10^-1`, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "RealLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "2.5", value: "25*10^-1", has_leading_space: true }

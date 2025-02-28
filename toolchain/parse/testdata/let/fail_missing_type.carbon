@@ -8,18 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_missing_type.carbon
 
-// CHECK:STDERR: fail_missing_type.carbon:[[@LINE+3]]:7: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_missing_type.carbon:[[@LINE+4]]:7: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: let a = 4;
 // CHECK:STDERR:       ^
+// CHECK:STDERR:
 let a = 4;
 
 // CHECK:STDOUT: - filename: fail_missing_type.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'a'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: 'a', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: 'a', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'IntLiteral', text: '4'},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 7},

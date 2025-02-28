@@ -18,28 +18,39 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.loc12_49 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
+// CHECK:STDOUT: @struct.loc12_3.2 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   %z.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %.loc12_48.2.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc12_48.5.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.loc12_49, i64 16, i1 false), !dbg !9
-// CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc13_17.1.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.b, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc13_17.2, ptr %y.var, align 4, !dbg !12
-// CHECK:STDOUT:   %z.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc14_16 = load i32, ptr %y.var, align 4, !dbg !14
-// CHECK:STDOUT:   store i32 %.loc14_16, ptr %z.var, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 0, !dbg !16
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.loc12_3.2, i64 16, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %y.var), !dbg !7
+// CHECK:STDOUT:   %.loc13_17.1.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.b, align 4, !dbg !9
+// CHECK:STDOUT:   store i32 %.loc13_17.2, ptr %y.var, align 4, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %z.var), !dbg !7
+// CHECK:STDOUT:   %.loc14_16 = load i32, ptr %y.var, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc14_16, ptr %z.var, align 4, !dbg !12
+// CHECK:STDOUT:   ret i32 0, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 1, 3, 0, 2, 4, 5 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -51,13 +62,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 12, column: 31, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 7, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 16, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 14, column: 7, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 14, column: 16, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 16, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 16, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 3, scope: !4)

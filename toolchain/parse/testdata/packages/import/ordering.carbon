@@ -29,10 +29,10 @@ import B;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'A'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'A'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'B'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'B'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -43,7 +43,7 @@ import B;
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"after_library"'},
 // CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'B'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'B'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -51,10 +51,10 @@ import B;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'A'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'A'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'B'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'B'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

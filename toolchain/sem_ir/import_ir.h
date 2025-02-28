@@ -35,8 +35,9 @@ struct ImportIRInst : public Printable<ImportIRInst> {
     out << "{ir_id: " << ir_id << ", inst_id: " << inst_id << "}";
   }
 
-  auto operator==(const ImportIRInst& rhs) const -> bool {
-    return ir_id == rhs.ir_id && inst_id == rhs.inst_id;
+  friend auto operator==(const ImportIRInst& lhs, const ImportIRInst& rhs)
+      -> bool {
+    return lhs.ir_id == rhs.ir_id && lhs.inst_id == rhs.inst_id;
   }
 
   ImportIRId ir_id;

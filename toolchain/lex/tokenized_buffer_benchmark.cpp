@@ -9,6 +9,7 @@
 
 #include "absl/random/random.h"
 #include "common/check.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "testing/base/source_gen.h"
@@ -74,7 +75,7 @@ struct RandomSourceOptions {
   int comment_line_percent = 0;
   int blank_line_percent = 0;
 
-  void Validate() {
+  auto Validate() -> void {
     auto is_percentage = [](int n) { return 0 <= n && n <= 100; };
     CARBON_CHECK(is_percentage(symbol_percent));
     CARBON_CHECK(is_percentage(keyword_percent));
@@ -173,13 +174,14 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
   // First place tokens onto each line.
   for (auto i : llvm::seq(NumTokens / options.tokens_per_line)) {
     lines.push_back("");
-    llvm::raw_string_ostream os(lines.back());
+    RawStringOstream os;
     // Arbitrarily indent each line by two spaces.
     os << "  ";
     llvm::ListSeparator sep(" ");
     for (int j : llvm::seq(options.tokens_per_line)) {
       os << sep << tokens[i * options.tokens_per_line + j];
     }
+    lines.push_back(os.TakeStr());
   }
 
   // Next, synthesize blank and comment lines with the correct distribution.
@@ -217,14 +219,13 @@ class LexerBenchHelper {
   }
 
   auto DiagnoseErrors() -> std::string {
-    std::string result;
-    llvm::raw_string_ostream out(result);
-    StreamDiagnosticConsumer consumer(out, /*include_diagnostic_kind=*/false);
+    RawStringOstream result;
+    StreamDiagnosticConsumer consumer(&result);
     auto buffer = Lex::Lex(value_stores_, source_, consumer);
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors(),
                  "Asked to diagnose errors but none found!");
-    return result;
+    return result.TakeStr();
   }
 
   auto source_text() -> llvm::StringRef { return source_.text(); }
@@ -243,7 +244,7 @@ class LexerBenchHelper {
   SourceBuffer source_;
 };
 
-void BM_ValidKeywords(benchmark::State& state) {
+auto BM_ValidKeywords(benchmark::State& state) -> void {
   absl::BitGen gen;
   std::array<llvm::StringRef, NumTokens> tokens;
   for (int i : llvm::seq(NumTokens)) {
@@ -265,7 +266,7 @@ void BM_ValidKeywords(benchmark::State& state) {
 }
 BENCHMARK(BM_ValidKeywords);
 
-void BM_ValidKeywordsAsRawIdentifiers(benchmark::State& state) {
+auto BM_ValidKeywordsAsRawIdentifiers(benchmark::State& state) -> void {
   absl::BitGen gen;
   std::array<llvm::StringRef, NumTokens> tokens;
   for (int i : llvm::seq(NumTokens)) {
@@ -290,7 +291,7 @@ BENCHMARK(BM_ValidKeywordsAsRawIdentifiers);
 
 // This benchmark does a 50-50 split of r-prefixed and r#-prefixed identifiers
 // to directly compare raw and non-raw performance.
-void BM_RawIdentifierFocus(benchmark::State& state) {
+auto BM_RawIdentifierFocus(benchmark::State& state) -> void {
   llvm::SmallVector<llvm::StringRef> ids =
       Testing::SourceGen::Global().GetIdentifiers(NumTokens / 2);
 
@@ -327,7 +328,7 @@ void BM_RawIdentifierFocus(benchmark::State& state) {
 BENCHMARK(BM_RawIdentifierFocus);
 
 template <int MinLength, int MaxLength, bool Uniform>
-void BM_ValidIdentifiers(benchmark::State& state) {
+auto BM_ValidIdentifiers(benchmark::State& state) -> void {
   std::string source = RandomIdentifierSeq(MinLength, MaxLength, Uniform);
 
   LexerBenchHelper helper(source);
@@ -360,7 +361,7 @@ BENCHMARK(BM_ValidIdentifiers<80, 80, /*Uniform=*/true>);
 // Benchmark to stress the lexing of horizontal whitespace. This sets up what is
 // nearly a worst-case scenario of short-but-expensive-to-lex tokens with runs
 // of horizontal whitespace between them.
-void BM_HorizontalWhitespace(benchmark::State& state) {
+auto BM_HorizontalWhitespace(benchmark::State& state) -> void {
   int num_spaces = state.range(0);
   std::string separator(num_spaces, ' ');
   std::string source = RandomIdentifierSeq(3, 5, /*uniform=*/true, separator);
@@ -380,7 +381,7 @@ void BM_HorizontalWhitespace(benchmark::State& state) {
 }
 BENCHMARK(BM_HorizontalWhitespace)->RangeMultiplier(4)->Range(1, 128);
 
-void BM_RandomSource(benchmark::State& state) {
+auto BM_RandomSource(benchmark::State& state) -> void {
   std::string source = RandomSource(DefaultSourceDist);
 
   LexerBenchHelper helper(source);
@@ -406,7 +407,7 @@ void BM_RandomSource(benchmark::State& state) {
 BENCHMARK(BM_RandomSource);
 
 // Benchmark to stress opening and closing grouped symbols.
-void BM_GroupingSymbols(benchmark::State& state) {
+auto BM_GroupingSymbols(benchmark::State& state) -> void {
   int curly_brace_depth = state.range(0);
   int paren_depth = state.range(1);
   int square_bracket_depth = state.range(2);
@@ -419,8 +420,7 @@ void BM_GroupingSymbols(benchmark::State& state) {
   // are also active and have some reasonable icache pressure.
   llvm::SmallVector<llvm::StringRef> ids =
       Testing::SourceGen::Global().GetShuffledIdentifiers(NumTokens);
-  std::string source;
-  llvm::raw_string_ostream os(source);
+  RawStringOstream os;
   int num_tokens_per_nest =
       curly_brace_depth * 2 + paren_depth * 2 + square_bracket_depth * 2 + 2;
   int num_nests = NumTokens / num_tokens_per_nest;
@@ -449,7 +449,8 @@ void BM_GroupingSymbols(benchmark::State& state) {
     os << ids[(i * 2 + 1) % NumTokens] << "\n";
   }
 
-  LexerBenchHelper helper(os.str());
+  std::string source = os.TakeStr();
+  LexerBenchHelper helper(source);
   for (auto _ : state) {
     TokenizedBuffer buffer = helper.Lex();
 
@@ -494,7 +495,7 @@ BENCHMARK(BM_GroupingSymbols)
 
 // Benchmark to stress the lexing of blank lines. This uses a simple, easy to
 // lex token, but separates each one by varying numbers of blank lines.
-void BM_BlankLines(benchmark::State& state) {
+auto BM_BlankLines(benchmark::State& state) -> void {
   int num_blank_lines = state.range(0);
   std::string separator(num_blank_lines, '\n');
   std::string source = RandomIdentifierSeq(3, 5, /*uniform=*/true, separator);
@@ -520,19 +521,19 @@ BENCHMARK(BM_BlankLines)->RangeMultiplier(4)->Range(1, 128);
 // Benchmark to stress the lexing of comment lines. This uses a simple, easy to
 // lex token, but separates each one by varying numbers of comment lines, with
 // varying comment line length and indentation.
-void BM_CommentLines(benchmark::State& state) {
+auto BM_CommentLines(benchmark::State& state) -> void {
   int num_comment_lines = state.range(0);
   int comment_length = state.range(1);
   int comment_indent = state.range(2);
-  std::string separator;
-  llvm::raw_string_ostream os(separator);
+  RawStringOstream os;
   os << "\n";
   for (int i : llvm::seq(num_comment_lines)) {
     static_cast<void>(i);
     os << std::string(comment_indent, ' ') << "//"
        << std::string(comment_length, ' ') << "\n";
   }
-  std::string source = RandomIdentifierSeq(3, 5, /*uniform=*/true, separator);
+  std::string source =
+      RandomIdentifierSeq(3, 5, /*uniform=*/true, os.TakeStr());
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
@@ -610,6 +611,7 @@ template <const DispatchTableT& Table>
 auto BasicDispatch(ssize_t& index, const char* text, char* buffer) -> void {
   *buffer = text[index];
   ++index;
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
   [[clang::musttail]] return Table[static_cast<unsigned char>(text[index])](
       index, text, buffer);
 }
@@ -620,6 +622,7 @@ auto SpecializedDispatch(ssize_t& index, const char* text, char* buffer)
   CARBON_CHECK(C == text[index]);
   *buffer = C;
   ++index;
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
   [[clang::musttail]] return Table[static_cast<unsigned char>(text[index])](
       index, text, buffer);
 }

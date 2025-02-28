@@ -9,7 +9,7 @@
 
 #include <forward_list>
 
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -23,20 +23,19 @@
 namespace Carbon::Parse {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::ElementsAre;
 using ::testing::Pair;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
 
 class TreeTest : public ::testing::Test {
- protected:
+ public:
   Testing::CompileHelper compile_helper_;
 };
 
 TEST_F(TreeTest, IsValid) {
   Tree& tree = compile_helper_.GetTree("");
-  EXPECT_TRUE((*tree.postorder().begin()).is_valid());
+  EXPECT_TRUE((*tree.postorder().begin()).has_value());
 }
 
 TEST_F(TreeTest, AsAndTryAs) {
@@ -86,23 +85,23 @@ TEST_F(TreeTest, AsAndTryAs) {
   EXPECT_TRUE(*any_decl_id == any_decl_id2);
 }
 
-TEST_F(TreeTest, PrintPostorderAsYAML) {
+TEST_F(TreeTest, PrintPostorderAsYaml) {
   auto [tokens, tree_and_subtrees] =
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());
-  TestRawOstream print_stream;
+  RawStringOstream print_stream;
   tree_and_subtrees.tree().Print(print_stream);
 
   auto file = Yaml::Sequence(ElementsAre(
       Yaml::Mapping(ElementsAre(Pair("kind", "FileStart"), Pair("text", ""))),
       Yaml::Mapping(
           ElementsAre(Pair("kind", "FunctionIntroducer"), Pair("text", "fn"))),
-      Yaml::Mapping(
-          ElementsAre(Pair("kind", "IdentifierName"), Pair("text", "F"))),
-      Yaml::Mapping(
-          ElementsAre(Pair("kind", "TuplePatternStart"), Pair("text", "("))),
-      Yaml::Mapping(ElementsAre(Pair("kind", "TuplePattern"), Pair("text", ")"),
-                                Pair("subtree_size", "2"))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "IdentifierNameBeforeParams"),
+                                Pair("text", "F"))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "ExplicitParamListStart"),
+                                Pair("text", "("))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "ExplicitParamList"),
+                                Pair("text", ")"), Pair("subtree_size", "2"))),
       Yaml::Mapping(ElementsAre(Pair("kind", "FunctionDecl"), Pair("text", ";"),
                                 Pair("subtree_size", "5"))),
       Yaml::Mapping(ElementsAre(Pair("kind", "FileEnd"), Pair("text", "")))));
@@ -115,27 +114,27 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
               IsYaml(ElementsAre(root)));
 }
 
-TEST_F(TreeTest, PrintPreorderAsYAML) {
+TEST_F(TreeTest, PrintPreorderAsYaml) {
   auto [tokens, tree_and_subtrees] =
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());
-  TestRawOstream print_stream;
+  RawStringOstream print_stream;
   tree_and_subtrees.PrintPreorder(print_stream);
 
   auto param_list = Yaml::Sequence(ElementsAre(Yaml::Mapping(
-      ElementsAre(Pair("node_index", "3"), Pair("kind", "TuplePatternStart"),
-                  Pair("text", "(")))));
+      ElementsAre(Pair("node_index", "3"),
+                  Pair("kind", "ExplicitParamListStart"), Pair("text", "(")))));
 
   auto function_decl = Yaml::Sequence(ElementsAre(
       Yaml::Mapping(ElementsAre(Pair("node_index", "1"),
                                 Pair("kind", "FunctionIntroducer"),
                                 Pair("text", "fn"))),
       Yaml::Mapping(ElementsAre(Pair("node_index", "2"),
-                                Pair("kind", "IdentifierName"),
+                                Pair("kind", "IdentifierNameBeforeParams"),
                                 Pair("text", "F"))),
       Yaml::Mapping(ElementsAre(Pair("node_index", "4"),
-                                Pair("kind", "TuplePattern"), Pair("text", ")"),
-                                Pair("subtree_size", "2"),
+                                Pair("kind", "ExplicitParamList"),
+                                Pair("text", ")"), Pair("subtree_size", "2"),
                                 Pair("children", param_list)))));
 
   auto file = Yaml::Sequence(ElementsAre(

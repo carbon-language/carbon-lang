@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "common/error_test_helpers.h"
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 
 namespace Carbon {
 namespace {
@@ -48,6 +48,12 @@ struct Val {
 TEST(ErrorTest, ErrorOrArrowOp) {
   ErrorOr<Val> err({1});
   EXPECT_EQ(err->val, 1);
+}
+
+TEST(ErrorTest, ErrorOrReference) {
+  Val val = {1};
+  ErrorOr<Val&> maybe_val(val);
+  EXPECT_EQ(maybe_val->val, 1);
 }
 
 auto IndirectErrorOrSuccessTest() -> ErrorOr<Success> { return Success(); }
@@ -108,7 +114,7 @@ TEST(ErrorTest, ErrorBuilderOperatorImplicitCast) {
 
 TEST(ErrorTest, StreamError) {
   Error result = ErrorBuilder("TestFunc") << "msg";
-  Testing::TestRawOstream result_stream;
+  RawStringOstream result_stream;
   result_stream << result;
   EXPECT_EQ(result_stream.TakeStr(), "TestFunc: msg");
 }

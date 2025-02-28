@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include "common/ostream.h"
 #include "toolchain/base/int.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -14,7 +15,7 @@ namespace Carbon::SemIR {
 
 // An enum whose values are the specified types.
 template <typename... Types>
-class TypeEnum {
+class TypeEnum : public Printable<TypeEnum<Types...>> {
  public:
   static constexpr size_t NumTypes = sizeof...(Types);
   static constexpr size_t NumValues = NumTypes + 2;
@@ -96,6 +97,20 @@ class TypeEnum {
     return value_ != RawEnumType::Invalid;
   }
 
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "IdKind(";
+    if (value_ == RawEnumType::None) {
+      out << "None";
+    } else {
+      static constexpr std::array<llvm::StringLiteral, sizeof...(Types)> Names =
+          {
+              Types::Label...,
+          };
+      out << Names[static_cast<int>(value_)];
+    }
+    out << ")";
+  }
+
  private:
   // Translates a type to its enum value, or `Invalid`.
   template <typename IdT, bool AllowInvalid>
@@ -124,10 +139,11 @@ using IdKind = TypeEnum<
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,
     // From sem_ir/ids.h.
-    InstId, AbsoluteInstId, AnyRawId, ConstantId, EntityNameId,
+    InstId, AbsoluteInstId, DestInstId, AnyRawId, ConstantId, EntityNameId,
     CompileTimeBindIndex, RuntimeParamIndex, FacetTypeId, FunctionId, ClassId,
-    InterfaceId, ImplId, GenericId, SpecificId, ImportIRId, ImportIRInstId,
-    LocId, BoolValue, IntKind, NameId, NameScopeId, InstBlockId,
+    InterfaceId, AssociatedConstantId, ImplId, GenericId, SpecificId,
+    ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId, NameScopeId,
+    InstBlockId, AbsoluteInstBlockId, DeclInstBlockId, LabelId, ExprRegionId,
     StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex, LibraryNameId,
     FloatKind>;
 

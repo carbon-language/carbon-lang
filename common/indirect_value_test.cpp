@@ -85,6 +85,7 @@ TEST(IndirectValueTest, MutableArrow) {
 
 TEST(IndirectValueTest, CopyConstruct) {
   IndirectValue<TestValue> v1;
+  // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
   auto v2 = v1;
   EXPECT_EQ(v1->state, "default constructed");
   EXPECT_EQ(v2->state, "copy constructed");

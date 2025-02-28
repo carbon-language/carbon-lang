@@ -39,10 +39,10 @@ class FileTestAutoupdater {
       const llvm::SmallVector<llvm::StringRef>& filenames,
       int autoupdate_line_number, bool autoupdate_split,
       const llvm::SmallVector<FileTestLine>& non_check_lines,
-      llvm::StringRef stdout, llvm::StringRef stderr,
+      llvm::StringRef actual_stdout, llvm::StringRef actual_stderr,
       const std::optional<RE2>& default_file_re,
       const llvm::SmallVector<LineNumberReplacement>& line_number_replacements,
-      std::function<void(std::string&)> do_extra_check_replacements)
+      std::function<auto(std::string&)->void> do_extra_check_replacements)
       : file_test_path_(file_test_path),
         test_command_(std::move(test_command)),
         dump_command_(std::move(dump_command)),
@@ -56,10 +56,10 @@ class FileTestAutoupdater {
         do_extra_check_replacements_(std::move(do_extra_check_replacements)),
         // BuildCheckLines should only be called after other member
         // initialization.
-        stdout_(BuildCheckLines(stdout, "STDOUT")),
-        stderr_(BuildCheckLines(stderr, "STDERR")),
-        any_attached_stdout_lines_(std::any_of(
-            stdout_.lines.begin(), stdout_.lines.end(),
+        stdout_(BuildCheckLines(actual_stdout, "STDOUT")),
+        stderr_(BuildCheckLines(actual_stderr, "STDERR")),
+        any_attached_stdout_lines_(llvm::any_of(
+            stdout_.lines,
             [&](const CheckLine& line) { return line.line_number() != -1; })),
         non_check_line_(non_check_lines_.begin()) {
     for (const auto& replacement : line_number_replacements_) {
@@ -105,7 +105,9 @@ class FileTestAutoupdater {
   };
 
   // A CHECK line which is integrated into autoupdate output.
-  class CheckLine : public FileTestLineBase {
+  //
+  // `final` because we use pointer arithmetic on this type.
+  class CheckLine final : public FileTestLineBase {
    public:
     // RE2 is passed by a pointer because it doesn't support std::optional.
     explicit CheckLine(FileAndLineNumber file_and_line_number, std::string line)
@@ -201,7 +203,7 @@ class FileTestAutoupdater {
   const llvm::SmallVector<FileTestLine>& non_check_lines_;
   const std::optional<RE2>& default_file_re_;
   const llvm::SmallVector<LineNumberReplacement>& line_number_replacements_;
-  std::function<void(std::string&)> do_extra_check_replacements_;
+  std::function<auto(std::string&)->void> do_extra_check_replacements_;
 
   // Generated TIP lines, from AddTips.
   llvm::SmallVector<TipLine> tips_;

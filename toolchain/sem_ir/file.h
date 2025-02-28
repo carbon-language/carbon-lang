@@ -15,6 +15,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
@@ -23,6 +24,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/import_cpp.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/interface.h"
@@ -35,11 +37,31 @@
 
 namespace Carbon::SemIR {
 
+// An expression that may contain control flow, represented as a
+// single-entry/single-exit region. `block_ids` are the blocks that are part of
+// evaluation of the expression, and `result_id` represents the result of
+// evaluating the expression. `block_ids` consists of all blocks that are
+// dominated by `block_ids.front()` and post-dominated by `block_ids.back()`,
+// and should be in lexical order. `result_id` will be in `block_ids.back()` or
+// some block that dominates it.
+//
+// `block_ids` cannot be empty. If it has a single element, then the region
+// should be used via a `SpliceBlock` inst. Otherwise, the region should be used
+// by branching to the entry block, and the last inst in the exit block will
+// likewise be a branch.
+struct ExprRegion {
+  llvm::SmallVector<InstBlockId> block_ids;
+  InstId result_id;
+};
+
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
+  using CompleteFacetTypeStore =
+      RelationalValueStore<SemIR::FacetTypeId, SemIR::CompleteFacetTypeId>;
+
   // Starts a new file for Check::CheckParseTree.
-  explicit File(CheckIRId check_ir_id,
+  explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
                 SharedValueStores& value_stores, std::string filename);
 
@@ -62,8 +84,12 @@ class File : public Printable<File> {
       -> void;
 
   // Returns array bound value from the bound instruction.
-  auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
-    return ints().Get(insts().GetAs<IntValue>(bound_id).int_id).getZExtValue();
+  auto GetArrayBoundValue(InstId bound_id) const -> std::optional<uint64_t> {
+    if (auto bound = insts().TryGetAs<IntValue>(
+            constant_values().GetConstantInstId(bound_id))) {
+      return ints().Get(bound->int_id).getZExtValue();
+    }
+    return std::nullopt;
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
@@ -71,8 +97,13 @@ class File : public Printable<File> {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
+  // Returns true if this file is an `impl`.
+  auto is_impl() -> bool {
+    return import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir != nullptr;
+  }
+
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
-  auto package_id() const -> IdentifierId { return package_id_; }
+  auto package_id() const -> PackageNameId { return package_id_; }
   auto library_id() const -> SemIR::LibraryNameId { return library_id_; }
 
   // Directly expose SharedValueStores members.
@@ -116,11 +147,24 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
+  auto associated_constants() -> ValueStore<AssociatedConstantId>& {
+    return associated_constants_;
+  }
+  auto associated_constants() const -> const ValueStore<AssociatedConstantId>& {
+    return associated_constants_;
+  }
+  // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }
   auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
+  }
+  auto complete_facet_types() -> CompleteFacetTypeStore& {
+    return complete_facet_types_;
+  }
+  auto complete_facet_types() const -> const CompleteFacetTypeStore& {
+    return complete_facet_types_;
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
@@ -137,6 +181,10 @@ class File : public Printable<File> {
   }
   auto import_ir_insts() const -> const ValueStore<ImportIRInstId>& {
     return import_ir_insts_;
+  }
+  auto import_cpps() -> ValueStore<ImportCppId>& { return import_cpps_; }
+  auto import_cpps() const -> const ValueStore<ImportCppId>& {
+    return import_cpps_;
   }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
@@ -166,6 +214,11 @@ class File : public Printable<File> {
   auto constants() -> ConstantStore& { return constants_; }
   auto constants() const -> const ConstantStore& { return constants_; }
 
+  auto expr_regions() -> ValueStore<ExprRegionId>& { return expr_regions_; }
+  auto expr_regions() const -> const ValueStore<ExprRegionId>& {
+    return expr_regions_;
+  }
+
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
@@ -181,7 +234,11 @@ class File : public Printable<File> {
 
   auto filename() const -> llvm::StringRef { return filename_; }
 
+  auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
+
  private:
+  const Parse::Tree* parse_tree_;
+
   // True if parts of the IR may be invalid.
   bool has_errors_ = false;
 
@@ -189,10 +246,10 @@ class File : public Printable<File> {
   CheckIRId check_ir_id_;
 
   // The file's package.
-  IdentifierId package_id_ = IdentifierId::Invalid;
+  PackageNameId package_id_ = PackageNameId::None;
 
   // The file's library.
-  LibraryNameId library_id_ = LibraryNameId::Invalid;
+  LibraryNameId library_id_ = LibraryNameId::None;
 
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;
@@ -216,8 +273,14 @@ class File : public Printable<File> {
   // Storage for interfaces.
   ValueStore<InterfaceId> interfaces_;
 
+  // Storage for associated constants.
+  ValueStore<AssociatedConstantId> associated_constants_;
+
   // Storage for facet types.
   CanonicalValueStore<FacetTypeId> facet_types_;
+
+  // Storage for complete facet types.
+  CompleteFacetTypeStore complete_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
@@ -235,6 +298,9 @@ class File : public Printable<File> {
   // that are import-related.
   ValueStore<ImportIRInstId> import_ir_insts_;
 
+  // List of Cpp imports.
+  ValueStore<ImportCppId> import_cpps_;
+
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
@@ -244,7 +310,7 @@ class File : public Printable<File> {
   InstStore insts_;
 
   // Storage for name scopes.
-  NameScopeStore name_scopes_;
+  NameScopeStore name_scopes_ = NameScopeStore(this);
 
   // Constant values for instructions.
   ConstantValueStore constant_values_;
@@ -254,10 +320,10 @@ class File : public Printable<File> {
   InstBlockStore inst_blocks_;
 
   // The top instruction block ID.
-  InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
+  InstBlockId top_inst_block_id_ = InstBlockId::None;
 
   // The global constructor function id.
-  FunctionId global_ctor_id_ = FunctionId::Invalid;
+  FunctionId global_ctor_id_ = FunctionId::None;
 
   // Storage for instructions that represent computed global constants, such as
   // types.
@@ -268,6 +334,10 @@ class File : public Printable<File> {
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(this);
+
+  // Single-entry/single-exit regions that are referenced as units, e.g. because
+  // they represent expressions.
+  ValueStore<ExprRegionId> expr_regions_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md
@@ -284,12 +354,10 @@ enum class ExprCategory : int8_t {
   // object that outlives the current full expression context.
   DurableRef,
   // This instruction represents an ephemeral reference expression, that denotes
-  // an
-  // object that does not outlive the current full expression context.
+  // an object that does not outlive the current full expression context.
   EphemeralRef,
   // This instruction represents an initializing expression, that describes how
-  // to
-  // initialize an object.
+  // to initialize an object.
   Initializing,
   // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple

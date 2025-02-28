@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -17,7 +18,7 @@ namespace Carbon::Check {
 static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                                   Operator op) -> SemIR::InstId {
   // Look up the interface, and pass it any generic arguments.
-  auto interface_id = context.LookupNameInCore(loc_id, op.interface_name);
+  auto interface_id = LookupNameInCore(context, loc_id, op.interface_name);
   if (!op.interface_args_ref.empty()) {
     interface_id =
         PerformCall(context, loc_id, interface_id, op.interface_args_ref);
@@ -31,7 +32,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
-                        Context::BuildDiagnosticFn missing_impl_diagnoser)
+                        MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id.ToImplicit(), op);
@@ -39,8 +40,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `operand.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
                                                  op_fn, missing_impl_diagnoser);
-  if (bound_op_id == SemIR::InstId::BuiltinErrorInst) {
-    return SemIR::InstId::BuiltinErrorInst;
+  if (bound_op_id == SemIR::ErrorInst::SingletonInstId) {
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Form `bound_op()`.
@@ -49,7 +50,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         Context::BuildDiagnosticFn missing_impl_diagnoser)
+                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id.ToImplicit(), op);
@@ -57,8 +58,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `lhs.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn,
                                                  missing_impl_diagnoser);
-  if (bound_op_id == SemIR::InstId::BuiltinErrorInst) {
-    return SemIR::InstId::BuiltinErrorInst;
+  if (bound_op_id == SemIR::ErrorInst::SingletonInstId) {
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Form `bound_op(rhs)`.

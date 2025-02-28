@@ -10,19 +10,20 @@
 
 import Geometry;
 
-// CHECK:STDERR: fail_too_late.carbon:[[@LINE+6]]:1: error: the `library` declaration must be the first non-comment line [PackageTooLate]
+// CHECK:STDERR: fail_too_late.carbon:[[@LINE+7]]:1: error: the `library` declaration must be the first non-comment line [PackageTooLate]
 // CHECK:STDERR: library "too_late";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_too_late.carbon:[[@LINE-5]]:1: note: first non-comment line is here [FirstNonCommentLine]
 // CHECK:STDERR: import Geometry;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: fail_too_late.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Geometry'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 2},

@@ -2,12 +2,15 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load(
+    "@llvm-project//:vars.bzl",
+    "LLVM_VERSION_MAJOR",
+)
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
-load("install_filegroups.bzl", "install_busybox_wrapper", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
+load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
-load("run_tool.bzl", "run_tool")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -82,12 +85,14 @@ cc_library(
 
 cc_test(
     name = "busybox_info_test",
+    size = "small",
     srcs = ["busybox_info_test.cpp"],
     deps = [
         ":busybox_info",
         "//common:check",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -111,12 +116,17 @@ cc_binary(
     ],
 )
 
+# TODO: Add remaining aliases of LLD for Windows and WASM when we have support
+# for them wired up through the busybox.
 lld_aliases = [
     "ld.lld",
     "ld64.lld",
-    "lld-link",
-    "wasm-ld",
 ]
+
+filegroup(
+    name = "clang_headers",
+    srcs = ["@llvm-project//clang:builtin_headers_gen"],
+)
 
 # Given a root `prefix_root`, the hierarchy looks like:
 #
@@ -129,9 +139,10 @@ lld_aliases = [
 # based on the FHS (Filesystem Hierarchy Standard).
 install_dirs = {
     "bin": [
-        install_busybox_wrapper(
+        install_symlink(
             "carbon",
             "../lib/carbon/carbon-busybox",
+            is_driver = True,
         ),
     ],
     "lib/carbon": [
@@ -145,20 +156,19 @@ install_dirs = {
         install_filegroup("core", "//core:prelude"),
     ],
     "lib/carbon/llvm/bin": [
-        install_target(
-            "lld",
-            "@llvm-project//lld:lld",
-            executable = True,
-        ),
-        install_busybox_wrapper(
+        install_symlink(
             "clang",
             "../../carbon-busybox",
-            [
-                "clang",
-                "--",
-            ],
+            is_driver = True,
         ),
-    ] + [install_symlink(name, "lld") for name in lld_aliases],
+    ] + [install_symlink(
+        name,
+        "../../carbon-busybox",
+        is_driver = True,
+    ) for name in lld_aliases],
+    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
+        install_filegroup("include", ":clang_headers", "staging/include/"),
+    ],
 }
 
 make_install_filegroups(
@@ -192,12 +202,4 @@ pkg_tar_and_test(
     package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
-)
-
-# Support `bazel run` on specific binaries.
-run_tool(
-    name = "run_carbon",
-    data = [":install_data"],
-    env = cc_env(),
-    tool = "prefix_root/bin/carbon",
 )

@@ -23,13 +23,14 @@ class A {
 
   base: { }
   // We should resume parsing here after the previous error.
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+7]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+8]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+3]]:7: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:       ^
+  // CHECK:STDERR:
   var n: i32;
 }
 
@@ -37,7 +38,7 @@ class A {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'A'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'A'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
 // CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 2},

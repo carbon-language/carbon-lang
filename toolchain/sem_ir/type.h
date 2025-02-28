@@ -26,12 +26,31 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns the ID of the constant used to define the specified type.
   auto GetConstantId(TypeId type_id) const -> ConstantId {
-    if (!type_id.is_valid()) {
-      // TODO: Investigate replacing this with a CHECK or returning Invalid.
+    if (!type_id.has_value()) {
+      // TODO: Investigate replacing this with a CHECK or returning `None`.
       return ConstantId::NotConstant;
     }
     return type_id.AsConstantId();
   }
+
+  // Returns the type ID for a constant that is a type value, i.e. it is a value
+  // of type `TypeType`.
+  //
+  // Facet values are of the same typishness as types, but are not themselves
+  // types, so they can not be passed here. They should be converted to a type
+  // through an `as type` conversion, that is, to a value of type `TypeType`.
+  auto GetTypeIdForTypeConstantId(SemIR::ConstantId constant_id) const
+      -> SemIR::TypeId;
+
+  // Returns the type ID for an instruction whose constant value is a type
+  // value, i.e. it is a value of type `TypeType`.
+  //
+  // Instructions whose values are facet values (see `FacetValue`) produce a
+  // value of the same typishness as types, but which are themselves not types,
+  // so they can not be passed here. They should be converted to a type through
+  // an `as type` conversion, such as to a `FacetAccessType` instruction whose
+  // value is of type `TypeType`.
+  auto GetTypeIdForTypeInstId(SemIR::InstId inst_id) const -> SemIR::TypeId;
 
   // Returns the ID of the instruction used to define the specified type.
   auto GetInstId(TypeId type_id) const -> InstId;
@@ -68,7 +87,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   }
 
   // Gets the value representation to use for a type. This returns an
-  // invalid type if the given type is not complete.
+  // `None` type if the given type is not complete.
   auto GetValueRepr(TypeId type_id) const -> ValueRepr {
     if (auto type_info = complete_type_info_.Lookup(type_id)) {
       return type_info.value().value_repr;
@@ -76,11 +95,20 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return {.kind = ValueRepr::Unknown};
   }
 
-  // Sets the value representation associated with a type.
-  auto SetValueRepr(TypeId type_id, ValueRepr value_repr) -> void {
-    CARBON_CHECK(value_repr.kind != ValueRepr::Unknown);
-    auto insert_info =
-        complete_type_info_.Insert(type_id, {.value_repr = value_repr});
+  // Gets the `CompleteTypeInfo` for a type, with an empty value if the type is
+  // not complete.
+  auto GetCompleteTypeInfo(TypeId type_id) const -> CompleteTypeInfo {
+    if (auto type_info = complete_type_info_.Lookup(type_id)) {
+      return type_info.value();
+    }
+    return {.value_repr = {.kind = ValueRepr::Unknown}};
+  }
+
+  // Sets the `CompleteTypeInfo` associated with a type, marking it as complete.
+  // This can be used with abstract types.
+  auto SetComplete(TypeId type_id, const CompleteTypeInfo& info) -> void {
+    CARBON_CHECK(info.value_repr.kind != ValueRepr::Unknown);
+    auto insert_info = complete_type_info_.Insert(type_id, info);
     CARBON_CHECK(insert_info.is_inserted(), "Type {0} completed more than once",
                  type_id);
     complete_types_.push_back(type_id);
@@ -88,8 +116,8 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   }
 
   // Get the object representation associated with a type. For a non-class type,
-  // this is the type itself. An invalid TypeId is returned if the object
-  // representation cannot be determined because the type is not complete.
+  // this is the type itself. `None` is returned if the object representation
+  // cannot be determined because the type is not complete.
   auto GetObjectRepr(TypeId type_id) const -> TypeId;
 
   // Determines whether the given type is known to be complete. This does not
@@ -108,10 +136,16 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns integer type information from a type ID that is known to represent
   // an integer type. Abstracts away the difference between an `IntType`
-  // instruction defined type, a builtin instruction defined type, and a class
-  // adapting such a type. Uses IntId::Invalid for types that have a
+  // instruction defined type, a singleton instruction defined type, and a class
+  // adapting such a type. Uses IntId::None for types that have a
   // non-constant width and for IntLiteral.
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;
+
+  // Returns whether `type_id` represents a facet type.
+  auto IsFacetType(SemIR::TypeId type_id) const -> bool {
+    return type_id == SemIR::TypeType::SingletonTypeId ||
+           Is<SemIR::FacetType>(type_id);
+  }
 
   // Returns a list of types that were completed in this file, in the order in
   // which they were completed. Earlier types in this list cannot contain
@@ -123,8 +157,15 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto type_id : complete_types_) {
+        auto info = GetCompleteTypeInfo(type_id);
         map.Add(PrintToString(type_id),
-                Yaml::OutputScalar(GetValueRepr(type_id)));
+                Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
+                  map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));
+                  if (info.abstract_class_id.has_value()) {
+                    map2.Add("abstract_class_id",
+                             Yaml::OutputScalar(info.abstract_class_id));
+                  }
+                }));
       }
     });
   }

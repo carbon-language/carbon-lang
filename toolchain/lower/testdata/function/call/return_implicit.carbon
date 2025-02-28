@@ -27,9 +27,15 @@ fn Main() {
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %b.var), !dbg !9
 // CHECK:STDOUT:   call void @_CMakeImplicitEmptyTuple.Main(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -43,6 +49,6 @@ fn Main() {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 7, scope: !8)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 15, scope: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !8)

@@ -43,6 +43,7 @@ cc_library(
         ":check",
         ":error",
         ":ostream",
+        ":raw_string_ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -54,8 +55,8 @@ cc_test(
     deps = [
         ":command_line",
         ":error_test_helpers",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -108,8 +109,8 @@ cc_test(
     deps = [
         ":enum_base",
         ":enum_base_test_def",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -120,6 +121,7 @@ cc_library(
     deps = [
         ":check",
         ":ostream",
+        ":raw_string_ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -141,8 +143,8 @@ cc_test(
     deps = [
         ":error",
         ":error_test_helpers",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -181,11 +183,12 @@ cc_library(
 
 cc_test(
     name = "hashing_test",
+    size = "small",
     srcs = ["hashing_test.cpp"],
     deps = [
         ":hashing",
+        ":raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -217,6 +220,7 @@ cc_library(
 
 cc_test(
     name = "hashtable_key_context_test",
+    size = "small",
     srcs = ["hashtable_key_context_test.cpp"],
     deps = [
         ":hashtable_key_context",
@@ -281,12 +285,12 @@ cc_library(
 
 cc_test(
     name = "map_test",
+    size = "small",
     srcs = ["map_test.cpp"],
     deps = [
         ":map",
         ":raw_hashtable_test_helpers",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -368,6 +372,7 @@ cc_binary(
 
 sh_test(
     name = "raw_hashtable_metadata_group_benchmark_test",
+    size = "small",
     srcs = ["raw_hashtable_metadata_group_benchmark"],
     args = [
         "--benchmark_min_time=1x",
@@ -408,6 +413,26 @@ cc_library(
 )
 
 cc_library(
+    name = "raw_string_ostream",
+    hdrs = ["raw_string_ostream.h"],
+    deps = [
+        ":check",
+        ":ostream",
+    ],
+)
+
+cc_test(
+    name = "raw_string_ostream_test",
+    size = "small",
+    srcs = ["raw_string_ostream_test.cpp"],
+    deps = [
+        ":raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "set",
     hdrs = ["set.h"],
     deps = [
@@ -420,12 +445,12 @@ cc_library(
 
 cc_test(
     name = "set_test",
+    size = "small",
     srcs = ["set_test.cpp"],
     deps = [
         ":raw_hashtable_test_helpers",
         ":set",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )
@@ -611,9 +636,9 @@ cc_test(
     size = "small",
     srcs = ["vlog_test.cpp"],
     deps = [
+        ":raw_string_ostream",
         ":vlog",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )

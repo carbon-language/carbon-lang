@@ -6,15 +6,37 @@
 
 namespace Carbon::SemIR {
 
-template <typename VecT>
-static auto SortAndDeduplicate(VecT* vec) -> void {
-  std::sort(vec->begin(), vec->end());
-  vec->erase(std::unique(vec->begin(), vec->end()), vec->end());
+template <typename VecT, typename CompareT>
+static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {
+  llvm::sort(vec, compare);
+  vec.erase(llvm::unique(vec), vec.end());
+}
+
+// Canonically ordered by the numerical ids.
+static auto ImplsLess(const FacetTypeInfo::ImplsConstraint& lhs,
+                      const FacetTypeInfo::ImplsConstraint& rhs) -> bool {
+  return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
+         std::tie(rhs.interface_id.index, rhs.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
+                        const FacetTypeInfo::RewriteConstraint& rhs) -> bool {
+  return std::tie(lhs.lhs_const_id.index, lhs.rhs_const_id.index) <
+         std::tie(rhs.lhs_const_id.index, rhs.rhs_const_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto RequiredLess(const CompleteFacetType::RequiredInterface& lhs,
+                         const CompleteFacetType::RequiredInterface& rhs)
+    -> bool {
+  return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
+         std::tie(rhs.interface_id.index, rhs.specific_id.index);
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  SortAndDeduplicate(&impls_constraints);
-  SortAndDeduplicate(&rewrite_constraints);
+  SortAndDeduplicate(impls_constraints, ImplsLess);
+  SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
 
 auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
@@ -26,7 +48,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     llvm::ListSeparator sep;
     for (ImplsConstraint req : impls_constraints) {
       out << sep << req.interface_id;
-      if (req.specific_id.is_valid()) {
+      if (req.specific_id.has_value()) {
         out << "(" << req.specific_id << ")";
       }
     }
@@ -43,7 +65,12 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   if (other_requirements) {
     out << outer_sep << "+ TODO requirements";
   }
+
   out << "}";
+}
+
+auto CompleteFacetType::CanonicalizeRequiredInterfaces() -> void {
+  SortAndDeduplicate(required_interfaces, RequiredLess);
 }
 
 }  // namespace Carbon::SemIR

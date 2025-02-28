@@ -18,9 +18,9 @@ var a: A = {};
 // CHECK:STDOUT: ; ModuleID = 'class_with_fun.carbon'
 // CHECK:STDOUT: source_filename = "class_with_fun.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global {}
+// CHECK:STDOUT: @a = internal global {} zeroinitializer
 // CHECK:STDOUT: @A.val.loc13_12 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @A.val.loc16_14 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @A.val.loc16_1 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_Cret_a.Main(ptr sret({}) %return) !dbg !4 {
@@ -31,12 +31,12 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @A.val.loc16_14, i64 0, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @A.val.loc16_1, i64 0, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }

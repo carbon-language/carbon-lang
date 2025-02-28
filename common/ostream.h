@@ -5,13 +5,14 @@
 #ifndef CARBON_COMMON_OSTREAM_H_
 #define CARBON_COMMON_OSTREAM_H_
 
+// Libraries should include this header instead of raw_ostream.
+
 #include <concepts>
 #include <ostream>
 #include <type_traits>
 
-#include "llvm/Support/raw_os_ostream.h"
-// Libraries should include this header instead of raw_ostream.
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"  // IWYU pragma: export
 
 namespace Carbon {
@@ -50,6 +51,26 @@ class Printable {
       *out << " pointing to " << *p;
     }
   }
+};
+
+// Helper class for printing strings with escapes.
+//
+// For example:
+//   stream << FormatEscaped(str);
+// Is equivalent to:
+//   stream.write_escaped(str);
+class FormatEscaped : public Printable<FormatEscaped> {
+ public:
+  explicit FormatEscaped(llvm::StringRef str, bool use_hex_escapes = false)
+      : str_(str), use_hex_escapes_(use_hex_escapes) {}
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out.write_escaped(str_, use_hex_escapes_);
+  }
+
+ private:
+  llvm::StringRef str_;
+  bool use_hex_escapes_;
 };
 
 // Returns the result of printing the value.

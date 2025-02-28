@@ -4,11 +4,14 @@
 
 #include "toolchain/testing/yaml_test_helpers.h"
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/YAMLParser.h"
 
 namespace Carbon::Testing::Yaml {
 
+// This is for tests, so we should be okay with the recursion here.
+// NOLINTNEXTLINE(misc-no-recursion)
 static auto Parse(llvm::yaml::Node* node) -> Value {
   CARBON_CHECK(node != nullptr);
 
@@ -61,9 +64,9 @@ auto Value::FromText(llvm::StringRef text) -> ErrorOr<SequenceValue> {
   sm.setDiagHandler(
       [](const llvm::SMDiagnostic& diag, void* context) -> void {
         auto* error_message = static_cast<std::optional<std::string>*>(context);
-        *error_message = std::string();
-        llvm::raw_string_ostream stream(**error_message);
+        RawStringOstream stream;
         diag.print(/*ProgName=*/nullptr, stream, /*ShowColors=*/false);
+        *error_message = stream.TakeStr();
       },
       &error_message);
   llvm::yaml::Stream yaml_stream(text, sm);

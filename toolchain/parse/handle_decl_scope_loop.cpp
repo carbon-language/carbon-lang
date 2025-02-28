@@ -142,7 +142,7 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
       // Misplaced packaging keywords may lead to this being re-triggered.
       if (context.packaging_state() !=
           Context::PackagingState::AfterNonPackagingDecl) {
-        if (!context.first_non_packaging_token().is_valid()) {
+        if (!context.first_non_packaging_token().has_value()) {
           context.set_first_non_packaging_token(*context.position());
         }
         context.set_packaging_state(
@@ -184,9 +184,8 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Library:
         case Lex::TokenKind::Namespace:
         case Lex::TokenKind::Var:
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
-  case Lex::TokenKind::Name:
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"
 
           return false;
@@ -214,8 +213,8 @@ static auto TryHandleAsModifier(Context& context) -> bool {
   }
 
   switch (position_kind) {
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)              \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)                   \
   case Lex::TokenKind::Name:                                          \
     context.AddLeafNode(NodeKind::Name##Modifier, context.Consume()); \
     return true;
@@ -242,21 +241,8 @@ static auto TryHandleAsModifier(Context& context) -> bool {
   }
 }
 
-auto HandleDeclScopeLoop(Context& context) -> void {
-  // This maintains the current state unless we're at the end of the scope.
-
-  if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace) ||
-      context.PositionIs(Lex::TokenKind::FileEnd)) {
-    // This is the end of the scope, so the loop state ends.
-    context.PopAndDiscardState();
-    return;
-  }
-
-  // Create a state with the correct starting position, with a dummy kind
-  // until we see the declaration's introducer.
-  Context::StateStackEntry state{.state = State::Invalid,
-                                 .token = *context.position(),
-                                 .subtree_start = context.tree().size()};
+auto HandleDecl(Context& context) -> void {
+  auto state = context.PopState();
 
   // Add a placeholder node, to be replaced by the declaration introducer once
   // it is found.
@@ -269,6 +255,18 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   if (!TryHandleAsDecl(context, state, saw_modifier)) {
     HandleUnrecognizedDecl(context, state.subtree_start);
   }
+}
+
+auto HandleDeclScopeLoop(Context& context) -> void {
+  // This maintains the current state unless we're at the end of the scope.
+  if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace) ||
+      context.PositionIs(Lex::TokenKind::FileEnd)) {
+    // This is the end of the scope, so the loop state ends.
+    context.PopAndDiscardState();
+    return;
+  }
+
+  context.PushState(State::Decl);
 }
 
 }  // namespace Carbon::Parse

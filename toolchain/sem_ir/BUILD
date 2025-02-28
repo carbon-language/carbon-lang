@@ -21,12 +21,10 @@ cc_library(
 cc_library(
     name = "typed_insts",
     srcs = [
-        "builtin_inst_kind.cpp",
         "ids.cpp",
         "inst_kind.cpp",
     ],
     hdrs = [
-        "builtin_inst_kind.h",
         "id_kind.h",
         "ids.h",
         "inst_kind.h",
@@ -57,6 +55,7 @@ cc_library(
         "//common:check",
         "//common:hashing",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//common:struct_reflection",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
@@ -77,10 +76,12 @@ cc_library(
         "generic.cpp",
         "impl.cpp",
         "name.cpp",
+        "name_scope.cpp",
         "type.cpp",
         "type_info.cpp",
     ],
     hdrs = [
+        "associated_constant.h",
         "builtin_function_kind.h",
         "class.h",
         "constant.h",
@@ -92,6 +93,7 @@ cc_library(
         "function.h",
         "generic.h",
         "impl.h",
+        "import_cpp.h",
         "import_ir.h",
         "interface.h",
         "name.h",
@@ -113,6 +115,7 @@ cc_library(
         "//common:hashing",
         "//common:map",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//common:set",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",
@@ -135,6 +138,7 @@ cc_library(
         ":file",
         ":typed_insts",
         "//common:check",
+        "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
     ],
@@ -142,14 +146,22 @@ cc_library(
 
 cc_library(
     name = "inst_namer",
-    srcs = ["inst_namer.cpp"],
-    hdrs = ["inst_namer.h"],
+    srcs = [
+        "inst_fingerprinter.cpp",
+        "inst_namer.cpp",
+    ],
+    hdrs = [
+        "inst_fingerprinter.h",
+        "inst_namer.h",
+    ],
     deps = [
         ":file",
         ":typed_insts",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
@@ -183,6 +195,43 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "absolute_node_id",
+    srcs = ["absolute_node_id.cpp"],
+    hdrs = ["absolute_node_id.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
+    deps = [
+        ":file",
+        ":stringify_type",
+        "//common:ostream",
+    ],
+    # Always link dump methods so they are callable from a debugger
+    # even though they are never called.
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "name_scope_test",
+    size = "small",
+    srcs = ["name_scope_test.cpp"],
+    deps = [
+        ":file",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
 cc_test(
     name = "typed_insts_test",
     size = "small",
@@ -201,9 +250,9 @@ cc_test(
     srcs = ["yaml_test.cpp"],
     deps = [
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/driver",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",

@@ -1351,7 +1351,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     }
     case Value::Kind::MixinPseudoType:
     case Value::Kind::TypeOfMixinPseudoType:
-      CARBON_CHECK(false, "Type expression must not contain Mixin types");
+      CARBON_FATAL("Type expression must not contain Mixin types");
   }
 }
 

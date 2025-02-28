@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_prefix_repeat.carbon
 
-// CHECK:STDERR: fail_prefix_repeat.carbon:[[@LINE+3]]:17: error: parentheses are required around this unary `const` operator [UnaryOperatorRequiresParentheses]
+// CHECK:STDERR: fail_prefix_repeat.carbon:[[@LINE+4]]:17: error: parentheses are required around this unary `const` operator [UnaryOperatorRequiresParentheses]
 // CHECK:STDERR: fn F() -> const const i32* {
 // CHECK:STDERR:                 ^~~~~
+// CHECK:STDERR:
 fn F() -> const const i32* {
 }
 
@@ -18,9 +19,9 @@ fn F() -> const const i32* {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:               {kind: 'PrefixOperatorConst', text: 'const', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'PrefixOperatorConst', text: 'const', subtree_size: 3},

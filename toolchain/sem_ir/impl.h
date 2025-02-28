@@ -8,31 +8,39 @@
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
 struct ImplFields {
-  // The following members always have values, and do not change throughout the
-  // lifetime of the interface.
+  // This following members always have values and do not change.
 
   // The type for which the impl is implementing a constraint.
   InstId self_id;
   // The constraint that the impl implements.
   InstId constraint_id;
 
+  // The single interface to implement from `constraint_id`.
+  // The members are `None` if `constraint_id` isn't complete or doesn't
+  // correspond to a single interface.
+  SemIR::SpecificInterface interface;
+
+  // The witness for the impl. This can be `BuiltinErrorInst` or an import
+  // reference. Note that the entries in the witness are updated at the end of
+  // the impl definition.
+  InstId witness_id = InstId::None;
+
   // The following members are set at the `{` of the impl definition.
 
   // The impl scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
+  NameScopeId scope_id = NameScopeId::None;
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
+  InstBlockId body_block_id = InstBlockId::None;
 
   // The following members are set at the `}` of the impl definition.
-
-  // The witness for the impl. This can be `BuiltinErrorInst`.
-  InstId witness_id = InstId::Invalid;
+  bool defined = false;
 };
 
 // An implementation of a constraint. See EntityWithParamsBase regarding the
@@ -46,11 +54,11 @@ struct Impl : public EntityWithParamsBase,
 
   // Determines whether this impl has been fully defined. This is false until we
   // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return witness_id.is_valid(); }
+  auto is_defined() const -> bool { return defined; }
 
   // Determines whether this impl's definition has begun but not yet ended.
   auto is_being_defined() const -> bool {
-    return definition_id.is_valid() && !is_defined();
+    return has_definition_started() && !is_defined();
   }
 };
 
@@ -59,30 +67,29 @@ struct Impl : public EntityWithParamsBase,
 class ImplStore {
  private:
   // An ID of either a single impl or a lookup bucket.
-  class ImplOrLookupBucketId : public IdBase {
-   private:
-    explicit constexpr ImplOrLookupBucketId(int index) : IdBase(index) {}
-
+  class ImplOrLookupBucketId : public IdBase<ImplOrLookupBucketId> {
    public:
-    // An explicitly invalid ID, corresponding to to ImplId::Invalid.
-    static const ImplOrLookupBucketId Invalid;
+    static constexpr llvm::StringLiteral Label = "impl_or_lookup_bucket";
+
+    // An ID with no value, corresponding to to ImplId::None.
+    static const ImplOrLookupBucketId None;
 
     static auto ForImplId(ImplId impl_id) -> ImplOrLookupBucketId {
       return ImplOrLookupBucketId(impl_id.index);
     }
 
     static auto ForBucket(int bucket) -> ImplOrLookupBucketId {
-      return ImplOrLookupBucketId(ImplId::InvalidIndex - bucket - 1);
+      return ImplOrLookupBucketId(ImplId::NoneIndex - bucket - 1);
     }
 
     // Returns whether this ID represents a bucket index, rather than an ImplId.
-    // An invalid ID is not a bucket index.
-    auto is_bucket() const { return index < ImplId::InvalidIndex; }
+    // `None` is not a bucket index.
+    auto is_bucket() const { return index < ImplId::NoneIndex; }
 
     // Returns the bucket index represented by this ID. Requires is_bucket().
     auto bucket() const -> int {
       CARBON_CHECK(is_bucket());
-      return ImplId::InvalidIndex - index - 1;
+      return ImplId::NoneIndex - index - 1;
     }
 
     // Returns the ImplId index represented by this ID. Requires !is_bucket().
@@ -90,6 +97,9 @@ class ImplStore {
       CARBON_CHECK(!is_bucket());
       return ImplId(index);
     }
+
+   private:
+    explicit constexpr ImplOrLookupBucketId(int index) : IdBase(index) {}
   };
 
  public:
@@ -99,15 +109,15 @@ class ImplStore {
   // The bucket is held indirectly as an `ImplOrLookupBucketId`, in one of three
   // states:
   //
-  //   - An invalid `ImplId` represents an empty bucket.
-  //   - A valid `ImplId` represents a bucket with exactly one impl. This is
+  //   - `ImplId::None` represents an empty bucket.
+  //   - An `ImplId` value represents a bucket with exactly one impl. This is
   //     expected to be by far the most common case.
   //   - A lookup bucket index represents an index within the `ImplStore`'s
   //     array of variable-sized lookup buckets.
   class LookupBucketRef {
    public:
     LookupBucketRef(ImplStore& store, ImplOrLookupBucketId& id)
-        : store_(&store), id_(&id), single_id_storage_(ImplId::Invalid) {
+        : store_(&store), id_(&id), single_id_storage_(ImplId::None) {
       if (!id.is_bucket()) {
         single_id_storage_ = id.impl_id();
       }
@@ -124,14 +134,14 @@ class ImplStore {
       if (id_->is_bucket()) {
         return store_->lookup_buckets_[id_->bucket()].end();
       }
-      return &single_id_storage_ + (id_->is_valid() ? 1 : 0);
+      return &single_id_storage_ + (id_->has_value() ? 1 : 0);
     }
 
     // Adds an impl to this lookup bucket. Only impls from the current file and
     // its API file should be added in this way. Impls from other files do not
     // need to be found by impl redeclaration lookup so should not be added.
     auto push_back(ImplId impl_id) -> void {
-      if (!id_->is_valid()) {
+      if (!id_->has_value()) {
         *id_ = ImplOrLookupBucketId::ForImplId(impl_id);
         single_id_storage_ = impl_id;
       } else if (!id_->is_bucket()) {
@@ -181,17 +191,19 @@ class ImplStore {
 
   auto array_ref() const -> llvm::ArrayRef<Impl> { return values_.array_ref(); }
   auto size() const -> size_t { return values_.size(); }
+  auto enumerate() const -> auto { return values_.enumerate(); }
 
  private:
   File& sem_ir_;
   ValueStore<ImplId> values_;
-  Map<std::pair<InstId, InstId>, ImplOrLookupBucketId> lookup_;
+  Map<std::tuple<InstId, InterfaceId, SpecificId>, ImplOrLookupBucketId>
+      lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };
 
 constexpr inline ImplStore::ImplOrLookupBucketId
-    ImplStore::ImplOrLookupBucketId::Invalid(InvalidIndex);
+    ImplStore::ImplOrLookupBucketId::None(NoneIndex);
 
 }  // namespace Carbon::SemIR
 

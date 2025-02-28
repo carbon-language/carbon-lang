@@ -22,23 +22,25 @@ class ConstantContext {
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
-  // constant value that has already been lowered.
+  // constant value that has already been lowered. Returns nullptr if it
+  // hasn't been, in which case it should not be needed.
   auto GetConstant(SemIR::InstId inst_id) const -> llvm::Constant* {
     return GetConstant(file_context_->sem_ir().constant_values().Get(inst_id));
   }
 
   // Gets the lowered constant value for a constant that has already been
-  // lowered.
+  // lowered. Returns nullptr if it hasn't been, in which case it should not be
+  // needed.
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
-    CARBON_CHECK(const_id.is_template(), "Unexpected constant ID {0}",
+    CARBON_CHECK(const_id.is_concrete(), "Unexpected constant ID {0}",
                  const_id);
     auto inst_id =
         file_context_->sem_ir().constant_values().GetInstId(const_id);
-    CARBON_CHECK(
-        inst_id.index >= 0 && inst_id.index <= last_lowered_constant_index_,
-        "Queried constant {0} with instruction {1} that has not been lowered "
-        "yet",
-        const_id, inst_id);
+    if (inst_id.index > last_lowered_constant_index_) {
+      // This constant hasn't been lowered.
+      return nullptr;
+    }
+    CARBON_CHECK(inst_id.index >= 0);
     return constants_[inst_id.index];
   }
 
@@ -46,6 +48,11 @@ class ConstantContext {
   auto GetUnusedConstant(SemIR::TypeId /*type_id*/) const -> llvm::Constant* {
     // TODO: Consider using a poison value of the appropriate type.
     return nullptr;
+  }
+
+  // Gets the value to use for an integer literal.
+  auto GetIntLiteralAsValue() const -> llvm::Constant* {
+    return file_context_->GetIntLiteralAsValue();
   }
 
   // Gets a callable's function. Returns nullptr for a builtin.
@@ -65,7 +72,7 @@ class ConstantContext {
 
   // Sets the index of the constant we most recently lowered. This is used to
   // check we don't look at constants that we've not lowered yet.
-  auto SetLastLoweredConstantIndex(int32_t index) {
+  auto SetLastLoweredConstantIndex(int32_t index) -> void {
     last_lowered_constant_index_ = index;
   }
 
@@ -160,7 +167,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
     -> llvm::Constant* {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
-  return context.GetConstant(inst.function_id);
+  return context.GetConstant(inst.function_decl_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -187,17 +194,14 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
   // represented as an LLVM integer type.
   auto* int_type = llvm::dyn_cast<llvm::IntegerType>(type);
   if (!int_type) {
-    auto* struct_type = llvm::dyn_cast<llvm::StructType>(type);
-    CARBON_CHECK(struct_type && struct_type->getNumElements() == 0);
-    return llvm::ConstantStruct::get(struct_type);
+    auto* int_literal_value = context.GetIntLiteralAsValue();
+    CARBON_CHECK(int_literal_value->getType() == type);
+    return int_literal_value;
   }
 
-  auto val = context.sem_ir().ints().Get(inst.int_id);
   int bit_width = int_type->getBitWidth();
-  bool is_signed =
-      context.sem_ir().types().GetIntTypeInfo(inst.type_id).is_signed;
-  return llvm::ConstantInt::get(type, is_signed ? val.sextOrTrunc(bit_width)
-                                                : val.zextOrTrunc(bit_width));
+  auto val = context.sem_ir().ints().GetAtWidth(inst.int_id, bit_width);
+  return llvm::ConstantInt::get(type, val);
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)
@@ -223,6 +227,8 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
     -> llvm::Constant* {
   if constexpr (InstT::Kind.constant_kind() == SemIR::InstConstantKind::Never ||
                 InstT::Kind.constant_kind() ==
+                    SemIR::InstConstantKind::Indirect ||
+                InstT::Kind.constant_kind() ==
                     SemIR::InstConstantKind::SymbolicOnly) {
     CARBON_FATAL("Unexpected constant instruction kind {0}", inst);
   } else if constexpr (!InstT::Kind.is_lowered()) {
@@ -242,21 +248,21 @@ auto LowerConstants(FileContext& file_context,
   ConstantContext context(file_context, constants);
   // Lower each constant in InstId order. This guarantees we lower the
   // dependencies of a constant before we lower the constant itself.
-  for (auto [inst_id_val, const_id] :
-       llvm::enumerate(file_context.sem_ir().constant_values().array_ref())) {
-    if (!const_id.is_valid() || !const_id.is_template()) {
-      // We are only interested in lowering template constants.
+  for (auto [inst_id, const_id] :
+       file_context.sem_ir().constant_values().enumerate()) {
+    if (!const_id.has_value() || !const_id.is_concrete()) {
+      // We are only interested in lowering concrete constants.
       continue;
     }
-    auto inst_id = file_context.sem_ir().constant_values().GetInstId(const_id);
-
-    if (inst_id.index != static_cast<int32_t>(inst_id_val)) {
+    auto defining_inst_id =
+        file_context.sem_ir().constant_values().GetInstId(const_id);
+    if (defining_inst_id != inst_id) {
       // This isn't the instruction that defines the constant.
       continue;
     }
 
     auto inst = file_context.sem_ir().insts().Get(inst_id);
-    if (inst.type_id().is_valid() &&
+    if (inst.type_id().has_value() &&
         !file_context.sem_ir().types().IsComplete(inst.type_id())) {
       // If a constant doesn't have a complete type, that means we imported it
       // but didn't actually use it.
@@ -275,6 +281,6 @@ auto LowerConstants(FileContext& file_context,
     constants[inst_id.index] = value;
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
-}  // namespace Carbon::Lower
+}
 
 }  // namespace Carbon::Lower

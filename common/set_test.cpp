@@ -21,7 +21,7 @@ using RawHashtable::TestData;
 using ::testing::UnorderedElementsAreArray;
 
 template <typename SetT, typename MatcherRangeT>
-void ExpectSetElementsAre(SetT&& s, MatcherRangeT element_matchers) {
+auto ExpectSetElementsAre(SetT&& s, MatcherRangeT element_matchers) -> void {
   // Collect the elements into a container.
   using KeyT = typename std::remove_reference<SetT>::type::KeyT;
   std::vector<KeyT> entries;
@@ -34,8 +34,9 @@ void ExpectSetElementsAre(SetT&& s, MatcherRangeT element_matchers) {
 
 // Allow directly using an initializer list.
 template <typename SetT, typename MatcherT>
-void ExpectSetElementsAre(SetT&& s,
-                          std::initializer_list<MatcherT> element_matchers) {
+auto ExpectSetElementsAre(SetT&& s,
+                          std::initializer_list<MatcherT> element_matchers)
+    -> void {
   std::vector<MatcherT> element_matchers_storage = element_matchers;
   ExpectSetElementsAre(s, element_matchers_storage);
 }
@@ -94,7 +95,7 @@ TYPED_TEST(SetTest, Basic) {
   ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 512)));
 }
 
-TYPED_TEST(SetTest, FactoryAPI) {
+TYPED_TEST(SetTest, FactoryApi) {
   using SetT = TypeParam;
   SetT s;
   EXPECT_TRUE(s.Insert(1, [](int k, void* key_storage) {

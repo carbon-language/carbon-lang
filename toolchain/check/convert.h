@@ -38,11 +38,15 @@ struct ConversionTarget {
   // The target type for the conversion.
   SemIR::TypeId type_id;
   // For an initializer, the object being initialized.
-  SemIR::InstId init_id = SemIR::InstId::Invalid;
+  SemIR::InstId init_id = SemIR::InstId::None;
   // For an initializer, a block of pending instructions that are needed to
   // form the value of `init_id`, and that can be discarded if no
   // initialization is needed.
   PendingBlock* init_block = nullptr;
+  // Whether failure of conversion is an error and is diagnosed to the user.
+  // When looking for a possible conversion but with graceful fallback, diagnose
+  // should be false.
+  bool diagnose = true;
 
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {
@@ -80,6 +84,13 @@ auto ConvertToValueOrRefOfType(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
+// Attempted to convert `expr_id` to a value expression of type `type_id`, with
+// graceful failure, which does not result in diagnostics. An ErrorInst
+// instruction is still returned on failure.
+auto TryConvertToValueOfType(Context& context, SemIR::LocId loc_id,
+                             SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId;
+
 // Converts `value_id` to a value expression of type `bool`.
 auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId;
@@ -102,18 +113,22 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 // A type that has been converted for use as a type expression.
 struct TypeExpr {
-  // The converted expression of type `type`, or `InstId::BuiltinErrorInst`.
+  // The converted expression of type `type`, or `ErrorInst::SingletonInstId`.
   SemIR::InstId inst_id;
-  // The corresponding type, or `TypeId::Error`.
+  // The corresponding type, or `ErrorInst::SingletonTypeId`.
   SemIR::TypeId type_id;
 };
 
 // Converts an expression for use as a type.
+//
+// If `diagnose` is true, errors are diagnosed to the user. Set it to false when
+// looking to see if a conversion is possible but with graceful fallback.
+//
 // TODO: Most of the callers of this function discard the `inst_id` and lose
 // track of the conversion. In most cases we should be retaining that as the
 // operand of some downstream instruction.
-auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
-    -> TypeExpr;
+auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
+                bool diagnose = true) -> TypeExpr;
 
 }  // namespace Carbon::Check
 

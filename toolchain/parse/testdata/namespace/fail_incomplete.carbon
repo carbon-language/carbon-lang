@@ -38,9 +38,10 @@ namespace bool
 // CHECK:STDERR:
 namespace namespace namespace namespace namespace
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:1: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:1: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR: namespace
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 namespace
 
 // CHECK:STDOUT: - filename: fail_incomplete.carbon

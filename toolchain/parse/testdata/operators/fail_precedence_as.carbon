@@ -46,9 +46,10 @@ fn F(n: i32) {
   // CHECK:STDERR:            ^~
   // CHECK:STDERR:
   6 as i32 == 7;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:10: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:10: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
   // CHECK:STDERR:   8 <= 9 as i32;
   // CHECK:STDERR:          ^~
+  // CHECK:STDERR:
   8 <= 9 as i32;
 }
 
@@ -56,12 +57,12 @@ fn F(n: i32) {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'n'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'n'},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
 // CHECK:STDOUT:             {kind: 'BoolLiteralTrue', text: 'true'},
 // CHECK:STDOUT:           {kind: 'PrefixOperatorNot', text: 'not', subtree_size: 2},

@@ -10,22 +10,23 @@
 
 // --- fail_todo.carbon
 
-// CHECK:STDERR: fail_todo.carbon:[[@LINE+3]]:1: error: semantics TODO: `extern library` [SemanticsTodo]
+// CHECK:STDERR: fail_todo.carbon:[[@LINE+4]]:1: error: semantics TODO: `extern library` [SemanticsTodo]
 // CHECK:STDERR: extern library "foo" class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern library "foo" class C;
 
 // CHECK:STDOUT: --- fail_todo.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;

@@ -7,7 +7,6 @@
 
 #include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -19,6 +18,7 @@
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
 // - Optionally, a `SingletonInstId` if it is a singleton instruction.
+//   Similarly, there may be `SingletonConstantId` and `SingletonTypeId`.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
@@ -48,30 +48,6 @@
 
 namespace Carbon::SemIR {
 
-// Used for the type of patterns that do not match a fixed type.
-struct AutoType {
-  static constexpr auto Kind = InstKind::AutoType.Define<Parse::InvalidNodeId>(
-      {.ir_name = "auto",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-
-  TypeId type_id;
-};
-
-// The type of bool literals and branch conditions, bool.
-struct BoolType {
-  static constexpr auto Kind = InstKind::BoolType.Define<Parse::InvalidNodeId>(
-      {.ir_name = "bool",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-
-  TypeId type_id;
-};
-
 // Common representation for declarations describing the foundation type of a
 // class -- either its adapted type or its base class.
 struct AnyFoundationDecl {
@@ -87,7 +63,7 @@ struct AnyFoundationDecl {
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
       {.ir_name = "adapt_decl",
-       .constant_kind = InstConstantKind::Always,
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
   // No type_id; this is not a value.
@@ -99,7 +75,8 @@ struct AdaptDecl {
 struct AddrOf {
   // Parse node is usually Parse::PrefixOperatorAmpId.
   static constexpr auto Kind = InstKind::AddrOf.Define<Parse::NodeId>(
-      {.ir_name = "addr_of", .constant_kind = InstConstantKind::Conditional});
+      {.ir_name = "addr_of",
+       .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   InstId lvalue_id;
@@ -109,7 +86,9 @@ struct AddrOf {
 // generally be a pattern inst.
 struct AddrPattern {
   static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
-      {.ir_name = "addr_pattern", .is_lowered = false});
+      {.ir_name = "addr_pattern",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   TypeId type_id;
   // The `self` binding.
@@ -119,8 +98,10 @@ struct AddrPattern {
 // An array indexing operation, such as `array[index]`.
 struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
-  static constexpr auto Kind =
-      InstKind::ArrayIndex.Define<Parse::NodeId>({.ir_name = "array_index"});
+  static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
+      {.ir_name = "array_index",
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId array_id;
@@ -130,9 +111,9 @@ struct ArrayIndex {
 // Common representation for aggregate access nodes, which access a fixed
 // element of an aggregate.
 struct AnyAggregateAccess {
-  static constexpr InstKind Kinds[] = {
-      InstKind::StructAccess, InstKind::TupleAccess,
-      InstKind::ClassElementAccess, InstKind::InterfaceWitnessAccess};
+  static constexpr InstKind Kinds[] = {InstKind::ClassElementAccess,
+                                       InstKind::StructAccess,
+                                       InstKind::TupleAccess};
 
   InstKind kind;
   TypeId type_id;
@@ -149,13 +130,13 @@ struct AnyAggregateInit {
   InstKind kind;
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // Common representation for all kinds of aggregate value.
 struct AnyAggregateValue {
-  static constexpr InstKind Kinds[] = {
-      InstKind::StructValue, InstKind::TupleValue, InstKind::InterfaceWitness};
+  static constexpr InstKind Kinds[] = {InstKind::StructValue,
+                                       InstKind::TupleValue};
 
   InstKind kind;
   TypeId type_id;
@@ -171,7 +152,7 @@ struct ArrayInit {
 
   TypeId type_id;
   InstBlockId inits_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // An array of `element_type_id` values, sized to `bound_id`.
@@ -200,9 +181,9 @@ struct AsCompatible {
 // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
 // `InitializeFrom`.
 struct Assign {
-  static constexpr auto Kind = InstKind::Assign.Define<
-      Parse::NodeIdOneOf<Parse::InfixOperatorEqualId, Parse::VariableDeclId>>(
-      {.ir_name = "assign"});
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
+      {.ir_name = "assign", .constant_kind = InstConstantKind::Never});
 
   // Assignments are statements, and so have no type.
   InstId lhs_id;
@@ -212,11 +193,15 @@ struct Assign {
 // An associated constant declaration in an interface, such as `let T:! type;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
-      InstKind::AssociatedConstantDecl.Define<Parse::LetDeclId>(
-          {.ir_name = "assoc_const_decl", .is_lowered = false});
+      InstKind::AssociatedConstantDecl
+          .Define<Parse::CompileTimeBindingPatternId>(
+              {.ir_name = "assoc_const_decl",
+               .constant_kind = InstConstantKind::Unique,
+               .is_lowered = false});
 
   TypeId type_id;
-  NameId name_id;
+  AssociatedConstantId assoc_const_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // An associated entity declared in an interface. This is either an associated
@@ -237,14 +222,28 @@ struct AssociatedEntity {
 // `InterfaceName.Function`.
 struct AssociatedEntityType {
   static constexpr auto Kind =
-      InstKind::AssociatedEntityType.Define<Parse::InvalidNodeId>(
+      InstKind::AssociatedEntityType.Define<Parse::NoneNodeId>(
           {.ir_name = "assoc_entity_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional});
+           .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
+  // The interface in which the entity was declared.
+  // TODO: Consider storing an `InterfaceId` and `SpecificId` instead.
   TypeId interface_type_id;
-  TypeId entity_type_id;
+};
+
+// Used for the type of patterns that do not match a fixed type.
+struct AutoType {
+  static constexpr auto Kind = InstKind::AutoType.Define<Parse::NoneNodeId>(
+      {.ir_name = "auto",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+
+  TypeId type_id;
 };
 
 // A base in a class, of the form `base: base_type;`. A base class is an
@@ -252,7 +251,7 @@ struct AssociatedEntityType {
 // an `UnboundElementType`.
 struct BaseDecl {
   static constexpr auto Kind = InstKind::BaseDecl.Define<Parse::BaseDeclId>(
-      {.ir_name = "base_decl", .constant_kind = InstConstantKind::Always});
+      {.ir_name = "base_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;
   InstId base_type_inst_id;
@@ -297,8 +296,8 @@ struct BindAlias {
 // Binds a name, such as `x` in `var x: i32`.
 struct BindName {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::BindName.Define<Parse::NodeId>({.ir_name = "bind_name"});
+  static constexpr auto Kind = InstKind::BindName.Define<Parse::NodeId>(
+      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -343,7 +342,9 @@ struct AnyBindingPattern {
 // Represents a non-symbolic binding pattern.
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
-      {.ir_name = "binding_pattern", .is_lowered = false});
+      {.ir_name = "binding_pattern",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -354,7 +355,6 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .is_type = InstIsType::Never,
           .constant_kind = InstConstantKind::SymbolicOnly,
           .is_lowered = false,
       });
@@ -365,11 +365,11 @@ struct SymbolicBindingPattern {
 
 // Reads an argument from `BranchWithArg`.
 struct BlockArg {
-  static constexpr auto Kind =
-      InstKind::BlockArg.Define<Parse::NodeId>({.ir_name = "block_arg"});
+  static constexpr auto Kind = InstKind::BlockArg.Define<Parse::NodeId>(
+      {.ir_name = "block_arg", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
-  InstBlockId block_id;
+  LabelId block_id;
 };
 
 // A literal bool value, `true` or `false`.
@@ -382,25 +382,40 @@ struct BoolLiteral {
   BoolValue value;
 };
 
-// A bound method, that combines a function with the value to use for its
-// `self` parameter, such as `object.MethodName`.
+// The type of bool literals and branch conditions, bool.
+struct BoolType {
+  static constexpr auto Kind = InstKind::BoolType.Define<Parse::NoneNodeId>(
+      {.ir_name = "bool",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+
+  TypeId type_id;
+};
+
+// For member access such as `object.MethodName`, combines a member function
+// with the value to use for `self`. This is a callable structure; `Call` will
+// handle the argument assignment.
 struct BoundMethod {
   static constexpr auto Kind = InstKind::BoundMethod.Define<Parse::NodeId>(
       {.ir_name = "bound_method",
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   // The object argument in the bound method, which will be used to initialize
   // `self`, or whose address will be used to initialize `self` for an `addr
   // self` parameter.
   InstId object_id;
-  InstId function_id;
+  // The function being bound, whose type_id is always a `FunctionType`.
+  InstId function_decl_id;
 };
 
 // The type of bound method values.
 struct BoundMethodType {
   static constexpr auto Kind =
-      InstKind::BoundMethodType.Define<Parse::InvalidNodeId>(
+      InstKind::BoundMethodType.Define<Parse::NoneNodeId>(
           {.ir_name = "<bound method>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -418,7 +433,7 @@ struct AnyBranch {
 
   InstKind kind;
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   // Kind-specific data.
   AnyRawId arg1;
 };
@@ -427,20 +442,24 @@ struct AnyBranch {
 struct Branch {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Branch.Define<Parse::NodeId>(
-      {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
+      {.ir_name = "br",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
 };
 
 // Control flow to branch to the target block if `cond_id` is true.
 struct BranchIf {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::BranchIf.Define<Parse::NodeId>(
-      {.ir_name = "br", .terminator_kind = TerminatorKind::TerminatorSequence});
+      {.ir_name = "br",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::TerminatorSequence});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId cond_id;
 };
 
@@ -449,10 +468,12 @@ struct BranchIf {
 struct BranchWithArg {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::BranchWithArg.Define<Parse::NodeId>(
-      {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
+      {.ir_name = "br",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId arg_id;
 };
 
@@ -484,7 +505,7 @@ struct ClassDecl {
   ClassId class_id;
   // The declaration block, containing the class name's qualifiers and the
   // class's generic parameters.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // Access to a member of a class, such as `base.index`. This provides a
@@ -494,6 +515,7 @@ struct ClassElementAccess {
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
           {.ir_name = "class_element_access",
+           .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -508,7 +530,7 @@ struct ClassInit {
 
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // The type for a class, either non-generic or specific.
@@ -536,7 +558,6 @@ struct CompleteTypeWitness {
   static constexpr auto Kind =
       InstKind::CompleteTypeWitness.Define<Parse::NodeId>(
           {.ir_name = "complete_type_witness",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::Always});
   // Always the builtin witness type.
   TypeId type_id;
@@ -564,7 +585,9 @@ struct Converted {
       InstKind::Converted.Define<Parse::NodeId>({.ir_name = "converted"});
 
   TypeId type_id;
-  InstId original_id;
+  // The operand prior to being converted. This is tracked only for tooling
+  // purposes and has no associated semantics.
+  AbsoluteInstId original_id;
   InstId result_id;
 };
 
@@ -582,11 +605,15 @@ struct Deref {
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
 struct ErrorInst {
-  static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::NoneNodeId>(
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonConstantId =
+      ConstantId::ForConcreteConstant(SingletonInstId);
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(SingletonConstantId);
 
   TypeId type_id;
 };
@@ -621,7 +648,6 @@ struct FacetAccessWitness {
   static constexpr auto Kind =
       InstKind::FacetAccessWitness.Define<Parse::NodeId>(
           {.ir_name = "facet_access_witness",
-           .is_type = InstIsType::Never,
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 
@@ -640,6 +666,7 @@ struct FacetType {
        .deduce_through = true});
 
   TypeId type_id;
+  // TODO: Rename this to facet_type_info_id.
   FacetTypeId facet_type_id;
 };
 
@@ -647,15 +674,13 @@ struct FacetType {
 // witness that it satisfies the facet type.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
-      {.ir_name = "facet_value",
-       .is_type = InstIsType::Never,
-       .constant_kind = InstConstantKind::Always});
+      {.ir_name = "facet_value", .constant_kind = InstConstantKind::Always});
 
   // A `FacetType`.
   TypeId type_id;
   // The type that you will get if you cast this value to `type`.
   InstId type_inst_id;
-  // An `InterfaceWitness` instruction (TODO: `FacetTypeWitness`).
+  // An `ImplWitness` instruction (TODO: `FacetTypeWitness`).
   InstId witness_inst_id;
 };
 
@@ -663,8 +688,8 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::BindingPatternId>(
-          {.ir_name = "field_decl", .constant_kind = InstConstantKind::Always});
+      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
+          {.ir_name = "field_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;
   NameId name_id;
@@ -684,7 +709,7 @@ struct FloatLiteral {
 
 // A floating point type.
 struct FloatType {
-  static constexpr auto Kind = InstKind::FloatType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::FloatType.Define<Parse::NoneNodeId>(
       {.ir_name = "float_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -701,7 +726,7 @@ struct FloatType {
 // integers, likely replacing this with a `FloatLiteralType`.
 struct LegacyFloatType {
   static constexpr auto Kind =
-      InstKind::LegacyFloatType.Define<Parse::InvalidNodeId>(
+      InstKind::LegacyFloatType.Define<Parse::NoneNodeId>(
           {.ir_name = "f64",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -722,7 +747,7 @@ struct FunctionDecl {
   FunctionId function_id;
   // The declaration block, containing the function declaration's parameters and
   // their types.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // The type of a function.
@@ -731,11 +756,31 @@ struct FunctionType {
       InstKind::FunctionType.Define<Parse::AnyFunctionDeclId>(
           {.ir_name = "fn_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional});
+           .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   FunctionId function_id;
   SpecificId specific_id;
+};
+
+// The type of an associated function within an `impl`, modeled as an underlying
+// `FunctionType` plus the value of the `Self` parameter. This is the type of
+// `(SelfType as Interface).AssociatedFunction`.
+struct FunctionTypeWithSelfType {
+  static constexpr auto Kind =
+      InstKind::FunctionTypeWithSelfType.Define<Parse::NoneNodeId>(
+          {.ir_name = "fn_type_with_self_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible,
+           .is_lowered = false});
+
+  TypeId type_id;
+  // The type of the function within the interface. This includes the
+  // interface's SpecificId if applicable. This will be a `FunctionType` except
+  // in error cases.
+  InstId interface_function_type_id;
+  // The value to use for `Self` in this function.
+  InstId self_id;
 };
 
 // The type of the name of a generic class. The corresponding value is an empty
@@ -743,10 +788,10 @@ struct FunctionType {
 struct GenericClassType {
   // This is only ever created as a constant, so doesn't have a location.
   static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::InvalidNodeId>(
+      InstKind::GenericClassType.Define<Parse::NoneNodeId>(
           {.ir_name = "generic_class_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional});
+           .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   ClassId class_id;
@@ -758,10 +803,10 @@ struct GenericClassType {
 struct GenericInterfaceType {
   // This is only ever created as a constant, so doesn't have a location.
   static constexpr auto Kind =
-      InstKind::GenericInterfaceType.Define<Parse::InvalidNodeId>(
+      InstKind::GenericInterfaceType.Define<Parse::NoneNodeId>(
           {.ir_name = "generic_interface_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional});
+           .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   InterfaceId interface_id;
@@ -772,21 +817,63 @@ struct GenericInterfaceType {
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
       {.ir_name = "impl_decl",
-       .constant_kind = InstConstantKind::Always,
+       // TODO: Modeling impls as unique doesn't properly handle impl
+       // redeclarations.
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
   // No type: an impl declaration is not a value.
   ImplId impl_id;
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
+};
+
+// A witness that a type implements an interface.
+struct ImplWitness {
+  static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
+      {.ir_name = "impl_witness",
+       .constant_kind = InstConstantKind::WheneverPossible,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
+       .is_lowered = false});
+
+  // Always the builtin witness type.
+  TypeId type_id;
+  AbsoluteInstBlockId elements_id;
+  SpecificId specific_id;
+};
+
+// Accesses an element of an impl witness by index.
+struct ImplWitnessAccess {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_access",
+           .is_type = InstIsType::Maybe,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId witness_id;
+  ElementIndex index;
+};
+
+// An `import Cpp` declaration.
+struct ImportCppDecl {
+  static constexpr auto Kind =
+      InstKind::ImportCppDecl.Define<Parse::ImportDeclId>(
+          {.ir_name = "import_cpp",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 };
 
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
   static constexpr auto Kind = InstKind::ImportDecl.Define<Parse::ImportDeclId>(
-      {.ir_name = "import", .is_lowered = false});
+      {.ir_name = "import",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   NameId package_id;
 };
@@ -835,7 +922,7 @@ struct InitializeFrom {
 
   TypeId type_id;
   InstId src_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // An interface declaration.
@@ -850,35 +937,7 @@ struct InterfaceDecl {
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
-  InstBlockId decl_block_id;
-};
-
-// A witness that a type implements an interface.
-struct InterfaceWitness {
-  static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
-      {.ir_name = "interface_witness",
-       .constant_kind = InstConstantKind::Conditional,
-       // TODO: For dynamic dispatch, we might want to lower witness tables as
-       // constants.
-       .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  InstBlockId elements_id;
-};
-
-// Accesses an element of an interface witness by index.
-struct InterfaceWitnessAccess {
-  static constexpr auto Kind =
-      InstKind::InterfaceWitnessAccess.Define<Parse::NodeId>(
-          {.ir_name = "interface_witness_access",
-           .is_type = InstIsType::Maybe,
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  TypeId type_id;
-  InstId witness_id;
-  ElementIndex index;
+  DeclInstBlockId decl_block_id;
 };
 
 // A literal integer value.
@@ -897,7 +956,7 @@ struct IntValue {
 // runtime.
 struct IntLiteralType {
   static constexpr auto Kind =
-      InstKind::IntLiteralType.Define<Parse::InvalidNodeId>(
+      InstKind::IntLiteralType.Define<Parse::NoneNodeId>(
           {.ir_name = "Core.IntLiteral",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -908,9 +967,11 @@ struct IntLiteralType {
   TypeId type_id;
 };
 
-// An integer type.
+// A primitive integer type whose representation and operations are defined by
+// the toolchain. The `Core.Int` and `Core.UInt` classes are defined as adapters
+// for this type.
 struct IntType {
-  static constexpr auto Kind = InstKind::IntType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::IntType.Define<Parse::NoneNodeId>(
       {.ir_name = "int_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -921,6 +982,17 @@ struct IntType {
   // TODO: Consider adding a more compact way of representing either a small
   // unsigned integer bit width or an inst_id.
   InstId bit_width_id;
+};
+
+// A name-binding declaration, i.e. a declaration introduced with `let` or
+// `var`.
+struct NameBindingDecl {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::NameBindingDecl.Define<Parse::NodeId>(
+      {.ir_name = "name_binding_decl",
+       .constant_kind = InstConstantKind::Never});
+
+  InstBlockId pattern_block_id;
 };
 
 // A name reference, with the value of the name. This only handles name
@@ -939,7 +1011,13 @@ struct NameRef {
 struct Namespace {
   static constexpr auto Kind =
       InstKind::Namespace.Define<Parse::AnyNamespaceId>(
-          {.ir_name = "namespace", .constant_kind = InstConstantKind::Always});
+          {.ir_name = "namespace",
+           // TODO: Modeling namespaces as unique doesn't properly handle
+           // namespace redeclarations.
+           .constant_kind = InstConstantKind::Unique});
+  // The file's package namespace is a well-known instruction to help `package.`
+  // qualified names. It will always be immediately after singletons.
+  static constexpr InstId PackageInstId = InstId(SingletonInstKinds.size());
 
   TypeId type_id;
   NameScopeId name_scope_id;
@@ -951,7 +1029,7 @@ struct Namespace {
 // The type of namespace and imported package names.
 struct NamespaceType {
   static constexpr auto Kind =
-      InstKind::NamespaceType.Define<Parse::InvalidNodeId>(
+      InstKind::NamespaceType.Define<Parse::NoneNodeId>(
           {.ir_name = "<namespace>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -974,15 +1052,16 @@ struct AnyParam {
   RuntimeParamIndex runtime_index;
 
   // A name to associate with this Param in pretty-printed IR. This is not
-  // necessarily unique, or even valid, and has no semantic significance.
+  // necessarily unique, and can even be `None`; it has no semantic
+  // significance.
   NameId pretty_name_id;
 };
 
 // An output parameter. See AnyParam for member documentation.
 struct OutParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::OutParam.Define<Parse::NodeId>({.ir_name = "out_param"});
+  static constexpr auto Kind = InstKind::OutParam.Define<Parse::NodeId>(
+      {.ir_name = "out_param", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   RuntimeParamIndex runtime_index;
@@ -992,8 +1071,8 @@ struct OutParam {
 // A by-value parameter. See AnyParam for member documentation.
 struct ValueParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::ValueParam.Define<Parse::NodeId>({.ir_name = "value_param"});
+  static constexpr auto Kind = InstKind::ValueParam.Define<Parse::NodeId>(
+      {.ir_name = "value_param", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   RuntimeParamIndex runtime_index;
@@ -1017,7 +1096,9 @@ struct AnyParamPattern {
 struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
-          {.ir_name = "out_param_pattern", .is_lowered = false});
+          {.ir_name = "out_param_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1043,18 +1124,38 @@ struct PointerType {
       InstKind::PointerType.Define<Parse::PostfixOperatorStarId>(
           {.ir_name = "ptr_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional,
+           .constant_kind = InstConstantKind::WheneverPossible,
            .deduce_through = true});
 
   TypeId type_id;
   TypeId pointee_id;
 };
 
+// Requires a type to be complete. This is only created for generic types and
+// produces a witness that the type is complete.
+//
+// TODO: Eventually this should be replaced by a witness for an interface that
+// models type completeness, and should track other information such as the
+// value representation.
+struct RequireCompleteType {
+  static constexpr auto Kind =
+      InstKind::RequireCompleteType.Define<Parse::NodeId>(
+          {.ir_name = "require_complete_type",
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+  // Always the builtin witness type.
+  TypeId type_id;
+  // The type that is required to be complete.
+  TypeId complete_type_id;
+};
+
 struct Return {
   static constexpr auto Kind =
       InstKind::Return.Define<Parse::NodeIdOneOf<Parse::FunctionDefinitionId,
                                                  Parse::ReturnStatementId>>(
-          {.ir_name = "return", .terminator_kind = TerminatorKind::Terminator});
+          {.ir_name = "return",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
 };
@@ -1063,20 +1164,22 @@ struct Return {
 struct ReturnExpr {
   static constexpr auto Kind =
       InstKind::ReturnExpr.Define<Parse::ReturnStatementId>(
-          {.ir_name = "return", .terminator_kind = TerminatorKind::Terminator});
+          {.ir_name = "return",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
   InstId expr_id;
-  // The return slot, if any. Invalid if we're not returning through memory.
-  InstId dest_id;
+  // The return slot, if any. `None` if we're not returning through memory.
+  DestInstId dest_id;
 };
 
 // The return slot of a function declaration, as exposed in the function body.
 // This acts as an output parameter, analogous to `BindName` for input
 // parameters.
 struct ReturnSlot {
-  static constexpr auto Kind =
-      InstKind::ReturnSlot.Define<Parse::NodeId>({.ir_name = "return_slot"});
+  static constexpr auto Kind = InstKind::ReturnSlot.Define<Parse::NodeId>(
+      {.ir_name = "return_slot", .constant_kind = InstConstantKind::Never});
 
   // The type of the value that will be stored in this slot (i.e. the return
   // type of the function).
@@ -1097,7 +1200,9 @@ struct ReturnSlot {
 struct ReturnSlotPattern {
   static constexpr auto Kind =
       InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
-          {.ir_name = "return_slot_pattern", .is_lowered = false});
+          {.ir_name = "return_slot_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // The type of the value that will be stored in this slot (i.e. the return
   // type of the function).
@@ -1113,7 +1218,9 @@ struct ReturnSlotPattern {
 struct RequirementEquivalent {
   static constexpr auto Kind =
       InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
-          {.ir_name = "requirement_equivalent", .is_lowered = false});
+          {.ir_name = "requirement_equivalent",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
@@ -1124,7 +1231,9 @@ struct RequirementEquivalent {
 struct RequirementImpls {
   static constexpr auto Kind =
       InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
-          {.ir_name = "requirement_impls", .is_lowered = false});
+          {.ir_name = "requirement_impls",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
@@ -1135,7 +1244,9 @@ struct RequirementImpls {
 struct RequirementRewrite {
   static constexpr auto Kind =
       InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
-          {.ir_name = "requirement_rewrite", .is_lowered = false});
+          {.ir_name = "requirement_rewrite",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
@@ -1169,7 +1280,7 @@ struct SpecificConstant {
 struct SpecificFunction {
   static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
       {.ir_name = "specific_function",
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::WheneverPossible});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;
@@ -1183,7 +1294,7 @@ struct SpecificFunction {
 // The type of specific functions.
 struct SpecificFunctionType {
   static constexpr auto Kind =
-      InstKind::SpecificFunctionType.Define<Parse::InvalidNodeId>(
+      InstKind::SpecificFunctionType.Define<Parse::NoneNodeId>(
           {.ir_name = "<specific function>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
@@ -1203,7 +1314,7 @@ struct SpliceBlock {
       InstKind::SpliceBlock.Define<Parse::NodeId>({.ir_name = "splice_block"});
 
   TypeId type_id;
-  InstBlockId block_id;
+  AbsoluteInstBlockId block_id;
   InstId result_id;
 };
 
@@ -1220,11 +1331,10 @@ struct StringLiteral {
 
 // The type of string values and String literals.
 struct StringType {
-  static constexpr auto Kind =
-      InstKind::StringType.Define<Parse::InvalidNodeId>(
-          {.ir_name = "String",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::StringType.Define<Parse::NoneNodeId>(
+      {.ir_name = "String",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
@@ -1237,6 +1347,7 @@ struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
       {.ir_name = "struct_access",
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -1251,14 +1362,15 @@ struct StructInit {
 
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // A literal struct value, such as `{.a = 1, .b = 2}`.
 struct StructLiteral {
   static constexpr auto Kind =
       InstKind::StructLiteral.Define<Parse::StructLiteralId>(
-          {.ir_name = "struct_literal"});
+          {.ir_name = "struct_literal",
+           .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1270,7 +1382,7 @@ struct StructType {
       InstKind::StructType.Define<Parse::StructTypeLiteralId>(
           {.ir_name = "struct_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional,
+           .constant_kind = InstConstantKind::WheneverPossible,
            .deduce_through = true});
 
   TypeId type_id;
@@ -1281,7 +1393,7 @@ struct StructType {
 struct StructValue {
   static constexpr auto Kind = InstKind::StructValue.Define<Parse::NodeId>(
       {.ir_name = "struct_value",
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1293,7 +1405,7 @@ struct Temporary {
       InstKind::Temporary.Define<Parse::NodeId>({.ir_name = "temporary"});
 
   TypeId type_id;
-  InstId storage_id;
+  DestInstId storage_id;
   InstId init_id;
 };
 
@@ -1301,19 +1413,18 @@ struct Temporary {
 struct TemporaryStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TemporaryStorage.Define<Parse::NodeId>(
-      {.ir_name = "temporary_storage"});
+      {.ir_name = "temporary_storage",
+       .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
 };
 
-// Access to a tuple member. Versus `TupleIndex`, this handles access where
-// the index was inferred rather than being specified as an expression,
-// such as `var tuple: (i32, i32) = (0, 1)` needing to access the `i32` values
-// for assignment.
+// Access to a tuple member.
 struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
       {.ir_name = "tuple_access",
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -1328,14 +1439,27 @@ struct TupleInit {
 
   TypeId type_id;
   InstBlockId elements_id;
-  InstId dest_id;
+  DestInstId dest_id;
 };
 
 // A literal tuple value.
 struct TupleLiteral {
   static constexpr auto Kind =
       InstKind::TupleLiteral.Define<Parse::TupleLiteralId>(
-          {.ir_name = "tuple_literal"});
+          {.ir_name = "tuple_literal",
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstBlockId elements_id;
+};
+
+// A tuple pattern, such as `(x, y: i32)`.
+struct TuplePattern {
+  static constexpr auto Kind =
+      InstKind::TuplePattern.Define<Parse::TuplePatternId>(
+          {.ir_name = "tuple_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1343,10 +1467,10 @@ struct TupleLiteral {
 
 // The type of a tuple.
 struct TupleType {
-  static constexpr auto Kind = InstKind::TupleType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::TupleType.Define<Parse::NoneNodeId>(
       {.ir_name = "tuple_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Conditional,
+       .constant_kind = InstConstantKind::WheneverPossible,
        .deduce_through = true});
 
   TypeId type_id;
@@ -1357,7 +1481,7 @@ struct TupleType {
 struct TupleValue {
   static constexpr auto Kind = InstKind::TupleValue.Define<Parse::NodeId>(
       {.ir_name = "tuple_value",
-       .constant_kind = InstConstantKind::Conditional,
+       .constant_kind = InstConstantKind::WheneverPossible,
        .deduce_through = true});
 
   TypeId type_id;
@@ -1367,11 +1491,13 @@ struct TupleValue {
 // Tracks expressions which are valid as types. This has a deliberately
 // self-referential type.
 struct TypeType {
-  static constexpr auto Kind = InstKind::TypeType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::TypeType.Define<Parse::NoneNodeId>(
       {.ir_name = "type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
 
   TypeId type_id;
 };
@@ -1391,10 +1517,10 @@ struct UnaryOperatorNot {
 // expression, such as `instance.(Class.field)`.
 struct UnboundElementType {
   static constexpr auto Kind = InstKind::UnboundElementType.Define<
-      Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::BindingPatternId>>(
+      Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::VarBindingPatternId>>(
       {.ir_name = "unbound_element_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   // The class that a value of this type is an element of.
@@ -1409,7 +1535,7 @@ struct UnboundElementType {
 // form a reference to the array object.
 struct ValueAsRef {
   static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::IndexExprId>(
-      {.ir_name = "value_as_ref"});
+      {.ir_name = "value_as_ref", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstId value_id;
@@ -1428,28 +1554,60 @@ struct ValueOfInitializer {
   InstId init_id;
 };
 
-// Tracks storage for a `var` declaration.
-struct VarStorage {
-  // TODO: Make Parse::NodeId more specific.
+// A `var` pattern.
+struct VarPattern {
   static constexpr auto Kind =
-      InstKind::VarStorage.Define<Parse::NodeId>({.ir_name = "var"});
+      InstKind::VarPattern.Define<Parse::VariablePatternId>(
+          {.ir_name = "var_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
-  NameId name_id;
+  InstId subpattern_id;
+};
+
+// Tracks storage for a `var` pattern.
+struct VarStorage {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
+      {.ir_name = "var", .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+
+  // A name to associate with this var in pretty-printed IR. This is not
+  // necessarily unique, and can even be `None`; it has no semantic
+  // significance.
+  NameId pretty_name_id;
 };
 
 // The type of virtual function tables.
 struct VtableType {
-  static constexpr auto Kind =
-      InstKind::VtableType.Define<Parse::InvalidNodeId>(
-          {.ir_name = "<vtable>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::VtableType.Define<Parse::NoneNodeId>(
+      {.ir_name = "<vtable>",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
+};
+
+// Initializer for virtual function table pointers in object initialization.
+struct VtablePtr {
+  static constexpr auto Kind =
+      InstKind::VtablePtr.Define<Parse::NodeId>({.ir_name = "vtable_ptr"});
+  TypeId type_id;
+};
+
+// Definition of ABI-neutral vtable information for a dynamic class.
+struct Vtable {
+  static constexpr auto Kind = InstKind::Vtable.Define<Parse::NodeId>(
+      {.ir_name = "vtable",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  TypeId type_id;
+  InstBlockId virtual_functions_id;
 };
 
 // An `expr where requirements` expression.
@@ -1468,11 +1626,10 @@ struct WhereExpr {
 
 // The type of witnesses.
 struct WitnessType {
-  static constexpr auto Kind =
-      InstKind::WitnessType.Define<Parse::InvalidNodeId>(
-          {.ir_name = "<witness>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
+      {.ir_name = "<witness>",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
@@ -1485,8 +1642,8 @@ namespace Internal {
 
 // HasNodeId is true if T has an associated parse node.
 template <typename T>
-concept HasNodeId = !std::same_as<typename decltype(T::Kind)::TypedNodeId,
-                                  Parse::InvalidNodeId>;
+concept HasNodeId =
+    !std::same_as<typename decltype(T::Kind)::TypedNodeId, Parse::NoneNodeId>;
 
 // HasUntypedNodeId is true if T has an associated parse node which can be any
 // kind of node.

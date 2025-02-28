@@ -50,8 +50,9 @@ enum class DiagnosticLevel : int8_t {
 // is required to be less than SourceBuffer that it refers to due to the
 // contained filename and line references.
 struct DiagnosticLoc {
-  // Write the filename, line number, and column number corresponding to this
-  // location to the given stream.
+  // Writes the location to the given stream. It will be formatted as
+  // `<filename>:<line_number>:<column_number>: ` with parts dropped when
+  // unknown.
   auto FormatLocation(llvm::raw_ostream& out) const -> void;
 
   // Write the source snippet corresponding to this location to the given
@@ -60,12 +61,16 @@ struct DiagnosticLoc {
 
   // Name of the file or buffer that this diagnostic refers to.
   llvm::StringRef filename;
+
   // A reference to the line of the error.
   llvm::StringRef line;
+
   // 1-based line number. -1 indicates unknown; other values are unused.
   int32_t line_number = -1;
+
   // 1-based column number. -1 indicates unknown; other values are unused.
   int32_t column_number = -1;
+
   // The number of characters corresponding to the location in the line,
   // starting at column_number. Should always be at least 1.
   int32_t length = 1;
@@ -74,6 +79,9 @@ struct DiagnosticLoc {
 // A message composing a diagnostic. This may be the main message, but can also
 // be notes providing more information.
 struct DiagnosticMessage {
+  // Helper for calling `format_fn`.
+  auto Format() const -> std::string { return format_fn(*this); }
+
   // The diagnostic's kind.
   DiagnosticKind kind;
 
@@ -96,7 +104,7 @@ struct DiagnosticMessage {
   llvm::SmallVector<llvm::Any> format_args;
 
   // Returns the formatted string. By default, this uses llvm::formatv.
-  std::function<std::string(const DiagnosticMessage&)> format_fn;
+  std::function<auto(const DiagnosticMessage&)->std::string> format_fn;
 };
 
 // An instance of a single error or warning.  Information about the diagnostic
@@ -104,6 +112,18 @@ struct DiagnosticMessage {
 struct Diagnostic {
   // The diagnostic's level.
   DiagnosticLevel level;
+
+  // The byte offset of the final token which is associated with the diagnostic.
+  // This is used by `SortingDiagnosticConsumer`. This is separate from the
+  // `DiagnosticLoc` because it must refer to a position in the primary file
+  // being processed by a consumer, and has no use cross-file or in notes.
+  //
+  // This will usually be the start position (not end) of the last lexed token
+  // processed before the diagnostic; it could also be `-1` when no source code
+  // needs to be processed for a diagnostic, or an appropriate byte offset when
+  // we specifically want a different diagnostic ordering than when a diagnostic
+  // is issued.
+  int32_t last_byte_offset = -1;
 
   // Messages related to the diagnostic. Only one should be a warning or error;
   // other messages provide context.

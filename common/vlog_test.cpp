@@ -7,7 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -24,13 +24,13 @@ class VLogger {
     }
   }
 
-  void VLog() { CARBON_VLOG("Test\n"); }
-  void VLogFormatArgs() { CARBON_VLOG("Test {0} {1} {2}\n", 1, 2, 3); }
+  auto VLog() -> void { CARBON_VLOG("Test\n"); }
+  auto VLogFormatArgs() -> void { CARBON_VLOG("Test {0} {1} {2}\n", 1, 2, 3); }
 
   auto TakeStr() -> std::string { return buffer_.TakeStr(); }
 
  private:
-  TestRawOstream buffer_;
+  RawStringOstream buffer_;
 
   llvm::raw_ostream* vlog_stream_ = nullptr;
 };
@@ -50,7 +50,7 @@ TEST(VLogTest, Disabled) {
 }
 
 TEST(VLogTest, To) {
-  TestRawOstream buffer;
+  RawStringOstream buffer;
   CARBON_VLOG_TO(&buffer, "Test");
   EXPECT_THAT(buffer.TakeStr(), "Test");
 }

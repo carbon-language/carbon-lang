@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Reviewing test deltas](#reviewing-test-deltas)
     -   [Verbose output](#verbose-output)
     -   [Stack traces](#stack-traces)
+    -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
 
 <!-- tocstop -->
 
@@ -280,12 +281,12 @@ If the resulting SemIR needs a new instruction:
 
         -   Set `.is_type = InstIsType::Always` in its `Kind` definition.
         -   When constructing instructions of this kind, pass
-            `SemIR::TypeId::TypeType` in as the value of the `type_id` field, as
-            in:
+            `SemIR::TypeType::SingletonTypeId` in as the value of the `type_id`
+            field, as in:
 
             ```
-            SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
-                node_id, {.type_id = SemIR::TypeId::TypeType, ...});
+            SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(context,
+                node_id, {.type_id = SemIR::TypeType::SingletonTypeId, ...});
             ```
 
     -   Although most instructions have distinct types represented by
@@ -297,13 +298,13 @@ If the resulting SemIR needs a new instruction:
         constructed as a special-case in
         [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
         one of these builtin types, use something like
-        `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`, as in:
+        `GetSingletonType(context,SemIR::WitnessType::SingletonInstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
-            context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType);
-        SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
-            node_id, {.type_id = witness_type_id, ...});
+            GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
+        SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(
+            context, node_id, {.type_id = witness_type_id, ...});
         ```
 
     -   Instructions without types may still be used as arguments to
@@ -331,7 +332,7 @@ Adding an instruction will generally also require a handler in the Lower step.
 Most new instructions will automatically be formatted reasonably by the SemIR
 formatter. If not, then add a `FormatInst` overload to
 [`sem_ir/formatter.cpp`](/toolchain/sem_ir/formatter.cpp). If only the arguments
-need custom formatting, then a `FormatInstRHS` overload can be implemented
+need custom formatting, then a `FormatInstRhs` overload can be implemented
 instead.
 
 If the resulting SemIR needs a new built-in, add it to
@@ -466,8 +467,10 @@ example, with `toolchain/parse/testdata/basics/empty.carbon`:
     -   Executes an individual test.
 -   `bazel run //toolchain -- compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
     -   Explicitly runs `carbon` with the provided arguments.
--   `bazel-bin/toolchain/install/run_carbon compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
-    -   Similar to the previous command, but without using `bazel`.
+-   `bazel-bin/toolchain/carbon compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
+    -   Similar to the previous command, but without using `bazel run`. This can
+        be useful with a debugger or other tool that needs to directly run the
+        binary.
 -   `bazel run //toolchain -- -v compile --phase=check toolchain/check/testdata/basics/run.carbon`
     -   Runs using `-v` for verbose log output, and running through the `check`
         phase.
@@ -496,3 +499,13 @@ While the iterative processing pattern means function stack traces will have
 minimal context for how the current function is reached, we use LLVM's
 `PrettyStackTrace` to include details about the state stack. The state stack
 will be above the function stack in crash output.
+
+### Dumping objects in interactive debuggers
+
+We provide namespace-scoped `Dump` functions in several components, such as
+[check/dump.cpp](/toolchain/check/dump.cpp). These `Dump` functions will print
+contextual information about an object to stderr. The files contain details
+regarding support.
+
+Objects which inherit from `Printable` also have `Dump` member functions, but
+these will lack contextual information.

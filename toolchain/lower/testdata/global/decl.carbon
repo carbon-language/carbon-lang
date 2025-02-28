@@ -12,7 +12,7 @@ var a: i32;
 // CHECK:STDOUT: ; ModuleID = 'decl.carbon'
 // CHECK:STDOUT: source_filename = "decl.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global i32
+// CHECK:STDOUT: @a = internal global i32 0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

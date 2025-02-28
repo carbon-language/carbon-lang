@@ -70,6 +70,12 @@ serves to simplify it.
 -   All other names use `snake_case`, including function parameters, and
     non-constant local and member variables.
     -   Private member variables should have a trailing `_`.
+-   For acronyms and initialisms, we generally follow the
+    [capitalization style](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
+    (`Api` instead of `API`).
+    -   The exceptions are `LLVM` and `IR`, which we capitalize.
+-   For abbreviations, there is a list of
+    [common toolchain abbreviations](/toolchain/docs/idioms.md#abbreviations-used-in-the-code-aka-carbon-abbreviation-decoder-ring).
 
 ### File names
 
@@ -85,7 +91,8 @@ to pick a consistent option. Where possible,
 [`clang-format`](#suggested-clang-format-contents) should be used to enforce
 these.
 
--   Always use trailing return type syntax for functions and methods.
+-   Always use trailing return type syntax for functions and methods, including
+    `-> void`, for consistency with Carbon syntax.
 -   Place the pointer `*` adjacent to the type: `TypeName* variable_name`.
 -   Only declare one variable at a time (declaring multiple variables requires
     confusing repetition of part of the type).
@@ -184,6 +191,11 @@ these.
     -   Tests are an exception and should typically be wrapped in an anonymous
         namespace under the namespace of the code under test, to keep everything
         internal.
+-   For
+    [Access Control](https://google.github.io/styleguide/cppguide.html#Access_Control),
+    specifically for test fixtures in `.cpp` files, we use `public` instead of
+    `protected`. This is motivated by the
+    `misc-non-private-member-variables-in-classes` tidy check.
 
 ### Copyable and movable types
 

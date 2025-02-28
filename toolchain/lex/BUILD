@@ -184,9 +184,11 @@ cc_library(
     hdrs = ["lex.h"],
     deps = [
         ":character_set",
+        ":dump",
         ":helpers",
         ":numeric_literal",
         ":string_literal",
+        ":token_index",
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
@@ -196,6 +198,18 @@ cc_library(
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
+    deps = [
+        ":tokenized_buffer",
+        "//common:ostream",
+    ],
+    # Always link dump methods.
+    alwayslink = 1,
 )
 
 cc_library(
@@ -253,8 +267,8 @@ cc_test(
         ":token_kind",
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
+        "//common:raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
@@ -290,6 +304,7 @@ cc_binary(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//common:raw_string_ostream",
         "//testing/base:benchmark_main",
         "//testing/base:source_gen_lib",
         "//toolchain/base:shared_value_stores",

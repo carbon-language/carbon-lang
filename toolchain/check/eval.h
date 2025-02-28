@@ -20,7 +20,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
 // Evaluates the eval block for a region of a specific. Produces a block
 // containing the evaluated constant values of the instructions in the eval
 // block.
-auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
+auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
+                             SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
     -> SemIR::InstBlockId;
 

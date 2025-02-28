@@ -60,23 +60,23 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
     DiagnoseRepeated(context, current_modifier_node_id, node_id);
     return false;
   }
-  if (current_modifier_node_id.is_valid()) {
+  if (current_modifier_node_id.has_value()) {
     DiagnoseNotAllowedWith(context, current_modifier_node_id, node_id);
     return false;
   }
   if (auto later_modifier_set = s.modifier_set & later_modifiers;
       !later_modifier_set.empty()) {
     // At least one later modifier is present. Diagnose using the closest.
-    Parse::NodeId closest_later_modifier = Parse::NodeId::Invalid;
+    Parse::NodeId closest_later_modifier = Parse::NodeId::None;
     for (auto later_order = static_cast<int8_t>(order) + 1;
          later_order <= static_cast<int8_t>(ModifierOrder::Last);
          ++later_order) {
-      if (s.ordered_modifier_node_ids[later_order] != Parse::NodeId::Invalid) {
+      if (s.ordered_modifier_node_ids[later_order].has_value()) {
         closest_later_modifier = s.ordered_modifier_node_ids[later_order];
         break;
       }
     }
-    CARBON_CHECK(closest_later_modifier.is_valid());
+    CARBON_CHECK(closest_later_modifier.has_value());
 
     CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
                       "`{0}` must appear before `{1}`", Lex::TokenKind,
@@ -95,8 +95,8 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
   return true;
 }
 
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                  \
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)                       \
   auto HandleParseNode(Context& context, Parse::Name##ModifierId node_id) \
       -> bool {                                                           \
     HandleModifier(context, node_id, KeywordModifierSet::Name);           \
@@ -117,6 +117,11 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context, Parse::ExternModifierId node_id)
     -> bool {
   return HandleModifier(context, node_id, KeywordModifierSet::Extern);
+}
+
+auto HandleParseNode(Context& context, Parse::ReturnedModifierId node_id)
+    -> bool {
+  return HandleModifier(context, node_id, KeywordModifierSet::Returned);
 }
 
 }  // namespace Carbon::Check

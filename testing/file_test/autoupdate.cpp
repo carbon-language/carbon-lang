@@ -6,19 +6,25 @@
 
 #include <fstream>
 
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "common/check.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::Testing {
 
-// Converts a matched line number to an int, trimming whitespace.
+// Converts a matched line number to an int, trimming whitespace. Returns 0 if
+// there is no line number, to assist early placement.
 static auto ParseLineNumber(absl::string_view matched_line_number) -> int {
   llvm::StringRef trimmed = matched_line_number;
   trimmed = trimmed.trim();
+  if (trimmed.empty()) {
+    return 0;
+  }
   // NOLINTNEXTLINE(google-runtime-int): API requirement.
   long long val;
   CARBON_CHECK(!llvm::getAsSignedInteger(trimmed, 10, val), "{0}",
@@ -41,7 +47,6 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
     return;
   }
 
-  bool found_one = false;
   // Use a cursor for the line so that we can't keep matching the same
   // content, which may occur when we keep a literal line number.
   int line_offset = 0;
@@ -60,10 +65,8 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
       RE2::PartialMatch(line_cursor, *replacement_->re, &matched_line_number);
     }
     if (matched_line_number.empty()) {
-      CARBON_CHECK(found_one, "{0}", line_);
       return;
     }
-    found_one = true;
 
     // Update the cursor offset from the match.
     line_offset = matched_line_number.begin() - line_.c_str();
@@ -156,12 +159,6 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     lines.pop_back();
   }
 
-  // `{{` and `[[` are escaped as a regex matcher.
-  static RE2 double_brace_re(R"(\{\{)");
-  static RE2 double_square_bracket_re(R"(\[\[)");
-  // End-of-line whitespace is replaced with a regex matcher to make it visible.
-  static RE2 end_of_line_whitespace_re(R"((\s+)$)");
-
   // The default file number for when no specific file is found.
   int default_file_number = 0;
 
@@ -180,9 +177,16 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
       check_line.append(line);
     }
 
-    RE2::Replace(&check_line, double_brace_re, R"({{\\{\\{}})");
-    RE2::Replace(&check_line, double_square_bracket_re, R"({{\\[\\[}})");
-    RE2::Replace(&check_line, end_of_line_whitespace_re, R"({{\1}})");
+    // \r and \t are invisible characters worth marking.
+    // {{ and [[ are autoupdate syntax which we need to escape.
+    check_line = absl::StrReplaceAll(check_line, {{"\r", R"({{\r}})"},
+                                                  {"\t", R"({{\t}})"},
+                                                  {"{{", R"({{\{\{}})"},
+                                                  {"[[", R"({{\[\[}})"}});
+    // Add an empty regex to call out end-of-line whitespace.
+    if (check_line.ends_with(' ')) {
+      check_line.append("{{}}");
+    }
 
     // Ignore TEST_TMPDIR in output.
     if (auto pos = check_line.find(tmpdir); pos != std::string::npos) {
@@ -362,11 +366,11 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   }
 
   // Generate the autoupdated file.
-  std::string new_content;
-  llvm::raw_string_ostream new_content_stream(new_content);
+  RawStringOstream new_content_stream;
   for (const auto& line : new_lines_) {
     new_content_stream << *line << '\n';
   }
+  std::string new_content = new_content_stream.TakeStr();
 
   // Update the file on disk if needed.
   if (new_content == input_content_) {

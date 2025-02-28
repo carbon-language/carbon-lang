@@ -22,11 +22,11 @@ impl namespace Foo;
 // CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
 // CHECK:STDOUT:       {kind: 'DefaultModifier', text: 'default'},
 // CHECK:STDOUT:       {kind: 'FinalModifier', text: 'final'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

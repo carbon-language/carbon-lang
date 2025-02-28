@@ -52,9 +52,10 @@ library "[[@TEST_NAME]]" impl
 
 library "[[@TEST_NAME]]"
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+46]]:21: error: `library` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+47]]:21: error: `library` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_identifier.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

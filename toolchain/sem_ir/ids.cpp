@@ -4,57 +4,56 @@
 
 #include "toolchain/sem_ir/ids.h"
 
+#include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
-  out << "inst";
-  if (!is_valid()) {
-    IdBase::Print(out);
-  } else if (is_builtin()) {
-    out << builtin_inst_kind();
+  if (IsSingletonInstId(*this)) {
+    out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
-    // Use the `+` as a small reminder that this is a delta, rather than an
-    // absolute index.
-    out << "+" << index - SingletonInstKinds.size();
+    IdBase::Print(out);
   }
 }
 
 auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
     -> void {
-  if (!is_valid()) {
+  if (!has_value()) {
     IdBase::Print(out);
-  } else if (is_template()) {
+    return;
+  }
+  if (is_concrete()) {
     if (disambiguate) {
-      out << "templateConstant(";
+      out << "concrete_constant(";
     }
-    out << template_inst_id();
+    out << concrete_inst_id();
     if (disambiguate) {
       out << ")";
     }
   } else if (is_symbolic()) {
-    out << "symbolicConstant" << symbolic_index();
+    out << "symbolic_constant" << symbolic_index();
   } else {
+    CARBON_CHECK(!is_constant());
     out << "runtime";
   }
 }
 
 auto RuntimeParamIndex::Print(llvm::raw_ostream& out) const -> void {
-  out << "runtime_param";
   if (*this == Unknown) {
-    out << "<unknown>";
+    out << Label << "<unknown>";
   } else {
     IndexBase::Print(out);
   }
 }
 
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
-  out << "genericInst";
-  if (is_valid()) {
-    out << (region() == Declaration ? "InDecl" : "InDef") << index();
+  out << "generic_inst";
+  if (has_value()) {
+    out << (region() == Declaration ? "_in_decl" : "_in_def") << index();
   } else {
-    out << "<invalid>";
+    out << "<none>";
   }
 }
 
@@ -78,41 +77,56 @@ auto IntKind::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+// Double-check the special value mapping and constexpr evaluation.
+static_assert(NameId::SpecialNameId::Vptr == *NameId::Vptr.AsSpecialNameId());
+
 auto NameId::ForIdentifier(IdentifierId id) -> NameId {
   if (id.index >= 0) {
     return NameId(id.index);
-  } else if (!id.is_valid()) {
-    return NameId::Invalid;
+  } else if (!id.has_value()) {
+    return NameId::None;
   } else {
     CARBON_FATAL("Unexpected identifier ID {0}", id);
   }
 }
 
-auto NameId::Print(llvm::raw_ostream& out) const -> void {
-  out << "name";
-  if (*this == SelfValue) {
-    out << "SelfValue";
-  } else if (*this == SelfType) {
-    out << "SelfType";
-  } else if (*this == PeriodSelf) {
-    out << "PeriodSelf";
-  } else if (*this == ReturnSlot) {
-    out << "ReturnSlot";
-  } else if (*this == PackageNamespace) {
-    out << "PackageNamespace";
-  } else if (*this == Base) {
-    out << "Base";
+auto NameId::ForPackageName(PackageNameId id) -> NameId {
+  if (auto identifier_id = id.AsIdentifierId(); identifier_id.has_value()) {
+    return ForIdentifier(identifier_id);
+  } else if (id == PackageNameId::Core) {
+    return NameId::Core;
+  } else if (!id.has_value()) {
+    return NameId::None;
   } else {
-    CARBON_CHECK(!is_valid() || index >= 0, "Unknown index {0}", index);
-    IdBase::Print(out);
+    CARBON_FATAL("Unexpected package ID {0}", id);
   }
+}
+
+auto NameId::Print(llvm::raw_ostream& out) const -> void {
+  if (!has_value() || index >= 0) {
+    IdBase::Print(out);
+    return;
+  }
+  out << Label << "(";
+  auto special_name_id = AsSpecialNameId();
+  CARBON_CHECK(special_name_id, "Unknown index {0}", index);
+
+  switch (*special_name_id) {
+#define CARBON_SPECIAL_NAME_ID_FOR_PRINT(Name) \
+  case SpecialNameId::Name:                    \
+    out << #Name;                              \
+    break;
+    CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_PRINT)
+#undef CARBON_SPECIAL_NAME_ID_FOR_PRINT
+  }
+  out << ")";
 }
 
 auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
   if (*this == Unreachable) {
     out << "unreachable";
   } else if (*this == Empty) {
-    out << "empty";
+    out << Label << "_empty";
   } else if (*this == Exports) {
     out << "exports";
   } else if (*this == ImportRefs) {
@@ -120,31 +134,29 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
   } else if (*this == GlobalInit) {
     out << "global_init";
   } else {
-    out << "block";
     IdBase::Print(out);
   }
 }
 
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
-  out << "type";
-  if (*this == TypeType) {
+  out << Label << "(";
+  if (*this == TypeType::SingletonTypeId) {
     out << "TypeType";
-  } else if (*this == AutoType) {
+  } else if (*this == AutoType::SingletonTypeId) {
     out << "AutoType";
-  } else if (*this == Error) {
+  } else if (*this == ErrorInst::SingletonTypeId) {
     out << "Error";
   } else {
-    out << "(";
     AsConstantId().Print(out, /*disambiguate=*/false);
-    out << ")";
   }
+  out << ")";
 }
 
 auto LibraryNameId::ForStringLiteralValueId(StringLiteralValueId id)
     -> LibraryNameId {
-  CARBON_CHECK(id.index >= InvalidIndex, "Unexpected library name ID {0}", id);
-  if (id == StringLiteralValueId::Invalid) {
-    // Prior to SemIR, we use invalid to indicate `default`.
+  CARBON_CHECK(id.index >= NoneIndex, "Unexpected library name ID {0}", id);
+  if (id == StringLiteralValueId::None) {
+    // Prior to SemIR, we use `None` to indicate `default`.
     return LibraryNameId::Default;
   } else {
     return LibraryNameId(id.index);
@@ -152,19 +164,18 @@ auto LibraryNameId::ForStringLiteralValueId(StringLiteralValueId id)
 }
 
 auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
-  out << "libraryName";
   if (*this == Default) {
-    out << "Default";
+    out << Label << "Default";
   } else if (*this == Error) {
-    out << "<error>";
+    out << Label << "<error>";
   } else {
     IdBase::Print(out);
   }
 }
 
 auto LocId::Print(llvm::raw_ostream& out) const -> void {
-  out << "loc_";
-  if (is_node_id() || !is_valid()) {
+  out << Label << "_";
+  if (is_node_id() || !has_value()) {
     out << node_id();
   } else {
     out << import_ir_inst_id();

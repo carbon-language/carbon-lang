@@ -36,7 +36,7 @@ class NodeExtractor {
 
   auto at_end() const -> bool { return it_ == end_; }
   auto kind() const -> NodeKind { return tree_->tree().node_kind(*it_); }
-  auto has_token() const -> bool { return node_id_.is_valid(); }
+  auto has_token() const -> bool { return node_id_.has_value(); }
   auto token() const -> Lex::TokenIndex {
     return tree_->tree().node_token(node_id_);
   }
@@ -48,7 +48,9 @@ class NodeExtractor {
   // Saves a checkpoint of our current position so we can return later if
   // extraction of a child node fails.
   auto Checkpoint() const -> CheckpointState { return {.it = it_}; }
-  auto RestoreCheckpoint(CheckpointState checkpoint) { it_ = checkpoint.it; }
+  auto RestoreCheckpoint(CheckpointState checkpoint) -> void {
+    it_ = checkpoint.it;
+  }
 
   // Determines whether the current position matches the specified node kind. If
   // not, produces a suitable trace message.
@@ -76,11 +78,13 @@ class NodeExtractor {
                             std::tuple<U...>* /*type*/) -> std::optional<T>;
 
   // Split out trace logic. The noinline saves a few seconds on compilation.
+  // TODO: Switch format to `llvm::StringLiteral` if
+  // `llvm::StringLiteral::c_str` is added.
   template <typename... ArgT>
-  [[clang::noinline]] auto MaybeTrace(llvm::StringLiteral format,
-                                      ArgT... args) const -> void {
+  [[clang::noinline]] auto MaybeTrace(const char* format, ArgT... args) const
+      -> void {
     if (trace_) {
-      *trace_ << llvm::formatv(format.data(), args...);
+      *trace_ << llvm::formatv(format, args...);
     }
   }
 
@@ -201,7 +205,7 @@ auto NodeExtractor::MatchesNodeIdOneOf(
       *trace_ << "\n";
     }
     return false;
-  } else if (std::find(kinds.begin(), kinds.end(), node_kind) == kinds.end()) {
+  } else if (llvm::find(kinds, node_kind) == kinds.end()) {
     if (trace_) {
       *trace_ << "NodeIdOneOf error: wrong kind " << node_kind << ", expected ";
       trace_kinds();
@@ -293,7 +297,7 @@ struct Extractable<std::optional<T>> {
 
 auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
     -> bool {
-  if (!node_id_.is_valid()) {
+  if (!node_id_.has_value()) {
     MaybeTrace("Token {0} expected but processing root node\n", expected_kind);
     return false;
   }
@@ -405,7 +409,7 @@ CARBON_PARSE_NODE_KIND(File)
 #include "toolchain/parse/node_kind.def"
 
 auto TreeAndSubtrees::ExtractFile() const -> File {
-  return ExtractNodeFromChildren<File>(NodeId::Invalid, roots());
+  return ExtractNodeFromChildren<File>(NodeId::None, roots());
 }
 
 }  // namespace Carbon::Parse

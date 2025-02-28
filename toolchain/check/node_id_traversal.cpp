@@ -14,10 +14,9 @@ NodeIdTraversal::NodeIdTraversal(Context& context,
       next_deferred_definition_(&context.parse_tree()),
       worklist_(vlog_stream) {
   auto range = context.parse_tree().postorder();
-  chunks_.push_back(
-      {.it = range.begin(),
-       .end = range.end(),
-       .next_definition = Parse::DeferredDefinitionIndex::Invalid});
+  chunks_.push_back({.it = range.begin(),
+                     .end = range.end(),
+                     .next_definition = Parse::DeferredDefinitionIndex::None});
 }
 
 auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
@@ -166,7 +165,7 @@ auto NodeIdTraversal::NextDeferredDefinitionCache::SkipTo(
   index_ = next_index;
   if (static_cast<size_t>(index_.index) ==
       tree_->deferred_definitions().size()) {
-    start_id_ = Parse::NodeId::Invalid;
+    start_id_ = Parse::NodeId::None;
   } else {
     start_id_ = tree_->deferred_definitions().Get(index_).start_id;
   }

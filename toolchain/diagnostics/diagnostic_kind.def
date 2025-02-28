@@ -14,7 +14,22 @@
 
 #ifndef CARBON_DIAGNOSTIC_KIND
 #error "Must define the x-macro to use this file."
+#define CARBON_DIAGNOSTIC_KIND(Name)
 #endif
+
+// ============================================================================
+// Driver and subcommand diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(DriverInstallInvalid)
+CARBON_DIAGNOSTIC_KIND(DriverCommandLineParseFailed)
+CARBON_DIAGNOSTIC_KIND(ClangFuzzingDisallowed)
+CARBON_DIAGNOSTIC_KIND(CompilePhaseFlagConflict)
+CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
+CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
+CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
+CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
+CARBON_DIAGNOSTIC_KIND(LLDFuzzingDisallowed)
 
 // ============================================================================
 // SourceBuffer diagnostics
@@ -49,8 +64,8 @@ CARBON_DIAGNOSTIC_KIND(UnicodeEscapeSurrogate)
 CARBON_DIAGNOSTIC_KIND(UnicodeEscapeTooLarge)
 CARBON_DIAGNOSTIC_KIND(UnknownBaseSpecifier)
 CARBON_DIAGNOSTIC_KIND(UnknownEscapeSequence)
-CARBON_DIAGNOSTIC_KIND(UnsupportedCRLineEnding)
-CARBON_DIAGNOSTIC_KIND(UnsupportedLFCRLineEnding)
+CARBON_DIAGNOSTIC_KIND(UnsupportedCrLineEnding)
+CARBON_DIAGNOSTIC_KIND(UnsupportedLfCrLineEnding)
 CARBON_DIAGNOSTIC_KIND(UnmatchedOpening)
 CARBON_DIAGNOSTIC_KIND(UnmatchedClosing)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedCharacters)
@@ -62,13 +77,14 @@ CARBON_DIAGNOSTIC_KIND(WrongRealLiteralExponent)
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(BinaryOperatorRequiresWhitespace)
-CARBON_DIAGNOSTIC_KIND(ExpectedArraySemi)
+CARBON_DIAGNOSTIC_KIND(ExpectedArrayComma)
 CARBON_DIAGNOSTIC_KIND(ExpectedCloseSymbol)
 CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedExpr)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPeriodOrArrow)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierOrSelfAfterPeriod)
 CARBON_DIAGNOSTIC_KIND(ExpectedBindingPattern)
+CARBON_DIAGNOSTIC_KIND(ExpectedGenericBindingPatternAfterTemplate)
 CARBON_DIAGNOSTIC_KIND(ExpectedParenAfter)
 CARBON_DIAGNOSTIC_KIND(ExpectedExprSemi)
 CARBON_DIAGNOSTIC_KIND(ExpectedStatementSemi)
@@ -77,7 +93,6 @@ CARBON_DIAGNOSTIC_KIND(ExpectedVarAfterReturned)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableDecl)
 CARBON_DIAGNOSTIC_KIND(ExpectedChoiceDefinition)
 CARBON_DIAGNOSTIC_KIND(ExpectedChoiceAlternativeName)
-CARBON_DIAGNOSTIC_KIND(UnreachableMatchCase)
 CARBON_DIAGNOSTIC_KIND(OperatorRequiresParentheses)
 CARBON_DIAGNOSTIC_KIND(StatementOperatorAsSubExpr)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresParentheses)
@@ -88,12 +103,14 @@ CARBON_DIAGNOSTIC_KIND(UnrecognizedDecl)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
 
 // Match diagnostics.
-CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInMatchCasesBlock)
-CARBON_DIAGNOSTIC_KIND(ExpectedMatchCases)
-CARBON_DIAGNOSTIC_KIND(ExpectedMatchCasesBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseArrow)
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseBlock)
-CARBON_DIAGNOSTIC_KIND(MatchParseTODO)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseGuardCloseParen)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseGuardOpenParen)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCases)
+CARBON_DIAGNOSTIC_KIND(ExpectedMatchCasesBlock)
+CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInMatchCasesBlock)
+CARBON_DIAGNOSTIC_KIND(UnreachableMatchCase)
 
 // Package-related diagnostics.
 CARBON_DIAGNOSTIC_KIND(FirstDecl)
@@ -106,6 +123,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryNameOrDefault)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
 CARBON_DIAGNOSTIC_KIND(ExportImportPackage)
+CARBON_DIAGNOSTIC_KIND(ExpectedPeriodAfterPackage)
 
 // For-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
@@ -141,8 +159,13 @@ CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 // Location context.
 CARBON_DIAGNOSTIC_KIND(InImport)
+CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 
 // Package/import checking diagnostics.
+CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)
+CARBON_DIAGNOSTIC_KIND(CppInteropMissingLibrary)
+CARBON_DIAGNOSTIC_KIND(CppInteropParseError)
+CARBON_DIAGNOSTIC_KIND(CppInteropParseWarning)
 CARBON_DIAGNOSTIC_KIND(IncorrectExtension)
 CARBON_DIAGNOSTIC_KIND(IncorrectExtensionImplNote)
 CARBON_DIAGNOSTIC_KIND(DuplicateLibraryApi)
@@ -161,6 +184,7 @@ CARBON_DIAGNOSTIC_KIND(ExplicitImportApi)
 CARBON_DIAGNOSTIC_KIND(RepeatedImport)
 CARBON_DIAGNOSTIC_KIND(FirstImported)
 CARBON_DIAGNOSTIC_KIND(ExportFromImpl)
+CARBON_DIAGNOSTIC_KIND(MissingOwningDeclarationInApi)
 CARBON_DIAGNOSTIC_KIND(MissingDefinitionInImpl)
 CARBON_DIAGNOSTIC_KIND(MissingGenericFunctionDefinition)
 CARBON_DIAGNOSTIC_KIND(MissingGenericFunctionDefinitionHere)
@@ -171,6 +195,7 @@ CARBON_DIAGNOSTIC_KIND(RedeclRedundant)
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDef)
 CARBON_DIAGNOSTIC_KIND(RedeclRedef)
 CARBON_DIAGNOSTIC_KIND(RedeclExternMismatch)
+CARBON_DIAGNOSTIC_KIND(RedeclImportedImpl)
 CARBON_DIAGNOSTIC_KIND(RedeclParamListDiffers)
 CARBON_DIAGNOSTIC_KIND(RedeclParamListPrevious)
 CARBON_DIAGNOSTIC_KIND(RedeclParamCountDiffers)
@@ -184,6 +209,9 @@ CARBON_DIAGNOSTIC_KIND(ExternLibraryInImporter)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIncorrect)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryExpected)
 CARBON_DIAGNOSTIC_KIND(ExternRequiresDeclInApiFile)
+
+// Namespace checking.
+CARBON_DIAGNOSTIC_KIND(NamespaceDeclNotAtTopLevel)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)
@@ -226,7 +254,9 @@ CARBON_DIAGNOSTIC_KIND(ClassForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
+CARBON_DIAGNOSTIC_KIND(VirtualWithoutSelf)
 
 // Deduction.
 CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)
@@ -234,6 +264,7 @@ CARBON_DIAGNOSTIC_KIND(DeductionInconsistent)
 CARBON_DIAGNOSTIC_KIND(DeductionGenericHere)
 CARBON_DIAGNOSTIC_KIND(InitializingGenericParam)
 CARBON_DIAGNOSTIC_KIND(CompTimeArgumentNotConstant)
+CARBON_DIAGNOSTIC_KIND(RuntimeConversionDuringCompTimeDeduction)
 
 // Export checking.
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)
@@ -244,21 +275,28 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(VarInInterfaceDecl)
 
 // Impl checking.
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
+CARBON_DIAGNOSTIC_KIND(AssociatedFunctionHere)
 CARBON_DIAGNOSTIC_KIND(ExtendImplForall)
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ExtendImplSelfAs)
 CARBON_DIAGNOSTIC_KIND(ExtendImplSelfAsDefault)
-CARBON_DIAGNOSTIC_KIND(ExtendUndefinedInterface)
+CARBON_DIAGNOSTIC_KIND(ImplAccessMemberBeforeComplete)
+CARBON_DIAGNOSTIC_KIND(ImplAsIncompleteFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplAsNonFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
+CARBON_DIAGNOSTIC_KIND(ImplAssociatedConstantNeedsValue)
+CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
+CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
+CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
-CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
-CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
-CARBON_DIAGNOSTIC_KIND(ImplAssociatedFunctionHere)
-CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
+CARBON_DIAGNOSTIC_KIND(ImplOfNotOneInterface)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
@@ -267,6 +305,9 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInAssociatedConstant)
+
+// Pattern checking.
+CARBON_DIAGNOSTIC_KIND(TemplateBindingInAssociatedConstantDecl)
 
 // Qualified declaration name checking.
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclOutsidePackage)
@@ -280,12 +321,16 @@ CARBON_DIAGNOSTIC_KIND(FromExtendHere)
 CARBON_DIAGNOSTIC_KIND(InNameLookup)
 CARBON_DIAGNOSTIC_KIND(NameAmbiguousDueToExtend)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)
+CARBON_DIAGNOSTIC_KIND(MemberNameNotFound)
+CARBON_DIAGNOSTIC_KIND(MemberNameNotFoundInScope)
 CARBON_DIAGNOSTIC_KIND(NoPeriodSelfForDesignator)
+CARBON_DIAGNOSTIC_KIND(UsedBeforeInitialization)
 
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInAdaptDecl)
+CARBON_DIAGNOSTIC_KIND(AbstractTypeInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInFunctionReturnType)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInInit)
-CARBON_DIAGNOSTIC_KIND(AbstractTypeInVarDecl)
+CARBON_DIAGNOSTIC_KIND(AbstractTypeInVarPattern)
 CARBON_DIAGNOSTIC_KIND(AddrOfEphemeralRef)
 CARBON_DIAGNOSTIC_KIND(AddrOfNonRef)
 CARBON_DIAGNOSTIC_KIND(AddrOnNonSelfParam)
@@ -295,6 +340,7 @@ CARBON_DIAGNOSTIC_KIND(ArrayBoundNegative)
 CARBON_DIAGNOSTIC_KIND(ArrayIndexOutOfBounds)
 CARBON_DIAGNOSTIC_KIND(ArrayInitFromLiteralArgCountMismatch)
 CARBON_DIAGNOSTIC_KIND(ArrayInitFromExprArgCountMismatch)
+CARBON_DIAGNOSTIC_KIND(ArrayInitDependentBound)
 CARBON_DIAGNOSTIC_KIND(ArrowOperatorOfNonPointer)
 CARBON_DIAGNOSTIC_KIND(AssignmentToNonAssignable)
 CARBON_DIAGNOSTIC_KIND(BreakOutsideLoop)
@@ -302,7 +348,9 @@ CARBON_DIAGNOSTIC_KIND(CompileTimeDivisionByZero)
 CARBON_DIAGNOSTIC_KIND(CompileTimeIntegerOverflow)
 CARBON_DIAGNOSTIC_KIND(CompileTimeIntegerNegateOverflow)
 CARBON_DIAGNOSTIC_KIND(CompileTimeFloatBitWidth)
+CARBON_DIAGNOSTIC_KIND(CompileTimeShiftNegative)
 CARBON_DIAGNOSTIC_KIND(CompileTimeShiftOutOfRange)
+CARBON_DIAGNOSTIC_KIND(CompileTimeUnsizedShiftOutOfRange)
 CARBON_DIAGNOSTIC_KIND(ContinueOutsideLoop)
 CARBON_DIAGNOSTIC_KIND(CopyOfUncopyableType)
 CARBON_DIAGNOSTIC_KIND(CoreNameNotFound)
@@ -315,16 +363,21 @@ CARBON_DIAGNOSTIC_KIND(RealMantissaTooLargeForI64)
 CARBON_DIAGNOSTIC_KIND(RealExponentTooLargeForI64)
 CARBON_DIAGNOSTIC_KIND(NameDeclDuplicate)
 CARBON_DIAGNOSTIC_KIND(NameDeclPrevious)
+CARBON_DIAGNOSTIC_KIND(NameUseBeforeDecl)
+CARBON_DIAGNOSTIC_KIND(NameUseBeforeDeclNote)
 CARBON_DIAGNOSTIC_KIND(RepeatedConst)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAdaptDecl)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAssociatedConstantDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBaseDecl)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBindingDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInConversion)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionParam)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionReturnType)
-CARBON_DIAGNOSTIC_KIND(IncompleteTypeInLetDecl)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInMonomorphization)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInValueConversion)
-CARBON_DIAGNOSTIC_KIND(IncompleteTypeInVarDecl)
+CARBON_DIAGNOSTIC_KIND(InCopy)
 CARBON_DIAGNOSTIC_KIND(IntTooLargeForType)
 CARBON_DIAGNOSTIC_KIND(IntWidthNotMultipleOf8)
 CARBON_DIAGNOSTIC_KIND(IntWidthNotPositive)
@@ -361,7 +414,7 @@ CARBON_DIAGNOSTIC_KIND(UnexpectedDeclNameParams)
 CARBON_DIAGNOSTIC_KIND(QualifiedNameInNonScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedNameNonScopeEntity)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprInIncompleteClassScope)
-CARBON_DIAGNOSTIC_KIND(QualifiedExprInUndefinedInterfaceScope)
+CARBON_DIAGNOSTIC_KIND(QualifiedExprInIncompleteFacetTypeScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
@@ -394,6 +447,34 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 // Where operator and its requirements.
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+
+// Facet type resolution.
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
+CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
+
+// Facet type combination.
+CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
+
+// Pattern matching diagnostics.
+CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
+
+// ============================================================================
+// Language server diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(LanguageServerFileUnknown)
+CARBON_DIAGNOSTIC_KIND(LanguageServerFileUnsupported)
+CARBON_DIAGNOSTIC_KIND(LanguageServerMissingInputStream)
+CARBON_DIAGNOSTIC_KIND(LanguageServerNotificationParseError)
+CARBON_DIAGNOSTIC_KIND(LanguageServerTransportError)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnexpectedReply)
+CARBON_DIAGNOSTIC_KIND(LanguageServerUnsupportedNotification)
+
+// Document handling.
+CARBON_DIAGNOSTIC_KIND(LanguageServerOpenDuplicateFile)
+CARBON_DIAGNOSTIC_KIND(LanguageServerCloseUnknownFile)
+CARBON_DIAGNOSTIC_KIND(LanguageServerDiagnosticInWrongFile)
 
 // ============================================================================
 // Other diagnostics

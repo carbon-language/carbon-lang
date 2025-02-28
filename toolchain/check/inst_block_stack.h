@@ -31,9 +31,9 @@ class InstBlockStack {
   auto Push(SemIR::InstBlockId id, llvm::ArrayRef<SemIR::InstId> inst_ids)
       -> void;
 
-  // Pushes a new instruction block. It will be invalid unless PeekOrAdd is
+  // Pushes a new instruction block. It will be `None` unless PeekOrAdd is
   // called in order to support lazy allocation.
-  auto Push() -> void { Push(SemIR::InstBlockId::Invalid); }
+  auto Push() -> void { Push(SemIR::InstBlockId::None); }
 
   // Pushes a new unreachable code block.
   auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }
@@ -44,8 +44,8 @@ class InstBlockStack {
   // 0.
   auto PeekOrAdd(int depth = 0) -> SemIR::InstBlockId;
 
-  // Pops the top instruction block. This will always return a valid instruction
-  // block; SemIR::InstBlockId::Empty is returned if one wasn't allocated.
+  // Pops the top instruction block. This will never return `None`; `Empty` is
+  // returned if one wasn't allocated.
   auto Pop() -> SemIR::InstBlockId;
 
   // Pops the top instruction block, and discards it if it hasn't had an ID
@@ -54,7 +54,7 @@ class InstBlockStack {
 
   // Adds the given instruction ID to the block at the top of the stack.
   auto AddInstId(SemIR::InstId inst_id) -> void {
-    CARBON_CHECK(!empty(), "no current block");
+    CARBON_CHECK(!empty(), "{0} has no current block", name_);
     insts_stack_.AppendToTop(inst_id);
   }
 
@@ -74,7 +74,7 @@ class InstBlockStack {
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void {
-    CARBON_CHECK(empty(), "{0}", id_stack_.size());
+    CARBON_CHECK(empty(), "{0} still has {1} entries", name_, id_stack_.size());
   }
 
   auto empty() const -> bool { return id_stack_.empty(); }
@@ -89,8 +89,8 @@ class InstBlockStack {
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
 
-  // The stack of block IDs. Valid if allocated, Invalid if no block has been
-  // allocated, or Unreachable if this block is known to be unreachable.
+  // The stack of block IDs. A value if allocated, `None` if no block has been
+  // allocated, or `Unreachable` if this block is known to be unreachable.
   llvm::SmallVector<SemIR::InstBlockId> id_stack_;
 
   // The stack of insts in each block.

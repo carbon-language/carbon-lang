@@ -9,8 +9,9 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "toolchain/check/sem_ir_diagnostic_converter.h"
+#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
@@ -27,11 +28,12 @@ class FileContext {
     int32_t column_number;
   };
 
-  explicit FileContext(llvm::LLVMContext& llvm_context, bool include_debug_info,
-                       const Check::SemIRDiagnosticConverter& converter,
-                       llvm::StringRef module_name, const SemIR::File& sem_ir,
-                       const SemIR::InstNamer* inst_namer,
-                       llvm::raw_ostream* vlog_stream);
+  explicit FileContext(
+      llvm::LLVMContext& llvm_context,
+      std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+          tree_and_subtrees_getters_for_debug_info,
+      llvm::StringRef module_name, const SemIR::File& sem_ir,
+      const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
   // the main execution loop.
@@ -53,8 +55,7 @@ class FileContext {
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
-    // InvalidType should not be passed in.
-    CARBON_CHECK(type_id.index >= 0, "{0}", type_id);
+    CARBON_CHECK(type_id.has_value(), "Should not be called with `None`");
     CARBON_CHECK(types_[type_id.index], "Missing type {0}: {1}", type_id,
                  sem_ir().types().GetAsInst(type_id));
     return types_[type_id.index];
@@ -66,6 +67,12 @@ class FileContext {
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {
     return llvm::ConstantStruct::get(GetTypeType());
+  }
+
+  // Returns a lowered value to use for a value of int literal type.
+  auto GetIntLiteralAsValue() -> llvm::Constant* {
+    // TODO: Consider adding a named struct type for integer literals.
+    return llvm::ConstantStruct::get(llvm::StructType::get(llvm_context()));
   }
 
   // Returns a global value for the given instruction.
@@ -93,11 +100,21 @@ class FileContext {
   // by the caller.
   auto BuildFunctionDecl(SemIR::FunctionId function_id,
                          SemIR::SpecificId specific_id =
-                             SemIR::SpecificId::Invalid) -> llvm::Function*;
+                             SemIR::SpecificId::None) -> llvm::Function*;
 
   // Builds the definition for the given function. If the function is only a
-  // declaration with no definition, does nothing.
-  auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
+  // declaration with no definition, does nothing. If this is a generic it'll
+  // only be lowered if the specific_id is specified. During this lowering of
+  // a generic, more generic functions may be added for lowering.
+  auto BuildFunctionDefinition(
+      SemIR::FunctionId function_id,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
+
+  // Builds a functions body. Common functionality for all functions.
+  auto BuildFunctionBody(
+      SemIR::FunctionId function_id, const SemIR::Function& function,
+      llvm::Function* llvm_function,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
@@ -123,8 +140,9 @@ class FileContext {
   // The DICompileUnit, if any - null implies debug info is not being emitted.
   llvm::DICompileUnit* di_compile_unit_;
 
-  // The source location converter.
-  const Check::SemIRDiagnosticConverter& converter_;
+  // The trees are only provided when debug info should be emitted.
+  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
+      tree_and_subtrees_getters_for_debug_info_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
@@ -144,6 +162,13 @@ class FileContext {
   // Maps specific callables to lowered functions. Vector indexes correspond to
   // `SpecificId` indexes. We resize this directly to the correct size.
   llvm::SmallVector<llvm::Function*, 0> specific_functions_;
+
+  // Maps which specific functions are generics that need to have their
+  // definitions lowered after the lowering of other definitions.
+  // This list may grow while lowering generic definitions from this list.
+  // The list uses the `SpecificId` to index into specific_functions_.
+  llvm::SmallVector<std::pair<SemIR::FunctionId, SemIR::SpecificId>, 10>
+      specific_function_definitions_;
 
   // Provides lowered versions of types.
   // Vector indexes correspond to `TypeId` indexes for non-symbolic types. We

@@ -30,13 +30,14 @@ extern library fn G();
 
 // --- fail_identifier.carbon
 
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+7]]:16: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+8]]:16: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
 // CHECK:STDERR: extern library foo fn G();
 // CHECK:STDERR:                ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+3]]:16: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:16: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR: extern library foo fn G();
 // CHECK:STDERR:                ^~~
+// CHECK:STDERR:
 extern library foo fn G();
 
 // CHECK:STDOUT: - filename: extern.carbon
@@ -44,9 +45,9 @@ extern library foo fn G();
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'ExternModifier', text: 'extern'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'G'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -57,9 +58,9 @@ extern library foo fn G();
 // CHECK:STDOUT:           {kind: 'LibraryName', text: '"foo"'},
 // CHECK:STDOUT:         {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'ExternModifierWithLibrary', text: 'extern', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'G'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -70,9 +71,9 @@ extern library foo fn G();
 // CHECK:STDOUT:           {kind: 'DefaultLibrary', text: 'default'},
 // CHECK:STDOUT:         {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'ExternModifierWithLibrary', text: 'extern', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'G'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -83,9 +84,9 @@ extern library foo fn G();
 // CHECK:STDOUT:           {kind: 'LibraryName', text: 'fn', has_error: yes},
 // CHECK:STDOUT:         {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'ExternModifierWithLibrary', text: 'extern', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'G'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

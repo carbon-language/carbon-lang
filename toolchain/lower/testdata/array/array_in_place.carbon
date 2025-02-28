@@ -11,7 +11,7 @@
 fn F() -> (i32, i32, i32);
 
 fn G() {
-  var v: [(i32, i32, i32); 2] = (F(), F());
+  var v: array((i32, i32, i32), 2) = (F(), F());
 }
 
 // CHECK:STDOUT: ; ModuleID = 'array_in_place.carbon'
@@ -22,12 +22,18 @@ fn G() {
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca [2 x { i32, i32, i32 }], align 8, !dbg !7
-// CHECK:STDOUT:   %.loc14_42.1.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, {} zeroinitializer, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_42.1.array.index), !dbg !9
-// CHECK:STDOUT:   %.loc14_42.3.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, {} zeroinitializer, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_42.3.array.index), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 24, ptr %v.var), !dbg !7
+// CHECK:STDOUT:   %.loc14_47.2.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, i64 0, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_47.2.array.index), !dbg !9
+// CHECK:STDOUT:   %.loc14_47.4.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, i64 1, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_47.4.array.index), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -39,8 +45,8 @@ fn G() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 33, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 34, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 39, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 38, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 39, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 44, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !4)

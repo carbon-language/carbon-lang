@@ -14,9 +14,10 @@
 // CHECK:STDERR:
 constraint "Foo"
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:1: error: `constraint` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:1: error: `constraint` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR: constraint
 // CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR:
 constraint
 
 // CHECK:STDOUT: - filename: fail_incomplete.carbon

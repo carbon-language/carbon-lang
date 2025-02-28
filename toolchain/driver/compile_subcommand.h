@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_DRIVER_COMPILE_SUBCOMMAND_H_
 
 #include "common/command_line.h"
+#include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -51,7 +52,6 @@ struct CompileOptions {
   bool dump_asm = false;
   bool dump_mem_usage = false;
   bool dump_timings = false;
-  bool include_diagnostic_kind = false;
   bool stream_errors = false;
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
@@ -74,8 +74,9 @@ class CompileSubcommand : public DriverSubcommand {
 
  private:
   // Does custom validation of the compile-subcommand options structure beyond
-  // what the command line parsing library supports.
-  auto ValidateOptions(DriverEnv& driver_env) const -> bool;
+  // what the command line parsing library supports. Diagnoses and returns false
+  // on failure.
+  auto ValidateOptions(NoLocDiagnosticEmitter& emitter) const -> bool;
 
   CompileOptions options_;
 };

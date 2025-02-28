@@ -10,13 +10,14 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_close_paren.carbon:[[@LINE+7]]:21: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+    // CHECK:STDERR: fail_missing_guard_close_paren.carbon:[[@LINE+8]]:21: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
     // CHECK:STDERR:     case x: bool if (false => { return 1; }
     // CHECK:STDERR:                     ^
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_missing_guard_close_paren.carbon:[[@LINE+3]]:28: error: TODO: improve match parsing [MatchParseTODO]
+    // CHECK:STDERR: fail_missing_guard_close_paren.carbon:[[@LINE+4]]:28: error: expected `)` [ExpectedMatchCaseGuardCloseParen]
     // CHECK:STDERR:     case x: bool if (false => { return 1; }
     // CHECK:STDERR:                            ^~
+    // CHECK:STDERR:
     case x: bool if (false => { return 1; }
   }
   return 0;
@@ -26,9 +27,9 @@ fn f() -> i32 {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'f'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'f'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
@@ -38,9 +39,9 @@ fn f() -> i32 {
 // CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'MatchCaseGuardIntroducer', text: 'if'},
 // CHECK:STDOUT:               {kind: 'MatchCaseGuardStart', text: '('},
 // CHECK:STDOUT:               {kind: 'BoolLiteralFalse', text: 'false'},

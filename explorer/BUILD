@@ -57,9 +57,12 @@ cc_binary(
     deps = [
         ":main",
         "//common:check",
-        "//testing/base:test_raw_ostream",
+        "//common:raw_string_ostream",
+        "//testing/base:file_helpers",
         "//testing/file_test:file_test_base",
+        "//testing/file_test:manifest",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/strings",
         "@re2",
     ],
 )
@@ -95,19 +98,12 @@ file_test(
 )
 
 filegroup(
-    name = "carbon_files",
-    srcs = glob(["testdata/**/*.carbon"]),
-    # Files are used for validating fuzzer completeness.
-    visibility = ["//explorer/fuzzing:__pkg__"],
-)
-
-filegroup(
-    name = "treesitter_testdata",
+    name = "tree_sitter_testdata",
     srcs = glob(
         ["testdata/**/*.carbon"],
         exclude = [
             "testdata/**/fail_*",
         ],
     ),
-    visibility = ["//utils/treesitter:__pkg__"],
+    visibility = ["//utils/tree_sitter:__pkg__"],
 )

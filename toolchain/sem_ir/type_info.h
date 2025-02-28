@@ -58,12 +58,17 @@ struct ValueRepr : public Printable<ValueRepr> {
            aggregate_kind == ValueAndObjectAggregate;
   }
 
+  // Returns whether this value representation is a copy of the object
+  // representation of the type. `orig_type_id` must be the type for which this
+  // is the value representation.
+  auto IsCopyOfObjectRepr(const File& file, TypeId orig_type_id) const -> bool;
+
   // The kind of value representation used by this type.
   Kind kind = Unknown;
   // The kind of aggregate representation used by this type.
   AggregateKind aggregate_kind = AggregateKind::NotAggregate;
   // The type used to model the value representation.
-  TypeId type_id = TypeId::Invalid;
+  TypeId type_id = TypeId::None;
 };
 
 // Information stored about a TypeId corresponding to a complete type.
@@ -73,6 +78,9 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
   ValueRepr value_repr = ValueRepr();
+
+  // If this type is abstract, this is id of an abstract class it uses.
+  SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
 };
 
 // The initializing representation to use when returning by value.
@@ -104,6 +112,10 @@ struct InitRepr {
   // Returns whether the initializing representation information could be fully
   // computed.
   auto is_valid() const -> bool { return kind != Incomplete; }
+
+  // Returns whether the initializing representation is a copy of the object
+  // representation of the type. Provided for symmetry with `ValueRepr`.
+  auto IsCopyOfObjectRepr() const -> bool { return kind == ByCopy; }
 };
 
 // Information about a function's return type.
@@ -111,13 +123,14 @@ struct ReturnTypeInfo {
   // Builds return type information for a given declared return type.
   static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo {
     return {.type_id = type_id,
-            .init_repr = type_id.is_valid() ? InitRepr::ForType(file, type_id)
-                                            : InitRepr{.kind = InitRepr::None}};
+            .init_repr = type_id.has_value()
+                             ? InitRepr::ForType(file, type_id)
+                             : InitRepr{.kind = InitRepr::None}};
   }
 
   // Builds return type information for a given function.
   static auto ForFunction(const File& file, const Function& function,
-                          SpecificId specific_id = SpecificId::Invalid)
+                          SpecificId specific_id = SpecificId::None)
       -> ReturnTypeInfo {
     return ForType(file, function.GetDeclaredReturnType(file, specific_id));
   }
@@ -132,11 +145,47 @@ struct ReturnTypeInfo {
     return init_repr.kind == InitRepr::InPlace;
   }
 
-  // The declared return type. Invalid if no return type was specified.
+  // The declared return type. `None` if no return type was specified.
   TypeId type_id;
   // The initializing representation for the return type.
   InitRepr init_repr;
 };
+
+// Information about the numeric type literal that corresponds to a type.
+struct NumericTypeLiteralInfo {
+  // The kind of a numeric type literal, as determined by the letter that
+  // prefixes the bit width.
+  enum Kind : char {
+    None = 0,
+    Int = 'i',
+    UInt = 'u',
+    Float = 'f',
+  };
+
+  static const NumericTypeLiteralInfo Invalid;
+
+  // Returns the numeric type literal that would evaluate to this class type, if
+  // any.
+  static auto ForType(const File& file, ClassType class_type)
+      -> NumericTypeLiteralInfo;
+
+  // Prints the numeric type literal that corresponds to this type.
+  auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
+
+  // Gets a string containing the literal.
+  auto GetLiteralAsString(const File& file) const -> std::string;
+
+  // Returns whether this is a valid numeric type literal.
+  auto is_valid() const -> bool { return kind != None; }
+
+  // The kind of this type literal.
+  Kind kind;
+  // The bit width of this type literal.
+  IntId bit_width_id;
+};
+
+inline constexpr NumericTypeLiteralInfo NumericTypeLiteralInfo::Invalid = {
+    .kind = None, .bit_width_id = IntId::None};
 
 }  // namespace Carbon::SemIR
 

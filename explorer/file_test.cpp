@@ -3,15 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
+#include "common/raw_string_ostream.h"
 #include "explorer/main.h"
 #include "re2/re2.h"
-#include "testing/base/test_raw_ostream.h"
+#include "testing/base/file_helpers.h"
 #include "testing/file_test/file_test_base.h"
+#include "testing/file_test/manifest.h"
 
 ABSL_FLAG(bool, trace, false,
           "Set to true to run tests with tracing enabled, even if they don't "
           "otherwise specify it. This does not result in checking trace output "
           "contents; it essentially only verifies there's not a crash bug.");
+ABSL_FLAG(std::string, explorer_test_targets_file, "",
+          "A path to a file containing repo-relative names of test files.");
 
 namespace Carbon::Testing {
 namespace {
@@ -19,8 +24,8 @@ namespace {
 class ExplorerFileTest : public FileTestBase {
  public:
   explicit ExplorerFileTest(llvm::StringRef /*exe_path*/,
-                            std::mutex* output_mutex, llvm::StringRef test_name)
-      : FileTestBase(output_mutex, test_name),
+                            llvm::StringRef test_name)
+      : FileTestBase(test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
     CARBON_CHECK(prelude_line_re_.ok(), "{0}", prelude_line_re_.error());
@@ -29,7 +34,8 @@ class ExplorerFileTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
+           FILE* /*input_stream*/, llvm::raw_pwrite_stream& output_stream,
+           llvm::raw_pwrite_stream& error_stream)
       -> ErrorOr<RunResult> override {
     // Add the prelude.
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
@@ -52,20 +58,18 @@ class ExplorerFileTest : public FileTestBase {
       args.push_back(arg.data());
     }
 
-    int exit_code = ExplorerMain(
-        args.size(), args.data(), /*install_path=*/"", PreludePath, stdout,
-        stderr, check_trace_output() ? stdout : trace_stream_, *fs);
+    int exit_code =
+        ExplorerMain(args.size(), args.data(), /*install_path=*/"", PreludePath,
+                     output_stream, error_stream,
+                     check_trace_output() ? output_stream : trace_stream_, *fs);
 
-    return {{.success = exit_code == EXIT_SUCCESS}};
-  }
-
-  auto ValidateRun() -> void override {
     // Skip trace test check as they use stdout stream instead of
     // trace_stream_ostream
-    if (absl::GetFlag(FLAGS_trace)) {
-      EXPECT_FALSE(trace_stream_.TakeStr().empty())
-          << "Tracing should always do something";
+    if (absl::GetFlag(FLAGS_trace) && trace_stream_.TakeStr().empty()) {
+      return Error("Tracing should always do something");
     }
+
+    return {{.success = exit_code == EXIT_SUCCESS}};
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
@@ -97,18 +101,31 @@ class ExplorerFileTest : public FileTestBase {
     }
   }
 
+  // Cannot execute in parallel.
+  auto AllowParallelRun() const -> bool override { return false; }
+
  private:
   // Trace output is directly checked for a few tests.
   auto check_trace_output() -> bool {
     return test_name().find("/trace/") != std::string::npos;
   }
 
-  TestRawOstream trace_stream_;
+  RawStringOstream trace_stream_;
   RE2 prelude_line_re_;
   RE2 timing_re_;
 };
 
 }  // namespace
+
+// Explorer uses a non-standard approach to getting the manifest path.
+auto GetFileTestManifest() -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> manifest;
+  auto content = ReadFile(absl::GetFlag(FLAGS_explorer_test_targets_file));
+  for (const auto& line : absl::StrSplit(*content, "\n", absl::SkipEmpty())) {
+    manifest.push_back(std::string(line));
+  }
+  return manifest;
+}
 
 CARBON_FILE_TEST_FACTORY(ExplorerFileTest)
 

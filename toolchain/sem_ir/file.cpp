@@ -18,12 +18,13 @@
 
 namespace Carbon::SemIR {
 
-File::File(CheckIRId check_ir_id,
+File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
            const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
            SharedValueStores& value_stores, std::string filename)
-    : check_ir_id_(check_ir_id),
+    : parse_tree_(parse_tree),
+      check_ir_id_(check_ir_id),
       package_id_(packaging_decl ? packaging_decl->names.package_id
-                                 : IdentifierId::Invalid),
+                                 : PackageNameId::None),
       library_id_(packaging_decl ? LibraryNameId::ForStringLiteralValueId(
                                        packaging_decl->names.library_id)
                                  : LibraryNameId::Default),
@@ -31,22 +32,23 @@ File::File(CheckIRId check_ir_id,
       filename_(std::move(filename)),
       impls_(*this),
       type_blocks_(allocator_),
-      name_scopes_(&insts_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(this) {
-  // `type` and the error type are both complete types.
-  types_.SetValueRepr(TypeId::TypeType,
-                      {.kind = ValueRepr::Copy, .type_id = TypeId::TypeType});
-  types_.SetValueRepr(TypeId::Error,
-                      {.kind = ValueRepr::Copy, .type_id = TypeId::Error});
+  // `type` and the error type are both complete & concrete types.
+  types_.SetComplete(TypeType::SingletonTypeId,
+                     {.value_repr = {.kind = ValueRepr::Copy,
+                                     .type_id = TypeType::SingletonTypeId}});
+  types_.SetComplete(ErrorInst::SingletonTypeId,
+                     {.value_repr = {.kind = ValueRepr::Copy,
+                                     .type_id = ErrorInst::SingletonTypeId}});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {
     auto inst_id =
         insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
     constant_values_.Set(inst_id,
-                         SemIR::ConstantId::ForTemplateConstant(inst_id));
+                         SemIR::ConstantId::ForConcreteConstant(inst_id));
   }
 }
 
@@ -104,23 +106,23 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
           map.Add("types", types_.OutputYaml());
           map.Add("type_blocks", type_blocks_.OutputYaml());
-          map.Add(
-              "insts", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                int start = include_singletons ? 0 : SingletonInstKinds.size();
-                for (int i : llvm::seq(start, insts_.size())) {
-                  auto id = InstId(i);
-                  map.Add(PrintToString(id),
-                          Yaml::OutputScalar(insts_.Get(id)));
-                }
-              }));
+          map.Add("insts",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    for (auto [id, inst] : insts_.enumerate()) {
+                      if (!include_singletons && IsSingletonInstId(id)) {
+                        continue;
+                      }
+                      map.Add(PrintToString(id), Yaml::OutputScalar(inst));
+                    }
+                  }));
           map.Add("constant_values",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    int start =
-                        include_singletons ? 0 : SingletonInstKinds.size();
-                    for (int i : llvm::seq(start, insts_.size())) {
-                      auto id = InstId(i);
+                    for (auto [id, _] : insts_.enumerate()) {
+                      if (!include_singletons && IsSingletonInstId(id)) {
+                        continue;
+                      }
                       auto value = constant_values_.Get(id);
-                      if (!value.is_valid() || value.is_constant()) {
+                      if (!value.has_value() || value.is_constant()) {
                         map.Add(PrintToString(id), Yaml::OutputScalar(value));
                       }
                     }
@@ -187,6 +189,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case NameBindingDecl::Kind:
       case Namespace::Kind:
       case OutParamPattern::Kind:
       case RequirementEquivalent::Kind:
@@ -195,6 +198,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Return::Kind:
       case ReturnSlotPattern::Kind:
       case ReturnExpr::Kind:
+      case TuplePattern::Kind:
+      case VarPattern::Kind:
+      case Vtable::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:
@@ -258,18 +264,21 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FloatLiteral::Kind:
       case FloatType::Kind:
       case FunctionType::Kind:
+      case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case ImplWitness::Kind:
+      case ImplWitnessAccess::Kind:
+      case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case IntLiteralType::Kind:
       case IntType::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
-      case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
       case LegacyFloatType::Kind:
       case NamespaceType::Kind:
       case PointerType::Kind:
+      case RequireCompleteType::Kind:
       case SpecificFunction::Kind:
       case SpecificFunctionType::Kind:
       case StringLiteral::Kind:
@@ -297,7 +306,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         // TODO: Don't rely on value_id for expression category, since it may
         // not be valid yet. This workaround only works because we don't support
         // `var` in function signatures yet.
-        if (!inst.value_id.is_valid()) {
+        if (!inst.value_id.has_value()) {
           return value_category;
         }
         inst_id = inst.value_id;
@@ -308,6 +317,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         inst_id = inst.array_id;
         continue;
       }
+
+      case VtablePtr::Kind:
+        return ExprCategory::EphemeralRef;
 
       case CARBON_KIND(ClassElementAccess inst): {
         inst_id = inst.base_id;

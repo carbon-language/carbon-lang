@@ -223,7 +223,7 @@
       "patterns": [
         {
           "name": "support.class.carbon",
-          "match": "(?<=\\bpackage\\s)\\w+"
+          "match": "(?<=\\b(package|Core)\\s)\\w+"
         },
         {
           "name": "support.variable.carbon",

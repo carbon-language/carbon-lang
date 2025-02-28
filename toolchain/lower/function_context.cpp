@@ -64,7 +64,7 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
 // types, which would make getting the right overload resolution complex.
 template <typename InstT>
 static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
-                            InstT inst) {
+                            InstT inst) -> void {
   if constexpr (!InstT::Kind.is_lowered()) {
     CARBON_FATAL(
         "Encountered an instruction that isn't expected to lower. It's "
@@ -72,7 +72,9 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
         "instruction in lowered contexts. Instruction: {0}",
         inst);
   } else if constexpr (InstT::Kind.constant_kind() ==
-                       SemIR::InstConstantKind::Always) {
+                           SemIR::InstConstantKind::Always ||
+                       InstT::Kind.constant_kind() ==
+                           SemIR::InstConstantKind::Unique) {
     CARBON_FATAL("Missing constant value for constant instruction {0}", inst);
   } else if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Always) {
     // For instructions that are always of type `type`, produce the trivial
@@ -115,7 +117,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
   }
 
-  builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
+  builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
   if (di_subprogram_) {
     builder_.SetCurrentDebugLocation(llvm::DebugLoc());
   }

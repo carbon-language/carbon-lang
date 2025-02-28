@@ -5,11 +5,14 @@
 #ifndef CARBON_COMMON_ERROR_H_
 #define CARBON_COMMON_ERROR_H_
 
+#include <functional>
 #include <string>
+#include <type_traits>
 #include <variant>
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/Twine.h"
 
 namespace Carbon {
@@ -18,7 +21,7 @@ namespace Carbon {
 // using `ErrorOr<Success>` and `return Success();` if no value needs to be
 // returned.
 struct Success : public Printable<Success> {
-  void Print(llvm::raw_ostream& out) const { out << "Success"; }
+  auto Print(llvm::raw_ostream& out) const -> void { out << "Success"; }
 };
 
 // Tracks an error message.
@@ -47,7 +50,7 @@ class [[nodiscard]] Error : public Printable<Error> {
   }
 
   // Prints the error string.
-  void Print(llvm::raw_ostream& out) const {
+  auto Print(llvm::raw_ostream& out) const -> void {
     if (!location().empty()) {
       out << location() << ": ";
     }
@@ -75,18 +78,29 @@ class [[nodiscard]] Error : public Printable<Error> {
 template <typename T>
 class [[nodiscard]] ErrorOr {
  public:
+  using ValueT = std::remove_reference_t<T>;
+
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
   ErrorOr(Error err) : val_(std::move(err)) {}
 
+  // Constructs with a reference.
+  // Implicit for easy construction on returns.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ErrorOr(T ref)
+    requires std::is_reference_v<T>
+      : val_(std::ref(ref)) {}
+
   // Constructs with a value.
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(T val) : val_(std::move(val)) {}
+  ErrorOr(T val)
+    requires(!std::is_reference_v<T>)
+      : val_(std::move(val)) {}
 
   // Returns true for success.
-  auto ok() const -> bool { return std::holds_alternative<T>(val_); }
+  auto ok() const -> bool { return std::holds_alternative<StoredT>(val_); }
 
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
@@ -101,35 +115,32 @@ class [[nodiscard]] ErrorOr {
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator*() -> T& {
+  auto operator*() -> ValueT& {
     CARBON_CHECK(ok());
-    return std::get<T>(val_);
+    return std::get<StoredT>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator*() const -> const T& {
+  auto operator*() const -> const ValueT& {
     CARBON_CHECK(ok());
-    return std::get<T>(val_);
+    return std::get<StoredT>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator->() -> T* {
-    CARBON_CHECK(ok());
-    return &std::get<T>(val_);
-  }
+  auto operator->() -> ValueT* { return &**this; }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator->() const -> const T* {
-    CARBON_CHECK(ok());
-    return &std::get<T>(val_);
-  }
+  auto operator->() const -> const ValueT* { return &**this; }
 
  private:
+  using StoredT = std::conditional_t<std::is_reference_v<T>,
+                                     std::reference_wrapper<ValueT>, T>;
+
   // Either an error message or a value.
-  std::variant<Error, T> val_;
+  std::variant<Error, StoredT> val_;
 };
 
 // A helper class for accumulating error message and converting to
@@ -138,7 +149,10 @@ class ErrorBuilder {
  public:
   explicit ErrorBuilder(std::string location = "")
       : location_(std::move(location)),
-        out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
+        out_(std::make_unique<RawStringOstream>()) {}
+
+  ErrorBuilder(ErrorBuilder&&) = default;
+  auto operator=(ErrorBuilder&&) -> ErrorBuilder& = default;
 
   // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
   // the builder must be converted to an `Error` or `ErrorOr`.
@@ -156,19 +170,17 @@ class ErrorBuilder {
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator Error() { return Error(location_, message_); }
+  operator Error() { return Error(location_, out_->TakeStr()); }
 
   template <typename T>
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
   operator ErrorOr<T>() {
-    return Error(location_, message_);
+    return Error(location_, out_->TakeStr());
   }
 
  private:
   std::string location_;
-  std::string message_;
-  // Use a pointer to allow move construction.
-  std::unique_ptr<llvm::raw_string_ostream> out_;
+  std::unique_ptr<RawStringOstream> out_;
 };
 
 }  // namespace Carbon

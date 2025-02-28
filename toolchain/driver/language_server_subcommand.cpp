@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/language_server_subcommand.h"
 
+#include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/language_server/language_server.h"
 
 namespace Carbon {
@@ -19,13 +20,17 @@ LanguageServerSubcommand::LanguageServerSubcommand()
     : DriverSubcommand(SubcommandInfo) {}
 
 auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  // TODO: Consider a way to override stdin, but it's a `FILE*` so less
-  // convenient to work with.
-  auto err = LanguageServer::Run(stdin, driver_env.output_stream);
-  if (!err.ok()) {
-    driver_env.error_stream << "error: " << err.error() << "\n";
+  if (!driver_env.input_stream) {
+    CARBON_DIAGNOSTIC(LanguageServerMissingInputStream, Error,
+                      "language-server requires input_stream");
+    driver_env.emitter.Emit(LanguageServerMissingInputStream);
+    return {.success = false};
   }
-  return {.success = err.ok()};
+
+  bool success = LanguageServer::Run(
+      driver_env.input_stream, *driver_env.output_stream,
+      *driver_env.error_stream, driver_env.vlog_stream, driver_env.consumer);
+  return {.success = success};
 }
 
 }  // namespace Carbon

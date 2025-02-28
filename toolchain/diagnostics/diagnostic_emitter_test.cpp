@@ -17,20 +17,24 @@ using ::Carbon::Testing::IsDiagnostic;
 using ::Carbon::Testing::IsSingleDiagnostic;
 using testing::ElementsAre;
 
-struct FakeDiagnosticConverter : DiagnosticConverter<int> {
+class FakeDiagnosticEmitter : public DiagnosticEmitter<int> {
+ public:
+  using DiagnosticEmitter::DiagnosticEmitter;
+
+ protected:
   auto ConvertLoc(int n, ContextFnT /*context_fn*/) const
-      -> DiagnosticLoc override {
-    return {.line_number = 1, .column_number = n};
+      -> ConvertedDiagnosticLoc override {
+    return {.loc = {.line_number = 1, .column_number = n},
+            .last_byte_offset = -1};
   }
 };
 
 class DiagnosticEmitterTest : public ::testing::Test {
- protected:
-  DiagnosticEmitterTest() : emitter_(converter_, consumer_) {}
+ public:
+  DiagnosticEmitterTest() : emitter_(&consumer_) {}
 
-  FakeDiagnosticConverter converter_;
   Testing::MockDiagnosticConsumer consumer_;
-  DiagnosticEmitter<int> emitter_;
+  FakeDiagnosticEmitter emitter_;
 };
 
 TEST_F(DiagnosticEmitterTest, EmitSimpleError) {

@@ -23,14 +23,21 @@ namespace Carbon::Lex {
 // meaningfully compared.
 //
 // All other APIs to query a `TokenIndex` are on the `TokenizedBuffer`.
-struct TokenIndex : public IndexBase {
-  static const TokenIndex Invalid;
+struct TokenIndex : public IndexBase<TokenIndex> {
+  // The number of bits which must be allotted for `TokenIndex`.
+  static constexpr int Bits = 23;
+  // The maximum number of tokens that can be stored, including the FileStart
+  // and FileEnd tokens.
+  static constexpr int Max = 1 << Bits;
+
+  static constexpr llvm::StringLiteral Label = "token";
+  static const TokenIndex None;
   // Comments aren't tokenized, so this is the first token after FileStart.
   static const TokenIndex FirstNonCommentToken;
   using IndexBase::IndexBase;
 };
 
-constexpr TokenIndex TokenIndex::Invalid(TokenIndex::InvalidIndex);
+constexpr TokenIndex TokenIndex::None(TokenIndex::NoneIndex);
 constexpr TokenIndex TokenIndex::FirstNonCommentToken(1);
 
 // A lightweight handle to a lexed token in a `TokenizedBuffer` whose kind is

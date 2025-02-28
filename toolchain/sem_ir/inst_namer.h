@@ -10,6 +10,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_fingerprinter.h"
 
 namespace Carbon::SemIR {
 
@@ -31,8 +32,7 @@ class InstNamer {
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
-  InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
-            const Parse::Tree& parse_tree, const File& sem_ir);
+  explicit InstNamer(const File* sem_ir);
 
   // Returns the scope ID corresponding to an ID of a function, class, or
   // interface.
@@ -41,15 +41,18 @@ class InstNamer {
     auto index = static_cast<int32_t>(ScopeId::FirstFunction);
 
     if constexpr (!std::same_as<FunctionId, IdT>) {
-      index += sem_ir_.functions().size();
+      index += sem_ir_->functions().size();
       if constexpr (!std::same_as<ClassId, IdT>) {
-        index += sem_ir_.classes().size();
+        index += sem_ir_->classes().size();
         if constexpr (!std::same_as<InterfaceId, IdT>) {
-          index += sem_ir_.interfaces().size();
-          if constexpr (!std::same_as<ImplId, IdT>) {
-            index += sem_ir_.impls().size();
-            static_assert(std::same_as<NumberOfScopesTag, IdT>,
-                          "Unknown ID kind for scope");
+          index += sem_ir_->interfaces().size();
+          if constexpr (!std::same_as<AssociatedConstantId, IdT>) {
+            index += sem_ir_->associated_constants().size();
+            if constexpr (!std::same_as<ImplId, IdT>) {
+              index += sem_ir_->impls().size();
+              static_assert(std::same_as<NumberOfScopesTag, IdT>,
+                            "Unknown ID kind for scope");
+            }
           }
         }
       }
@@ -72,7 +75,7 @@ class InstNamer {
   // Returns the IR name to use for a function, class, or interface.
   template <typename IdT>
   auto GetNameFor(IdT id) const -> std::string {
-    if (!id.is_valid()) {
+    if (!id.has_value()) {
       return "invalid";
     }
     return GetScopeName(GetScopeFor(id));
@@ -130,8 +133,10 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& inst_namer, SemIR::LocId loc_id,
-                      std::string name) -> Name;
+    auto AllocateName(
+        const InstNamer& inst_namer,
+        std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint,
+        std::string name) -> Name;
   };
 
   // A named scope that contains named entities.
@@ -151,7 +156,8 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                      std::string name = "",
-                     SemIR::LocId loc_id = SemIR::LocId::Invalid) -> void;
+                     std::variant<SemIR::LocId, uint64_t>
+                         loc_id_or_fingerprint = SemIR::LocId::None) -> void;
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
@@ -165,9 +171,8 @@ class InstNamer {
 
   auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
 
-  const Lex::TokenizedBuffer& tokenized_buffer_;
-  const Parse::Tree& parse_tree_;
-  const File& sem_ir_;
+  const File* sem_ir_;
+  InstFingerprinter fingerprinter_;
 
   // The namespace for entity names. Names within this namespace are prefixed
   // with `@` in formatted SemIR.

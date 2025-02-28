@@ -9,13 +9,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_not_constant.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+8]]:10: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   let a: i32;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+4]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
-  // CHECK:STDERR:   let a: i32;
-  // CHECK:STDERR:          ^~~
   let a: i32;
 }
 
@@ -28,32 +29,32 @@ alias UseOther = I.other;
 // CHECK:STDOUT: --- fail_assoc_const_not_constant.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .UseA = %UseA
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.ref.loc23: type = name_ref I, %I.decl [template = constants.%I.type]
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
-// CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <error> [template = <error>]
-// CHECK:STDOUT:   %I.ref.loc26: type = name_ref I, %I.decl [template = constants.%I.type]
-// CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [template = <error>]
-// CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [template = <error>]
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
+// CHECK:STDOUT:   %I.ref.loc24: type = name_ref I, %I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <unexpected>.inst19.loc20_7 [concrete = <error>]
+// CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <unexpected>.inst19.loc20_7 [concrete = <error>]
+// CHECK:STDOUT:   %I.ref.loc27: type = name_ref I, %I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [concrete = <error>]
+// CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .a = <unexpected>.inst19.loc20_7
+// CHECK:STDOUT:   .other = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
