@@ -116,16 +116,13 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 }
 
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
-                    std::unique_ptr<clang::ASTUnit>* ast,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
-    -> void {
+    -> std::unique_ptr<clang::ASTUnit> {
   if (imports.empty()) {
-    return;
+    return nullptr;
   }
 
-  CARBON_CHECK(ast);
-  CARBON_CHECK(!ast->get());
   CARBON_CHECK(!context.sem_ir().cpp_ast());
 
   auto [generated_ast, ast_has_error] =
@@ -141,12 +138,13 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   name_scope.set_is_closed_import(true);
   name_scope.set_is_cpp_scope(true);
 
-  *ast = std::move(generated_ast);
-  context.sem_ir().set_cpp_ast(ast->get());
+  context.sem_ir().set_cpp_ast(generated_ast.get());
 
   if (ast_has_error) {
     name_scope.set_has_error();
   }
+
+  return std::move(generated_ast);
 }
 
 // Lookups the given name in the Clang AST. Returns the lookup result if lookup
