@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/function/declaration/extern.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/function/extern.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/extern.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/extern.carbon
 
 // --- extern.carbon
 
@@ -106,5 +106,31 @@ extern library "foo" fn G() {}
 // CHECK:STDOUT:         {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'ExternModifierWithLibrary', text: 'extern', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: extern_def.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'ExternModifier', text: 'extern'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: library_def.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:             {kind: 'LibraryName', text: '"foo"'},
+// CHECK:STDOUT:           {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'ExternModifierWithLibrary', text: 'extern', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
