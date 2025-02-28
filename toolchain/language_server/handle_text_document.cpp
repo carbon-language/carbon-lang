@@ -28,7 +28,7 @@ auto HandleDidOpenTextDocument(
   }
 }
 
-// Moves from `cursor_index` past `line_count` lines.
+// Returns the result of moving from `cursor_index` past `line_count` lines.
 static auto GetNthLineIndex(llvm::StringRef contents, size_t cursor_index,
                             size_t line_count) -> size_t {
   for (auto _ : llvm::seq(line_count)) {
