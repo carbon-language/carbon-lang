@@ -22,14 +22,14 @@ fn MyF() {
   Cpp.foo();
 }
 
-// --- import_function_decl_use_different_name.carbon
+// --- fail_import_function_decl_use_different_name.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "function_decl.h";
 
 fn MyF() {
-  // CHECK:STDERR: import_function_decl_use_different_name.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_function_decl_use_different_name.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   Cpp.bar();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -222,7 +222,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo[]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_function_decl_use_different_name.carbon
+// CHECK:STDOUT: --- fail_import_function_decl_use_different_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
