@@ -43,6 +43,41 @@ fn F() {
   fn PositionalParams {}
 }
 
+// --- builtin.carbon
+
+fn F() = "builtin";
+
+// --- builtin_nested.carbon
+
+impl T as I {
+  fn Op() = "builtin";
+}
+
+// --- fail_builtin_identifier.carbon
+
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:18: error: expected builtin function name after `=` [ExpectedBuiltinName]
+// CHECK:STDERR: fn NotString() = banana;
+// CHECK:STDERR:                  ^~~~~~
+// CHECK:STDERR:
+fn NotString() = banana;
+
+// --- fail_builtin_two_strings.carbon
+
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:32: error: `fn` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fn JunkAfterString() = "hello" "world";
+// CHECK:STDERR:                                ^~~~~~~
+// CHECK:STDERR:
+fn JunkAfterString() = "hello" "world";
+
+// --- fail_builtin_spurious_equals.carbon
+
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:23: error: expected builtin function name after `=` [ExpectedBuiltinName]
+// CHECK:STDERR: fn SpuriousEquals() = { }
+// CHECK:STDERR:                       ^
+// CHECK:STDERR:
+fn SpuriousEquals() = { }
+fn TestRecoveryFromSpuriousEquals();
+
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

@@ -40,6 +40,14 @@ extern library fn G();
 // CHECK:STDERR:
 extern library foo fn G();
 
+// --- extern_def.carbon
+
+extern fn G() {}
+
+// --- library_def.carbon
+
+extern library "foo" fn G() {}
+
 // CHECK:STDOUT: - filename: extern.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
