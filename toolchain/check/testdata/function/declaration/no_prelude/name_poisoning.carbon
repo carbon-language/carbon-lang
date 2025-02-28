@@ -94,6 +94,7 @@ alias N.F2 = F1;
 fn N.F1();
 
 // Failure: `N.F1` used after declaration failed.
+// TODO: #4622 - Allow defining a poisoned name so it would be found if used after it's declared.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:14: error: member name `F1` not found in `N` [MemberNameNotFoundInScope]
 // CHECK:STDERR: alias N.F3 = N.F1;
 // CHECK:STDERR:              ^~~~
