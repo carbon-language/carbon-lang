@@ -253,7 +253,7 @@ static auto CopyAncestorNameScopesFromImportIR(
 
   // Add ancestor namespace names, starting with the outermost.
   for (auto import_scope_id : llvm::reverse(new_namespaces)) {
-    auto import_scope = import_sem_ir.name_scopes().Get(import_scope_id);
+    const auto& import_scope = import_sem_ir.name_scopes().Get(import_scope_id);
     auto name_id =
         CopyNameFromImportIR(context, import_sem_ir, import_scope.name_id());
     scope_cursor =

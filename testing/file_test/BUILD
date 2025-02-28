@@ -7,9 +7,6 @@ load("rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# Used to access a `#define` with the manifest file, produced by rules.bzl.
-exports_files(["file_test_manifest.cpp"])
-
 cc_library(
     name = "autoupdate",
     testonly = 1,
@@ -42,6 +39,7 @@ cc_library(
     hdrs = ["file_test_base.h"],
     deps = [
         ":autoupdate",
+        ":manifest",
         "//common:check",
         "//common:error",
         "//common:exe_path",
@@ -68,4 +66,20 @@ file_test(
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+# Note this is separate from the implementation; see the .h file.
+cc_library(
+    name = "manifest",
+    testonly = 1,
+    hdrs = ["manifest.h"],
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+# Used through `file_test` in rules.bzl.
+cc_library(
+    name = "manifest_impl",
+    testonly = 1,
+    srcs = ["manifest.cpp"],
+    deps = [":manifest"],
 )
