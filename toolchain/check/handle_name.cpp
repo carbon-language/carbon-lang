@@ -94,7 +94,7 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
 static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
     -> SemIR::NameId {
   CARBON_CHECK(!context.parse_tree().node_has_error(node_id),
-               "Unreachable until we support checking error parse nodes");
+               "TODO: support checking error parse nodes");
   auto token = context.parse_tree().node_token(node_id);
   return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
 }
