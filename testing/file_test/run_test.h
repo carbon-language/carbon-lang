@@ -11,11 +11,9 @@
 
 namespace Carbon::Testing {
 
-// Processes the test file and runs the test. Returns an error if something
-// went wrong.
-auto ProcessTestFileAndRun(FileTestBase* test_base, std::mutex* output_mutex,
-                           bool dump_output, bool running_autoupdate)
-    -> ErrorOr<TestFile>;
+// Runs the test, updating `test_file`.
+auto RunTestFile(const FileTestBase& test_base, bool dump_output,
+                 TestFile& test_file) -> ErrorOr<Success>;
 
 }  // namespace Carbon::Testing
 

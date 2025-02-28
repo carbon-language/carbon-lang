@@ -35,7 +35,7 @@ class ExplorerFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
            FILE* /*input_stream*/, llvm::raw_pwrite_stream& output_stream,
-           llvm::raw_pwrite_stream& error_stream)
+           llvm::raw_pwrite_stream& error_stream) const
       -> ErrorOr<RunResult> override {
     // Add the prelude.
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
@@ -58,21 +58,22 @@ class ExplorerFileTest : public FileTestBase {
       args.push_back(arg.data());
     }
 
+    RawStringOstream trace_stream;
     int exit_code =
         ExplorerMain(args.size(), args.data(), /*install_path=*/"", PreludePath,
                      output_stream, error_stream,
-                     check_trace_output() ? output_stream : trace_stream_, *fs);
+                     check_trace_output() ? output_stream : trace_stream, *fs);
 
     // Skip trace test check as they use stdout stream instead of
     // trace_stream_ostream
-    if (absl::GetFlag(FLAGS_trace) && trace_stream_.TakeStr().empty()) {
+    if (absl::GetFlag(FLAGS_trace) && trace_stream.TakeStr().empty()) {
       return Error("Tracing should always do something");
     }
 
     return {{.success = exit_code == EXIT_SUCCESS}};
   }
 
-  auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
+  auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override {
     llvm::SmallVector<std::string> args;
     if (absl::GetFlag(FLAGS_trace)) {
       args.push_back("--trace_file=-");
@@ -83,14 +84,15 @@ class ExplorerFileTest : public FileTestBase {
   }
 
   auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> llvm::SmallVector<LineNumberReplacement> override {
+      const -> llvm::SmallVector<LineNumberReplacement> override {
     if (check_trace_output()) {
       return {};
     }
     return FileTestBase::GetLineNumberReplacements(filenames);
   }
 
-  auto DoExtraCheckReplacements(std::string& check_line) -> void override {
+  auto DoExtraCheckReplacements(std::string& check_line) const
+      -> void override {
     // Ignore the resulting column of EndOfFile because it's often the end of
     // the CHECK comment.
     RE2::GlobalReplace(&check_line, prelude_line_re_,
@@ -106,11 +108,10 @@ class ExplorerFileTest : public FileTestBase {
 
  private:
   // Trace output is directly checked for a few tests.
-  auto check_trace_output() -> bool {
+  auto check_trace_output() const -> bool {
     return test_name().find("/trace/") != std::string::npos;
   }
 
-  RawStringOstream trace_stream_;
   RE2 prelude_line_re_;
   RE2 timing_re_;
 };
