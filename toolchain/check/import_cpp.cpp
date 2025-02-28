@@ -156,14 +156,13 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
 
-  auto name = context.names().GetAsStringIfIdentifier(name_id);
-  CARBON_CHECK(name);
+  llvm::StringRef name = context.names().GetIRBaseName(name_id);
 
   clang::LookupResult lookup(
       sema,
       clang::DeclarationNameInfo(
           clang::DeclarationName(
-              sema.getPreprocessor().getIdentifierInfo(*name)),
+              sema.getPreprocessor().getIdentifierInfo(name)),
           clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
