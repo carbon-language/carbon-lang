@@ -31,7 +31,7 @@ auto HandleDidOpenTextDocument(
 // Returns the result of moving from `cursor_index` past `line_count` lines.
 static auto GetNthLineIndex(llvm::StringRef contents, size_t cursor_index,
                             size_t line_count) -> size_t {
-  for (auto _ : llvm::seq(line_count)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(line_count)) {
     const size_t newline_index = contents.find('\n', cursor_index);
     CARBON_CHECK(newline_index != std::string::npos,
                  "Line number greater than number of lines in the file");
