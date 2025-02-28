@@ -10,12 +10,11 @@
       "debuggerRoot": "${workspaceFolder}",
       "initCommands": [
         "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
-        "settings set target.source-map \".\" \"${workspaceFolder}\""
-      ],
-      "env": { "TEST_TMPDIR": "/tmp" },
-      "sourceMap": {
-        "/proc/self/cwd/": "${workspaceFolder}"
-      }
+        "settings set target.source-map \".\" \"${workspaceFolder}\"",
+        "settings set target.source-map \"/proc/self/cwd\" \"${workspaceFolder}\"",
+        "env TEST_TARGET=//toolchain/testing:file_test",
+        "env TEST_TMPDIR=/tmp"
+      ]
     },
     {
       "type": "lldb-dap",
@@ -32,7 +31,8 @@
       "debuggerRoot": "${workspaceFolder}",
       "initCommands": [
         "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
-        "settings set target.source-map \".\" \"${workspaceFolder}\""
+        "settings set target.source-map \".\" \"${workspaceFolder}\"",
+        "settings set target.source-map \"/proc/self/cwd\" \"${workspaceFolder}\""
       ]
     }
   ]

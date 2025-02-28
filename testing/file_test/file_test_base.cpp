@@ -29,7 +29,6 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 #include "common/check.h"
 #include "common/error.h"
 #include "common/exe_path.h"
@@ -42,7 +41,6 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/ThreadPool.h"
-#include "testing/base/file_helpers.h"
 #include "testing/file_test/autoupdate.h"
 #include "testing/file_test/run_test.h"
 #include "testing/file_test/test_file.h"
@@ -298,14 +296,9 @@ static auto RegisterTests(FileTestFactory* test_factory,
                           llvm::StringRef exe_path,
                           llvm::SmallVectorImpl<FileTestInfo>& tests)
     -> ErrorOr<Success> {
-  GetFileTestManifestPath();
-  CARBON_ASSIGN_OR_RETURN(auto test_manifest,
-                          ReadFile(GetFileTestManifestPath()));
-
   // Prepare the vector first, so that the location of entries won't change.
-  for (const auto& test_name :
-       absl::StrSplit(test_manifest, "\n", absl::SkipEmpty())) {
-    tests.push_back({.test_name = std::string(test_name)});
+  for (auto& test_name : GetFileTestManifest()) {
+    tests.push_back({.test_name = test_name});
   }
 
   // Amend entries with factory functions.

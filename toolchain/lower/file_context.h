@@ -103,8 +103,12 @@ class FileContext {
                              SemIR::SpecificId::None) -> llvm::Function*;
 
   // Builds the definition for the given function. If the function is only a
-  // declaration with no definition, does nothing.
-  auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
+  // declaration with no definition, does nothing. If this is a generic it'll
+  // only be lowered if the specific_id is specified. During this lowering of
+  // a generic, more generic functions may be added for lowering.
+  auto BuildFunctionDefinition(
+      SemIR::FunctionId function_id,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
   // Builds a functions body. Common functionality for all functions.
   auto BuildFunctionBody(
@@ -163,7 +167,8 @@ class FileContext {
   // definitions lowered after the lowering of other definitions.
   // This list may grow while lowering generic definitions from this list.
   // The list uses the `SpecificId` to index into specific_functions_.
-  llvm::SmallVector<SemIR::SpecificId, 10> specific_function_definitions_;
+  llvm::SmallVector<std::pair<SemIR::FunctionId, SemIR::SpecificId>, 10>
+      specific_function_definitions_;
 
   // Provides lowered versions of types.
   // Vector indexes correspond to `TypeId` indexes for non-symbolic types. We
