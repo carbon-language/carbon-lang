@@ -207,25 +207,23 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       context, SemIR::LocIdAndInst(Parse::NodeId::None, function_decl));
 
   auto function_info = SemIR::Function{
-      SemIR::EntityWithParamsBase{
-          .name_id = name_id,
-          .parent_scope_id = scope_id,
-          .generic_id = SemIR::GenericId::None,
-          .first_param_node_id = Parse::NodeId::None,
-          .last_param_node_id = Parse::NodeId::None,
-          .pattern_block_id = SemIR::InstBlockId::Empty,
-          .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
-          .param_patterns_id = SemIR::InstBlockId::Empty,
-          .call_params_id = SemIR::InstBlockId::Empty,
-          .is_extern = false,
-          .extern_library_id = SemIR::LibraryNameId::None,
-          .non_owning_decl_id = SemIR::InstId::None,
-          .first_owning_decl_id = decl_id,
-          .definition_id = SemIR::InstId::None},
-      SemIR::FunctionFields{
-          .return_slot_pattern_id = SemIR::InstId::None,
-          .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
-          .self_param_id = SemIR::InstId::None}};
+      {.name_id = name_id,
+       .parent_scope_id = scope_id,
+       .generic_id = SemIR::GenericId::None,
+       .first_param_node_id = Parse::NodeId::None,
+       .last_param_node_id = Parse::NodeId::None,
+       .pattern_block_id = SemIR::InstBlockId::Empty,
+       .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
+       .param_patterns_id = SemIR::InstBlockId::Empty,
+       .call_params_id = SemIR::InstBlockId::Empty,
+       .is_extern = false,
+       .extern_library_id = SemIR::LibraryNameId::None,
+       .non_owning_decl_id = SemIR::InstId::None,
+       .first_owning_decl_id = decl_id,
+       .definition_id = SemIR::InstId::None},
+      {.return_slot_pattern_id = SemIR::InstId::None,
+       .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
+       .self_param_id = SemIR::InstId::None}};
 
   function_decl.function_id = context.functions().Add(function_info);
 
