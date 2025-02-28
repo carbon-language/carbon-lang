@@ -925,6 +925,19 @@ struct InitializeFrom {
   DestInstId dest_id;
 };
 
+// Used as the type of template actions that produce instructions.
+struct InstType {
+  static constexpr auto Kind = InstKind::InstType.Define<Parse::NoneNodeId>(
+      {.ir_name = "<instruction>",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+
+  TypeId type_id;
+};
+
 // An interface declaration.
 struct InterfaceDecl {
   static constexpr auto Kind =

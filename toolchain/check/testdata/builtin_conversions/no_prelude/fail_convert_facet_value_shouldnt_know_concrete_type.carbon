@@ -270,11 +270,11 @@ fn F() {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ffd566.1: type = import_ref Core//default, loc8_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst70 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc9_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43db8b.2)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
 // CHECK:STDOUT:   %Core.import_ref.ffd566.2: type = import_ref Core//default, loc8_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst69 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst70 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc9_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -41,8 +41,8 @@ alias UseOther = I.other;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %I.ref.loc24: type = name_ref I, %I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <unexpected>.inst19.loc20_7 [concrete = <error>]
-// CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <unexpected>.inst19.loc20_7 [concrete = <error>]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <unexpected>.inst20.loc20_7 [concrete = <error>]
+// CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <unexpected>.inst20.loc20_7 [concrete = <error>]
 // CHECK:STDOUT:   %I.ref.loc27: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [concrete = <error>]
 // CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [concrete = <error>]
@@ -53,7 +53,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .a = <unexpected>.inst19.loc20_7
+// CHECK:STDOUT:   .a = <unexpected>.inst20.loc20_7
 // CHECK:STDOUT:   .other = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()

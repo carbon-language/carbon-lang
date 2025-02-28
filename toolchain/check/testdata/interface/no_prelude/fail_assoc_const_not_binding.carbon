@@ -127,7 +127,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst15
+// CHECK:STDOUT:   .Self = <unexpected>.inst16
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -140,7 +140,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst15
+// CHECK:STDOUT:   .Self = <unexpected>.inst16
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

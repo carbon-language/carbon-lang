@@ -275,10 +275,10 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//base, NSC, loaded [concrete = constants.%NSC]
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type.9be]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc11_1, loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst28 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst29 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.be6 = import_ref Main//base, loc10_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,12 +345,12 @@ private export C;
 // CHECK:STDOUT:     .NSC = file.%NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//export, NSC, loaded [concrete = constants.%NSC]
-// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export, inst23 [indirect], loaded [concrete = constants.%complete_type.9be]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst24 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//export, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.63c: <witness> = import_ref Main//export, inst31 [indirect], loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.f0b = import_ref Main//export, inst32 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.ebc = import_ref Main//export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export, inst24 [indirect], loaded [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst25 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//export, inst26 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.63c: <witness> = import_ref Main//export, inst32 [indirect], loaded [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %Main.import_ref.f0b = import_ref Main//export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ebc = import_ref Main//export, inst34 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -407,12 +407,12 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//export, NSC, loaded [concrete = constants.%NSC]
-// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export, inst23 [indirect], loaded [concrete = constants.%complete_type.9be]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst24 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//export, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.63c: <witness> = import_ref Main//export, inst31 [indirect], loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.f0b = import_ref Main//export, inst32 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.ebc = import_ref Main//export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export, inst24 [indirect], loaded [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst25 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//export, inst26 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.63c: <witness> = import_ref Main//export, inst32 [indirect], loaded [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %Main.import_ref.f0b = import_ref Main//export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ebc = import_ref Main//export, inst34 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -501,12 +501,12 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//export_export, NSC, loaded [concrete = constants.%NSC]
-// CHECK:STDOUT:   %Main.import_ref.328: <witness> = import_ref Main//export_export, inst23 [indirect], loaded [concrete = constants.%complete_type.9be]
-// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//export_export, inst24 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.3ef = import_ref Main//export_export, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c12: <witness> = import_ref Main//export_export, inst31 [indirect], loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//export_export, inst32 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.b18 = import_ref Main//export_export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.328: <witness> = import_ref Main//export_export, inst24 [indirect], loaded [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//export_export, inst25 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3ef = import_ref Main//export_export, inst26 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c12: <witness> = import_ref Main//export_export, inst32 [indirect], loaded [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//export_export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b18 = import_ref Main//export_export, inst34 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -596,12 +596,12 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//export_export, NSC, loaded [concrete = constants.%NSC]
-// CHECK:STDOUT:   %Main.import_ref.328: <witness> = import_ref Main//export_export, inst23 [indirect], loaded [concrete = constants.%complete_type.9be]
-// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//export_export, inst24 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.3ef = import_ref Main//export_export, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c12: <witness> = import_ref Main//export_export, inst31 [indirect], loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//export_export, inst32 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.b18 = import_ref Main//export_export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.328: <witness> = import_ref Main//export_export, inst24 [indirect], loaded [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//export_export, inst25 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3ef = import_ref Main//export_export, inst26 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c12: <witness> = import_ref Main//export_export, inst32 [indirect], loaded [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//export_export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b18 = import_ref Main//export_export, inst34 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -725,7 +725,7 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -768,10 +768,10 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//base, NSC, loaded [concrete = constants.%NSC]
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type.9be]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc11_1, loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst28 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst29 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.be6 = import_ref Main//base, loc10_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -861,12 +861,12 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//export, NSC, loaded [concrete = constants.%NSC]
-// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export, inst23 [indirect], loaded [concrete = constants.%complete_type.9be]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst24 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//export, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.63c: <witness> = import_ref Main//export, inst31 [indirect], loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.f0b = import_ref Main//export, inst32 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.ebc = import_ref Main//export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export, inst24 [indirect], loaded [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst25 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//export, inst26 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.63c: <witness> = import_ref Main//export, inst32 [indirect], loaded [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %Main.import_ref.f0b = import_ref Main//export, inst33 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ebc = import_ref Main//export, inst34 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -966,7 +966,7 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1000,9 +1000,9 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//repeat_export, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//repeat_export, inst23 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//repeat_export, inst24 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//repeat_export, inst25 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//repeat_export, inst24 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//repeat_export, inst25 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//repeat_export, inst26 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1057,7 +1057,7 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

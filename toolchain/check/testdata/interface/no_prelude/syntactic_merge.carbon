@@ -630,7 +630,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %Main.Foo: %Foo.type = import_ref Main//two_file, Foo, loaded [concrete = constants.%Foo.generic]
 // CHECK:STDOUT:   %Main.Bar: %Bar.type = import_ref Main//two_file, Bar, loaded [concrete = constants.%Bar.generic]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.11fba2.1: %C = import_ref Main//two_file, loc7_15, loaded [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   %Main.import_ref.11fba2.2: %C = import_ref Main//two_file, loc8_15, loaded [symbolic = @Bar.%a (constants.%a)]
 // CHECK:STDOUT: }
@@ -1072,7 +1072,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//alias_two_file, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.Foo: %Foo.type = import_ref Main//alias_two_file, Foo, loaded [concrete = constants.%Foo.generic]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.11f: %C = import_ref Main//alias_two_file, loc6_15, loaded [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

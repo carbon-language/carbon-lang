@@ -206,7 +206,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %Main.ReturnDUsed: %ReturnDUsed.type = import_ref Main//incomplete_return, ReturnDUsed, loaded [concrete = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %Main.Call = import_ref Main//incomplete_return, Call, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//incomplete_return, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//incomplete_return, inst17 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

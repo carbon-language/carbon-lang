@@ -180,6 +180,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case SemIR::BoundMethodType::Kind:
       case SemIR::ErrorInst::Kind:
       case SemIR::IntLiteralType::Kind:
+      case SemIR::InstType::Kind:
       case SemIR::LegacyFloatType::Kind:
       case SemIR::NamespaceType::Kind:
       case SemIR::SpecificFunctionType::Kind:

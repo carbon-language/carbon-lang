@@ -334,9 +334,9 @@ import Other library "o1";
 // CHECK:STDOUT:   %Main.C1: type = import_ref Main//mix_current_package, C1, loaded [concrete = constants.%C1]
 // CHECK:STDOUT:   %Main.C2: type = import_ref Main//c2, C2, loaded [concrete = constants.%C2]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//c1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.eb7 = import_ref Main//c1, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.eb7 = import_ref Main//c1, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//c2, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.5b0 = import_ref Main//c2, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5b0 = import_ref Main//c2, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -416,7 +416,7 @@ import Other library "o1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C1: type = import_ref Main//dup_c1, C1, loaded [concrete = constants.%C1]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//c1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.eb7 = import_ref Main//c1, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.eb7 = import_ref Main//c1, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -483,7 +483,7 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//use_ns, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//ns, loc5_13, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2dd = import_ref Main//ns, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2dd = import_ref Main//ns, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -556,10 +556,10 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.O1: type = import_ref Other//o1, O1, loaded [concrete = constants.%O1]
 // CHECK:STDOUT:   %Other.import_ref.8f24d3.1: <witness> = import_ref Other//o1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.481 = import_ref Other//o1, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.481 = import_ref Other//o1, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Other.O2: type = import_ref Other//o2, O2, loaded [concrete = constants.%O2]
 // CHECK:STDOUT:   %Other.import_ref.8f24d3.2: <witness> = import_ref Other//o2, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2eb = import_ref Other//o2, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2eb = import_ref Other//o2, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -651,7 +651,7 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.O1: type = import_ref Other//o1, O1, loaded [concrete = constants.%O1]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//o1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.481 = import_ref Other//o1, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.481 = import_ref Other//o1, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

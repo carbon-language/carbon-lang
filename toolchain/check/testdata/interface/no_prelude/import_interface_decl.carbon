@@ -97,7 +97,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %Main.import_ref.420 = import_ref Main//b, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.420 = import_ref Main//b, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc7_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.171: type = import_ref Main//b, loc7_12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }

@@ -448,7 +448,7 @@ fn Var5() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Abstract: type = import_ref Main//lib, Abstract, loaded [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//lib, loc3_26, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee1 = import_ref Main//lib, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee1 = import_ref Main//lib, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
