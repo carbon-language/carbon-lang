@@ -182,23 +182,23 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
-    return SemIR::InstId::None;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   if (!clang_decl->isGlobal()) {
     context.TODO(loc_id, "Unsupported: Non-global function");
-    return SemIR::InstId::None;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
-    return SemIR::InstId::None;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   if (!clang_decl->param_empty()) {
     context.TODO(loc_id, "Unsupported: Function with parameters");
-    return SemIR::InstId::None;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   if (!clang_decl->getReturnType()->isVoidType()) {
     context.TODO(loc_id, "Unsupported: Function with non-void return type");
-    return SemIR::InstId::None;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto function_decl = SemIR::FunctionDecl{
@@ -272,7 +272,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                "find a single result; LookupResultKind: {0}",
                                lookup->getResultKind())
                      .str());
-    return SemIR::InstId::None;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   return ImportNameDecl(context, loc_id, scope_id, name_id,

@@ -34,14 +34,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "overloaded_function_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overloaded_function_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_overloaded_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_overloaded_function_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_overloaded_function_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_overloaded_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -59,14 +55,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "variadic_function_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_variadic_function_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_variadic_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_variadic_function_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_variadic_function_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_variadic_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -84,14 +76,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_global_function_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_non_global_function_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_non_global_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_non_global_function_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_non_global_function_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_non_global_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -112,14 +100,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "parameterized_function_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Function with parameters` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Function with parameters` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -137,14 +121,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_void_return_function_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Function with non-void return type` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Function with non-void return type` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -223,7 +203,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <poisoned>
+// CHECK:STDOUT:     .foo = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -254,7 +234,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <poisoned>
+// CHECK:STDOUT:     .foo = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -285,7 +265,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <poisoned>
+// CHECK:STDOUT:     .foo = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -316,7 +296,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <poisoned>
+// CHECK:STDOUT:     .foo = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,7 +327,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <poisoned>
+// CHECK:STDOUT:     .foo = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
