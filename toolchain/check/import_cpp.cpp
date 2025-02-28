@@ -149,7 +149,8 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   }
 }
 
-static auto ClangLookup(Context& context, SemIR::NameId name_id)
+static auto ClangLookup(Context& context, SemIR::LocId loc_id,
+                        SemIR::NameId name_id)
     -> std::optional<clang::LookupResult> {
   clang::ASTUnit* ast = context.sem_ir().cpp_ast();
   CARBON_CHECK(ast);
@@ -167,8 +168,15 @@ static auto ClangLookup(Context& context, SemIR::NameId name_id)
           clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
-  if (!sema.LookupQualifiedName(
-          lookup, ast->getASTContext().getTranslationUnitDecl())) {
+  bool found = sema.LookupQualifiedName(
+      lookup, ast->getASTContext().getTranslationUnitDecl());
+
+  if (lookup.isClassLookup()) {
+    // TODO: When support class lookup, also check access.
+    context.TODO(loc_id, "Unsupported: Lookup in Class");
+  }
+
+  if (!found) {
     return std::nullopt;
   }
 
@@ -254,7 +262,7 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  auto lookup = ClangLookup(context, name_id);
+  auto lookup = ClangLookup(context, loc_id, name_id);
   if (!lookup) {
     return SemIR::InstId::None;
   }
