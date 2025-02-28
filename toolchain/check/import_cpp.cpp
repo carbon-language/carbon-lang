@@ -149,6 +149,8 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   }
 }
 
+// Lookups the given name in the Clang AST. Returns the lookup result if lookup
+// was successful.
 static auto ClangLookup(Context& context, SemIR::LocId loc_id,
                         SemIR::NameId name_id)
     -> std::optional<clang::LookupResult> {
@@ -183,6 +185,8 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
   return lookup;
 }
 
+// Imports a function declaration from Clang to Carbon. If successful, returns
+// the new Carbon function declaration `InstId`.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                SemIR::NameScopeId scope_id,
                                SemIR::NameId name_id,
@@ -243,6 +247,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   return decl_id;
 }
 
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration.
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
                            SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                            const clang::NamedDecl* clang_decl)
