@@ -154,7 +154,6 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
     -> std::optional<clang::LookupResult> {
   clang::ASTUnit* ast = context.sem_ir().cpp_ast();
   CARBON_CHECK(ast);
-  CARBON_CHECK(ast->hasSema());
   clang::Sema& sema = ast->getSema();
 
   auto name = context.names().GetAsStringIfIdentifier(name_id);
