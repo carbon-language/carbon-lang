@@ -65,38 +65,17 @@ library "[[@TEST_NAME]]";
 import Core;
 
 interface A {
-  fn G();
+  fn G[self: Self]();
 }
 
 class C {}
 impl C as A {
-  fn G() {}
+  fn G[self: Self]() {}
 }
 
 fn F() {
-  // CHECK:STDERR: same.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `A` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   ({} as C).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   ({} as C).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   ({} as C).((A & A).G)();
-  // CHECK:STDERR: same.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `A` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR: same.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `A` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (({} as C) as (C as (A & A))).(A.G)();
 }
 
@@ -137,23 +116,16 @@ import Core;
 
 interface A {}
 interface B {
-  fn G();
+  fn G[self: Self]();
 }
 
 class C {}
 impl C as A {}
 impl C as B {
-  fn G() {}
+  fn G[self: Self]() {}
 }
 
 fn F() {
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `B` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   ({} as C).((A & B).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   ({} as C).((A & B).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   ({} as C).((A & B).G)();
 
   // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+11]]:18: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
@@ -192,14 +164,11 @@ import Core;
 interface A {
 }
 interface B {
-  fn G();
+  fn G[self: Self]();
 }
 
-fn G[T:! A & B](t: T) {
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `T` to `B` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   t.(B.G)();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+4]]:3: note: type `T` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
+fn H[T:! A & B](t: T) {
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+4]]:3: error: cannot access member of interface `B` in type `T` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   t.(B.G)();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -209,26 +178,26 @@ fn G[T:! A & B](t: T) {
 class C {}
 impl C as A {}
 impl C as B {
-  fn G() {}
+  fn G[self: Self]() {}
 }
 
 fn F() {
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+17]]:3: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
-  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn G[T:! A & B](t: T) {
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-18]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn H[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `type` to `A & B` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-31]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn G[T:! A & B](t: T) {
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn H[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  G({} as C);
+  H({} as C);
 }
