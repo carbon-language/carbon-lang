@@ -40,6 +40,10 @@ import library "i";
 
 fn Call() {
   // We find C in "get", but should look in "c" instead.
+  // CHECK:STDERR: call.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   Get().(I.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   Get().(I.F)();
 }
 
@@ -229,8 +233,9 @@ fn Call() {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.742) [concrete]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.742) [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [concrete]
 // CHECK:STDOUT:   %.076: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [concrete]
@@ -248,11 +253,11 @@ fn Call() {
 // CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//get, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//i, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//i, loc4_21, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F = import_ref Main//i, F, unloaded
+// CHECK:STDOUT:   %Main.F: %F.type.cf0 = import_ref Main//i, F, loaded [concrete = constants.%F.bc6]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst17 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.e53: <witness> = import_ref Main//c, loc7_13, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//c, loc7_6, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.f50: type = import_ref Main//c, loc7_11, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst17 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -289,8 +294,8 @@ fn Call() {
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Get.ref: %Get.type = name_ref Get, imports.%Main.Get [concrete = constants.%Get]
-// CHECK:STDOUT:   %.loc9: ref %C = temporary_storage
-// CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc9
+// CHECK:STDOUT:   %.loc13: ref %C = temporary_storage
+// CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc13
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.076 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.a2e]

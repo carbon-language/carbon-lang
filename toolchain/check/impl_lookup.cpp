@@ -273,11 +273,8 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 // facet.
 static auto FindWitnessInFacet(Context& context, SemIR::LocId loc_id,
                                SemIR::ConstantId facet_const_id,
-                               SemIR::SpecificInterface& specific_interface
-#if 0
-                               , bool allow_incomplete
-#endif
-                               ) -> SemIR::InstId {
+                               SemIR::SpecificInterface& specific_interface)
+    -> SemIR::InstId {
   SemIR::InstId facet_inst_id =
       context.constant_values().GetInstId(facet_const_id);
   // FIXME: Should we convert from a FacetAccessType to its facet here?
@@ -285,23 +282,6 @@ static auto FindWitnessInFacet(Context& context, SemIR::LocId loc_id,
   SemIR::TypeId facet_type_id = facet_inst.type_id();
   if (auto facet_type_inst =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_id)) {
-#if 0
-    if (allow_incomplete) {
-      const auto& facet_type_info =
-          context.facet_types().Get(facet_type_inst->facet_type_id);
-      for (auto interface : facet_type_info.impls_constraints) {
-        if (interface == specific_interface) {
-          // TODO: Need to validate other requirements.
-          // TODO: Need to get the right witness when there are multiple.
-          return GetOrAddInst<SemIR::FacetAccessWitness>(
-              context, loc_id,
-              {.type_id = GetSingletonType(context,
-                                           SemIR::WitnessType::SingletonInstId),
-               .facet_value_inst_id = type_inst_id});
-        }
-      }
-    } else {
-#endif
     auto complete_facet_type_id = RequireCompleteFacetType(
         context, facet_type_id, loc_id, *facet_type_inst, [&] {
           CARBON_DIAGNOSTIC(ImplLookupForFacetWithIncompleteType, Error,
@@ -315,7 +295,6 @@ static auto FindWitnessInFacet(Context& context, SemIR::LocId loc_id,
           context.complete_facet_types().Get(complete_facet_type_id);
       for (auto interface : complete_facet_type.required_interfaces) {
         if (interface == specific_interface) {
-          // TODO: Need to validate other requirements.
           // TODO: Need to get the right witness when there are multiple.
           return GetOrAddInst<SemIR::FacetAccessWitness>(
               context, loc_id,
@@ -325,9 +304,6 @@ static auto FindWitnessInFacet(Context& context, SemIR::LocId loc_id,
         }
       }
     }
-#if 0
-  }
-#endif
   }
   return SemIR::InstId::None;
 }

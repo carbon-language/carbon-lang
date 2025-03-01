@@ -32,6 +32,10 @@ library "[[@TEST_NAME]]";
 import library "types";
 import library "impl_in_interface_args";
 
+// CHECK:STDERR: use_impl_in_interface_args.carbon:[[@LINE+4]]:14: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+// CHECK:STDERR: fn G(x: X) { x.(I(InInterfaceArgs).F)(); }
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(x: X) { x.(I(InInterfaceArgs).F)(); }
 
 // --- impl_in_class_args.carbon
@@ -49,6 +53,10 @@ library "[[@TEST_NAME]]";
 import library "types";
 import library "impl_in_class_args";
 
+// CHECK:STDERR: use_impl_in_class_args.carbon:[[@LINE+4]]:27: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+// CHECK:STDERR: fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
+// CHECK:STDERR:                           ^~~~~~~~~~
+// CHECK:STDERR:
 fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 
 // CHECK:STDOUT: --- types.carbon
@@ -340,7 +348,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//types, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.cd3: @I.%I.assoc_type (%I.assoc_type.955) = import_ref Main//types, loc4_31, loaded [symbolic = @I.%assoc0 (constants.%assoc0.249)]
-// CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
+// CHECK:STDOUT:   %Main.F: @I.%F.type (%F.type.2ae) = import_ref Main//types, F, loaded [symbolic = @I.%F (constants.%F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.38e: @I.%I.type (%I.type.325) = import_ref Main//types, inst26 [no loc], loaded [symbolic = @I.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.e54: @I.%F.type (%F.type.2ae) = import_ref Main//types, loc4_31, loaded [symbolic = @I.%F (constants.%F.bb2)]
@@ -415,8 +423,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.ref: %I.type.dac = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %InInterfaceArgs.ref: type = name_ref InInterfaceArgs, imports.%Main.InInterfaceArgs [concrete = constants.%InInterfaceArgs]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.e45]
-// CHECK:STDOUT:   %.loc6: %I.assoc_type.9f3 = specific_constant imports.%Main.import_ref.cd3, @I(constants.%InInterfaceArgs) [concrete = constants.%assoc0.0fc]
-// CHECK:STDOUT:   %F.ref: %I.assoc_type.9f3 = name_ref F, %.loc6 [concrete = constants.%assoc0.0fc]
+// CHECK:STDOUT:   %.loc10: %I.assoc_type.9f3 = specific_constant imports.%Main.import_ref.cd3, @I(constants.%InInterfaceArgs) [concrete = constants.%assoc0.0fc]
+// CHECK:STDOUT:   %F.ref: %I.assoc_type.9f3 = name_ref F, %.loc10 [concrete = constants.%assoc0.0fc]
 // CHECK:STDOUT:   %impl.elem0: %.e37 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.d5f]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
@@ -668,7 +676,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//types, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.cd3: @I.%I.assoc_type (%I.assoc_type.955) = import_ref Main//types, loc4_31, loaded [symbolic = @I.%assoc0 (constants.%assoc0.249)]
-// CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
+// CHECK:STDOUT:   %Main.F: @I.%F.type (%F.type.2ae) = import_ref Main//types, F, loaded [symbolic = @I.%F (constants.%F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.f6b058.3: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.38e: @I.%I.type (%I.type.325) = import_ref Main//types, inst26 [no loc], loaded [symbolic = @I.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.e54: @I.%F.type (%F.type.2ae) = import_ref Main//types, loc4_31, loaded [symbolic = @I.%F (constants.%F.bb2)]
@@ -693,7 +701,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %c.param_patt: %C.23b = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.23b = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_22: type = splice_block %C [concrete = constants.%C.23b] {
+// CHECK:STDOUT:     %.loc10_22: type = splice_block %C [concrete = constants.%C.23b] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %InClassArgs.ref: type = name_ref InClassArgs, imports.%Main.InClassArgs [concrete = constants.%InClassArgs]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%InClassArgs) [concrete = constants.%C.23b]
@@ -761,8 +769,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.ref: %I.type.dac = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.45c]
-// CHECK:STDOUT:   %.loc6_34: %I.assoc_type.a7e = specific_constant imports.%Main.import_ref.cd3, @I(constants.%X) [concrete = constants.%assoc0.ba0]
-// CHECK:STDOUT:   %F.ref: %I.assoc_type.a7e = name_ref F, %.loc6_34 [concrete = constants.%assoc0.ba0]
+// CHECK:STDOUT:   %.loc10_34: %I.assoc_type.a7e = specific_constant imports.%Main.import_ref.cd3, @I(constants.%X) [concrete = constants.%assoc0.ba0]
+// CHECK:STDOUT:   %F.ref: %I.assoc_type.a7e = name_ref F, %.loc10_34 [concrete = constants.%assoc0.ba0]
 // CHECK:STDOUT:   %impl.elem0: %.c87 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.7ab]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return

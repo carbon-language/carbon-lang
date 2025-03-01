@@ -187,12 +187,17 @@ static auto PerformImplLookup(
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto interface_type =
       GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
+#if 1  // FIXME
+  // An associated entity is always associated with a single interface.
+  CARBON_CHECK(interface_type);
+#else
   if (!interface_type) {
     context.TODO(loc_id,
                  "Lookup of impl witness not yet supported except for a single "
                  "interface");
     return SemIR::ErrorInst::SingletonInstId;
   }
+#endif
 
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   auto witness_id =
@@ -539,6 +544,32 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
   // performed using the type of the base expression.
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           member.type_id())) {
+    auto interface_type =
+        GetInterfaceFromFacetType(context, assoc_type->interface_type_id);
+    // An associated entity is always associated with a single interface.
+    CARBON_CHECK(interface_type);
+    const auto& interface =
+        context.interfaces().Get(interface_type->interface_id);
+    auto assoc_entities =
+        context.inst_blocks().Get(interface.associated_entities_id);
+    auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
+    auto assoc_entity =
+        context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
+    auto decl_id = assoc_entities[assoc_entity.index.index];
+    LoadImportRef(context, decl_id);
+    auto decl_value_id = context.constant_values().GetConstantInstId(decl_id);
+    auto decl_type_id = context.insts().Get(decl_value_id).type_id();
+    bool is_instance_member = false;
+    if (auto function_type =
+            context.types().TryGetAs<SemIR::FunctionType>(decl_type_id)) {
+      const auto& function =
+          context.functions().Get(function_type->function_id);
+      is_instance_member = function.self_param_id.has_value();
+    }
+    if (!is_instance_member) {
+      context.TODO(loc_id,
+                   "CompoundMemberAccess with non-instance associated entity");
+    }
     member_id =
         PerformImplLookup(context, loc_id, base_type_const_id, *assoc_type,
                           member_id, missing_impl_diagnoser);

@@ -71,6 +71,10 @@ fn F() {
   // Even if the `impl` is diagnosed above, we must not add the impl of the
   // interface to itself in a way that allows it to be used during impl lookup,
   // or we end up with infinite impl lookup recursion here.
+  // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   ({} as Point).(Z.Zero)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   ({} as Point).(Z.Zero)();
 }
 
@@ -311,12 +315,12 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc32_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc36_5.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Point.ref: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %.loc32_5.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc32_5.3: init %Point = class_init (), %.loc32_5.2 [concrete = constants.%Point.val]
-// CHECK:STDOUT:   %.loc32_5.4: ref %Point = temporary %.loc32_5.2, %.loc32_5.3
-// CHECK:STDOUT:   %.loc32_7: ref %Point = converted %.loc32_5.1, %.loc32_5.4
+// CHECK:STDOUT:   %.loc36_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc36_5.3: init %Point = class_init (), %.loc36_5.2 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc36_5.4: ref %Point = temporary %.loc36_5.2, %.loc36_5.3
+// CHECK:STDOUT:   %.loc36_7: ref %Point = converted %.loc36_5.1, %.loc36_5.4
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.c37 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Zero.dec]

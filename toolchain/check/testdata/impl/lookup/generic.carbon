@@ -21,6 +21,10 @@ impl forall [T:! type] T as HasF {
 }
 
 fn G(x: {}) {
+  // CHECK:STDERR: deduced_type.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   x.(HasF.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   x.(HasF.F)();
 }
 
@@ -55,6 +59,10 @@ impl forall [T:! type] C(T) as HasF {
 }
 
 fn G(x: C({})) {
+  // CHECK:STDERR: deduced_type_argument.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   x.(HasF.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   x.(HasF.F)();
 }
 
@@ -71,6 +79,10 @@ impl forall [T:! type] {} as HasF(T) {
 }
 
 fn G(x: {}) {
+  // CHECK:STDERR: deduced_interface_argument.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   x.(HasF({}).F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
   x.(HasF({}).F)();
 }
 
@@ -90,6 +102,10 @@ impl forall [T:! type, U:! type] T as HasF {
 fn G(x: {}) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we couldn't deduce a value for 'U'.
+  // CHECK:STDERR: fail_incomplete_deduction.carbon:[[@LINE+8]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   x.(HasF.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_incomplete_deduction.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   x.(HasF.F)();
   // CHECK:STDERR:   ^~~~~~~~~~
@@ -115,6 +131,10 @@ class B {}
 fn G(x: A) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we deduced two different values for `T`.
+  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+8]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   x.(HasF(B).F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF(B)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   x.(HasF(B).F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
@@ -827,11 +847,11 @@ fn G(x: A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_struct_type = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.fe3 = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.generic]
-// CHECK:STDOUT:   %.loc13_12: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc13_13: type = converted %.loc13_12, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc17_12: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc17_13: type = converted %.loc17_12, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(constants.%empty_struct_type)> [concrete = constants.%HasF.type.072]
-// CHECK:STDOUT:   %.loc13_14: %HasF.assoc_type.60b = specific_constant @HasF.%assoc0.loc5_9.1, @HasF(constants.%empty_struct_type) [concrete = constants.%assoc0.46d]
-// CHECK:STDOUT:   %F.ref: %HasF.assoc_type.60b = name_ref F, %.loc13_14 [concrete = constants.%assoc0.46d]
+// CHECK:STDOUT:   %.loc17_14: %HasF.assoc_type.60b = specific_constant @HasF.%assoc0.loc5_9.1, @HasF(constants.%empty_struct_type) [concrete = constants.%assoc0.46d]
+// CHECK:STDOUT:   %F.ref: %HasF.assoc_type.60b = name_ref F, %.loc17_14 [concrete = constants.%assoc0.46d]
 // CHECK:STDOUT:   %impl.elem0: %.a00 = impl_witness_access constants.%impl_witness.221, element0 [concrete = constants.%F.8c6]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %specific_fn()
@@ -1197,8 +1217,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.fe3 = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.generic]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(constants.%B)> [concrete = constants.%HasF.type.2f5]
-// CHECK:STDOUT:   %.loc22: %HasF.assoc_type.3e1 = specific_constant @HasF.%assoc0.loc5_9.1, @HasF(constants.%B) [concrete = constants.%assoc0.8ec]
-// CHECK:STDOUT:   %F.ref: %HasF.assoc_type.3e1 = name_ref F, %.loc22 [concrete = constants.%assoc0.8ec]
+// CHECK:STDOUT:   %.loc26: %HasF.assoc_type.3e1 = specific_constant @HasF.%assoc0.loc5_9.1, @HasF(constants.%B) [concrete = constants.%assoc0.8ec]
+// CHECK:STDOUT:   %F.ref: %HasF.assoc_type.3e1 = name_ref F, %.loc26 [concrete = constants.%assoc0.8ec]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

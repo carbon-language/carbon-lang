@@ -24,18 +24,30 @@ impl A as Action(B) {
   fn Op() {}
 }
 
+// CHECK:STDERR: action.carbon:[[@LINE+4]]:14: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+// CHECK:STDERR: fn F(a: A) { a.(Action(B).Op)(); }
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(a: A) { a.(Action(B).Op)(); }
 
 // --- action.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: action.impl.carbon:[[@LINE+4]]:14: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+// CHECK:STDERR: fn G(a: A) { a.(Action(B).Op)(); }
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(a: A) { a.(Action(B).Op)(); }
 
 // --- fail_action.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_action.impl.carbon:[[@LINE+8]]:14: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+// CHECK:STDERR: fn G(a: A) { a.(Action(C).Op)(); }
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_action.impl.carbon:[[@LINE+4]]:14: error: cannot access member of interface `Action(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn G(a: A) { a.(Action(C).Op)(); }
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
@@ -62,6 +74,10 @@ impl A as Factory(B) {
 impl library "[[@TEST_NAME]]";
 
 fn MakeB(a: A) -> B {
+  // CHECK:STDERR: factory.impl.carbon:[[@LINE+4]]:10: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   return a.(Factory(B).Make)();
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return a.(Factory(B).Make)();
 }
 
@@ -72,6 +88,10 @@ impl library "[[@TEST_NAME]]";
 class C {}
 
 fn MakeC(a: A) -> C {
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+8]]:10: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   return a.(Factory(C).Make)();
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
@@ -218,8 +238,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.ref: %Action.type.29c = name_ref Action, file.%Action.decl [concrete = constants.%Action.generic]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.cb0]
-// CHECK:STDOUT:   %.loc16: %Action.assoc_type.827 = specific_constant @Action.%assoc0.loc5_10.1, @Action(constants.%B) [concrete = constants.%assoc0.035]
-// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.827 = name_ref Op, %.loc16 [concrete = constants.%assoc0.035]
+// CHECK:STDOUT:   %.loc20: %Action.assoc_type.827 = specific_constant @Action.%assoc0.loc5_10.1, @Action(constants.%B) [concrete = constants.%assoc0.035]
+// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.827 = name_ref Op, %.loc20 [concrete = constants.%assoc0.035]
 // CHECK:STDOUT:   %impl.elem0: %.920 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.40d]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
@@ -293,7 +313,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.318: @Action.%Action.assoc_type (%Action.assoc_type.8f9) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.905ab9.2)]
-// CHECK:STDOUT:   %Main.Op = import_ref Main//action, Op, unloaded
+// CHECK:STDOUT:   %Main.Op: @Action.%Op.type (%Op.type.036) = import_ref Main//action, Op, loaded [symbolic = @Action.%Op (constants.%Op.6ed)]
 // CHECK:STDOUT:   %Main.import_ref.71c: <witness> = import_ref Main//action, loc12_21, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc8_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst41 [no loc], unloaded
@@ -376,8 +396,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.ref: %Action.type.29c = name_ref Action, imports.%Main.Action [concrete = constants.%Action.generic]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, imports.%Main.B [concrete = constants.%B]
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.cb0]
-// CHECK:STDOUT:   %.loc4: %Action.assoc_type.827 = specific_constant imports.%Main.import_ref.318, @Action(constants.%B) [concrete = constants.%assoc0.4cc]
-// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.827 = name_ref Op, %.loc4 [concrete = constants.%assoc0.4cc]
+// CHECK:STDOUT:   %.loc8: %Action.assoc_type.827 = specific_constant imports.%Main.import_ref.318, @Action(constants.%B) [concrete = constants.%assoc0.4cc]
+// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.827 = name_ref Op, %.loc8 [concrete = constants.%assoc0.4cc]
 // CHECK:STDOUT:   %impl.elem0: %.ae7 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.40d]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
@@ -451,7 +471,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.318: @Action.%Action.assoc_type (%Action.assoc_type.8f9) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.905ab9.2)]
-// CHECK:STDOUT:   %Main.Op = import_ref Main//action, Op, unloaded
+// CHECK:STDOUT:   %Main.Op: @Action.%Op.type (%Op.type.036) = import_ref Main//action, Op, loaded [symbolic = @Action.%Op (constants.%Op.6ed)]
 // CHECK:STDOUT:   %Main.import_ref.7a1 = import_ref Main//action, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc8_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst41 [no loc], unloaded
@@ -543,8 +563,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.ref: %Action.type.29c = name_ref Action, imports.%Main.Action [concrete = constants.%Action.generic]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%C)> [concrete = constants.%Action.type.e2b]
-// CHECK:STDOUT:   %.loc8: %Action.assoc_type.0a7 = specific_constant imports.%Main.import_ref.318, @Action(constants.%C) [concrete = constants.%assoc0.85d]
-// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.0a7 = name_ref Op, %.loc8 [concrete = constants.%assoc0.85d]
+// CHECK:STDOUT:   %.loc12: %Action.assoc_type.0a7 = specific_constant imports.%Main.import_ref.318, @Action(constants.%C) [concrete = constants.%assoc0.85d]
+// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.0a7 = name_ref Op, %.loc12 [concrete = constants.%assoc0.85d]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -776,7 +796,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8d5: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.35472f.2)]
-// CHECK:STDOUT:   %Main.Make = import_ref Main//factory, Make, unloaded
+// CHECK:STDOUT:   %Main.Make: @Factory.%Make.type (%Make.type.598) = import_ref Main//factory, Make, loaded [symbolic = @Factory.%Make (constants.%Make.737)]
 // CHECK:STDOUT:   %Main.import_ref.72b: <witness> = import_ref Main//factory, loc11_22, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc8_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst47 [no loc], unloaded
@@ -862,10 +882,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %B.ref.loc5: type = name_ref B, imports.%Main.B [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc9: type = name_ref B, imports.%Main.B [concrete = constants.%B]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.a5d]
-// CHECK:STDOUT:   %.loc5: %Factory.assoc_type.668 = specific_constant imports.%Main.import_ref.8d5, @Factory(constants.%B) [concrete = constants.%assoc0.503]
-// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.668 = name_ref Make, %.loc5 [concrete = constants.%assoc0.503]
+// CHECK:STDOUT:   %.loc9: %Factory.assoc_type.668 = specific_constant imports.%Main.import_ref.8d5, @Factory(constants.%B) [concrete = constants.%assoc0.503]
+// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.668 = name_ref Make, %.loc9 [concrete = constants.%assoc0.503]
 // CHECK:STDOUT:   %impl.elem0: %.357 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Make.377]
 // CHECK:STDOUT:   %.loc4: ref %B = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %B = call %impl.elem0() to %.loc4
@@ -940,7 +960,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8d5: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.35472f.2)]
-// CHECK:STDOUT:   %Main.Make = import_ref Main//factory, Make, unloaded
+// CHECK:STDOUT:   %Main.Make: @Factory.%Make.type (%Make.type.598) = import_ref Main//factory, Make, loaded [symbolic = @Factory.%Make (constants.%Make.737)]
 // CHECK:STDOUT:   %Main.import_ref.3e9 = import_ref Main//factory, loc11_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc8_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst47 [no loc], unloaded
@@ -1036,10 +1056,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %C.ref.loc11: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.5c5]
-// CHECK:STDOUT:   %.loc11: %Factory.assoc_type.709 = specific_constant imports.%Main.import_ref.8d5, @Factory(constants.%C) [concrete = constants.%assoc0.ef9]
-// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.709 = name_ref Make, %.loc11 [concrete = constants.%assoc0.ef9]
+// CHECK:STDOUT:   %.loc15: %Factory.assoc_type.709 = specific_constant imports.%Main.import_ref.8d5, @Factory(constants.%C) [concrete = constants.%assoc0.ef9]
+// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.709 = name_ref Make, %.loc15 [concrete = constants.%assoc0.ef9]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

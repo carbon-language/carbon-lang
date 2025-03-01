@@ -15,6 +15,10 @@ fn F() {
   impl () as I {
     fn G() {}
   }
+  // CHECK:STDERR: local.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR:   ().(I.G)();
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
   ().(I.G)();
 }
 
@@ -72,7 +76,7 @@ fn F() {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @F.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [concrete = constants.%impl_witness]
-// CHECK:STDOUT:   %.loc18: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc22: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.fbf = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G.5a2]

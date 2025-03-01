@@ -14,6 +14,10 @@ class C {
     fn F() {
       // I and F are both complete here, and the impl below is in scope.
       var c: C = {};
+      // CHECK:STDERR: default_fn.carbon:[[@LINE+4]]:7: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+      // CHECK:STDERR:       c.(I.F)();
+      // CHECK:STDERR:       ^~~~~~~
+      // CHECK:STDERR:
       c.(I.F)();
     }
   }
