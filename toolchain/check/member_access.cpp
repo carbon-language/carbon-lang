@@ -563,17 +563,23 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
     auto decl_value_id = context.constant_values().GetConstantInstId(decl_id);
     auto decl_type_id = context.insts().Get(decl_value_id).type_id();
 
-    // For instance methods
     if (IsInstanceType(context, decl_type_id)) {
+      // Step 2a: For instance methods, lookup the impl of the interface for
+      // this type and get the method.
       member_id =
           PerformImplLookup(context, loc_id, base_type_const_id, *assoc_type,
                             member_id, missing_impl_diagnoser);
+      // Next we will perform instance binding.
     } else {
+      // Step 2b: For non-instance methods and associated constants, we convert
+      // to the interface type of the associated member, to get a facet value.
       auto facet_inst_id =
           ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
       if (facet_inst_id == SemIR::ErrorInst::SingletonInstId) {
         return SemIR::ErrorInst::SingletonInstId;
       }
+      // That facet value has both the self type we need below and the witness
+      // we are going to use to look up the value of the associated member.
       auto self_type_const_id = TryEvalInst(
           context, SemIR::InstId::None,
           SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
@@ -585,12 +591,17 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
           {.type_id =
                GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
            .facet_value_inst_id = facet_inst_id});
+      // Before we can access the element of the witness, we need to figure out
+      // the type of that element. It depends on the self type and the specific
+      // interface.
       auto interface_type =
           GetInterfaceFromFacetType(context, interface_type_id);
       auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
           context, loc_id, interface_type->specific_id, decl_id, self_type_id,
           witness_id);
-      // No instance binding to do, so return instead of continuing.
+      // Now that we have the witness, an index into it, and the type of the
+      // result, return the element of the witness. No instance binding to do,
+      // so return instead of continuing.
       return GetOrAddInst<SemIR::ImplWitnessAccess>(
           context, loc_id,
           {.type_id = assoc_type_id,
