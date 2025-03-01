@@ -27,7 +27,6 @@ static constexpr llvm::StringLiteral StdinFilename = "STDIN";
 
 // Does replacements in ARGS for %s and %t.
 static auto DoArgReplacements(
-
     llvm::SmallVector<std::string>& test_args,
     const llvm::StringMap<std::string>& replacements,
     const llvm::SmallVector<TestFile::Split>& split_files) -> ErrorOr<Success> {
@@ -87,21 +86,15 @@ static auto DoArgReplacements(
   return Success();
 }
 
-auto ProcessTestFileAndRun(FileTestBase* test_base, std::mutex* output_mutex,
-                           bool dump_output, bool running_autoupdate)
-    -> ErrorOr<TestFile> {
-  // Load expected output.
-  CARBON_ASSIGN_OR_RETURN(
-      TestFile test_file,
-      ProcessTestFile(test_base->test_name(), running_autoupdate));
-
+auto RunTestFile(const FileTestBase& test_base, bool dump_output,
+                 TestFile& test_file) -> ErrorOr<Success> {
   // Process arguments.
   if (test_file.test_args.empty()) {
-    test_file.test_args = test_base->GetDefaultArgs();
+    test_file.test_args = test_base.GetDefaultArgs();
     test_file.test_args.append(test_file.extra_args);
   }
   CARBON_RETURN_IF_ERROR(DoArgReplacements(test_file.test_args,
-                                           test_base->GetArgReplacements(),
+                                           test_base.GetArgReplacements(),
                                            test_file.file_splits));
 
   // stdin needs to exist on-disk for compatibility. We'll use a pointer for it.
@@ -147,13 +140,6 @@ auto ProcessTestFileAndRun(FileTestBase* test_base, std::mutex* output_mutex,
   llvm::PrettyStackTraceProgram stack_trace_entry(
       test_argv_for_stack_trace.size() - 1, test_argv_for_stack_trace.data());
 
-  // Execution must be serialized for either serial tests or console output.
-  std::unique_lock<std::mutex> output_lock;
-  if (output_mutex &&
-      (test_file.capture_console_output || !test_base->AllowParallelRun())) {
-    output_lock = std::unique_lock<std::mutex>(*output_mutex);
-  }
-
   // Conditionally capture console output. We use a scope exit to ensure the
   // captures terminate even on run failures.
   if (test_file.capture_console_output) {
@@ -168,10 +154,10 @@ auto ProcessTestFileAndRun(FileTestBase* test_base, std::mutex* output_mutex,
   llvm::raw_svector_ostream error_stream(test_file.actual_stderr);
 
   ErrorOr<FileTestBase::RunResult> run_result =
-      dump_output ? test_base->Run(test_args_ref, fs, input_stream,
-                                   llvm::outs(), llvm::errs())
-                  : test_base->Run(test_args_ref, fs, input_stream,
-                                   output_stream, error_stream);
+      dump_output ? test_base.Run(test_args_ref, fs, input_stream, llvm::outs(),
+                                  llvm::errs())
+                  : test_base.Run(test_args_ref, fs, input_stream,
+                                  output_stream, error_stream);
 
   // Ensure stdout/stderr are always fetched, even when discarded on error.
   if (test_file.capture_console_output) {
@@ -185,7 +171,7 @@ auto ProcessTestFileAndRun(FileTestBase* test_base, std::mutex* output_mutex,
     return std::move(run_result).error();
   }
   test_file.run_result = std::move(*run_result);
-  return test_file;
+  return Success();
 }
 
 }  // namespace Carbon::Testing

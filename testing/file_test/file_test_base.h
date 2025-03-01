@@ -71,15 +71,15 @@ class FileTestBase {
   virtual auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
                    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
                    FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
-                   llvm::raw_pwrite_stream& error_stream)
+                   llvm::raw_pwrite_stream& error_stream) const
       -> ErrorOr<RunResult> = 0;
 
   // Returns default arguments. Only called when a file doesn't set ARGS.
-  virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
+  virtual auto GetDefaultArgs() const -> llvm::SmallVector<std::string> = 0;
 
   // Returns a map of string replacements to implement `%{key}` -> `value` in
   // arguments.
-  virtual auto GetArgReplacements() -> llvm::StringMap<std::string> {
+  virtual auto GetArgReplacements() const -> llvm::StringMap<std::string> {
     return {};
   }
 
@@ -87,18 +87,19 @@ class FileTestBase {
   // May return nullptr if unused. If GetLineNumberReplacements returns an entry
   // with has_file=false, this is required.
   virtual auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
-      -> std::optional<RE2> {
+      const -> std::optional<RE2> {
     return std::nullopt;
   }
 
   // Returns replacement information for line numbers. See LineReplacement for
   // construction.
   virtual auto GetLineNumberReplacements(
-      llvm::ArrayRef<llvm::StringRef> filenames)
+      llvm::ArrayRef<llvm::StringRef> filenames) const
       -> llvm::SmallVector<LineNumberReplacement>;
 
   // Optionally allows children to provide extra replacements for autoupdate.
-  virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) -> void {}
+  virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) const
+      -> void {}
 
   // Whether to allow running the test in parallel, particularly for autoupdate.
   // This can be overridden to force some tests to be run serially. At any given

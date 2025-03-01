@@ -94,6 +94,7 @@ alias N.F2 = F1;
 fn N.F1();
 
 // Failure: `N.F1` used after declaration failed.
+// TODO: #4622 - Allow defining a poisoned name so it would be found if used after it's declared.
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:14: error: member name `F1` not found in `N` [MemberNameNotFoundInScope]
 // CHECK:STDERR: alias N.F3 = N.F1;
 // CHECK:STDERR:              ^~~~
@@ -414,7 +415,7 @@ fn F1() {
 // CHECK:STDOUT:   %F2: %F1.type.75d = bind_alias F2, %F1.decl.loc4 [concrete = constants.%F1.afe]
 // CHECK:STDOUT:   %F1.decl.loc18: %F1.type.fe6 = fn_decl @F1.2 [concrete = constants.%F1.cc1] {} {}
 // CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, %N [concrete = %N]
-// CHECK:STDOUT:   %F1.ref.loc25: <error> = name_ref F1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F1.ref.loc26: <error> = name_ref F1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F3: <error> = bind_alias F3, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

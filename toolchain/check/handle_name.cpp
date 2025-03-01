@@ -92,12 +92,10 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
 }
 
 static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
-    -> std::optional<SemIR::NameId> {
+    -> SemIR::NameId {
+  CARBON_CHECK(!context.parse_tree().node_has_error(node_id),
+               "TODO: Support checking error parse nodes");
   auto token = context.parse_tree().node_token(node_id);
-  if (context.tokens().GetKind(token) != Lex::TokenKind::Identifier) {
-    CARBON_CHECK(context.parse_tree().node_has_error(node_id));
-    return std::nullopt;
-  }
   return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
 }
 
@@ -128,20 +126,11 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
       {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
 }
 
-static auto HandleIdentifierName(Context& context,
-                                 Parse::AnyNonExprIdentifierNameId node_id)
-    -> bool {
-  // The parent is responsible for binding the name.
-  auto name_id = GetIdentifierAsName(context, node_id);
-  CARBON_CHECK(name_id,
-               "Unreachable until we support checking error parse nodes");
-  context.node_stack().Push(node_id, *name_id);
-  return true;
-}
-
 auto HandleParseNode(Context& context,
                      Parse::IdentifierNameNotBeforeParamsId node_id) -> bool {
-  return HandleIdentifierName(context, node_id);
+  // The parent is responsible for binding the name.
+  context.node_stack().Push(node_id, GetIdentifierAsName(context, node_id));
+  return true;
 }
 
 auto HandleParseNode(Context& context,
@@ -150,16 +139,16 @@ auto HandleParseNode(Context& context,
   context.pattern_block_stack().Push();
   context.full_pattern_stack().PushFullPattern(
       FullPatternStack::Kind::ImplicitParamList);
-  return HandleIdentifierName(context, node_id);
+  // The parent is responsible for binding the name.
+  context.node_stack().Push(node_id, GetIdentifierAsName(context, node_id));
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
     -> bool {
   auto name_id = GetIdentifierAsName(context, node_id);
-  CARBON_CHECK(name_id,
-               "Unreachable until we support checking error parse nodes");
   context.node_stack().Push(node_id,
-                            HandleNameAsExpr(context, node_id, *name_id));
+                            HandleNameAsExpr(context, node_id, name_id));
   return true;
 }
 
