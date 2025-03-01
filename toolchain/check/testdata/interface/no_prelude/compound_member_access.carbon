@@ -24,8 +24,7 @@ interface J {
   let U:! type;
 }
 
-// Works.
-// fn F(T:! J, S:! T.U) {}
+fn F(T:! J, S:! T.U) {}
 
 fn G(V:! J, W:! V.(J.U)) {}
 
