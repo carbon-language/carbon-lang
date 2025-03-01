@@ -292,8 +292,8 @@ NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitPar
 Optional [^:]*: missing
 NodeIdInCategory NonExprName: kind IdentifierNameBeforeParams consumed
 Vector: begin
-NodeIdOneOf NameQualifierWithParams or NameQualifierWithoutParams: NameQualifierWithoutParams consumed
-NodeIdOneOf error: wrong kind AbstractModifier, expected NameQualifierWithParams or NameQualifierWithoutParams
+NodeIdOneOf NameQualifierWithParams or IdentifierNameQualifierWithoutParams or KeywordNameQualifierWithoutParams: IdentifierNameQualifierWithoutParams consumed
+NodeIdOneOf error: wrong kind AbstractModifier, expected NameQualifierWithParams or IdentifierNameQualifierWithoutParams or KeywordNameQualifierWithoutParams
 Vector: end
 Aggregate [^:]*: success
 Vector: begin

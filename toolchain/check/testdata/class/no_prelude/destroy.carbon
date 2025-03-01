@@ -10,6 +10,8 @@
 
 // --- fail_todo_basic.carbon
 
+library "[[@TEST_NAME]]";
+
 class C {
   // CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+4]]:6: error: semantics TODO: `KeywordNameBeforeParamsId` [SemanticsTodo]
   // CHECK:STDERR:   fn destroy[self: Self]();
@@ -19,8 +21,8 @@ class C {
 }
 
 // --- fail_todo_addr.carbon
-// CHECK:STDERR: fail_todo_addr.carbon: error: `Main//default` previously provided by `fail_todo_basic.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
+
+library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_todo_addr.carbon:[[@LINE+4]]:6: error: semantics TODO: `KeywordNameBeforeParamsId` [SemanticsTodo]
@@ -31,8 +33,9 @@ class C {
 }
 
 // --- fail_todo_class_function.carbon
-// CHECK:STDERR: fail_todo_class_function.carbon: error: `Main//default` previously provided by `fail_todo_basic.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
+
+library "[[@TEST_NAME]]";
+
 
 class C {
   // CHECK:STDERR: fail_todo_class_function.carbon:[[@LINE+4]]:6: error: semantics TODO: `KeywordNameBeforeParamsId` [SemanticsTodo]
@@ -42,15 +45,55 @@ class C {
   fn destroy();
 }
 
-// --- fail_todo_wrong_scope.carbon
-// CHECK:STDERR: fail_todo_wrong_scope.carbon: error: `Main//default` previously provided by `fail_todo_basic.carbon` [DuplicateMainApi]
+// --- fail_todo_destroy_in_namespace.carbon
+
+library "[[@TEST_NAME]]";
+
+namespace NS;
+
+// CHECK:STDERR: fail_todo_destroy_in_namespace.carbon:[[@LINE+4]]:7: error: semantics TODO: `KeywordNameBeforeParamsId` [SemanticsTodo]
+// CHECK:STDERR: fn NS.destroy();
+// CHECK:STDERR:       ^~~~~~~
 // CHECK:STDERR:
+fn NS.destroy();
+
+// --- fail_todo_missing_params.carbon
+
+library "[[@TEST_NAME]]";
+
+
+class C {
+  // CHECK:STDERR: fail_todo_missing_params.carbon:[[@LINE+4]]:6: error: semantics TODO: `KeywordNameNotBeforeParamsId` [SemanticsTodo]
+  // CHECK:STDERR:   fn destroy;
+  // CHECK:STDERR:      ^~~~~~~
+  // CHECK:STDERR:
+  fn destroy;
+}
+
+fn C.destroy {}
+
+// --- fail_todo_wrong_scope.carbon
+
+library "[[@TEST_NAME]]";
+
 
 // CHECK:STDERR: fail_todo_wrong_scope.carbon:[[@LINE+4]]:4: error: semantics TODO: `KeywordNameBeforeParamsId` [SemanticsTodo]
 // CHECK:STDERR: fn destroy();
 // CHECK:STDERR:    ^~~~~~~
 // CHECK:STDERR:
 fn destroy();
+
+// --- fail_invalid_qualifier.carbon
+
+class C {
+  // CHECK:STDERR: fail_invalid_qualifier.carbon:[[@LINE+4]]:6: error: semantics TODO: `KeywordNameBeforeParamsId` [SemanticsTodo]
+  // CHECK:STDERR:   fn destroy();
+  // CHECK:STDERR:      ^~~~~~~
+  // CHECK:STDERR:
+  fn destroy();
+}
+
+fn C.destroy.destroy() {}
 
 // CHECK:STDOUT: --- fail_todo_basic.carbon
 // CHECK:STDOUT:
@@ -97,7 +140,41 @@ fn destroy();
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_destroy_in_namespace.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_missing_params.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_wrong_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_invalid_qualifier.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

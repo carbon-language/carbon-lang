@@ -198,7 +198,8 @@ auto HandleParseNode(Context& context,
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::NameQualifierWithoutParamsId /*node_id*/) -> bool {
+                     Parse::IdentifierNameQualifierWithoutParamsId /*node_id*/)
+    -> bool {
   context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
   return true;
 }
@@ -237,6 +238,12 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     context.node_stack().Push(node_id, member_id);
   }
   return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::KeywordNameQualifierWithoutParamsId node_id)
+    -> bool {
+  return context.TODO(node_id, "KeywordNameQualifierWithoutParamsId");
 }
 
 auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {

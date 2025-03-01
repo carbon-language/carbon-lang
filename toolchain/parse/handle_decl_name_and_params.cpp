@@ -13,11 +13,12 @@ namespace Carbon::Parse {
 static auto HandleName(Context& context, Context::StateStackEntry state,
                        Lex::TokenIndex name_token,
                        NodeKind not_before_params_kind,
+                       NodeKind not_before_params_qualifier_kind,
                        NodeKind before_params_kind) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::Period:
       context.AddLeafNode(not_before_params_kind, name_token);
-      context.AddNode(NodeKind::NameQualifierWithoutParams,
+      context.AddNode(not_before_params_qualifier_kind,
                       context.ConsumeChecked(Lex::TokenKind::Period),
                       state.has_error);
       context.PushState(State::DeclNameAndParams);
@@ -49,12 +50,14 @@ auto HandleDeclNameAndParams(Context& context) -> void {
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     HandleName(context, state, *identifier,
                NodeKind::IdentifierNameNotBeforeParams,
+               NodeKind::IdentifierNameQualifierWithoutParams,
                NodeKind::IdentifierNameBeforeParams);
     return;
   }
 
   if (auto keyword = context.ConsumeIf(Lex::TokenKind::Destroy)) {
     HandleName(context, state, *keyword, NodeKind::KeywordNameNotBeforeParams,
+               NodeKind::KeywordNameQualifierWithoutParams,
                NodeKind::KeywordNameBeforeParams);
     return;
   }

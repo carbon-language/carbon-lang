@@ -180,11 +180,20 @@ struct NameQualifierWithParams {
 };
 
 // A name qualifier without parameters, such as `A.`.
-struct NameQualifierWithoutParams {
-  static constexpr auto Kind = NodeKind::NameQualifierWithoutParams.Define(
-      {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
+struct IdentifierNameQualifierWithoutParams {
+  static constexpr auto Kind =
+      NodeKind::IdentifierNameQualifierWithoutParams.Define(
+          {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
 
   IdentifierNameNotBeforeParamsId name;
+  Lex::PeriodTokenIndex token;
+};
+struct KeywordNameQualifierWithoutParams {
+  static constexpr auto Kind =
+      NodeKind::KeywordNameQualifierWithoutParams.Define(
+          {.bracketed_by = KeywordNameNotBeforeParams::Kind});
+
+  KeywordNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
 };
 
@@ -192,7 +201,8 @@ struct NameQualifierWithoutParams {
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
   llvm::SmallVector<
-      NodeIdOneOf<NameQualifierWithParams, NameQualifierWithoutParams>>
+      NodeIdOneOf<NameQualifierWithParams, IdentifierNameQualifierWithoutParams,
+                  KeywordNameQualifierWithoutParams>>
       qualifiers;
   AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;
