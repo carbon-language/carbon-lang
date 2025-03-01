@@ -187,18 +187,8 @@ static auto PerformImplLookup(
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto interface_type =
       GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
-#if 1  // FIXME
   // An associated entity is always associated with a single interface.
   CARBON_CHECK(interface_type);
-#else
-  if (!interface_type) {
-    context.TODO(loc_id,
-                 "Lookup of impl witness not yet supported except for a single "
-                 "interface");
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-#endif
-
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   auto witness_id =
       LookupImplWitness(context, loc_id, type_const_id,
@@ -529,6 +519,9 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   return member_id;
 }
 
+// Given an associated entity `member_inst_id` of an interface with type
+// `interface_type_id`, determine if it is an instance member. That is, it
+// returns true if it is an associated function with a `self` parameter.
 static auto IsInstanceMember(Context& context, SemIR::TypeId interface_type_id,
                              SemIR::InstId member_inst_id) -> bool {
   auto interface_type = GetInterfaceFromFacetType(context, interface_type_id);
