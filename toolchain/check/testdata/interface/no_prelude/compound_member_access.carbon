@@ -27,14 +27,6 @@ interface J {
 // Works.
 // fn F(T:! J, S:! T.U) {}
 
-// CHECK:STDERR: compound_member_access.carbon:[[@LINE+8]]:17: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
-// CHECK:STDERR: fn G(V:! J, W:! V.(J.U)) {}
-// CHECK:STDERR:                 ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: compound_member_access.carbon:[[@LINE+4]]:17: error: cannot access member of interface `J` in type `J` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: fn G(V:! J, W:! V.(J.U)) {}
-// CHECK:STDERR:                 ^~~~~~~
-// CHECK:STDERR:
 fn G(V:! J, W:! V.(J.U)) {}
 
 // CHECK:STDOUT: --- compound_member_access.carbon
@@ -46,7 +38,12 @@ fn G(V:! J, W:! V.(J.U)) {}
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete]
 // CHECK:STDOUT:   %V: %J.type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %V.patt: %J.type = symbolic_binding_pattern V, 0 [symbolic]
-// CHECK:STDOUT:   %W.patt: <error> = symbolic_binding_pattern W, 1 [symbolic]
+// CHECK:STDOUT:   %V.as_type: type = facet_access_type %V [symbolic]
+// CHECK:STDOUT:   %V.as_wit: <witness> = facet_access_witness %V [symbolic]
+// CHECK:STDOUT:   %J.facet: %J.type = facet_value %V.as_type, %V.as_wit [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %V.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %W: %impl.elem0 = bind_symbolic_name W, 1 [symbolic]
+// CHECK:STDOUT:   %W.patt: %impl.elem0 = symbolic_binding_pattern W, 1 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -58,21 +55,23 @@ fn G(V:! J, W:! V.(J.U)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %V.patt.loc38_6.1: %J.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc38_6.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %J.type = value_param_pattern %V.patt.loc38_6.1, runtime_param<none> [symbolic = %V.patt.loc38_6.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %W.patt.loc38_13.1: <error> = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc38_13.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: <error> = value_param_pattern %W.patt.loc38_13.1, runtime_param<none> [concrete = <error>]
+// CHECK:STDOUT:     %V.patt.loc30_6.1: %J.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc30_6.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.param_patt: %J.type = value_param_pattern %V.patt.loc30_6.1, runtime_param<none> [symbolic = %V.patt.loc30_6.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %W.patt.loc30_13.1: @G.%impl.elem0.loc30_18.2 (%impl.elem0) = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc30_13.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: @G.%impl.elem0.loc30_18.2 (%impl.elem0) = value_param_pattern %W.patt.loc30_13.1, runtime_param<none> [symbolic = %W.patt.loc30_13.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.param: %J.type = value_param runtime_param<none>
-// CHECK:STDOUT:     %J.ref.loc38_10: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
-// CHECK:STDOUT:     %V.loc38_6.1: %J.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc38_6.2 (constants.%V)]
-// CHECK:STDOUT:     %W.param: <error> = value_param runtime_param<none>
-// CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:       %V.ref: %J.type = name_ref V, %V.loc38_6.1 [symbolic = %V.loc38_6.2 (constants.%V)]
-// CHECK:STDOUT:       %J.ref.loc38_20: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:     %J.ref.loc30_10: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:     %V.loc30_6.1: %J.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc30_6.2 (constants.%V)]
+// CHECK:STDOUT:     %W.param: @G.%impl.elem0.loc30_18.2 (%impl.elem0) = value_param runtime_param<none>
+// CHECK:STDOUT:     %.loc30: type = splice_block %impl.elem0.loc30_18.1 [symbolic = %impl.elem0.loc30_18.2 (constants.%impl.elem0)] {
+// CHECK:STDOUT:       %V.ref: %J.type = name_ref V, %V.loc30_6.1 [symbolic = %V.loc30_6.2 (constants.%V)]
+// CHECK:STDOUT:       %J.ref.loc30_20: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %U.ref: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       %V.as_wit.loc30_18.1: <witness> = facet_access_witness %V.ref [symbolic = %V.as_wit.loc30_18.2 (constants.%V.as_wit)]
+// CHECK:STDOUT:       %impl.elem0.loc30_18.1: type = impl_witness_access %V.as_wit.loc30_18.1, element0 [symbolic = %impl.elem0.loc30_18.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W: <error> = bind_symbolic_name W, 1, %W.param [concrete = <error>]
+// CHECK:STDOUT:     %W.loc30_13.1: @G.%impl.elem0.loc30_18.2 (%impl.elem0) = bind_symbolic_name W, 1, %W.param [symbolic = %W.loc30_13.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,14 +91,17 @@ fn G(V:! J, W:! V.(J.U)) {}
 // CHECK:STDOUT:   assoc_const U:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%V.loc38_6.1: %J.type, %W: <error>) {
-// CHECK:STDOUT:   %V.loc38_6.2: %J.type = bind_symbolic_name V, 0 [symbolic = %V.loc38_6.2 (constants.%V)]
-// CHECK:STDOUT:   %V.patt.loc38_6.2: %J.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc38_6.2 (constants.%V.patt)]
-// CHECK:STDOUT:   %W.patt.loc38_13.2: <error> = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc38_13.2 (constants.%W.patt)]
+// CHECK:STDOUT: generic fn @G(%V.loc30_6.1: %J.type, %W.loc30_13.1: @G.%impl.elem0.loc30_18.2 (%impl.elem0)) {
+// CHECK:STDOUT:   %V.loc30_6.2: %J.type = bind_symbolic_name V, 0 [symbolic = %V.loc30_6.2 (constants.%V)]
+// CHECK:STDOUT:   %V.patt.loc30_6.2: %J.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc30_6.2 (constants.%V.patt)]
+// CHECK:STDOUT:   %V.as_wit.loc30_18.2: <witness> = facet_access_witness %V.loc30_6.2 [symbolic = %V.as_wit.loc30_18.2 (constants.%V.as_wit)]
+// CHECK:STDOUT:   %impl.elem0.loc30_18.2: type = impl_witness_access %V.as_wit.loc30_18.2, element0 [symbolic = %impl.elem0.loc30_18.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %W.loc30_13.2: %impl.elem0 = bind_symbolic_name W, 1 [symbolic = %W.loc30_13.2 (constants.%W)]
+// CHECK:STDOUT:   %W.patt.loc30_13.2: %impl.elem0 = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc30_13.2 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %J.type, %W.param_patt: <error>) {
+// CHECK:STDOUT:   fn(%V.param_patt: %J.type, %W.param_patt: @G.%impl.elem0.loc30_18.2 (%impl.elem0)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -107,9 +109,14 @@ fn G(V:! J, W:! V.(J.U)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(constants.%V, <error>) {
-// CHECK:STDOUT:   %V.loc38_6.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc38_6.2 => constants.%V
-// CHECK:STDOUT:   %W.patt.loc38_13.2 => <error>
+// CHECK:STDOUT: specific @U(constants.%J.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @G(constants.%V, constants.%W) {
+// CHECK:STDOUT:   %V.loc30_6.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc30_6.2 => constants.%V
+// CHECK:STDOUT:   %V.as_wit.loc30_18.2 => constants.%V.as_wit
+// CHECK:STDOUT:   %impl.elem0.loc30_18.2 => constants.%impl.elem0
+// CHECK:STDOUT:   %W.loc30_13.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc30_13.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -19,7 +19,10 @@ impl i32 as Simple {
 }
 
 fn NonInstanceCall(n: i32) {
-  // CHECK:STDERR: compound.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: compound.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `Simple` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   n.(Simple.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: compound.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `Core.ImplicitAs(Simple)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   n.(Simple.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,7 +34,10 @@ fn InstanceCall(n: i32) {
 }
 
 fn NonInstanceCallIndirect(p: i32*) {
-  // CHECK:STDERR: compound.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: compound.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `Simple` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   p->(Simple.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: compound.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `Core.ImplicitAs(Simple)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   p->(Simple.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -66,7 +72,6 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, %impl_witness.5b2 [concrete]
 // CHECK:STDOUT:   %NonInstanceCall.type: type = fn_type @NonInstanceCall [concrete]
 // CHECK:STDOUT:   %NonInstanceCall: %NonInstanceCall.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.187: type = fn_type_with_self_type %F.type.e2e, %Simple.facet [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.b73: type = fn_type_with_self_type %G.type.b60, %Simple.facet [concrete]
@@ -80,6 +85,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -118,7 +124,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc29: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc32: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -129,7 +135,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
-// CHECK:STDOUT:     %.loc33: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %.loc36: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
@@ -141,7 +147,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
-// CHECK:STDOUT:     %.loc41: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %.loc47: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
@@ -215,8 +221,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   %F.ref: %Simple.assoc_type = name_ref F, @Simple.%assoc0 [concrete = constants.%assoc0.9ca]
-// CHECK:STDOUT:   %impl.elem0: %.187 = impl_witness_access constants.%impl_witness.5b2, element0 [concrete = constants.%F.df1]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:   %.loc29: %Simple.type = converted %n.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -236,9 +241,8 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   %F.ref: %Simple.assoc_type = name_ref F, @Simple.%assoc0 [concrete = constants.%assoc0.9ca]
-// CHECK:STDOUT:   %.loc38: ref %i32 = deref %p.ref
-// CHECK:STDOUT:   %impl.elem0: %.187 = impl_witness_access constants.%impl_witness.5b2, element0 [concrete = constants.%F.df1]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:   %.loc44_4.1: ref %i32 = deref %p.ref
+// CHECK:STDOUT:   %.loc44_4.2: %Simple.type = converted %.loc44_4.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,11 +251,11 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %.loc42_4.1: ref %i32 = deref %p.ref
+// CHECK:STDOUT:   %.loc48_4.1: ref %i32 = deref %p.ref
 // CHECK:STDOUT:   %impl.elem1: %.b73 = impl_witness_access constants.%impl_witness.5b2, element1 [concrete = constants.%G.e73]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc42_4.1, %impl.elem1
-// CHECK:STDOUT:   %.loc42_4.2: %i32 = bind_value %.loc42_4.1
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %bound_method(%.loc42_4.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc48_4.1, %impl.elem1
+// CHECK:STDOUT:   %.loc48_4.2: %i32 = bind_value %.loc48_4.1
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %bound_method(%.loc48_4.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -74,17 +74,26 @@ impl C as A {
 }
 
 fn F() {
-  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: same.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   ({} as C).((A & A).G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ({} as C).((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as C).((A & A).G)();
-  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: same.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: same.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: same.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -138,43 +147,38 @@ impl C as B {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   ({} as C).((A & B).G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ({} as C).((A & B).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as C).((A & B).G)();
 
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+15]]:18: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+11]]:18: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+11]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+8]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & B))).((A & B).G)();
 
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+15]]:18: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+11]]:18: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+11]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+8]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & B))).((B).G)();
 }
@@ -192,11 +196,10 @@ interface B {
 }
 
 fn G[T:! A & B](t: T) {
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+8]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `T` to `B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   t.(B.G)();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+4]]:3: error: cannot access member of interface `B` in type `T` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+4]]:3: note: type `T` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   t.(B.G)();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -213,7 +216,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+17]]:3: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-22]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn G[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -223,7 +226,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-32]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-31]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn G[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

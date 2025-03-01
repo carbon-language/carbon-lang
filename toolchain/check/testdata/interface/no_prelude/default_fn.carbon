@@ -14,7 +14,7 @@ class C {
     fn F() {
       // I and F are both complete here, and the impl below is in scope.
       var c: C = {};
-      // CHECK:STDERR: default_fn.carbon:[[@LINE+4]]:7: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+      // CHECK:STDERR: default_fn.carbon:[[@LINE+4]]:7: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
       // CHECK:STDERR:       c.(I.F)();
       // CHECK:STDERR:       ^~~~~~~
       // CHECK:STDERR:
@@ -34,7 +34,6 @@ class C {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.0b5: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.20c: %F.type.0b5 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
@@ -45,7 +44,6 @@ class C {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.eab: type = fn_type_with_self_type %F.type.0b5, %I.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -111,8 +109,7 @@ class C {
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0: %.eab = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.eb2]
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:     %.loc21: %I.type = converted %c.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

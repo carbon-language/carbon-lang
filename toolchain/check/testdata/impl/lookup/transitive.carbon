@@ -40,7 +40,10 @@ import library "i";
 
 fn Call() {
   // We find C in "get", but should look in "c" instead.
-  // CHECK:STDERR: call.carbon:[[@LINE+4]]:3: error: semantics TODO: `CompoundMemberAccess with non-instance associated entity` [SemanticsTodo]
+  // CHECK:STDERR: call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `C` to `I` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   Get().(I.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: call.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Get().(I.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -222,7 +225,6 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Get.type: type = fn_type @Get [concrete]
 // CHECK:STDOUT:   %Get: %Get.type = struct_value () [concrete]
@@ -230,32 +232,28 @@ fn Call() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.826: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [concrete]
-// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.742) [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [concrete]
-// CHECK:STDOUT:   %.076: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
-// CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [concrete]
-// CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc0.229: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.777 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Get: %Get.type = import_ref Main//get, Get, loaded [concrete = constants.%Get]
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//i, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//get, inst21 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//get, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//i, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//i, loc4_21, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F: %F.type.cf0 = import_ref Main//i, F, loaded [concrete = constants.%F.bc6]
-// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst17 [no loc], loaded [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Main.import_ref.e53: <witness> = import_ref Main//c, loc7_13, loaded [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//i, loc4_21, loaded [concrete = constants.%assoc0.229]
+// CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//i, F, loaded [concrete = constants.%F]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst17 [no loc], loaded [symbolic = constants.%Self.826]
+// CHECK:STDOUT:   %Main.import_ref.615 = import_ref Main//c, loc7_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//c, loc7_6, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.f50: type = import_ref Main//c, loc7_11, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT: }
@@ -281,7 +279,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: imports.%Main.import_ref.29a as imports.%Main.import_ref.f50 [from "c.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.e53
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.615
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "get.carbon"] {
@@ -294,22 +292,19 @@ fn Call() {
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Get.ref: %Get.type = name_ref Get, imports.%Main.Get [concrete = constants.%Get]
-// CHECK:STDOUT:   %.loc13: ref %C = temporary_storage
-// CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc13
+// CHECK:STDOUT:   %.loc16_7: ref %C = temporary_storage
+// CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc16_7
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.076 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.a2e]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0.229]
+// CHECK:STDOUT:   %.loc16_8: %I.type = converted %Get.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get() -> %C [from "get.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5dd: %I.type) [from "i.carbon"] {
+// CHECK:STDOUT: generic fn @F(imports.%Main.import_ref.5dd: %I.type) [from "i.carbon"] {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() [from "c.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT: specific @F(constants.%Self.826) {}
 // CHECK:STDOUT:
