@@ -48,6 +48,19 @@
 
 namespace Carbon::SemIR {
 
+// An action that performs simple member access, `base.name`.
+struct AccessMemberAction {
+  static constexpr auto Kind =
+      InstKind::AccessMemberAction.Define<Parse::NodeId>(
+          {.ir_name = "access_member_action",
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId base_id;
+  NameId name_id;
+};
+
 // Common representation for declarations describing the foundation type of a
 // class -- either its adapted type or its base class.
 struct AnyFoundationDecl {
@@ -1331,6 +1344,18 @@ struct SpliceBlock {
   InstId result_id;
 };
 
+// Splices an instruction computed by an action into the location where this
+// appears.
+struct SpliceInst {
+  static constexpr auto Kind =
+      InstKind::SpliceInst.Define<Parse::NodeId>({.ir_name = "splice_inst"});
+
+  TypeId type_id;
+  // The instruction that computes the instruction to splice. The type of this
+  // instruction should be InstType.
+  InstId inst_id;
+};
+
 // A literal string value.
 struct StringLiteral {
   static constexpr auto Kind =
@@ -1499,6 +1524,19 @@ struct TupleValue {
 
   TypeId type_id;
   InstBlockId elements_id;
+};
+
+// Returns the type of the instruction produced by an action.
+struct TypeOfInst {
+  static constexpr auto Kind = InstKind::TypeOfInst.Define<Parse::NodeId>(
+      {.ir_name = "type_of_inst",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::SymbolicOnly});
+
+  TypeId type_id;
+  // The instruction that computes the instruction whose type is returned. The
+  // type of this instruction should be InstType.
+  InstId inst_id;
 };
 
 // Tracks expressions which are valid as types. This has a deliberately

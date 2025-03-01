@@ -240,6 +240,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
+      case AccessMemberAction::Kind:
       case AddrOf::Kind:
       case ArrayType::Kind:
       case AssociatedConstantDecl::Kind:
@@ -289,6 +290,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case SymbolicBindingPattern::Kind:
       case TupleType::Kind:
       case TupleValue::Kind:
+      case TypeOfInst::Kind:
       case TypeType::Kind:
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
@@ -345,6 +347,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         inst_id = inst.result_id;
         continue;
       }
+
+      case SpliceInst::Kind:
+        // TODO: Add ExprCategory::Dependent.
+        return value_category;
 
       case StructLiteral::Kind:
       case TupleLiteral::Kind:

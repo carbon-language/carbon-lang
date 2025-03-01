@@ -552,6 +552,17 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case SemIR::TypeOfInst::Kind: {
+        // Print the constant value if we've already computed the inst.
+        auto const_inst_id =
+            sem_ir.constant_values().GetConstantInstId(step.inst_id);
+        if (const_inst_id.has_value()) {
+          step_stack.PushInstId(const_inst_id);
+          break;
+        }
+        out << "<dependent type>";
+        break;
+      }
       case CARBON_KIND(UnboundElementType inst): {
         out << "<unbound element of class ";
         step_stack.PushString(">");
@@ -562,6 +573,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << "<vtable ptr>";
         break;
       }
+      case AccessMemberAction::Kind:
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -610,6 +622,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ReturnSlotPattern::Kind:
       case SpecificConstant::Kind:
       case SpliceBlock::Kind:
+      case SpliceInst::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
       case StructInit::Kind:
