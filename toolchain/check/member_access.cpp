@@ -222,41 +222,6 @@ static auto PerformImplLookup(
                                    interface_type->specific_id, member_id);
 }
 
-#if 0
-// Performs impl lookup for compound member access with a non-instance interface
-// member.
-static auto PerformImplLookupFIXME(Context& context, SemIR::LocId loc_id,
-                                   SemIR::InstId base_id,
-                                   SemIR::AssociatedEntityType assoc_type,
-                                   SemIR::InstId member_id,
-                                   SemIR::InstId decl_id) -> SemIR::InstId {
-  auto facet_inst_id = ConvertToValueOfType(context, loc_id, base_id,
-                                            assoc_type.interface_type_id);
-  if (facet_inst_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-  auto self_type_const_id = TryEvalInst(
-      context, SemIR::InstId::None,
-      SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
-                             .facet_value_inst_id = facet_inst_id});
-  auto self_type_id =
-      context.types().GetTypeIdForTypeConstantId(self_type_const_id);
-  auto witness_id = GetOrAddInst<SemIR::ImplWitnessAccess>(
-      context, loc_id,
-      {.type_id = SemIR::WitnessType::SingletonInstId
-       .facet_value_inst_id = facet_inst_id});
-  auto interface_type =
-      GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
-  auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-      context, loc_id, interface_type.specific_id, decl_id, self_type_id,
-      witness_id);
-  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
-                                                {.type_id = assoc_type_id,
-                                                 .witness_id = witness_id,
-                                                 .index = assoc_entity->index});
-}
-#endif
-
 // Performs a member name lookup into the specified scope, including performing
 // impl lookup if necessary. If the scope result is `None`, assume an error has
 // already been diagnosed, and return `ErrorInst`.
@@ -564,31 +529,6 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
   }
   return false;
 }
-
-#if 0
-// Given an associated entity `member_inst_id` of an interface with type
-// `interface_type_id`, determine if it is an instance member. That is, it
-// returns true if it is an associated function with a `self` parameter.
-static auto IsInstanceMember(Context& context, SemIR::TypeId interface_type_id,
-                             SemIR::InstId member_inst_id) -> bool {
-  auto interface_type = GetInterfaceFromFacetType(context, interface_type_id);
-  // An associated entity is always associated with a single interface.
-  CARBON_CHECK(interface_type);
-  const auto& interface =
-      context.interfaces().Get(interface_type->interface_id);
-  auto assoc_entities =
-      context.inst_blocks().Get(interface.associated_entities_id);
-  auto value_inst_id =
-      context.constant_values().GetConstantInstId(member_inst_id);
-  auto assoc_entity =
-      context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
-  auto decl_id = assoc_entities[assoc_entity.index.index];
-  LoadImportRef(context, decl_id);
-  auto decl_value_id = context.constant_values().GetConstantInstId(decl_id);
-  auto decl_type_id = context.insts().Get(decl_value_id).type_id();
-  return IsInstanceType(context, decl_type_id);
-}
-#endif
 
 auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                                  SemIR::InstId base_id,
