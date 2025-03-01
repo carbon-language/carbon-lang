@@ -46,15 +46,16 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
-  // FIXME: return function.self_param_id.has_value();
-  for (auto param_id :
-       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id)) {
-    if (SemIR::Function::GetNameFromPatternId(sem_ir, param_id) ==
-        SemIR::NameId::SelfValue) {
-      return true;
-    }
-  }
+  return function.self_param_id.has_value();
+}
 
+// Return whether `type_id`, the type of an associated entity, is for an
+// instance member (currently true only for instance methods).
+static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
+  if (auto function_type =
+          context.types().TryGetAs<SemIR::FunctionType>(type_id)) {
+    return IsInstanceMethod(context.sem_ir(), function_type->function_id);
+  }
   return false;
 }
 
@@ -189,6 +190,7 @@ static auto PerformImplLookup(
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto interface_type =
       GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
+  // FIXME: Separate PR.
   // An associated entity is always associated with a single interface.
   CARBON_CHECK(interface_type);
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
@@ -519,15 +521,6 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);
 
   return member_id;
-}
-
-static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
-  if (auto function_type =
-          context.types().TryGetAs<SemIR::FunctionType>(type_id)) {
-    const auto& function = context.functions().Get(function_type->function_id);
-    return function.self_param_id.has_value();
-  }
-  return false;
 }
 
 auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
