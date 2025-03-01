@@ -23,25 +23,25 @@ class FileTestBaseTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
            FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
-           llvm::raw_pwrite_stream& error_stream)
+           llvm::raw_pwrite_stream& error_stream) const
       -> ErrorOr<RunResult> override;
 
-  auto GetArgReplacements() -> llvm::StringMap<std::string> override {
+  auto GetArgReplacements() const -> llvm::StringMap<std::string> override {
     return {{"replacement", "replaced"}};
   }
 
-  auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
+  auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override {
     return {"default_args", "%s"};
   }
 
-  auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
+  auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames) const
       -> std::optional<RE2> override {
     return std::make_optional<RE2>(
         llvm::formatv(R"(file: ({0}))", llvm::join(filenames, "|")));
   }
 
   auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> llvm::SmallVector<LineNumberReplacement> override {
+      const -> llvm::SmallVector<LineNumberReplacement> override {
     auto replacements = FileTestBase::GetLineNumberReplacements(filenames);
     auto filename = std::filesystem::path(test_name().str()).filename();
     if (llvm::StringRef(filename).starts_with("file_only_re_")) {
@@ -260,7 +260,7 @@ auto FileTestBaseTest::Run(
     const llvm::SmallVector<llvm::StringRef>& test_args,
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
-    llvm::raw_pwrite_stream& error_stream) -> ErrorOr<RunResult> {
+    llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
   PrintArgs(test_args, output_stream);
 
   auto filename = std::filesystem::path(test_name().str()).filename();

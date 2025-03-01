@@ -65,6 +65,10 @@ auto CheckUnit::Run() -> void {
   // Add a block for the file.
   context_.inst_block_stack().Push();
 
+  // TODO: Remove this and the pop in `FinishRun` once we properly push and pop
+  // in the right places.
+  context_.generic_region_stack().Push();
+
   InitPackageScopeAndImports();
 
   // Eagerly import the impls declared in the api file to prepare to redeclare
@@ -491,6 +495,9 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
 }
 
 auto CheckUnit::FinishRun() -> void {
+  // TODO: Remove this once we properly push and pop in the right places.
+  context_.generic_region_stack().Pop();
+
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
 
