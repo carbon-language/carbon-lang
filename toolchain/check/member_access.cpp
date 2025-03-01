@@ -529,6 +529,31 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   return member_id;
 }
 
+static auto IsInstanceMember(Context& context, SemIR::TypeId interface_type_id,
+                             SemIR::InstId member_inst_id) -> bool {
+  auto interface_type = GetInterfaceFromFacetType(context, interface_type_id);
+  // An associated entity is always associated with a single interface.
+  CARBON_CHECK(interface_type);
+  const auto& interface =
+      context.interfaces().Get(interface_type->interface_id);
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+  auto value_inst_id =
+      context.constant_values().GetConstantInstId(member_inst_id);
+  auto assoc_entity =
+      context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
+  auto decl_id = assoc_entities[assoc_entity.index.index];
+  LoadImportRef(context, decl_id);
+  auto decl_value_id = context.constant_values().GetConstantInstId(decl_id);
+  auto decl_type_id = context.insts().Get(decl_value_id).type_id();
+  if (auto function_type =
+          context.types().TryGetAs<SemIR::FunctionType>(decl_type_id)) {
+    const auto& function = context.functions().Get(function_type->function_id);
+    return function.self_param_id.has_value();
+  }
+  return false;
+}
+
 auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id,
@@ -544,28 +569,8 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
   // performed using the type of the base expression.
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           member.type_id())) {
-    auto interface_type =
-        GetInterfaceFromFacetType(context, assoc_type->interface_type_id);
-    // An associated entity is always associated with a single interface.
-    CARBON_CHECK(interface_type);
-    const auto& interface =
-        context.interfaces().Get(interface_type->interface_id);
-    auto assoc_entities =
-        context.inst_blocks().Get(interface.associated_entities_id);
-    auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
-    auto assoc_entity =
-        context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
-    auto decl_id = assoc_entities[assoc_entity.index.index];
-    LoadImportRef(context, decl_id);
-    auto decl_value_id = context.constant_values().GetConstantInstId(decl_id);
-    auto decl_type_id = context.insts().Get(decl_value_id).type_id();
-    bool is_instance_member = false;
-    if (auto function_type =
-            context.types().TryGetAs<SemIR::FunctionType>(decl_type_id)) {
-      const auto& function =
-          context.functions().Get(function_type->function_id);
-      is_instance_member = function.self_param_id.has_value();
-    }
+    bool is_instance_member =
+        IsInstanceMember(context, assoc_type->interface_type_id, member_id);
     if (!is_instance_member) {
       context.TODO(loc_id,
                    "CompoundMemberAccess with non-instance associated entity");
