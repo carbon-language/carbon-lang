@@ -10,10 +10,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/import_impl_with_no_interface.carbon
 
-// --- lib.carbon
+// --- fail_lib.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: lib.carbon:[[@LINE+4]]:18: error: name `Undeclared` not found [NameNotFound]
+// CHECK:STDERR: fail_lib.carbon:[[@LINE+4]]:18: error: name `Undeclared` not found [NameNotFound]
 // CHECK:STDERR: impl {.i: ()} as Undeclared {
 // CHECK:STDERR:                  ^~~~~~~~~~
 // CHECK:STDERR:
