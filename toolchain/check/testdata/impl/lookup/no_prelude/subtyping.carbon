@@ -8,6 +8,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/no_prelude/subtyping.carbon
 
+// This is testing `FindWitnessInFacet` from impl_lookup.cpp
+
 // --- equivalent.carbon
 library "[[@TEST_NAME]]";
 
