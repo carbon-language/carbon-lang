@@ -52,6 +52,16 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
     auto subcommand_args =
         llvm::StringSwitch<llvm::SmallVector<llvm::StringRef>>(
             *busybox_info.mode)
+            // The `clang` program name used configures the default for its
+            // `--driver-mode` flag. The first of these is redundant with the
+            // default, but we group it here for clarity.
+            .Case("clang", {"clang", "--"})
+            .Case("clang++", {"clang", "--", "--driver-mode=g++"})
+            .Case("clang-cl", {"clang", "--", "--driver-mode=cl"})
+            .Case("clang-cpp", {"clang", "--", "--driver-mode=cpp"})
+
+            // LLD has platform-specific program names that we translate into
+            // platform flags.
             .Case("ld.lld", {"lld", "--platform=gnu", "--"})
             .Case("ld64.lld", {"lld", "--platform=darwin", "--"})
 
