@@ -8,18 +8,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/compound_member_access.carbon
 
-// FIXME: move to its own test?
-// interface A {}
-// interface B {}
-// impl forall [T:! A] T as B {}
-// fn FB[TB:! B](xb: TB) {}
-// fn FA[TA:! A](xa: TA) {
-//   FB(xa);
-// }
-// fn FC[TC:! A where .Self impls type](xc: TC) {
-//   FA(xc);
-// }
-
 // --- core.carbon
 package Core;
 
