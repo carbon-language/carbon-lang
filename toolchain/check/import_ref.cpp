@@ -2131,10 +2131,14 @@ struct SpecificInterfaceData {
 static auto GetLocalSpecificInstanceData(
     ImportRefResolver& resolver, SemIR::SpecificInterface import_interface)
     -> SpecificInterfaceData {
-  return {.interface_const_id = GetLocalConstantId(
-              resolver, resolver.import_interfaces()
-                            .Get(import_interface.interface_id)
-                            .first_owning_decl_id),
+  SemIR::ConstantId interface_const_id = SemIR::ConstantId::None;
+  if (import_interface.interface_id.has_value()) {
+    interface_const_id =
+        GetLocalConstantId(resolver, resolver.import_interfaces()
+                                         .Get(import_interface.interface_id)
+                                         .first_owning_decl_id);
+  }
+  return {.interface_const_id = interface_const_id,
           .specific_data =
               GetLocalSpecificData(resolver, import_interface.specific_id)};
 }
@@ -2143,6 +2147,9 @@ static auto GetLocalSpecificInterface(ImportContext& context,
                                       SemIR::SpecificId import_specific_id,
                                       SpecificInterfaceData interface_data)
     -> SemIR::SpecificInterface {
+  if (!interface_data.interface_const_id.has_value()) {
+    return SemIR::SpecificInterface::None;
+  }
   // Find the corresponding interface type. For a non-generic interface,
   // this is the type of the interface declaration. For a generic interface,
   // build a interface type referencing this specialization of the generic
