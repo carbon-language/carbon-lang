@@ -13,14 +13,14 @@ library "[[@TEST_NAME]]";
 
 interface J {
   let U:! type;
-  // CHECK:STDERR: fail_todo_associated_type_in_signature.carbon:[[@LINE+14]]:23: error: cannot implicitly convert from `<associated entity in J>` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_associated_type_in_signature.carbon:[[@LINE+14]]:23: error: cannot implicitly convert value of type `<associated entity in J>` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self](u: U) -> U;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR: fail_todo_associated_type_in_signature.carbon:[[@LINE+11]]:23: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self](u: U) -> U;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_associated_type_in_signature.carbon:[[@LINE+7]]:29: error: cannot implicitly convert from `<associated entity in J>` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_associated_type_in_signature.carbon:[[@LINE+7]]:29: error: cannot implicitly convert value of type `<associated entity in J>` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self](u: U) -> U;
   // CHECK:STDERR:                             ^
   // CHECK:STDERR: fail_todo_associated_type_in_signature.carbon:[[@LINE+4]]:29: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
@@ -53,7 +53,7 @@ interface M {
 
 impl () as M where .Z = {.b = {}} {
   fn G() -> {} {
-    // CHECK:STDERR: fail_todo_use_non-type_in_function.carbon:[[@LINE+7]]:13: error: cannot convert from `type` to `M` with `as` [ExplicitAsConversionFailure]
+    // CHECK:STDERR: fail_todo_use_non-type_in_function.carbon:[[@LINE+7]]:13: error: cannot convert value of type `type` to `M` with `as` [ExplicitAsConversionFailure]
     // CHECK:STDERR:     return (Self as M).Z.b;
     // CHECK:STDERR:             ^~~~~~~~~
     // CHECK:STDERR: fail_todo_use_non-type_in_function.carbon:[[@LINE+4]]:13: note: type `type` does not implement interface `Core.As(M)` [MissingImplInMemberAccessNote]
@@ -69,7 +69,7 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let N:! i32;
-  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+7]]:37: error: cannot implicitly convert from `<associated entity in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+7]]:37: error: cannot implicitly convert value of type `<associated entity in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self]() -> array(bool, N);
   // CHECK:STDERR:                                     ^
   // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+4]]:37: note: type `<associated entity in I>` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
