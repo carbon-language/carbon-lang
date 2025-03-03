@@ -461,7 +461,6 @@ CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
 // Compound member access
 CARBON_DIAGNOSTIC_KIND(CompoundMemberAccessDoesNotUseBase)
-CARBON_DIAGNOSTIC_KIND(NonInstanceCompoundMemberAccessOfNonFacet)
 
 // ============================================================================
 // Language server diagnostics
