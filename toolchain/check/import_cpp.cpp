@@ -64,10 +64,9 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(context, imports),
-      {// Parse C++ (and not C)
-       "-x", "c++"},
-      (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
-      std::make_shared<clang::PCHContainerOperations>(),
+      // Parse C++ (and not C)
+      {"-x", "c++"}, (importing_file_path + ".generated.cpp_imports.h").str(),
+      "clang-tool", std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
   // TODO: Implement and use a DynamicRecursiveASTVisitor to traverse the AST.
@@ -148,7 +147,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   return std::move(generated_ast);
 }
 
-// Lookups the given name in the Clang AST. Returns the lookup result if lookup
+// Look ups the given name in the Clang AST. Returns the lookup result if lookup
 // was successful.
 static auto ClangLookup(Context& context, SemIR::LocId loc_id,
                         llvm::StringRef name)
@@ -264,8 +263,10 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  auto name = context.names().GetAsStringIfIdentifier(name_id);
+  std::optional<llvm::StringRef> name =
+      context.names().GetAsStringIfIdentifier(name_id);
   if (!name) {
+    // Special names never exist in C++ code.
     CARBON_DIAGNOSTIC(CppNonIdentifierName, Error,
                       "Using non-identifier name `{0}` in `Cpp`",
                       SemIR::NameId);
