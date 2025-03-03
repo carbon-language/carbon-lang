@@ -36,7 +36,6 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-
 class C {
   // CHECK:STDERR: fail_todo_class_function.carbon:[[@LINE+4]]:6: error: semantics TODO: `KeywordNameBeforeParamsId` [SemanticsTodo]
   // CHECK:STDERR:   fn destroy();
