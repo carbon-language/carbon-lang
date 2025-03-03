@@ -1091,10 +1091,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %B.ref.loc12: type = name_ref B, imports.%Main.B [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc8: type = name_ref B, imports.%Main.B [concrete = constants.%B]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.a5d]
-// CHECK:STDOUT:   %.loc12: %Factory.assoc_type.668 = specific_constant imports.%Main.import_ref.ff7, @Factory(constants.%B) [concrete = constants.%assoc1.51f]
-// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.668 = name_ref Method, %.loc12 [concrete = constants.%assoc1.51f]
+// CHECK:STDOUT:   %.loc8: %Factory.assoc_type.668 = specific_constant imports.%Main.import_ref.ff7, @Factory(constants.%B) [concrete = constants.%assoc1.51f]
+// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.668 = name_ref Method, %.loc8 [concrete = constants.%assoc1.51f]
 // CHECK:STDOUT:   %impl.elem1: %.478 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%Method.3d4]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc7: ref %B = splice_block %return {}
