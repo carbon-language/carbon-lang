@@ -19,7 +19,9 @@
 namespace std {
 template <class T, class U, class V, class W>
   requires(convertible_to<V, T> && convertible_to<W, U>)
-inline auto operator==(pair<T&, U&> lhs, pair<V, W> rhs) -> bool {
+inline auto operator==(
+    pair<std::reference_wrapper<T>, std::reference_wrapper<U>> lhs,
+    pair<V, W> rhs) -> bool {
   return lhs.first == static_cast<T>(rhs.first) &&
          lhs.second == static_cast<U>(rhs.second);
 }
@@ -42,9 +44,11 @@ auto ExpectMapElementsAre(MapT&& m, MatcherRangeT element_matchers) -> void {
   // Now collect the elements into a container.
   using KeyT = typename std::remove_reference<MapT>::type::KeyT;
   using ValueT = typename std::remove_reference<MapT>::type::ValueT;
-  std::vector<std::pair<KeyT&, ValueT&>> map_entries;
+  std::vector<
+      std::pair<std::reference_wrapper<KeyT>, std::reference_wrapper<ValueT>>>
+      map_entries;
   m.ForEach([&map_entries](KeyT& k, ValueT& v) {
-    map_entries.push_back({k, v});
+    map_entries.push_back({std::ref(k), std::ref(v)});
   });
 
   // Use the GoogleMock unordered container matcher to validate and show errors
