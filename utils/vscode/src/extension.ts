@@ -26,21 +26,50 @@ let client: LanguageClient;
 /**
  * Splits a CLI-style quoted string.
  */
-function splitQuotedString(carbonArgs: string): string[] {
-  const regex = /"([^"]*)"|'([^']*)'|(\S+)/g;
-  const result = [];
-  let match;
+function splitQuotedString(argsString: string): string[] {
+  const args: string[] = [];
+  let arg = '';
+  let inSingleQuotes = false;
+  let inDoubleQuotes = false;
+  let escaped = false;
 
-  while ((match = regex.exec(carbonArgs)) !== null) {
-    if (match[1]) {
-      result.push(match[1]);
-    } else if (match[2]) {
-      result.push(match[2]);
-    } else if (match[3]) {
-      result.push(match[3]);
+  for (const char of argsString) {
+    if (escaped) {
+      arg += char;
+      escaped = false;
+      continue;
     }
+    switch (char) {
+      case '\\':
+        escaped = true;
+        continue;
+      case "'":
+        if (!inDoubleQuotes) {
+          inSingleQuotes = !inSingleQuotes;
+          continue;
+        }
+        break;
+      case '"':
+        if (!inSingleQuotes) {
+          inDoubleQuotes = !inDoubleQuotes;
+          continue;
+        }
+        break;
+      case ' ':
+        if (!inSingleQuotes && !inDoubleQuotes) {
+          args.push(arg);
+          arg = '';
+        }
+        break;
+    }
+    arg += char;
   }
-  return result;
+
+  if (arg.length > 0) {
+    args.push(arg);
+  }
+
+  return args;
 }
 
 /**
@@ -48,7 +77,9 @@ function splitQuotedString(carbonArgs: string): string[] {
  */
 function buildServerArgs(settings: WorkspaceConfiguration): string[] {
   const result: string[] = [];
-  result.push(...splitQuotedString(settings.get('carbonServerCommandArgs', '')));
+  result.push(
+    ...splitQuotedString(settings.get('carbonServerCommandArgs', ''))
+  );
   result.push('language-server');
   result.push(
     ...splitQuotedString(settings.get('carbonServerSubcommandArgs', ''))
