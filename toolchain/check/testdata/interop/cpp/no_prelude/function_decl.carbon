@@ -40,14 +40,28 @@ fn MyF() {
 
 void base();
 
-// --- import_function_special_name_decl.carbon
+// --- fail_import_function_special_name_decl.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "function_special_name_decl.h";
 
 fn MyF() {
+  // CHECK:STDERR: fail_import_function_special_name_decl.carbon:[[@LINE+4]]:3: error: Using non-identifier name `base` in `Cpp` [CppNonIdentifierName]
+  // CHECK:STDERR:   Cpp.base();
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
   Cpp.base();
+}
+
+// --- import_function_escaped_special_name_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "function_special_name_decl.h";
+
+fn MyF() {
+  Cpp.r#base();
 }
 
 // --- overloaded_function_decl.h
@@ -253,7 +267,38 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_function_special_name_decl.carbon
+// CHECK:STDOUT: --- fail_import_function_special_name_decl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .base = <error>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .MyF = %MyF.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "function_special_name_decl.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %base.ref: <error> = name_ref base, <error> [concrete = <error>]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_function_escaped_special_name_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -265,7 +310,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .base = @MyF.%base.decl
+// CHECK:STDOUT:     .r#base = @MyF.%base.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -284,7 +329,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %base.decl: %base.type = fn_decl @base [concrete = constants.%base] {} {}
-// CHECK:STDOUT:   %base.ref: %base.type = name_ref base, %base.decl [concrete = constants.%base]
+// CHECK:STDOUT:   %base.ref: %base.type = name_ref r#base, %base.decl [concrete = constants.%base]
 // CHECK:STDOUT:   %base.call: init %empty_tuple.type = call %base.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -22,6 +22,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
@@ -150,13 +151,11 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
 // Lookups the given name in the Clang AST. Returns the lookup result if lookup
 // was successful.
 static auto ClangLookup(Context& context, SemIR::LocId loc_id,
-                        SemIR::NameId name_id)
+                        llvm::StringRef name)
     -> std::optional<clang::LookupResult> {
   clang::ASTUnit* ast = context.sem_ir().cpp_ast();
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
-
-  llvm::StringRef name = context.names().GetIRBaseName(name_id);
 
   clang::LookupResult lookup(
       sema,
@@ -265,7 +264,16 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  auto lookup = ClangLookup(context, loc_id, name_id);
+  auto name = context.names().GetAsStringIfIdentifier(name_id);
+  if (!name) {
+    CARBON_DIAGNOSTIC(CppNonIdentifierName, Error,
+                      "Using non-identifier name `{0}` in `Cpp`",
+                      SemIR::NameId);
+    context.emitter().Emit(loc_id, CppNonIdentifierName, name_id);
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
+  auto lookup = ClangLookup(context, loc_id, *name);
   if (!lookup) {
     return SemIR::InstId::None;
   }
