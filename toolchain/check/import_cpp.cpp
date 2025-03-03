@@ -170,8 +170,9 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
       lookup, ast->getASTContext().getTranslationUnitDecl());
 
   if (lookup.isClassLookup()) {
-    // TODO: When support class lookup, also check access.
+    // TODO: To support class lookup, also return the AccessKind for storage.
     context.TODO(loc_id, "Unsupported: Lookup in Class");
+    return std::nullopt;
   }
 
   if (!found) {
