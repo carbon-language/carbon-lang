@@ -80,7 +80,7 @@ class MatchContext {
 
  private:
   // Allocates the next unallocated RuntimeParamIndex, starting from 0.
-  auto NextRuntimeIndex() -> SemIR::RuntimeParamIndex {
+  auto NextRuntimeIndex() -> SemIR::CallParamIndex {
     auto result = next_index_;
     ++next_index_.index;
     return result;
@@ -125,7 +125,7 @@ class MatchContext {
   llvm::SmallVector<WorkItem> stack_;
 
   // The next index to be allocated by `NextRuntimeIndex`.
-  SemIR::RuntimeParamIndex next_index_;
+  SemIR::CallParamIndex next_index_;
 
   // The pending results that will be returned by the current `DoWork` call.
   // It represents the contents of the `Call` arguments block when kind_
@@ -274,11 +274,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::ValueParamPattern param_pattern,
                                       SemIR::LocId pattern_loc_id,
                                       WorkItem entry) -> void {
-  CARBON_CHECK(param_pattern.runtime_index.index < 0 ||
-                   static_cast<size_t>(param_pattern.runtime_index.index) ==
-                       results_.size(),
-               "Parameters out of order; expecting {0} but got {1}",
-               results_.size(), param_pattern.runtime_index.index);
+  CARBON_CHECK(
+      param_pattern.index.index < 0 ||
+          static_cast<size_t>(param_pattern.index.index) == results_.size(),
+      "Parameters out of order; expecting {0} but got {1}", results_.size(),
+      param_pattern.index.index);
   switch (kind_) {
     case MatchKind::Caller: {
       CARBON_CHECK(entry.scrutinee_id.has_value());
@@ -296,14 +296,14 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      if (!param_pattern.runtime_index.has_value()) {
-        param_pattern.runtime_index = NextRuntimeIndex();
+      if (!param_pattern.index.has_value()) {
+        param_pattern.index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
       auto param_id = AddInst<SemIR::ValueParam>(
           context, pattern_loc_id,
           {.type_id = param_pattern.type_id,
-           .runtime_index = param_pattern.runtime_index,
+           .index = param_pattern.index,
            .pretty_name_id = GetPrettyName(context, param_pattern)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = param_id});
@@ -335,14 +335,14 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case MatchKind::Callee: {
       // TODO: Consider ways to address near-duplication with the
       // ValueParamPattern case.
-      if (!param_pattern.runtime_index.has_value()) {
-        param_pattern.runtime_index = NextRuntimeIndex();
+      if (!param_pattern.index.has_value()) {
+        param_pattern.index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
       auto param_id = AddInst<SemIR::OutParam>(
           context, pattern_loc_id,
           {.type_id = param_pattern.type_id,
-           .runtime_index = param_pattern.runtime_index,
+           .index = param_pattern.index,
            .pretty_name_id = GetPrettyName(context, param_pattern)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = param_id});

@@ -188,23 +188,20 @@ struct CompileTimeBindIndex : public IndexBase<CompileTimeBindIndex> {
 constexpr CompileTimeBindIndex CompileTimeBindIndex::None =
     CompileTimeBindIndex(NoneIndex);
 
-// The index of a runtime parameter in a function. These are allocated
+// The index of a `Call` parameter in a function. These are allocated
 // sequentially, left-to-right, to the function parameters that will have
-// arguments passed to them at runtime. In a `call` instruction, a runtime
+// arguments passed to them at runtime. In a `Call` instruction, a runtime
 // argument will have the position in the argument list corresponding to its
-// runtime parameter index.
-// TODO: Rename this to CallParamIndex, for consistency with the "`Call`
-// parameters" terminology in EntityWithParamsBase.
-struct RuntimeParamIndex : public IndexBase<RuntimeParamIndex> {
+// `Call` parameter index.
+struct CallParamIndex : public IndexBase<CallParamIndex> {
   static constexpr llvm::StringLiteral Label = "runtime_param";
 
-  static const RuntimeParamIndex None;
+  static const CallParamIndex None;
 
   using IndexBase::IndexBase;
 };
 
-constexpr RuntimeParamIndex RuntimeParamIndex::None =
-    RuntimeParamIndex(NoneIndex);
+constexpr CallParamIndex CallParamIndex::None = CallParamIndex(NoneIndex);
 
 // The ID of a function.
 struct FunctionId : public IdBase<FunctionId> {

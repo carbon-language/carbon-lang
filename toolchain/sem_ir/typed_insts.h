@@ -1022,7 +1022,7 @@ struct AnyParam {
 
   InstKind kind;
   TypeId type_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 
   // A name to associate with this Param in pretty-printed IR. This is not
   // necessarily unique, and can even be `None`; it has no semantic
@@ -1037,7 +1037,7 @@ struct OutParam {
       InstKind::OutParam.Define<Parse::NodeId>({.ir_name = "out_param"});
 
   TypeId type_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
   NameId pretty_name_id;
 };
 
@@ -1048,7 +1048,7 @@ struct ValueParam {
       InstKind::ValueParam.Define<Parse::NodeId>({.ir_name = "value_param"});
 
   TypeId type_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
   NameId pretty_name_id;
 };
 
@@ -1062,7 +1062,7 @@ struct AnyParamPattern {
   InstKind kind;
   TypeId type_id;
   InstId subpattern_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 };
 
 // A pattern that represents an output `Call` parameter.
@@ -1073,7 +1073,7 @@ struct OutParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 };
 
 // A pattern that represents a by-value `Call` parameter.
@@ -1085,7 +1085,7 @@ struct ValueParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in

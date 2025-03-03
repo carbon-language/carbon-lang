@@ -1059,14 +1059,14 @@ static auto GetLocalParamPatternsId(ImportContext& context,
       }
     }
     if (param_pattern) {
-      new_param_id = AddInstInNoBlock(
-          context.local_context(),
-          MakeImportedLocIdAndInst<SemIR::ValueParamPattern>(
-              context.local_context(),
-              AddImportIRInst(context, param_pattern_id),
-              {.type_id = type_id,
-               .subpattern_id = new_param_id,
-               .runtime_index = param_pattern->runtime_index}));
+      new_param_id =
+          AddInstInNoBlock(context.local_context(),
+                           MakeImportedLocIdAndInst<SemIR::ValueParamPattern>(
+                               context.local_context(),
+                               AddImportIRInst(context, param_pattern_id),
+                               {.type_id = type_id,
+                                .subpattern_id = new_param_id,
+                                .index = param_pattern->index}));
     }
     if (addr_inst) {
       type_id = context.local_context().types().GetTypeIdForTypeConstantId(
@@ -1118,7 +1118,7 @@ static auto GetLocalReturnSlotPatternId(
           AddImportIRInst(context, import_return_slot_pattern_id),
           {.type_id = type_id,
            .subpattern_id = new_return_slot_pattern_id,
-           .runtime_index = param_pattern.runtime_index}));
+           .index = param_pattern.index}));
 }
 
 // Translates a NameScopeId from the import IR to a local NameScopeId. Adds

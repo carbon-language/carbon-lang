@@ -254,7 +254,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               context, node_id,
               {.type_id = context.insts().Get(result_inst_id).type_id(),
                .subpattern_id = result_inst_id,
-               .runtime_index = SemIR::RuntimeParamIndex::None});
+               .index = SemIR::CallParamIndex::None});
         }
       }
       context.node_stack().Push(node_id, result_inst_id);
