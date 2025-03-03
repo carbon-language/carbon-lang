@@ -8,7 +8,12 @@
  * This is the main launcher for the LSP extension.
  */
 
-import { workspace, ExtensionContext, commands } from 'vscode';
+import {
+  workspace,
+  ExtensionContext,
+  commands,
+  WorkspaceConfiguration,
+} from 'vscode';
 
 import {
   LanguageClient,
@@ -17,6 +22,39 @@ import {
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
+
+/**
+ * Splits a CLI-style quoted string.
+ */
+function splitQuotedString(carbonArgs: string): string[] {
+  const regex = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  const result = [];
+  let match;
+
+  while ((match = regex.exec(carbonArgs)) !== null) {
+    if (match[1]) {
+      result.push(match[1]);
+    } else if (match[2]) {
+      result.push(match[2]);
+    } else if (match[3]) {
+      result.push(match[3]);
+    }
+  }
+  return result;
+}
+
+/**
+ * Combines the `language-server` command with args from settings.
+ */
+function buildServerArgs(settings: WorkspaceConfiguration): string[] {
+  const result: string[] = [];
+  result.push(...splitQuotedString(settings.get('carbonServerCommandArgs', '')));
+  result.push('language-server');
+  result.push(
+    ...splitQuotedString(settings.get('carbonServerSubcommandArgs', ''))
+  );
+  return result;
+}
 
 export function activate(context: ExtensionContext) {
   const settings = workspace.getConfiguration('carbon');
@@ -28,7 +66,7 @@ export function activate(context: ExtensionContext) {
       'carbonPath',
       context.asAbsolutePath('./bazel-bin/toolchain/carbon')
     ),
-    args: ['language-server'],
+    args: buildServerArgs(settings),
   };
 
   const clientOptions: LanguageClientOptions = {
