@@ -273,7 +273,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 // facet.
 static auto FindWitnessInFacet(Context& context, SemIR::LocId loc_id,
                                SemIR::ConstantId facet_const_id,
-                               SemIR::SpecificInterface& specific_interface)
+                               const SemIR::SpecificInterface& specific_interface)
     -> SemIR::InstId {
   SemIR::InstId facet_inst_id =
       context.constant_values().GetInstId(facet_const_id);
@@ -296,9 +296,9 @@ static auto FindWitnessInFacet(Context& context, SemIR::LocId loc_id,
       for (auto interface : complete_facet_type.required_interfaces) {
         if (interface == specific_interface) {
           // TODO: Need to get the right witness when there are multiple.
-          return GetOrAddInst<SemIR::FacetAccessWitness>(
+          return GetOrAddInst(
               context, loc_id,
-              {.type_id = GetSingletonType(context,
+              SemIR::FacetAccessWitness{.type_id = GetSingletonType(context,
                                            SemIR::WitnessType::SingletonInstId),
                .facet_value_inst_id = facet_inst_id});
         }
