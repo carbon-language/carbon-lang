@@ -240,8 +240,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
            implicit_param_patterns, param_patterns)) {
     auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
         sem_ir(), param_pattern_id);
-    if (!param_pattern_info ||
-        !param_pattern_info->inst.runtime_index.has_value()) {
+    if (!param_pattern_info) {
       continue;
     }
     auto param_type_id = SemIR::GetTypeInSpecific(

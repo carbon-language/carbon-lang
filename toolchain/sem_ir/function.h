@@ -75,12 +75,13 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
-  // Given an instruction from `param_patterns_id` or
+  // Given the ID of an instruction from `param_patterns_id` or
   // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
-  // corresponding instruction, its ID, and the entity_name_id of the underlying
-  // binding pattern, or std::nullopt if it isn't a `Call` parameter of the
-  // function.
-  // FIXME rename and redocument as a way of getting `Call` parameters?
+  // corresponding `Call` parameter pattern, its ID, and the entity_name_id of
+  // the underlying binding pattern, or std::nullopt if there is no
+  // corresponding `Call` parameter.
+  // TODO: Remove this, by exposing `Call` parameter patterns instead of `Call`
+  // parameters in EntityWithParams.
   static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                InstId param_pattern_id)
       -> std::optional<ParamPatternInfo>;

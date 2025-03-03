@@ -217,20 +217,12 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
   InsertHere(context, type_expr_region_id);
   auto value_id = SemIR::InstId::None;
-  // FIXME change to if Local?
-  switch (kind_) {
-    case MatchKind::Local: {
-      value_id = ConvertToValueOrRefOfType(
-          context, context.insts().GetLocId(entry.scrutinee_id),
-          entry.scrutinee_id, binding_pattern.type_id);
-      break;
-    }
-    case MatchKind::Callee: {
-      value_id = entry.scrutinee_id;
-      break;
-    }
-    case MatchKind::Caller:
-      CARBON_FATAL();
+  if (kind_ == MatchKind::Local) {
+    value_id = ConvertToValueOrRefOfType(
+        context, context.insts().GetLocId(entry.scrutinee_id),
+        entry.scrutinee_id, binding_pattern.type_id);
+  } else {
+    value_id = entry.scrutinee_id;
   }
   auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
   CARBON_CHECK(!bind_name.value_id.has_value());

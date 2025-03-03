@@ -965,7 +965,6 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
       pattern_inst = resolver.import_insts().Get(pattern_id);
       GetLocalConstantId(resolver, pattern_inst.type_id());
     }
-    // to be wrapped in ValueParamPattern.
     // If the parameter is a symbolic binding, build the
     // SymbolicBindingPattern constant.
     if (pattern_inst.Is<SemIR::SymbolicBindingPattern>()) {
