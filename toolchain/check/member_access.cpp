@@ -190,7 +190,6 @@ static auto PerformImplLookup(
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto interface_type =
       GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
-  // FIXME: Separate PR.
   // An associated entity is always associated with a single interface.
   CARBON_CHECK(interface_type);
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
