@@ -64,6 +64,9 @@ library "[[@TEST_NAME]]";
 
 import Core;
 
+// Non-instance versions of these tests are in
+// .../interface/no_prelude/compound_member_access.carbon.
+
 interface A {
   fn G[self: Self]();
 }
