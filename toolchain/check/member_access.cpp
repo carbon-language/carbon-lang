@@ -503,11 +503,6 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
       return SemIR::ErrorInst::SingletonInstId;
     }
 
-    if (auto facet_type = context.insts().TryGetAs<SemIR::BindSymbolicName>(
-            context.constant_values().GetInstId(base_type_const_id))) {
-      llvm::errs() << "hi\n";
-    }
-
     if (base_type_id != SemIR::ErrorInst::SingletonTypeId) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                         "type {0} does not support qualified expressions",
