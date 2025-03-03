@@ -18,6 +18,13 @@ interface A {}
 fn TakesA[T:! A](x: T) {}
 
 fn WithExtraWhere[U:! A where .Self impls type](y: U) {
+  // CHECK:STDERR: equivalent.carbon:[[@LINE+7]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   TakesA(y);
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: equivalent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn TakesA[T:! A](x: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   TakesA(y);
 }
 
@@ -30,7 +37,6 @@ fn WithExtraWhere[U:! A where .Self impls type](y: U) {
 // CHECK:STDOUT:   %T.patt: %A.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %TakesA.type: type = fn_type @TakesA [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakesA: %TakesA.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.cf4: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %.Self: %A.type = bind_symbolic_name .Self [symbolic_self]
@@ -42,9 +48,6 @@ fn WithExtraWhere[U:! A where .Self impls type](y: U) {
 // CHECK:STDOUT:   %WithExtraWhere.type: type = fn_type @WithExtraWhere [concrete]
 // CHECK:STDOUT:   %WithExtraWhere: %WithExtraWhere.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.732: <witness> = require_complete_type %U.as_type [symbolic]
-// CHECK:STDOUT:   %U.as_wit: <witness> = facet_access_witness %U [symbolic]
-// CHECK:STDOUT:   %A.facet: %A.type = facet_value %U.as_type, %U.as_wit [symbolic]
-// CHECK:STDOUT:   %TakesA.specific_fn: <specific function> = specific_function %TakesA, @TakesA(%A.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -128,22 +131,12 @@ fn WithExtraWhere[U:! A where .Self impls type](y: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @WithExtraWhere.%U.as_type.loc7_52.2 (%U.as_type) [symbolic = %require_complete (constants.%require_complete.732)]
-// CHECK:STDOUT:   %U.as_wit.loc8_11.3: <witness> = facet_access_witness %U.loc7_19.2 [symbolic = %U.as_wit.loc8_11.3 (constants.%U.as_wit)]
-// CHECK:STDOUT:   %A.facet.loc8_11.3: %A.type = facet_value %U.as_type.loc7_52.2, %U.as_wit.loc8_11.3 [symbolic = %A.facet.loc8_11.3 (constants.%A.facet)]
-// CHECK:STDOUT:   %TakesA.specific_fn.loc8_3.2: <specific function> = specific_function constants.%TakesA, @TakesA(%A.facet.loc8_11.3) [symbolic = %TakesA.specific_fn.loc8_3.2 (constants.%TakesA.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%U.param_patt: %A_where.type](%y.param_patt: @WithExtraWhere.%U.as_type.loc7_52.2 (%U.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %TakesA.ref: %TakesA.type = name_ref TakesA, file.%TakesA.decl [concrete = constants.%TakesA]
 // CHECK:STDOUT:     %y.ref: @WithExtraWhere.%U.as_type.loc7_52.2 (%U.as_type) = name_ref y, %y
-// CHECK:STDOUT:     %U.as_wit.loc8_11.1: <witness> = facet_access_witness constants.%U [symbolic = %U.as_wit.loc8_11.3 (constants.%U.as_wit)]
-// CHECK:STDOUT:     %A.facet.loc8_11.1: %A.type = facet_value constants.%U.as_type, %U.as_wit.loc8_11.1 [symbolic = %A.facet.loc8_11.3 (constants.%A.facet)]
-// CHECK:STDOUT:     %.loc8_11.1: %A.type = converted constants.%U.as_type, %A.facet.loc8_11.1 [symbolic = %A.facet.loc8_11.3 (constants.%A.facet)]
-// CHECK:STDOUT:     %U.as_wit.loc8_11.2: <witness> = facet_access_witness constants.%U [symbolic = %U.as_wit.loc8_11.3 (constants.%U.as_wit)]
-// CHECK:STDOUT:     %A.facet.loc8_11.2: %A.type = facet_value constants.%U.as_type, %U.as_wit.loc8_11.2 [symbolic = %A.facet.loc8_11.3 (constants.%A.facet)]
-// CHECK:STDOUT:     %.loc8_11.2: %A.type = converted constants.%U.as_type, %A.facet.loc8_11.2 [symbolic = %A.facet.loc8_11.3 (constants.%A.facet)]
-// CHECK:STDOUT:     %TakesA.specific_fn.loc8_3.1: <specific function> = specific_function %TakesA.ref, @TakesA(constants.%A.facet) [symbolic = %TakesA.specific_fn.loc8_3.2 (constants.%TakesA.specific_fn)]
-// CHECK:STDOUT:     %TakesA.call: init %empty_tuple.type = call %TakesA.specific_fn.loc8_3.1(%y.ref)
+// CHECK:STDOUT:     %.loc15: %A.type = converted constants.%U.as_type, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -159,15 +152,4 @@ fn WithExtraWhere[U:! A where .Self impls type](y: U) {
 // CHECK:STDOUT:   %U.patt.loc7_19.2 => constants.%U
 // CHECK:STDOUT:   %U.as_type.loc7_52.2 => constants.%U.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @TakesA(constants.%A.facet) {
-// CHECK:STDOUT:   %T.loc5_11.2 => constants.%A.facet
-// CHECK:STDOUT:   %T.patt.loc5_11.2 => constants.%A.facet
-// CHECK:STDOUT:   %T.as_type.loc5_21.2 => constants.%U.as_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.732
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @TakesA(@WithExtraWhere.%A.facet.loc8_11.3) {}
 // CHECK:STDOUT:
