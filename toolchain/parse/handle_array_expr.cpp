@@ -13,28 +13,30 @@ namespace Carbon::Parse {
 
 auto HandleArrayExpr(Context& context) -> void {
   auto state = context.PopState();
-  context.AddLeafNode(NodeKind::ArrayExprStart,
-                      context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
-                      state.has_error);
-  context.PushState(state, State::ArrayExprSemi);
+  auto array_token = context.ConsumeChecked(Lex::TokenKind::Array);
+  context.AddLeafNode(NodeKind::ArrayExprKeyword, array_token, state.has_error);
+  if (auto open_paren = context.ConsumeAndAddOpenParen(
+          array_token, NodeKind::ArrayExprOpenParen)) {
+    state.token = *open_paren;
+  } else {
+    state.has_error = true;
+  }
+  context.PushState(state, State::ArrayExprComma);
   context.PushState(State::Expr);
 }
 
-auto HandleArrayExprSemi(Context& context) -> void {
+auto HandleArrayExprComma(Context& context) -> void {
   auto state = context.PopState();
-  auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
-  if (!semi) {
-    context.AddNode(NodeKind::ArrayExprSemi, *context.position(), true);
-    CARBON_DIAGNOSTIC(ExpectedArraySemi, Error, "expected `;` in array type");
-    context.emitter().Emit(*context.position(), ExpectedArraySemi);
+  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Comma,
+                                       NodeKind::ArrayExprComma)) {
+    context.AddLeafNode(NodeKind::ArrayExprComma, *context.position(), true);
+    CARBON_DIAGNOSTIC(ExpectedArrayComma, Error,
+                      "expected `,` in `array(Type, Count)`");
+    context.emitter().Emit(*context.position(), ExpectedArrayComma);
     state.has_error = true;
-  } else {
-    context.AddNode(NodeKind::ArrayExprSemi, *semi, state.has_error);
   }
   context.PushState(state, State::ArrayExprFinish);
-  if (!context.PositionIs(Lex::TokenKind::CloseSquareBracket)) {
-    context.PushState(State::Expr);
-  }
+  context.PushState(State::Expr);
 }
 
 auto HandleArrayExprFinish(Context& context) -> void {

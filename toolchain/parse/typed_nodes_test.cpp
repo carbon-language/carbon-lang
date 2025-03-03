@@ -110,7 +110,7 @@ TEST_F(TypedNodeTest, ModifierOrder) {
 
 TEST_F(TypedNodeTest, For) {
   auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
-    fn F(arr: [i32; 5]) {
+    fn F(arr: array(i32, 5)) {
       for (var v: i32 in arr) {
         Print(v);
       }
@@ -262,7 +262,7 @@ Aggregate [^:]*: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-NodeIdInCategory MemberExpr\|MemberName\|IntConst: kind IdentifierNameNotBeforeParams consumed
+NodeIdInCategory IntConst\|MemberExpr\|MemberName: kind IdentifierNameNotBeforeParams consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
 Aggregate [^:]*: success
 )Trace"));
@@ -290,10 +290,10 @@ Optional [^:]*: found
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitParamList
 Optional [^:]*: missing
-NodeIdInCategory NonExprIdentifierName: kind IdentifierNameBeforeParams consumed
+NodeIdInCategory NonExprName: kind IdentifierNameBeforeParams consumed
 Vector: begin
-NodeIdOneOf NameQualifierWithParams or NameQualifierWithoutParams: NameQualifierWithoutParams consumed
-NodeIdOneOf error: wrong kind AbstractModifier, expected NameQualifierWithParams or NameQualifierWithoutParams
+NodeIdOneOf NameQualifierWithParams or IdentifierNameQualifierWithoutParams or KeywordNameQualifierWithoutParams: IdentifierNameQualifierWithoutParams consumed
+NodeIdOneOf error: wrong kind AbstractModifier, expected NameQualifierWithParams or IdentifierNameQualifierWithoutParams or KeywordNameQualifierWithoutParams
 Vector: end
 Aggregate [^:]*: success
 Vector: begin

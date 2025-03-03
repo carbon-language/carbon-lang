@@ -32,7 +32,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
-                        Context::BuildDiagnosticFn missing_impl_diagnoser)
+                        MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id.ToImplicit(), op);
@@ -50,7 +50,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         Context::BuildDiagnosticFn missing_impl_diagnoser)
+                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id.ToImplicit(), op);

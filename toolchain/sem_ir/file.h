@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
+#include "clang/Frontend/ASTUnit.h"
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
@@ -57,6 +58,9 @@ struct ExprRegion {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
+  using CompleteFacetTypeStore =
+      RelationalValueStore<SemIR::FacetTypeId, SemIR::CompleteFacetTypeId>;
+
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
@@ -150,16 +154,17 @@ class File : public Printable<File> {
   auto associated_constants() const -> const ValueStore<AssociatedConstantId>& {
     return associated_constants_;
   }
+  // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }
   auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }
-  auto complete_facet_types() -> ValueStore<CompleteFacetTypeId>& {
+  auto complete_facet_types() -> CompleteFacetTypeStore& {
     return complete_facet_types_;
   }
-  auto complete_facet_types() const -> const ValueStore<CompleteFacetTypeId>& {
+  auto complete_facet_types() const -> const CompleteFacetTypeStore& {
     return complete_facet_types_;
   }
   auto impls() -> ImplStore& { return impls_; }
@@ -182,6 +187,10 @@ class File : public Printable<File> {
   auto import_cpps() const -> const ValueStore<ImportCppId>& {
     return import_cpps_;
   }
+  auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
+  // TODO: When the AST can be created before creating `File`, initialize the
+  // pointer in the constructor and remove this function.
+  auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -276,7 +285,7 @@ class File : public Printable<File> {
   CanonicalValueStore<FacetTypeId> facet_types_;
 
   // Storage for complete facet types.
-  ValueStore<CompleteFacetTypeId> complete_facet_types_;
+  CompleteFacetTypeStore complete_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
@@ -296,6 +305,10 @@ class File : public Printable<File> {
 
   // List of Cpp imports.
   ValueStore<ImportCppId> import_cpps_;
+
+  // The Clang AST to use when looking up `Cpp` names. Null if there are no
+  // `Cpp` imports.
+  clang::ASTUnit* cpp_ast_ = nullptr;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.

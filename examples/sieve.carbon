@@ -28,7 +28,7 @@ class Sieve {
     }
   }
 
-  var is_prime: [bool; 1000];
+  var is_prime: array(bool, 1000);
 }
 
 fn Run() -> i32 {

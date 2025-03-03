@@ -155,7 +155,7 @@ class ScopeStack {
   auto Restore(SuspendedScope scope) -> void;
 
   // Runs verification that the processing cleanly finished.
-  auto VerifyOnFinish() -> void;
+  auto VerifyOnFinish() const -> void;
 
   auto return_scope_stack() -> llvm::SmallVector<ReturnScope>& {
     return return_scope_stack_;

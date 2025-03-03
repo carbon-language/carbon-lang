@@ -754,13 +754,13 @@ class FormatterImpl {
   template <typename InstT>
   auto FormatInst(InstId inst_id, InstT inst) -> void {
     Indent();
-    FormatInstLHS(inst_id, inst);
+    FormatInstLhs(inst_id, inst);
     out_ << InstT::Kind.ir_name();
     pending_constant_value_ = sem_ir_->constant_values().Get(inst_id);
     pending_constant_value_is_self_ =
         sem_ir_->constant_values().GetInstIdIfValid(pending_constant_value_) ==
         inst_id;
-    FormatInstRHS(inst);
+    FormatInstRhs(inst);
     FormatPendingConstantValue(AddSpace::Before);
     out_ << "\n";
   }
@@ -768,9 +768,9 @@ class FormatterImpl {
   // Don't print a constant for ImportRefUnloaded.
   auto FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
     Indent();
-    FormatInstLHS(inst_id, inst);
+    FormatInstLhs(inst_id, inst);
     out_ << ImportRefUnloaded::Kind.ir_name();
-    FormatInstRHS(inst);
+    FormatInstRhs(inst);
     out_ << "\n";
   }
 
@@ -835,7 +835,7 @@ class FormatterImpl {
     pending_constant_value_ = ConstantId::NotConstant;
   }
 
-  auto FormatInstLHS(InstId inst_id, Inst inst) -> void {
+  auto FormatInstLhs(InstId inst_id, Inst inst) -> void {
     switch (inst.kind().value_kind()) {
       case InstValueKind::Typed:
         FormatName(inst_id);
@@ -863,26 +863,26 @@ class FormatterImpl {
   }
 
   // Format ImportCppDecl name.
-  auto FormatInstLHS(InstId inst_id, ImportCppDecl /*inst*/) -> void {
+  auto FormatInstLhs(InstId inst_id, ImportCppDecl /*inst*/) -> void {
     FormatName(inst_id);
     out_ << " = ";
   }
 
   // Format ImportDecl with its name.
-  auto FormatInstLHS(InstId inst_id, ImportDecl /*inst*/) -> void {
+  auto FormatInstLhs(InstId inst_id, ImportDecl /*inst*/) -> void {
     FormatName(inst_id);
     out_ << " = ";
   }
 
   // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
-  auto FormatInstLHS(InstId inst_id, ImportRefUnloaded /*inst*/) -> void {
+  auto FormatInstLhs(InstId inst_id, ImportRefUnloaded /*inst*/) -> void {
     FormatName(inst_id);
     out_ << " = ";
   }
 
   template <typename InstT>
-  auto FormatInstRHS(InstT inst) -> void {
+  auto FormatInstRhs(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
     using Info = Internal::InstLikeTypeInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
@@ -904,7 +904,7 @@ class FormatterImpl {
     }
   }
 
-  auto FormatInstRHS(BindSymbolicName inst) -> void {
+  auto FormatInstRhs(BindSymbolicName inst) -> void {
     // A BindSymbolicName with no value is a purely symbolic binding, such as
     // the `Self` in an interface. Don't print out `none` for the value.
     if (inst.value_id.has_value()) {
@@ -914,12 +914,12 @@ class FormatterImpl {
     }
   }
 
-  auto FormatInstRHS(BlockArg inst) -> void {
+  auto FormatInstRhs(BlockArg inst) -> void {
     out_ << " ";
     FormatLabel(inst.block_id);
   }
 
-  auto FormatInstRHS(Namespace inst) -> void {
+  auto FormatInstRhs(Namespace inst) -> void {
     if (inst.import_id.has_value()) {
       FormatArgs(inst.import_id, inst.name_scope_id);
     } else {
@@ -961,7 +961,7 @@ class FormatterImpl {
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstRHS(Call inst) -> void {
+  auto FormatInstRhs(Call inst) -> void {
     out_ << " ";
     FormatArg(inst.callee_id);
 
@@ -997,56 +997,56 @@ class FormatterImpl {
     }
   }
 
-  auto FormatInstRHS(ArrayInit inst) -> void {
+  auto FormatInstRhs(ArrayInit inst) -> void {
     FormatArgs(inst.inits_id);
     FormatReturnSlotArg(inst.dest_id);
   }
 
-  auto FormatInstRHS(InitializeFrom inst) -> void {
+  auto FormatInstRhs(InitializeFrom inst) -> void {
     FormatArgs(inst.src_id);
     FormatReturnSlotArg(inst.dest_id);
   }
 
-  auto FormatInstRHS(ValueParam inst) -> void {
+  auto FormatInstRhs(ValueParam inst) -> void {
     FormatArgs(inst.index);
     // Omit pretty_name because it's an implementation detail of
     // pretty-printing.
   }
 
-  auto FormatInstRHS(OutParam inst) -> void {
+  auto FormatInstRhs(OutParam inst) -> void {
     FormatArgs(inst.index);
     // Omit pretty_name because it's an implementation detail of
     // pretty-printing.
   }
 
-  auto FormatInstRHS(ReturnExpr ret) -> void {
+  auto FormatInstRhs(ReturnExpr ret) -> void {
     FormatArgs(ret.expr_id);
     if (ret.dest_id.has_value()) {
       FormatReturnSlotArg(ret.dest_id);
     }
   }
 
-  auto FormatInstRHS(ReturnSlot inst) -> void {
+  auto FormatInstRhs(ReturnSlot inst) -> void {
     // Omit inst.type_inst_id because it's not semantically significant.
     FormatArgs(inst.storage_id);
   }
 
-  auto FormatInstRHS(ReturnSlotPattern /*inst*/) -> void {
+  auto FormatInstRhs(ReturnSlotPattern /*inst*/) -> void {
     // No-op because type_id is the only semantically significant field,
     // and it's handled separately.
   }
 
-  auto FormatInstRHS(StructInit init) -> void {
+  auto FormatInstRhs(StructInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlotArg(init.dest_id);
   }
 
-  auto FormatInstRHS(TupleInit init) -> void {
+  auto FormatInstRhs(TupleInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlotArg(init.dest_id);
   }
 
-  auto FormatInstRHS(FunctionDecl inst) -> void {
+  auto FormatInstRhs(FunctionDecl inst) -> void {
     FormatArgs(inst.function_id);
     llvm::SaveAndRestore class_scope(
         scope_, inst_namer_->GetScopeFor(inst.function_id));
@@ -1055,7 +1055,7 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(ClassDecl inst) -> void {
+  auto FormatInstRhs(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
     llvm::SaveAndRestore class_scope(scope_,
                                      inst_namer_->GetScopeFor(inst.class_id));
@@ -1063,7 +1063,7 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(ImplDecl inst) -> void {
+  auto FormatInstRhs(ImplDecl inst) -> void {
     FormatArgs(inst.impl_id);
     llvm::SaveAndRestore class_scope(scope_,
                                      inst_namer_->GetScopeFor(inst.impl_id));
@@ -1071,7 +1071,7 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(InterfaceDecl inst) -> void {
+  auto FormatInstRhs(InterfaceDecl inst) -> void {
     FormatArgs(inst.interface_id);
     llvm::SaveAndRestore class_scope(
         scope_, inst_namer_->GetScopeFor(inst.interface_id));
@@ -1080,28 +1080,28 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(AssociatedConstantDecl inst) -> void {
+  auto FormatInstRhs(AssociatedConstantDecl inst) -> void {
     FormatArgs(inst.assoc_const_id);
     llvm::SaveAndRestore assoc_const_scope(
         scope_, inst_namer_->GetScopeFor(inst.assoc_const_id));
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(IntValue inst) -> void {
+  auto FormatInstRhs(IntValue inst) -> void {
     out_ << " ";
     sem_ir_->ints()
         .Get(inst.int_id)
         .print(out_, sem_ir_->types().IsSignedInt(inst.type_id));
   }
 
-  auto FormatInstRHS(FloatLiteral inst) -> void {
+  auto FormatInstRhs(FloatLiteral inst) -> void {
     llvm::SmallVector<char, 16> buffer;
     sem_ir_->floats().Get(inst.float_id).toString(buffer);
     out_ << " " << buffer;
   }
 
   // Format the metadata in File for `import Cpp`.
-  auto FormatInstRHS(ImportCppDecl /*inst*/) -> void {
+  auto FormatInstRhs(ImportCppDecl /*inst*/) -> void {
     out_ << " ";
     OpenBrace();
     for (ImportCpp import_cpp : sem_ir_->import_cpps().array_ref()) {
@@ -1114,7 +1114,7 @@ class FormatterImpl {
     CloseBrace();
   }
 
-  auto FormatImportRefRHS(ImportIRInstId import_ir_inst_id,
+  auto FormatImportRefRhs(ImportIRInstId import_ir_inst_id,
                           EntityNameId entity_name_id,
                           llvm::StringLiteral loaded_label) -> void {
     out_ << " ";
@@ -1148,29 +1148,29 @@ class FormatterImpl {
     out_ << ", " << loaded_label;
   }
 
-  auto FormatInstRHS(ImportRefLoaded inst) -> void {
-    FormatImportRefRHS(inst.import_ir_inst_id, inst.entity_name_id, "loaded");
+  auto FormatInstRhs(ImportRefLoaded inst) -> void {
+    FormatImportRefRhs(inst.import_ir_inst_id, inst.entity_name_id, "loaded");
   }
 
-  auto FormatInstRHS(ImportRefUnloaded inst) -> void {
-    FormatImportRefRHS(inst.import_ir_inst_id, inst.entity_name_id, "unloaded");
+  auto FormatInstRhs(ImportRefUnloaded inst) -> void {
+    FormatImportRefRhs(inst.import_ir_inst_id, inst.entity_name_id, "unloaded");
   }
 
-  auto FormatInstRHS(NameBindingDecl inst) -> void {
+  auto FormatInstRhs(NameBindingDecl inst) -> void {
     FormatTrailingBlock(inst.pattern_block_id);
   }
 
-  auto FormatInstRHS(SpliceBlock inst) -> void {
+  auto FormatInstRhs(SpliceBlock inst) -> void {
     FormatArgs(inst.result_id);
     FormatTrailingBlock(inst.block_id);
   }
 
-  auto FormatInstRHS(WhereExpr inst) -> void {
+  auto FormatInstRhs(WhereExpr inst) -> void {
     FormatArgs(inst.period_self_id);
     FormatTrailingBlock(inst.requirements_id);
   }
 
-  auto FormatInstRHS(StructType inst) -> void {
+  auto FormatInstRhs(StructType inst) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
     for (auto field : sem_ir_->struct_type_fields().Get(inst.fields_id)) {
@@ -1346,6 +1346,10 @@ class FormatterImpl {
   }
 
   auto FormatName(AbsoluteInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
+  auto FormatName(DestInstId id) -> void {
     FormatName(static_cast<InstId>(id));
   }
 

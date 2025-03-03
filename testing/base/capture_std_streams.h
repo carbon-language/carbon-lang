@@ -25,7 +25,7 @@ auto EndStdStreamCapture(std::string& out, std::string& err) -> void;
 // that are needed when debugging.
 template <typename FnT>
 static auto CallWithCapturedOutput(std::string& out, std::string& err,
-                                   FnT function) {
+                                   FnT function) -> auto {
   Internal::BeginStdStreamCapture();
   auto result = function();
   Internal::EndStdStreamCapture(out, err);

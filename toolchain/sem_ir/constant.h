@@ -166,12 +166,7 @@ class ConstantValueStore {
       auto [index, value] = pair;
       return std::pair<InstId, ConstantId>(InstId(index), value);
     };
-    auto range = llvm::enumerate(values_);
-    using Iter =
-        llvm::mapped_iterator<decltype(range.begin()), decltype(index_to_id)>;
-    auto begin = Iter(range.begin(), index_to_id);
-    auto end = Iter(range.end(), index_to_id);
-    return llvm::make_range(begin, end);
+    return llvm::map_range(llvm::enumerate(values_), index_to_id);
   }
 
   // Returns the symbolic constants mapping as an ArrayRef whose keys are

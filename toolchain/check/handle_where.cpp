@@ -62,7 +62,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
 
   // Convert rhs to type of lhs.
   auto lhs_type_id = context.insts().Get(lhs).type_id();
-  if (context.types().GetConstantId(lhs_type_id).is_symbolic()) {
+  if (lhs_type_id.is_symbolic()) {
     // If the type of the associated constant is symbolic, we defer conversion
     // until the constraint is resolved, in case it depends on `Self` (which
     // will now be a reference to `.Self`).

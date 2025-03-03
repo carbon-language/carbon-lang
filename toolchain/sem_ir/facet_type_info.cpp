@@ -26,8 +26,15 @@ static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
          std::tie(rhs.lhs_const_id.index, rhs.rhs_const_id.index);
 }
 
+// Canonically ordered by the numerical ids.
+static auto RequiredLess(const CompleteFacetType::RequiredInterface& lhs,
+                         const CompleteFacetType::RequiredInterface& rhs)
+    -> bool {
+  return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
+         std::tie(rhs.interface_id.index, rhs.specific_id.index);
+}
+
 auto FacetTypeInfo::Canonicalize() -> void {
-  CARBON_CHECK(!complete_id.has_value());
   SortAndDeduplicate(impls_constraints, ImplsLess);
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
@@ -59,10 +66,11 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     out << outer_sep << "+ TODO requirements";
   }
 
-  if (complete_id.has_value()) {
-    out << outer_sep << "complete: " << complete_id;
-  }
   out << "}";
+}
+
+auto CompleteFacetType::CanonicalizeRequiredInterfaces() -> void {
+  SortAndDeduplicate(required_interfaces, RequiredLess);
 }
 
 }  // namespace Carbon::SemIR

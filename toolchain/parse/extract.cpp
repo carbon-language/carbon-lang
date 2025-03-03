@@ -48,7 +48,9 @@ class NodeExtractor {
   // Saves a checkpoint of our current position so we can return later if
   // extraction of a child node fails.
   auto Checkpoint() const -> CheckpointState { return {.it = it_}; }
-  auto RestoreCheckpoint(CheckpointState checkpoint) { it_ = checkpoint.it; }
+  auto RestoreCheckpoint(CheckpointState checkpoint) -> void {
+    it_ = checkpoint.it;
+  }
 
   // Determines whether the current position matches the specified node kind. If
   // not, produces a suitable trace message.

@@ -4,6 +4,7 @@
 
 #include "toolchain/lower/file_context.h"
 
+#include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
@@ -85,6 +86,16 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
     BuildFunctionDefinition(id);
   }
+
+  // Lower function definitions for generics.
+  // This cannot be a range-based loop, as new definitions can be added
+  // while building other definitions.
+  // NOLINTNEXTLINE
+  for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
+    auto [function_id, specific_id] = specific_function_definitions_[i];
+    BuildFunctionDefinition(function_id, specific_id);
+  }
+
   // Append `__global_init` to `llvm::global_ctors` to initialize global
   // variables.
   if (sem_ir().global_ctor_id().has_value()) {
@@ -184,6 +195,8 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
   // TODO: Add this function to a list of specific functions whose definitions
   // we need to emit.
   specific_functions_[specific_id.index] = result;
+  // TODO: Use this to generate definitions for these functions.
+  specific_function_definitions_.push_back({function_id, specific_id});
   return result;
 }
 
@@ -298,7 +311,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   return llvm_function;
 }
 
-auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
+auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id,
+                                          SemIR::SpecificId specific_id)
     -> void {
   const auto& function = sem_ir().functions().Get(function_id);
   const auto& body_block_ids = function.body_block_ids;
@@ -307,19 +321,36 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
-  llvm::Function* llvm_function = GetFunction(function_id);
-  if (!llvm_function) {
-    // We chose not to lower this function at all, for example because it's a
-    // generic function.
-    return;
+  llvm::Function* llvm_function;
+  if (specific_id.has_value()) {
+    llvm_function = specific_functions_[specific_id.index];
+  } else {
+    llvm_function = GetFunction(function_id);
+    if (!llvm_function) {
+      // We chose not to lower this function at all, for example because it's a
+      // generic function.
+      return;
+    }
   }
+
+  // For non-generics we do not lower. For generics, the llvm function was
+  // created via GetOrCreateFunction prior to this when building the
+  // declaration.
+  BuildFunctionBody(function_id, function, llvm_function, specific_id);
+}
+
+auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
+                                    const SemIR::Function& function,
+                                    llvm::Function* llvm_function,
+                                    SemIR::SpecificId specific_id) -> void {
+  const auto& body_block_ids = function.body_block_ids;
+  CARBON_DCHECK(llvm_function, "LLVM Function not found when lowering body.");
+  CARBON_DCHECK(!body_block_ids.empty(),
+                "No function body blocks found during lowering.");
 
   FunctionContext function_lowering(*this, llvm_function,
                                     BuildDISubprogram(function, llvm_function),
                                     vlog_stream_);
-
-  // TODO: Pass in a specific ID for generic functions.
-  const auto specific_id = SemIR::SpecificId::None;
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
@@ -337,12 +368,15 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   auto lower_param = [&](SemIR::InstId param_id) {
     // Get the value of the parameter from the function argument.
     auto param_inst = sem_ir().insts().GetAs<SemIR::AnyParam>(param_id);
-    llvm::Value* param_value =
-        llvm::PoisonValue::get(GetType(param_inst.type_id));
+    llvm::Value* param_value;
+
     if (SemIR::ValueRepr::ForType(sem_ir(), param_inst.type_id).kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;
+    } else {
+      param_value = llvm::PoisonValue::get(GetType(
+          SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_inst.type_id)));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);

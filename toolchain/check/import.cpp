@@ -79,7 +79,8 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
 // could also be a builtin name ID which is equivalent cross-IR.
 static auto CopyNameFromImportIR(Context& context,
                                  const SemIR::File& import_sem_ir,
-                                 SemIR::NameId import_name_id) {
+                                 SemIR::NameId import_name_id)
+    -> SemIR::NameId {
   if (auto import_identifier_id = import_name_id.AsIdentifierId();
       import_identifier_id.has_value()) {
     auto name = import_sem_ir.identifiers().Get(import_identifier_id);
@@ -252,7 +253,7 @@ static auto CopyAncestorNameScopesFromImportIR(
 
   // Add ancestor namespace names, starting with the outermost.
   for (auto import_scope_id : llvm::reverse(new_namespaces)) {
-    auto import_scope = import_sem_ir.name_scopes().Get(import_scope_id);
+    const auto& import_scope = import_sem_ir.name_scopes().Get(import_scope_id);
     auto name_id =
         CopyNameFromImportIR(context, import_sem_ir, import_scope.name_id());
     scope_cursor =
@@ -263,6 +264,40 @@ static auto CopyAncestorNameScopesFromImportIR(
   }
 
   return scope_cursor;
+}
+
+// Imports the function if it's a non-owning declaration with the current file
+// as owner.
+static auto LoadImportForOwningFunction(Context& context,
+                                        const SemIR::File& import_sem_ir,
+                                        const SemIR::Function& function,
+                                        SemIR::InstId import_ref) {
+  if (!function.extern_library_id.has_value()) {
+    return;
+  }
+  CARBON_CHECK(function.is_extern && "Expected extern functions");
+  auto lib_id = function.extern_library_id;
+  bool is_lib_default = lib_id == SemIR::LibraryNameId::Default;
+
+  auto current_id = context.sem_ir().library_id();
+  bool is_current_default = current_id == SemIR::LibraryNameId::Default;
+
+  if (is_lib_default == is_current_default) {
+    if (is_lib_default) {
+      // Both libraries are default, import ref.
+      LoadImportRef(context, import_ref);
+    } else {
+      // Both libraries are non-default: check if they're the same named
+      // library, import ref if yes.
+      auto str_owner_library = context.string_literal_values().Get(
+          current_id.AsStringLiteralValueId());
+      auto str_decl_library = import_sem_ir.string_literal_values().Get(
+          lib_id.AsStringLiteralValueId());
+      if (str_owner_library == str_decl_library) {
+        LoadImportRef(context, import_ref);
+      }
+    }
+  }
 }
 
 // Adds an ImportRef for an entity, handling merging if needed.
@@ -281,10 +316,20 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
   if (inserted) {
     auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id, .parent_scope_id = parent_scope_id});
+    auto import_ref = AddImportRef(
+        context, {.ir_id = ir_id, .inst_id = import_inst_id}, entity_name_id);
     entry.result = SemIR::ScopeLookupResult::MakeFound(
-        AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
-                     entity_name_id),
-        SemIR::AccessKind::Public);
+        import_ref, SemIR::AccessKind::Public);
+
+    // Import references for non-owning declarations that match current library.
+    if (auto function_decl =
+            import_sem_ir.insts().TryGetAs<SemIR::FunctionDecl>(
+                import_inst_id)) {
+      LoadImportForOwningFunction(
+          context, import_sem_ir,
+          import_sem_ir.functions().Get(function_decl->function_id),
+          import_ref);
+    }
     return;
   }
 

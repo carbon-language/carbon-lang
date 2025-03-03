@@ -12,7 +12,7 @@ class Wrap(T:! type) {
   fn Make() -> T { return Make(); }
 }
 
-class C { var arr: [i32; 100]; }
+class C { var arr: array(i32, 100); }
 
 fn G() {
   var a: i32 = Wrap(i32).Make();

@@ -11,6 +11,7 @@
 #include "llvm/IR/Module.h"
 #include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
@@ -102,8 +103,18 @@ class FileContext {
                              SemIR::SpecificId::None) -> llvm::Function*;
 
   // Builds the definition for the given function. If the function is only a
-  // declaration with no definition, does nothing.
-  auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
+  // declaration with no definition, does nothing. If this is a generic it'll
+  // only be lowered if the specific_id is specified. During this lowering of
+  // a generic, more generic functions may be added for lowering.
+  auto BuildFunctionDefinition(
+      SemIR::FunctionId function_id,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
+
+  // Builds a functions body. Common functionality for all functions.
+  auto BuildFunctionBody(
+      SemIR::FunctionId function_id, const SemIR::Function& function,
+      llvm::Function* llvm_function,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
@@ -151,6 +162,13 @@ class FileContext {
   // Maps specific callables to lowered functions. Vector indexes correspond to
   // `SpecificId` indexes. We resize this directly to the correct size.
   llvm::SmallVector<llvm::Function*, 0> specific_functions_;
+
+  // Maps which specific functions are generics that need to have their
+  // definitions lowered after the lowering of other definitions.
+  // This list may grow while lowering generic definitions from this list.
+  // The list uses the `SpecificId` to index into specific_functions_.
+  llvm::SmallVector<std::pair<SemIR::FunctionId, SemIR::SpecificId>, 10>
+      specific_function_definitions_;
 
   // Provides lowered versions of types.
   // Vector indexes correspond to `TypeId` indexes for non-symbolic types. We

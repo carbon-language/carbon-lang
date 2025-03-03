@@ -19,11 +19,12 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/autoupdate.h"
+#include "testing/file_test/manifest.h"
 
 namespace Carbon::Testing {
 
 // A framework for testing files. See README.md for documentation.
-class FileTestBase : public testing::Test {
+class FileTestBase {
  public:
   // Provided for child class convenience.
   using LineNumberReplacement = FileTestAutoupdater::LineNumberReplacement;
@@ -52,8 +53,8 @@ class FileTestBase : public testing::Test {
     llvm::SmallVector<std::pair<std::string, bool>> per_file_success;
   };
 
-  explicit FileTestBase(std::mutex* output_mutex, llvm::StringRef test_name)
-      : output_mutex_(output_mutex), test_name_(test_name) {}
+  explicit FileTestBase(llvm::StringRef test_name) : test_name_(test_name) {}
+  virtual ~FileTestBase() = default;
 
   // Implemented by children to run the test. The framework will validate the
   // content written to `output_stream` and `error_stream`. Children should use
@@ -70,15 +71,15 @@ class FileTestBase : public testing::Test {
   virtual auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
                    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
                    FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
-                   llvm::raw_pwrite_stream& error_stream)
+                   llvm::raw_pwrite_stream& error_stream) const
       -> ErrorOr<RunResult> = 0;
 
   // Returns default arguments. Only called when a file doesn't set ARGS.
-  virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
+  virtual auto GetDefaultArgs() const -> llvm::SmallVector<std::string> = 0;
 
   // Returns a map of string replacements to implement `%{key}` -> `value` in
   // arguments.
-  virtual auto GetArgReplacements() -> llvm::StringMap<std::string> {
+  virtual auto GetArgReplacements() const -> llvm::StringMap<std::string> {
     return {};
   }
 
@@ -86,18 +87,19 @@ class FileTestBase : public testing::Test {
   // May return nullptr if unused. If GetLineNumberReplacements returns an entry
   // with has_file=false, this is required.
   virtual auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
-      -> std::optional<RE2> {
+      const -> std::optional<RE2> {
     return std::nullopt;
   }
 
   // Returns replacement information for line numbers. See LineReplacement for
   // construction.
   virtual auto GetLineNumberReplacements(
-      llvm::ArrayRef<llvm::StringRef> filenames)
+      llvm::ArrayRef<llvm::StringRef> filenames) const
       -> llvm::SmallVector<LineNumberReplacement>;
 
   // Optionally allows children to provide extra replacements for autoupdate.
-  virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) -> void {}
+  virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) const
+      -> void {}
 
   // Whether to allow running the test in parallel, particularly for autoupdate.
   // This can be overridden to force some tests to be run serially. At any given
@@ -105,25 +107,10 @@ class FileTestBase : public testing::Test {
   // run.
   virtual auto AllowParallelRun() const -> bool { return true; }
 
-  // Runs a test and compares output. This keeps output split by line so that
-  // issues are a little easier to identify by the different line.
-  auto TestBody() -> void final;
-
-  // Runs the test and autoupdates checks. Returns true if updated.
-  auto Autoupdate() -> ErrorOr<bool>;
-
-  // Runs the test and dumps output.
-  auto DumpOutput() -> ErrorOr<Success>;
-
   // Returns the name of the test (relative to the repo root).
   auto test_name() const -> llvm::StringRef { return test_name_; }
 
  private:
-  // An optional mutex for output. If provided, it will be locked during `Run`
-  // when stderr/stdout are being captured (SET-CAPTURE-CONSOLE-OUTPUT), in
-  // order to avoid output conflicts.
-  std::mutex* output_mutex_;
-
   llvm::StringRef test_name_;
 };
 
@@ -132,11 +119,9 @@ struct FileTestFactory {
   // The test fixture name.
   const char* name;
 
-  // A factory function for tests. The output_mutex is optional; see
-  // `FileTestBase::output_mutex_`.
-  std::function<auto(llvm::StringRef exe_path, std::mutex* output_mutex,
-                     llvm::StringRef test_name)
-                    ->FileTestBase*>
+  // A factory function for tests.
+  std::function<
+      auto(llvm::StringRef exe_path, llvm::StringRef test_name)->FileTestBase*>
       factory_fn;
 };
 
@@ -151,12 +136,11 @@ struct FileTestFactory {
 extern auto GetFileTestFactory() -> FileTestFactory;
 
 // Provides a standard GetFileTestFactory implementation.
-#define CARBON_FILE_TEST_FACTORY(Name)                                    \
-  auto GetFileTestFactory() -> FileTestFactory {                          \
-    return {#Name, [](llvm::StringRef exe_path, std::mutex* output_mutex, \
-                      llvm::StringRef test_name) {                        \
-              return new Name(exe_path, output_mutex, test_name);         \
-            }};                                                           \
+#define CARBON_FILE_TEST_FACTORY(Name)                                       \
+  auto GetFileTestFactory() -> FileTestFactory {                             \
+    return {#Name, [](llvm::StringRef exe_path, llvm::StringRef test_name) { \
+              return new Name(exe_path, test_name);                          \
+            }};                                                              \
   }
 
 }  // namespace Carbon::Testing

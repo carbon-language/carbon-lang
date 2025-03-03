@@ -149,7 +149,7 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(State::ParenExpr);
       break;
     }
-    case Lex::TokenKind::OpenSquareBracket: {
+    case Lex::TokenKind::Array: {
       context.PushState(state);
       context.PushState(State::ArrayExpr);
       break;

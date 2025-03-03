@@ -61,7 +61,7 @@ auto ConvertFormatValue(T&& t) -> T&& {
 // without the user writing a cast.
 template <typename T>
   requires(std::is_enum_v<std::remove_reference_t<T>>)
-auto ConvertFormatValue(T&& t) {
+auto ConvertFormatValue(T&& t) -> auto {
   if constexpr (std::is_signed_v<
                     std::underlying_type_t<std::remove_reference_t<T>>>) {
     return static_cast<int64_t>(t);

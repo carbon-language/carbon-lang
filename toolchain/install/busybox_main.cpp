@@ -25,12 +25,13 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   InitLLVM init_llvm(argc, argv);
 
   // Start by resolving any symlinks.
-  CARBON_ASSIGN_OR_RETURN(auto busybox_info, GetBusyboxInfo(argv[0]));
+  CARBON_ASSIGN_OR_RETURN(auto busybox_info,
+                          GetBusyboxInfo(FindExecutablePath(argv[0])));
 
   auto fs = llvm::vfs::getRealFileSystem();
 
   // Resolve paths before calling SetWorkingDirForBazel.
-  std::string exe_path = FindExecutablePath(busybox_info.bin_path.string());
+  std::string exe_path = busybox_info.bin_path.string();
   const auto install_paths = InstallPaths::MakeExeRelative(exe_path);
   if (install_paths.error()) {
     return Error(*install_paths.error());
@@ -41,7 +42,20 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   llvm::SmallVector<llvm::StringRef> args;
   args.reserve(argc + 1);
   if (busybox_info.mode) {
-    args.append({*busybox_info.mode, "--"});
+    // Map busybox modes to the relevant subcommands with any flags needed to
+    // emulate the requested command. Typically, our busyboxed binaries redirect
+    // to a specific subcommand with some flags set and then pass the remaining
+    // busybox arguments as positional arguments to that subcommand.
+    //
+    // TODO: Add relevant flags to the `clang` subcommand and add `clang`-based
+    // symlinks to this like `clang++`.
+    auto subcommand_args =
+        llvm::StringSwitch<llvm::SmallVector<llvm::StringRef>>(
+            *busybox_info.mode)
+            .Case("ld.lld", {"lld", "--platform=gnu", "--"})
+            .Case("ld64.lld", {"lld", "--platform=darwin", "--"})
+            .Default({*busybox_info.mode, "--"});
+    args.append(subcommand_args);
   }
   args.append(argv + 1, argv + argc);
 

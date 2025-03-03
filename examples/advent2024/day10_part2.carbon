@@ -28,7 +28,7 @@ class PathsToTop {
 
   fn AddLevel[addr self: Self*](terrain: Terrain, level: i32) -> i64 {
     var total: i64 = 0;
-    let adj: [(i32, i32); 4] = ((-1, 0), (0, -1), (1, 0), (0, 1));
+    let adj: array((i32, i32), 4) = ((-1, 0), (0, -1), (1, 0), (0, 1));
     var y: i32 = 0;
     while (y < 43) {
       var x: i32 = 0;
@@ -56,7 +56,7 @@ class PathsToTop {
     return total;
   }
 
-  var paths: [[i64; 43]; 43];
+  var paths: array(array(i64, 43), 43);
 }
 
 fn Run() {

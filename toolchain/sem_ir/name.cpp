@@ -10,29 +10,31 @@ namespace Carbon::SemIR {
 
 // Get the spelling to use for a special name.
 static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
-  switch (name_id.index) {
-    case NameId::None.index:
-      return for_ir ? "" : "<none>";
-    case NameId::Base.index:
+  if (name_id == NameId::None) {
+    return for_ir ? "" : "<none>";
+  }
+
+  auto special_name_id = name_id.AsSpecialNameId();
+  CARBON_CHECK(special_name_id, "Not a special name");
+  switch (*special_name_id) {
+    case NameId::SpecialNameId::Base:
       return "base";
-    case NameId::Core.index:
-      return "Core";
-    case NameId::PeriodSelf.index:
-      return ".Self";
-    case NameId::ReturnSlot.index:
-      return for_ir ? "return" : "<return slot>";
-    case NameId::PackageNamespace.index:
-      return "package";
-    case NameId::SelfType.index:
-      return "Self";
-    case NameId::SelfValue.index:
-      return "self";
-    case NameId::Vptr.index:
-      return for_ir ? "vptr" : "<vptr>";
-    case NameId::ChoiceDiscriminant.index:
+    case NameId::SpecialNameId::ChoiceDiscriminant:
       return "discriminant";
-    default:
-      CARBON_FATAL("Unknown special name");
+    case NameId::SpecialNameId::Core:
+      return "Core";
+    case NameId::SpecialNameId::PackageNamespace:
+      return "package";
+    case NameId::SpecialNameId::PeriodSelf:
+      return ".Self";
+    case NameId::SpecialNameId::ReturnSlot:
+      return for_ir ? "return" : "<return slot>";
+    case NameId::SpecialNameId::SelfType:
+      return "Self";
+    case NameId::SpecialNameId::SelfValue:
+      return "self";
+    case NameId::SpecialNameId::Vptr:
+      return for_ir ? "vptr" : "<vptr>";
   }
 }
 

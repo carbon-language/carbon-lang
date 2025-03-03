@@ -20,6 +20,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Check {
 
@@ -64,6 +65,10 @@ auto CheckUnit::Run() -> void {
   // Add a block for the file.
   context_.inst_block_stack().Push();
 
+  // TODO: Remove this and the pop in `FinishRun` once we properly push and pop
+  // in the right places.
+  context_.generic_region_stack().Push();
+
   InitPackageScopeAndImports();
 
   // Eagerly import the impls declared in the api file to prepare to redeclare
@@ -75,20 +80,7 @@ auto CheckUnit::Run() -> void {
     return;
   }
 
-  CheckRequiredDefinitions();
-
-  context_.Finalize();
-
-  context_.VerifyOnFinish();
-
-  context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
-
-#ifndef NDEBUG
-  if (auto verify = context_.sem_ir().Verify(); !verify.ok()) {
-    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", context_.sem_ir(),
-                 verify.error());
-  }
-#endif
+  FinishRun();
 }
 
 auto CheckUnit::InitPackageScopeAndImports() -> void {
@@ -143,8 +135,16 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   ImportCurrentPackage(package_inst_id, namespace_type_id);
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
-  ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                 unit_and_imports_->cpp_import_names, fs_);
+
+  const auto& cpp_import_names = unit_and_imports_->cpp_import_names;
+  if (!cpp_import_names.empty()) {
+    auto* cpp_ast = unit_and_imports_->unit->cpp_ast;
+    CARBON_CHECK(cpp_ast);
+    CARBON_CHECK(!cpp_ast->get());
+    *cpp_ast =
+        ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
+                       cpp_import_names, fs_);
+  }
 }
 
 auto CheckUnit::CollectDirectImports(
@@ -398,6 +398,44 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   return true;
 }
 
+auto CheckUnit::CheckRequiredDeclarations() -> void {
+  for (const auto& function : context_.functions().array_ref()) {
+    if (!function.first_owning_decl_id.has_value() &&
+        function.extern_library_id == context_.sem_ir().library_id()) {
+      auto function_loc_id =
+          context_.insts().GetLocId(function.non_owning_decl_id);
+      CARBON_CHECK(function_loc_id.is_import_ir_inst_id());
+      auto import_ir_id = context_.sem_ir()
+                              .import_ir_insts()
+                              .Get(function_loc_id.import_ir_inst_id())
+                              .ir_id;
+      auto& import_ir = context_.import_irs().Get(import_ir_id);
+      if (import_ir.sem_ir->package_id().has_value() !=
+          context_.sem_ir().package_id().has_value()) {
+        continue;
+      }
+
+      CARBON_DIAGNOSTIC(
+          MissingOwningDeclarationInApi, Error,
+          "owning declaration required for non-owning declaration");
+      if (!import_ir.sem_ir->package_id().has_value() &&
+          !context_.sem_ir().package_id().has_value()) {
+        emitter_.Emit(function.non_owning_decl_id,
+                      MissingOwningDeclarationInApi);
+        continue;
+      }
+
+      if (import_ir.sem_ir->identifiers().Get(
+              import_ir.sem_ir->package_id().AsIdentifierId()) ==
+          context_.sem_ir().identifiers().Get(
+              context_.sem_ir().package_id().AsIdentifierId())) {
+        emitter_.Emit(function.non_owning_decl_id,
+                      MissingOwningDeclarationInApi);
+      }
+    }
+  }
+}
+
 auto CheckUnit::CheckRequiredDefinitions() -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
@@ -462,6 +500,31 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
     }
   }
+}
+
+auto CheckUnit::FinishRun() -> void {
+  // TODO: Remove this once we properly push and pop in the right places.
+  context_.generic_region_stack().Pop();
+
+  CheckRequiredDeclarations();
+  CheckRequiredDefinitions();
+
+  // Pop information for the file-level scope.
+  context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
+  context_.scope_stack().Pop();
+
+  // Finalizes the list of exports on the IR.
+  context_.inst_blocks().Set(SemIR::InstBlockId::Exports, context_.exports());
+  // Finalizes the ImportRef inst block.
+  context_.inst_blocks().Set(SemIR::InstBlockId::ImportRefs,
+                             context_.import_ref_ids());
+  // Finalizes __global_init.
+  context_.global_init().Finalize();
+
+  context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
+
+  // Verify that Context cleanly finished.
+  context_.VerifyOnFinish();
 }
 
 }  // namespace Carbon::Check

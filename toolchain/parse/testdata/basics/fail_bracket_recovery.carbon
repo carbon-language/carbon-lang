@@ -10,11 +10,12 @@
 
 // This is a valid parse tree even though the lex errors.
 fn F() {
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:11: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR:   var x: ([i32; 3) = (0, 1, 2);
-  // CHECK:STDERR:           ^
+  var a: array(i32, 3) = (0, 1, 2);
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:5: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR:   (a[1) + 1;
+  // CHECK:STDERR:     ^
   // CHECK:STDERR:
-  var x: ([i32; 3) = (0, 1, 2);
+  (a[1) + 1;
   // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+12]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:               ^
@@ -39,16 +40,15 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:               {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                   {kind: 'ArrayExprStart', text: '['},
-// CHECK:STDOUT:                   {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:                 {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:               {kind: 'ArrayExpr', text: ']', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 10},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:               {kind: 'ArrayExprKeyword', text: 'array'},
+// CHECK:STDOUT:               {kind: 'ArrayExprOpenParen', text: '('},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:               {kind: 'ArrayExprComma', text: ','},
+// CHECK:STDOUT:               {kind: 'IntLiteral', text: '3'},
+// CHECK:STDOUT:             {kind: 'ArrayExpr', text: ')', subtree_size: 6},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
@@ -57,7 +57,16 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
 // CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 20},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 19},
+// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
+// CHECK:STDOUT:               {kind: 'IndexExprStart', text: '[', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IntLiteral', text: '1'},
+// CHECK:STDOUT:             {kind: 'IndexExpr', text: ']', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', subtree_size: 6},
+// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorPlus', text: '+', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'StructTypeLiteralStart', text: '{'},
@@ -80,6 +89,6 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'StructLiteralField', text: '=', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 22},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 48},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 56},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

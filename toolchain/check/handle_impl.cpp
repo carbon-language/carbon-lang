@@ -255,7 +255,8 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
                               DeclParams(prev_impl), SemIR::SpecificId::None,
-                              /*check_syntax=*/true, /*diagnose=*/false)) {
+                              /*diagnose=*/false, /*check_syntax=*/true,
+                              /*check_self=*/true)) {
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
@@ -323,7 +324,13 @@ static auto CheckConstraintIsInterface(Context& context,
 
   auto complete_id = RequireCompleteFacetType(
       context, facet_type_id, context.insts().GetLocId(impl.constraint_id),
-      *facet_type, FacetTypeImpl);
+      *facet_type, [&] {
+        CARBON_DIAGNOSTIC(ImplAsIncompleteFacetType, Error,
+                          "impl as incomplete facet type {0}", InstIdAsType);
+        return context.emitter().Build(impl.latest_decl_id(),
+                                       ImplAsIncompleteFacetType,
+                                       impl.constraint_id);
+      });
   if (!complete_id.has_value()) {
     return nullptr;
   }

@@ -6,9 +6,11 @@
 
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
 
@@ -150,6 +152,18 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
                                    scope.import_ir_scopes(), name_id),
         SemIR::AccessKind::Public);
   }
+
+  if (scope.is_cpp_scope()) {
+    SemIR::InstId imported_inst_id =
+        ImportNameFromCpp(context, loc_id, scope_id, name_id);
+    if (imported_inst_id.has_value()) {
+      SemIR::ScopeLookupResult result = SemIR::ScopeLookupResult::MakeFound(
+          imported_inst_id, SemIR::AccessKind::Public);
+      scope.AddRequired({.name_id = name_id, .result = result});
+      return result;
+    }
+  }
+
   return SemIR::ScopeLookupResult::MakeNotFound();
 }
 
@@ -234,6 +248,19 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     -> bool {
   auto base_id = context.constant_values().GetInstId(base_const_id);
   auto base = context.insts().Get(base_id);
+
+  if (auto base_as_facet_access_type = base.TryAs<SemIR::FacetAccessType>()) {
+    // Move from the symbolic facet value up in typish-ness to its FacetType to
+    // find a lookup scope.
+    auto facet_type_type_id =
+        context.insts()
+            .Get(base_as_facet_access_type->facet_value_inst_id)
+            .type_id();
+    base_const_id = context.types().GetConstantId(facet_type_type_id);
+    base_id = context.constant_values().GetInstId(base_const_id);
+    base = context.insts().Get(base_id);
+  }
+
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     scopes->push_back(
         LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
@@ -258,7 +285,13 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
     auto complete_id = RequireCompleteFacetType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-        loc_id, *base_as_facet_type, FacetTypeMemberAccess);
+        loc_id, *base_as_facet_type, [&] {
+          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
+                            "member access into incomplete facet type {0}",
+                            InstIdAsType);
+          return context.emitter().Build(
+              loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
+        });
     if (complete_id.has_value()) {
       const auto& resolved = context.complete_facet_types().Get(complete_id);
       for (const auto& interface : resolved.required_interfaces) {

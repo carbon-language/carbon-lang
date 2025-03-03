@@ -78,6 +78,13 @@ class DeclIntroducerStateStack {
     return stack_.pop_back_val();
   }
 
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void {
+    CARBON_CHECK(stack_.empty(),
+                 "decl_introduce_state_stack still has {0} entries",
+                 stack_.size());
+  }
+
  private:
   llvm::SmallVector<DeclIntroducerState> stack_;
 };

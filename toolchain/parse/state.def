@@ -73,32 +73,26 @@ CARBON_PARSE_STATE(IndexExpr)
 //   (state done)
 CARBON_PARSE_STATE(IndexExprFinish)
 
-// Handles an array expression.
+// Handles the array keyword and opening paren in an array expression.
 //
-// [T; N]
-// ^
+// array(T, N)
+// ^~~~~~
 //   1. Expr
-//   2. ArrayExprSemi
+//   2. ArrayExprComma
 CARBON_PARSE_STATE(ArrayExpr)
 
-// Handles ';' in an array expression.
+// Handles ',' in an array expression.
 //
-// [T;]
-//   ^
-//   1. ArrayExprFinish
-//
-// [T; N]
-//   ^
+// array(T, N)
+//        ^
 //   1. Expr
 //   2. ArrayExprFinish
-CARBON_PARSE_STATE(ArrayExprSemi)
+CARBON_PARSE_STATE(ArrayExprComma)
 
 // Handles finishing the array expression.
 //
-// [T;]
-//    ^
-// [T; N]
-//      ^
+// array(T, N)
+//           ^
 //   (state done)
 CARBON_PARSE_STATE(ArrayExprFinish)
 

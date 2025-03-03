@@ -103,12 +103,12 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // Build each impl scope.
   for (auto [impl_id, impl_info] : sem_ir->impls().enumerate()) {
     auto impl_scope = GetScopeFor(impl_id);
-    // TODO: Provide a location for the impl for use as a disambiguator.
-    auto impl_loc = Parse::NodeId::None;
+    auto impl_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, impl_id);
     // TODO: Invent a name based on the self and constraint types.
     GetScopeInfo(impl_scope).name =
-        globals_.AllocateName(*this, impl_loc, "impl");
-    AddBlockLabel(impl_scope, impl_info.body_block_id, "impl", impl_loc);
+        globals_.AllocateName(*this, impl_fingerprint, "impl");
+    AddBlockLabel(impl_scope, impl_info.body_block_id, "impl",
+                  impl_fingerprint);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
     CollectNamesInGeneric(impl_scope, impl_info.generic_id);
   }
@@ -292,22 +292,24 @@ auto InstNamer::Namespace::AllocateName(
   }
 }
 
-auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
-                              std::string name, SemIR::LocId loc_id) -> void {
+auto InstNamer::AddBlockLabel(
+    ScopeId scope_id, InstBlockId block_id, std::string name,
+    std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint) -> void {
   if (!block_id.has_value() || labels_[block_id.index].second) {
     return;
   }
 
-  if (!loc_id.has_value()) {
+  if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint);
+      loc_id && !loc_id->has_value()) {
     if (const auto& block = sem_ir_->inst_blocks().Get(block_id);
         !block.empty()) {
-      loc_id = sem_ir_->insts().GetLocId(block.front());
+      loc_id_or_fingerprint = sem_ir_->insts().GetLocId(block.front());
     }
   }
 
   labels_[block_id.index] = {
-      scope_id, GetScopeInfo(scope_id).labels.AllocateName(*this, loc_id,
-                                                           std::move(name))};
+      scope_id, GetScopeInfo(scope_id).labels.AllocateName(
+                    *this, loc_id_or_fingerprint, std::move(name))};
 }
 
 // Finds and adds a suitable block label for the given SemIR instruction that

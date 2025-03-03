@@ -21,8 +21,6 @@ namespace Carbon::Check {
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId;
-static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
-                                       SemIR::SpecificId specific_id) -> void;
 
 auto StartGenericDecl(Context& context) -> void {
   context.generic_region_stack().Push();
@@ -414,8 +412,8 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
   context.generic_region_stack().Pop();
 }
 
-static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
-                                       SemIR::SpecificId specific_id) -> void {
+auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
+                                SemIR::SpecificId specific_id) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   if (!context.specifics().Get(specific_id).decl_block_id.has_value()) {

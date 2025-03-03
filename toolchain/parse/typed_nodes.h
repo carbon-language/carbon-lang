@@ -131,13 +131,19 @@ using EmptyDecl =
 // to be followed by parameters.
 using IdentifierNameBeforeParams =
     LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
+using KeywordNameBeforeParams =
+    LeafNode<NodeKind::KeywordNameBeforeParams, Lex::TokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in a non-expression context, such as a declaration, that is known
 // to not be followed by parameters.
 using IdentifierNameNotBeforeParams =
     LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
+using KeywordNameNotBeforeParams =
+    LeafNode<NodeKind::KeywordNameNotBeforeParams, Lex::TokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
 using IdentifierNameExpr =
@@ -174,11 +180,20 @@ struct NameQualifierWithParams {
 };
 
 // A name qualifier without parameters, such as `A.`.
-struct NameQualifierWithoutParams {
-  static constexpr auto Kind = NodeKind::NameQualifierWithoutParams.Define(
-      {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
+struct IdentifierNameQualifierWithoutParams {
+  static constexpr auto Kind =
+      NodeKind::IdentifierNameQualifierWithoutParams.Define(
+          {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
 
   IdentifierNameNotBeforeParamsId name;
+  Lex::PeriodTokenIndex token;
+};
+struct KeywordNameQualifierWithoutParams {
+  static constexpr auto Kind =
+      NodeKind::KeywordNameQualifierWithoutParams.Define(
+          {.bracketed_by = KeywordNameNotBeforeParams::Kind});
+
+  KeywordNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
 };
 
@@ -186,9 +201,10 @@ struct NameQualifierWithoutParams {
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
   llvm::SmallVector<
-      NodeIdOneOf<NameQualifierWithParams, NameQualifierWithoutParams>>
+      NodeIdOneOf<NameQualifierWithParams, IdentifierNameQualifierWithoutParams,
+                  KeywordNameQualifierWithoutParams>>
       qualifiers;
-  AnyNonExprIdentifierNameId name;
+  AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> params;
 };
@@ -805,29 +821,25 @@ struct MatchStatement {
 // Expression nodes
 // ----------------
 
-using ArrayExprStart =
-    LeafNode<NodeKind::ArrayExprStart, Lex::OpenSquareBracketTokenIndex>;
+using ArrayExprKeyword =
+    LeafNode<NodeKind::ArrayExprKeyword, Lex::ArrayTokenIndex>;
 
-// The start of an array type, `[i32;`.
-//
-// TODO: Consider flattening this into `ArrayExpr`.
-struct ArrayExprSemi {
-  static constexpr auto Kind = NodeKind::ArrayExprSemi.Define(
-      {.bracketed_by = ArrayExprStart::Kind, .child_count = 2});
+using ArrayExprOpenParen =
+    LeafNode<NodeKind::ArrayExprOpenParen, Lex::OpenParenTokenIndex>;
 
-  ArrayExprStartId left_square;
-  AnyExprId type;
-  Lex::SemiTokenIndex token;
-};
+using ArrayExprComma = LeafNode<NodeKind::ArrayExprComma, Lex::CommaTokenIndex>;
 
-// An array type, such as  `[i32; 3]` or `[i32;]`.
+// An array type, `array(T, N)`.
 struct ArrayExpr {
   static constexpr auto Kind = NodeKind::ArrayExpr.Define(
-      {.category = NodeCategory::Expr, .bracketed_by = ArrayExprSemi::Kind});
+      {.category = NodeCategory::Expr, .child_count = 5});
 
-  ArrayExprSemiId start;
-  std::optional<AnyExprId> bound;
-  Lex::CloseSquareBracketTokenIndex token;
+  ArrayExprKeywordId keyword;
+  ArrayExprOpenParenId start;
+  AnyExprId type;
+  ArrayExprCommaId comma;
+  AnyExprId bound;
+  Lex::CloseParenTokenIndex token;
 };
 
 // The opening portion of an indexing expression: `a[`.
@@ -1161,7 +1173,7 @@ struct ChoiceDefinition {
 
   ChoiceDefinitionStartId signature;
   struct Alternative {
-    AnyNonExprIdentifierNameId name;
+    AnyNonExprNameId name;
     std::optional<ExplicitParamListId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;

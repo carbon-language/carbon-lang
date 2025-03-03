@@ -25,6 +25,20 @@ constexpr SpecificInterface SpecificInterface::None = {
     .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
 
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
+  // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
+  // canonicalized, so that it can be further modified by the caller if desired.
+  static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
+      -> FacetTypeInfo {
+    FacetTypeInfo info = {.other_requirements = false};
+    llvm::append_range(info.impls_constraints, lhs.impls_constraints);
+    llvm::append_range(info.impls_constraints, rhs.impls_constraints);
+    llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
+    llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
+    info.other_requirements |= lhs.other_requirements;
+    info.other_requirements |= rhs.other_requirements;
+    return info;
+  }
+
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
   // https://github.com/carbon-language/carbon-lang/issues/2409.
@@ -55,12 +69,6 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Add same-type constraints.
   // TODO: Remove once all requirements are supported.
   bool other_requirements;
-
-  // This is should be `None` for new facet type values, and only set as a
-  // private implementation detail of `RequireCompleteFacetType`. It is stored
-  // here so that we only compute its value once per facet type. This is not
-  // part of the value of the facet type, excluded from `==` and its hash value.
-  CompleteFacetTypeId complete_id = CompleteFacetTypeId::None;
 
   // Sorts and deduplicates constraints. Call after building the value, and then
   // don't mutate this value afterwards.
@@ -106,6 +114,10 @@ struct CompleteFacetType {
   int num_to_impl;
 
   // TODO: Which interfaces to perform name lookup into.
+
+  // Sorts and deduplicates `required_interfaces`. Call after building the sets
+  // of interfaces, and then don't mutate them value afterwards.
+  auto CanonicalizeRequiredInterfaces() -> void;
 };
 
 // See common/hashing.h.

@@ -39,6 +39,7 @@ cc_library(
     hdrs = ["file_test_base.h"],
     deps = [
         ":autoupdate",
+        ":manifest",
         "//common:check",
         "//common:error",
         "//common:exe_path",
@@ -48,6 +49,7 @@ cc_library(
         "//testing/base:file_helpers",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
+        "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -64,4 +66,20 @@ file_test(
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+# Note this is separate from the implementation; see the .h file.
+cc_library(
+    name = "manifest",
+    testonly = 1,
+    hdrs = ["manifest.h"],
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+# Used through `file_test` in rules.bzl.
+cc_library(
+    name = "manifest_impl",
+    testonly = 1,
+    srcs = ["manifest.cpp"],
+    deps = [":manifest"],
 )

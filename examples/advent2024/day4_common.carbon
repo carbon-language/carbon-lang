@@ -32,7 +32,7 @@ class Wordsearch {
   }
 
   // TODO: Make this generic in the length of the search query.
-  fn Check4[self: Self](xmas: [i32; 4], x: i32, y: i32, dx: i32, dy: i32) -> bool {
+  fn Check4[self: Self](xmas: array(i32, 4), x: i32, y: i32, dx: i32, dy: i32) -> bool {
     var i: i32 = 0;
     while (i < 4) {
       if (self.At(x + i * dx, y + i * dy) != xmas[i]) {
@@ -43,7 +43,7 @@ class Wordsearch {
     return true;
   }
 
-  fn Check3[self: Self](mas: [i32; 3], x: i32, y: i32, dx: i32, dy: i32) -> bool {
+  fn Check3[self: Self](mas: array(i32, 3), x: i32, y: i32, dx: i32, dy: i32) -> bool {
     var i: i32 = 0;
     while (i < 3) {
       if (self.At(x + i * dx, y + i * dy) != mas[i]) {
@@ -54,5 +54,5 @@ class Wordsearch {
     return true;
   }
 
-  var grid: [[i32; 140]; 140];
+  var grid: array(array(i32, 140), 140);
 }

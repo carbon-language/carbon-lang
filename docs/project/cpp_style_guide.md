@@ -70,6 +70,12 @@ serves to simplify it.
 -   All other names use `snake_case`, including function parameters, and
     non-constant local and member variables.
     -   Private member variables should have a trailing `_`.
+-   For acronyms and initialisms, we generally follow the
+    [capitalization style](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
+    (`Api` instead of `API`).
+    -   The exceptions are `LLVM` and `IR`, which we capitalize.
+-   For abbreviations, there is a list of
+    [common toolchain abbreviations](/toolchain/docs/idioms.md#abbreviations-used-in-the-code-aka-carbon-abbreviation-decoder-ring).
 
 ### File names
 
