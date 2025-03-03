@@ -28,6 +28,15 @@ auto LLVMOptions::Build(CommandLine::CommandBuilder& b,
                         DriverSubcommand** selected_subcommand) -> void {
   // Add further subcommands for each LLVM tool.
   for (LLVMTool tool : LLVMTool::Tools) {
+    // TODO: The subcommand info for each tool is weirdly stored in the
+    // `LLVMTool` class instead of here where it makes more logical sense.
+    // Either we should figure out how to move it to here or we should more
+    // fully document the oddity of having it in the `LLVMTool` class.
+    //
+    // TODO: Currently, the command line subsystem's help isn't as user friendly
+    // for the generated subcommands below this as it could be. Because each of
+    // these has a completely generic and stamped out info, the `help` output is
+    // very repetitive and doesn't actually contribute much information.
     b.AddSubcommand(tool.subcommand_info(), [&](auto& sub_b) {
       sub_b.AddStringPositionalArg(
           {
@@ -53,8 +62,7 @@ LLVMSubcommand::LLVMSubcommand() : DriverSubcommand(SubcommandInfo) {}
 auto LLVMSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   LLVMRunner runner(driver_env.installation, driver_env.vlog_stream);
 
-  // Don't run LLD when fuzzing, as we're not currently in a good position to
-  // debug and fix fuzzer-found bugs within LLD.
+  // Don't run arbitrary LLVM tools and libraries when fuzzing.
   if (!DisableFuzzingExternalLibraries(driver_env, "llvm")) {
     return {.success = false};
   }

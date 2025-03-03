@@ -82,7 +82,7 @@ TEST(LLVMRunnerTest, Version) {
     EXPECT_TRUE(Testing::CallWithCapturedOutput(
         out, err, [&] { return runner.Run(tool, {test_flag}); }));
 
-    // The arguments to LLD should be part of the verbose log.
+    // The arguments to the LLVM tool should be part of the verbose log.
     EXPECT_THAT(test_os.TakeStr(), HasSubstr(test_flag));
 
     // Nothing should print to stderr here.

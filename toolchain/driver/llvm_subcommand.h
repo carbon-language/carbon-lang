@@ -18,8 +18,11 @@ namespace Carbon {
 //
 // See the implementation of `Build` for documentation on members.
 struct LLVMOptions {
-  // Build the LLVM subcommand options using `b`. Whatever eventual nested
-  // subcommand action is selected, it needs to additionally run `select_fn`.
+  // Build the LLVM subcommand options using `b`.
+  //
+  // When this top-level subcommand is selected (potentially through a nested
+  // sub-subcommand), the `selected_subcommand` should be set to point to
+  // `subcommand` to reflect that.
   auto Build(CommandLine::CommandBuilder& b, DriverSubcommand* subcommand,
              DriverSubcommand** selected_subcommand) -> void;
 
@@ -29,8 +32,7 @@ struct LLVMOptions {
 
 // Implement the LLVM subcommand of the driver.
 //
-// This provides access to the full collection of internal LLVM command line
-// tools.
+// This provides access to the full collection of LLVM command line tools.
 class LLVMSubcommand : public DriverSubcommand {
  public:
   explicit LLVMSubcommand();

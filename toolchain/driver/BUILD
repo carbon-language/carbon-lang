@@ -227,24 +227,10 @@ cc_test(
     ],
 )
 
-config_setting(
-    name = "is_macos",
-    constraint_values = ["@platforms//os:macos"],
-)
-
 cc_library(
     name = "llvm_runner",
     srcs = ["llvm_runner.cpp"],
     hdrs = ["llvm_runner.h"],
-    linkopts = select({
-        # TODO: This should be moved upstream to LLVM's tool libraries that
-        # require it.
-        ":is_macos": [
-            "-framework",
-            "CoreFoundation",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tool_runner_base",
         "//common:ostream",

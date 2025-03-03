@@ -21,6 +21,14 @@ CARBON_DEFINE_RAW_ENUM_CLASS(LLVMTool, uint8_t) {
 #include "toolchain/base/llvm_tools.def"
 };
 
+// An enum-like class for each of the LLVM tools.
+//
+// This can be used like an enum to track a specific one of the LLVM tools. It
+// also has a collection of methods to access various aspects of the tools
+// themselves, including the symbol used to invoke the given tool.
+//
+// The instances of this class are generated from `llvm_tools.bzl`, see that
+// file for more details.
 class LLVMTool : public CARBON_ENUM_BASE(LLVMTool) {
  public:
 #define CARBON_LLVM_TOOL(Identifier, Name, BinName, MainFn) \

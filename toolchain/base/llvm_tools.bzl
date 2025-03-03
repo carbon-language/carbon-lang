@@ -6,7 +6,9 @@
 
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-LLVM_TOOLS = {
+# The main LLVM command line tools, including their "primary" name, binary name,
+# and the library dependency required to use them.
+LLVM_MAIN_TOOLS = {
     "ar": struct(bin_name = "llvm-ar", lib = "@llvm-project//llvm:llvm-ar-lib"),
     "cgdata": struct(bin_name = "llvm-cgdata", lib = "@llvm-project//llvm:llvm-cgdata-lib"),
     "cxxfilt": struct(bin_name = "llvm-cxxfilt", lib = "@llvm-project//llvm:llvm-cxxfilt-lib"),
@@ -30,6 +32,12 @@ LLVM_TOOLS = {
     "symbolizer": struct(bin_name = "llvm-symbolizer", lib = "@llvm-project//llvm:llvm-symbolizer-lib"),
 }
 
+# A collection of additional alias names that should be available for the main
+# tools. The key is the main tool with the support for these names, followed by
+# a list of the aliased names.
+#
+# Note that we don't track separate binary names for the alias names as those
+# are always formed by prepending `llvm-` for the aliases.
 LLVM_TOOL_ALIASES = {
     "ar": ["ranlib", "lib", "dlltool"],
     #"cxxfilt": ["c++filt"],
@@ -46,6 +54,20 @@ _DEF_FILE_TEMPLATE = """
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // This is a generated X-macro header for defining LLVM tools.
+//
+// Each X-macro takes four arguments:
+// - `Id` is the identifier-shaped PascalCased tool name.
+// - `Name` is a string literal of the tool name.
+// - `BinName` is a string literal of the binary name of the tool when installed
+//    as a stand-alone command line tool.
+// - `MainFn` is the function symbol name used to run the tool as-if its `main`.
+//
+// There are three X-macros available:
+// - `CARBON_LLVM_TOOL` is available for every tool.
+//   - `CARBON_LLVM_MAIN_TOOL` is available for each tool with a distinct
+//     `MainFn` symbol name.
+//   - `CARBON_LLVM_ALIAS_TOOL` is available for each tool that is an alias of
+//     some other tool. It's `MainFn` will be the alias-target symbol name.
 //
 // See toolchain/driver/llvm_tools.bzl for more details.
 
@@ -88,11 +110,11 @@ def _build_def_macro(kind, name, bin_name, main_info):
 def _generate_llvm_tools_def_rule(ctx):
     def_lines = []
 
-    for name, tool_info in LLVM_TOOLS.items():
+    for name, tool_info in LLVM_MAIN_TOOLS.items():
         def_lines.append(_build_def_macro("MAIN_", name, tool_info.bin_name, tool_info))
 
     for target, aliases in LLVM_TOOL_ALIASES.items():
-        tool_info = LLVM_TOOLS[target]
+        tool_info = LLVM_MAIN_TOOLS[target]
         for alias in aliases:
             bin_name = "llvm-" + alias
             def_lines.append(_build_def_macro("ALIAS_", alias, bin_name, tool_info))

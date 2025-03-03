@@ -9,7 +9,7 @@ load(
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
-load("//toolchain/base:llvm_tools.bzl", "LLVM_TOOLS", "LLVM_TOOL_ALIASES")
+load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 
@@ -128,7 +128,7 @@ lld_aliases = [
 
 llvm_binaries = lld_aliases + [
     tool.bin_name
-    for tool in LLVM_TOOLS.values()
+    for tool in LLVM_MAIN_TOOLS.values()
 ] + [
     "llvm-" + alias
     for (_, aliases) in LLVM_TOOL_ALIASES.items()
