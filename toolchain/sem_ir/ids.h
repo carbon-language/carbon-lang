@@ -198,22 +198,13 @@ constexpr CompileTimeBindIndex CompileTimeBindIndex::None =
 struct RuntimeParamIndex : public IndexBase<RuntimeParamIndex> {
   static constexpr llvm::StringLiteral Label = "runtime_param";
 
-  // An index with no value.
   static const RuntimeParamIndex None;
 
-  // An placeholder for index whose value is not yet known.
-  static const RuntimeParamIndex Unknown;
-
   using IndexBase::IndexBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr RuntimeParamIndex RuntimeParamIndex::None =
     RuntimeParamIndex(NoneIndex);
-
-constexpr RuntimeParamIndex RuntimeParamIndex::Unknown =
-    RuntimeParamIndex(NoneIndex - 1);
 
 // The ID of a function.
 struct FunctionId : public IdBase<FunctionId> {

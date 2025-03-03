@@ -252,13 +252,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         if (node_kind == Parse::NodeKind::LetBindingPattern) {
           result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
               context, node_id,
-              {
-                  .type_id = context.insts().Get(result_inst_id).type_id(),
-                  .subpattern_id = result_inst_id,
-                  .runtime_index = is_generic
-                                       ? SemIR::RuntimeParamIndex::None
-                                       : SemIR::RuntimeParamIndex::Unknown,
-              });
+              {.type_id = context.insts().Get(result_inst_id).type_id(),
+               .subpattern_id = result_inst_id,
+               .runtime_index = SemIR::RuntimeParamIndex::None});
         }
       }
       context.node_stack().Push(node_id, result_inst_id);

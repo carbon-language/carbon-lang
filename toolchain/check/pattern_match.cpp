@@ -296,7 +296,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      if (param_pattern.runtime_index == SemIR::RuntimeParamIndex::Unknown) {
+      if (!param_pattern.runtime_index.has_value()) {
         param_pattern.runtime_index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
@@ -335,7 +335,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case MatchKind::Callee: {
       // TODO: Consider ways to address near-duplication with the
       // ValueParamPattern case.
-      if (param_pattern.runtime_index == SemIR::RuntimeParamIndex::Unknown) {
+      if (!param_pattern.runtime_index.has_value()) {
         param_pattern.runtime_index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
