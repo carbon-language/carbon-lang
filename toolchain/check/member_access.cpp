@@ -46,7 +46,14 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
-  return function.self_param_id.has_value();
+  for (auto param_id :
+       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id)) {
+    if (SemIR::Function::GetNameFromPatternId(sem_ir, param_id) ==
+        SemIR::NameId::SelfValue) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Return whether `type_id`, the type of an associated entity, is for an
@@ -190,8 +197,13 @@ static auto PerformImplLookup(
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto interface_type =
       GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
-  // An associated entity is always associated with a single interface.
-  CARBON_CHECK(interface_type);
+  if (!interface_type) {
+    context.TODO(loc_id,
+                 "Lookup of impl witness not yet supported except for a single "
+                 "interface");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   auto witness_id =
       LookupImplWitness(context, loc_id, type_const_id,
