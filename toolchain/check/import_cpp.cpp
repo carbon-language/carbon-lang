@@ -150,8 +150,15 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
 // Look ups the given name in the Clang AST. Returns the lookup result if lookup
 // was successful.
 static auto ClangLookup(Context& context, SemIR::LocId loc_id,
-                        llvm::StringRef name)
+                        SemIR::NameId name_id)
     -> std::optional<clang::LookupResult> {
+  std::optional<llvm::StringRef> name =
+      context.names().GetAsStringIfIdentifier(name_id);
+  if (!name) {
+    // Special names never exist in C++ code.
+    return std::nullopt;
+  }
+
   clang::ASTUnit* ast = context.sem_ir().cpp_ast();
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
@@ -160,7 +167,7 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
       sema,
       clang::DeclarationNameInfo(
           clang::DeclarationName(
-              sema.getPreprocessor().getIdentifierInfo(name)),
+              sema.getPreprocessor().getIdentifierInfo(*name)),
           clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
@@ -263,18 +270,7 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  std::optional<llvm::StringRef> name =
-      context.names().GetAsStringIfIdentifier(name_id);
-  if (!name) {
-    // Special names never exist in C++ code.
-    CARBON_DIAGNOSTIC(CppNonIdentifierName, Error,
-                      "Using non-identifier name `{0}` in `Cpp`",
-                      SemIR::NameId);
-    context.emitter().Emit(loc_id, CppNonIdentifierName, name_id);
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-
-  auto lookup = ClangLookup(context, loc_id, *name);
+  auto lookup = ClangLookup(context, loc_id, name_id);
   if (!lookup) {
     return SemIR::InstId::None;
   }

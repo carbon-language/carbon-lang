@@ -316,7 +316,6 @@ CARBON_DIAGNOSTIC_KIND(QualifiedDeclInIncompleteClassScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclInUndefinedInterfaceScope)
 
 // Name lookup.
-CARBON_DIAGNOSTIC_KIND(CppNonIdentifierName)
 CARBON_DIAGNOSTIC_KIND(FromExtendHere)
 CARBON_DIAGNOSTIC_KIND(InCppNameLookup)
 CARBON_DIAGNOSTIC_KIND(InNameLookup)

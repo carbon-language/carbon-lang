@@ -47,7 +47,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "function_special_name_decl.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_function_special_name_decl.carbon:[[@LINE+4]]:3: error: Using non-identifier name `base` in `Cpp` [CppNonIdentifierName]
+  // CHECK:STDERR: fail_import_function_special_name_decl.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   Cpp.base();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -275,9 +275,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .base = <error>
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
