@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/no_prelude/subtyping.carbon
 
-// This is testing `FindWitnessInFacet` from impl_lookup.cpp
-
-// --- equivalent.carbon
+// --- fail_todo_equivalent.carbon
 library "[[@TEST_NAME]]";
 
 interface A {}
@@ -18,17 +16,17 @@ interface A {}
 fn TakesA[T:! A](x: T) {}
 
 fn WithExtraWhere[U:! A where .Self impls type](y: U) {
-  // CHECK:STDERR: equivalent.carbon:[[@LINE+7]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+7]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   TakesA(y);
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: equivalent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn TakesA[T:! A](x: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TakesA(y);
 }
 
-// CHECK:STDOUT: --- equivalent.carbon
+// CHECK:STDOUT: --- fail_todo_equivalent.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]

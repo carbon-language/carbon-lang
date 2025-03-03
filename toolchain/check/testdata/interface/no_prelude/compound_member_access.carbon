@@ -27,7 +27,7 @@ impl forall [T:! type] T as BitAnd {
   fn Op[self: Self](other: Self) -> Self = "type.and";
 }
 
-// --- associated_constant.carbon
+// --- fail_todo_associated_constant.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -38,13 +38,13 @@ interface J {
 fn Simple1(T:! J, S:! T.U) {}
 
 // This should be equivalent to `Simple1` above, but using compound member access.
-// CHECK:STDERR: associated_constant.carbon:[[@LINE+4]]:25: error: cannot access member of interface `J` in type `J` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_todo_associated_constant.carbon:[[@LINE+4]]:25: error: cannot access member of interface `J` in type `J` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn Compound1(V:! J, W:! V.(J.U)) {}
 // CHECK:STDERR:                         ^~~~~~~
 // CHECK:STDERR:
 fn Compound1(V:! J, W:! V.(J.U)) {}
 
-// --- non_instance.carbon
+// --- fail_todo_non_instance.carbon
 library "[[@TEST_NAME]]";
 
 interface K1 {
@@ -58,7 +58,7 @@ fn Simple2(T:! K1) {
 
 // This should be equivalent to `Simple2` above, but using compound member access.
 fn Compound2(V:! K1) {
-  // CHECK:STDERR: non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `K1` in type `K1` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `K1` in type `K1` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   V.(K1.Q1)();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -176,7 +176,7 @@ fn Compound5(V:! L2) {
   V.(L2.S2)();
 }
 
-// --- fail_combine_non_instance.carbon
+// --- todo_fail_combine_non_instance.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
@@ -198,7 +198,7 @@ fn Fails() {
   (({} as C) as (C as (A & A))).(A.G)();
 }
 
-// --- allowed_combine_non_instance.carbon
+// --- fail_todo_allowed_combine_non_instance.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
@@ -213,17 +213,17 @@ impl C as A {
 }
 
 fn Works() {
-  // CHECK:STDERR: allowed_combine_non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_allowed_combine_non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `type` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   C.((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
   C.((A & A).G)();
-  // CHECK:STDERR: allowed_combine_non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `A` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_allowed_combine_non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   (C as (A & A)).((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (C as (A & A)).((A & A).G)();
-  // CHECK:STDERR: allowed_combine_non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `A` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_allowed_combine_non_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   (C as (A & A)).(A.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -547,7 +547,7 @@ fn Works() {
 // CHECK:STDOUT:   %Self.as_type.loc12_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_constant.carbon
+// CHECK:STDOUT: --- fail_todo_associated_constant.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
@@ -683,7 +683,7 @@ fn Works() {
 // CHECK:STDOUT:   %W.patt.loc15_21.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_instance.carbon
+// CHECK:STDOUT: --- fail_todo_non_instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %K1.type: type = facet_type <@K1> [concrete]
@@ -1355,7 +1355,7 @@ fn Works() {
 // CHECK:STDOUT:   %V.patt.loc30_14.2 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_combine_non_instance.carbon
+// CHECK:STDOUT: --- todo_fail_combine_non_instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
@@ -1617,7 +1617,7 @@ fn Works() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- allowed_combine_non_instance.carbon
+// CHECK:STDOUT: --- fail_todo_allowed_combine_non_instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]

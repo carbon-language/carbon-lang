@@ -61,12 +61,12 @@ impl A as Factory(B) {
   fn Method[self: Self]() -> B;
 }
 
-// --- factory.impl.carbon
+// --- fail_todo_factory.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
 fn MakeB() -> B {
-  // CHECK:STDERR: factory.impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Factory(B)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_factory.impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Factory(B)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return A.(Factory(B).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -904,7 +904,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self.as_type.loc8_19.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- factory.impl.carbon
+// CHECK:STDOUT: --- fail_todo_factory.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]

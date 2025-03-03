@@ -27,13 +27,13 @@ impl {.i: ()} as Instance {
   fn G[self: Self]() {}
 }
 
-// --- import_non-instance_success.carbon
+// --- fail_todo_import_non-instance_success.carbon
 library "[[@TEST_NAME]]";
 
 import library "lib";
 
 fn NonInstanceCallImport() {
-  // CHECK:STDERR: import_non-instance_success.carbon:[[@LINE+4]]:3: error: cannot access member of interface `NonInstance` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_import_non-instance_success.carbon:[[@LINE+4]]:3: error: cannot access member of interface `NonInstance` in type `type` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   {.i: ()}.(NonInstance.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -47,7 +47,7 @@ interface ImplicitAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
-// --- fail_import_non-instance.carbon
+// --- todo_fail_import_non-instance.carbon
 library "[[@TEST_NAME]]";
 
 import library "lib";
@@ -57,7 +57,7 @@ fn NonInstanceCallImportFail(n: {.i: ()}) {
   n.(NonInstance.F)();
 }
 
-// --- fail_import_non-instance_indirect.carbon
+// --- todo_fail_import_non-instance_indirect.carbon
 library "[[@TEST_NAME]]";
 
 import library "lib";
@@ -236,7 +236,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%struct_type.i
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non-instance_success.carbon
+// CHECK:STDOUT: --- fail_todo_import_non-instance_success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstanceCallImport.type: type = fn_type @NonInstanceCallImport [concrete]
@@ -406,7 +406,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(%Dest.loc3_22.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non-instance.carbon
+// CHECK:STDOUT: --- todo_fail_import_non-instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -512,7 +512,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.73c) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non-instance_indirect.carbon
+// CHECK:STDOUT: --- todo_fail_import_non-instance_indirect.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

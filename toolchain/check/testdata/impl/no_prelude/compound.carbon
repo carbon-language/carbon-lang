@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/compound.carbon
 
-// --- non-instance_success.carbon
+// --- fail_todo_non-instance_success.carbon
 library "[[@TEST_NAME]]";
 
 interface NonInstance1 {
@@ -20,7 +20,7 @@ impl {.a: ()} as NonInstance1 {
 }
 
 fn NonInstanceCall1() {
-  // CHECK:STDERR: non-instance_success.carbon:[[@LINE+4]]:3: error: cannot access member of interface `NonInstance1` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_non-instance_success.carbon:[[@LINE+4]]:3: error: cannot access member of interface `NonInstance1` in type `type` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   {.a: ()}.(NonInstance1.F1)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -34,7 +34,7 @@ interface ImplicitAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
-// --- fail_non-instance.carbon
+// --- todo_fail_non-instance.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
@@ -51,7 +51,7 @@ fn NonInstanceCall2(n: {.b: ()}) {
   n.(NonInstance2.F2)();
 }
 
-// --- fail_non-instance_indirect.carbon
+// --- todo_fail_non-instance_indirect.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
@@ -106,7 +106,7 @@ fn InstanceCallFail() {
   {.e: ()}.(Instance2.G2)();
 }
 
-// CHECK:STDOUT: --- non-instance_success.carbon
+// CHECK:STDOUT: --- fail_todo_non-instance_success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance1.type: type = facet_type <@NonInstance1> [concrete]
@@ -279,7 +279,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(%Dest.loc3_22.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non-instance.carbon
+// CHECK:STDOUT: --- todo_fail_non-instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance2.type: type = facet_type <@NonInstance2> [concrete]
@@ -376,7 +376,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F2.1(constants.%NonInstance2.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non-instance_indirect.carbon
+// CHECK:STDOUT: --- todo_fail_non-instance_indirect.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance3.type: type = facet_type <@NonInstance3> [concrete]
