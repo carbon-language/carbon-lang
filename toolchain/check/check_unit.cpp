@@ -135,8 +135,16 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   ImportCurrentPackage(package_inst_id, namespace_type_id);
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
-  ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                 unit_and_imports_->cpp_import_names, fs_);
+
+  const auto& cpp_import_names = unit_and_imports_->cpp_import_names;
+  if (!cpp_import_names.empty()) {
+    auto* cpp_ast = unit_and_imports_->unit->cpp_ast;
+    CARBON_CHECK(cpp_ast);
+    CARBON_CHECK(!cpp_ast->get());
+    *cpp_ast =
+        ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
+                       cpp_import_names, fs_);
+  }
 }
 
 auto CheckUnit::CollectDirectImports(

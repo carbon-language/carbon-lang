@@ -212,6 +212,12 @@ class NameScope : public Printable<NameScope> {
     is_closed_import_ = is_closed_import;
   }
 
+  auto is_cpp_scope() const -> bool { return is_cpp_scope_; }
+
+  auto set_is_cpp_scope(bool is_cpp_scope) -> void {
+    is_cpp_scope_ = is_cpp_scope;
+  }
+
   // Returns true if this name scope describes an imported package.
   auto is_imported_package() const -> bool {
     return is_closed_import() && parent_scope_id() == NameScopeId::Package;
@@ -271,6 +277,9 @@ class NameScope : public Printable<NameScope> {
 
   // True if this is a closed namespace created by importing a package.
   bool is_closed_import_ = false;
+
+  // True if this is the `Cpp` namescope used when importing C++ code.
+  bool is_cpp_scope_ = false;
 
   // Imported IR scopes that compose this namespace. This will be empty for
   // scopes that correspond to the current package.
