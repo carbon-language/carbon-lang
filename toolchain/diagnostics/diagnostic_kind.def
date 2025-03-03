@@ -301,7 +301,6 @@ CARBON_DIAGNOSTIC_KIND(ImplOfNotOneInterface)
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
-CARBON_DIAGNOSTIC_KIND(ImplLookupForFacetWithIncompleteType)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
