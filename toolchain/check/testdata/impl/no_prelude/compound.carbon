@@ -8,6 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/compound.carbon
 
+// --- core.carbon
+package Core;
+
+interface ImplicitAs(Dest:! type) {
+  fn Convert[self: Self]() -> Dest;
+}
+
 // --- fail_todo_non-instance_success.carbon
 library "[[@TEST_NAME]]";
 
@@ -25,13 +32,6 @@ fn NonInstanceCall1() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {.a: ()}.(NonInstance1.F1)();
-}
-
-// --- core.carbon
-package Core;
-
-interface ImplicitAs(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
 }
 
 // --- todo_fail_non-instance.carbon
@@ -106,83 +106,6 @@ fn InstanceCallFail() {
   {.e: ()}.(Instance2.G2)();
 }
 
-// CHECK:STDOUT: --- fail_todo_non-instance_success.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %NonInstance1.type: type = facet_type <@NonInstance1> [concrete]
-// CHECK:STDOUT:   %Self: %NonInstance1.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F1.type.163: type = fn_type @F1.1 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %F1.b1f: %F1.type.163 = struct_value () [concrete]
-// CHECK:STDOUT:   %NonInstance1.assoc_type: type = assoc_entity_type %NonInstance1.type [concrete]
-// CHECK:STDOUT:   %assoc0: %NonInstance1.assoc_type = assoc_entity element0, @NonInstance1.%F1.decl [concrete]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F1.decl) [concrete]
-// CHECK:STDOUT:   %F1.type.d4a: type = fn_type @F1.2 [concrete]
-// CHECK:STDOUT:   %F1.c75: %F1.type.d4a = struct_value () [concrete]
-// CHECK:STDOUT:   %NonInstance1.facet: %NonInstance1.type = facet_value %struct_type.a, %impl_witness [concrete]
-// CHECK:STDOUT:   %NonInstanceCall1.type: type = fn_type @NonInstanceCall1 [concrete]
-// CHECK:STDOUT:   %NonInstanceCall1: %NonInstanceCall1.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .NonInstance1 = %NonInstance1.decl
-// CHECK:STDOUT:     .NonInstanceCall1 = %NonInstanceCall1.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NonInstance1.decl: type = interface_decl @NonInstance1 [concrete = constants.%NonInstance1.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
-// CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
-// CHECK:STDOUT:     %NonInstance1.ref: type = name_ref NonInstance1, file.%NonInstance1.decl [concrete = constants.%NonInstance1.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F1.decl) [concrete = constants.%impl_witness]
-// CHECK:STDOUT:   %NonInstanceCall1.decl: %NonInstanceCall1.type = fn_decl @NonInstanceCall1 [concrete = constants.%NonInstanceCall1] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @NonInstance1 {
-// CHECK:STDOUT:   %Self: %NonInstance1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F1.decl: %F1.type.163 = fn_decl @F1.1 [concrete = constants.%F1.b1f] {} {}
-// CHECK:STDOUT:   %assoc0: %NonInstance1.assoc_type = assoc_entity element0, %F1.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F1 = %assoc0
-// CHECK:STDOUT:   witness = (%F1.decl)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %struct_type.a as %NonInstance1.ref {
-// CHECK:STDOUT:   %F1.decl: %F1.type.d4a = fn_decl @F1.2 [concrete = constants.%F1.c75] {} {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F1 = %F1.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F1.1(@NonInstance1.%Self: %NonInstance1.type) {
-// CHECK:STDOUT:   fn();
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F1.2() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @NonInstanceCall1() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_9.2: type = converted %.loc16_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
-// CHECK:STDOUT:   %NonInstance1.ref: type = name_ref NonInstance1, file.%NonInstance1.decl [concrete = constants.%NonInstance1.type]
-// CHECK:STDOUT:   %F1.ref: %NonInstance1.assoc_type = name_ref F1, @NonInstance1.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F1.1(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F1.1(constants.%NonInstance1.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- core.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -278,6 +201,83 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(%Dest.loc3_22.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_non-instance_success.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %NonInstance1.type: type = facet_type <@NonInstance1> [concrete]
+// CHECK:STDOUT:   %Self: %NonInstance1.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %F1.type.163: type = fn_type @F1.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %F1.b1f: %F1.type.163 = struct_value () [concrete]
+// CHECK:STDOUT:   %NonInstance1.assoc_type: type = assoc_entity_type %NonInstance1.type [concrete]
+// CHECK:STDOUT:   %assoc0: %NonInstance1.assoc_type = assoc_entity element0, @NonInstance1.%F1.decl [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F1.decl) [concrete]
+// CHECK:STDOUT:   %F1.type.d4a: type = fn_type @F1.2 [concrete]
+// CHECK:STDOUT:   %F1.c75: %F1.type.d4a = struct_value () [concrete]
+// CHECK:STDOUT:   %NonInstance1.facet: %NonInstance1.type = facet_value %struct_type.a, %impl_witness [concrete]
+// CHECK:STDOUT:   %NonInstanceCall1.type: type = fn_type @NonInstanceCall1 [concrete]
+// CHECK:STDOUT:   %NonInstanceCall1: %NonInstanceCall1.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .NonInstance1 = %NonInstance1.decl
+// CHECK:STDOUT:     .NonInstanceCall1 = %NonInstanceCall1.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %NonInstance1.decl: type = interface_decl @NonInstance1 [concrete = constants.%NonInstance1.type] {} {}
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
+// CHECK:STDOUT:     %NonInstance1.ref: type = name_ref NonInstance1, file.%NonInstance1.decl [concrete = constants.%NonInstance1.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F1.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %NonInstanceCall1.decl: %NonInstanceCall1.type = fn_decl @NonInstanceCall1 [concrete = constants.%NonInstanceCall1] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @NonInstance1 {
+// CHECK:STDOUT:   %Self: %NonInstance1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %F1.decl: %F1.type.163 = fn_decl @F1.1 [concrete = constants.%F1.b1f] {} {}
+// CHECK:STDOUT:   %assoc0: %NonInstance1.assoc_type = assoc_entity element0, %F1.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .F1 = %assoc0
+// CHECK:STDOUT:   witness = (%F1.decl)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %struct_type.a as %NonInstance1.ref {
+// CHECK:STDOUT:   %F1.decl: %F1.type.d4a = fn_decl @F1.2 [concrete = constants.%F1.c75] {} {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .F1 = %F1.decl
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F1.1(@NonInstance1.%Self: %NonInstance1.type) {
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F1.2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @NonInstanceCall1() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_9.2: type = converted %.loc16_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
+// CHECK:STDOUT:   %NonInstance1.ref: type = name_ref NonInstance1, file.%NonInstance1.decl [concrete = constants.%NonInstance1.type]
+// CHECK:STDOUT:   %F1.ref: %NonInstance1.assoc_type = name_ref F1, @NonInstance1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F1.1(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F1.1(constants.%NonInstance1.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_non-instance.carbon
 // CHECK:STDOUT:
