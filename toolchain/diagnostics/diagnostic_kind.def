@@ -359,6 +359,7 @@ CARBON_DIAGNOSTIC_KIND(CoreNotFound)
 CARBON_DIAGNOSTIC_KIND(DerefOfNonPointer)
 CARBON_DIAGNOSTIC_KIND(DerefOfType)
 CARBON_DIAGNOSTIC_KIND(CompileTimeBindingInVarDecl)
+CARBON_DIAGNOSTIC_KIND(CompoundMemberAccessDoesNotUseBase)
 CARBON_DIAGNOSTIC_KIND(RealMantissaTooLargeForI64)
 CARBON_DIAGNOSTIC_KIND(RealExponentTooLargeForI64)
 CARBON_DIAGNOSTIC_KIND(NameDeclDuplicate)
@@ -458,9 +459,6 @@ CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
-
-// Compound member access
-CARBON_DIAGNOSTIC_KIND(CompoundMemberAccessDoesNotUseBase)
 
 // ============================================================================
 // Language server diagnostics
