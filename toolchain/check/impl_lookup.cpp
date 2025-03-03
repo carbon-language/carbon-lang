@@ -276,9 +276,8 @@ static auto FindWitnessInFacet(
     const SemIR::SpecificInterface& specific_interface) -> SemIR::InstId {
   SemIR::InstId facet_inst_id =
       context.constant_values().GetInstId(facet_const_id);
-  // FIXME: Should we convert from a FacetAccessType to its facet here?
-  SemIR::Inst facet_inst = context.insts().Get(facet_inst_id);
-  SemIR::TypeId facet_type_id = facet_inst.type_id();
+  // TODO: Should we convert from a FacetAccessType to its facet here?
+  SemIR::TypeId facet_type_id = context.insts().Get(facet_inst_id).type_id();
   if (auto facet_type_inst =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_id)) {
     auto complete_facet_type_id = RequireCompleteFacetType(
