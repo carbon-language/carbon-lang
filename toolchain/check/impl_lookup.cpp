@@ -281,12 +281,10 @@ static auto FindWitnessInFacet(
   if (auto facet_type_inst =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_id)) {
     auto complete_facet_type_id = RequireCompleteFacetType(
-        context, facet_type_id, loc_id, *facet_type_inst, [&] {
-          CARBON_DIAGNOSTIC(ImplLookupForFacetWithIncompleteType, Error,
-                            "impl lookup for with incomplete facet type {0}",
-                            SemIR::TypeId);
-          return context.emitter().Build(
-              loc_id, ImplLookupForFacetWithIncompleteType, facet_type_id);
+        context, facet_type_id, loc_id, *facet_type_inst,
+        [&]() -> DiagnosticBuilder {
+          // TODO: Find test that triggers this code path.
+          CARBON_FATAL("impl lookup for with incomplete facet type");
         });
     if (complete_facet_type_id.has_value()) {
       const auto& complete_facet_type =
