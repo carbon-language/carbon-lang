@@ -53,7 +53,10 @@ _DEF_FILE_TEMPLATE = """
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// This is a generated X-macro header for defining LLVM tools.
+// This is a generated X-macro header for defining LLVM tools. It does not use
+// `#include` guards, and instead is designed to be `#include`ed after the
+// x-macro is defined in order for its inclusion to expand to the desired
+// output. Macro definitions are cleaned up at the end of this file.
 //
 // Each X-macro takes four arguments:
 // - `Id` is the identifier-shaped PascalCased tool name.

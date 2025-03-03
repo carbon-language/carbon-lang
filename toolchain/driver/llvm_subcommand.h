@@ -21,7 +21,7 @@ struct LLVMOptions {
   // Build the LLVM subcommand options using `b`.
   //
   // When this top-level subcommand is selected (potentially through a nested
-  // sub-subcommand), the `selected_subcommand` should be set to point to
+  // sub-subcommand), the `selected_subcommand` will be set to point to
   // `subcommand` to reflect that.
   auto Build(CommandLine::CommandBuilder& b, DriverSubcommand* subcommand,
              DriverSubcommand** selected_subcommand) -> void;
