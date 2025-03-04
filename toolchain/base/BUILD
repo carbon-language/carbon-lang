@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("llvm_tools.bzl", "LLVM_MAIN_TOOLS", "generate_llvm_tools_def")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -118,6 +119,37 @@ cc_test(
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
     ],
+)
+
+generate_llvm_tools_def(
+    name = "llvm_tools_def",
+    out = "llvm_tools.def",
+)
+
+config_setting(
+    name = "is_macos",
+    constraint_values = ["@platforms//os:macos"],
+)
+
+cc_library(
+    name = "llvm_tools",
+    srcs = ["llvm_tools.cpp"],
+    hdrs = ["llvm_tools.h"],
+    linkopts = select({
+        # TODO: This should be moved upstream to LLVM's tool libraries that
+        # require it.
+        ":is_macos": [
+            "-framework",
+            "CoreFoundation",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":llvm_tools_def",
+        "//common:command_line",
+        "//common:enum_base",
+        "@llvm-project//llvm:Support",
+    ] + [info.lib for info in LLVM_MAIN_TOOLS.values()],
 )
 
 cc_library(

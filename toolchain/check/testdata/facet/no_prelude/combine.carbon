@@ -14,15 +14,7 @@
 package Core;
 
 interface As(Dest:! type) {
-  // CHECK:STDERR: core.carbon:[[@LINE+8]]:36: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   fn Convert[self: Self]() -> Dest;!
-  // CHECK:STDERR:                                    ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: core.carbon:[[@LINE+4]]:36: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   fn Convert[self: Self]() -> Dest;!
-  // CHECK:STDERR:                                    ^
-  // CHECK:STDERR:
-  fn Convert[self: Self]() -> Dest;!
+  fn Convert[self: Self]() -> Dest;
 }
 
 interface ImplicitAs(Dest:! type) {
@@ -45,34 +37,42 @@ import Core;
 interface A {}
 class C {}
 
-// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
 // CHECK:STDERR: fn AC[T:! A & C](t: T) {}
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
 fn AC[T:! A & C](t: T) {}
-// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
 // CHECK:STDERR: fn CA[T:! C & A](t: T) {}
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
 fn CA[T:! C & A](t: T) {}
-// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+8]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn CC[T:! C & C](t: T) {}
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
 // CHECK:STDERR: fn CC[T:! C & C](t: T) {}
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
 fn CC[T:! C & C](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (A & C));
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (A & C));
-  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (C & A));
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (C & A));
-  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+8]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+  // CHECK:STDERR:   ({} as C) as (C as (C & C));
+  // CHECK:STDERR:                       ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (C & C));
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
@@ -93,17 +93,9 @@ interface A {}
 class C {}
 impl C as A {}
 
-// CHECK:STDERR: same.carbon:[[@LINE+4]]:11: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: fn AA[T:! A & A](t: T) {}
-// CHECK:STDERR:           ^~~~~
-// CHECK:STDERR:
 fn AA[T:! A & A](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: same.carbon:[[@LINE+4]]:23: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:   ({} as C) as (C as (A & A));
-  // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR:
   ({} as C) as (C as (A & A));
 
   AA({} as C);
@@ -132,9 +124,9 @@ impl C as B {
 fn F() {
   // TODO: This error message is wrong here, we are not using `extend`.
 
-  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+4]]:15: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+4]]:14: error: ambiguous use of name `G` found in multiple extended scopes [NameAmbiguousDueToExtend]
   // CHECK:STDERR:   ({} as C).((A & B).G)();
-  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR:              ^~~~~~~~~
   // CHECK:STDERR:
   ({} as C).((A & B).G)();
 }
@@ -146,37 +138,24 @@ import Core;
 
 interface A {}
 interface B {
-  fn G();
+  fn BB[self: Self]();
 }
 
 class C {}
 impl C as A {}
 impl C as B {
-  fn G() {}
+  fn BB[self: Self]() {}
 }
 
+fn G[T:! A & B](t: T) {}
+
 fn F() {
-  // CHECK:STDERR: combine.carbon:[[@LINE+4]]:15: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:   ({} as C).((A & B).G)();
-  // CHECK:STDERR:               ^~~~~
-  // CHECK:STDERR:
-  ({} as C).((A & B).G)();
+  ({} as C).((A & B).BB)();
 
-  // CHECK:STDERR: combine.carbon:[[@LINE+8]]:24: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
-  // CHECK:STDERR:                        ^~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: combine.carbon:[[@LINE+4]]:35: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
-  // CHECK:STDERR:                                   ^~~~~
-  // CHECK:STDERR:
-  (({} as C) as (C as (A & B))).((A & B).G)();
+  (({} as C) as (C as (A & B))).((A & B).BB)();
+  (({} as C) as (C as (A & B))).(B.BB)();
 
-  // CHECK:STDERR: combine.carbon:[[@LINE+4]]:24: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
-  // CHECK:STDERR:                        ^~~~~
-  // CHECK:STDERR:
-  (({} as C) as (C as (A & B))).((B).G)();
+  G({} as C);
 }
 
 // --- generic_interface.carbon
@@ -194,10 +173,6 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-// CHECK:STDERR: generic_interface.carbon:[[@LINE+4]]:10: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: fn G[T:! A(P1) & B](t: T) {}
-// CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR:
 fn G[T:! A(P1) & B](t: T) {}
 
 fn F() {
@@ -219,13 +194,19 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-// CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+4]]:10: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: fn G[T:! A(P2) & B](t: T) {}
-// CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR:
 fn G[T:! A(P2) & B](t: T) {}
 
 fn F() {
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A(P2) & B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A(P2) & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn G[T:! A(P2) & B](t: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   G({} as C);
 }
 
@@ -247,10 +228,6 @@ impl C as Iface {}
 
 impl forall [IfaceType:! Iface] C as GenericIface(GenericClass(IfaceType)) {}
 
-// CHECK:STDERR: generic_forall_impl.carbon:[[@LINE+4]]:10: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](t: T) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](t: T) {}
 
 fn F() {

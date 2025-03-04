@@ -104,6 +104,8 @@ cc_library(
         "link_subcommand.h",
         "lld_subcommand.cpp",
         "lld_subcommand.h",
+        "llvm_subcommand.cpp",
+        "llvm_subcommand.h",
     ],
     hdrs = [
         "driver.h",
@@ -116,12 +118,14 @@ cc_library(
     deps = [
         ":clang_runner",
         ":lld_runner",
+        ":llvm_runner",
         "//common:command_line",
         "//common:error",
         "//common:ostream",
         "//common:raw_string_ostream",
         "//common:version",
         "//common:vlog",
+        "//toolchain/base:llvm_tools",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:timings",
@@ -220,6 +224,41 @@ cc_test(
         "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
+    ],
+)
+
+cc_library(
+    name = "llvm_runner",
+    srcs = ["llvm_runner.cpp"],
+    hdrs = ["llvm_runner.h"],
+    deps = [
+        ":tool_runner_base",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/base:llvm_tools",
+        "//toolchain/install:install_paths",
+        "@llvm-project//lld:Common",
+        "@llvm-project//lld:ELF",
+        "@llvm-project//lld:MachO",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "llvm_runner_test",
+    size = "small",
+    srcs = ["llvm_runner_test.cpp"],
+    env = cc_env(),
+    deps = [
+        ":llvm_runner",
+        "//common:all_llvm_targets",
+        "//common:ostream",
+        "//common:raw_string_ostream",
+        "//testing/base:capture_std_streams",
+        "//testing/base:global_exe_path",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

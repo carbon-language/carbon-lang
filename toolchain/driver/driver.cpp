@@ -16,6 +16,7 @@
 #include "toolchain/driver/language_server_subcommand.h"
 #include "toolchain/driver/link_subcommand.h"
 #include "toolchain/driver/lld_subcommand.h"
+#include "toolchain/driver/llvm_subcommand.h"
 
 namespace Carbon {
 
@@ -35,6 +36,7 @@ struct Options {
   LanguageServerSubcommand language_server;
   LinkSubcommand link;
   LldSubcommand lld;
+  LLVMSubcommand llvm;
 
   // On success, this is set to the subcommand to run.
   DriverSubcommand* selected_subcommand = nullptr;
@@ -92,6 +94,7 @@ applies to each message that forms a diagnostic, not just the primary message.
   language_server.AddTo(b, &selected_subcommand);
   link.AddTo(b, &selected_subcommand);
   lld.AddTo(b, &selected_subcommand);
+  llvm.AddTo(b, &selected_subcommand);
 
   b.RequiresSubcommand();
 }
