@@ -160,9 +160,9 @@ static auto FindAndDiagnoseImplLookupCycle(
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value).
 static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
-                                        SemIR::ConstantId interface_const_id)
-    -> llvm::SmallVector<
-        std::pair<SemIR::CompleteFacetType::RequiredInterface, bool>, 16> {
+                                        SemIR::ConstantId interface_const_id,
+                                        bool& has_other_requirements)
+    -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface, 16> {
   // The `interface_const_id` is a constant value for some facet type. We do
   // this long chain of steps to go from that constant value to the
   // `FacetTypeId` found on the `FacetType` instruction of this constant value,
@@ -181,9 +181,9 @@ static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
   const auto& complete_facet_type =
       context.complete_facet_types().Get(complete_facet_type_id);
 
-  llvm::SmallVector<
-      std::pair<SemIR::CompleteFacetType::RequiredInterface, bool>, 16>
+  llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface, 16>
       interface_ids;
+  has_other_requirements = false;
 
   if (complete_facet_type.required_interfaces.empty()) {
     // This should never happen - a FacetType either requires or is bounded by
@@ -195,19 +195,18 @@ static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
     return interface_ids;
   }
   for (auto required : complete_facet_type.required_interfaces) {
-    interface_ids.push_back(
-        {required,
-         context.facet_types().Get(facet_type_id).other_requirements});
+    interface_ids.push_back(required);
+    if (context.facet_types().Get(facet_type_id).other_requirements) {
+      has_other_requirements = true;
+    }
   }
   return interface_ids;
 }
 
 static auto GetWitnessIdForImpl(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
-    SemIR::ConstantId interface_const_id,
     const SemIR::CompleteFacetType::RequiredInterface& interface,
-    bool interface_has_other_requirements, const SemIR::Impl& impl)
-    -> SemIR::InstId {
+    const SemIR::Impl& impl) -> SemIR::InstId {
   // If the impl's interface_id differs from the query, then this impl can not
   // possibly provide the queried interface, and we don't need to proceed.
   if (impl.interface.interface_id != interface.interface_id) {
@@ -268,34 +267,15 @@ static auto GetWitnessIdForImpl(
     return SemIR::InstId::None;
   }
 
-  auto deduced_constaint_facet_type_id =
-      context.insts()
-          .GetAs<SemIR::FacetType>(deduced_constraint_id)
-          .facet_type_id;
-  bool constraint_has_other_requirements =
-      context.facet_types()
-          .Get(deduced_constaint_facet_type_id)
-          .other_requirements;
-
-  // If there are requirements on the impl's constraint facet type, or on the
-  // query facet type, that are not modelled yet in the FacetTypeInfo and
-  // CompleteFacetType, then we can't tell if we have a match for this specific
-  // query interface.
-  //
-  // In this case we just do the wrong thing if the either the constraint or
-  // query facet type had more than one interface in it, and compare the
-  // constant value of the entire query facet type against the entire impl's
-  // constraint facet type. The latter will include those other requirements
-  // (correctly), but the former may include more things unrelated to this one
-  // interface being looked for here and thus fail incorrectly.
-  //
-  // TODO: Stop using `other_requirements` and look at `where .Self impls`
-  // clauses with further impl lookups as needed. These should become part of
-  // the set of interfaces for which this function is called on, and this
-  // function shouldn't have to think about them.
-  if (constraint_has_other_requirements || interface_has_other_requirements) {
-    if (context.constant_values().Get(deduced_constraint_id) !=
-        interface_const_id) {
+  {
+    auto deduced_constaint_facet_type_id =
+        context.insts()
+            .GetAs<SemIR::FacetType>(deduced_constraint_id)
+            .facet_type_id;
+    if (context.facet_types()
+            .Get(deduced_constaint_facet_type_id)
+            .other_requirements) {
+      // TODO: Remove this when other requirements goes away.
       return SemIR::InstId::None;
     }
   }
@@ -336,11 +316,16 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  auto interfaces =
-      GetInterfacesFromConstantId(context, loc_id, interface_const_id);
+  bool has_other_requirements = false;
+  auto interfaces = GetInterfacesFromConstantId(
+      context, loc_id, interface_const_id, has_other_requirements);
   if (interfaces.empty()) {
     // TODO: Remove this when the context.TODO() is removed in
     // GetInterfacesFromConstantId.
+    return SemIR::InstId::None;
+  }
+  if (has_other_requirements) {
+    // TODO: Remove this when other requirements go away.
     return SemIR::InstId::None;
   }
 
@@ -354,13 +339,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // We need to find a witness for each interface in `interfaces`. We return
   // them in the same order as they are found in the `CompleteFacetType`, which
   // is the same order as in `interfaces` here.
-  for (const auto& [interface, interface_has_other_requirements] : interfaces) {
+  for (const auto& interface : interfaces) {
     bool found_witness = false;
     for (const auto& impl : context.impls().array_ref()) {
       stack.back().impl_loc = impl.definition_id;
-      auto result_witness_id = GetWitnessIdForImpl(
-          context, loc_id, type_const_id, interface_const_id, interface,
-          interface_has_other_requirements, impl);
+      auto result_witness_id =
+          GetWitnessIdForImpl(context, loc_id, type_const_id, interface, impl);
       if (result_witness_id.has_value()) {
         result_witness_ids.push_back(result_witness_id);
         // We found a matching impl; don't keep looking for this `interface`,
