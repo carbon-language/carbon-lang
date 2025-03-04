@@ -1,7 +1,7 @@
 {
   "name": "carbon-vscode",
   "displayName": "Carbon Language",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "carbon-lang",
   "description": "Carbon language support for Visual Studio Code.",
   "repository": {
@@ -42,8 +42,18 @@
       "properties": {
         "carbon.carbonPath": {
           "type": "string",
-          "description": "The path to the 'carbon' binary.",
+          "description": "The path to the `carbon` binary.",
           "default": "./bazel-bin/toolchain/carbon"
+        },
+        "carbon.carbonServerCommandArgs": {
+          "type": "string",
+          "description": "Extra flags to pass to `carbon` before the `language-server` subcommand, such as `-v` for debugging.",
+          "default": ""
+        },
+        "carbon.carbonServerSubcommandArgs": {
+          "type": "string",
+          "description": "Extra flags to pass to the `language-server` subcommand.",
+          "default": ""
         }
       }
     },

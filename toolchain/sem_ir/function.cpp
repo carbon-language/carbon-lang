@@ -10,13 +10,18 @@
 
 namespace Carbon::SemIR {
 
-auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
+auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
+                       SpecificId specific_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::None,
                            .enclosing_specific_id = SpecificId::None,
                            .resolved_specific_id = SpecificId::None,
                            .self_type_id = InstId::None,
                            .self_id = InstId::None,
                            .is_error = false};
+  if (specific_id.has_value()) {
+    callee_id = sem_ir.constant_values().GetInstIdIfValid(
+        GetConstantValueInSpecific(sem_ir, specific_id, callee_id));
+  }
 
   if (auto specific_function =
           sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
