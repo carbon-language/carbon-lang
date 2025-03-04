@@ -68,7 +68,7 @@ impl A as Factory(B) {
   fn Method[self: Self]() -> B;
 }
 
-// --- fail_todo_factory.impl.carbon
+// --- factory.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
@@ -999,7 +999,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self.as_type.loc8_19.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_factory.impl.carbon
+// CHECK:STDOUT: --- factory.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
