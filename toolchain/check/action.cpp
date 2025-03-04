@@ -75,4 +75,29 @@ auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
       SemIR::SpliceInst{.type_id = result_type_id, .inst_id = inst_id});
 }
 
+auto BeginPerformDelayedAction(Context& context) -> void {
+  // Push an `InstBlock` to hold any instructions created by the action.
+  // Note that we assume that actions don't need to create multiple blocks. If
+  // this changes, we should push a region too.
+  context.inst_block_stack().Push();
+}
+
+auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id) -> SemIR::InstId {
+  // If the only created instruction is the result, then we can use it directly.
+  auto contents = context.inst_block_stack().PeekCurrentBlockContents();
+  if (contents.size() == 1 && contents[0] == result_id) {
+    context.inst_block_stack().PopAndDiscard();
+    return result_id;
+  }
+
+  // Otherwise, create a splice_block to represent the sequence of instructions
+  // created by the action.
+  auto result = context.insts().GetWithLocId(result_id);
+  return AddInstInNoBlock(
+      context, result.loc_id,
+      SemIR::SpliceBlock{.type_id = result.inst.type_id(),
+                         .block_id = context.inst_block_stack().Pop(),
+                         .result_id = result_id});
+}
+
 }  // namespace Carbon::Check

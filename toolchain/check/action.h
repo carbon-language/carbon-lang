@@ -30,6 +30,9 @@ auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id)
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
                               SemIR::TypeId result_type_id) -> SemIR::InstId;
 
+// Handles a new action. If the action is not dependent, it is performed
+// immediately. Otherwise, adds the action to the enclosing template's eval
+// block and creates an instruction to splice in the result of the action.
 template <typename ActionT>
 auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
                   SemIR::TypeId result_type_id = SemIR::TypeId::None)
@@ -42,14 +45,23 @@ auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
   return PerformAction(context, loc_id, action_inst);
 }
 
+// Performs setup steps for performing a delayed action.
+auto BeginPerformDelayedAction(Context& context) -> void;
+
+// Performs cleanup steps for performing a delayed action.
+auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
+    -> SemIR::InstId;
+
+// Performs an action as a result of evaluation of a template's eval block.
 template <typename ActionT>
 auto PerformDelayedAction(Context& context, SemIR::LocId loc_id,
                           ActionT action_inst) -> SemIR::InstId {
   if (ActionIsDependent(context, action_inst)) {
     return SemIR::InstId::None;
   }
-  // TODO: Push an inst block and form a splice_block instruction if needed.
-  return PerformAction(context, loc_id, action_inst);
+  BeginPerformDelayedAction(context);
+  auto inst_id = PerformAction(context, loc_id, action_inst);
+  return EndPerformDelayedAction(context, inst_id);
 }
 
 }  // namespace Carbon::Check
