@@ -31,7 +31,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, %impl_witness [concrete]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,7 +89,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, constants.%impl_witness [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, (constants.%impl_witness) [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %.loc19: %Eats.type = converted %Animal.ref, %Eats.facet [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc19)
 // CHECK:STDOUT:   return

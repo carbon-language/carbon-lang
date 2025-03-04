@@ -30,7 +30,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.1e1: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.4c3: %F.type.1e1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %T, %impl_witness [symbolic]
+// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %T, (%impl_witness) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

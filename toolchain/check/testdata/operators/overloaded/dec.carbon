@@ -36,11 +36,11 @@ fn TestOp() {
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.9e0: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.cf9: %Op.type.9e0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.01d: type = fn_type_with_self_type %Op.type.633, %Dec.facet [concrete]
+// CHECK:STDOUT:   %.369: type = fn_type_with_self_type %Op.type.633, %Dec.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -113,7 +113,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0: %.01d = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.cf9]
+// CHECK:STDOUT:   %impl.elem0: %.369 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.cf9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.ref
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr)

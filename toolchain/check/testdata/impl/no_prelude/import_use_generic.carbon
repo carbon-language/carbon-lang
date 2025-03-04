@@ -68,7 +68,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.40c: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.071: %F.type.40c = struct_value () [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%impl_witness) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -203,8 +203,8 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %F.type.4a4: type = fn_type @F.1, @impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %F.9e6: %F.type.4a4 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.2 [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.7a7, %impl_witness.02b [concrete]
-// CHECK:STDOUT:   %.c06: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.7a7, (%impl_witness.02b) [concrete]
+// CHECK:STDOUT:   %.dd0: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.9e6, @F.1(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -258,7 +258,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %c.ref: ref %C.7a7 = name_ref c, file.%c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0: %.c06 = impl_witness_access constants.%impl_witness.02b, element0 [concrete = constants.%F.9e6]
+// CHECK:STDOUT:     %impl.elem0: %.dd0 = impl_witness_access constants.%impl_witness.02b, element0 [concrete = constants.%F.9e6]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @F.1(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %specific_fn()
 // CHECK:STDOUT:     %.loc16_19.1: ref %empty_tuple.type = temporary_storage

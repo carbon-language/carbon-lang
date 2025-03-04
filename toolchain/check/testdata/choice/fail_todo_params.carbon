@@ -61,8 +61,8 @@ choice C {
 // CHECK:STDOUT:   %impl_witness.514: <witness> = impl_witness (imports.%Core.import_ref.c3d), @impl.86e(%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %Convert.type.f9b: type = fn_type @Convert.2, @impl.86e(%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %Convert.84e: %Convert.type.f9b = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.766 = facet_value Core.IntLiteral, %impl_witness.514 [concrete]
-// CHECK:STDOUT:   %.996: type = fn_type_with_self_type %Convert.type.5a2, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.766 = facet_value Core.IntLiteral, (%impl_witness.514) [concrete]
+// CHECK:STDOUT:   %.df4: type = fn_type_with_self_type %Convert.type.5a2, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.db0: <bound method> = bound_method %int_0.5c6, %Convert.84e [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn.e7f: <specific function> = specific_function %Convert.bound.db0, @Convert.2(%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %int_0.cd3: %u1 = int_value 0 [concrete]
@@ -109,7 +109,7 @@ choice C {
 // CHECK:STDOUT:   %u1: type = class_type @UInt, @UInt(constants.%int_1.5b8) [concrete = constants.%u1]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type.df6]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc4: %.996 = impl_witness_access constants.%impl_witness.514, element0 [concrete = constants.%Convert.84e]
+// CHECK:STDOUT:   %impl.elem0.loc4: %.df4 = impl_witness_access constants.%impl_witness.514, element0 [concrete = constants.%Convert.84e]
 // CHECK:STDOUT:   %bound_method.loc4: <bound method> = bound_method %int_0, %impl.elem0.loc4 [concrete = constants.%Convert.bound.db0]
 // CHECK:STDOUT:   %specific_fn.loc4: <specific function> = specific_function %bound_method.loc4, @Convert.2(constants.%int_1.5b8) [concrete = constants.%Convert.specific_fn.e7f]
 // CHECK:STDOUT:   %int.convert_checked.loc4: init %u1 = call %specific_fn.loc4(%int_0) [concrete = constants.%int_0.cd3]
@@ -125,7 +125,7 @@ choice C {
 // CHECK:STDOUT:   %.loc4_7.10: %C = bind_value %.loc4_7.9
 // CHECK:STDOUT:   %Alt1: %C = bind_name Alt1, %.loc4_7.10
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc10: %.996 = impl_witness_access constants.%impl_witness.514, element0 [concrete = constants.%Convert.84e]
+// CHECK:STDOUT:   %impl.elem0.loc10: %.df4 = impl_witness_access constants.%impl_witness.514, element0 [concrete = constants.%Convert.84e]
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10 [concrete = constants.%Convert.bound.1f9]
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %bound_method.loc10, @Convert.2(constants.%int_1.5b8) [concrete = constants.%Convert.specific_fn.9b2]
 // CHECK:STDOUT:   %int.convert_checked.loc10: init %u1 = call %specific_fn.loc10(%int_1.loc10) [concrete = constants.%int_1.ae4]

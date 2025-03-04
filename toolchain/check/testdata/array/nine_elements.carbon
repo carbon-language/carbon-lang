@@ -32,8 +32,8 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
-// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
+// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn.70c: <specific function> = specific_function %Convert.bound.ab5, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
@@ -105,7 +105,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_8.loc11_46: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
 // CHECK:STDOUT:   %.loc11_50.1: %tuple.type = tuple_literal (%int_1.loc11_25, %int_2.loc11_28, %int_3.loc11_31, %int_4.loc11_34, %int_5.loc11_37, %int_6.loc11_40, %int_7.loc11_43, %int_8.loc11_46, %int_9)
-// CHECK:STDOUT:   %impl.elem0.loc11_50.1: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.1: <bound method> = bound_method %int_1.loc11_25, %impl.elem0.loc11_50.1 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn.loc11_50.1: <specific function> = specific_function %bound_method.loc11_50.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.70c]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.1: init %i32 = call %specific_fn.loc11_50.1(%int_1.loc11_25) [concrete = constants.%int_1.5d2]
@@ -113,7 +113,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_50.3: ref %i32 = array_index file.%a.var, %int_0
 // CHECK:STDOUT:   %.loc11_50.4: init %i32 = initialize_from %.loc11_50.2 to %.loc11_50.3 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.2: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.2: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.2: <bound method> = bound_method %int_2.loc11_28, %impl.elem0.loc11_50.2 [concrete = constants.%Convert.bound.ef9]
 // CHECK:STDOUT:   %specific_fn.loc11_50.2: <specific function> = specific_function %bound_method.loc11_50.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.787]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.2: init %i32 = call %specific_fn.loc11_50.2(%int_2.loc11_28) [concrete = constants.%int_2.ef8]
@@ -121,7 +121,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_1.loc11_50: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc11_50.6: ref %i32 = array_index file.%a.var, %int_1.loc11_50
 // CHECK:STDOUT:   %.loc11_50.7: init %i32 = initialize_from %.loc11_50.5 to %.loc11_50.6 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.3: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.3: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.3: <bound method> = bound_method %int_3.loc11_31, %impl.elem0.loc11_50.3 [concrete = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %specific_fn.loc11_50.3: <specific function> = specific_function %bound_method.loc11_50.3, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.b42]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.3: init %i32 = call %specific_fn.loc11_50.3(%int_3.loc11_31) [concrete = constants.%int_3.822]
@@ -129,7 +129,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_2.loc11_50: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc11_50.9: ref %i32 = array_index file.%a.var, %int_2.loc11_50
 // CHECK:STDOUT:   %.loc11_50.10: init %i32 = initialize_from %.loc11_50.8 to %.loc11_50.9 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.4: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.4: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.4: <bound method> = bound_method %int_4.loc11_34, %impl.elem0.loc11_50.4 [concrete = constants.%Convert.bound.ac3]
 // CHECK:STDOUT:   %specific_fn.loc11_50.4: <specific function> = specific_function %bound_method.loc11_50.4, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.450]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.4: init %i32 = call %specific_fn.loc11_50.4(%int_4.loc11_34) [concrete = constants.%int_4.940]
@@ -137,7 +137,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_3.loc11_50: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %.loc11_50.12: ref %i32 = array_index file.%a.var, %int_3.loc11_50
 // CHECK:STDOUT:   %.loc11_50.13: init %i32 = initialize_from %.loc11_50.11 to %.loc11_50.12 [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.5: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.5: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.5: <bound method> = bound_method %int_5.loc11_37, %impl.elem0.loc11_50.5 [concrete = constants.%Convert.bound.4e6]
 // CHECK:STDOUT:   %specific_fn.loc11_50.5: <specific function> = specific_function %bound_method.loc11_50.5, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.ba9]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.5: init %i32 = call %specific_fn.loc11_50.5(%int_5.loc11_37) [concrete = constants.%int_5.0f6]
@@ -145,7 +145,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_4.loc11_50: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
 // CHECK:STDOUT:   %.loc11_50.15: ref %i32 = array_index file.%a.var, %int_4.loc11_50
 // CHECK:STDOUT:   %.loc11_50.16: init %i32 = initialize_from %.loc11_50.14 to %.loc11_50.15 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.6: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.6: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.6: <bound method> = bound_method %int_6.loc11_40, %impl.elem0.loc11_50.6 [concrete = constants.%Convert.bound.ce9]
 // CHECK:STDOUT:   %specific_fn.loc11_50.6: <specific function> = specific_function %bound_method.loc11_50.6, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.631]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.6: init %i32 = call %specific_fn.loc11_50.6(%int_6.loc11_40) [concrete = constants.%int_6.e56]
@@ -153,7 +153,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_5.loc11_50: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc11_50.18: ref %i32 = array_index file.%a.var, %int_5.loc11_50
 // CHECK:STDOUT:   %.loc11_50.19: init %i32 = initialize_from %.loc11_50.17 to %.loc11_50.18 [concrete = constants.%int_6.e56]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.7: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.7: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.7: <bound method> = bound_method %int_7.loc11_43, %impl.elem0.loc11_50.7 [concrete = constants.%Convert.bound.208]
 // CHECK:STDOUT:   %specific_fn.loc11_50.7: <specific function> = specific_function %bound_method.loc11_50.7, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.c12]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.7: init %i32 = call %specific_fn.loc11_50.7(%int_7.loc11_43) [concrete = constants.%int_7.0b1]
@@ -161,7 +161,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_6.loc11_50: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
 // CHECK:STDOUT:   %.loc11_50.21: ref %i32 = array_index file.%a.var, %int_6.loc11_50
 // CHECK:STDOUT:   %.loc11_50.22: init %i32 = initialize_from %.loc11_50.20 to %.loc11_50.21 [concrete = constants.%int_7.0b1]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.8: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.8: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.8: <bound method> = bound_method %int_8.loc11_46, %impl.elem0.loc11_50.8 [concrete = constants.%Convert.bound.e09]
 // CHECK:STDOUT:   %specific_fn.loc11_50.8: <specific function> = specific_function %bound_method.loc11_50.8, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.e0d]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.8: init %i32 = call %specific_fn.loc11_50.8(%int_8.loc11_46) [concrete = constants.%int_8.98c]
@@ -169,7 +169,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_7.loc11_50: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
 // CHECK:STDOUT:   %.loc11_50.24: ref %i32 = array_index file.%a.var, %int_7.loc11_50
 // CHECK:STDOUT:   %.loc11_50.25: init %i32 = initialize_from %.loc11_50.23 to %.loc11_50.24 [concrete = constants.%int_8.98c]
-// CHECK:STDOUT:   %impl.elem0.loc11_50.9: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_50.9: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_50.9: <bound method> = bound_method %int_9, %impl.elem0.loc11_50.9 [concrete = constants.%Convert.bound.9e2]
 // CHECK:STDOUT:   %specific_fn.loc11_50.9: <specific function> = specific_function %bound_method.loc11_50.9, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.b02]
 // CHECK:STDOUT:   %int.convert_checked.loc11_50.9: init %i32 = call %specific_fn.loc11_50.9(%int_9) [concrete = constants.%int_9.f88]

@@ -253,6 +253,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(FacetAccessWitness inst): {
         out << "<witness for ";
         step_stack.PushString(">");
+        step_stack.PushString(", elem TODO");
         step_stack.PushInstId(inst.facet_value_inst_id);
         break;
       }

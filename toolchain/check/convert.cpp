@@ -1043,14 +1043,19 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         return facet_value_inst_id;
       }
 
-      auto witness_inst_id = LookupImplWitness(
+      auto lookup_result = LookupImplWitness(
           context, loc_id, context.constant_values().Get(facet_value_inst_id),
           context.types().GetConstantId(target.type_id));
-      if (witness_inst_id != SemIR::InstId::None) {
-        return AddInst<SemIR::FacetValue>(context, loc_id,
-                                          {.type_id = target.type_id,
-                                           .type_inst_id = lookup_inst_id,
-                                           .witness_inst_id = witness_inst_id});
+      if (lookup_result.has_value()) {
+        if (lookup_result.has_error_value()) {
+          return SemIR::ErrorInst::SingletonInstId;
+        } else {
+          return AddInst<SemIR::FacetValue>(
+              context, loc_id,
+              {.type_id = target.type_id,
+               .type_inst_id = lookup_inst_id,
+               .witnesses_block_id = lookup_result.inst_block_id()});
+        }
       }
     }
 
@@ -1071,14 +1076,19 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
       // (which has type `FacetType`), if the type satisfies the requirements of
       // the target `FacetType`, as determined by finding an impl witness. This
       // binds the value to the `FacetType` with a `FacetValue`.
-      auto witness_inst_id = LookupImplWitness(
+      auto lookup_result = LookupImplWitness(
           context, loc_id, sem_ir.constant_values().Get(lookup_inst_id),
           sem_ir.types().GetConstantId(target.type_id));
-      if (witness_inst_id != SemIR::InstId::None) {
-        return AddInst<SemIR::FacetValue>(context, loc_id,
-                                          {.type_id = target.type_id,
-                                           .type_inst_id = lookup_inst_id,
-                                           .witness_inst_id = witness_inst_id});
+      if (lookup_result.has_value()) {
+        if (lookup_result.has_error_value()) {
+          return SemIR::ErrorInst::SingletonInstId;
+        } else {
+          return AddInst<SemIR::FacetValue>(
+              context, loc_id,
+              {.type_id = target.type_id,
+               .type_inst_id = lookup_inst_id,
+               .witnesses_block_id = lookup_result.inst_block_id()});
+        }
       }
     }
   }

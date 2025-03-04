@@ -57,7 +57,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.6fb: type = class_type @C, @C(type, %i32) [concrete]
 // CHECK:STDOUT:   %F.type.066: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.9ec: %F.type.066 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %impl_witness [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

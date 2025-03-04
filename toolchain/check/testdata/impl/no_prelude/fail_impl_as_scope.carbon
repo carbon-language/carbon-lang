@@ -235,13 +235,13 @@ class X {
 // CHECK:STDOUT:   %Zero.dec: %Zero.type.e33 = struct_value () [concrete]
 // CHECK:STDOUT:   %Method.type.2ed: type = fn_type @Method.3 [concrete]
 // CHECK:STDOUT:   %Method.2c2: %Method.type.2ed = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, %impl_witness [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.6a1: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
+// CHECK:STDOUT:   %.2c0: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -402,7 +402,7 @@ class X {
 // CHECK:STDOUT:   %.loc40_7.1: ref %Point = converted %.loc40_5.1, %.loc40_5.4
 // CHECK:STDOUT:   %Z.ref.loc40: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Method.ref: %Z.assoc_type = name_ref Method, @Z.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %impl.elem1: %.6a1 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%Method.2c2]
+// CHECK:STDOUT:   %impl.elem1: %.2c0 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%Method.2c2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc40_7.1, %impl.elem1
 // CHECK:STDOUT:   %.loc40_7.2: %Point = bind_value %.loc40_7.1
 // CHECK:STDOUT:   %Method.call: init %empty_tuple.type = call %bound_method(%.loc40_7.2)
@@ -459,7 +459,7 @@ class X {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.3b4.%B.decl) [concrete]
 // CHECK:STDOUT:   %B.type.d47: type = fn_type @B.2 [concrete]
 // CHECK:STDOUT:   %B.4af: %B.type.d47 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, %impl_witness [concrete]
+// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }

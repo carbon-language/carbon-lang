@@ -202,7 +202,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %impl_witness.e97: <witness> = impl_witness (@impl.c58.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.042: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.db4: %F.type.042 = struct_value () [concrete]
-// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, %impl_witness.e97 [concrete]
+// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%impl_witness.e97) [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
 // CHECK:STDOUT:   %Self.cf8: %Instance.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.cf8 [symbolic]
@@ -213,7 +213,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %impl_witness.114: <witness> = impl_witness (@impl.477.%G.decl) [concrete]
 // CHECK:STDOUT:   %G.type.0c0: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.484: %G.type.0c0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, %impl_witness.114 [concrete]
+// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%impl_witness.114) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -418,8 +418,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.2d7) [concrete]
 // CHECK:STDOUT:   %F.type.9e5: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, %impl_witness [concrete]
-// CHECK:STDOUT:   %.582: type = fn_type_with_self_type %F.type.9e5, %NonInstance.facet [concrete]
+// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %.1bc: type = fn_type_with_self_type %F.type.9e5, %NonInstance.facet [concrete]
 // CHECK:STDOUT:   %F.type.042: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.db4: %F.type.042 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -497,7 +497,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %n.ref: %struct_type.i = name_ref n, %n
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.69f [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.582 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.db4]
+// CHECK:STDOUT:   %impl.elem0: %.1bc = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.db4]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -525,8 +525,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.2d7) [concrete]
 // CHECK:STDOUT:   %F.type.9e5: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, %impl_witness [concrete]
-// CHECK:STDOUT:   %.582: type = fn_type_with_self_type %F.type.9e5, %NonInstance.facet [concrete]
+// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %.1bc: type = fn_type_with_self_type %F.type.9e5, %NonInstance.facet [concrete]
 // CHECK:STDOUT:   %F.type.042: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.db4: %F.type.042 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -606,7 +606,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.69f [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %.loc7: ref %struct_type.i = deref %p.ref
-// CHECK:STDOUT:   %impl.elem0: %.582 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.db4]
+// CHECK:STDOUT:   %impl.elem0: %.1bc = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.db4]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -634,8 +634,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.373) [concrete]
 // CHECK:STDOUT:   %G.type.1e1: type = fn_type @G.1 [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.cf8 [symbolic]
-// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, %impl_witness [concrete]
-// CHECK:STDOUT:   %.6d8: type = fn_type_with_self_type %G.type.1e1, %Instance.facet [concrete]
+// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %.59b: type = fn_type_with_self_type %G.type.1e1, %Instance.facet [concrete]
 // CHECK:STDOUT:   %G.type.0c0: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.484: %G.type.0c0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.i [concrete]
@@ -727,7 +727,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %n.ref: %struct_type.i = name_ref n, %n
 // CHECK:STDOUT:   %Instance.ref: type = name_ref Instance, imports.%Main.Instance [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   %G.ref: %Instance.assoc_type = name_ref G, imports.%Main.import_ref.7cb [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.6d8 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G.484]
+// CHECK:STDOUT:   %impl.elem0: %.59b = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G.484]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %bound_method(%n.ref)
 // CHECK:STDOUT:   return
@@ -748,7 +748,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.ref: type = name_ref Instance, imports.%Main.Instance [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   %G.ref: %Instance.assoc_type = name_ref G, imports.%Main.import_ref.7cb [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %.loc10_4.1: ref %struct_type.i = deref %p.ref
-// CHECK:STDOUT:   %impl.elem0: %.6d8 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G.484]
+// CHECK:STDOUT:   %impl.elem0: %.59b = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G.484]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_4.1, %impl.elem0
 // CHECK:STDOUT:   %.loc10_4.2: ref %empty_tuple.type = struct_access %.loc10_4.1, element0
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]

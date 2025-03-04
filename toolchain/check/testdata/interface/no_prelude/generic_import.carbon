@@ -114,7 +114,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [concrete]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

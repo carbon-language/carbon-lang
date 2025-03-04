@@ -612,10 +612,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(FacetAccessWitness inst): {
         auto name_id = facet_access_name_id(inst.facet_value_inst_id);
+        RawStringOstream out;
         if (name_id.has_value()) {
-          add_inst_name_id(name_id, ".as_wit");
+          out << ".as_wit.iface" << inst.index.index;
+          add_inst_name_id(name_id, out.TakeStr());
         } else {
-          add_inst_name("as_wit");
+          out << "as_wit.iface" << inst.index.index;
+          add_inst_name(out.TakeStr());
         }
         continue;
       }
