@@ -18,22 +18,17 @@ import {
 import {
   LanguageClient,
   LanguageClientOptions,
-  ServerOptions,
-} from 'vscode-languageclient/node';
-
-let client: LanguageClient;
-
-/**
- * Splits a CLI-style quoted string.
- */
 function splitQuotedString(argsString: string): string[] {
   const args: string[] = [];
   let arg = '';
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
   let escaped = false;
+  let empty = true;
 
   for (const char of argsString) {
+    const was_empty = empty;
+    empty = false;
     if (escaped) {
       arg += char;
       escaped = false;
@@ -57,15 +52,19 @@ function splitQuotedString(argsString: string): string[] {
         break;
       case ' ':
         if (!inSingleQuotes && !inDoubleQuotes) {
-          args.push(arg);
-          arg = '';
+          if (!was_empty) {
+            args.push(arg);
+            arg = '';
+          }
+          empty = true;
+          continue;
         }
         break;
     }
     arg += char;
   }
 
-  if (arg.length > 0) {
+  if (!empty) {
     args.push(arg);
   }
 
