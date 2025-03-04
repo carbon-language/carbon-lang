@@ -73,10 +73,8 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc3_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_22.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc3_22.1, runtime_param<none> [symbolic = %Dest.patt.loc3_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc3_22.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc3_22.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc3_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc3_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,12 +185,12 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.ffd566.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43db8b.2)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.ffd566.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst26 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst24 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc4_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,16 +208,14 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %Different.decl: type = interface_decl @Different [concrete = constants.%Different.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %U.patt.loc34_6.1: %Different.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc34_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %Different.type = value_param_pattern %U.patt.loc34_6.1, runtime_param<none> [symbolic = %U.patt.loc34_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc34_6.1 [symbolic = %U.loc34_6.2 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %U.param: %Different.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
-// CHECK:STDOUT:     %U.loc34_6.1: %Different.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc34_6.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc34_6.1: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc34_6.2 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -240,7 +236,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   witness = (%F.decl, %T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.ffd566.1: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
@@ -294,7 +290,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.ffd566.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
@@ -307,7 +303,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %U.loc34_6.2: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc34_6.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc34_6.2: %Different.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc34_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %Different.type) -> <error>;
+// CHECK:STDOUT:   fn(%U.patt.loc34_6.1: %Different.type) -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.719) {}

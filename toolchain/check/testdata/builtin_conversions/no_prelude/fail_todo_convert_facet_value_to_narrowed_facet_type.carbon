@@ -55,10 +55,8 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_22.1, runtime_param<none> [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_22.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_22.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,13 +165,11 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %T.patt.loc9_9.1: %Eats.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_9.2 (constants.%T.patt.6be)]
-// CHECK:STDOUT:     %T.param_patt: %Eats.type = value_param_pattern %T.patt.loc9_9.1, runtime_param<none> [symbolic = %T.patt.loc9_9.2 (constants.%T.patt.6be)]
 // CHECK:STDOUT:     %e.patt: @Feed.%T.as_type.loc9_22.2 (%T.as_type) = binding_pattern e
 // CHECK:STDOUT:     %e.param_patt: @Feed.%T.as_type.loc9_22.2 (%T.as_type) = value_param_pattern %e.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %Eats.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
-// CHECK:STDOUT:     %T.loc9_9.1: %Eats.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc9_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_9.1: %Eats.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_9.2 (constants.%T)]
 // CHECK:STDOUT:     %e.param: @Feed.%T.as_type.loc9_22.2 (%T.as_type) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc9_22.1: type = splice_block %.loc9_22.2 [symbolic = %T.as_type.loc9_22.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %Eats.type = name_ref T, %T.loc9_9.1 [symbolic = %T.loc9_9.2 (constants.%T)]
@@ -184,16 +180,14 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %T.patt.loc15_17.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_17.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc15_17.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T: <error> = bind_symbolic_name T, 0, %T.param [concrete = <error>]
+// CHECK:STDOUT:     %T: <error> = bind_symbolic_name T, 0 [concrete = <error>]
 // CHECK:STDOUT:     %a.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, %T [concrete = <error>]
 // CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
@@ -224,7 +218,7 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Feed.%T.as_type.loc9_22.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: %Eats.type](%e.param_patt: @Feed.%T.as_type.loc9_22.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn[%T.patt.loc9_9.1: %Eats.type](%e.param_patt: @Feed.%T.as_type.loc9_22.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -235,7 +229,7 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: <error>](%a.param_patt: <error>) {
+// CHECK:STDOUT:   fn[%T.patt.loc15_17.1: <error>](%a.param_patt: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:     %a.ref: <error> = name_ref a, %a [concrete = <error>]

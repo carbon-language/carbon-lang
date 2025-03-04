@@ -92,9 +92,9 @@ fn CallF() {
   // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(I where .(I.V) = {} and...)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-10]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:      ^
   // CHECK:STDERR:
   F({});
 }
@@ -583,9 +583,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: %I.type.dac = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %N.patt.loc4_13.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_13.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc4_13.1, runtime_param<none> [symbolic = %N.patt.loc4_13.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4_33.1: type = splice_block %.loc4_33.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
@@ -593,7 +591,7 @@ fn CallF() {
 // CHECK:STDOUT:       %.loc4_33.2: type = value_of_initializer %int_literal.make_type [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_33.3: type = converted %int_literal.make_type, %.loc4_33.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_13.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_13.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_13.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_13.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.19e [concrete] {} {
 // CHECK:STDOUT:     %.loc15_7.1: %empty_struct_type = struct_literal ()
@@ -748,9 +746,7 @@ fn CallF() {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc8_6.1: %I_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I_where.type = value_param_pattern %T.patt.loc8_6.1, runtime_param<none> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %I_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -776,7 +772,7 @@ fn CallF() {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc8_60.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_6.1: %I_where.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_6.1: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallF.decl: %CallF.type = fn_decl @CallF [concrete = constants.%CallF] {} {}
 // CHECK:STDOUT: }
@@ -805,7 +801,7 @@ fn CallF() {
 // CHECK:STDOUT:   %T.loc8_6.2: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_6.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_6.2: %I_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %I_where.type);
+// CHECK:STDOUT:   fn(%T.patt.loc8_6.1: %I_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallF() {

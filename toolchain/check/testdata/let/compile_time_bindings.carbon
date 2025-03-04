@@ -345,17 +345,15 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %.loc9_17.2: %empty_tuple.type = converted %.loc9_17.1, %empty_tuple.loc9 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %a: %empty_tuple.type = bind_name a, %.loc9_17.2
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %b.patt.loc10_8.2: %tuple.type.9fb = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %tuple.type.9fb = value_param_pattern %b.patt.loc10_8.2, runtime_param<none> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.patt.loc10_8.1: %tuple.type.9fb = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %tuple.type.9fb = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc10_16.1: type = splice_block %.loc10_16.4 [concrete = constants.%tuple.type.9fb] {
 // CHECK:STDOUT:       %.loc10_14: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc10_16.2: %tuple.type.9fb = tuple_literal (%.loc10_14)
 // CHECK:STDOUT:       %.loc10_16.3: type = converted %.loc10_14, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc10_16.4: type = converted %.loc10_16.2, constants.%tuple.type.9fb [concrete = constants.%tuple.type.9fb]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc10_8.2: %tuple.type.9fb = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc10_8.2: %tuple.type.9fb = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %tuple.type.2d5 = binding_pattern d
@@ -395,7 +393,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%b.loc10_8.2: %tuple.type.9fb) {
 // CHECK:STDOUT:   %b.loc10_8.1: %tuple.type.9fb = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.1 (constants.%b)]
-// CHECK:STDOUT:   %b.patt.loc10_8.1: %tuple.type.9fb = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.patt.loc10_8.2: %tuple.type.9fb = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.2 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %c.loc11_9.2: %tuple.type.bcd = bind_symbolic_name c, 1 [symbolic = %c.loc11_9.2 (constants.%c)]
@@ -404,7 +402,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %tuple.elem0.loc15_24.3: %empty_tuple.type = tuple_access %c.loc11_9.2, element0 [symbolic = %tuple.elem0.loc15_24.3 (constants.%tuple.elem0.eaf)]
 // CHECK:STDOUT:   %tuple.elem1.loc15_24.3: %empty_tuple.type = tuple_access %c.loc11_9.2, element1 [symbolic = %tuple.elem1.loc15_24.3 (constants.%tuple.elem1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%b.param_patt: %tuple.type.9fb) {
+// CHECK:STDOUT:   fn(%b.patt.loc10_8.1: %tuple.type.9fb) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %c.patt.loc11_9.1: %tuple.type.bcd = symbolic_binding_pattern c, 1 [symbolic = %c.patt.loc11_9.2 (constants.%c.patt)]
@@ -525,7 +523,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%b) {
 // CHECK:STDOUT:   %b.loc10_8.1 => constants.%b
-// CHECK:STDOUT:   %b.patt.loc10_8.1 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc10_8.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_let_after.carbon

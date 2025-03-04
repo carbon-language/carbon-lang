@@ -212,11 +212,11 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.845 = import_ref Main//a, inst21 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4d2: %Field.elem = import_ref Main//a, loc8_8, loaded [concrete = %.d33]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst60 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst59 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.760: %F.type = import_ref Main//a, loc14_21, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Main.import_ref.26e: %G.type = import_ref Main//a, loc15_27, loaded [concrete = constants.%G]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst60 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst59 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.42a = import_ref Main//a, loc14_21, unloaded
 // CHECK:STDOUT:   %Main.import_ref.67a = import_ref Main//a, loc15_27, unloaded
 // CHECK:STDOUT: }
@@ -361,5 +361,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.7b34f2.1]() [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst1179: %ptr.6cf]() [from "a.carbon"];
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst1155: %ptr.6cf]() [from "a.carbon"];
 // CHECK:STDOUT:

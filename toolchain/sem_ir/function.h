@@ -75,13 +75,16 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
-  // Given an instruction from `param_patterns_id` or
+  // Given the ID of an instruction from `param_patterns_id` or
   // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
-  // corresponding instruction, its ID, and the entity_name_id of the underlying
-  // binding pattern.
+  // corresponding `Call` parameter pattern, its ID, and the entity_name_id of
+  // the underlying binding pattern, or std::nullopt if there is no
+  // corresponding `Call` parameter.
+  // TODO: Remove this, by exposing `Call` parameter patterns instead of `Call`
+  // parameters in EntityWithParams.
   static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                InstId param_pattern_id)
-      -> ParamPatternInfo;
+      -> std::optional<ParamPatternInfo>;
 
   // Gets the name from the name binding instruction, or `None` if this pattern
   // has been replaced with BuiltinErrorInst.
@@ -115,7 +118,9 @@ struct CalleeFunction {
 };
 
 // Returns information for the function corresponding to callee_id.
-auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction;
+auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
+                       SpecificId specific_id = SpecificId::None)
+    -> CalleeFunction;
 
 }  // namespace Carbon::SemIR
 

@@ -116,10 +116,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc3_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_22.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc3_22.1, runtime_param<none> [symbolic = %Dest.patt.loc3_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc3_22.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc3_22.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc3_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc3_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

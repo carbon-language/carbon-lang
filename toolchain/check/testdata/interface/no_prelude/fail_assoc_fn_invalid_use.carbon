@@ -54,11 +54,9 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc8_8.1, runtime_param<none> [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %I.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,7 +101,7 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.de3) = impl_witness_access %T.as_wit.loc13_4.2, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%.loc13_4.2 (%.de3) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %I.type) {
+// CHECK:STDOUT:   fn(%T.patt.loc8_8.1: %I.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]

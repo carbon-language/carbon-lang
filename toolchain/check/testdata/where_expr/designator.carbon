@@ -136,9 +136,7 @@ class D {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [concrete = constants.%PeriodSelf] {
 // CHECK:STDOUT:     %T.patt.loc8_15.1: %I_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I_where.type = value_param_pattern %T.patt.loc8_15.1, runtime_param<none> [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %I_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.258]
@@ -148,13 +146,11 @@ class D {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc8_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_15.1: %I_where.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_15.1: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [concrete = constants.%PeriodMember] {
 // CHECK:STDOUT:     %U.patt.loc10_17.1: %I_where.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt.loc10_17.1, runtime_param<none> [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc10_23.1: type = splice_block %.loc10_23.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.258]
@@ -169,13 +165,11 @@ class D {
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc10_41
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc10_17.1: %I_where.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc10_17.1: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [concrete = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt.loc12_18.1: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %type_where = value_param_pattern %V.patt.loc12_18.1, runtime_param<none> [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %type_where = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc12_27.1: type = splice_block %.loc12_27.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.644]
@@ -184,7 +178,7 @@ class D {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.loc12_18.1: %type_where = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc12_18.1: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,21 +202,21 @@ class D {
 // CHECK:STDOUT:   %T.loc8_15.2: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_15.2: %I_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %I_where.type);
+// CHECK:STDOUT:   fn(%T.patt.loc8_15.1: %I_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodMember(%U.loc10_17.1: %I_where.type) {
 // CHECK:STDOUT:   %U.loc10_17.2: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc10_17.2: %I_where.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %I_where.type);
+// CHECK:STDOUT:   fn(%U.patt.loc10_17.1: %I_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: %type_where) {
 // CHECK:STDOUT:   %V.loc12_18.2: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.loc12_18.2: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %type_where);
+// CHECK:STDOUT:   fn(%V.patt.loc12_18.1: %type_where);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%Self) {}
@@ -275,9 +269,7 @@ class D {
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %PeriodMismatch.decl: %PeriodMismatch.type = fn_decl @PeriodMismatch [concrete = constants.%PeriodMismatch] {
 // CHECK:STDOUT:     %W.patt.loc12_19.1: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: <error> = value_param_pattern %W.patt.loc12_19.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %W.param: <error> = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc12_25.1: type = splice_block %.loc12_25.2 [concrete = <error>] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -288,7 +280,7 @@ class D {
 // CHECK:STDOUT:         requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W: <error> = bind_symbolic_name W, 0, %W.param [concrete = <error>]
+// CHECK:STDOUT:     %W: <error> = bind_symbolic_name W, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,7 +304,7 @@ class D {
 // CHECK:STDOUT: generic fn @PeriodMismatch(%W: <error>) {
 // CHECK:STDOUT:   %W.patt.loc12_19.2: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.param_patt: <error>);
+// CHECK:STDOUT:   fn(%W.patt.loc12_19.1: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%Self) {}

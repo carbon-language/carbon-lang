@@ -82,10 +82,10 @@ alias D = C;
 class Foo(a:! C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:11: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: class Foo(b:! D) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:           ^
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:11: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: class Foo(a:! C);
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:           ^
 // CHECK:STDERR:
 class Foo(b:! D) {}
 
@@ -208,35 +208,27 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc8: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc8, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc7: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param.loc7 [symbolic = %a.loc7_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc8: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc8, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc8: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc8: %C = bind_symbolic_name a, 0, %a.param.loc8 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc8: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = class_decl @Bar [concrete = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc11: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc11, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc10: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc10_11.1: %C = bind_symbolic_name a, 0, %a.param.loc10 [symbolic = %a.loc10_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc10_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc10_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = class_decl @Bar [concrete = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc11: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc11, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc11: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc11: %C = bind_symbolic_name a, 0, %a.param.loc11 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc11: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,19 +301,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc6: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc6_17.1: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.loc6_17.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_17.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_17.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc7: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param.loc7 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -376,19 +364,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc6_11.1, runtime_param<none> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc14_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc14_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc14_11.1, runtime_param<none> [symbolic = %a.patt.loc14_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc14_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc14_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc14_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc14_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -453,19 +437,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc6: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc7: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param.loc7 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -523,19 +503,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<none> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [concrete = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc8_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc8_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc8_11.1, runtime_param<none> [symbolic = %a.patt.loc8_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc8_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc8_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc8_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc8_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -592,8 +568,8 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//two_file, D, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.11fba2.1: %C = import_ref Main//two_file, loc7_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
-// CHECK:STDOUT:   %Main.import_ref.11fba2.2: %C = import_ref Main//two_file, loc8_11, loaded [symbolic = @Bar.%a.1 (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.f97b44.1: %C = import_ref Main//two_file, loc7_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.f97b44.2: %C = import_ref Main//two_file, loc8_11, loaded [symbolic = @Bar.%a.1 (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -607,19 +583,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc4: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc4, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc4: %C = bind_symbolic_name a, 0, %a.param [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc4: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [concrete = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc5: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc5, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc5: %C = bind_symbolic_name a, 0, %a.param [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc5: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -630,7 +602,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.11fba2.1: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.f97b44.1: %C) {
 // CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -645,7 +617,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Bar(imports.%Main.import_ref.11fba2.2: %C) {
+// CHECK:STDOUT: generic class @Bar(imports.%Main.import_ref.f97b44.2: %C) {
 // CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -698,19 +670,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<none> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
 // CHECK:STDOUT:     %b.patt.loc15_11.1: %C = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_11.2 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt.loc15_11.1, runtime_param<none> [symbolic = %b.patt.loc15_11.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %b.loc15_11.1: %C = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc15_11.2 (constants.%b)]
+// CHECK:STDOUT:     %b.loc15_11.1: %C = bind_symbolic_name b, 0 [symbolic = %b.loc15_11.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -780,19 +748,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<none> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc15_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc15_11.1, runtime_param<none> [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc15_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc15_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -862,19 +826,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<none> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc15_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc15_11.1, runtime_param<none> [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc15_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc15_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -938,11 +898,9 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc6_11.1, runtime_param<none> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -983,7 +941,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//alias_two_file, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.11f: %C = import_ref Main//alias_two_file, loc6_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.f97: %C = import_ref Main//alias_two_file, loc6_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -998,11 +956,9 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc6, runtime_param<none> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc6: %C = bind_symbolic_name a, 0, %a.param [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc6: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1013,7 +969,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.11f: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.f97: %C) {
 // CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -1057,26 +1013,22 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6_11.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc6_11.1, runtime_param<none> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %const = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc6: type = splice_block %const [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %const: type = const_type %C [concrete = constants.%const]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc6_11.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_11.1: %const = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc18_11.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc18_11.1, runtime_param<none> [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %const = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_15 [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %const.loc18_22: type = const_type %C [concrete = constants.%const]
 // CHECK:STDOUT:       %const.loc18_15: type = const_type %const [concrete = constants.%const]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc18_11.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc18_11.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc18_11.1: %const = bind_symbolic_name a, 0 [symbolic = %a.loc18_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

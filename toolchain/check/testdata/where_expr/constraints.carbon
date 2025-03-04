@@ -93,9 +93,9 @@ fn DoesNotImplI() {
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-14]]:1: in import [InImport]
-  // CHECK:STDERR: state_constraints.carbon:13:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: state_constraints.carbon:13:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Impls(V:! J where .Self impls I);
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:          ^
   // CHECK:STDERR:
   Impls(C);
 }
@@ -110,9 +110,9 @@ fn NotEmptyStruct() {
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn EmptyStruct(Y:! J where .Self == {});
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   EmptyStruct(C);
 }
@@ -172,9 +172,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %EqualEqual.decl: %EqualEqual.type = fn_decl @EqualEqual [concrete = constants.%EqualEqual] {
 // CHECK:STDOUT:     %U.patt.loc11_15.1: %I_where.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_15.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt.loc11_15.1, runtime_param<none> [symbolic = %U.patt.loc11_15.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_21.1: type = splice_block %.loc11_21.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.258]
@@ -184,13 +182,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc11_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc11_15.1: %I_where.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_15.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_15.1: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc11_15.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [concrete = constants.%Impls] {
 // CHECK:STDOUT:     %V.patt.loc13_10.1: %J_where.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_10.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %J_where.type = value_param_pattern %V.patt.loc13_10.1, runtime_param<none> [symbolic = %V.patt.loc13_10.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %J_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc13_16.1: type = splice_block %.loc13_16.2 [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.968]
@@ -202,13 +198,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_impls %.loc13_22, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.loc13_10.1: %J_where.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc13_10.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc13_10.1: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V.loc13_10.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [concrete = constants.%And] {
 // CHECK:STDOUT:     %W.patt.loc15_8.1: %I_where.type = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc15_8.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: %I_where.type = value_param_pattern %W.patt.loc15_8.1, runtime_param<none> [symbolic = %W.patt.loc15_8.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %W.param: %I_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc15_14.1: type = splice_block %.loc15_14.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.258]
@@ -228,7 +222,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc15_50
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.loc15_8.1: %I_where.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc15_8.2 (constants.%W)]
+// CHECK:STDOUT:     %W.loc15_8.1: %I_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc15_8.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,21 +263,21 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %U.loc11_15.2: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc11_15.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc11_15.2: %I_where.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_15.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %I_where.type);
+// CHECK:STDOUT:   fn(%U.patt.loc11_15.1: %I_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Impls(%V.loc13_10.1: %J_where.type) {
 // CHECK:STDOUT:   %V.loc13_10.2: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V.loc13_10.2 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.loc13_10.2: %J_where.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_10.2 (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %J_where.type);
+// CHECK:STDOUT:   fn(%V.patt.loc13_10.1: %J_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @And(%W.loc15_8.1: %I_where.type) {
 // CHECK:STDOUT:   %W.loc15_8.2: %I_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc15_8.2 (constants.%W)]
 // CHECK:STDOUT:   %W.patt.loc15_8.2: %I_where.type = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc15_8.2 (constants.%W.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.param_patt: %I_where.type);
+// CHECK:STDOUT:   fn(%W.patt.loc15_8.1: %I_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%Self.826) {}
@@ -352,9 +346,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %K.decl: type = interface_decl @K [concrete = constants.%K.type] {} {}
 // CHECK:STDOUT:   %AssociatedTypeImpls.decl: %AssociatedTypeImpls.type = fn_decl @AssociatedTypeImpls [concrete = constants.%AssociatedTypeImpls] {
 // CHECK:STDOUT:     %W.patt.loc11_24.1: %K_where.type = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: %K_where.type = value_param_pattern %W.patt.loc11_24.1, runtime_param<none> [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %W.param: %K_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_30.1: type = splice_block %.loc11_30.2 [concrete = constants.%K_where.type] {
 // CHECK:STDOUT:       %K.ref: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
 // CHECK:STDOUT:       %.Self: %K.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -371,7 +363,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_impls %.loc11_36.2, %M.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.loc11_24.1: %K_where.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc11_24.2 (constants.%W)]
+// CHECK:STDOUT:     %W.loc11_24.1: %K_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc11_24.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -412,7 +404,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %W.loc11_24.2: %K_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc11_24.2 (constants.%W)]
 // CHECK:STDOUT:   %W.patt.loc11_24.2: %K_where.type = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.param_patt: %K_where.type);
+// CHECK:STDOUT:   fn(%W.patt.loc11_24.1: %K_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Associated(constants.%Self.09f) {}
@@ -452,9 +444,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonTypeImpls.decl: %NonTypeImpls.type = fn_decl @NonTypeImpls [concrete = constants.%NonTypeImpls] {
 // CHECK:STDOUT:     %U.patt.loc11_17.1: %type_where = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc11_17.1, runtime_param<none> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: %type_where = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_26.1: type = splice_block %.loc11_26.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
@@ -463,7 +453,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_impls <error>, type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc11_17.1: %type_where = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_17.1: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -471,7 +461,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %U.loc11_17.2: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc11_17.2: %type_where = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %type_where);
+// CHECK:STDOUT:   fn(%U.patt.loc11_17.1: %type_where);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonTypeImpls(constants.%U) {
@@ -507,9 +497,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplsNonType.decl: %ImplsNonType.type = fn_decl @ImplsNonType [concrete = constants.%ImplsNonType] {
 // CHECK:STDOUT:     %U.patt.loc11_17.1: %type_where = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc11_17.1, runtime_param<none> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: %type_where = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_26.1: type = splice_block %.loc11_26.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
@@ -519,7 +507,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc11_17.1: %type_where = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_17.1: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,7 +515,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %U.loc11_17.2: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc11_17.2: %type_where = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %type_where);
+// CHECK:STDOUT:   fn(%U.patt.loc11_17.1: %type_where);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplsNonType(constants.%U) {
@@ -564,9 +552,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplsOfNonFacetType.decl: %ImplsOfNonFacetType.type = fn_decl @ImplsOfNonFacetType [concrete = constants.%ImplsOfNonFacetType] {
 // CHECK:STDOUT:     %U.patt.loc8_24.1: %type_where = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_24.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc8_24.1, runtime_param<none> [symbolic = %U.patt.loc8_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: %type_where = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8_33.1: type = splice_block %.loc8_33.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
@@ -576,7 +562,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc8_24.1: %type_where = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc8_24.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc8_24.1: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc8_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,7 +570,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %U.loc8_24.2: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc8_24.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc8_24.2: %type_where = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %type_where);
+// CHECK:STDOUT:   fn(%U.patt.loc8_24.1: %type_where);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplsOfNonFacetType(constants.%U) {
@@ -628,7 +614,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.81e: %J_where.type = import_ref Main//state_constraints, loc13_10, loaded [symbolic = @Impls.%V (constants.%V)]
+// CHECK:STDOUT:   %Main.import_ref.9d4: %J_where.type = import_ref Main//state_constraints, loc13_10, loaded [symbolic = @Impls.%V (constants.%V)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -655,9 +641,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [concrete = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [concrete = constants.%EmptyStruct] {
 // CHECK:STDOUT:     %Y.patt.loc26_16.1: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
-// CHECK:STDOUT:     %Y.param_patt: %J_where.type = value_param_pattern %Y.patt.loc26_16.1, runtime_param<none> [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Y.param: %J_where.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc26_22.1: type = splice_block %.loc26_22.2 [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -667,7 +651,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Y.loc26_16.1: %J_where.type = bind_symbolic_name Y, 0, %Y.param [symbolic = %Y.loc26_16.2 (constants.%Y)]
+// CHECK:STDOUT:     %Y.loc26_16.1: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc26_16.2 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [concrete = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
@@ -699,18 +683,18 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Impls(imports.%Main.import_ref.81e: %J_where.type) [from "state_constraints.carbon"] {
+// CHECK:STDOUT: generic fn @Impls(imports.%Main.import_ref.9d4: %J_where.type) [from "state_constraints.carbon"] {
 // CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
-// CHECK:STDOUT:   %V.patt: %J_where.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt (constants.%V.patt)]
+// CHECK:STDOUT:   %V.patt.2: %J_where.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.2 (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %J_where.type);
+// CHECK:STDOUT:   fn(%V.patt.1: %J_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc26_16.1: %J_where.type) {
 // CHECK:STDOUT:   %Y.loc26_16.2: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc26_16.2 (constants.%Y)]
 // CHECK:STDOUT:   %Y.patt.loc26_16.2: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%Y.param_patt: %J_where.type);
+// CHECK:STDOUT:   fn(%Y.patt.loc26_16.1: %J_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEmptyStruct() {
@@ -723,7 +707,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
 // CHECK:STDOUT:   %V => constants.%V
-// CHECK:STDOUT:   %V.patt => constants.%V
+// CHECK:STDOUT:   %V.patt.2 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {

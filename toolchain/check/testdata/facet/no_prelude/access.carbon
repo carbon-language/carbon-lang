@@ -98,11 +98,9 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc8_8.1, runtime_param<none> [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %I.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,7 +131,7 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %impl.elem0.loc9_4.2: @Use.%.loc9_4.2 (%.d9e) = impl_witness_access %T.as_wit.loc9_4.2, element0 [symbolic = %impl.elem0.loc9_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_fn.loc9_4.2: <specific function> = specific_function %impl.elem0.loc9_4.2, @DoIt(%I.facet) [symbolic = %specific_fn.loc9_4.2 (constants.%specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %I.type) {
+// CHECK:STDOUT:   fn(%T.patt.loc8_8.1: %I.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %DoIt.ref: %I.assoc_type = name_ref DoIt, @I.%assoc0 [concrete = constants.%assoc0]
@@ -189,16 +187,14 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc8_8.1, runtime_param<none> [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %return.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc8_18.1: type = facet_access_type %T.ref.loc8 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc8: type = converted %T.ref.loc8, %T.as_type.loc8_18.1 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.param: %I.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %return.param: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -244,7 +240,7 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %impl.elem0.loc9_11.2: @Use.%.loc9_11.2 (%.aaf) = impl_witness_access %T.as_wit.loc9_11.2, element0 [symbolic = %impl.elem0.loc9_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_fn.loc9_11.2: <specific function> = specific_function %impl.elem0.loc9_11.2, @Make(%I.facet) [symbolic = %specific_fn.loc9_11.2 (constants.%specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %I.type) -> @Use.%T.as_type.loc8_18.2 (%T.as_type) {
+// CHECK:STDOUT:   fn(%T.patt.loc8_8.1: %I.type) -> @Use.%T.as_type.loc8_18.2 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref.loc9: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %Make.ref: %I.assoc_type = name_ref Make, @I.%assoc0 [concrete = constants.%assoc0]
@@ -308,7 +304,6 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc8_8.1, runtime_param<none> [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = return_slot_pattern
@@ -317,9 +312,8 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:     %T.ref.loc8_24: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc8_24: type = facet_access_type %T.ref.loc8_24 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc8_24: type = converted %T.ref.loc8_24, %T.as_type.loc8_24 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.param: %I.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.2 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref.loc8_18: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
@@ -380,7 +374,7 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %.loc9_11.2: type = fn_type_with_self_type constants.%Copy.type, %I.facet [symbolic = %.loc9_11.2 (constants.%.4ef)]
 // CHECK:STDOUT:   %impl.elem0.loc9_11.2: @Use.%.loc9_11.2 (%.4ef) = impl_witness_access %T.as_wit.loc9_11.2, element0 [symbolic = %impl.elem0.loc9_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: %I.type](%x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type)) -> @Use.%T.as_type.loc8_18.2 (%T.as_type) {
+// CHECK:STDOUT:   fn[%T.patt.loc8_8.1: %I.type](%x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type)) -> @Use.%T.as_type.loc8_18.2 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Use.%T.as_type.loc8_18.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %Copy.ref: %I.assoc_type = name_ref Copy, @I.%assoc0 [concrete = constants.%assoc0]
@@ -444,13 +438,11 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc8_8.1, runtime_param<none> [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %I.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.2 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
@@ -489,7 +481,7 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %impl.elem0.loc9_4.2: @Use.%.loc9_4.2 (%.33b) = impl_witness_access %T.as_wit.loc9_4.2, element0 [symbolic = %impl.elem0.loc9_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_fn.loc9_4.2: <specific function> = specific_function %impl.elem0.loc9_4.2, @Hello(%I.facet) [symbolic = %specific_fn.loc9_4.2 (constants.%specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: %I.type](%x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn[%T.patt.loc8_8.1: %I.type](%x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Use.%T.as_type.loc8_18.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %Hello.ref: %I.assoc_type = name_ref Hello, @I.%assoc0 [concrete = constants.%assoc0]
@@ -545,7 +537,6 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %UseIndirect.decl: %UseIndirect.type = fn_decl @UseIndirect [concrete = constants.%UseIndirect] {
 // CHECK:STDOUT:     %T.patt.loc8_16.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc8_16.1, runtime_param<none> [symbolic = %T.patt.loc8_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = return_slot_pattern
@@ -554,9 +545,8 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:     %T.ref.loc8_32: %I.type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc8_32: type = facet_access_type %T.ref.loc8_32 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc8_32: type = converted %T.ref.loc8_32, %T.as_type.loc8_32 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.param: %I.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %T.loc8_16.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_16.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_16.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_16.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc8_26.1: type = splice_block %.loc8_26.2 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref.loc8_26: %I.type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
@@ -617,7 +607,7 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %.loc9_14.2: type = fn_type_with_self_type constants.%Copy.type, %I.facet [symbolic = %.loc9_14.2 (constants.%.4ef)]
 // CHECK:STDOUT:   %impl.elem0.loc9_14.2: @UseIndirect.%.loc9_14.2 (%.4ef) = impl_witness_access %T.as_wit.loc9_14.2, element0 [symbolic = %impl.elem0.loc9_14.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: %I.type](%x.param_patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type)) -> @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) {
+// CHECK:STDOUT:   fn[%T.patt.loc8_16.1: %I.type](%x.param_patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type)) -> @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %T.ref.loc9: %I.type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]

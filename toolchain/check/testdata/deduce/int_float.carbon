@@ -79,7 +79,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc4_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc4_6.1, runtime_param<none> [symbolic = %N.patt.loc4_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %n.patt: @F.%Int.loc4_42.2 (%Int) = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: @F.%Int.loc4_42.2 (%Int) = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
@@ -90,7 +89,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %int_literal.make_type.loc4_64: init type = call %IntLiteral.ref.loc4_52() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_64.1: type = value_of_initializer %int_literal.make_type.loc4_64 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_64.2: type = converted %int_literal.make_type.loc4_64, %.loc4_64.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc4_14: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
@@ -98,7 +96,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %.loc4_26.2: type = value_of_initializer %int_literal.make_type.loc4_26 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_26.3: type = converted %int_literal.make_type.loc4_26, %.loc4_26.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_6.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:     %n.param: @F.%Int.loc4_42.2 (%Int) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc4_42: type = splice_block %Int.loc4_42.1 [symbolic = %Int.loc4_42.2 (constants.%Int)] {
 // CHECK:STDOUT:       %Core.ref.loc4_32: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -140,7 +138,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%Int.loc4_42.2 (%Int) [symbolic = %require_complete (constants.%require_complete.b4f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%n.param_patt: @F.%Int.loc4_42.2 (%Int)) -> Core.IntLiteral {
+// CHECK:STDOUT:   fn[%N.patt.loc4_6.1: Core.IntLiteral](%n.param_patt: @F.%Int.loc4_42.2 (%Int)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc5: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc5
@@ -209,7 +207,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc9_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc9_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc9_6.1, runtime_param<none> [symbolic = %N.patt.loc9_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: <error> = value_param_pattern %n.patt, runtime_param0 [concrete = <error>]
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
@@ -220,7 +217,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %int_literal.make_type.loc9_66: init type = call %IntLiteral.ref.loc9_54() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc9_66.1: type = value_of_initializer %int_literal.make_type.loc9_66 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc9_66.2: type = converted %int_literal.make_type.loc9_66, %.loc9_66.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc9_26.1: type = splice_block %.loc9_26.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc9_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc9_14: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
@@ -228,7 +224,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %.loc9_26.2: type = value_of_initializer %int_literal.make_type.loc9_26 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc9_26.3: type = converted %int_literal.make_type.loc9_26, %.loc9_26.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc9_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc9_6.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc9_6.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc9_6.2 (constants.%N)]
 // CHECK:STDOUT:     %n.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %Core.ref.loc9_32: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -272,7 +268,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%n.param_patt: <error>) -> Core.IntLiteral {
+// CHECK:STDOUT:   fn[%N.patt.loc9_6.1: Core.IntLiteral](%n.param_patt: <error>) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc10: Core.IntLiteral = name_ref N, %N.loc9_6.1 [symbolic = %N.loc9_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc10

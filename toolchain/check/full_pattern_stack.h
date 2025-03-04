@@ -95,6 +95,13 @@ class FullPatternStack {
         {.name_id = name_id, .inst_id = SemIR::InstId::InitTombstone});
   }
 
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void {
+    CARBON_CHECK(kind_stack_.empty(),
+                 "full_pattern_stack still has {1} entries",
+                 kind_stack_.size());
+  }
+
  private:
   LexicalLookup* lookup_;
 

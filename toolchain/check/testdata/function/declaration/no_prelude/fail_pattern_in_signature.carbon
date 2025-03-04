@@ -29,9 +29,9 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %empty_struct_type = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %empty_struct_type = value_param_pattern %a.patt, runtime_param<unknown>
+// CHECK:STDOUT:     %a.param_patt: %empty_struct_type = value_param_pattern %a.patt, runtime_param<none>
 // CHECK:STDOUT:     %b.patt: %empty_struct_type = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %empty_struct_type = value_param_pattern %b.patt, runtime_param<unknown>
+// CHECK:STDOUT:     %b.param_patt: %empty_struct_type = value_param_pattern %b.patt, runtime_param<none>
 // CHECK:STDOUT:     %.loc15_19: %tuple.type = tuple_pattern (%a.param_patt, %b.param_patt)
 // CHECK:STDOUT:     %c.patt: %empty_struct_type = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %empty_struct_type = value_param_pattern %c.patt, runtime_param0

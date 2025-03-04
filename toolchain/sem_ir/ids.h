@@ -192,26 +192,18 @@ struct CompileTimeBindIndex : public IndexBase<CompileTimeBindIndex> {
   using IndexBase::IndexBase;
 };
 
-// The index of a runtime parameter in a function. These are allocated
+// The index of a `Call` parameter in a function. These are allocated
 // sequentially, left-to-right, to the function parameters that will have
-// arguments passed to them at runtime. In a `call` instruction, a runtime
+// arguments passed to them at runtime. In a `Call` instruction, a runtime
 // argument will have the position in the argument list corresponding to its
-// runtime parameter index.
-// TODO: Rename this to CallParamIndex, for consistency with the "`Call`
-// parameters" terminology in EntityWithParamsBase.
-struct RuntimeParamIndex : public IndexBase<RuntimeParamIndex> {
+// `Call` parameter index.
+struct CallParamIndex : public IndexBase<CallParamIndex> {
+  // TODO: Rename this in an isolated PR, to avoid obscuring other changes with
+  // the churn.
   static constexpr llvm::StringLiteral Label = "runtime_param";
 
-  // An placeholder for index whose value is not yet known.
-  static const RuntimeParamIndex Unknown;
-
   using IndexBase::IndexBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
-
-constexpr RuntimeParamIndex RuntimeParamIndex::Unknown =
-    RuntimeParamIndex(NoneIndex - 1);
 
 // The ID of a function.
 struct FunctionId : public IdBase<FunctionId> {

@@ -79,14 +79,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc4_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.8e2)]
-// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc4_6.1, runtime_param<none> [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32.loc4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc4: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc4_6.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,7 +99,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %array_type.loc9_24.2: type = array_type %int.convert_checked.loc9_23.2, %i32 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc9_24.2 (%array_type) [symbolic = %require_complete (constants.%require_complete.9dc)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.param_patt: %i32) {
+// CHECK:STDOUT:   fn(%N.patt.loc4_6.1: %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: @F.%array_type.loc9_24.2 (%array_type) = binding_pattern arr
@@ -198,14 +196,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %N.patt.loc5_15.1: %i32 = symbolic_binding_pattern N, 0, template [template = %N.patt.loc5_15.2 (constants.%N.patt.8e2)]
-// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc5_15.1, runtime_param<none> [template = %N.patt.loc5_15.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc5: type = splice_block %i32.loc5 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc5_15.1: %i32 = bind_symbolic_name N, 0, template, %N.param [template = %N.loc5_15.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc5_15.1: %i32 = bind_symbolic_name N, 0, template [template = %N.loc5_15.2 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }
@@ -221,7 +217,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %array_type.loc10_24.2: type = array_type %int.convert_checked.loc10_23.2, %i32 [template = %array_type.loc10_24.2 (constants.%array_type.b04)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc10_24.2 (%array_type.b04) [template = %require_complete (constants.%require_complete.9dc)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.param_patt: %i32) {
+// CHECK:STDOUT:   fn(%N.patt.loc5_15.1: %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: @G.%array_type.loc10_24.2 (%array_type.b04) = binding_pattern arr

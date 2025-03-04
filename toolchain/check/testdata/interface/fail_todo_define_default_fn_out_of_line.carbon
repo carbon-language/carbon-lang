@@ -231,7 +231,6 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %self.patt: %C.7e5 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.7e5 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt]
-// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc20, runtime_param<none> [symbolic = constants.%U.patt]
 // CHECK:STDOUT:     %u.patt: %U = binding_pattern u
 // CHECK:STDOUT:     %u.param_patt: %U = value_param_pattern %u.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %U = return_slot_pattern
@@ -244,8 +243,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_24.2 [symbolic = constants.%C.7e5]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc20: %C.7e5 = bind_name self, %self.param.loc20
-// CHECK:STDOUT:     %U.param.loc20: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %U.loc20: type = bind_symbolic_name U, 1, %U.param.loc20 [symbolic = constants.%U]
+// CHECK:STDOUT:     %U.loc20: type = bind_symbolic_name U, 1 [symbolic = constants.%U]
 // CHECK:STDOUT:     %u.param.loc20: %U = value_param runtime_param1
 // CHECK:STDOUT:     %U.ref.loc20_43: type = name_ref U, %U.loc20 [symbolic = constants.%U]
 // CHECK:STDOUT:     %u.loc20: %U = bind_name u, %u.param.loc20
@@ -275,7 +273,6 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %self.patt: %C.7e5 = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: %C.7e5 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:       %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt]
-// CHECK:STDOUT:       %U.param_patt: type = value_param_pattern %U.patt.loc20, runtime_param<none> [symbolic = constants.%U.patt]
 // CHECK:STDOUT:       %u.patt: %U = binding_pattern u
 // CHECK:STDOUT:       %u.param_patt: %U = value_param_pattern %u.patt, runtime_param1
 // CHECK:STDOUT:       %return.patt: %U = return_slot_pattern
@@ -288,8 +285,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:         %Self.ref.loc14: type = name_ref Self, %.loc14_16.2 [symbolic = %C (constants.%C.7e5)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self.loc14: @F.%C (%C.7e5) = bind_name self, %self.param.loc14
-// CHECK:STDOUT:       %U.param.loc14: type = value_param runtime_param<none>
-// CHECK:STDOUT:       %U.loc14_22.2: type = bind_symbolic_name U, 1, %U.param.loc14 [symbolic = %U.loc14_22.1 (constants.%U)]
+// CHECK:STDOUT:       %U.loc14_22.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:       %u.param.loc14: @F.%U.loc14_22.1 (%U) = value_param runtime_param1
 // CHECK:STDOUT:       %U.ref.loc14_35: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:       %u.loc14: @F.%U.loc14_22.1 (%U) = bind_name u, %u.param.loc14
@@ -315,7 +311,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %require_complete.loc20_46: <witness> = require_complete_type @F.%U.loc14_22.1 (%U) [symbolic = %require_complete.loc20_46 (constants.%require_complete.b54)]
 // CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type @F.%C (%C.7e5) [symbolic = %require_complete.loc20_22 (constants.%require_complete.e44)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: %C.7e5](%U.param_patt: type, %u.param_patt: %U) -> %U {
+// CHECK:STDOUT:   fn[%self.param_patt: %C.7e5](%U.patt.loc20: type, %u.param_patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %u.ref: @F.%U.loc14_22.1 (%U) = name_ref u, %u.loc20
 // CHECK:STDOUT:     return %u.ref

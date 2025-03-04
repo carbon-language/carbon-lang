@@ -31,10 +31,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc11_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_6.1, runtime_param<none> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -47,7 +45,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr.loc12_11.2 (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %require_complete.loc13 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type) {
+// CHECK:STDOUT:   fn(%T.patt.loc11_6.1: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %p.patt: @F.%ptr.loc12_11.2 (%ptr) = binding_pattern p

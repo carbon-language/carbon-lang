@@ -35,9 +35,9 @@ impl package Implicit;
 // CHECK:STDERR: var c_bad: C((1, 2, 3)) = F();
 // CHECK:STDERR:              ^~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:6: in import [InImport]
-// CHECK:STDERR: implicit.carbon:7:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: implicit.carbon:7:9: note: initializing generic parameter `X` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(X:! (i32, i32)) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:         ^
 // CHECK:STDERR:
 var c_bad: C((1, 2, 3)) = F();
 
@@ -167,9 +167,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b_ref: ref %tuple.type.fc1 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %X.patt.loc7_9.1: %tuple.type.d07 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: %tuple.type.d07 = value_param_pattern %X.patt.loc7_9.1, runtime_param<none> [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %X.param: %tuple.type.d07 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc7_22.1: type = splice_block %.loc7_22.3 [concrete = constants.%tuple.type.d07] {
 // CHECK:STDOUT:       %int_32.loc7_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc7_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -178,7 +176,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:       %.loc7_22.2: %tuple.type.24b = tuple_literal (%i32.loc7_14, %i32.loc7_19)
 // CHECK:STDOUT:       %.loc7_22.3: type = converted %.loc7_22.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %X.loc7_9.1: %tuple.type.d07 = bind_symbolic_name X, 0, %X.param [symbolic = %X.loc7_9.2 (constants.%X)]
+// CHECK:STDOUT:     %X.loc7_9.1: %tuple.type.d07 = bind_symbolic_name X, 0 [symbolic = %X.loc7_9.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C.ee0 = return_slot_pattern
@@ -349,9 +347,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.554: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
+// CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1211 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1185 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -433,7 +431,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %c: ref %C.cf0 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.554: %tuple.type.c2c) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
@@ -540,9 +538,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.554: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
+// CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1211 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1185 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -572,7 +570,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %c_bad: <error> = bind_name c_bad, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.554: %tuple.type.c2c) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
@@ -657,9 +655,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.554: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
+// CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1211 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1185 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -703,7 +701,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %c_bad: ref %C.ed5 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.554: %tuple.type.c2c) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:

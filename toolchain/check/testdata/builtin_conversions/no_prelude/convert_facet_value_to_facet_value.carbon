@@ -60,10 +60,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_22.1, runtime_param<none> [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_22.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_22.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,11 +180,9 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness.loc11: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %e.patt.loc13_9.1: %Eats.type = symbolic_binding_pattern e, 0 [symbolic = %e.patt.loc13_9.2 (constants.%e.patt)]
-// CHECK:STDOUT:     %e.param_patt: %Eats.type = value_param_pattern %e.patt.loc13_9.1, runtime_param<none> [symbolic = %e.patt.loc13_9.2 (constants.%e.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %e.param: %Eats.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
-// CHECK:STDOUT:     %e.loc13_9.1: %Eats.type = bind_symbolic_name e, 0, %e.param [symbolic = %e.loc13_9.2 (constants.%e)]
+// CHECK:STDOUT:     %e.loc13_9.1: %Eats.type = bind_symbolic_name e, 0 [symbolic = %e.loc13_9.2 (constants.%e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
 // CHECK:STDOUT:   impl_decl @impl.27e [concrete] {} {
@@ -237,7 +233,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%e.param_patt: %Eats.type) {
+// CHECK:STDOUT:   fn(%e.patt.loc13_9.1: %Eats.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

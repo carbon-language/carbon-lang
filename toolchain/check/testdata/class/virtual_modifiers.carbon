@@ -1595,10 +1595,8 @@ class T2 {
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
 // CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [concrete = constants.%Base.generic] {
 // CHECK:STDOUT:     %T.patt.loc7_17.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_17.1, runtime_param<none> [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc7_17.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_17.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_17.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_17.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT: }

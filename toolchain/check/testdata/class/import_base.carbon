@@ -186,7 +186,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.e67: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.720]
 // CHECK:STDOUT:   %Main.import_ref.2e4 = import_ref Main//a, loc9_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c5f: <witness> = import_ref Main//a, loc14_1, loaded [concrete = constants.%complete_type.15c]
-// CHECK:STDOUT:   %Main.import_ref.9a9 = import_ref Main//a, inst77 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.9a9 = import_ref Main//a, inst76 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.7e5 = import_ref Main//a, loc13_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.a21640.2: type = import_ref Main//a, loc13_16, loaded [concrete = constants.%Base]
 // CHECK:STDOUT: }

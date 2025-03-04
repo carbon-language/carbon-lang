@@ -29,15 +29,13 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc11_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_6.1, runtime_param<none> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %n.patt: @F.%T.loc11_6.2 (%T) = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: @F.%T.loc11_6.2 (%T) = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @F.%T.loc11_6.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.%T.loc11_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %n.param: @F.%T.loc11_6.2 (%T) = value_param runtime_param0
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %n: @F.%T.loc11_6.2 (%T) = bind_name n, %n.param
@@ -53,7 +51,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type, %n.param_patt: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
+// CHECK:STDOUT:   fn(%T.patt.loc11_6.1: type, %n.param_patt: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %m.patt: @F.%T.loc11_6.2 (%T) = binding_pattern m

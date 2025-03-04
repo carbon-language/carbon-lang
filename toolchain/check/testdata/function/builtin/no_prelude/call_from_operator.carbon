@@ -153,17 +153,13 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [concrete = constants.%Add.type] {} {}
 // CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_14.1, runtime_param<none> [symbolic = %T.patt.loc11_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc11_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %T.patt.loc15_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc15_22.1, runtime_param<none> [symbolic = %T.patt.loc15_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc15_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_22.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_22.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.c45 [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -668,12 +664,12 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.f6b058.1: type = import_ref Core//default, loc11_14, loaded [symbolic = @As.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.a7c = import_ref Core//default, inst85 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc11_14, loaded [symbolic = @As.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.a7c = import_ref Core//default, inst83 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.713: @As.%As.assoc_type (%As.assoc_type.a44) = import_ref Core//default, loc12_32, loaded [symbolic = @As.%assoc0 (constants.%assoc0.5bc)]
 // CHECK:STDOUT:   %Core.Convert.313 = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.f6b058.2: type = import_ref Core//default, loc11_14, loaded [symbolic = @As.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.996: @As.%As.type (%As.type.eed) = import_ref Core//default, inst85 [no loc], loaded [symbolic = @As.%Self (constants.%Self.65a)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc11_14, loaded [symbolic = @As.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.996: @As.%As.type (%As.type.eed) = import_ref Core//default, inst83 [no loc], loaded [symbolic = @As.%Self (constants.%Self.65a)]
 // CHECK:STDOUT:   %Core.import_ref.708: @As.%Convert.type (%Convert.type.843) = import_ref Core//default, loc12_32, loaded [symbolic = @As.%Convert (constants.%Convert.95f)]
 // CHECK:STDOUT:   %Core.import_ref.07c = import_ref Core//default, inst39 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.bdf: %Add.assoc_type = import_ref Core//default, loc8_41, loaded [concrete = constants.%assoc0.b3c]
@@ -684,15 +680,15 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Core.import_ref.8aa: <witness> = import_ref Core//default, loc23_30, loaded [concrete = constants.%impl_witness.d9b]
 // CHECK:STDOUT:   %Core.import_ref.8721d7.1: type = import_ref Core//default, loc23_17, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Core.import_ref.1e5: type = import_ref Core//default, loc23_28, loaded [concrete = constants.%As.type.a6d]
-// CHECK:STDOUT:   %Core.import_ref.f6b058.3: type = import_ref Core//default, loc15_22, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst128 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//default, loc15_22, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst124 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc16_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43db8b.2)]
 // CHECK:STDOUT:   %Core.Convert.e69 = import_ref Core//default, Convert, unloaded
 // CHECK:STDOUT:   %Core.import_ref.de9: <witness> = import_ref Core//default, loc27_38, loaded [concrete = constants.%impl_witness.39c]
 // CHECK:STDOUT:   %Core.import_ref.8721d7.2: type = import_ref Core//default, loc27_17, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Core.import_ref.4d9: type = import_ref Core//default, loc27_36, loaded [concrete = constants.%ImplicitAs.type.61e]
-// CHECK:STDOUT:   %Core.import_ref.f6b058.4: type = import_ref Core//default, loc15_22, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst128 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//default, loc15_22, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst124 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc16_32, unloaded
 // CHECK:STDOUT:   %Core.import_ref.3b6: <witness> = import_ref Core//default, loc31_38, loaded [concrete = constants.%impl_witness.8f3]
 // CHECK:STDOUT:   %Core.import_ref.c8c7cd.2: type = import_ref Core//default, loc31_6, loaded [concrete = constants.%i32.builtin]
@@ -751,7 +747,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @As(imports.%Core.import_ref.f6b058.1: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic interface @As(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -778,7 +774,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   witness = (imports.%Core.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.f6b058.3: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.3: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -820,7 +816,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert.1(imports.%Core.import_ref.f6b058.2: type, imports.%Core.import_ref.996: @As.%As.type (%As.type.eed)) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Convert.1(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.996: @As.%As.type (%As.type.eed)) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T)> [symbolic = %As.type (constants.%As.type.eed)]
 // CHECK:STDOUT:   %Self: %As.type.eed = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.65a)]
@@ -829,7 +825,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type (%Self.as_type.04d)]() -> @Convert.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert.2(imports.%Core.import_ref.f6b058.4: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Convert.2(imports.%Core.import_ref.5ab3ec.4: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]

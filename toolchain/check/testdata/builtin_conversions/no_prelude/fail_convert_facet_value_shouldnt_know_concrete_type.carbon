@@ -42,9 +42,9 @@ fn F() {
   // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+7]]:3: note: type `Animal` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE-9]]:9: note: initializing generic parameter `e` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Feed(e:! Eats) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:         ^
   // CHECK:STDERR:
   Feed(Goat as Animal);
 }
@@ -81,17 +81,13 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc4_14.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc4_14.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc4_14.1, runtime_param<none> [symbolic = %Dest.patt.loc4_14.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc4_14.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc4_14.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc4_14.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc4_14.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc8_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc8_22.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc8_22.1, runtime_param<none> [symbolic = %Dest.patt.loc8_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc8_22.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc8_22.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc8_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc8_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,12 +265,12 @@ fn F() {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.ffd566.1: type = import_ref Core//default, loc8_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc8_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst65 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc9_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43db8b.2)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.ffd566.2: type = import_ref Core//default, loc8_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst69 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc8_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst65 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc9_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,11 +299,9 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness.loc11: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %e.patt.loc13_9.1: %Eats.type = symbolic_binding_pattern e, 0 [symbolic = %e.patt.loc13_9.2 (constants.%e.patt)]
-// CHECK:STDOUT:     %e.param_patt: %Eats.type = value_param_pattern %e.patt.loc13_9.1, runtime_param<none> [symbolic = %e.patt.loc13_9.2 (constants.%e.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %e.param: %Eats.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
-// CHECK:STDOUT:     %e.loc13_9.1: %Eats.type = bind_symbolic_name e, 0, %e.param [symbolic = %e.loc13_9.2 (constants.%e)]
+// CHECK:STDOUT:     %e.loc13_9.1: %Eats.type = bind_symbolic_name e, 0 [symbolic = %e.loc13_9.2 (constants.%e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -328,7 +322,7 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.ffd566.1: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
@@ -372,7 +366,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%e.param_patt: %Eats.type) {
+// CHECK:STDOUT:   fn(%e.patt.loc13_9.1: %Eats.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -389,7 +383,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.ffd566.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]

@@ -54,17 +54,13 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc4_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_6.1, runtime_param<none> [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc7_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_6.1, runtime_param<none> [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc7_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,7 +70,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type) {
+// CHECK:STDOUT:   fn(%T.patt.loc4_6.1: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -87,7 +83,7 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn.loc8_3.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2) [symbolic = %F.specific_fn.loc8_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type) {
+// CHECK:STDOUT:   fn(%T.patt.loc7_6.1: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_6.1 [symbolic = %T.loc7_6.2 (constants.%T)]
@@ -134,8 +130,8 @@ fn H() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//library, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Main.G: %G.type = import_ref Main//library, G, loaded [concrete = constants.%G]
-// CHECK:STDOUT:   %Main.import_ref.f6b058.1: type = import_ref Main//library, loc4_6, loaded [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.f6b058.2: type = import_ref Main//library, loc7_6, loaded [symbolic = @G.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//library, loc4_6, loaded [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//library, loc7_6, loaded [symbolic = @G.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -171,49 +167,49 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(imports.%Main.import_ref.f6b058.1: type) [from "library.carbon"] {
+// CHECK:STDOUT: generic fn @F(imports.%Main.import_ref.5ab3ec.1: type) [from "library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type);
+// CHECK:STDOUT:   fn(%T.patt.1: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(imports.%Main.import_ref.f6b058.2: type) [from "library.carbon"] {
+// CHECK:STDOUT: generic fn @G(imports.%Main.import_ref.5ab3ec.2: type) [from "library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function constants.%F, @F(%T) [symbolic = %F.specific_fn (constants.%F.specific_fn.ef1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type);
+// CHECK:STDOUT:   fn(%T.patt.1: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
-// CHECK:STDOUT:   %T.patt => constants.%C
+// CHECK:STDOUT:   %T.patt.2 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(@G.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
-// CHECK:STDOUT:   %T.patt => constants.%C
+// CHECK:STDOUT:   %T.patt.2 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn => constants.%F.specific_fn.04a

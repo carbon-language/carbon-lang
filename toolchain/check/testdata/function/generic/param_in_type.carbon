@@ -50,16 +50,14 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc11_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.8e2)]
-// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc11_6.1, runtime_param<none> [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:     %a.patt: @F.%ptr.loc11_31.2 (%ptr) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @F.%ptr.loc11_31.2 (%ptr) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc11_10: type = splice_block %i32.loc11_10 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc11_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc11_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc11_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc11_6.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc11_6.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc11_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:     %a.param: @F.%ptr.loc11_31.2 (%ptr) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc11_31: type = splice_block %ptr.loc11_31.1 [symbolic = %ptr.loc11_31.2 (constants.%ptr)] {
 // CHECK:STDOUT:       %int_32.loc11_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -87,7 +85,7 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %array_type.loc11_30.2: type = array_type %int.convert_checked.loc11_29.2, %i32 [symbolic = %array_type.loc11_30.2 (constants.%array_type)]
 // CHECK:STDOUT:   %ptr.loc11_31.2: type = ptr_type @F.%array_type.loc11_30.2 (%array_type) [symbolic = %ptr.loc11_31.2 (constants.%ptr)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.param_patt: %i32, %a.param_patt: @F.%ptr.loc11_31.2 (%ptr));
+// CHECK:STDOUT:   fn(%N.patt.loc11_6.1: %i32, %a.param_patt: @F.%ptr.loc11_31.2 (%ptr));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {

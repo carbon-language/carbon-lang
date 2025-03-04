@@ -55,10 +55,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_22.1, runtime_param<none> [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_22.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_22.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -170,13 +168,11 @@ fn F() {
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
 // CHECK:STDOUT:     %T.patt.loc8_15.1: %Animal.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %Animal.type = value_param_pattern %T.patt.loc8_15.1, runtime_param<none> [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %a.patt: @WalkAnimal.%T.as_type.loc8_30.2 (%T.as_type) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%T.as_type.loc8_30.2 (%T.as_type) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %Animal.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %T.loc8_15.1: %Animal.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_15.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:     %a.param: @WalkAnimal.%T.as_type.loc8_30.2 (%T.as_type) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc8_30.1: type = splice_block %.loc8_30.2 [symbolic = %T.as_type.loc8_30.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %Animal.type = name_ref T, %T.loc8_15.1 [symbolic = %T.loc8_15.2 (constants.%T)]
@@ -223,7 +219,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @WalkAnimal.%T.as_type.loc8_30.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: %Animal.type](%a.param_patt: @WalkAnimal.%T.as_type.loc8_30.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn[%T.patt.loc8_15.1: %Animal.type](%a.param_patt: @WalkAnimal.%T.as_type.loc8_30.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

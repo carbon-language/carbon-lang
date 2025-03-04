@@ -172,19 +172,15 @@ var n: {} = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
 // CHECK:STDOUT:     %T.patt.loc4_8.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_8.1, runtime_param<none> [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc4_18.1: @Int.%T.loc4_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: @Int.%T.loc4_8.2 (%T) = value_param_pattern %N.patt.loc4_18.1, runtime_param<none> [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_29.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_29.2: type = converted %.loc4_29.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc4_8.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_8.2 (constants.%T)]
-// CHECK:STDOUT:     %N.param: @Int.%T.loc4_8.2 (%T) = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc4_8.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_8.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_8.1 [symbolic = %T.loc4_8.2 (constants.%T)]
-// CHECK:STDOUT:     %N.loc4_18.1: @Int.%T.loc4_8.2 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc4_18.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_18.1: @Int.%T.loc4_8.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc4_18.2 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -198,7 +194,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc4_8.2 (%T)) -> %empty_struct_type {
+// CHECK:STDOUT:   fn[%T.patt.loc4_8.1: type](%N.patt.loc4_18.1: @Int.%T.loc4_8.2 (%T)) -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc4_41: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
@@ -233,8 +229,8 @@ var n: {} = i32;
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude_fake_int
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.f6b: type = import_ref Core//prelude_fake_int, loc4_8, loaded [symbolic = @Int.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.546: @Int.%T (%T) = import_ref Core//prelude_fake_int, loc4_18, loaded [symbolic = @Int.%N (constants.%N)]
+// CHECK:STDOUT:   %Core.import_ref.5ab: type = import_ref Core//prelude_fake_int, loc4_8, loaded [symbolic = @Int.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.34c: @Int.%T (%T) = import_ref Core//prelude_fake_int, loc4_18, loaded [symbolic = @Int.%N (constants.%N)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -255,15 +251,15 @@ var n: {} = i32;
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(imports.%Core.import_ref.f6b: type, imports.%Core.import_ref.546: @Int.%T (%T)) [from "prelude_fake_int.carbon"] {
+// CHECK:STDOUT: generic fn @Int(imports.%Core.import_ref.5ab: type, imports.%Core.import_ref.34c: @Int.%T (%T)) [from "prelude_fake_int.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.51ccc0.2)]
+// CHECK:STDOUT:   %N.patt.2: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.2 (constants.%N.patt.51ccc0.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T (%T)) -> %empty_struct_type;
+// CHECK:STDOUT:   fn[%T.patt.1: type](%N.patt.1: @Int.%T (%T)) -> %empty_struct_type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -277,16 +273,16 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T
 // CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt => constants.%N
+// CHECK:STDOUT:   %N.patt.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
 // CHECK:STDOUT:   %T => Core.IntLiteral
-// CHECK:STDOUT:   %T.patt => Core.IntLiteral
+// CHECK:STDOUT:   %T.patt.2 => Core.IntLiteral
 // CHECK:STDOUT:   %N => constants.%int_32
-// CHECK:STDOUT:   %N.patt => constants.%int_32
+// CHECK:STDOUT:   %N.patt.2 => constants.%int_32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -313,19 +309,15 @@ var n: {} = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_8.1, runtime_param<none> [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc8_18.1: @Int.%T.loc8_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc8_18.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: @Int.%T.loc8_8.2 (%T) = value_param_pattern %N.patt.loc8_18.1, runtime_param<none> [symbolic = %N.patt.loc8_18.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_29.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_29.2: type = converted %.loc8_29.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc8_8.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:     %N.param: @Int.%T.loc8_8.2 (%T) = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc8_8.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:     %N.loc8_18.1: @Int.%T.loc8_8.2 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc8_18.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc8_18.1: @Int.%T.loc8_8.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc8_18.2 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -349,7 +341,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc8_8.2 (%T)) -> %empty_tuple.type {
+// CHECK:STDOUT:   fn[%T.patt.loc8_8.1: type](%N.patt.loc8_18.1: @Int.%T.loc8_8.2 (%T)) -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]

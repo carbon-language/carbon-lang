@@ -55,11 +55,9 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
 // CHECK:STDOUT:     %A.patt.loc16_15.1: %Animal.type = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc16_15.2 (constants.%A.patt)]
-// CHECK:STDOUT:     %A.param_patt: %Animal.type = value_param_pattern %A.patt.loc16_15.1, runtime_param<none> [symbolic = %A.patt.loc16_15.2 (constants.%A.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.param: %Animal.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %A.loc16_15.1: %Animal.type = bind_symbolic_name A, 0, %A.param [symbolic = %A.loc16_15.2 (constants.%A)]
+// CHECK:STDOUT:     %A.loc16_15.1: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc16_15.2 (constants.%A)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -91,7 +89,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%A.param_patt: %Animal.type) {
+// CHECK:STDOUT:   fn(%A.patt.loc16_15.1: %Animal.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

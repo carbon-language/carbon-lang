@@ -72,17 +72,14 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
 // CHECK:STDOUT:     %F.patt.loc5_13.1: type = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_13.2 (constants.%F.patt)]
-// CHECK:STDOUT:     %F.param_patt: type = value_param_pattern %F.patt.loc5_13.1, runtime_param<none> [symbolic = %F.patt.loc5_13.2 (constants.%F.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %F.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %F.loc5_13.1: type = bind_symbolic_name F, 0, %F.param [symbolic = %F.loc5_13.2 (constants.%F.8b3)]
+// CHECK:STDOUT:     %F.loc5_13.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc5_13.2 (constants.%F.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %F.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %F.loc13_10: type = bind_symbolic_name F, 0, %F.param [symbolic = constants.%F.8b3]
+// CHECK:STDOUT:     %F.loc13_10: type = bind_symbolic_name F, 0 [symbolic = constants.%F.8b3]
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param runtime_param0

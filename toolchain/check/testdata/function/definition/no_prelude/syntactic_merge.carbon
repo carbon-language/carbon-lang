@@ -636,19 +636,15 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt.loc7_8.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_8.1, runtime_param<none> [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7_8.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_8.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
 // CHECK:STDOUT:     %a.patt.loc15_8.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_8.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc15_8.1, runtime_param<none> [symbolic = %a.patt.loc15_8.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param<none>
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc15_8.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc15_8.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -664,7 +660,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.loc7_8.2: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.param_patt: %C]();
+// CHECK:STDOUT:   fn[%a.patt.loc7_8.1: %C]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(%a.loc15_8.1: %C) {
@@ -673,7 +669,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.param_patt: %C]() {
+// CHECK:STDOUT:   fn[%a.patt.loc15_8.1: %C]() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

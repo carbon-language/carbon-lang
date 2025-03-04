@@ -103,17 +103,13 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc4_14.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc4_14.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc4_14.1, runtime_param<none> [symbolic = %Dest.patt.loc4_14.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc4_14.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc4_14.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc4_14.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc4_14.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc8_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc8_22.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc8_22.1, runtime_param<none> [symbolic = %Dest.patt.loc8_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc8_22.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc8_22.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc8_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc8_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,11 +301,9 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness.loc11: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %e.patt.loc13_9.1: %Eats.type = symbolic_binding_pattern e, 0 [symbolic = %e.patt.loc13_9.2 (constants.%e.patt)]
-// CHECK:STDOUT:     %e.param_patt: %Eats.type = value_param_pattern %e.patt.loc13_9.1, runtime_param<none> [symbolic = %e.patt.loc13_9.2 (constants.%e.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %e.param: %Eats.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
-// CHECK:STDOUT:     %e.loc13_9.1: %Eats.type = bind_symbolic_name e, 0, %e.param [symbolic = %e.loc13_9.2 (constants.%e)]
+// CHECK:STDOUT:     %e.loc13_9.1: %Eats.type = bind_symbolic_name e, 0 [symbolic = %e.loc13_9.2 (constants.%e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -354,7 +348,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%e.param_patt: %Eats.type) {
+// CHECK:STDOUT:   fn(%e.patt.loc13_9.1: %Eats.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
