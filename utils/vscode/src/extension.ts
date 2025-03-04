@@ -18,45 +18,63 @@ import {
 import {
   LanguageClient,
   LanguageClientOptions,
+  ServerOptions,
+} from 'vscode-languageclient/node';
+
+let client: LanguageClient;
+
+/**
+ * Splits a CLI-style quoted string.
+ */
 function splitQuotedString(argsString: string): string[] {
   const args: string[] = [];
   let arg = '';
+  // Track whether there's an arg to handle `""` and similar.
+  let hasArg = true;
+  // Whether this is in a quote-delimited section.
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
-  let escaped = false;
-  let empty = true;
+  // Whether this is a `\`-escaped character.
+  let inEscape = false;
 
   for (const char of argsString) {
-    const was_empty = empty;
-    empty = false;
-    if (escaped) {
+    // While spaces can appear in arguments, they can only be an argument in
+    // combination with other characters.
+    hasArg = hasArg || char != ' ';
+
+    if (inEscape) {
+      // After an escape, directly append the character.
       arg += char;
-      escaped = false;
+      inEscape = false;
       continue;
     }
     switch (char) {
       case '\\':
-        escaped = true;
+        // First character of an escape.
+        inEscape = true;
         continue;
       case "'":
         if (!inDoubleQuotes) {
+          // Single-quoted section.
           inSingleQuotes = !inSingleQuotes;
           continue;
         }
         break;
       case '"':
         if (!inSingleQuotes) {
+          // Double-quoted section.
           inDoubleQuotes = !inDoubleQuotes;
           continue;
         }
         break;
       case ' ':
         if (!inSingleQuotes && !inDoubleQuotes) {
-          if (!was_empty) {
+          // Space between arguments (but possibly multiple spaces).
+          if (hasArg) {
             args.push(arg);
             arg = '';
+            hasArg = false;
           }
-          empty = true;
           continue;
         }
         break;
@@ -64,7 +82,8 @@ function splitQuotedString(argsString: string): string[] {
     arg += char;
   }
 
-  if (!empty) {
+  // Finish any pending argument.
+  if (hasArg) {
     args.push(arg);
   }
 
