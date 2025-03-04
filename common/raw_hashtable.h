@@ -163,6 +163,10 @@ struct StorageEntry {
       IsTriviallyDestructible && std::is_trivially_move_constructible_v<KeyT> &&
       std::is_trivially_move_constructible_v<ValueT>;
 
+  static constexpr bool IsCopyable =
+      IsTriviallyRelocatable || (std::is_copy_constructible_v<KeyT> &&
+                                 std::is_copy_constructible_v<ValueT>);
+
   auto key() const -> const KeyT& {
     // Ensure we don't need more alignment than available. Inside a method body
     // to apply to the complete type.
@@ -233,6 +237,9 @@ struct StorageEntry<KeyT, void> {
   static constexpr bool IsTriviallyRelocatable =
       IsTriviallyDestructible && std::is_trivially_move_constructible_v<KeyT>;
 
+  static constexpr bool IsCopyable =
+      IsTriviallyRelocatable || std::is_copy_constructible_v<KeyT>;
+
   auto key() const -> const KeyT& {
     // Ensure we don't need more alignment than available.
     static_assert(
@@ -252,7 +259,9 @@ struct StorageEntry<KeyT, void> {
     key().~KeyT();
   }
 
-  auto CopyFrom(const StorageEntry& entry) -> void {
+  auto CopyFrom(const StorageEntry& entry) -> void
+    requires(IsCopyable)
+  {
     if constexpr (IsTriviallyRelocatable) {
       memcpy(this, &entry, sizeof(StorageEntry));
     } else {
@@ -567,7 +576,8 @@ class BaseImpl {
 
   auto Construct(Storage* small_storage) -> void;
   auto Destroy() -> void;
-  auto CopySlotsFrom(const BaseImpl& arg) -> void;
+  auto CopySlotsFrom(const BaseImpl& arg) -> void
+    requires(EntryT::IsCopyable);
   auto MoveFrom(BaseImpl&& arg, Storage* small_storage) -> void;
 
   auto InsertIntoEmpty(HashCode hash) -> EntryT*;
@@ -611,9 +621,11 @@ class TableImpl : public InputBaseT {
   using BaseT = InputBaseT;
 
   TableImpl() : BaseT(SmallSize, small_storage()) {}
-  TableImpl(const TableImpl& arg);
+  TableImpl(const TableImpl& arg)
+    requires(BaseT::EntryT::IsCopyable);
   TableImpl(TableImpl&& arg) noexcept;
-  auto operator=(const TableImpl& arg) -> TableImpl&;
+  auto operator=(const TableImpl& arg) -> TableImpl&
+    requires(BaseT::EntryT::IsCopyable);
   auto operator=(TableImpl&& arg) noexcept -> TableImpl&;
   ~TableImpl();
 
@@ -1202,7 +1214,9 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Destroy() -> void {
 // storage.
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::CopySlotsFrom(
-    const BaseImpl& arg) -> void {
+    const BaseImpl& arg) -> void
+  requires(EntryT::IsCopyable)
+{
   CARBON_DCHECK(alloc_size() == arg.alloc_size());
   ssize_t local_size = alloc_size();
 
@@ -1545,6 +1559,7 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
 
 template <typename InputBaseT, ssize_t SmallSize>
 TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
+  requires(BaseT::EntryT::IsCopyable)
     : BaseT(arg.alloc_size(), arg.growth_budget_, SmallSize) {
   // Check for completely broken objects. These invariants should be true even
   // in a moved-from state.
@@ -1561,7 +1576,9 @@ TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
 
 template <typename InputBaseT, ssize_t SmallSize>
 auto TableImpl<InputBaseT, SmallSize>::operator=(const TableImpl& arg)
-    -> TableImpl& {
+    -> TableImpl&
+  requires(BaseT::EntryT::IsCopyable)
+{
   // Check for completely broken objects. These invariants should be true even
   // in a moved-from state.
   CARBON_DCHECK(arg.alloc_size() == 0 || !arg.is_small() ||

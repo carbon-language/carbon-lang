@@ -135,7 +135,7 @@ fn F() {
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
@@ -148,7 +148,7 @@ fn F() {
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
