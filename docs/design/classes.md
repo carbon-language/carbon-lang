@@ -2285,8 +2285,14 @@ the type of `U.x`."
     -   [No unqualified lookup when defining outside a scope](/proposals/p2287.md#no-unqualified-lookup-when-defining-outside-a-scope)
 
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+
     -   [Use `extends` instead of `extend`](/proposals/p2760.md#use-extends-instead-of-extend)
     -   [List base class in class declaration](/proposals/p2760.md#list-base-class-in-class-declaration)
+
+-   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
+
+    -   [Destructor syntax options](/proposals/p5017.md#destructor-syntax-options)
+    -   [Destructor name options](/proposals/p5017.md#destructor-name-options)
 
 ## References
 
@@ -2300,3 +2306,4 @@ the type of `U.x`."
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
