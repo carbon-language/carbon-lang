@@ -64,13 +64,16 @@ library "[[@TEST_NAME]]";
 
 import Core;
 
+// Non-instance versions of these tests are in
+// .../interface/no_prelude/compound_member_access.carbon.
+
 interface A {
-  fn G();
+  fn G[self: Self]();
 }
 
 class C {}
 impl C as A {
-  fn G() {}
+  fn G[self: Self]() {}
 }
 
 fn F() {
@@ -116,13 +119,13 @@ import Core;
 
 interface A {}
 interface B {
-  fn G();
+  fn G[self: Self]();
 }
 
 class C {}
 impl C as A {}
 impl C as B {
-  fn G() {}
+  fn G[self: Self]() {}
 }
 
 fn F() {
@@ -132,7 +135,7 @@ fn F() {
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
@@ -145,7 +148,7 @@ fn F() {
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
@@ -164,10 +167,10 @@ import Core;
 interface A {
 }
 interface B {
-  fn G();
+  fn G[self: Self]();
 }
 
-fn G[T:! A & B](t: T) {
+fn H[T:! A & B](t: T) {
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+4]]:3: error: cannot access member of interface `B` in type `T` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   t.(B.G)();
   // CHECK:STDERR:   ^~~~~~~
@@ -178,26 +181,26 @@ fn G[T:! A & B](t: T) {
 class C {}
 impl C as A {}
 impl C as B {
-  fn G() {}
+  fn G[self: Self]() {}
 }
 
 fn F() {
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+17]]:3: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
-  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-18]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn G[T:! A & B](t: T) {
+  // CHECK:STDERR: fn H[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `type` to `A & B` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A & B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn G[T:! A & B](t: T) {
+  // CHECK:STDERR: fn H[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  G({} as C);
+  H({} as C);
 }

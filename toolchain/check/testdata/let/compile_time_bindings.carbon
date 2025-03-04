@@ -107,7 +107,7 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let T:! type = i32;
-  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+7]]:13: error: cannot implicitly convert from `<associated entity in I>` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+7]]:13: error: cannot implicitly convert value of type `<associated entity in I>` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F() -> T;
   // CHECK:STDERR:             ^
   // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+4]]:13: note: type `<associated entity in I>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
