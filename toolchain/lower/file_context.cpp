@@ -219,6 +219,15 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // TODO: Consider tracking whether the function has been used, and only
   // lowering it if it's needed.
 
+  // TODO nit: add is_symbolic() to type_id to forward to
+  // type_id.AsConstantId().is_symbolic(). Update call below too.
+  auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
+    if (!type_id.has_value()) {
+      return nullptr;
+    }
+    return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
+  };
+
   const auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
   CARBON_CHECK(return_info.is_valid(), "Should not lower invalid functions.");
@@ -229,8 +238,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   auto param_patterns =
       sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
 
-  auto* return_type =
-      return_info.type_id.has_value() ? GetType(return_info.type_id) : nullptr;
+  auto* return_type = get_llvm_type(return_info.type_id);
 
   llvm::SmallVector<llvm::Type*> param_types;
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
@@ -259,6 +267,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     }
     auto param_type_id =
         SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_pattern.type_id);
+    CARBON_CHECK(
+        !param_type_id.AsConstantId().is_symbolic(),
+        "Found symbolic type id after resolution when lowering type {0}.",
+        param_pattern.type_id);
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
@@ -268,7 +280,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       case SemIR::ValueRepr::Copy:
       case SemIR::ValueRepr::Custom:
       case SemIR::ValueRepr::Pointer:
-        param_types.push_back(GetType(value_rep.type_id));
+        auto* param_types_to_add = get_llvm_type(value_rep.type_id);
+        param_types.push_back(param_types_to_add);
         param_inst_ids.push_back(param_pattern_id);
         break;
     }
@@ -349,7 +362,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
 
-  FunctionContext function_lowering(*this, llvm_function,
+  FunctionContext function_lowering(*this, llvm_function, specific_id,
                                     BuildDISubprogram(function, llvm_function),
                                     vlog_stream_);
 

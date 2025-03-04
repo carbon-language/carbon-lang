@@ -31,14 +31,23 @@ import library "import_generic";
 var c: C({}) = {};
 // We're just checking that this doesn't crash. It's not expected to compile.
 // CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+8]]:11: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
-// CHECK:STDERR: fn F() -> c.(I.F)() {}
+// CHECK:STDERR: fn G() -> c.(I.F)() {}
 // CHECK:STDERR:           ^~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:22: error: missing `return` at end of function with declared return type [MissingReturnStatement]
-// CHECK:STDERR: fn F() -> c.(I.F)() {}
+// CHECK:STDERR: fn G() -> c.(I.F)() {}
 // CHECK:STDERR:                      ^
 // CHECK:STDERR:
-fn F() -> c.(I.F)() {}
+fn G() -> c.(I.F)() {}
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+8]]:11: error: cannot access member of interface `I` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fn H() -> C({}).(I.F)() {}
+// CHECK:STDERR:           ^~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:26: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: fn H() -> C({}).(I.F)() {}
+// CHECK:STDERR:                          ^
+// CHECK:STDERR:
+fn H() -> C({}).(I.F)() {}
 
 // CHECK:STDOUT: --- import_generic.carbon
 // CHECK:STDOUT:
@@ -201,8 +210,10 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.7a7, %impl_witness.02b [concrete]
 // CHECK:STDOUT:   %.c06: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.9e6, @F.1(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.3 [concrete]
-// CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
+// CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -228,7 +239,8 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .c = %c
-// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
@@ -243,7 +255,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.7a7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C.7a7 = bind_name c, %c.var
-// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.3 [concrete = constants.%F.c41] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -256,6 +268,19 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     %.loc16_19.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:     %.loc16_19.2: ref %empty_tuple.type = temporary %.loc16_19.1, %F.call
 // CHECK:STDOUT:     %.loc16_19.3: type = converted %F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %.loc25_14: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc25_15: type = converted %.loc25_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.7a7]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -308,7 +333,11 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() -> <error> {
+// CHECK:STDOUT: fn @G() -> <error> {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @H() -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

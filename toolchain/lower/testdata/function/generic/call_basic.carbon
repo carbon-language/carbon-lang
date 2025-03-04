@@ -15,8 +15,8 @@ fn H[T:! type](x: T) {
 }
 
 fn G[T:! type](x: T) -> T {
-  // TODO: the call below is crashing because proper type resolution to
-  // use the G specific, not the G generic is not done yet.
+  H(x);
+  // TODO: Call crashes, see TODO in FunctionContext::GetValue()
   // H(T);
   return x;
 }
@@ -72,17 +72,29 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CG.Main.b88d1103f417c6d4(i32 %x) !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !23
+// CHECK:STDOUT:   call void @_CH.Main.b88d1103f417c6d4(i32 %x), !dbg !23
+// CHECK:STDOUT:   ret i32 %x, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.66be507887ceee78(double %x) !dbg !24 {
+// CHECK:STDOUT: define void @_CF.Main.66be507887ceee78(double %x) !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CG.Main.66be507887ceee78(double %x) !dbg !26 {
+// CHECK:STDOUT: define double @_CG.Main.66be507887ceee78(double %x) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret double %x, !dbg !27
+// CHECK:STDOUT:   call void @_CH.Main.66be507887ceee78(double %x), !dbg !28
+// CHECK:STDOUT:   ret double %x, !dbg !29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CH.Main.b88d1103f417c6d4(i32 %x) !dbg !30 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !31
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CH.Main.66be507887ceee78(double %x) !dbg !32 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -116,8 +128,14 @@ fn M() {
 // CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !21 = !DILocation(line: 11, column: 1, scope: !20)
 // CHECK:STDOUT: !22 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !23 = !DILocation(line: 21, column: 3, scope: !22)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 1, scope: !24)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.66be507887ceee78", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !27 = !DILocation(line: 21, column: 3, scope: !26)
+// CHECK:STDOUT: !23 = !DILocation(line: 18, column: 3, scope: !22)
+// CHECK:STDOUT: !24 = !DILocation(line: 21, column: 3, scope: !22)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !26 = !DILocation(line: 11, column: 1, scope: !25)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.66be507887ceee78", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 18, column: 3, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 21, column: 3, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.b88d1103f417c6d4", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 14, column: 1, scope: !30)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.66be507887ceee78", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !33 = !DILocation(line: 14, column: 1, scope: !32)

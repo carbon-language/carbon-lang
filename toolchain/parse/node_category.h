@@ -25,7 +25,7 @@ LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
   X(MemberExpr)                 \
   X(MemberName)                 \
   X(Modifier)                   \
-  X(NonExprIdentifierName)      \
+  X(NonExprName)                \
   X(PackageName)                \
   X(Pattern)                    \
   X(Requirement)                \

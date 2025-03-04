@@ -9,6 +9,7 @@ load(
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
+load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 
@@ -30,6 +31,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:error",
+        "//toolchain/base:llvm_tools",
         "@bazel_tools//tools/cpp/runfiles",
         "@llvm-project//llvm:Support",
     ],
@@ -111,6 +113,7 @@ cc_binary(
         "//common:exe_path",
         "//common:init_llvm",
         "//common:version_stamp",
+        "//toolchain/base:llvm_tools_def",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
     ],
@@ -121,6 +124,15 @@ cc_binary(
 lld_aliases = [
     "ld.lld",
     "ld64.lld",
+]
+
+llvm_binaries = lld_aliases + [
+    tool.bin_name
+    for tool in LLVM_MAIN_TOOLS.values()
+] + [
+    "llvm-" + alias
+    for (_, aliases) in LLVM_TOOL_ALIASES.items()
+    for alias in aliases
 ]
 
 filegroup(
@@ -165,7 +177,7 @@ install_dirs = {
         name,
         "../../carbon-busybox",
         is_driver = True,
-    ) for name in lld_aliases],
+    ) for name in llvm_binaries],
     "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
         install_filegroup("include", ":clang_headers", "staging/include/"),
     ],
