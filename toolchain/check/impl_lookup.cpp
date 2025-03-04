@@ -181,9 +181,11 @@ static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
   const auto& complete_facet_type =
       context.complete_facet_types().Get(complete_facet_type_id);
 
+  has_other_requirements =
+      context.facet_types().Get(facet_type_id).other_requirements;
+
   llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface, 16>
       interface_ids;
-  has_other_requirements = false;
 
   if (complete_facet_type.required_interfaces.empty()) {
     // This should never happen - a FacetType either requires or is bounded by
@@ -196,9 +198,6 @@ static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
   }
   for (auto required : complete_facet_type.required_interfaces) {
     interface_ids.push_back(required);
-    if (context.facet_types().Get(facet_type_id).other_requirements) {
-      has_other_requirements = true;
-    }
   }
   return interface_ids;
 }
