@@ -118,23 +118,23 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %return.patt: %ptr = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %ptr = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc4_20.1: type = ptr_type %T [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %return.param.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = out_param call_param0
 // CHECK:STDOUT:     %return.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = return_slot %return.param.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc6: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %return.patt: %ptr = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %ptr = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc6 [symbolic = constants.%T]
 // CHECK:STDOUT:     %ptr.loc6: type = ptr_type %T [symbolic = constants.%ptr]
 // CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:     %return.param.loc6: ref %ptr = out_param runtime_param0
+// CHECK:STDOUT:     %return.param.loc6: ref %ptr = out_param call_param0
 // CHECK:STDOUT:     %return.loc6: ref %ptr = return_slot %return.param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -205,26 +205,26 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.patt.loc4_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc4_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %return.patt: @F.%ptr.loc4_30.2 (%ptr.79f) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_30.2 (%ptr.79f) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_30.2 (%ptr.79f) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U)]
-// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc4_30.2 (%ptr.79f) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
 // CHECK:STDOUT:     %T.patt.loc13_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc13_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc13_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %return.patt: @.1.%ptr.loc13_30.2 (%ptr.b51) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %U [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
 // CHECK:STDOUT:     %T.loc13_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.loc13_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc13_16.2 (constants.%U)]
-// CHECK:STDOUT:     %return.param: ref @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @.1.%ptr.loc13_30.2 (%ptr.b51) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -310,26 +310,26 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.patt.loc4_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:     %U.patt.loc4_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
 // CHECK:STDOUT:     %return.patt: @F.%ptr.loc4_30.2 (%ptr.79f) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_30.2 (%ptr.79f) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_30.2 (%ptr.79f) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
 // CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T.8b3 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U.336)]
-// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc4_30.2 (%ptr.79f) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
 // CHECK:STDOUT:     %U.patt.loc13_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:     %T.patt.loc13_16.1: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc13_16.2 (constants.%T.patt.7a9)]
 // CHECK:STDOUT:     %return.patt: @.1.%ptr.loc13_30.2 (%ptr.b51) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T.loc13_16.1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
 // CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %T.336 [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
 // CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc13_6.2 (constants.%U.8b3)]
 // CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
-// CHECK:STDOUT:     %return.param: ref @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @.1.%ptr.loc13_30.2 (%ptr.b51) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @.1.%ptr.loc13_30.2 (%ptr.b51) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -415,26 +415,26 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.patt.loc4_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:     %U.patt.loc4_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
 // CHECK:STDOUT:     %return.patt: @F.%ptr.loc4_30.2 (%ptr.79f131.1) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_30.2 (%ptr.79f131.1) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_30.2 (%ptr.79f131.1) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
 // CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T.8b3 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f131.1)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U.336)]
-// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f131.1) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_30.2 (%ptr.79f131.1) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc4_30.2 (%ptr.79f131.1) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
 // CHECK:STDOUT:     %U.patt.loc13_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:     %T.patt.loc13_16.1: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc13_16.2 (constants.%T.patt.7a9)]
 // CHECK:STDOUT:     %return.patt: @.1.%ptr.loc13_30.2 (%ptr.79f131.2) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @.1.%ptr.loc13_30.2 (%ptr.79f131.2) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @.1.%ptr.loc13_30.2 (%ptr.79f131.2) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_6.1 [symbolic = %U.loc13_6.2 (constants.%U.8b3)]
 // CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %U.8b3 [symbolic = %ptr.loc13_30.2 (constants.%ptr.79f131.2)]
 // CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc13_6.2 (constants.%U.8b3)]
 // CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
-// CHECK:STDOUT:     %return.param: ref @.1.%ptr.loc13_30.2 (%ptr.79f131.2) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @.1.%ptr.loc13_30.2 (%ptr.79f131.2) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @.1.%ptr.loc13_30.2 (%ptr.79f131.2) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

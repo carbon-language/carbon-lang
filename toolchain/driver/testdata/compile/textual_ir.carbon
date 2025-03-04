@@ -33,9 +33,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %n.patt: %empty_tuple.type = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %empty_tuple.type = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %empty_tuple.type = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %tuple.type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %empty_tuple.type = tuple_literal ()
@@ -43,13 +43,13 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%tuple.type [concrete = constants.%tuple.type]
-// CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc15_12.1: type = splice_block %.loc15_12.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc15_12.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc15_12.3: type = converted %.loc15_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref %tuple.type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

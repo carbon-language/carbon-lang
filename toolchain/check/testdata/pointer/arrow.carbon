@@ -55,9 +55,9 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %ptr.patt: %ptr.019 = binding_pattern ptr
-// CHECK:STDOUT:     %ptr.param_patt: %ptr.019 = value_param_pattern %ptr.patt, runtime_param0
+// CHECK:STDOUT:     %ptr.param_patt: %ptr.019 = value_param_pattern %ptr.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %ptr.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %ptr.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc16: type = splice_block %ptr.loc16_14 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc16_14: type = ptr_type %C [concrete = constants.%ptr.019]
@@ -69,9 +69,9 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [concrete = constants.%Member] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }

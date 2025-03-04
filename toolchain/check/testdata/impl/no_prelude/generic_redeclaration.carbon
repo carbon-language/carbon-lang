@@ -603,20 +603,20 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %B.decl: @impl.2caff2.2.%B.type (%B.type) = fn_decl @B [symbolic = @impl.2caff2.2.%B (constants.%B)] {} {}
 // CHECK:STDOUT:     %C.decl: @impl.2caff2.2.%C.type (%C.type) = fn_decl @C [symbolic = @impl.2caff2.2.%C (constants.%C)] {
 // CHECK:STDOUT:       %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc19_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc19_14.2: type = converted %.loc19_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %D.decl: @impl.2caff2.2.%D.type (%D.type) = fn_decl @D [symbolic = @impl.2caff2.2.%D (constants.%D)] {
 // CHECK:STDOUT:       %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc20_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc20_14.2: type = converted %.loc20_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:

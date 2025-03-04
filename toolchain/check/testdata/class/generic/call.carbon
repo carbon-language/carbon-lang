@@ -591,44 +591,44 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %A.decl: @Inner.%A.type (%A.type.8d7) = fn_decl @A [symbolic = @Inner.%A (constants.%A.d0e)] {
 // CHECK:STDOUT:       %return.patt: @A.%Outer.loc4_22.1 (%Outer.9d6) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @A.%Outer.loc4_22.1 (%Outer.9d6) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @A.%Outer.loc4_22.1 (%Outer.9d6) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Outer.loc4_22.2: type = class_type @Outer, @Outer(constants.%T) [symbolic = %Outer.loc4_22.1 (constants.%Outer.9d6)]
-// CHECK:STDOUT:       %return.param: ref @A.%Outer.loc4_22.1 (%Outer.9d6) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @A.%Outer.loc4_22.1 (%Outer.9d6) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @A.%Outer.loc4_22.1 (%Outer.9d6) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %B.decl: @Inner.%B.type (%B.type.880) = fn_decl @B [symbolic = @Inner.%B (constants.%B.c7b)] {
 // CHECK:STDOUT:       %return.patt: @B.%Outer.loc7_22.1 (%Outer.99f) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @B.%Outer.loc7_22.1 (%Outer.99f) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @B.%Outer.loc7_22.1 (%Outer.99f) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_15.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %Outer.loc7_22.2: type = class_type @Outer, @Outer(constants.%U) [symbolic = %Outer.loc7_22.1 (constants.%Outer.99f)]
-// CHECK:STDOUT:       %return.param: ref @B.%Outer.loc7_22.1 (%Outer.99f) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @B.%Outer.loc7_22.1 (%Outer.99f) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @B.%Outer.loc7_22.1 (%Outer.99f) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %C.decl: @Inner.%C.type (%C.type.714) = fn_decl @C [symbolic = @Inner.%C (constants.%C.e62)] {
 // CHECK:STDOUT:       %return.patt: @C.%Inner.loc10_22.1 (%Inner.13a) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @C.%Inner.loc10_22.1 (%Inner.13a) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @C.%Inner.loc10_22.1 (%Inner.13a) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc10: @C.%Inner.type (%Inner.type.eae) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.137)]
 // CHECK:STDOUT:       %Inner.ref: @C.%Inner.type (%Inner.type.eae) = name_ref Inner, %.loc10 [symbolic = %Inner.generic (constants.%Inner.generic.137)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Inner.loc10_22.2: type = class_type @Inner, @Inner(constants.%T, constants.%T) [symbolic = %Inner.loc10_22.1 (constants.%Inner.13a)]
-// CHECK:STDOUT:       %return.param: ref @C.%Inner.loc10_22.1 (%Inner.13a) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @C.%Inner.loc10_22.1 (%Inner.13a) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @C.%Inner.loc10_22.1 (%Inner.13a) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %D.decl: @Inner.%D.type (%D.type.102) = fn_decl @D [symbolic = @Inner.%D (constants.%D.d85)] {
 // CHECK:STDOUT:       %return.patt: @D.%Inner.loc13_22.1 (%Inner.c71) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @D.%Inner.loc13_22.1 (%Inner.c71) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @D.%Inner.loc13_22.1 (%Inner.c71) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13: @D.%Inner.type (%Inner.type.eae) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.137)]
 // CHECK:STDOUT:       %Inner.ref: @D.%Inner.type (%Inner.type.eae) = name_ref Inner, %.loc13 [symbolic = %Inner.generic (constants.%Inner.generic.137)]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_15.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %Inner.loc13_22.2: type = class_type @Inner, @Inner(constants.%T, constants.%U) [symbolic = %Inner.loc13_22.1 (constants.%Inner.c71)]
-// CHECK:STDOUT:       %return.param: ref @D.%Inner.loc13_22.1 (%Inner.c71) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @D.%Inner.loc13_22.1 (%Inner.c71) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @D.%Inner.loc13_22.1 (%Inner.c71) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]

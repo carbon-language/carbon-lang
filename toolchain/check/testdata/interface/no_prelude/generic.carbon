@@ -191,10 +191,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %Self.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.ce6) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.088)]
 // CHECK:STDOUT:     %F.decl: @WithAssocFn.%F.type (%F.type.1af) = fn_decl @F.1 [symbolic = @WithAssocFn.%F (constants.%F.b7d)] {
 // CHECK:STDOUT:       %return.patt: %X = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %X = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: %X = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %return.param: ref %X = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:       %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc10_14.1: @WithAssocFn.%WithAssocFn.assoc_type (%WithAssocFn.assoc_type.02b) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc10_14.2 (constants.%assoc0.470)]
@@ -224,10 +224,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: impl @impl.90b: %Self.ref as %WithAssocFn.type {
 // CHECK:STDOUT:   %F.decl: %F.type.005 = fn_decl @F.2 [concrete = constants.%F.317] {
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

@@ -52,18 +52,18 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %n.patt: %T = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %T = value_param_pattern %n.patt, runtime_param1
+// CHECK:STDOUT:     %n.param_patt: %T = value_param_pattern %n.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:     %self.param.loc16: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
 // CHECK:STDOUT:     %.loc16_28.1: type = splice_block %Self.ref.loc16 [symbolic = constants.%Class] {
 // CHECK:STDOUT:       %.loc16_28.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = constants.%Class]
 // CHECK:STDOUT:       %Self.ref.loc16: type = name_ref Self, %.loc16_28.2 [symbolic = constants.%Class]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc16: %Class = bind_name self, %self.param.loc16
-// CHECK:STDOUT:     %n.param.loc16: %T = value_param runtime_param1
+// CHECK:STDOUT:     %n.param.loc16: %T = value_param call_param1
 // CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T.loc16 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc16: %T = bind_name n, %n.param.loc16
 // CHECK:STDOUT:   }
@@ -90,17 +90,17 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <none>
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %n.patt: %T = binding_pattern n
-// CHECK:STDOUT:       %n.param_patt: %T = value_param_pattern %n.patt, runtime_param1
+// CHECK:STDOUT:       %n.param_patt: %T = value_param_pattern %n.patt, call_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param.loc13: @F.%Class (%Class) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param.loc13: @F.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc13_14.1: type = splice_block %Self.ref.loc13 [symbolic = %Class (constants.%Class)] {
 // CHECK:STDOUT:         %.loc13_14.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref.loc13: type = name_ref Self, %.loc13_14.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self.loc13: @F.%Class (%Class) = bind_name self, %self.param.loc13
-// CHECK:STDOUT:       %n.param.loc13: @F.%T.loc13 (%T) = value_param runtime_param1
+// CHECK:STDOUT:       %n.param.loc13: @F.%T.loc13 (%T) = value_param call_param1
 // CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T.loc13 (constants.%T)]
 // CHECK:STDOUT:       %n.loc13: @F.%T.loc13 (%T) = bind_name n, %n.param.loc13
 // CHECK:STDOUT:     }

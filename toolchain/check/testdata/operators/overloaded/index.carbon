@@ -160,20 +160,20 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.178 = fn_decl @At.2 [concrete = constants.%At.d43] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %subscript.patt: %SubscriptType.8ee = binding_pattern subscript
-// CHECK:STDOUT:     %subscript.param_patt: %SubscriptType.8ee = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:     %subscript.param_patt: %SubscriptType.8ee = value_param_pattern %subscript.patt, call_param1
 // CHECK:STDOUT:     %return.patt: %ElementType.e6b = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ElementType.e6b = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %ElementType.e6b = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType.e6b]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param runtime_param1
+// CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.8ee]
 // CHECK:STDOUT:     %subscript: %SubscriptType.8ee = bind_name subscript, %subscript.param
-// CHECK:STDOUT:     %return.param: ref %ElementType.e6b = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %ElementType.e6b = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType.e6b = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -345,24 +345,24 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @impl.18b: %.loc4_15.2 as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.9ac = fn_decl @At.2 [concrete = constants.%At.642] {
 // CHECK:STDOUT:     %self.patt: %tuple.type.d07 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %tuple.type.d07 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %tuple.type.d07 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %subscript.patt: %i32 = binding_pattern subscript
-// CHECK:STDOUT:     %subscript.param_patt: %i32 = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:     %subscript.param_patt: %i32 = value_param_pattern %subscript.patt, call_param1
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc5_40: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5_40: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.param: %tuple.type.d07 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %tuple.type.d07 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.18b.%.loc4_15.2 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %self: %tuple.type.d07 = bind_name self, %self.param
-// CHECK:STDOUT:     %subscript.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %subscript.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc5: type = splice_block %i32.loc5_32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc5_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc5_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %subscript: %i32 = bind_name subscript, %subscript.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -472,20 +472,20 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.178 = fn_decl @At.2 [concrete = constants.%At.d43] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %subscript.patt: %SubscriptType.8ee = binding_pattern subscript
-// CHECK:STDOUT:     %subscript.param_patt: %SubscriptType.8ee = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:     %subscript.param_patt: %SubscriptType.8ee = value_param_pattern %subscript.patt, call_param1
 // CHECK:STDOUT:     %return.patt: %ElementType.e6b = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ElementType.e6b = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %ElementType.e6b = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType.e6b]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param runtime_param1
+// CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.8ee]
 // CHECK:STDOUT:     %subscript: %SubscriptType.8ee = bind_name subscript, %subscript.param
-// CHECK:STDOUT:     %return.param: ref %ElementType.e6b = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %ElementType.e6b = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType.e6b = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

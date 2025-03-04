@@ -165,7 +165,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C.c8f = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.c8f = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.c8f = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -186,7 +186,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %struct: %struct_type.a.b.501 = struct_value (%.loc9_28.3, %.loc9_28.5) [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:     %.loc9_29: %struct_type.a.b.501 = converted %.loc9_28.1, %struct [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%struct.ed5) [concrete = constants.%C.c8f]
-// CHECK:STDOUT:     %return.param: ref %C.c8f = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.c8f = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C.c8f = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

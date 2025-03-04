@@ -97,11 +97,11 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %T.patt.loc18_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt: @H.%Empty_where.type (%Empty_where.type.4ed) = binding_pattern U
-// CHECK:STDOUT:     %U.param_patt: @H.%Empty_where.type (%Empty_where.type.4ed) = value_param_pattern %U.patt, runtime_param0
+// CHECK:STDOUT:     %U.param_patt: @H.%Empty_where.type (%Empty_where.type.4ed) = value_param_pattern %U.patt, call_param0
 // CHECK:STDOUT:     %V.patt.loc18_43.1: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc18_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc18_6.2 (constants.%T)]
-// CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.4ed) = value_param runtime_param0
+// CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.4ed) = value_param call_param0
 // CHECK:STDOUT:     %.loc18_28.1: type = splice_block %.loc18_28.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.4ed)] {
 // CHECK:STDOUT:       %Empty.ref: %Empty.type.d5a = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.generic]
 // CHECK:STDOUT:       %T.ref.loc18_25: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
@@ -125,9 +125,9 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %U.patt: %Empty_where.type.a58 = binding_pattern U
-// CHECK:STDOUT:     %U.param_patt: %Empty_where.type.a58 = value_param_pattern %U.patt, runtime_param0
+// CHECK:STDOUT:     %U.param_patt: %Empty_where.type.a58 = value_param_pattern %U.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: %Empty_where.type.a58 = value_param runtime_param0
+// CHECK:STDOUT:     %U.param: %Empty_where.type.a58 = value_param call_param0
 // CHECK:STDOUT:     %.loc20_20.1: type = splice_block %.loc20_20.2 [concrete = constants.%Empty_where.type.a58] {
 // CHECK:STDOUT:       %Empty.ref: %Empty.type.d5a = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.generic]
 // CHECK:STDOUT:       %int_32.loc20_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

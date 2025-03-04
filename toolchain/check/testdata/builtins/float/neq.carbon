@@ -79,16 +79,16 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Neq.decl: %Neq.type = fn_decl @Neq [concrete = constants.%Neq] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: f64 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: f64 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: f64 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: f64 = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %bool.make_type, %.loc2_27.1 [concrete = bool]
-// CHECK:STDOUT:     %a.param: f64 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: f64 = value_param call_param0
 // CHECK:STDOUT:     %.loc2_11.1: type = splice_block %.loc2_11.3 [concrete = f64] {
 // CHECK:STDOUT:       %int_64.loc2_11: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %float.make_type.loc2_11: init type = call constants.%Float(%int_64.loc2_11) [concrete = f64]
@@ -96,7 +96,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:       %.loc2_11.3: type = converted %float.make_type.loc2_11, %.loc2_11.2 [concrete = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: f64 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: f64 = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: f64 = value_param call_param1
 // CHECK:STDOUT:     %.loc2_19.1: type = splice_block %.loc2_19.3 [concrete = f64] {
 // CHECK:STDOUT:       %int_64.loc2_19: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %float.make_type.loc2_19: init type = call constants.%Float(%int_64.loc2_19) [concrete = f64]
@@ -104,36 +104,36 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:       %.loc2_19.3: type = converted %float.make_type.loc2_19, %.loc2_19.2 [concrete = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: f64 = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [concrete = constants.%True] {} {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [concrete = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %true_.patt: %True = binding_pattern true_
-// CHECK:STDOUT:     %true_.param_patt: %True = value_param_pattern %true_.patt, runtime_param0
+// CHECK:STDOUT:     %true_.param_patt: %True = value_param_pattern %true_.patt, call_param0
 // CHECK:STDOUT:     %false_.patt: %False = binding_pattern false_
-// CHECK:STDOUT:     %false_.param_patt: %False = value_param_pattern %false_.patt, runtime_param1
+// CHECK:STDOUT:     %false_.param_patt: %False = value_param_pattern %false_.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %true_.param: %True = value_param runtime_param0
+// CHECK:STDOUT:     %true_.param: %True = value_param call_param0
 // CHECK:STDOUT:     %True.ref.loc7: type = name_ref True, file.%True.decl [concrete = constants.%True]
 // CHECK:STDOUT:     %true_: %True = bind_name true_, %true_.param
-// CHECK:STDOUT:     %false_.param: %False = value_param runtime_param1
+// CHECK:STDOUT:     %false_.param: %False = value_param call_param1
 // CHECK:STDOUT:     %False.ref.loc7: type = name_ref False, file.%False.decl [concrete = constants.%False]
 // CHECK:STDOUT:     %false_: %False = bind_name false_, %false_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallIsValid.decl: %RuntimeCallIsValid.type = fn_decl @RuntimeCallIsValid [concrete = constants.%RuntimeCallIsValid] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: f64 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: f64 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: f64 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: f64 = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc12_42.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc12_42.2: type = converted %bool.make_type, %.loc12_42.1 [concrete = bool]
-// CHECK:STDOUT:     %a.param: f64 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: f64 = value_param call_param0
 // CHECK:STDOUT:     %.loc12_26.1: type = splice_block %.loc12_26.3 [concrete = f64] {
 // CHECK:STDOUT:       %int_64.loc12_26: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %float.make_type.loc12_26: init type = call constants.%Float(%int_64.loc12_26) [concrete = f64]
@@ -141,7 +141,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:       %.loc12_26.3: type = converted %float.make_type.loc12_26, %.loc12_26.2 [concrete = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: f64 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: f64 = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: f64 = value_param call_param1
 // CHECK:STDOUT:     %.loc12_34.1: type = splice_block %.loc12_34.3 [concrete = f64] {
 // CHECK:STDOUT:       %int_64.loc12_34: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %float.make_type.loc12_34: init type = call constants.%Float(%int_64.loc12_34) [concrete = f64]
@@ -149,7 +149,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:       %.loc12_34.3: type = converted %float.make_type.loc12_34, %.loc12_34.2 [concrete = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: f64 = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -252,17 +252,17 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %WrongResult.decl: %WrongResult.type = fn_decl @WrongResult [concrete = constants.%WrongResult] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: f64 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: f64 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: f64 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: f64 = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.loc8_35: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc8_35: init type = call constants.%Float(%int_64.loc8_35) [concrete = f64]
 // CHECK:STDOUT:     %.loc8_35.1: type = value_of_initializer %float.make_type.loc8_35 [concrete = f64]
 // CHECK:STDOUT:     %.loc8_35.2: type = converted %float.make_type.loc8_35, %.loc8_35.1 [concrete = f64]
-// CHECK:STDOUT:     %a.param: f64 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: f64 = value_param call_param0
 // CHECK:STDOUT:     %.loc8_19.1: type = splice_block %.loc8_19.3 [concrete = f64] {
 // CHECK:STDOUT:       %int_64.loc8_19: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %float.make_type.loc8_19: init type = call constants.%Float(%int_64.loc8_19) [concrete = f64]
@@ -270,7 +270,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:       %.loc8_19.3: type = converted %float.make_type.loc8_19, %.loc8_19.2 [concrete = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: f64 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: f64 = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: f64 = value_param call_param1
 // CHECK:STDOUT:     %.loc8_27.1: type = splice_block %.loc8_27.3 [concrete = f64] {
 // CHECK:STDOUT:       %int_64.loc8_27: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %float.make_type.loc8_27: init type = call constants.%Float(%int_64.loc8_27) [concrete = f64]
@@ -278,7 +278,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:       %.loc8_27.3: type = converted %float.make_type.loc8_27, %.loc8_27.2 [concrete = f64]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: f64 = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref f64 = out_param call_param2
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

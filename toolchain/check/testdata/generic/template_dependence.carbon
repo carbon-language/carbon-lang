@@ -53,21 +53,21 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @F.%ptr.loc4_30.2 (%ptr.a13) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @F.%ptr.loc4_30.2 (%ptr.a13) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @F.%ptr.loc4_30.2 (%ptr.a13) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @F.%ptr.loc4_29.2 (%ptr.79f) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_29.2 (%ptr.79f) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_29.2 (%ptr.79f) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_36: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc4_37: type = ptr_type %T [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @F.%ptr.loc4_30.2 (%ptr.a13) = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: @F.%ptr.loc4_30.2 (%ptr.a13) = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %ptr.loc4_30.1 [template = %ptr.loc4_30.2 (constants.%ptr.a13)] {
 // CHECK:STDOUT:       %T.ref.loc4_28: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc4_29.1: type = ptr_type %T [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:       %ptr.loc4_30.1: type = ptr_type %ptr.79f [template = %ptr.loc4_30.2 (constants.%ptr.a13)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.%ptr.loc4_30.2 (%ptr.a13) = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_29.2 (%ptr.79f) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_29.2 (%ptr.79f) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc4_29.2 (%ptr.79f) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -132,7 +132,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc4_25.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_25.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %return.patt: @F.%tuple.type (%tuple.type.30b) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.%tuple.type (%tuple.type.30b) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @F.%tuple.type (%tuple.type.30b) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:     %U.ref.loc4: type = name_ref U, %U.loc4_25.1 [symbolic = %U.loc4_25.2 (constants.%U)]
@@ -140,7 +140,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc4_43.2: type = converted %.loc4_43.1, constants.%tuple.type.30b [template = %tuple.type (constants.%tuple.type.30b)]
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:     %U.loc4_25.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_25.2 (constants.%U)]
-// CHECK:STDOUT:     %return.param: ref @F.%tuple.type (%tuple.type.30b) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @F.%tuple.type (%tuple.type.30b) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @F.%tuple.type (%tuple.type.30b) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
