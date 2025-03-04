@@ -126,8 +126,17 @@ auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
                                       /*RV=*/0);
 }
 
-auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
+auto FileContext::GetGlobal(SemIR::InstId inst_id,
+                            SemIR::SpecificId specific_id) -> llvm::Value* {
   auto inst = sem_ir().insts().Get(inst_id);
+
+  if (specific_id.has_value()) {
+    inst_id = sem_ir().constant_values().GetInstIdIfValid(
+        GetConstantValueInSpecific(sem_ir(), specific_id, inst_id));
+    CARBON_CHECK(inst_id.has_value(),
+                 "Expected to find an instruction id for a specific in the "
+                 "file context");
+  }
 
   auto const_id = sem_ir().constant_values().Get(inst_id);
   if (const_id.is_concrete()) {

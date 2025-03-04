@@ -76,7 +76,8 @@ class FileContext {
   }
 
   // Returns a global value for the given instruction.
-  auto GetGlobal(SemIR::InstId inst_id) -> llvm::Value*;
+  auto GetGlobal(SemIR::InstId inst_id, SemIR::SpecificId specific_id)
+      -> llvm::Value*;
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* {

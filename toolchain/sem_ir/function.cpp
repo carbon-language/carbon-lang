@@ -21,6 +21,8 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
   if (specific_id.has_value()) {
     callee_id = sem_ir.constant_values().GetInstIdIfValid(
         GetConstantValueInSpecific(sem_ir, specific_id, callee_id));
+    CARBON_CHECK(callee_id.has_value(),
+                 "Invalid callee id in a specific context");
   }
 
   if (auto specific_function =
