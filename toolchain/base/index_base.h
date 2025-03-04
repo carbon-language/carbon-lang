@@ -48,6 +48,13 @@ template <typename IdT>
 struct IdBase : public AnyIdBase, public Printable<IdT> {
   using AnyIdBase::AnyIdBase;
 
+  // Provide a standard `None` mapping to `NoneIndex`.
+  //
+  // This uses a `&` to trigger slightly different instantiation behaviors in
+  // Clang. For context on why this is needed, see http://wg21.link/CWG2800.
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const IdT& None;
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << IdT::Label;
     if (has_value()) {
@@ -62,6 +69,9 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
     return lhs.index == rhs.index;
   }
 };
+
+template <typename IdT>
+constexpr const IdT& IdBase<IdT>::None = IdT(NoneIndex);
 
 // A lightweight handle to an item that behaves like an index.
 //

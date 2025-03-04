@@ -11,5 +11,5 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/fail_clang_fuzzing.cpp
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_clang_fuzzing.cpp
-// CHECK:STDERR: error: preventing fuzzing of `clang` subcommand due to library crashes [ClangFuzzingDisallowed]
+// CHECK:STDERR: error: preventing fuzzing of `clang` subcommand due to external library [ToolFuzzingDisallowed]
 // CHECK:STDERR:

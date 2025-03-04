@@ -68,6 +68,12 @@ class RegionStack {
     return stack_.PeekArray();
   }
 
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void {
+    CARBON_CHECK(stack_.empty(), "region_stack still has {0} entries",
+                 stack_.all_values_size());
+  }
+
   // Returns true if any regions have been added.
   auto empty() -> bool { return stack_.empty(); }
 

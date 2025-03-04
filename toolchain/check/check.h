@@ -27,6 +27,9 @@ struct Unit {
 
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
+
+  // The Clang AST owned by `CompileSubcommand`.
+  std::unique_ptr<clang::ASTUnit>* cpp_ast = nullptr;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

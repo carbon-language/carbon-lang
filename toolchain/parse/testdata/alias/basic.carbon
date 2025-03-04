@@ -44,7 +44,7 @@ fn F() {
 // CHECK:STDOUT:     {kind: 'Alias', text: ';', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'NS'},
-// CHECK:STDOUT:       {kind: 'NameQualifierWithoutParams', text: '.', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'ns'},
 // CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'foo'},

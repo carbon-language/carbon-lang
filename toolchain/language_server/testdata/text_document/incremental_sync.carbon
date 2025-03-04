@@ -2,6 +2,46 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Content after `didOpen`:
+//
+// ```
+// fn SecondFunCTIonNNN() {}
+//
+// fn ThirdFn() {}
+// ```
+//
+// After first `didChange`:
+//
+// ```
+// fn SecondFunction() {}
+//
+// fn ThirdFunction() {}
+// ```
+//
+// After second `didChange`:
+//
+// ```
+// fn SecondFunction() {}
+//
+// fn ThirdFunction() {}
+//
+// fn FourthFunction() {}
+// ```
+//
+// After third `didChange`:
+//
+// ```
+// fn FirstFunction() {}
+//
+// fn SecondFunction() {}
+//
+// fn ThirdFunction() {}
+//
+// fn FourthFunction() {}
+// ```
+//
+// Fourth `didChange` replaces full content.
+
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/incremental_sync.carbon

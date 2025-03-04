@@ -268,7 +268,7 @@ auto FileTestCase::TestBody() -> void {
 }
 
 auto FileTestBase::GetLineNumberReplacements(
-    llvm::ArrayRef<llvm::StringRef> filenames)
+    llvm::ArrayRef<llvm::StringRef> filenames) const
     -> llvm::SmallVector<LineNumberReplacement> {
   return {{.has_file = true,
            .re = std::make_shared<RE2>(
@@ -329,88 +329,147 @@ class FileTestEventListener : public testing::EmptyTestEventListener {
   llvm::MutableArrayRef<FileTestInfo> tests_;
 };
 
+// Returns true if the main thread should be used to run tests. This is if
+// either --dump_output is specified, or only 1 thread is needed to run tests.
+static auto SingleThreaded(llvm::ArrayRef<FileTestInfo> tests) -> bool {
+  if (absl::GetFlag(FLAGS_dump_output) || absl::GetFlag(FLAGS_threads) == 1) {
+    return true;
+  }
+
+  bool found_test_to_run = false;
+  for (const auto& test : tests) {
+    if (!test.registered_test->should_run()) {
+      continue;
+    }
+    if (found_test_to_run) {
+      // At least two tests will run, so multi-threaded.
+      return false;
+    }
+    // Found the first test to run.
+    found_test_to_run = true;
+  }
+  // 0 or 1 test will be run, so single-threaded.
+  return false;
+}
+
+// Runs the test in the section that would be inside a lock, possibly inside a
+// CrashRecoveryContext.
+static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
+    -> void {
+  // Add a crash trace entry with the single-file test command.
+  std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
+  llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
+
+  if (auto err = RunTestFile(test_instance, absl::GetFlag(FLAGS_dump_output),
+                             **test.test_result);
+      !err.ok()) {
+    test.test_result = std::move(err).error();
+  }
+}
+
+// Runs a single test. Uses a CrashRecoveryContext, and returns false on a
+// crash.
+static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
+                          std::mutex& output_mutex) -> bool {
+  std::unique_ptr<FileTestBase> test_instance(test.factory_fn());
+
+  if (absl::GetFlag(FLAGS_dump_output)) {
+    std::unique_lock<std::mutex> lock(output_mutex);
+    llvm::errs() << "\n--- Dumping: " << test.test_name << "\n\n";
+  }
+
+  // Load expected output.
+  test.test_result = ProcessTestFile(test_instance->test_name(),
+                                     absl::GetFlag(FLAGS_autoupdate));
+  if (test.test_result->ok()) {
+    // Execution must be serialized for either serial tests or console
+    // output.
+    std::unique_lock<std::mutex> output_lock;
+
+    if ((*test.test_result)->capture_console_output ||
+        !test_instance->AllowParallelRun()) {
+      output_lock = std::unique_lock<std::mutex>(output_mutex);
+    }
+
+    if (single_threaded) {
+      RunSingleTestHelper(test, *test_instance);
+    } else {
+      // Use a crash recovery context to try to get a stack trace when
+      // multiple threads may crash in parallel, which otherwise leads to the
+      // program aborting without printing a stack trace.
+      llvm::CrashRecoveryContext crc;
+      crc.DumpStackAndCleanupOnFailure = true;
+      if (!crc.RunSafely([&] { RunSingleTestHelper(test, *test_instance); })) {
+        return false;
+      }
+    }
+  }
+
+  if (!test.test_result->ok()) {
+    std::unique_lock<std::mutex> lock(output_mutex);
+    llvm::errs() << "\n" << test.test_result->error().message() << "\n";
+    return true;
+  }
+
+  test.autoupdate_differs =
+      RunAutoupdater(test_instance.get(), **test.test_result,
+                     /*dry_run=*/!absl::GetFlag(FLAGS_autoupdate));
+
+  std::unique_lock<std::mutex> lock(output_mutex);
+  if (absl::GetFlag(FLAGS_dump_output)) {
+    llvm::outs().flush();
+    const TestFile& test_file = **test.test_result;
+    llvm::errs() << "\n--- Exit with success: "
+                 << (test_file.run_result.success ? "true" : "false")
+                 << "\n--- Autoupdate differs: "
+                 << (test.autoupdate_differs ? "true" : "false") << "\n";
+  } else {
+    llvm::errs() << (test.autoupdate_differs ? "!" : ".");
+  }
+
+  return true;
+}
+
 auto FileTestEventListener::OnTestProgramStart(
     const testing::UnitTest& /*unit_test*/) -> void {
-  llvm::CrashRecoveryContext::Enable();
-  llvm::DefaultThreadPool pool(
-      {.ThreadsRequested = absl::GetFlag(FLAGS_dump_output)
-                               ? 1
-                               : absl::GetFlag(FLAGS_threads)});
+  bool single_threaded = SingleThreaded(tests_);
+
+  std::unique_ptr<llvm::ThreadPoolInterface> pool;
+  if (single_threaded) {
+    pool = std::make_unique<llvm::SingleThreadExecutor>();
+  } else {
+    // Enable the CRC for use in `RunSingleTest`.
+    llvm::CrashRecoveryContext::Enable();
+    pool = std::make_unique<llvm::DefaultThreadPool>(llvm::ThreadPoolStrategy{
+        .ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+  }
   if (!absl::GetFlag(FLAGS_dump_output)) {
-    llvm::errs() << "Running tests with " << pool.getMaxConcurrency()
+    llvm::errs() << "Running tests with " << pool->getMaxConcurrency()
                  << " thread(s)\n";
   }
 
-  // Guard access to both `llvm::errs` and `crashed`.
-  bool crashed = false;
+  // Guard access to output (stdout and stderr).
   std::mutex output_mutex;
+  std::atomic<bool> crashed = false;
 
   for (auto& test : tests_) {
     if (!test.registered_test->should_run()) {
       continue;
     }
 
-    pool.async([&output_mutex, &crashed, &test] {
+    pool->async([&] {
       // If any thread crashed, don't try running more.
-      {
-        std::unique_lock<std::mutex> lock(output_mutex);
-        if (crashed) {
-          return;
-        }
+      if (crashed) {
+        return;
       }
 
-      // Use a crash recovery context to try to get a stack trace when
-      // multiple threads may crash in parallel, which otherwise leads to the
-      // program aborting without printing a stack trace.
-      llvm::CrashRecoveryContext crc;
-      crc.DumpStackAndCleanupOnFailure = true;
-      bool thread_crashed = !crc.RunSafely([&] {
-        std::unique_ptr<FileTestBase> test_instance(test.factory_fn());
-
-        // Add a crash trace entry with the single-file test command.
-        std::string test_command =
-            GetBazelCommand(BazelMode::Test, test.test_name);
-        llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
-
-        if (absl::GetFlag(FLAGS_dump_output)) {
-          std::unique_lock<std::mutex> lock(output_mutex);
-          llvm::errs() << "\n--- Dumping: " << test.test_name << "\n\n";
-        }
-
-        test.test_result = ProcessTestFileAndRun(
-            test_instance.get(), &output_mutex,
-            absl::GetFlag(FLAGS_dump_output), absl::GetFlag(FLAGS_autoupdate));
-
-        if (!test.test_result->ok()) {
-          std::unique_lock<std::mutex> lock(output_mutex);
-          llvm::errs() << "\n" << test.test_result->error().message() << "\n";
-          return;
-        }
-
-        test.autoupdate_differs =
-            RunAutoupdater(test_instance.get(), **test.test_result,
-                           /*dry_run=*/!absl::GetFlag(FLAGS_autoupdate));
-
-        std::unique_lock<std::mutex> lock(output_mutex);
-        if (absl::GetFlag(FLAGS_dump_output)) {
-          llvm::outs().flush();
-          const TestFile& test_file = **test.test_result;
-          llvm::errs() << "\n--- Exit with success: "
-                       << (test_file.run_result.success ? "true" : "false")
-                       << "\n--- Autoupdate differs: "
-                       << (test.autoupdate_differs ? "true" : "false") << "\n";
-        } else {
-          llvm::errs() << (test.autoupdate_differs ? "!" : ".");
-        }
-      });
-      if (thread_crashed) {
-        std::unique_lock<std::mutex> lock(output_mutex);
+      if (!RunSingleTest(test, single_threaded, output_mutex)) {
         crashed = true;
       }
     });
   }
 
-  pool.wait();
+  pool->wait();
   if (crashed) {
     // Abort rather than returning so that we don't get a LeakSanitizer report.
     // We expect to have leaked memory if one or more of our tests crashed.

@@ -27,29 +27,29 @@ class ToolchainFileTest : public FileTestBase {
                              llvm::StringRef test_name);
 
   // Adds a replacement for `core_package_dir`.
-  auto GetArgReplacements() -> llvm::StringMap<std::string> override;
+  auto GetArgReplacements() const -> llvm::StringMap<std::string> override;
 
   // Loads files into the VFS and runs the driver.
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
            FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
-           llvm::raw_pwrite_stream& error_stream)
+           llvm::raw_pwrite_stream& error_stream) const
       -> ErrorOr<RunResult> override;
 
   // Sets different default flags based on the component being tested.
-  auto GetDefaultArgs() -> llvm::SmallVector<std::string> override;
+  auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override;
 
   // Generally uses the parent implementation, with special handling for lex.
-  auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
+  auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames) const
       -> std::optional<RE2> override;
 
   // Generally uses the parent implementation, with special handling for lex.
   auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> llvm::SmallVector<LineNumberReplacement> override;
+      const -> llvm::SmallVector<LineNumberReplacement> override;
 
   // Generally uses the parent implementation, with special handling for lex and
   // driver.
-  auto DoExtraCheckReplacements(std::string& check_line) -> void override;
+  auto DoExtraCheckReplacements(std::string& check_line) const -> void override;
 
   // Most tests can be run in parallel, but clangd has a global for its logging
   // system so we need language-server tests to be run in serial.
@@ -59,7 +59,7 @@ class ToolchainFileTest : public FileTestBase {
 
  private:
   // Adds a file to the fs.
-  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path) const
       -> ErrorOr<Success>;
 
   // Controls whether `Run()` includes the prelude.
@@ -94,7 +94,8 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
       component_(GetComponent(test_name)),
       installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
-auto ToolchainFileTest::GetArgReplacements() -> llvm::StringMap<std::string> {
+auto ToolchainFileTest::GetArgReplacements() const
+    -> llvm::StringMap<std::string> {
   return {{"core_package_dir", installation_.core_package()}};
 }
 
@@ -102,7 +103,7 @@ auto ToolchainFileTest::Run(
     const llvm::SmallVector<llvm::StringRef>& test_args,
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
-    llvm::raw_pwrite_stream& error_stream) -> ErrorOr<RunResult> {
+    llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
   CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
   if (!is_no_prelude()) {
     for (const auto& file : prelude) {
@@ -141,7 +142,8 @@ auto ToolchainFileTest::Run(
   return result;
 }
 
-auto ToolchainFileTest::GetDefaultArgs() -> llvm::SmallVector<std::string> {
+auto ToolchainFileTest::GetDefaultArgs() const
+    -> llvm::SmallVector<std::string> {
   llvm::SmallVector<std::string> args = {"--include-diagnostic-kind"};
 
   if (component_ == "format") {
@@ -180,7 +182,7 @@ auto ToolchainFileTest::GetDefaultArgs() -> llvm::SmallVector<std::string> {
 }
 
 auto ToolchainFileTest::GetDefaultFileRE(
-    llvm::ArrayRef<llvm::StringRef> filenames) -> std::optional<RE2> {
+    llvm::ArrayRef<llvm::StringRef> filenames) const -> std::optional<RE2> {
   if (component_ == "lex") {
     return std::make_optional<RE2>(
         llvm::formatv(R"(^- filename: ({0})$)", llvm::join(filenames, "|")));
@@ -189,7 +191,7 @@ auto ToolchainFileTest::GetDefaultFileRE(
 }
 
 auto ToolchainFileTest::GetLineNumberReplacements(
-    llvm::ArrayRef<llvm::StringRef> filenames)
+    llvm::ArrayRef<llvm::StringRef> filenames) const
     -> llvm::SmallVector<LineNumberReplacement> {
   auto replacements = FileTestBase::GetLineNumberReplacements(filenames);
   if (component_ == "lex") {
@@ -201,7 +203,7 @@ auto ToolchainFileTest::GetLineNumberReplacements(
   return replacements;
 }
 
-auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line)
+auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     -> void {
   if (component_ == "driver") {
     // TODO: Disable token output, it's not interesting for these tests.
@@ -221,7 +223,8 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line)
 }
 
 auto ToolchainFileTest::AddFile(llvm::vfs::InMemoryFileSystem& fs,
-                                llvm::StringRef path) -> ErrorOr<Success> {
+                                llvm::StringRef path) const
+    -> ErrorOr<Success> {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
       llvm::MemoryBuffer::getFile(path);
   if (file.getError()) {
