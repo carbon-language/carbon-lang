@@ -261,12 +261,12 @@ static auto GetWitnessIdForImpl(
   }
 
   {
-    auto deduced_constaint_facet_type_id =
+    auto deduced_constraint_facet_type_id =
         context.insts()
             .GetAs<SemIR::FacetType>(deduced_constraint_id)
             .facet_type_id;
     if (context.facet_types()
-            .Get(deduced_constaint_facet_type_id)
+            .Get(deduced_constraint_facet_type_id)
             .other_requirements) {
       // TODO: Remove this when other requirements goes away.
       return SemIR::InstId::None;
