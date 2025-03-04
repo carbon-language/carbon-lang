@@ -11,5 +11,5 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/fail_lld_fuzzing.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_lld_fuzzing.carbon
-// CHECK:STDERR: error: preventing fuzzing of `lld` subcommand due to external library [LLDFuzzingDisallowed]
+// CHECK:STDERR: error: preventing fuzzing of `lld` subcommand due to external library [ToolFuzzingDisallowed]
 // CHECK:STDERR:

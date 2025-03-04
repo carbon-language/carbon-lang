@@ -36,6 +36,22 @@ fn foo(a: i32, b: i32);
 
 fn foo() -> u32;
 
+// --- keyword.carbon
+
+fn destroy() {}
+
+// --- keyword_no_params.carbon
+
+fn destroy {}
+
+// --- keyword_in_qualified.carbon
+
+fn MyClass.destroy() {}
+
+// --- keyword_decl.carbon
+
+fn destroy.destroy() {}
+
 // --- impl_fn.carbon
 
 impl fn F();
@@ -254,6 +270,52 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:         {kind: 'UnsignedIntTypeLiteral', text: 'u32'},
 // CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: keyword.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'KeywordNameBeforeParams', text: 'destroy'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: keyword_no_params.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'KeywordNameNotBeforeParams', text: 'destroy'},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: keyword_in_qualified.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'MyClass'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'KeywordNameBeforeParams', text: 'destroy'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: keyword_decl.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:           {kind: 'KeywordNameNotBeforeParams', text: 'destroy'},
+// CHECK:STDOUT:         {kind: 'KeywordNameQualifierWithoutParams', text: '.', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'KeywordNameBeforeParams', text: 'destroy'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: impl_fn.carbon

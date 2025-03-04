@@ -248,6 +248,19 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     -> bool {
   auto base_id = context.constant_values().GetInstId(base_const_id);
   auto base = context.insts().Get(base_id);
+
+  if (auto base_as_facet_access_type = base.TryAs<SemIR::FacetAccessType>()) {
+    // Move from the symbolic facet value up in typish-ness to its FacetType to
+    // find a lookup scope.
+    auto facet_type_type_id =
+        context.insts()
+            .Get(base_as_facet_access_type->facet_value_inst_id)
+            .type_id();
+    base_const_id = context.types().GetConstantId(facet_type_type_id);
+    base_id = context.constant_values().GetInstId(base_const_id);
+    base = context.insts().Get(base_id);
+  }
+
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     scopes->push_back(
         LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
