@@ -105,7 +105,7 @@ fn F() {
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (A & A));
-  
+
   AA({} as C);
 }
 
