@@ -54,6 +54,15 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
             *busybox_info.mode)
             .Case("ld.lld", {"lld", "--platform=gnu", "--"})
             .Case("ld64.lld", {"lld", "--platform=darwin", "--"})
+
+    // We also support a number of LLVM tools with a trivial translation
+    // to subcommands. If any of these end up needing more advanced
+    // translation, that can be factored into the `.def` file to provide custom
+    // expansion here.
+#define CARBON_LLVM_TOOL(Id, Name, BinName, MainFn) \
+  .Case(BinName, {"llvm", Name, "--"})
+#include "toolchain/base/llvm_tools.def"
+
             .Default({*busybox_info.mode, "--"});
     args.append(subcommand_args);
   }

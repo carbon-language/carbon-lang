@@ -17,6 +17,7 @@ namespace Carbon {
 namespace {
 
 using RawHashtable::IndexKeyContext;
+using RawHashtable::MoveOnlyTestData;
 using RawHashtable::TestData;
 using ::testing::UnorderedElementsAreArray;
 
@@ -24,8 +25,8 @@ template <typename SetT, typename MatcherRangeT>
 auto ExpectSetElementsAre(SetT&& s, MatcherRangeT element_matchers) -> void {
   // Collect the elements into a container.
   using KeyT = typename std::remove_reference<SetT>::type::KeyT;
-  std::vector<KeyT> entries;
-  s.ForEach([&entries](KeyT& k) { entries.push_back(k); });
+  std::vector<std::reference_wrapper<KeyT>> entries;
+  s.ForEach([&entries](KeyT& k) { entries.push_back(std::ref(k)); });
 
   // Use the GoogleMock unordered container matcher to validate and show errors
   // on wrong elements.
@@ -58,9 +59,17 @@ auto MakeElements(RangeT&& range, RangeTs&&... ranges) {
 template <typename SetT>
 class SetTest : public ::testing::Test {};
 
+template <typename SetT>
+class MoveOnlySetTest : public ::testing::Test {};
+
 using Types = ::testing::Types<Set<int>, Set<int, 16>, Set<int, 128>,
                                Set<TestData>, Set<TestData, 16>>;
 TYPED_TEST_SUITE(SetTest, Types);
+
+using MoveOnlyTypes =
+    ::testing::Types<Set<MoveOnlyTestData>, Set<MoveOnlyTestData, 16>,
+                     Set<MoveOnlyTestData, 64>>;
+TYPED_TEST_SUITE(MoveOnlySetTest, MoveOnlyTypes);
 
 TYPED_TEST(SetTest, Basic) {
   using SetT = TypeParam;
@@ -162,7 +171,7 @@ TYPED_TEST(SetTest, Move) {
   // large.
   for (int i : llvm::seq(1, 24)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
-    ASSERT_TRUE(s.Insert(i).is_inserted());
+    EXPECT_TRUE(s.Insert(i).is_inserted());
   }
 
   SetT other_s1 = std::move(s);
@@ -198,15 +207,67 @@ TYPED_TEST(SetTest, Move) {
   std::swap(other_s1, other_s1);
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
 
-  // Test copying of a moved-from table over a valid table and self-move-assign.
-  // The former is required to be valid, and the latter is in at least the case
-  // of self-move-assign-when-moved-from, but the result can be in any state so
-  // just do them and ensure we don't crash.
+  // Test copying of a moved-from table over a valid table and
+  // self-move-assign. The former is required to be valid, and the latter is
+  // in at least the case of self-move-assign-when-moved-from, but the result
+  // can be in any state so just do them and ensure we don't crash.
   SetT other_s2 = other_s1;
   // NOLINTNEXTLINE(bugprone-use-after-move): Testing required use-after-move.
   other_s2 = s;
   other_s1 = std::move(other_s1);
   s = std::move(s);
+}
+
+TYPED_TEST(MoveOnlySetTest, Move) {
+  using SetT = TypeParam;
+  static_assert(!std::is_copy_assignable_v<SetT>);
+  static_assert(!std::is_copy_constructible_v<SetT>);
+  static_assert(std::is_move_assignable_v<SetT>);
+  static_assert(std::is_move_constructible_v<SetT>);
+
+  auto make_set = [] {
+    SetT s;
+    // Make sure we exceed the small size for some of the set types, but not all
+    // of them, so we cover all the combinations of copying between small and
+    // large.
+    for (int i : llvm::seq(1, 24)) {
+      SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+      EXPECT_TRUE(s.Insert(i).is_inserted());
+    }
+    return s;
+  };
+
+  SetT s = make_set();
+
+  SetT other_s1 = std::move(s);
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 24)));
+
+  // Add some more elements.
+  for (int i : llvm::seq(24, 32)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(other_s1.Insert(i).is_inserted());
+  }
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+
+  // Move back over a moved-from.
+  s = std::move(other_s1);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 32)));
+
+  // Now add still more elements, crossing the small size limit for all tested
+  // map types.
+  for (int i : llvm::seq(32, 72)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Insert(i).is_inserted());
+  }
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 72)));
+
+  // Assignment replaces the contents.
+  s = make_set();
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 24)));
+
+  // Self-swap (which does a self-move) works and is a no-op.
+  std::swap(s, s);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 24)));
 }
 
 TYPED_TEST(SetTest, Conversions) {

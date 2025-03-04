@@ -32,18 +32,42 @@ class DriverSubcommand {
   // the subcommand is in use.
   auto AddTo(CommandLine::CommandBuilder& b,
              DriverSubcommand** selected_subcommand) -> void {
-    b.AddSubcommand(info_, [this, selected_subcommand](
-                               CommandLine::CommandBuilder& sub_b) {
-      BuildOptions(sub_b);
-      sub_b.Do([this, selected_subcommand] { *selected_subcommand = this; });
-    });
+    b.AddSubcommand(
+        info_, [this, selected_subcommand](CommandLine::CommandBuilder& sub_b) {
+          BuildOptionsAndSetAction(sub_b, selected_subcommand);
+        });
   }
 
   // Adds command line options.
   virtual auto BuildOptions(CommandLine::CommandBuilder& b) -> void = 0;
 
+  // Adds command line options and registers the `Run` method to be called.
+  //
+  // For more complex subcommands that need to control the action this method
+  // can be overridden and bypass the simple API above.
+  //
+  // TODO: This isn't the most elegant way to manage this. There is probably a
+  // better factoring / organization of the driver subcommand infrastructure
+  // that bakes in the needed flexibility here, but that was deferred for a
+  // future refactoring.
+  virtual auto BuildOptionsAndSetAction(CommandLine::CommandBuilder& b,
+                                        DriverSubcommand** selected_subcommand)
+      -> void {
+    BuildOptions(b);
+    b.Do([this, selected_subcommand] { *selected_subcommand = this; });
+  }
+
   // Runs the command.
   virtual auto Run(DriverEnv& driver_env) -> DriverResult = 0;
+
+ protected:
+  // Diagnoses and returns false if currently fuzzing.
+  //
+  // This should be used in subcommands to check and diagnose rather than
+  // entering them during fuzzing when they use external libraries that we can't
+  // keep fuzz-clean.
+  auto DisableFuzzingExternalLibraries(DriverEnv& driver_env,
+                                       llvm::StringRef name) -> bool;
 
  private:
   // Subcommand information.

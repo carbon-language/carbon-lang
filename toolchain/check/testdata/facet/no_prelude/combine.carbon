@@ -64,6 +64,9 @@ library "[[@TEST_NAME]]";
 
 import Core;
 
+// Non-instance versions of these tests are in
+// .../interface/no_prelude/compound_member_access.carbon.
+
 interface A {
   fn G[self: Self]();
 }
@@ -132,7 +135,7 @@ fn F() {
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
@@ -145,7 +148,7 @@ fn F() {
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert from `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
@@ -189,7 +192,7 @@ fn F() {
   // CHECK:STDERR: fn H[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `type` to `A & B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A & B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]

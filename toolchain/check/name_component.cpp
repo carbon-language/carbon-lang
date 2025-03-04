@@ -57,8 +57,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
   }
 
   auto [name_loc_id, name_id] =
-      context.node_stack()
-          .PopWithNodeId<Parse::NodeCategory::NonExprIdentifierName>();
+      context.node_stack().PopWithNodeId<Parse::NodeCategory::NonExprName>();
 
   return {
       .name_loc_id = name_loc_id,

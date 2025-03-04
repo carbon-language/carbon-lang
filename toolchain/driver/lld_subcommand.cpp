@@ -93,11 +93,7 @@ auto LldSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Don't run LLD when fuzzing, as we're not currently in a good position to
   // debug and fix fuzzer-found bugs within LLD.
-  if (driver_env.fuzzing) {
-    CARBON_DIAGNOSTIC(
-        LLDFuzzingDisallowed, Error,
-        "preventing fuzzing of `lld` subcommand due to external library");
-    driver_env.emitter.Emit(LLDFuzzingDisallowed);
+  if (!DisableFuzzingExternalLibraries(driver_env, "lld")) {
     return {.success = false};
   }
 

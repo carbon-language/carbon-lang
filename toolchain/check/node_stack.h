@@ -377,9 +377,9 @@ class NodeStack {
                           Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::Expr,
                           Id::KindFor<SemIR::InstId>());
-    set_id_if_category_is(Parse::NodeCategory::MemberName |
-                              Parse::NodeCategory::NonExprIdentifierName,
-                          Id::KindFor<SemIR::NameId>());
+    set_id_if_category_is(
+        Parse::NodeCategory::MemberName | Parse::NodeCategory::NonExprName,
+        Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::ImplAs,
                           Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::Decl |
@@ -469,11 +469,13 @@ class NodeStack {
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::ForIn:
+      case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
       case Parse::NodeKind::IfConditionStart:
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
       case Parse::NodeKind::InvalidParseStart:
+      case Parse::NodeKind::KeywordNameQualifierWithoutParams:
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
       case Parse::NodeKind::MatchCase:
@@ -494,7 +496,6 @@ class NodeStack {
       case Parse::NodeKind::NamedConstraintDefinitionStart:
       case Parse::NodeKind::NamedConstraintIntroducer:
       case Parse::NodeKind::NameQualifierWithParams:
-      case Parse::NodeKind::NameQualifierWithoutParams:
       case Parse::NodeKind::NamespaceStart:
       case Parse::NodeKind::PackageIntroducer:
       case Parse::NodeKind::ParenExprStart:

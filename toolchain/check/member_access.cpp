@@ -46,14 +46,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
-  for (auto param_id :
-       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id)) {
-    if (SemIR::Function::GetNameFromPatternId(sem_ir, param_id) ==
-        SemIR::NameId::SelfValue) {
-      return true;
-    }
-  }
-  return false;
+  return function.self_param_id.has_value();
 }
 
 // Return whether `type_id`, the type of an associated entity, is for an
@@ -197,13 +190,8 @@ static auto PerformImplLookup(
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto interface_type =
       GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
-  if (!interface_type) {
-    context.TODO(loc_id,
-                 "Lookup of impl witness not yet supported except for a single "
-                 "interface");
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-
+  // An associated entity is always associated with a single interface.
+  CARBON_CHECK(interface_type);
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   auto witness_id =
       LookupImplWitness(context, loc_id, type_const_id,
@@ -297,8 +285,16 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (lookup_in_type_of_base) {
       SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
-      if (base_type_id != SemIR::TypeType::SingletonTypeId &&
-          context.types().IsFacetType(base_type_id)) {
+      if (auto facet_access_type =
+              context.types().TryGetAs<SemIR::FacetAccessType>(base_type_id)) {
+        // Move from the type of a symbolic facet value up in typish-ness to its
+        // FacetType to find the type to work with.
+        base_id = facet_access_type->facet_value_inst_id;
+        base_type_id = context.insts().Get(base_id).type_id();
+      }
+
+      if (auto facet_type =
+              context.types().TryGetAs<SemIR::FacetType>(base_type_id)) {
         // Handles `T.F` when `T` is a non-type facet.
         auto base_as_type = ExprAsType(context, loc_id, base_id);
 
@@ -311,9 +307,8 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         // First look for `*assoc_interface` in the type of the base. If it is
         // found, get the witness that the interface is implemented from
         // `base_id`.
-        auto facet_type = context.types().GetAs<SemIR::FacetType>(base_type_id);
         const auto& facet_type_info =
-            context.facet_types().Get(facet_type.facet_type_id);
+            context.facet_types().Get(facet_type->facet_type_id);
         // Witness that `T` implements the `*assoc_interface`.
         SemIR::InstId witness_inst_id = SemIR::InstId::None;
         for (auto base_interface : facet_type_info.impls_constraints) {
