@@ -412,6 +412,7 @@ class CompilationUnit {
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
+  std::unique_ptr<clang::ASTUnit> cpp_ast_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
 };
@@ -509,7 +510,8 @@ auto CompilationUnit::GetCheckUnit(SemIR::CheckIRId check_ir_id)
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .tree_and_subtrees_getter = *tree_and_subtrees_getter_,
-          .sem_ir = &*sem_ir_};
+          .sem_ir = &*sem_ir_,
+          .cpp_ast = &cpp_ast_};
 }
 
 auto CompilationUnit::PostCheck() -> void {

@@ -31,10 +31,6 @@ Context::Context(DiagnosticEmitter<SemIRLoc>* emitter,
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
   check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::None);
-
-  // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
-  // in the right places.
-  generic_region_stack().Push();
 }
 
 auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
@@ -46,17 +42,21 @@ auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
 auto Context::VerifyOnFinish() const -> void {
   // Information in all the various context objects should be cleaned up as
   // various pieces of context go out of scope. At this point, nothing should
-  // remain.
-  // node_stack_ will still contain top-level entities.
+  // remain, so we verify stacks are empty. `node_stack_` is an exception
+  // because it ends containing all top-level entities.
   inst_block_stack_.VerifyOnFinish();
   pattern_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
   args_type_info_stack_.VerifyOnFinish();
   CARBON_CHECK(struct_type_fields_stack_.empty());
-  // TODO: Add verification for decl_name_stack_ and
-  // decl_introducer_state_stack_.
+  CARBON_CHECK(field_decls_stack_.empty());
+  decl_name_stack_.VerifyOnFinish();
+  decl_introducer_state_stack_.VerifyOnFinish();
   scope_stack_.VerifyOnFinish();
-  // TODO: Add verification for generic_region_stack_.
+  generic_region_stack_.VerifyOnFinish();
+  vtable_stack_.VerifyOnFinish();
+  region_stack_.VerifyOnFinish();
+  CARBON_CHECK(impl_lookup_stack_.empty());
 
 #ifndef NDEBUG
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {

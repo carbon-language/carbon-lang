@@ -29,13 +29,8 @@ struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
   static constexpr llvm::StringLiteral Label = "deferred_def";
   using ValueType = DeferredDefinition;
 
-  static const DeferredDefinitionIndex None;
-
   using IndexBase::IndexBase;
 };
-
-constexpr DeferredDefinitionIndex DeferredDefinitionIndex::None =
-    DeferredDefinitionIndex(NoneIndex);
 
 // A function whose definition is deferred because it is defined inline in a
 // class or similar scope.

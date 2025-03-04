@@ -79,8 +79,7 @@ using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId =
     NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
-using AnyNonExprIdentifierNameId =
-    NodeIdInCategory<NodeCategory::NonExprIdentifierName>;
+using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 
 // NodeId with kind that matches one of the `T::Kind`s.

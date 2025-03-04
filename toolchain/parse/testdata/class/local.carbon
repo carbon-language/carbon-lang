@@ -41,7 +41,7 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'ClassDefinition', text: '}', subtree_size: 15},
 // CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
-// CHECK:STDOUT:           {kind: 'NameQualifierWithoutParams', text: '.', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IdentifierNameBeforeParams', text: 'H'},
 // CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},

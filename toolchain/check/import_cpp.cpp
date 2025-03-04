@@ -9,6 +9,7 @@
 #include <string>
 
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Tooling/Tooling.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -21,6 +22,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
@@ -61,9 +63,10 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                                                     diagnostic_options.get());
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
-      GenerateCppIncludesHeaderCode(context, imports), {},
-      (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
-      std::make_shared<clang::PCHContainerOperations>(),
+      GenerateCppIncludesHeaderCode(context, imports),
+      // Parse C++ (and not C)
+      {"-x", "c++"}, (importing_file_path + ".generated.cpp_imports.h").str(),
+      "clang-tool", std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
   // TODO: Implement and use a DynamicRecursiveASTVisitor to traverse the AST.
@@ -115,12 +118,14 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
-    -> void {
+    -> std::unique_ptr<clang::ASTUnit> {
   if (imports.empty()) {
-    return;
+    return nullptr;
   }
 
-  auto [ast, ast_has_error] =
+  CARBON_CHECK(!context.sem_ir().cpp_ast());
+
+  auto [generated_ast, ast_has_error] =
       GenerateAst(context, importing_file_path, imports, fs);
 
   PackageNameId package_id = imports.front().package_id;
@@ -131,10 +136,163 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   auto name_scope_id = AddNamespace(context, package_id, imports);
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
+  name_scope.set_is_cpp_scope(true);
+
+  context.sem_ir().set_cpp_ast(generated_ast.get());
 
   if (ast_has_error) {
     name_scope.set_has_error();
   }
+
+  return std::move(generated_ast);
+}
+
+// Look ups the given name in the Clang AST. Returns the lookup result if lookup
+// was successful.
+static auto ClangLookup(Context& context, SemIR::LocId loc_id,
+                        SemIR::NameId name_id)
+    -> std::optional<clang::LookupResult> {
+  std::optional<llvm::StringRef> name =
+      context.names().GetAsStringIfIdentifier(name_id);
+  if (!name) {
+    // Special names never exist in C++ code.
+    return std::nullopt;
+  }
+
+  clang::ASTUnit* ast = context.sem_ir().cpp_ast();
+  CARBON_CHECK(ast);
+  clang::Sema& sema = ast->getSema();
+
+  clang::LookupResult lookup(
+      sema,
+      clang::DeclarationNameInfo(
+          clang::DeclarationName(
+              sema.getPreprocessor().getIdentifierInfo(*name)),
+          clang::SourceLocation()),
+      clang::Sema::LookupNameKind::LookupOrdinaryName);
+
+  bool found = sema.LookupQualifiedName(
+      lookup, ast->getASTContext().getTranslationUnitDecl());
+
+  if (lookup.isClassLookup()) {
+    // TODO: To support class lookup, also return the AccessKind for storage.
+    context.TODO(loc_id, "Unsupported: Lookup in Class");
+    return std::nullopt;
+  }
+
+  if (!found) {
+    return std::nullopt;
+  }
+
+  return lookup;
+}
+
+// Imports a function declaration from Clang to Carbon. If successful, returns
+// the new Carbon function declaration `InstId`.
+static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
+                               SemIR::NameScopeId scope_id,
+                               SemIR::NameId name_id,
+                               const clang::FunctionDecl* clang_decl)
+    -> SemIR::InstId {
+  if (clang_decl->isVariadic()) {
+    context.TODO(loc_id, "Unsupported: Variadic function");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  if (!clang_decl->isGlobal()) {
+    context.TODO(loc_id, "Unsupported: Non-global function");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
+    context.TODO(loc_id, "Unsupported: Template function");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  if (!clang_decl->param_empty()) {
+    context.TODO(loc_id, "Unsupported: Function with parameters");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  if (!clang_decl->getReturnType()->isVoidType()) {
+    context.TODO(loc_id, "Unsupported: Function with non-void return type");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
+  auto function_decl = SemIR::FunctionDecl{
+      SemIR::TypeId::None, SemIR::FunctionId::None, SemIR::InstBlockId::Empty};
+  auto decl_id = AddPlaceholderInst(
+      context, SemIR::LocIdAndInst(Parse::NodeId::None, function_decl));
+
+  auto function_info = SemIR::Function{
+      {.name_id = name_id,
+       .parent_scope_id = scope_id,
+       .generic_id = SemIR::GenericId::None,
+       .first_param_node_id = Parse::NodeId::None,
+       .last_param_node_id = Parse::NodeId::None,
+       .pattern_block_id = SemIR::InstBlockId::Empty,
+       .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
+       .param_patterns_id = SemIR::InstBlockId::Empty,
+       .call_params_id = SemIR::InstBlockId::Empty,
+       .is_extern = false,
+       .extern_library_id = SemIR::LibraryNameId::None,
+       .non_owning_decl_id = SemIR::InstId::None,
+       .first_owning_decl_id = decl_id,
+       .definition_id = SemIR::InstId::None},
+      {.return_slot_pattern_id = SemIR::InstId::None,
+       .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
+       .self_param_id = SemIR::InstId::None}};
+
+  function_decl.function_id = context.functions().Add(function_info);
+
+  function_decl.type_id = GetFunctionType(context, function_decl.function_id,
+                                          SemIR::SpecificId::None);
+
+  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
+
+  return decl_id;
+}
+
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration.
+static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
+                           SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+                           const clang::NamedDecl* clang_decl)
+    -> SemIR::InstId {
+  if (const auto* clang_function_decl =
+          clang::dyn_cast<clang::FunctionDecl>(clang_decl)) {
+    return ImportFunctionDecl(context, loc_id, scope_id, name_id,
+                              clang_function_decl);
+  }
+
+  context.TODO(loc_id, llvm::formatv("Unsupported: Declaration type {0}",
+                                     clang_decl->getDeclKindName())
+                           .str());
+  return SemIR::InstId::None;
+}
+
+auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
+                       SemIR::NameScopeId scope_id, SemIR::NameId name_id)
+    -> SemIR::InstId {
+  auto lookup = ClangLookup(context, loc_id, name_id);
+  if (!lookup) {
+    return SemIR::InstId::None;
+  }
+
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCppNameLookup, Note,
+                          "in `Cpp` name lookup for `{0}`", SemIR::NameId);
+        builder.Note(loc_id, InCppNameLookup, name_id);
+      });
+
+  if (!lookup->isSingleResult()) {
+    context.TODO(loc_id,
+                 llvm::formatv("Unsupported: Lookup succeeded but couldn't "
+                               "find a single result; LookupResultKind: {0}",
+                               lookup->getResultKind())
+                     .str());
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
+  return ImportNameDecl(context, loc_id, scope_id, name_id,
+                        lookup->getFoundDecl());
 }
 
 }  // namespace Carbon::Check

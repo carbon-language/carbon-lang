@@ -58,6 +58,13 @@ class GenericRegionStack {
   // Returns the list of dependent instructions in the current generic region.
   auto PeekDependentInsts() -> llvm::ArrayRef<DependentInst>;
 
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void {
+    CARBON_CHECK(dependent_insts_stack_.empty(),
+                 "generic_region_stack still has {0} entries",
+                 dependent_insts_stack_.all_values_size());
+  }
+
  private:
   // A stack of symbolic constants for enclosing generic regions.
   ArrayStack<DependentInst> dependent_insts_stack_;
