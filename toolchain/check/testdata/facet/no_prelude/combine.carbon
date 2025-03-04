@@ -192,7 +192,7 @@ fn F() {
   // CHECK:STDERR: fn H[T:! A & B](t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `type` to `A & B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A & B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]

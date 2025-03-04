@@ -33,7 +33,7 @@ fn F() {
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `<associated entity in Interface>` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:10: error: cannot implicitly convert value of type `<associated entity in Interface>` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   var v: Interface.T;
   // CHECK:STDERR:          ^~~~~~~~~~~
   // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:10: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
