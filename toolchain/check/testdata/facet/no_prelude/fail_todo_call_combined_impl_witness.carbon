@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/facet/no_prelude/combine_witness.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/facet/no_prelude/fail_todo_call_combined_impl_witness.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/no_prelude/combine_witness.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/no_prelude/fail_todo_call_combined_impl_witness.carbon
 
 // --- core.carbon
 package Core;
@@ -27,7 +27,7 @@ impl forall [T:! type] T as BitAnd {
   fn Op[self: Self](other: Self) -> Self = "type.and";
 }
 
-// --- call_combined_impl_witness.carbon
+// --- fail_todo_call_combined_impl_witness.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -61,30 +61,30 @@ fn G[T:! A & Empty & B](t: T) {
   // TODO: Qualified lookup of `AA` and `BB` should also be possible here, using
   // the witnesses found in type deduction.
 
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `Empty & A & B` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+4]]:3: error: cannot access member of interface `A` in type `Empty & A & B` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   T.(A.AA)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   T.(A.AA)();
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE+7]]:3: error: cannot access member of interface `B` in type `Empty & A & B` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: error: cannot access member of interface `B` in type `Empty & A & B` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   T.(B.BB)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE-18]]:3: error: semantics TODO: `incorrect witness for multiple interfaces in a facet type` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE-18]]:3: error: semantics TODO: `incorrect witness for multiple interfaces in a facet type` [SemanticsTodo]
   // CHECK:STDERR:   t.AA();
   // CHECK:STDERR:   ^~~~
   T.(B.BB)();
 }
 
 fn F() {
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE+11]]:3: note: in `G(C as Empty & A & B)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+11]]:3: note: in `G(C as Empty & A & B)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE-28]]:3: error: semantics TODO: `incorrect witness for multiple interfaces in a facet type` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE-28]]:3: error: semantics TODO: `incorrect witness for multiple interfaces in a facet type` [SemanticsTodo]
   // CHECK:STDERR:   t.BB();
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE+4]]:3: note: in `G(C as Empty & A & B)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+4]]:3: note: in `G(C as Empty & A & B)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
@@ -408,7 +408,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.as_type.loc12_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_combined_impl_witness.carbon
+// CHECK:STDOUT: --- fail_todo_call_combined_impl_witness.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete]
