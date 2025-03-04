@@ -76,21 +76,21 @@ class Class(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = @Class.%MakeSelf (constants.%MakeSelf)] {
 // CHECK:STDOUT:       %return.patt: @MakeSelf.%Class (%Class) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @MakeSelf.%Class (%Class) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @MakeSelf.%Class (%Class) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc14_20: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14_20 [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %return.param: ref @MakeSelf.%Class (%Class) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @MakeSelf.%Class (%Class) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @MakeSelf.%Class (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = @Class.%MakeClass (constants.%MakeClass)] {
 // CHECK:STDOUT:       %return.patt: @MakeClass.%Class.loc15_28.1 (%Class) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @MakeClass.%Class.loc15_28.1 (%Class) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @MakeClass.%Class.loc15_28.1 (%Class) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc15_28.2: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc15_28.1 (constants.%Class)]
-// CHECK:STDOUT:       %return.param: ref @MakeClass.%Class.loc15_28.1 (%Class) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @MakeClass.%Class.loc15_28.1 (%Class) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @MakeClass.%Class.loc15_28.1 (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {} {}

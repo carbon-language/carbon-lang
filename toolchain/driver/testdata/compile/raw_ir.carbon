@@ -79,7 +79,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst17:          {kind: NameRef, arg0: name1, arg1: inst13, type: type(TypeType)}
 // CHECK:STDOUT:     inst18:          {kind: BindName, arg0: entity_name1, arg1: inst31, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst19:          {kind: BindingPattern, arg0: entity_name1, type: type(symbolic_constant3)}
-// CHECK:STDOUT:     inst20:          {kind: ValueParamPattern, arg0: inst19, arg1: runtime_param0, type: type(symbolic_constant3)}
+// CHECK:STDOUT:     inst20:          {kind: ValueParamPattern, arg0: inst19, arg1: call_param0, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst21:          {kind: NameRef, arg0: name1, arg1: inst13, type: type(TypeType)}
 // CHECK:STDOUT:     inst22:          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
 // CHECK:STDOUT:     inst23:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst22)}
@@ -89,9 +89,9 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst27:          {kind: TupleType, arg0: type_block2, type: type(TypeType)}
 // CHECK:STDOUT:     inst28:          {kind: Converted, arg0: inst25, arg1: inst27, type: type(TypeType)}
 // CHECK:STDOUT:     inst29:          {kind: ReturnSlotPattern, arg0: inst25, type: type(symbolic_constant5)}
-// CHECK:STDOUT:     inst30:          {kind: OutParamPattern, arg0: inst29, arg1: runtime_param1, type: type(symbolic_constant5)}
-// CHECK:STDOUT:     inst31:          {kind: ValueParam, arg0: runtime_param0, arg1: name2, type: type(symbolic_constant3)}
-// CHECK:STDOUT:     inst32:          {kind: OutParam, arg0: runtime_param1, arg1: name(ReturnSlot), type: type(symbolic_constant5)}
+// CHECK:STDOUT:     inst30:          {kind: OutParamPattern, arg0: inst29, arg1: call_param1, type: type(symbolic_constant5)}
+// CHECK:STDOUT:     inst31:          {kind: ValueParam, arg0: call_param0, arg1: name2, type: type(symbolic_constant3)}
+// CHECK:STDOUT:     inst32:          {kind: OutParam, arg0: call_param1, arg1: name(ReturnSlot), type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst33:          {kind: ReturnSlot, arg0: inst25, arg1: inst32, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst34:          {kind: FunctionDecl, arg0: function0, arg1: inst_block11, type: type(inst38)}
 // CHECK:STDOUT:     inst35:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<none>, type: type(TypeType)}

@@ -82,11 +82,11 @@ interface BeingDefined {
 // CHECK:STDOUT:   %Self: %BeingDefined.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [concrete = constants.%BeingDefined.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, %H.decl [concrete = constants.%assoc0]

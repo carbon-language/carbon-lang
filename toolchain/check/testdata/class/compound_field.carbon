@@ -86,66 +86,66 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %AccessDerived.decl: %AccessDerived.type = fn_decl @AccessDerived [concrete = constants.%AccessDerived] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
+// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref.loc24: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBase.decl: %AccessBase.type = fn_decl @AccessBase [concrete = constants.%AccessBase] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
+// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerivedIndirect.decl: %AccessDerivedIndirect.type = fn_decl @AccessDerivedIndirect [concrete = constants.%AccessDerivedIndirect] {
 // CHECK:STDOUT:     %p.patt: %ptr.404 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.404 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr.404 = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %ptr.235 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.235 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %ptr.235 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc32_45: type = ptr_type %i32 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %p.param: %ptr.404 = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr.404 = value_param call_param0
 // CHECK:STDOUT:     %.loc32: type = splice_block %ptr.loc32_36 [concrete = constants.%ptr.404] {
 // CHECK:STDOUT:       %Derived.ref.loc32: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr.loc32_36: type = ptr_type %Derived [concrete = constants.%ptr.404]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.404 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.235 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBaseIndirect.decl: %AccessBaseIndirect.type = fn_decl @AccessBaseIndirect [concrete = constants.%AccessBaseIndirect] {
 // CHECK:STDOUT:     %p.patt: %ptr.404 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.404 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr.404 = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %ptr.235 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.235 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %ptr.235 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc36_42: type = ptr_type %i32 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %p.param: %ptr.404 = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr.404 = value_param call_param0
 // CHECK:STDOUT:     %.loc36: type = splice_block %ptr.loc36_33 [concrete = constants.%ptr.404] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr.loc36_33: type = ptr_type %Derived [concrete = constants.%ptr.404]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.404 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.235 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

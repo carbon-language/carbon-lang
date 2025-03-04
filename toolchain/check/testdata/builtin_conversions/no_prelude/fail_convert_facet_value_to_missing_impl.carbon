@@ -82,12 +82,12 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type) = fn_decl @Convert [symbolic = @ImplicitAs.%Convert (constants.%Convert)] {
 // CHECK:STDOUT:       %self.patt: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Convert.%Dest (%Dest) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc4_22.1 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_20.1: type = splice_block %.loc5_20.3 [symbolic = %Self.as_type.loc5_20.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc5_20.2: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = name_ref Self, %.loc5_20.2 [symbolic = %Self (constants.%Self)]
@@ -95,7 +95,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:         %.loc5_20.3: type = converted %Self.ref, %Self.as_type.loc5_20.2 [symbolic = %Self.as_type.loc5_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Convert.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_35.1: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %Convert.decl [symbolic = %assoc0.loc5_35.2 (constants.%assoc0)]
@@ -197,11 +197,11 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %T.patt.loc9_9.1: %Eats.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_9.2 (constants.%T.patt.6be)]
 // CHECK:STDOUT:     %e.patt: @Feed.%T.as_type.loc9_22.2 (%T.as_type.27d) = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: @Feed.%T.as_type.loc9_22.2 (%T.as_type.27d) = value_param_pattern %e.patt, runtime_param0
+// CHECK:STDOUT:     %e.param_patt: @Feed.%T.as_type.loc9_22.2 (%T.as_type.27d) = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     %T.loc9_9.1: %Eats.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_9.2 (constants.%T.1b5)]
-// CHECK:STDOUT:     %e.param: @Feed.%T.as_type.loc9_22.2 (%T.as_type.27d) = value_param runtime_param0
+// CHECK:STDOUT:     %e.param: @Feed.%T.as_type.loc9_22.2 (%T.as_type.27d) = value_param call_param0
 // CHECK:STDOUT:     %.loc9_22.1: type = splice_block %.loc9_22.2 [symbolic = %T.as_type.loc9_22.2 (constants.%T.as_type.27d)] {
 // CHECK:STDOUT:       %T.ref: %Eats.type = name_ref T, %T.loc9_9.1 [symbolic = %T.loc9_9.2 (constants.%T.1b5)]
 // CHECK:STDOUT:       %T.as_type.loc9_22.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc9_22.2 (constants.%T.as_type.27d)]
@@ -212,11 +212,11 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %T.patt.loc21_17.1: %Animal.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_17.2 (constants.%T.patt.a9c)]
 // CHECK:STDOUT:     %a.patt: @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %T.loc21_17.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
-// CHECK:STDOUT:     %a.param: @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) = value_param call_param0
 // CHECK:STDOUT:     %.loc21_32.1: type = splice_block %.loc21_32.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)] {
 // CHECK:STDOUT:       %T.ref: %Animal.type = name_ref T, %T.loc21_17.1 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
 // CHECK:STDOUT:       %T.as_type.loc21_32.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]

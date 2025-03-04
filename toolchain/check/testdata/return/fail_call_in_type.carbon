@@ -46,20 +46,20 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ReturnType.decl: %ReturnType.type = fn_decl @ReturnType [concrete = constants.%ReturnType] {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [concrete = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc18_24.1: type = value_of_initializer %ReturnType.call
 // CHECK:STDOUT:     %.loc18_24.2: type = converted %ReturnType.call, %.loc18_24.1
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

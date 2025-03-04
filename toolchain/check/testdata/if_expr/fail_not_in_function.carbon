@@ -103,9 +103,9 @@ class C {
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}

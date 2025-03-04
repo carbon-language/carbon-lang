@@ -54,21 +54,21 @@ fn Constant() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Not.decl: %Not.type = fn_decl @Not [concrete = constants.%Not] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc11_20: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %bool.make_type.loc11_20 [concrete = bool]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %bool.make_type.loc11_20, %.loc11_20.1 [concrete = bool]
-// CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc11_11.1: type = splice_block %.loc11_11.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc11_11: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc11_11.2: type = value_of_initializer %bool.make_type.loc11_11 [concrete = bool]
 // CHECK:STDOUT:       %.loc11_11.3: type = converted %bool.make_type.loc11_11, %.loc11_11.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {

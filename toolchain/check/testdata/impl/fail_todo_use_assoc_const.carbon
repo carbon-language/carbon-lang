@@ -175,28 +175,28 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.c14 = fn_decl @F.1 [concrete = constants.%F.b71] {
 // CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %u.patt: <error> = binding_pattern u
-// CHECK:STDOUT:     %u.param_patt: <error> = value_param_pattern %u.patt, runtime_param1 [concrete = <error>]
+// CHECK:STDOUT:     %u.param_patt: <error> = value_param_pattern %u.patt, call_param1 [concrete = <error>]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc19_29: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0.1e6]
 // CHECK:STDOUT:     %.loc19_29: type = converted %U.ref.loc19_29, <error> [concrete = <error>]
-// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = value_param call_param0
 // CHECK:STDOUT:     %.loc19_14.1: type = splice_block %.loc19_14.2 [symbolic = %Self.as_type.loc19_14.1 (constants.%Self.as_type.3df)] {
 // CHECK:STDOUT:       %Self.ref: %J.type = name_ref Self, @J.%Self [symbolic = %Self (constants.%Self.ccd)]
 // CHECK:STDOUT:       %Self.as_type.loc19_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc19_14.1 (constants.%Self.as_type.3df)]
 // CHECK:STDOUT:       %.loc19_14.2: type = converted %Self.ref, %Self.as_type.loc19_14.2 [symbolic = %Self.as_type.loc19_14.1 (constants.%Self.as_type.3df)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type.3df) = bind_name self, %self.param
-// CHECK:STDOUT:     %u.param: <error> = value_param runtime_param1
+// CHECK:STDOUT:     %u.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %U.ref.loc19_23: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0.1e6]
 // CHECK:STDOUT:       %.loc19_23: type = converted %U.ref.loc19_23, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u: <error> = bind_name u, %u.param
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param2
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %J.assoc_type = assoc_entity element1, %F.decl [concrete = constants.%assoc1]
@@ -215,24 +215,24 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT: impl @impl.2d9: %.loc22_7.2 as %.loc22_14 {
 // CHECK:STDOUT:   %F.decl: %F.type.159 = fn_decl @F.2 [concrete = constants.%F.59d] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %u.patt: %empty_struct_type = binding_pattern u
-// CHECK:STDOUT:     %u.param_patt: %empty_struct_type = value_param_pattern %u.patt, runtime_param1
+// CHECK:STDOUT:     %u.param_patt: %empty_struct_type = value_param_pattern %u.patt, call_param1
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc23_31.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc23_31.2: type = converted %.loc23_31.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.2d9.%.loc22_7.2 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
-// CHECK:STDOUT:     %u.param: %empty_struct_type = value_param runtime_param1
+// CHECK:STDOUT:     %u.param: %empty_struct_type = value_param call_param1
 // CHECK:STDOUT:     %.loc23_24.1: type = splice_block %.loc23_24.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:       %.loc23_24.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc23_24.3: type = converted %.loc23_24.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u: %empty_struct_type = bind_name u, %u.param
-// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param2
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -244,20 +244,20 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT: impl @impl.fb4: %C.ref.loc31_6 as %.loc31_13 {
 // CHECK:STDOUT:   %F.decl: %F.type.01a = fn_decl @F.3 [concrete = constants.%F.686] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %u.patt: %C = binding_pattern u
-// CHECK:STDOUT:     %u.param_patt: %C = value_param_pattern %u.patt, runtime_param1
+// CHECK:STDOUT:     %u.param_patt: %C = value_param_pattern %u.patt, call_param1
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc32_29: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.fb4.%C.ref.loc31_6 [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %u.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %u.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc32_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %u: %C = bind_name u, %u.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -389,11 +389,11 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type.020 = fn_decl @G.1 [concrete = constants.%G.91c] {
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_14.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_14.2: type = converted %.loc5_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, %G.decl [concrete = constants.%assoc1]
@@ -412,11 +412,11 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT: impl @impl: %.loc8_7.2 as %.loc8_14 {
 // CHECK:STDOUT:   %G.decl: %G.type.aa2 = fn_decl @G.2 [concrete = constants.%G.816] {
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_14.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_14.2: type = converted %.loc9_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -543,9 +543,9 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [concrete = constants.%F.bc6] {
 // CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %N.ref: %I.assoc_type = name_ref N, @N.%assoc0 [concrete = constants.%assoc0.73c]
@@ -553,14 +553,14 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:     %.loc12_31.2: type = converted %bool.make_type, %.loc12_31.1 [concrete = bool]
 // CHECK:STDOUT:     %.loc12_37: Core.IntLiteral = converted %N.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %array_type: type = array_type <error>, bool [concrete = <error>]
-// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = value_param call_param0
 // CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.826)]
 // CHECK:STDOUT:       %Self.as_type.loc12_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)]
 // CHECK:STDOUT:       %.loc12_14.2: type = converted %Self.ref, %Self.as_type.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param1
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, %F.decl [concrete = constants.%assoc1]
@@ -579,19 +579,19 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT: impl @impl.581: %.loc15_7.2 as %.loc15_14 {
 // CHECK:STDOUT:   %F.decl: %F.type.9f6 = fn_decl @F.2 [concrete = constants.%F.572] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %array_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %array_type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %array_type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:     %.loc16_31.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc16_31.2: type = converted %bool.make_type, %.loc16_31.1 [concrete = bool]
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, bool [concrete = constants.%array_type]
-// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.581.%.loc15_7.2 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %array_type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %array_type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %array_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

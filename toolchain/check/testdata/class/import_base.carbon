@@ -77,17 +77,17 @@ fn Run() {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [concrete = constants.%Unused] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }

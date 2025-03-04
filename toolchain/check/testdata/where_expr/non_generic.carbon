@@ -50,9 +50,9 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [concrete = constants.%NotGenericF] {
 // CHECK:STDOUT:     %U.patt: %I_where.type = binding_pattern U
-// CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt, runtime_param0
+// CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param0
+// CHECK:STDOUT:     %U.param: %I_where.type = value_param call_param0
 // CHECK:STDOUT:     %.loc14_21.1: type = splice_block %.loc14_21.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]

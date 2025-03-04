@@ -45,11 +45,11 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_12.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_12.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

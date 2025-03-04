@@ -152,9 +152,9 @@ fn G(c: C) {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }

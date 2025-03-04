@@ -54,15 +54,15 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %ptr.3bc = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.3bc = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr.3bc = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %ptr.5d5 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.5d5 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %ptr.5d5 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     %ptr.loc15_37: type = ptr_type %ptr.235 [concrete = constants.%ptr.5d5]
-// CHECK:STDOUT:     %p.param: %ptr.3bc = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr.3bc = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_27 [concrete = constants.%ptr.3bc] {
 // CHECK:STDOUT:       %int_32.loc15_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -72,7 +72,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:       %ptr.loc15_27: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.3bc = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.5d5 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %ptr.5d5 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.5d5 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

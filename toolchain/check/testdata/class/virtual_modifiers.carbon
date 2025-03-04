@@ -324,9 +324,9 @@ class T2 {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -342,17 +342,17 @@ class T2 {
 // CHECK:STDOUT: class @Abstract {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [concrete = constants.%J] {
 // CHECK:STDOUT:     %self.patt: %Abstract = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Abstract = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Abstract = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Abstract = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Abstract [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %self: %Abstract = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [concrete = constants.%K] {
 // CHECK:STDOUT:     %self.patt: %Abstract = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Abstract = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Abstract = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Abstract = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Abstract [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %self: %Abstract = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -420,9 +420,9 @@ class T2 {
 // CHECK:STDOUT:   %.loc7: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %H.decl: %H.type.dba = fn_decl @H.1 [concrete = constants.%H.bce] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -497,9 +497,9 @@ class T2 {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -638,9 +638,9 @@ class T2 {
 // CHECK:STDOUT: class @A1 {
 // CHECK:STDOUT:   %F.decl: %F.type.13a = fn_decl @F.1 [concrete = constants.%F.df5] {
 // CHECK:STDOUT:     %self.patt: %A1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %A1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %A1 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %A1 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %A1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A1 [concrete = constants.%A1]
 // CHECK:STDOUT:     %self: %A1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -658,9 +658,9 @@ class T2 {
 // CHECK:STDOUT:   %.loc9: %A2.elem = base_decl %A1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.4ae = fn_decl @F.2 [concrete = constants.%F.1d5] {
 // CHECK:STDOUT:     %self.patt: %A2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %A2 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %A2 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %A2 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %A2 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A2 [concrete = constants.%A2]
 // CHECK:STDOUT:     %self: %A2 = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -729,9 +729,9 @@ class T2 {
 // CHECK:STDOUT: class @B1 {
 // CHECK:STDOUT:   %F.decl: %F.type.e4c = fn_decl @F.1 [concrete = constants.%F.8f5] {
 // CHECK:STDOUT:     %self.patt: %B1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %B1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %B1 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %B1 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %B1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B1 [concrete = constants.%B1]
 // CHECK:STDOUT:     %self: %B1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -749,9 +749,9 @@ class T2 {
 // CHECK:STDOUT:   %.loc9: %B2.elem = base_decl %B1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.b26 = fn_decl @F.2 [concrete = constants.%F.d48] {
 // CHECK:STDOUT:     %self.patt: %B2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %B2 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %B2 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %B2 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %B2 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B2 [concrete = constants.%B2]
 // CHECK:STDOUT:     %self: %B2 = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -772,9 +772,9 @@ class T2 {
 // CHECK:STDOUT:   %.loc14: %C.elem = base_decl %B2.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.3 [concrete = constants.%F.437] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -827,9 +827,9 @@ class T2 {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -915,9 +915,9 @@ class T2 {
 // CHECK:STDOUT:   %.var.loc6: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1065,9 +1065,9 @@ class T2 {
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element1 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1131,9 +1131,9 @@ class T2 {
 // CHECK:STDOUT: class @AbstractBase {
 // CHECK:STDOUT:   %F.decl: %F.type.85b = fn_decl @F.1 [concrete = constants.%F.6e9] {
 // CHECK:STDOUT:     %self.patt: %AbstractBase = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractBase = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %AbstractBase = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %AbstractBase = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %AbstractBase = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractBase [concrete = constants.%AbstractBase]
 // CHECK:STDOUT:     %self: %AbstractBase = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1165,9 +1165,9 @@ class T2 {
 // CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %AbstractIntermediate.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1233,9 +1233,9 @@ class T2 {
 // CHECK:STDOUT: class @VirtualBase {
 // CHECK:STDOUT:   %F.decl: %F.type.e62 = fn_decl @F.1 [concrete = constants.%F.3e7] {
 // CHECK:STDOUT:     %self.patt: %VirtualBase = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %VirtualBase = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %VirtualBase = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %VirtualBase = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %VirtualBase = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%VirtualBase [concrete = constants.%VirtualBase]
 // CHECK:STDOUT:     %self: %VirtualBase = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1267,9 +1267,9 @@ class T2 {
 // CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %VirtualIntermediate.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1332,9 +1332,9 @@ class T2 {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1352,14 +1352,14 @@ class T2 {
 // CHECK:STDOUT:   %.loc9: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %v.patt: %i32 = binding_pattern v
-// CHECK:STDOUT:     %v.param_patt: %i32 = value_param_pattern %v.patt, runtime_param1
+// CHECK:STDOUT:     %v.param_patt: %i32 = value_param_pattern %v.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
-// CHECK:STDOUT:     %v.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %v.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc17: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -1447,15 +1447,15 @@ class T2 {
 // CHECK:STDOUT: impl @impl: %T2.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.c41 = fn_decl @Convert.2 [concrete = constants.%Convert.f35] {
 // CHECK:STDOUT:     %self.patt: %T2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %T2 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %T2 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
-// CHECK:STDOUT:     %self.param: %T2 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %T2 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%T2.ref [concrete = constants.%T2]
 // CHECK:STDOUT:     %self: %T2 = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %T1 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %T1 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -1484,15 +1484,15 @@ class T2 {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
-// CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %T1 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %T1 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F.decl) [concrete = constants.%.5ee]
@@ -1511,15 +1511,15 @@ class T2 {
 // CHECK:STDOUT:   %.loc21: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %T2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %T2 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %T2 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %T2 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %T2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc30: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
@@ -1621,17 +1621,17 @@ class T2 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Base.%F.type (%F.type.f17) = fn_decl @F.1 [symbolic = @Base.%F (constants.%F.e26)] {
 // CHECK:STDOUT:       %self.patt: @F.1.%Base (%Base.370) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.1.%Base (%Base.370) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @F.1.%Base (%Base.370) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %t.patt: @F.1.%T (%T) = binding_pattern t
-// CHECK:STDOUT:       %t.param_patt: @F.1.%T (%T) = value_param_pattern %t.patt, runtime_param1
+// CHECK:STDOUT:       %t.param_patt: @F.1.%T (%T) = value_param_pattern %t.patt, call_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @F.1.%Base (%Base.370) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @F.1.%Base (%Base.370) = value_param call_param0
 // CHECK:STDOUT:       %.loc8_22.1: type = splice_block %Self.ref [symbolic = %Base (constants.%Base.370)] {
 // CHECK:STDOUT:         %.loc8_22.2: type = specific_constant constants.%Base.370, @Base(constants.%T) [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc8_22.2 [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.1.%Base (%Base.370) = bind_name self, %self.param
-// CHECK:STDOUT:       %t.param: @F.1.%T (%T) = value_param runtime_param1
+// CHECK:STDOUT:       %t.param: @F.1.%T (%T) = value_param call_param1
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Base.%T.loc7_17.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @F.1.%T (%T) = bind_name t, %t.param
 // CHECK:STDOUT:     }
@@ -1654,14 +1654,14 @@ class T2 {
 // CHECK:STDOUT:   %.loc12: %Derived.elem = base_decl %Base, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %t.patt: %T1 = binding_pattern t
-// CHECK:STDOUT:     %t.param_patt: %T1 = value_param_pattern %t.patt, runtime_param1
+// CHECK:STDOUT:     %t.param_patt: %T1 = value_param_pattern %t.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
-// CHECK:STDOUT:     %t.param: %T1 = value_param runtime_param1
+// CHECK:STDOUT:     %t.param: %T1 = value_param call_param1
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %t: %T1 = bind_name t, %t.param
 // CHECK:STDOUT:   }
@@ -1827,9 +1827,9 @@ class T2 {
 // CHECK:STDOUT: class @T1 {
 // CHECK:STDOUT:   %F1.decl: %F1.type.b96 = fn_decl @F1.1 [concrete = constants.%F1.765] {
 // CHECK:STDOUT:     %self.patt: %ptr.87b = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.87b = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ptr.87b = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.87b = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %ptr.87b = value_param call_param0
 // CHECK:STDOUT:     %.loc5: type = splice_block %ptr [concrete = constants.%ptr.87b] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T1 [concrete = constants.%T1]
 // CHECK:STDOUT:       %ptr: type = ptr_type %T1 [concrete = constants.%ptr.87b]
@@ -1850,10 +1850,10 @@ class T2 {
 // CHECK:STDOUT:   %.loc9: %T2.elem = base_decl %T1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F1.decl: %F1.type.b0d = fn_decl @F1.2 [concrete = constants.%F1.0ce] {
 // CHECK:STDOUT:     %self.patt: %ptr.63e = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.63e = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ptr.63e = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc17_14: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.63e = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %ptr.63e = value_param call_param0
 // CHECK:STDOUT:     %.loc17_29: type = splice_block %ptr [concrete = constants.%ptr.63e] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T2 [concrete = constants.%T2]
 // CHECK:STDOUT:       %ptr: type = ptr_type %T2 [concrete = constants.%ptr.63e]
