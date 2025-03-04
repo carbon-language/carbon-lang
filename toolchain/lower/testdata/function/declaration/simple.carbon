@@ -12,6 +12,10 @@ fn F(n: i32);
 
 fn G(n: i32) { F(n); }
 
+class A;
+fn H(n: A);
+fn I() -> A;
+
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
@@ -22,6 +26,10 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT:   call void @_CF.Main(i32 %n), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CH.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CI.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

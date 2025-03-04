@@ -190,49 +190,31 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
   return result;
 }
 
-auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
-                                    SemIR::SpecificId specific_id)
-    -> llvm::Function* {
-  const auto& function = sem_ir().functions().Get(function_id);
-
-  // Don't lower generic functions. Note that associated functions in interfaces
-  // have `Self` in scope, so are implicitly generic functions.
-  if (function.generic_id.has_value() && !specific_id.has_value()) {
-    return nullptr;
+auto FileContext::BuildFunctionTypeInfo(
+    const SemIR::Function& function, SemIR::SpecificId specific_id,
+    llvm::ArrayRef<SemIR::InstId> implicit_param_patterns,
+    llvm::ArrayRef<SemIR::InstId> param_patterns,
+    const SemIR::ReturnTypeInfo& return_info,
+    llvm::SmallVector<llvm::Type*>& param_types,
+    llvm::SmallVector<SemIR::InstId>& param_inst_ids, llvm::Type*& return_type,
+    SemIR::InstId& return_param_id) -> void {
+  return_type = nullptr;
+  if (return_info.type_id.has_value()) {
+    if (!types_[return_info.type_id.index]) {
+      // The return type has not been completed, so bail out of creating the
+      // function type.
+      return;
+    }
+    return_type = GetType(return_info.type_id);
   }
-
-  // Don't lower builtins.
-  if (function.builtin_function_kind != SemIR::BuiltinFunctionKind::None) {
-    return nullptr;
-  }
-
-  // TODO: Consider tracking whether the function has been used, and only
-  // lowering it if it's needed.
-
-  const auto return_info =
-      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
-  CARBON_CHECK(return_info.is_valid(), "Should not lower invalid functions.");
-
-  auto implicit_param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  // TODO: Include parameters corresponding to positional parameters.
-  auto param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
-
-  auto* return_type =
-      return_info.type_id.has_value() ? GetType(return_info.type_id) : nullptr;
-
-  llvm::SmallVector<llvm::Type*> param_types;
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
-  // reuse it from `BuildFunctionDefinition` and when building calls, or factor
-  // out a mechanism to compute the mapping between parameters and arguments on
-  // demand.
-  llvm::SmallVector<SemIR::InstId> param_inst_ids;
+  // reuse it from `BuildFunctionDefinition` and when building calls, or
+  // factor out a mechanism to compute the mapping between parameters and
+  // arguments on demand.
   auto max_llvm_params = (return_info.has_return_slot() ? 1 : 0) +
                          implicit_param_patterns.size() + param_patterns.size();
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
-  auto return_param_id = SemIR::InstId::None;
   if (return_info.has_return_slot()) {
     param_types.push_back(
         llvm::PointerType::get(return_type, /*AddressSpace=*/0));
@@ -252,7 +234,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
-        CARBON_FATAL("Incomplete parameter type lowering function declaration");
+        // This parameter type is incomplete. Fallback to describing the
+        // function type as `void()`.
+        param_types.clear();
+        param_inst_ids.clear();
+        return;
       case SemIR::ValueRepr::None:
         break;
       case SemIR::ValueRepr::Copy:
@@ -263,13 +249,51 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
         break;
     }
   }
+}
+
+auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
+                                    SemIR::SpecificId specific_id)
+    -> llvm::Function* {
+  const auto& function = sem_ir().functions().Get(function_id);
+
+  // Don't lower generic functions. Note that associated functions in interfaces
+  // have `Self` in scope, so are implicitly generic functions.
+  if (function.generic_id.has_value() && !specific_id.has_value()) {
+    return nullptr;
+  }
+
+  // Don't lower builtins.
+  if (function.builtin_function_kind != SemIR::BuiltinFunctionKind::None) {
+    return nullptr;
+  }
+
+  auto implicit_param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
+  // TODO: Include parameters corresponding to positional parameters.
+  auto param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
+
+  // TODO: Consider tracking whether the function has been used, and only
+  // lowering it if it's needed.
+
+  const auto return_info =
+      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
+
+  llvm::SmallVector<llvm::Type*> param_types;
+  llvm::SmallVector<SemIR::InstId> param_inst_ids;
+  llvm::Type* return_type = nullptr;
+  auto return_param_id = SemIR::InstId::None;
+  BuildFunctionTypeInfo(function, specific_id, implicit_param_patterns,
+                        param_patterns, return_info, param_types,
+                        param_inst_ids, return_type, return_param_id);
 
   // Compute the return type to use for the LLVM function. If the initializing
   // representation doesn't produce a value, set the return type to void.
   // TODO: For the `Run` entry point, remap return type to i32 if it doesn't
   // return a value.
   llvm::Type* function_return_type =
-      return_info.init_repr.kind == SemIR::InitRepr::ByCopy
+      (return_info.is_valid() &&
+       return_info.init_repr.kind == SemIR::InitRepr::ByCopy)
           ? return_type
           : llvm::Type::getVoidTy(llvm_context());
 
