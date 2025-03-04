@@ -593,8 +593,6 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
       // Before we can access the element of the witness, we need to figure out
       // the type of that element. It depends on the self type and the specific
       // interface.
-      auto interface_type =
-          GetInterfaceFromFacetType(context, interface_type_id);
       auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
           context, loc_id, interface_type->specific_id, decl_id, self_type_id,
           witness_id);
