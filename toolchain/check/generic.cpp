@@ -206,10 +206,17 @@ static auto AddGenericConstantToEvalBlock(
                 RebuildGenericConstantInEvalBlockCallbacks(
                     context, generic_id, region,
                     context.insts().GetLocId(inst_id), constants_in_generic));
-  CARBON_CHECK(new_inst_id != const_inst_id,
-               "Did not apply any substitutions to symbolic constant {0}",
-               context.insts().Get(const_inst_id));
-  return context.constant_values().Get(new_inst_id);
+  auto const_id = context.constant_values().Get(new_inst_id);
+  if (new_inst_id == const_inst_id) {
+    // This should only happen for template actions, where it's possible that no
+    // operand depends on any symbolic constants, only on instructions that
+    // might have symbolic types or values.
+    CARBON_CHECK(context.constant_values().GetDependence(const_id) ==
+                     SemIR::ConstantDependence::Template,
+                 "Did not apply any substitutions to symbolic constant {0}",
+                 context.insts().Get(const_inst_id));
+  }
+  return const_id;
 }
 
 // Populates a map of constants in a generic from the constants in the

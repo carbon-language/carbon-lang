@@ -31,19 +31,6 @@ static auto PerformAggregateAccess(Context& context, SemIR::Inst inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-// TODO: Generalize this to cover all actions.
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::AccessMemberAction inst) -> ConstantEvalResult {
-  // TODO: Pass in a SemIR::LocId or a SemIR::InstId instead of a SemIRLoc.
-  auto inst_id = PerformDelayedAction(context, SemIR::LocId::None, inst);
-  if (!inst_id.has_value()) {
-    // Couldn't perform the action because it's still dependent.
-    return ConstantEvalResult::NotConstant;
-  }
-  return ConstantEvalResult::Existing(
-      SemIR::ConstantId::ForConcreteConstant(inst_id));
-}
-
 auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
                       SemIR::ArrayInit inst) -> ConstantEvalResult {
   // TODO: Add an `ArrayValue` to represent a constant array object

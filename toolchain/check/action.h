@@ -20,6 +20,11 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 // that means it cannot be performed immediately.
 auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool;
 
+// Determines whether the given action operand depends on a template parameter
+// in a way that means the action cannot be performed immediately.
+auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id)
+    -> bool;
+
 // Adds an instruction to the current block to splice in the result of
 // performing a dependent action.
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,

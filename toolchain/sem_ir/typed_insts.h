@@ -53,11 +53,11 @@ struct AccessMemberAction {
   static constexpr auto Kind =
       InstKind::AccessMemberAction.Define<Parse::NodeId>(
           {.ir_name = "access_member_action",
-           .constant_kind = InstConstantKind::SymbolicOnly,
+           .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
   TypeId type_id;
-  InstId base_id;
+  MetaInstId base_id;
   NameId name_id;
 };
 

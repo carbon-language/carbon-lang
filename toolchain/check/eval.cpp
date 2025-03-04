@@ -5,6 +5,7 @@
 #include "toolchain/check/eval.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval_inst.h"
 #include "toolchain/check/facet_type.h"
@@ -355,6 +356,38 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
   *phase =
       LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
   return eval_context.constant_values().GetInstId(const_id);
+}
+
+// Find the instruction that the given instruction instantiates to, and return
+// that.
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::MetaInstId inst_id, Phase* phase)
+    -> SemIR::MetaInstId {
+  Phase inner_phase = Phase::Concrete;
+  if (auto const_inst_id =
+          GetConstantValue(eval_context, SemIR::InstId(inst_id), &inner_phase);
+      const_inst_id.has_value()) {
+    // The instruction has a constant value. Use that as the operand of the
+    // action.
+    *phase = LatestPhase(*phase, inner_phase);
+    return const_inst_id;
+  }
+
+  // If this instruction is splicing in an action result, that action result is
+  // our operand.
+  if (auto splice = eval_context.insts().TryGetAs<SemIR::SpliceInst>(inst_id)) {
+    if (auto spliced_inst_id =
+            GetConstantValue(eval_context, splice->inst_id, phase);
+        spliced_inst_id.has_value()) {
+      return splice->inst_id;
+    }
+  }
+
+  // Otherwise, this is a normal instruction.
+  if (OperandIsDependent(eval_context.context(), inst_id)) {
+    *phase = LatestPhase(*phase, Phase::TemplateSymbolic);
+  }
+  return inst_id;
 }
 
 // Explicitly discard a `DestInstId`, because we should not be using the
@@ -1598,6 +1631,18 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     }
     if constexpr (ConstantKind == SemIR::InstConstantKind::Always ||
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
+      return MakeConstantResult(eval_context.context(), inst, phase);
+    } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
+      if (phase < Phase::TemplateSymbolic) {
+        auto result_inst_id = PerformDelayedAction(
+            eval_context.context(), eval_context.insts().GetLocId(inst_id),
+            inst.As<InstT>());
+        if (result_inst_id.has_value()) {
+          // The result is an instruction.
+          return SemIR::ConstantId::ForConcreteConstant(result_inst_id);
+        }
+      }
+      // Couldn't perform the action because it's still dependent.
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else {
       return ConvertEvalResultToConstantId(

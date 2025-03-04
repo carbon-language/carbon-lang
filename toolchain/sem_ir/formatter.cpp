@@ -1353,6 +1353,10 @@ class FormatterImpl {
     FormatName(static_cast<InstId>(id));
   }
 
+  auto FormatName(MetaInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
   auto FormatName(SpecificId id) -> void {
     const auto& specific = sem_ir_->specifics().Get(id);
     FormatName(specific.generic_id);
