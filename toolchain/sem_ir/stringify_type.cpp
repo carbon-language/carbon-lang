@@ -599,6 +599,8 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case NameBindingDecl::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
+      case RefParam::Kind:
+      case RefParamPattern::Kind:
       case RequireCompleteType::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:

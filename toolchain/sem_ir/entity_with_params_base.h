@@ -108,9 +108,8 @@ struct EntityWithParamsBase {
   // instruction in the entity's pattern block that depends on all other
   // pattern insts pertaining to that parameter.
   InstBlockId implicit_param_patterns_id;
-  // A block containing, for each explicit parameter, a reference to the
-  // instruction in the entity's pattern block that depends on all other
-  // pattern insts pertaining to that parameter.
+  // A block containing, for each element of the explicit parameter list tuple
+  // pattern, a reference to the root pattern inst for that element.
   InstBlockId param_patterns_id;
 
   // If this entity is a function, this block consists of references to the

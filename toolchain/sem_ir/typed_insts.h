@@ -1040,10 +1040,9 @@ struct NamespaceType {
   TypeId type_id;
 };
 
-// A `Call` parameter for a function or other parameterized block. The sub-kinds
-// differ only in their expression category.
+// A `Call` parameter for a function or other parameterized block.
 struct AnyParam {
-  static constexpr InstKind Kinds[] = {InstKind::OutParam,
+  static constexpr InstKind Kinds[] = {InstKind::OutParam, InstKind::RefParam,
                                        InstKind::ValueParam};
 
   InstKind kind;
@@ -1067,6 +1066,17 @@ struct OutParam {
   NameId pretty_name_id;
 };
 
+// A by-reference `Call` parameter. See AnyParam for member documentation.
+struct RefParam {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeId>(
+      {.ir_name = "ref_param", .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  CallParamIndex index;
+  NameId pretty_name_id;
+};
+
 // A by-value `Call` parameter. See AnyParam for member documentation.
 struct ValueParam {
   // TODO: Make Parse::NodeId more specific.
@@ -1083,6 +1093,7 @@ struct ValueParam {
 // of the corresponding parameter inst.
 struct AnyParamPattern {
   static constexpr InstKind Kinds[] = {InstKind::OutParamPattern,
+                                       InstKind::RefParamPattern,
                                        InstKind::ValueParamPattern};
 
   InstKind kind;
@@ -1098,6 +1109,19 @@ struct OutParamPattern {
           {.ir_name = "out_param_pattern",
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  CallParamIndex index;
+};
+
+// A pattern that represents a by-reference `Call` parameter.
+struct RefParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "ref_param_pattern",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
