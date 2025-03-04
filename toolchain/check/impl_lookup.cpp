@@ -162,7 +162,7 @@ static auto FindAndDiagnoseImplLookupCycle(
 static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
                                         SemIR::ConstantId interface_const_id,
                                         bool& has_other_requirements)
-    -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface, 16> {
+    -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface> {
   // The `interface_const_id` is a constant value for some facet type. We do
   // this long chain of steps to go from that constant value to the
   // `FacetTypeId` found on the `FacetType` instruction of this constant value,
@@ -184,9 +184,6 @@ static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
   has_other_requirements =
       context.facet_types().Get(facet_type_id).other_requirements;
 
-  llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface, 16>
-      interface_ids;
-
   if (complete_facet_type.required_interfaces.empty()) {
     // This should never happen - a FacetType either requires or is bounded by
     // some `.Self impls` clause. Otherwise you would just have `type` (aka
@@ -194,12 +191,9 @@ static auto GetInterfacesFromConstantId(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id,
                  "impl lookup for a FacetType with no interface (using "
                  "`where .Self impls ...` instead?)");
-    return interface_ids;
+    return {};
   }
-  for (auto required : complete_facet_type.required_interfaces) {
-    interface_ids.push_back(required);
-  }
-  return interface_ids;
+  return complete_facet_type.required_interfaces;
 }
 
 static auto GetWitnessIdForImpl(
