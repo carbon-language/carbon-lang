@@ -40,7 +40,6 @@ LLVM_MAIN_TOOLS = {
 # are always formed by prepending `llvm-` for the aliases.
 LLVM_TOOL_ALIASES = {
     "ar": ["ranlib", "lib", "dlltool"],
-    #"cxxfilt": ["c++filt"],
     "objcopy": ["bitcode-strip", "install-name-tool", "strip"],
     "objdump": ["otool"],
     "rc": ["windres"],
