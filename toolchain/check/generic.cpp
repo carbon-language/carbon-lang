@@ -289,6 +289,13 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
           AddGenericConstantToEvalBlock(context, generic_id, region,
                                         constants_in_generic, inst_id));
     }
+
+    // If the instruction is a template action, add it directly to this position
+    // in the eval block.
+    if ((dep_kind & GenericRegionStack::DependencyKind::Template) !=
+        GenericRegionStack::DependencyKind::None) {
+      context.inst_block_stack().AddInstId(inst_id);
+    }
   }
 
   CARBON_CHECK(

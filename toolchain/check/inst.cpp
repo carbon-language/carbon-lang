@@ -40,7 +40,8 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
 
   // Keep track of dependent instructions.
   if (dep_kind != GenericRegionStack::DependencyKind::None) {
-    // TODO: Also check for template-dependent instructions.
+    // Template-dependent instructions are handled separately by
+    // `AddDependentActionSplice`.
     context.generic_region_stack().AddDependentInst(
         {.inst_id = inst_id, .kind = dep_kind});
   }

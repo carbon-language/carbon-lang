@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/action.h"
+#include "toolchain/check/generic_region_stack.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/constant.h"
 
 namespace Carbon::Check {
@@ -52,12 +54,21 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
 
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
                               SemIR::TypeId result_type_id) -> SemIR::InstId {
-  auto inst_id = AddInst(context, action);
+  auto inst_id = AddInstInNoBlock(context, action);
+  context.generic_region_stack().AddDependentInst(
+      {.inst_id = inst_id,
+       .kind = GenericRegionStack::DependencyKind::Template});
+
   if (!result_type_id.has_value()) {
-    result_type_id = context.types().GetTypeIdForTypeInstId(
-        AddInst(context, action.loc_id,
-                SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
-                                  .inst_id = inst_id}));
+    auto type_inst_id = AddInstInNoBlock(
+        context, action.loc_id,
+        SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
+                          .inst_id = inst_id});
+    context.generic_region_stack().AddDependentInst(
+        {.inst_id = type_inst_id,
+         .kind = GenericRegionStack::DependencyKind::Template});
+
+    result_type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
   }
   return AddInst(
       context, action.loc_id,

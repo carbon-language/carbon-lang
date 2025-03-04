@@ -57,6 +57,8 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [template]
 // CHECK:STDOUT:   %.c58: <instruction> = access_member_action @F.%x.ref, n [template]
+// CHECK:STDOUT:   %.058: type = type_of_inst %.c58 [template]
+// CHECK:STDOUT:   %.141: %.058 = splice_inst %.c58 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -147,13 +149,13 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc8_4.2: <instruction> = access_member_action %x.ref, n [template = constants.%.c58]
+// CHECK:STDOUT:   %.loc8_4.3: type = type_of_inst %.loc8_4.2 [template = constants.%.058]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc8_4.1: <instruction> = access_member_action %x.ref, n [template = constants.%.c58]
-// CHECK:STDOUT:     %.loc8_4.2: type = type_of_inst %.loc8_4.1 [concrete = <instruction>]
-// CHECK:STDOUT:     %.loc8_4.3: <instruction> = splice_inst %.loc8_4.1 [template = constants.%.c58]
+// CHECK:STDOUT:     %.loc8_4.1: %.058 = splice_inst %.loc8_4.2 [template = constants.%.141]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -187,6 +189,8 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.54b
+// CHECK:STDOUT:   %.loc8_4.2 => constants.%.c58
+// CHECK:STDOUT:   %.loc8_4.3 => constants.%.058
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%struct_type.m.n) {
@@ -195,6 +199,8 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.622
+// CHECK:STDOUT:   %.loc8_4.2 => constants.%.c58
+// CHECK:STDOUT:   %.loc8_4.3 => constants.%.058
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_such_member.carbon
@@ -207,6 +213,8 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [template]
 // CHECK:STDOUT:   %.c58: <instruction> = access_member_action @F.%x.ref, n [template]
+// CHECK:STDOUT:   %.058: type = type_of_inst %.c58 [template]
+// CHECK:STDOUT:   %.141: %.058 = splice_inst %.c58 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -277,13 +285,13 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc5_4.2: <instruction> = access_member_action %x.ref, n [template = constants.%.c58]
+// CHECK:STDOUT:   %.loc5_4.3: type = type_of_inst %.loc5_4.2 [template = constants.%.058]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc5_4.1: <instruction> = access_member_action %x.ref, n [template = constants.%.c58]
-// CHECK:STDOUT:     %.loc5_4.2: type = type_of_inst %.loc5_4.1 [concrete = <instruction>]
-// CHECK:STDOUT:     %.loc5_4.3: <instruction> = splice_inst %.loc5_4.1 [template = constants.%.c58]
+// CHECK:STDOUT:     %.loc5_4.1: %.058 = splice_inst %.loc5_4.2 [template = constants.%.141]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -308,5 +316,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.218
+// CHECK:STDOUT:   %.loc5_4.2 => constants.%.c58
+// CHECK:STDOUT:   %.loc5_4.3 => constants.%.058
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -273,6 +273,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case InstType::Kind:
+      case InstValue::Kind:
       case IntLiteralType::Kind:
       case IntType::Kind:
       case IntValue::Kind:

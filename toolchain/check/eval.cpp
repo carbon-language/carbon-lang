@@ -1639,7 +1639,11 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
             inst.As<InstT>());
         if (result_inst_id.has_value()) {
           // The result is an instruction.
-          return SemIR::ConstantId::ForConcreteConstant(result_inst_id);
+          return MakeConstantResult(
+              eval_context.context(),
+              SemIR::InstValue{.type_id = SemIR::InstType::SingletonTypeId,
+                               .inst_id = result_inst_id},
+              Phase::Concrete);
         }
       }
       // Couldn't perform the action because it's still dependent.

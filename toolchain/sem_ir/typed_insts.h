@@ -951,6 +951,19 @@ struct InstType {
   TypeId type_id;
 };
 
+// A value of type `InstType` that refers to an instruction. This is used to
+// represent an instruction as a value for use as a result of a template action.
+struct InstValue {
+  static constexpr auto Kind = InstKind::InstValue.Define<Parse::NoneNodeId>(
+      {.ir_name = "inst_value",
+       .is_type = InstIsType::Never,
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId inst_id;
+};
+
 // An interface declaration.
 struct InterfaceDecl {
   static constexpr auto Kind =
@@ -1352,7 +1365,8 @@ struct SpliceInst {
 
   TypeId type_id;
   // The instruction that computes the instruction to splice. The type of this
-  // instruction should be InstType.
+  // instruction should be InstType. If evaluation has succeeded, this will be
+  // an InstValue.
   InstId inst_id;
 };
 

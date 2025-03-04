@@ -608,6 +608,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:
+      case InstValue::Kind:
       case InterfaceDecl::Kind:
       case NameBindingDecl::Kind:
       case OutParam::Kind:

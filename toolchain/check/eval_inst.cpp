@@ -312,8 +312,12 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   // being spliced. Note that `inst.inst_id` is the instruction being spliced,
   // so we need to go through another round of obtaining the constant value in
   // addition to the one performed by the eval infrastructure.
-  return ConstantEvalResult::Existing(
-      context.constant_values().Get(inst.inst_id));
+  if (auto inst_value =
+          context.insts().TryGetAs<SemIR::InstValue>(inst.inst_id)) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst_value->inst_id));
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
@@ -347,8 +351,12 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::TypeOfInst inst) -> ConstantEvalResult {
   // Grab the type from the instruction produced as our operand.
-  return ConstantEvalResult::Existing(context.types().GetConstantId(
-      context.insts().Get(inst.inst_id).type_id()));
+  if (auto inst_value =
+          context.insts().TryGetAs<SemIR::InstValue>(inst.inst_id)) {
+    return ConstantEvalResult::Existing(context.types().GetConstantId(
+        context.insts().Get(inst_value->inst_id).type_id()));
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
