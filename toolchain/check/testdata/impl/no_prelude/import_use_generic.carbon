@@ -241,7 +241,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %c: ref %C.7a7 = bind_name c, %c.var
 // CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.3 [concrete = constants.%F.c41] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.ref: ref %C.7a7 = name_ref c, file.%c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
@@ -252,7 +252,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     %.loc16_19.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:     %.loc16_19.2: ref %empty_tuple.type = temporary %.loc16_19.1, %F.call
 // CHECK:STDOUT:     %.loc16_19.3: type = converted %F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

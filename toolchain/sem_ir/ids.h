@@ -198,7 +198,9 @@ struct CompileTimeBindIndex : public IndexBase<CompileTimeBindIndex> {
 // argument will have the position in the argument list corresponding to its
 // `Call` parameter index.
 struct CallParamIndex : public IndexBase<CallParamIndex> {
-  static constexpr llvm::StringLiteral Label = "call_param";
+  // TODO: Rename this in an isolated PR, to avoid obscuring other changes with
+  // the churn.
+  static constexpr llvm::StringLiteral Label = "runtime_param";
 
   using IndexBase::IndexBase;
 };

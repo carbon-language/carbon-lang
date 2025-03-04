@@ -358,9 +358,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %X = value_param call_param0
+// CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -686,9 +686,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %c.patt: %C.23b = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %C.23b = value_param_pattern %c.patt, call_param0
+// CHECK:STDOUT:     %c.param_patt: %C.23b = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %C.23b = value_param call_param0
+// CHECK:STDOUT:     %c.param: %C.23b = value_param runtime_param0
 // CHECK:STDOUT:     %.loc6_22: type = splice_block %C [concrete = constants.%C.23b] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %InClassArgs.ref: type = name_ref InClassArgs, imports.%Main.InClassArgs [concrete = constants.%InClassArgs]

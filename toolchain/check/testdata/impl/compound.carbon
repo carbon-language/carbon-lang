@@ -96,9 +96,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.006.%F.decl, @impl.006.%G.decl) [concrete = constants.%impl_witness.5b2]
 // CHECK:STDOUT:   %NonInstanceCall.decl: %NonInstanceCall.type = fn_decl @NonInstanceCall [concrete = constants.%NonInstanceCall] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
+// CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %.loc21: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -107,9 +107,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
+// CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %.loc25: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -118,9 +118,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCallIndirect.decl: %NonInstanceCallIndirect.type = fn_decl @NonInstanceCallIndirect [concrete = constants.%NonInstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
 // CHECK:STDOUT:     %.loc29: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -130,9 +130,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCallIndirect.decl: %InstanceCallIndirect.type = fn_decl @InstanceCallIndirect [concrete = constants.%InstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
 // CHECK:STDOUT:     %.loc33: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -148,9 +148,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0.9ca]
 // CHECK:STDOUT:   %G.decl: %G.type.b60 = fn_decl @G.1 [concrete = constants.%G.cb0] {
 // CHECK:STDOUT:     %self.patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.716) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.716) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.716) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.716) = value_param call_param0
+// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.716) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc13_14.1: type = splice_block %.loc13_14.2 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type.716)] {
 // CHECK:STDOUT:       %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self.3c9)]
 // CHECK:STDOUT:       %Self.as_type.loc13_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type.716)]
@@ -171,9 +171,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.decl: %F.type.758 = fn_decl @F.2 [concrete = constants.%F.df1] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type.c98 = fn_decl @G.2 [concrete = constants.%G.e73] {
 // CHECK:STDOUT:     %self.patt: %i32 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %i32 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.param_patt: %i32 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
+// CHECK:STDOUT:     %self.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %.loc18: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
