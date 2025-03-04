@@ -260,17 +260,30 @@ static auto GetWitnessIdForImpl(
     return SemIR::InstId::None;
   }
 
-  {
-    auto deduced_constraint_facet_type_id =
-        context.insts()
-            .GetAs<SemIR::FacetType>(deduced_constraint_id)
-            .facet_type_id;
-    if (context.facet_types()
-            .Get(deduced_constraint_facet_type_id)
-            .other_requirements) {
-      // TODO: Remove this when other requirements goes away.
-      return SemIR::InstId::None;
-    }
+  auto deduced_constraint_facet_type_id =
+      context.insts()
+          .GetAs<SemIR::FacetType>(deduced_constraint_id)
+          .facet_type_id;
+  const auto& deduced_constraint_complete_facet_type =
+      context.complete_facet_types().Get(
+          context.complete_facet_types().TryGetId(
+              deduced_constraint_facet_type_id));
+  CARBON_CHECK(deduced_constraint_complete_facet_type.num_to_impl == 1);
+
+  if (context.facet_types()
+          .Get(deduced_constraint_facet_type_id)
+          .other_requirements) {
+    // TODO: Remove this when other requirements goes away.
+    return SemIR::InstId::None;
+  }
+
+  // The specifics in the queried interface must match the deduced specifics in
+  // the impl's constraint facet type.
+  auto impl_interface_specific_id =
+      deduced_constraint_complete_facet_type.required_interfaces[0].specific_id;
+  auto query_interface_specific_id = interface.specific_id;
+  if (impl_interface_specific_id != query_interface_specific_id) {
+    return SemIR::InstId::None;
   }
 
   LoadImportRef(context, impl.witness_id);
