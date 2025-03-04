@@ -198,7 +198,6 @@ py_test(
     size = "small",
     srcs = ["llvm_symlinks_test.py"],
     data = [":install_data"],
-    main = "llvm_symlinks_test.py",
 )
 
 manifest(
