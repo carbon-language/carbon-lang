@@ -980,7 +980,8 @@ CARBON_PARSE_STATE(ParenExprFinish)
 // ^
 //   1. PatternListAsTuple
 //
-// ^ var ...
+//  var ...
+// ^
 //
 //   1. VariablePattern
 //
