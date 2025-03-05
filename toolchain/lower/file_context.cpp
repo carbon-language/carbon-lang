@@ -207,6 +207,8 @@ auto FileContext::BuildFunctionTypeInfo(
     }
     return_type = GetType(return_info.type_id);
   }
+  CARBON_CHECK(return_info.is_valid(), "Should not lower invalid functions.");
+
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
   // reuse it from `BuildFunctionDefinition` and when building calls, or
   // factor out a mechanism to compute the mapping between parameters and
