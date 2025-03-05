@@ -96,6 +96,20 @@ class FileContext {
   }
 
  private:
+  struct FunctionTypeInfo {
+    llvm::FunctionType* type;
+    llvm::SmallVector<SemIR::InstId> param_inst_ids;
+    llvm::Type* return_type = nullptr;
+    SemIR::InstId return_param_id = SemIR::InstId::None;
+  };
+
+  // Retrieve various features of the function's type useful for constructing
+  // the `llvm::Type` for the `llvm::Function`. If any part of the type can't be
+  // manifest (eg: incomplete return or parameter types), then the result is as
+  // if the type was `void()`.
+  auto BuildFunctionTypeInfo(const SemIR::Function& function,
+                             SemIR::SpecificId specific_id) -> FunctionTypeInfo;
+
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
   auto BuildFunctionDecl(SemIR::FunctionId function_id,

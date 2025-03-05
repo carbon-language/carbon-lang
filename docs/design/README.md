@@ -1954,13 +1954,13 @@ names resolvable by the compiler, and don't act like forward declarations.
 #### Destructors
 
 A destructor for a class is custom code executed when the lifetime of a value of
-that type ends. They are defined with the `destructor` keyword followed by
-either `[self: Self]` or `[addr self: Self*]` (as is done with
-[methods](#methods)) and the block of code in the class definition, as in:
+that type ends. They are defined with `fn destroy` followed by either
+`[self: Self]` or `[addr self: Self*]` (as is done with [methods](#methods)) and
+the block of code in the class definition, as in:
 
 ```carbon
 class MyClass {
-  destructor [self: Self] { ... }
+  fn destroy[self: Self]() { ... }
 }
 ```
 
@@ -1969,7 +1969,7 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  destructor [addr self: Self*] { ... }
+  fn destroy[addr self: Self*]() { ... }
 }
 ```
 

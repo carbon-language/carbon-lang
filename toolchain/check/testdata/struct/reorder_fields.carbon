@@ -54,27 +54,27 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %MakeI32.decl: %MakeI32.type = fn_decl @MakeI32 [concrete = constants.%MakeI32] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.decl: %MakeF64.type = fn_decl @MakeF64 [concrete = constants.%MakeF64] {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %float.make_type [concrete = f64]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %float.make_type, %.loc12_17.1 [concrete = f64]
-// CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref f64 = out_param call_param0
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %struct_type.a.b = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %struct_type.a.b = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %struct_type.a.b = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -83,7 +83,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %float.make_type.loc14 [concrete = f64]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %float.make_type.loc14, %.loc14_25.1 [concrete = f64]
 // CHECK:STDOUT:     %struct_type.a.b.loc14: type = struct_type {.a: %i32, .b: f64} [concrete = constants.%struct_type.a.b]
-// CHECK:STDOUT:     %return.param: ref %struct_type.a.b = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %struct_type.a.b = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.b = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

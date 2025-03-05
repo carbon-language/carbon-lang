@@ -50,9 +50,9 @@ fn F() {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %G.decl: %G.type.bff = fn_decl @G.1 [concrete = constants.%G.f0a] {
 // CHECK:STDOUT:     %self.patt: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc13_16.1: type = splice_block %.loc13_16.2 [symbolic = %Self.as_type.loc13_16.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc13_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc13_16.1 (constants.%Self.as_type)]
@@ -71,9 +71,9 @@ fn F() {
 // CHECK:STDOUT: impl @impl: %.loc15_9.2 as %I.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.c84 = fn_decl @G.2 [concrete = constants.%G.5a2] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc15_9.2 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
 // CHECK:STDOUT:   }
