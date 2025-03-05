@@ -200,11 +200,9 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
   return result;
 }
 
-auto FileContext::BuildFunctionTypeInfo(
-    const SemIR::Function& function, SemIR::SpecificId specific_id, llvm::function_ref<auto (SemIR::TypeId) -> llvm::Type*> get_llvm_type,
-    llvm::ArrayRef<SemIR::InstId> implicit_param_patterns,
-    llvm::ArrayRef<SemIR::InstId> param_patterns) -> FunctionTypeInfo {
-
+auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
+                                        SemIR::SpecificId specific_id)
+    -> FunctionTypeInfo {
   const auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
 
@@ -214,6 +212,22 @@ auto FileContext::BuildFunctionTypeInfo(
                 llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
                                         /*isVarArg=*/false)};
   }
+
+  // TODO nit: add is_symbolic() to type_id to forward to
+  // type_id.AsConstantId().is_symbolic(). Update call below too.
+  auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
+    if (!type_id.has_value()) {
+      return nullptr;
+    }
+    return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
+  };
+
+  auto implicit_param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
+  // TODO: Include parameters corresponding to positional parameters.
+  auto param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
+
   auto* return_type = get_llvm_type(return_info.type_id);
 
   llvm::SmallVector<llvm::Type*> param_types;
@@ -301,26 +315,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // TODO: Consider tracking whether the function has been used, and only
   // lowering it if it's needed.
 
-  // TODO nit: add is_symbolic() to type_id to forward to
-  // type_id.AsConstantId().is_symbolic(). Update call below too.
-  auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
-    if (!type_id.has_value()) {
-      return nullptr;
-    }
-    return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
-  };
-
-  auto implicit_param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  // TODO: Include parameters corresponding to positional parameters.
-  auto param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
-
-  // TODO: Consider tracking whether the function has been used, and only
-  // lowering it if it's needed.
-
-  auto function_type_info = BuildFunctionTypeInfo(
-      function, specific_id, get_llvm_type, implicit_param_patterns, param_patterns);
+  auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);

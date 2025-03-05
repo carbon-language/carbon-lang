@@ -107,10 +107,8 @@ class FileContext {
   // the `llvm::Type` for the `llvm::Function`. If any part of the type can't be
   // manifest (eg: incomplete return or parameter types), then the result is as
   // if the type was `void()`.
-  auto BuildFunctionTypeInfo(
-      const SemIR::Function& function, SemIR::SpecificId specific_id,
-      llvm::ArrayRef<SemIR::InstId> implicit_param_patterns,
-      llvm::ArrayRef<SemIR::InstId> param_patterns) -> FunctionTypeInfo;
+  auto BuildFunctionTypeInfo(const SemIR::Function& function,
+                             SemIR::SpecificId specific_id) -> FunctionTypeInfo;
 
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
