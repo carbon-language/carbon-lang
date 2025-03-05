@@ -79,10 +79,10 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %ptr.11f = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.11f = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ptr.11f = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc17_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc17: %ptr.11f = value_param runtime_param0
+// CHECK:STDOUT:     %self.param.loc17: %ptr.11f = value_param call_param0
 // CHECK:STDOUT:     %.loc17_26: type = splice_block %ptr.loc17 [concrete = constants.%ptr.11f] {
 // CHECK:STDOUT:       %Self.ref.loc17: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr.loc17: type = ptr_type %Base [concrete = constants.%ptr.11f]
@@ -92,9 +92,9 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %p.patt: %ptr.404 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.404 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr.404 = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: %ptr.404 = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr.404 = value_param call_param0
 // CHECK:STDOUT:     %.loc25: type = splice_block %ptr [concrete = constants.%ptr.404] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived [concrete = constants.%ptr.404]
@@ -111,10 +111,10 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.var: ref %Base.elem = var <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %ptr.11f = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.11f = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ptr.11f = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc17_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc14: %ptr.11f = value_param runtime_param0
+// CHECK:STDOUT:     %self.param.loc14: %ptr.11f = value_param call_param0
 // CHECK:STDOUT:     %.loc14: type = splice_block %ptr.loc14 [concrete = constants.%ptr.11f] {
 // CHECK:STDOUT:       %Self.ref.loc14: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr.loc14: type = ptr_type %Base [concrete = constants.%ptr.11f]

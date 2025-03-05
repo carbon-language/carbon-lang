@@ -77,12 +77,12 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %F.loc13_10: type = bind_symbolic_name F, 0 [symbolic = constants.%F.8b3]
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return.loc13: ref %i32 = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -115,20 +115,20 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Inner.%F.type (%F.type) = fn_decl @F [symbolic = @Inner.%F.loc8_19.2 (constants.%F.3fa)] {
 // CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %return.param: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:       %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Inner.%G.type (%G.type) = fn_decl @G [symbolic = @Inner.%G (constants.%G)] {
 // CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %return.param.loc9: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:       %return.param.loc9: ref %i32 = out_param call_param0
 // CHECK:STDOUT:       %return.loc9: ref %i32 = return_slot %return.param.loc9
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]

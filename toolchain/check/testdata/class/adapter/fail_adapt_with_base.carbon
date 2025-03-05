@@ -60,9 +60,9 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: class @AdaptWithVirtual {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %AdaptWithVirtual = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AdaptWithVirtual = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %AdaptWithVirtual = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %AdaptWithVirtual = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %AdaptWithVirtual = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AdaptWithVirtual [concrete = constants.%AdaptWithVirtual]
 // CHECK:STDOUT:     %self: %AdaptWithVirtual = bind_name self, %self.param
 // CHECK:STDOUT:   }

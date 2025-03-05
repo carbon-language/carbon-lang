@@ -72,10 +72,10 @@ fn TestOp() {
 // CHECK:STDOUT: impl @impl.c51: %C.ref as %Inc.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.73a = fn_decl @Op.2 [concrete = constants.%Op.0c9] {
 // CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc18_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc18_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C [concrete = constants.%ptr.019]

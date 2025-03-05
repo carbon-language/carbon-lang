@@ -94,35 +94,35 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.588.%Op.decl) [concrete = constants.%impl_witness.91c]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc26_26: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc26_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [concrete = constants.%TestAssign] {
 // CHECK:STDOUT:     %a.patt: %ptr.019 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %ptr.019 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %ptr.019 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc30: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref.loc30_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.019 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc30_25: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -131,20 +131,20 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.3f9: %C.ref as %Sub.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.c74 = fn_decl @Op.2 [concrete = constants.%Op.151] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, call_param1
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %other.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc18_25: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -157,18 +157,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.588: %C.ref as %SubAssign.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.966 = fn_decl @Op.4 [concrete = constants.%Op.a55] {
 // CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc23_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc23_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref.loc23_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %other.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc23_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }

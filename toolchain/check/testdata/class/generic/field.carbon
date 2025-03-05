@@ -85,13 +85,13 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %Class.247 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %Class.247 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %Class.247 = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %c.param: %Class.247 = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %Class.247 = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %Class [concrete = constants.%Class.247] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %int_32.loc15_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -99,45 +99,45 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%i32) [concrete = constants.%Class.247]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %Class.247 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc19_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %c.patt: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @G.%T.loc19_6.2 (%T) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @G.%T.loc19_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @G.%T.loc19_6.2 (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc19_32: type = name_ref T, %T.loc19_6.1 [symbolic = %T.loc19_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.loc19_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc19_6.2 (constants.%T)]
-// CHECK:STDOUT:     %c.param: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = value_param call_param0
 // CHECK:STDOUT:     %.loc19: type = splice_block %Class.loc19_26.1 [symbolic = %Class.loc19_26.2 (constants.%Class.fe1b2d.1)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %T.ref.loc19_25: type = name_ref T, %T.loc19_6.1 [symbolic = %T.loc19_6.2 (constants.%T)]
 // CHECK:STDOUT:       %Class.loc19_26.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc19_26.2 (constants.%Class.fe1b2d.1)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref @G.%T.loc19_6.2 (%T) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @G.%T.loc19_6.2 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @G.%T.loc19_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %U.patt.loc23_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc23_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %c.patt: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @H.%U.loc23_6.2 (%U) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @H.%U.loc23_6.2 (%U) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @H.%U.loc23_6.2 (%U) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc23_32: type = name_ref U, %U.loc23_6.1 [symbolic = %U.loc23_6.2 (constants.%U)]
 // CHECK:STDOUT:     %U.loc23_6.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc23_6.2 (constants.%U)]
-// CHECK:STDOUT:     %c.param: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = value_param call_param0
 // CHECK:STDOUT:     %.loc23: type = splice_block %Class.loc23_26.1 [symbolic = %Class.loc23_26.2 (constants.%Class.fe1b2d.2)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %U.ref.loc23_25: type = name_ref U, %U.loc23_6.1 [symbolic = %U.loc23_6.2 (constants.%U)]
 // CHECK:STDOUT:       %Class.loc23_26.1: type = class_type @Class, @Class(constants.%U) [symbolic = %Class.loc23_26.2 (constants.%Class.fe1b2d.2)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref @H.%U.loc23_6.2 (%U) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @H.%U.loc23_6.2 (%U) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @H.%U.loc23_6.2 (%U) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -55,13 +55,13 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
 // CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %float.make_type [concrete = f64]
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %float.make_type, %.loc11_13.1 [concrete = f64]
-// CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref f64 = out_param call_param0
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {} {}

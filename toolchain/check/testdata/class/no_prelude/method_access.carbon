@@ -44,9 +44,9 @@ fn G(x: X) {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -55,9 +55,9 @@ fn G(x: X) {
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %X = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %X = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %X = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %X = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %self: %X = bind_name self, %self.param
 // CHECK:STDOUT:   }

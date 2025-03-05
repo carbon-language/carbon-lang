@@ -7,6 +7,7 @@ load(
     "LLVM_VERSION_MAJOR",
 )
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
 load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
@@ -119,6 +120,13 @@ cc_binary(
     ],
 )
 
+clang_aliases = [
+    "clang",
+    "clang++",
+    "clang-cl",
+    "clang-cpp",
+]
+
 # TODO: Add remaining aliases of LLD for Windows and WASM when we have support
 # for them wired up through the busybox.
 lld_aliases = [
@@ -126,7 +134,7 @@ lld_aliases = [
     "ld64.lld",
 ]
 
-llvm_binaries = lld_aliases + [
+llvm_binaries = clang_aliases + lld_aliases + [
     tool.bin_name
     for tool in LLVM_MAIN_TOOLS.values()
 ] + [
@@ -167,13 +175,7 @@ install_dirs = {
         ),
         install_filegroup("core", "//core:prelude"),
     ],
-    "lib/carbon/llvm/bin": [
-        install_symlink(
-            "clang",
-            "../../carbon-busybox",
-            is_driver = True,
-        ),
-    ] + [install_symlink(
+    "lib/carbon/llvm/bin": [install_symlink(
         name,
         "../../carbon-busybox",
         is_driver = True,
@@ -189,6 +191,13 @@ make_install_filegroups(
     no_driver_name = "install_data.no_driver",
     pkg_name = "pkg_data",
     prefix = "prefix_root",
+)
+
+py_test(
+    name = "llvm_symlinks_test",
+    size = "small",
+    srcs = ["llvm_symlinks_test.py"],
+    data = [":install_data"],
 )
 
 manifest(

@@ -180,7 +180,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C.ee0 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.ee0 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.ee0 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -201,7 +201,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %tuple: %tuple.type.d07 = tuple_value (%.loc9_18.3, %.loc9_18.5) [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:     %.loc9_19: %tuple.type.d07 = converted %.loc9_18.1, %tuple [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.21c) [concrete = constants.%C.ee0]
-// CHECK:STDOUT:     %return.param: ref %C.ee0 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.ee0 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C.ee0 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

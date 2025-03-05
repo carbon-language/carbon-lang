@@ -265,10 +265,10 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.var.loc6: ref %A.elem = var <none>
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %A = out_param call_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [concrete = constants.%complete_type.70a]
@@ -815,9 +815,9 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref.loc12: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -903,9 +903,9 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref.loc12: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }

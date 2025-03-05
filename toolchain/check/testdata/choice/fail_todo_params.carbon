@@ -93,13 +93,13 @@ choice C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:   %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:   %.loc9_11: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:   %b.param: %i64 = value_param runtime_param1
+// CHECK:STDOUT:   %b.param: %i64 = value_param call_param1
 // CHECK:STDOUT:   %.loc9_19: type = splice_block %i64 [concrete = constants.%i64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
@@ -190,7 +190,7 @@ choice C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %a.param: @C.%T.loc3_10.2 (%T) = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: @C.%T.loc3_10.2 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc3_10.1 [symbolic = %T.loc3_10.2 (constants.%T)]
 // CHECK:STDOUT:     %a: @C.%T.loc3_10.2 (%T) = bind_name a, %a.param
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type]
@@ -235,7 +235,7 @@ choice C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %a.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:   %a.param: %ptr = value_param call_param0
 // CHECK:STDOUT:   %.loc8: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr]

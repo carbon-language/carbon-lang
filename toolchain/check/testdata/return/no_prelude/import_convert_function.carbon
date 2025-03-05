@@ -101,18 +101,18 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IntLiteral.decl: %IntLiteral.type = fn_decl @IntLiteral [concrete = constants.%IntLiteral] {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
 // CHECK:STDOUT:     %N.patt: Core.IntLiteral = binding_pattern N
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt, runtime_param0
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt, call_param0
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc6_22.1: type = splice_block %.loc6_22.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
@@ -120,7 +120,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:       %.loc6_22.3: type = converted %int_literal.make_type, %.loc6_22.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
@@ -159,12 +159,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type.4cf) = fn_decl @Convert.1 [symbolic = @ImplicitAs.%Convert (constants.%Convert.147)] {
 // CHECK:STDOUT:       %self.patt: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Convert.1.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.1.%T (%T) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Convert.1.%T (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc8_22.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %self.param: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc9_20.1: type = splice_block %.loc9_20.3 [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc9_20.2: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.07f) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.07f) = name_ref Self, %.loc9_20.2 [symbolic = %Self (constants.%Self)]
@@ -172,7 +172,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:         %.loc9_20.3: type = converted %Self.ref, %Self.as_type.loc9_20.2 [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Convert.1.%T (%T) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Convert.1.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Convert.1.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc9_32.1: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.94e) = assoc_entity element0, %Convert.decl [symbolic = %assoc0.loc9_32.2 (constants.%assoc0.a50)]
@@ -188,18 +188,18 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl: %.loc12_17.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.c2a = fn_decl @Convert.2 [concrete = constants.%Convert.40d] {
 // CHECK:STDOUT:     %self.patt: Core.IntLiteral = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: Core.IntLiteral = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: Core.IntLiteral = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32.builtin = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32.builtin = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32.builtin = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc13_31.1: type = value_of_initializer %int.make_type_signed [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc13_31.2: type = converted %int.make_type_signed, %.loc13_31.1 [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %self.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc12_17.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %self: Core.IntLiteral = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -415,10 +415,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.837 [concrete] {} {
@@ -571,15 +571,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.837: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.fff = fn_decl @Convert.3 [concrete = constants.%Convert.606] {
 // CHECK:STDOUT:     %self.patt: %C.808 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.808 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.808 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.808 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.808 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.837.%C [concrete = constants.%C.808]
 // CHECK:STDOUT:     %self: %C.808 = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -593,15 +593,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.511: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.89f = fn_decl @Convert.4 [concrete = constants.%Convert.689] {
 // CHECK:STDOUT:     %self.patt: %C.8be = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.8be = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.8be = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.8be = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.8be = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.511.%C [concrete = constants.%C.8be]
 // CHECK:STDOUT:     %self: %C.8be = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -615,15 +615,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.141: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.e90 = fn_decl @Convert.5 [concrete = constants.%Convert.ec9] {
 // CHECK:STDOUT:     %self.patt: %C.c17 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.c17 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.c17 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.c17 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.c17 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.141.%C [concrete = constants.%C.c17]
 // CHECK:STDOUT:     %self: %C.c17 = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -637,15 +637,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.e6b: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.5db = fn_decl @Convert.6 [concrete = constants.%Convert.193] {
 // CHECK:STDOUT:     %self.patt: %C.414 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.414 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.414 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.414 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.414 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.e6b.%C [concrete = constants.%C.414]
 // CHECK:STDOUT:     %self: %C.414 = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -659,15 +659,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.056: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4e7 = fn_decl @Convert.7 [concrete = constants.%Convert.52a] {
 // CHECK:STDOUT:     %self.patt: %C.488 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.488 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.488 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.488 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.488 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.056.%C [concrete = constants.%C.488]
 // CHECK:STDOUT:     %self: %C.488 = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -681,15 +681,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.154: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.658 = fn_decl @Convert.8 [concrete = constants.%Convert.9b6] {
 // CHECK:STDOUT:     %self.patt: %C.3e2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.3e2 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.3e2 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.3e2 = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.3e2 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.154.%C [concrete = constants.%C.3e2]
 // CHECK:STDOUT:     %self: %C.3e2 = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -703,15 +703,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.a6d: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.623 = fn_decl @Convert.9 [concrete = constants.%Convert.8c9] {
 // CHECK:STDOUT:     %self.patt: %C.78c = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.78c = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.78c = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.78c = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.78c = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.a6d.%C [concrete = constants.%C.78c]
 // CHECK:STDOUT:     %self: %C.78c = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -725,15 +725,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: impl @impl.ebc: %C as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.3f8 = fn_decl @Convert.10 [concrete = constants.%Convert.71a] {
 // CHECK:STDOUT:     %self.patt: %C.6aa = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.6aa = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C.6aa = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self.param: %C.6aa = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %C.6aa = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.ebc.%C [concrete = constants.%C.6aa]
 // CHECK:STDOUT:     %self: %C.6aa = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -1233,13 +1233,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F0.decl: %F0.type = fn_decl @F0 [concrete = constants.%F0] {
 // CHECK:STDOUT:     %n.patt: %i32.builtin = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32.builtin = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %i32.builtin = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %P.ref.loc7: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%P.D [concrete = constants.%D]
-// CHECK:STDOUT:     %n.param: %i32.builtin = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: %i32.builtin = value_param call_param0
 // CHECK:STDOUT:     %.loc7_10.1: type = splice_block %.loc7_10.3 [concrete = constants.%i32.builtin] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %int.make_type_signed: init type = call constants.%Int(%int_32) [concrete = constants.%i32.builtin]
@@ -1247,7 +1247,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:       %.loc7_10.3: type = converted %int.make_type_signed, %.loc7_10.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32.builtin = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -336,11 +336,11 @@ class D {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -385,11 +385,11 @@ class D {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -430,10 +430,10 @@ class D {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
@@ -479,10 +479,10 @@ class D {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, <error> [concrete = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]

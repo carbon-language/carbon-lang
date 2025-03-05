@@ -253,7 +253,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %c: ref %C.7a7 = bind_name c, %c.var
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.ref: ref %C.7a7 = name_ref c, file.%c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
@@ -264,12 +264,12 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %.loc16_19.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:     %.loc16_19.2: ref %empty_tuple.type = temporary %.loc16_19.1, %F.call
 // CHECK:STDOUT:     %.loc16_19.3: type = converted %F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %.loc25_14: %empty_struct_type = struct_literal ()
@@ -277,7 +277,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.7a7]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

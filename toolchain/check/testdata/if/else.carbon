@@ -59,9 +59,9 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc15_10.1: type = splice_block %.loc15_10.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc15_10.2: type = value_of_initializer %bool.make_type [concrete = bool]

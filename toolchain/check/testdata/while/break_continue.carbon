@@ -79,82 +79,82 @@ fn While() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type, %.loc11_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc12_11.2: type = converted %bool.make_type, %.loc12_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [concrete = constants.%C] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc13_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc13_11.2: type = converted %bool.make_type, %.loc13_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [concrete = constants.%D] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc14_11.2: type = converted %bool.make_type, %.loc14_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [concrete = constants.%E] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc15_11.2: type = converted %bool.make_type, %.loc15_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc16_11.2: type = converted %bool.make_type, %.loc16_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc17_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc17_11.2: type = converted %bool.make_type, %.loc17_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc18_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc18_11.2: type = converted %bool.make_type, %.loc18_11.1 [concrete = bool]
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [concrete = constants.%While] {} {}

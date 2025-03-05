@@ -85,30 +85,30 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Eq.decl: %Eq.type = fn_decl @Eq [concrete = constants.%Eq] {
 // CHECK:STDOUT:     %a.patt: bool = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: bool = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: bool = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc4_28: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc4_28.1: type = value_of_initializer %bool.make_type.loc4_28 [concrete = bool]
 // CHECK:STDOUT:     %.loc4_28.2: type = converted %bool.make_type.loc4_28, %.loc4_28.1 [concrete = bool]
-// CHECK:STDOUT:     %a.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc4_10: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc4_10.2: type = value_of_initializer %bool.make_type.loc4_10 [concrete = bool]
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %bool.make_type.loc4_10, %.loc4_10.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: bool = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: bool = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc4_19.1: type = splice_block %.loc4_19.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc4_19: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc4_19.2: type = value_of_initializer %bool.make_type.loc4_19 [concrete = bool]
 // CHECK:STDOUT:       %.loc4_19.3: type = converted %bool.make_type.loc4_19, %.loc4_19.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
@@ -123,22 +123,22 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: %True.type = fn_decl @True [concrete = constants.%True] {
 // CHECK:STDOUT:     %return.patt: %C.a14 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.a14 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.a14 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
-// CHECK:STDOUT:     %return.param: ref %C.a14 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.a14 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C.a14 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %False.decl: %False.type = fn_decl @False [concrete = constants.%False] {
 // CHECK:STDOUT:     %return.patt: %C.2ba = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.2ba = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.2ba = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
-// CHECK:STDOUT:     %return.param: ref %C.2ba = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.2ba = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C.2ba = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
@@ -332,22 +332,22 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: %True.type = fn_decl @True [concrete = constants.%True] {
 // CHECK:STDOUT:     %return.patt: %C.a14 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.a14 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.a14 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
-// CHECK:STDOUT:     %return.param: ref %C.a14 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.a14 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C.a14 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %False.decl: %False.type = fn_decl @False [concrete = constants.%False] {
 // CHECK:STDOUT:     %return.patt: %C.2ba = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.2ba = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.2ba = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
-// CHECK:STDOUT:     %return.param: ref %C.2ba = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.2ba = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C.2ba = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {

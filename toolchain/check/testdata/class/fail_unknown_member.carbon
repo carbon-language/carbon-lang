@@ -52,16 +52,16 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %Class = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %Class = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

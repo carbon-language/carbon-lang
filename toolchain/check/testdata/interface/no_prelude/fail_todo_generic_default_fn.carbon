@@ -52,16 +52,16 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [symbolic = constants.%.075] {
 // CHECK:STDOUT:     %self.patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc23_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc23_35.1: @.1.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc23_35: @.1.%I.type (%I.type.325) = name_ref Self, %.loc23_35.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc23_35: type = facet_access_type %Self.ref.loc23_35 [symbolic = %Self.as_type.loc23_24.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc23_35.2: type = converted %Self.ref.loc23_35, %Self.as_type.loc23_35 [symbolic = %Self.as_type.loc23_24.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %self.param: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc23_24.1: type = splice_block %.loc23_24.3 [symbolic = %Self.as_type.loc23_24.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %.loc23_24.2: @.1.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc23_24: @.1.%I.type (%I.type.325) = name_ref Self, %.loc23_24.2 [symbolic = %Self (constants.%Self)]
@@ -69,7 +69,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:       %.loc23_24.3: type = converted %Self.ref.loc23_24, %Self.as_type.loc23_24.1 [symbolic = %Self.as_type.loc23_24.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @.1.%Self.as_type.loc23_24.2 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -90,15 +90,15 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = @I.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_25.1: @F.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_25: @F.%I.type (%I.type.325) = name_ref Self, %.loc13_25.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc13_25: type = facet_access_type %Self.ref.loc13_25 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc13_25.2: type = converted %Self.ref.loc13_25, %Self.as_type.loc13_25 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %self.param: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc13_14.1: type = splice_block %.loc13_14.3 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc13_14.2: @F.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref.loc13_14: @F.%I.type (%I.type.325) = name_ref Self, %.loc13_14.2 [symbolic = %Self (constants.%Self)]
@@ -106,7 +106,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:         %.loc13_14.3: type = converted %Self.ref.loc13_14, %Self.as_type.loc13_14.2 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.%Self.as_type.loc13_14.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @F.%Self.as_type.loc13_14.1 (%Self.as_type) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @F.%Self.as_type.loc13_14.1 (%Self.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @F.%Self.as_type.loc13_14.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc13_29.1: @I.%I.assoc_type (%I.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc13_29.2 (constants.%assoc0)]

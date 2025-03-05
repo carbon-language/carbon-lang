@@ -137,12 +137,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type) = fn_decl @Convert [symbolic = @ImplicitAs.%Convert (constants.%Convert)] {
 // CHECK:STDOUT:       %self.patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Convert.%Dest (%Dest) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_22.1 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_20.1: type = splice_block %.loc4_20.3 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc4_20.2: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = name_ref Self, %.loc4_20.2 [symbolic = %Self (constants.%Self)]
@@ -150,7 +150,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:         %.loc4_20.3: type = converted %Self.ref, %Self.as_type.loc4_20.2 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Convert.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc4_35.1: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %Convert.decl [symbolic = %assoc0.loc4_35.2 (constants.%assoc0)]
@@ -254,9 +254,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.cf8]
 // CHECK:STDOUT:   %G.decl: %G.type.1e1 = fn_decl @G.1 [concrete = constants.%G.449] {
 // CHECK:STDOUT:     %self.patt: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Instance.type = name_ref Self, @Instance.%Self [symbolic = %Self (constants.%Self.cf8)]
 // CHECK:STDOUT:       %Self.as_type.loc12_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
@@ -283,9 +283,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: impl @impl.477: %struct_type.i as %Instance.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.0c0 = fn_decl @G.2 [concrete = constants.%G.484] {
 // CHECK:STDOUT:     %self.patt: %struct_type.i = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %struct_type.i = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %struct_type.i = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %struct_type.i = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %struct_type.i = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.477.%struct_type.i [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:     %self: %struct_type.i = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -456,9 +456,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonInstanceCallImportFail.decl: %NonInstanceCallImportFail.type = fn_decl @NonInstanceCallImportFail [concrete = constants.%NonInstanceCallImportFail] {
 // CHECK:STDOUT:     %n.patt: %struct_type.i = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %struct_type.i = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %struct_type.i = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param: %struct_type.i = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: %struct_type.i = value_param call_param0
 // CHECK:STDOUT:     %.loc6_40: type = splice_block %struct_type.i [concrete = constants.%struct_type.i] {
 // CHECK:STDOUT:       %.loc6_39.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc6_39.2: type = converted %.loc6_39.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -563,9 +563,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonInstanceCallIndirectImport.decl: %NonInstanceCallIndirectImport.type = fn_decl @NonInstanceCallIndirectImport [concrete = constants.%NonInstanceCallIndirectImport] {
 // CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc6_45: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %.loc6_43.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc6_43.2: type = converted %.loc6_43.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -673,9 +673,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %InstanceCallImport.decl: %InstanceCallImport.type = fn_decl @InstanceCallImport [concrete = constants.%InstanceCallImport] {
 // CHECK:STDOUT:     %n.patt: %struct_type.i = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %struct_type.i = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %struct_type.i = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param: %struct_type.i = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: %struct_type.i = value_param call_param0
 // CHECK:STDOUT:     %.loc5_33: type = splice_block %struct_type.i [concrete = constants.%struct_type.i] {
 // CHECK:STDOUT:       %.loc5_32.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc5_32.2: type = converted %.loc5_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -685,9 +685,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCallIndirectImport.decl: %InstanceCallIndirectImport.type = fn_decl @InstanceCallIndirectImport [concrete = constants.%InstanceCallIndirectImport] {
 // CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc9_42: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %.loc9_40.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_40.2: type = converted %.loc9_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

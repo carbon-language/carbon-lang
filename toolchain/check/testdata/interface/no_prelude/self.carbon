@@ -35,21 +35,21 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12_25: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc12_25: type = facet_access_type %Self.ref.loc12_25 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc12_25: type = converted %Self.ref.loc12_25, %Self.as_type.loc12_25 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc12_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc12_14.2: type = facet_access_type %Self.ref.loc12_14 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc12_14.2: type = converted %Self.ref.loc12_14, %Self.as_type.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @F.%Self.as_type.loc12_14.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref @F.%Self.as_type.loc12_14.1 (%Self.as_type) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @F.%Self.as_type.loc12_14.1 (%Self.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%Self.as_type.loc12_14.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
