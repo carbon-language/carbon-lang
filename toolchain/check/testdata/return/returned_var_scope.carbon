@@ -44,11 +44,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
 // CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.d04: <bound method> = bound_method %int_0.5c6, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn.d62: <specific function> = specific_function %Convert.bound.d04, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.b6e: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn.70c: <specific function> = specific_function %Convert.bound.ab5, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
@@ -115,9 +116,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc13: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %int_0.loc13, %impl.elem0.loc13 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %bound_method.loc13, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %specific_fn.loc13(%int_0.loc13) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %bound_method.loc13_14.1: <bound method> = bound_method %int_0.loc13, %impl.elem0.loc13 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_14.2: <bound method> = bound_method %int_0.loc13, %specific_fn.loc13 [concrete = constants.%bound_method.b6e]
+// CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %bound_method.loc13_14.2(%int_0.loc13) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc13_14.2: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign %v.var, %.loc13_14.2
 // CHECK:STDOUT:   %.loc13_21: type = splice_block %i32.loc13 [concrete = constants.%i32] {
@@ -139,9 +141,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc16: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %int_1, %impl.elem0.loc16 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %bound_method.loc16, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.70c]
-// CHECK:STDOUT:   %int.convert_checked.loc16: init %i32 = call %specific_fn.loc16(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %bound_method.loc16_14.1: <bound method> = bound_method %int_1, %impl.elem0.loc16 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %impl.elem0.loc16, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc16_14.2: <bound method> = bound_method %int_1, %specific_fn.loc16 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc16: init %i32 = call %bound_method.loc16_14.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc16_14.2: init %i32 = converted %int_1, %int.convert_checked.loc16 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign %w.var, %.loc16_14.2
 // CHECK:STDOUT:   %.loc16_21: type = splice_block %i32.loc16 [concrete = constants.%i32] {
@@ -154,9 +157,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: !if.else.loc15:
 // CHECK:STDOUT:   %int_0.loc18: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc18: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %int_0.loc18, %impl.elem0.loc18 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %bound_method.loc18, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %specific_fn.loc18(%int_0.loc18) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %bound_method.loc18_11.1: <bound method> = bound_method %int_0.loc18, %impl.elem0.loc18 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_11.2: <bound method> = bound_method %int_0.loc18, %specific_fn.loc18 [concrete = constants.%bound_method.b6e]
+// CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %bound_method.loc18_11.2(%int_0.loc18) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc18_11.1: %i32 = value_of_initializer %int.convert_checked.loc18 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc18_11.2: %i32 = converted %int_0.loc18, %.loc18_11.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   return %.loc18_11.2
@@ -175,9 +179,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc23: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %int_0, %impl.elem0.loc23 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %bound_method.loc23, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.d62]
-// CHECK:STDOUT:   %int.convert_checked.loc23: init %i32 = call %specific_fn.loc23(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %bound_method.loc23_14.1: <bound method> = bound_method %int_0, %impl.elem0.loc23 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc23_14.2: <bound method> = bound_method %int_0, %specific_fn.loc23 [concrete = constants.%bound_method.b6e]
+// CHECK:STDOUT:   %int.convert_checked.loc23: init %i32 = call %bound_method.loc23_14.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc23_14.2: init %i32 = converted %int_0, %int.convert_checked.loc23 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign %v.var, %.loc23_14.2
 // CHECK:STDOUT:   %.loc23_21: type = splice_block %i32.loc23 [concrete = constants.%i32] {
@@ -196,9 +201,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc26: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %int_1, %impl.elem0.loc26 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc26: <specific function> = specific_function %bound_method.loc26, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.70c]
-// CHECK:STDOUT:   %int.convert_checked.loc26: init %i32 = call %specific_fn.loc26(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %bound_method.loc26_12.1: <bound method> = bound_method %int_1, %impl.elem0.loc26 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc26: <specific function> = specific_function %impl.elem0.loc26, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc26_12.2: <bound method> = bound_method %int_1, %specific_fn.loc26 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc26: init %i32 = call %bound_method.loc26_12.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc26_12.2: init %i32 = converted %int_1, %int.convert_checked.loc26 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign %w.var, %.loc26_12.2
 // CHECK:STDOUT:   %.loc26_19: type = splice_block %i32.loc26 [concrete = constants.%i32] {

@@ -148,6 +148,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.f13: %F.type.2e4 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.facet.18f: %HasF.type = facet_value %empty_struct_type, %impl_witness.d9b [concrete]
 // CHECK:STDOUT:   %.658: type = fn_type_with_self_type %F.type.b7b, %HasF.facet.18f [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.f13, @F.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,9 +260,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.658 = impl_witness_access constants.%impl_witness.d9b, element0 [concrete = constants.%F.f13]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @F.2(constants.%empty_struct_type)
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %specific_fn(%x.ref)
+// CHECK:STDOUT:   %bound_method.loc13_4: <bound method> = bound_method %x.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_14: <bound method> = bound_method %x.ref, %specific_fn
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %bound_method.loc13_14(%x.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,6 +335,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.f13: %F.type.2e4 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.facet.18f: %HasF.type = facet_value %empty_struct_type, %impl_witness.d9b [concrete]
 // CHECK:STDOUT:   %.658: type = fn_type_with_self_type %F.type.b7b, %HasF.facet.18f [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.f13, @F.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -465,9 +468,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.658 = impl_witness_access constants.%impl_witness.d9b, element0 [concrete = constants.%F.f13]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @F.2(constants.%empty_struct_type)
-// CHECK:STDOUT:   %F.call: init %empty_struct_type = call %specific_fn(%x.ref)
+// CHECK:STDOUT:   %bound_method.loc13_11: <bound method> = bound_method %x.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_21: <bound method> = bound_method %x.ref, %specific_fn
+// CHECK:STDOUT:   %F.call: init %empty_struct_type = call %bound_method.loc13_21(%x.ref)
 // CHECK:STDOUT:   %.loc13_21.1: ref %empty_struct_type = temporary_storage
 // CHECK:STDOUT:   %.loc13_21.2: ref %empty_struct_type = temporary %.loc13_21.1, %F.call
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
@@ -549,6 +553,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.c77: %F.type.2e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.facet.007: %HasF.type = facet_value %C.7a7, %impl_witness.770 [concrete]
 // CHECK:STDOUT:   %.4df: type = fn_type_with_self_type %F.type.b7b, %HasF.facet.007 [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.c77, @F.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -686,9 +691,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.4df = impl_witness_access constants.%impl_witness.770, element0 [concrete = constants.%F.c77]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @F.2(constants.%empty_struct_type)
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %specific_fn(%x.ref)
+// CHECK:STDOUT:   %bound_method.loc15_4: <bound method> = bound_method %x.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc15_14: <bound method> = bound_method %x.ref, %specific_fn
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %bound_method.loc15_14(%x.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -791,6 +797,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.8c6: %F.type.a13 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.facet.075: %HasF.type.072 = facet_value %empty_struct_type, %impl_witness.221 [concrete]
 // CHECK:STDOUT:   %.a00: type = fn_type_with_self_type %F.type.b0b, %HasF.facet.075 [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.8c6, @F.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -927,9 +934,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.loc13_14: %HasF.assoc_type.60b = specific_constant @HasF.%assoc0.loc5_21.1, @HasF(constants.%empty_struct_type) [concrete = constants.%assoc0.46d]
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type.60b = name_ref F, %.loc13_14 [concrete = constants.%assoc0.46d]
 // CHECK:STDOUT:   %impl.elem0: %.a00 = impl_witness_access constants.%impl_witness.221, element0 [concrete = constants.%F.8c6]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @F.2(constants.%empty_struct_type)
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %specific_fn(%x.ref)
+// CHECK:STDOUT:   %bound_method.loc13_4: <bound method> = bound_method %x.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_18: <bound method> = bound_method %x.ref, %specific_fn
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %bound_method.loc13_18(%x.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

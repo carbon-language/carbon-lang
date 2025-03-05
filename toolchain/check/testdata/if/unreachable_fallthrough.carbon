@@ -35,11 +35,12 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
 // CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn.70c: <specific function> = specific_function %Convert.bound.ab5, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ef9: <bound method> = bound_method %int_2.ecc, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn.787: <specific function> = specific_function %Convert.bound.ef9, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.b92: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,9 +88,10 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc13: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %int_1, %impl.elem0.loc13 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %bound_method.loc13, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.70c]
-// CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %specific_fn.loc13(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %bound_method.loc13_13.1: <bound method> = bound_method %int_1, %impl.elem0.loc13 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_13.2: <bound method> = bound_method %int_1, %specific_fn.loc13 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %bound_method.loc13_13.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_13.1: %i32 = value_of_initializer %int.convert_checked.loc13 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_13.2: %i32 = converted %int_1, %.loc13_13.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   return %.loc13_13.2
@@ -97,9 +99,10 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc15: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %int_2, %impl.elem0.loc15 [concrete = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %bound_method.loc15, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.787]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %specific_fn.loc15(%int_2) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %bound_method.loc15_13.1: <bound method> = bound_method %int_2, %impl.elem0.loc15 [concrete = constants.%Convert.bound.ef9]
+// CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc15_13.2: <bound method> = bound_method %int_2, %specific_fn.loc15 [concrete = constants.%bound_method.b92]
+// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %bound_method.loc15_13.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_13.1: %i32 = value_of_initializer %int.convert_checked.loc15 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_13.2: %i32 = converted %int_2, %.loc15_13.1 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   return %.loc15_13.2

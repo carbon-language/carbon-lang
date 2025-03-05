@@ -18,6 +18,11 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                            .self_type_id = InstId::None,
                            .self_id = InstId::None,
                            .is_error = false};
+  if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
+    result.self_id = bound_method->object_id;
+    callee_id = bound_method->function_decl_id;
+  }
+
   if (specific_id.has_value()) {
     callee_id = sem_ir.constant_values().GetInstIdIfValid(
         GetConstantValueInSpecific(sem_ir, specific_id, callee_id));
@@ -29,11 +34,6 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
           sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
     result.resolved_specific_id = specific_function->specific_id;
     callee_id = specific_function->callee_id;
-  }
-
-  if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
-    result.self_id = bound_method->object_id;
-    callee_id = bound_method->function_decl_id;
   }
 
   // Identify the function we're calling by its type.
