@@ -193,20 +193,20 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
 auto FileContext::BuildFunctionTypeInfo(
     const SemIR::Function& function, SemIR::SpecificId specific_id,
     llvm::ArrayRef<SemIR::InstId> implicit_param_patterns,
-    llvm::ArrayRef<SemIR::InstId> param_patterns,
-    llvm::SmallVector<SemIR::InstId>& param_inst_ids, llvm::Type*& return_type,
-    SemIR::InstId& return_param_id) -> llvm::FunctionType* {
-  const auto return_info =
+    llvm::ArrayRef<SemIR::InstId> param_patterns) -> FunctionTypeInfo {
+  auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
 
   if (!return_info.is_valid()) {
     // The return type has not been completed, create a trivial type instead.
-    return llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
-                                   /*isVarArg=*/false);
+    return {.type =
+                llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
+                                        /*isVarArg=*/false)};
   }
-  return_type =
+  auto* return_type =
       return_info.type_id.has_value() ? GetType(return_info.type_id) : nullptr;
 
+  llvm::SmallVector<llvm::Type*> param_types;
   // Compute the return type to use for the LLVM function. If the initializing
   // representation doesn't produce a value, set the return type to void.
   // TODO: For the `Run` entry point, remap return type to i32 if it doesn't
@@ -218,14 +218,15 @@ auto FileContext::BuildFunctionTypeInfo(
           : llvm::Type::getVoidTy(llvm_context());
 
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
-  // reuse it from `BuildFunctionDefinition` and when building calls, or
-  // factor out a mechanism to compute the mapping between parameters and
-  // arguments on demand.
+  // reuse it from `BuildFunctionDefinition` and when building calls, or factor
+  // out a mechanism to compute the mapping between parameters and arguments on
+  // demand.
+  llvm::SmallVector<SemIR::InstId> param_inst_ids;
   auto max_llvm_params = (return_info.has_return_slot() ? 1 : 0) +
                          implicit_param_patterns.size() + param_patterns.size();
-  llvm::SmallVector<llvm::Type*> param_types;
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
+  auto return_param_id = SemIR::InstId::None;
   if (return_info.has_return_slot()) {
     param_types.push_back(
         llvm::PointerType::get(return_type, /*AddressSpace=*/0));
@@ -247,9 +248,9 @@ auto FileContext::BuildFunctionTypeInfo(
       case SemIR::ValueRepr::Unknown:
         // This parameter type is incomplete. Fallback to describing the
         // function type as `void()`.
-        param_inst_ids.clear();
-        return llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
-                                       /*isVarArg=*/false);
+        return {.type = llvm::FunctionType::get(
+                    llvm::Type::getVoidTy(llvm_context()),
+                    /*isVarArg=*/false)};
       case SemIR::ValueRepr::None:
         break;
       case SemIR::ValueRepr::Copy:
@@ -260,8 +261,11 @@ auto FileContext::BuildFunctionTypeInfo(
         break;
     }
   }
-  return llvm::FunctionType::get(function_return_type, param_types,
-                                 /*isVarArg=*/false);
+  return {.type = llvm::FunctionType::get(function_return_type, param_types,
+                                          /*isVarArg=*/false),
+          .param_inst_ids = std::move(param_inst_ids),
+          .return_type = return_type,
+          .return_param_id = return_param_id};
 }
 
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
@@ -289,31 +293,27 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // TODO: Consider tracking whether the function has been used, and only
   // lowering it if it's needed.
 
-  llvm::SmallVector<SemIR::InstId> param_inst_ids;
-  llvm::Type* return_type = nullptr;
-  auto return_param_id = SemIR::InstId::None;
-  auto* function_type = BuildFunctionTypeInfo(
-      function, specific_id, implicit_param_patterns, param_patterns,
-      param_inst_ids, return_type, return_param_id);
+  auto function_type_info = BuildFunctionTypeInfo(
+      function, specific_id, implicit_param_patterns, param_patterns);
 
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
 
-  auto* llvm_function =
-      llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
-                             mangled_name, llvm_module());
+  auto* llvm_function = llvm::Function::Create(function_type_info.type,
+                                               llvm::Function::ExternalLinkage,
+                                               mangled_name, llvm_module());
 
   CARBON_CHECK(llvm_function->getName() == mangled_name,
                "Mangled name collision: {0}", mangled_name);
 
   // Set up parameters and the return slot.
-  for (auto [inst_id, arg] :
-       llvm::zip_equal(param_inst_ids, llvm_function->args())) {
+  for (auto [inst_id, arg] : llvm::zip_equal(function_type_info.param_inst_ids,
+                                             llvm_function->args())) {
     auto name_id = SemIR::NameId::None;
-    if (inst_id == return_param_id) {
+    if (inst_id == function_type_info.return_param_id) {
       name_id = SemIR::NameId::ReturnSlot;
-      arg.addAttr(
-          llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
+      arg.addAttr(llvm::Attribute::getWithStructRetType(
+          llvm_context(), function_type_info.return_type));
     } else {
       name_id = SemIR::Function::GetNameFromPatternId(sem_ir(), inst_id);
     }
