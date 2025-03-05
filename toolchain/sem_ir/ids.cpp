@@ -40,14 +40,6 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
-auto RuntimeParamIndex::Print(llvm::raw_ostream& out) const -> void {
-  if (*this == Unknown) {
-    out << Label << "<unknown>";
-  } else {
-    IndexBase::Print(out);
-  }
-}
-
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
   out << "generic_inst";
   if (has_value()) {

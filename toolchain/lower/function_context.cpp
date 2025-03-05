@@ -12,10 +12,12 @@ namespace Carbon::Lower {
 
 FunctionContext::FunctionContext(FileContext& file_context,
                                  llvm::Function* function,
+                                 SemIR::SpecificId specific_id,
                                  llvm::DISubprogram* di_subprogram,
                                  llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
+      specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),

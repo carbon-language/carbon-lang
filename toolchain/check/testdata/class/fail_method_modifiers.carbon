@@ -99,17 +99,17 @@ base class BaseClass {
 // CHECK:STDOUT: class @FinalClass {
 // CHECK:STDOUT:   %Abstract.decl: %Abstract.type.c3e = fn_decl @Abstract.1 [concrete = constants.%Abstract.d21] {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %FinalClass = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %FinalClass = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [concrete = constants.%FinalClass]
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Virtual.decl: %Virtual.type = fn_decl @Virtual [concrete = constants.%Virtual] {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %FinalClass = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %FinalClass = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [concrete = constants.%FinalClass]
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -125,17 +125,17 @@ base class BaseClass {
 // CHECK:STDOUT: class @AbstractClass {
 // CHECK:STDOUT:   %Default.decl: %Default.type = fn_decl @Default [concrete = constants.%Default] {
 // CHECK:STDOUT:     %self.patt: %AbstractClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %AbstractClass = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %AbstractClass = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [concrete = constants.%AbstractClass]
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [concrete = constants.%Final] {
 // CHECK:STDOUT:     %self.patt: %AbstractClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %AbstractClass = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %AbstractClass = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [concrete = constants.%AbstractClass]
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -151,9 +151,9 @@ base class BaseClass {
 // CHECK:STDOUT: class @BaseClass {
 // CHECK:STDOUT:   %Abstract.decl: %Abstract.type.de1 = fn_decl @Abstract.2 [concrete = constants.%Abstract.af0] {
 // CHECK:STDOUT:     %self.patt: %BaseClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %BaseClass = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %BaseClass = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %BaseClass = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %BaseClass = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [concrete = constants.%BaseClass]
 // CHECK:STDOUT:     %self: %BaseClass = bind_name self, %self.param
 // CHECK:STDOUT:   }

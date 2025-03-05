@@ -34,9 +34,12 @@ def log(s: str) -> None:
 
 
 def filter_targets(bazel: Path, targets: str) -> str:
+    # Need to quote targets for inclusion in another query.
+    quoted_targets = "\n".join([f'"{t}"' for t in targets.splitlines()])
+
     with tempfile.NamedTemporaryFile(mode="w+") as tmp:
         query = (
-            f"let t = set({targets}) in "
+            f"let t = set({quoted_targets}) in "
             "kind(rule, $t) except attr(tags, manual, $t)\n"
         )
         query_lines = query.splitlines()

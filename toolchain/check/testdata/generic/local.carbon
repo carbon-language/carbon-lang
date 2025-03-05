@@ -129,10 +129,8 @@ class C(C:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc5_11.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_11.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc5_11.1, runtime_param<none> [symbolic = %T.patt.loc5_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc5_11.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc5_11.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc5_11.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_11.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %C.d45 = binding_pattern v
@@ -229,10 +227,8 @@ class C(C:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
 // CHECK:STDOUT:     %C.patt.loc13_11.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
-// CHECK:STDOUT:     %C.param_patt: type = value_param_pattern %C.patt.loc13_11.1, runtime_param<none> [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0, %C.param [symbolic = %C.loc13_11.2 (constants.%C)]
+// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -269,10 +265,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %C.patt.loc4_9.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc4_9.2 (constants.%C.patt)]
-// CHECK:STDOUT:     %C.param_patt: type = value_param_pattern %C.patt.loc4_9.1, runtime_param<none> [symbolic = %C.patt.loc4_9.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %C.loc4_9.1: type = bind_symbolic_name C, 0, %C.param [symbolic = %C.loc4_9.2 (constants.%C.8b3)]
+// CHECK:STDOUT:     %C.loc4_9.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc4_9.2 (constants.%C.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

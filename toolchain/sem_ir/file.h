@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
+#include "clang/Frontend/ASTUnit.h"
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
@@ -186,6 +187,10 @@ class File : public Printable<File> {
   auto import_cpps() const -> const ValueStore<ImportCppId>& {
     return import_cpps_;
   }
+  auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
+  // TODO: When the AST can be created before creating `File`, initialize the
+  // pointer in the constructor and remove this function.
+  auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -300,6 +305,10 @@ class File : public Printable<File> {
 
   // List of Cpp imports.
   ValueStore<ImportCppId> import_cpps_;
+
+  // The Clang AST to use when looking up `Cpp` names. Null if there are no
+  // `Cpp` imports.
+  clang::ASTUnit* cpp_ast_ = nullptr;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.

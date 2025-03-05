@@ -86,6 +86,16 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
     BuildFunctionDefinition(id);
   }
+
+  // Lower function definitions for generics.
+  // This cannot be a range-based loop, as new definitions can be added
+  // while building other definitions.
+  // NOLINTNEXTLINE
+  for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
+    auto [function_id, specific_id] = specific_function_definitions_[i];
+    BuildFunctionDefinition(function_id, specific_id);
+  }
+
   // Append `__global_init` to `llvm::global_ctors` to initialize global
   // variables.
   if (sem_ir().global_ctor_id().has_value()) {
@@ -185,16 +195,17 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
   // TODO: Add this function to a list of specific functions whose definitions
   // we need to emit.
   specific_functions_[specific_id.index] = result;
-  // TODO: Should this be a pair of <function_id, specific_id> ?
-  specific_function_definitions_.push_back(specific_id);
+  // TODO: Use this to generate definitions for these functions.
+  specific_function_definitions_.push_back({function_id, specific_id});
   return result;
 }
 
 auto FileContext::BuildFunctionTypeInfo(
-    const SemIR::Function& function, SemIR::SpecificId specific_id,
+    const SemIR::Function& function, SemIR::SpecificId specific_id, llvm::function_ref<auto (SemIR::TypeId) -> llvm::Type*> get_llvm_type,
     llvm::ArrayRef<SemIR::InstId> implicit_param_patterns,
     llvm::ArrayRef<SemIR::InstId> param_patterns) -> FunctionTypeInfo {
-  auto return_info =
+
+  const auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
 
   if (!return_info.is_valid()) {
@@ -203,8 +214,7 @@ auto FileContext::BuildFunctionTypeInfo(
                 llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
                                         /*isVarArg=*/false)};
   }
-  auto* return_type =
-      return_info.type_id.has_value() ? GetType(return_info.type_id) : nullptr;
+  auto* return_type = get_llvm_type(return_info.type_id);
 
   llvm::SmallVector<llvm::Type*> param_types;
   // Compute the return type to use for the LLVM function. If the initializing
@@ -235,14 +245,17 @@ auto FileContext::BuildFunctionTypeInfo(
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
            implicit_param_patterns, param_patterns)) {
-    auto param_pattern = SemIR::Function::GetParamPatternInfoFromPatternId(
-                             sem_ir(), param_pattern_id)
-                             .inst;
-    if (!param_pattern.runtime_index.has_value()) {
+    auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
+        sem_ir(), param_pattern_id);
+    if (!param_pattern_info) {
       continue;
     }
-    auto param_type_id =
-        SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_pattern.type_id);
+    auto param_type_id = SemIR::GetTypeInSpecific(
+        sem_ir(), specific_id, param_pattern_info->inst.type_id);
+    CARBON_CHECK(
+        !param_type_id.AsConstantId().is_symbolic(),
+        "Found symbolic type id after resolution when lowering type {0}.",
+        param_pattern_info->inst.type_id);
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
@@ -256,7 +269,8 @@ auto FileContext::BuildFunctionTypeInfo(
       case SemIR::ValueRepr::Copy:
       case SemIR::ValueRepr::Custom:
       case SemIR::ValueRepr::Pointer:
-        param_types.push_back(GetType(value_rep.type_id));
+        auto* param_types_to_add = get_llvm_type(value_rep.type_id);
+        param_types.push_back(param_types_to_add);
         param_inst_ids.push_back(param_pattern_id);
         break;
     }
@@ -284,6 +298,18 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     return nullptr;
   }
 
+  // TODO: Consider tracking whether the function has been used, and only
+  // lowering it if it's needed.
+
+  // TODO nit: add is_symbolic() to type_id to forward to
+  // type_id.AsConstantId().is_symbolic(). Update call below too.
+  auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
+    if (!type_id.has_value()) {
+      return nullptr;
+    }
+    return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
+  };
+
   auto implicit_param_patterns =
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
   // TODO: Include parameters corresponding to positional parameters.
@@ -294,7 +320,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // lowering it if it's needed.
 
   auto function_type_info = BuildFunctionTypeInfo(
-      function, specific_id, implicit_param_patterns, param_patterns);
+      function, specific_id, get_llvm_type, implicit_param_patterns, param_patterns);
 
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
@@ -323,7 +349,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   return llvm_function;
 }
 
-auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
+auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id,
+                                          SemIR::SpecificId specific_id)
     -> void {
   const auto& function = sem_ir().functions().Get(function_id);
   const auto& body_block_ids = function.body_block_ids;
@@ -332,14 +359,22 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
-  llvm::Function* llvm_function = GetFunction(function_id);
-  if (!llvm_function) {
-    // We chose not to lower this function at all, for example because it's a
-    // generic function.
-    return;
+  llvm::Function* llvm_function;
+  if (specific_id.has_value()) {
+    llvm_function = specific_functions_[specific_id.index];
+  } else {
+    llvm_function = GetFunction(function_id);
+    if (!llvm_function) {
+      // We chose not to lower this function at all, for example because it's a
+      // generic function.
+      return;
+    }
   }
 
-  BuildFunctionBody(function_id, function, llvm_function);
+  // For non-generics we do not lower. For generics, the llvm function was
+  // created via GetOrCreateFunction prior to this when building the
+  // declaration.
+  BuildFunctionBody(function_id, function, llvm_function, specific_id);
 }
 
 auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
@@ -351,7 +386,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
 
-  FunctionContext function_lowering(*this, llvm_function,
+  FunctionContext function_lowering(*this, llvm_function, specific_id,
                                     BuildDISubprogram(function, llvm_function),
                                     vlog_stream_);
 
@@ -371,12 +406,15 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   auto lower_param = [&](SemIR::InstId param_id) {
     // Get the value of the parameter from the function argument.
     auto param_inst = sem_ir().insts().GetAs<SemIR::AnyParam>(param_id);
-    llvm::Value* param_value =
-        llvm::PoisonValue::get(GetType(param_inst.type_id));
+    llvm::Value* param_value;
+
     if (SemIR::ValueRepr::ForType(sem_ir(), param_inst.type_id).kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;
+    } else {
+      param_value = llvm::PoisonValue::get(GetType(
+          SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_inst.type_id)));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);

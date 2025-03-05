@@ -252,6 +252,13 @@ class DeclNameStack {
                        SemIR::AccessKind access_kind)
       -> SemIR::ScopeLookupResult;
 
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void {
+    CARBON_CHECK(decl_name_stack_.empty(),
+                 "decl_name_stack still has {0} entries",
+                 decl_name_stack_.size());
+  }
+
  private:
   // Returns a name context corresponding to an empty name.
   auto MakeEmptyNameContext() -> NameContext;

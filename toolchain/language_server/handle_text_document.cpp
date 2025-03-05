@@ -6,6 +6,8 @@
 
 namespace Carbon::LanguageServer {
 
+// Implements `textDocument/didOpen`:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didOpen
 auto HandleDidOpenTextDocument(
     Context& context, const clang::clangd::DidOpenTextDocumentParams& params)
     -> void {
@@ -26,36 +28,31 @@ auto HandleDidOpenTextDocument(
   }
 }
 
+// Returns the result of moving from `cursor_index` past `line_count` lines.
+static auto GetNthLineIndex(llvm::StringRef contents, size_t cursor_index,
+                            size_t line_count) -> size_t {
+  for ([[maybe_unused]] auto _ : llvm::seq(line_count)) {
+    const size_t newline_index = contents.find('\n', cursor_index);
+    CARBON_CHECK(newline_index != std::string::npos,
+                 "Line number greater than number of lines in the file");
+    cursor_index = newline_index + 1;
+  }
+  return cursor_index;
+}
+
 // Takes start and end positions and returns a tuple with start and end
 // offsets. Positions are based on row and column numbers in the source
 // code. We often need to know the offsets when modifying strings, so
 // this function helps us calculate the offsets. It assumes that the start
 // position comes before the end position.
-static auto PositionToIndex(const std::string& contents,
+static auto PositionToIndex(llvm::StringRef contents,
                             const clang::clangd::Position& start,
                             const clang::clangd::Position& end)
     -> std::tuple<size_t, size_t> {
-  size_t start_index = 0;
-  size_t end_index = 0;
-
-  for (auto line_number : llvm::seq(end.line)) {
-    const size_t newline_index = contents.find('\n', end_index);
-
-    CARBON_CHECK(newline_index != std::string::npos,
-                 "Line number greater than number of lines in the file");
-
-    end_index = newline_index + 1;
-
-    // This condition won't be met if start.line == end.line
-    // so we need to also check this outside the loop.
-    if (line_number == start.line) {
-      start_index = end_index;
-    }
-  }
-
-  if (start.line == end.line) {
-    start_index = end_index;
-  }
+  size_t start_index =
+      GetNthLineIndex(contents, /*cursor_index=*/0, start.line);
+  size_t end_index = GetNthLineIndex(contents, /*cursor_index=*/start_index,
+                                     end.line - start.line);
 
   start_index += start.character;
   end_index += end.character;
@@ -94,6 +91,8 @@ static auto ApplyChanges(
   }
 }
 
+// Implements `textDocument/didChange`:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didChange
 auto HandleDidChangeTextDocument(
     Context& context, const clang::clangd::DidChangeTextDocumentParams& params)
     -> void {
@@ -112,6 +111,8 @@ auto HandleDidChangeTextDocument(
   }
 }
 
+// Implements `textDocument/didClose`:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didClose
 auto HandleDidCloseTextDocument(
     Context& context, const clang::clangd::DidCloseTextDocumentParams& params)
     -> void {

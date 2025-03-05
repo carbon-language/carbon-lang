@@ -58,8 +58,11 @@ cc_binary(
         ":main",
         "//common:check",
         "//common:raw_string_ostream",
+        "//testing/base:file_helpers",
         "//testing/file_test:file_test_base",
+        "//testing/file_test:manifest",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/strings",
         "@re2",
     ],
 )

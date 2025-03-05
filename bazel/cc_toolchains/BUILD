@@ -20,7 +20,7 @@ selects.config_setting_group(
 # Matches macOS platforms.
 config_setting(
     name = "is_macos",
-    constraint_values = ["@platforms//os:osx"],
+    constraint_values = ["@platforms//os:macos"],
 )
 
 # For use by rules.bzl.

@@ -5,6 +5,7 @@
 #include "toolchain/check/impl_lookup.h"
 
 #include "toolchain/check/deduce.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type_completion.h"
@@ -164,23 +165,39 @@ static auto FindAndDiagnoseImplLookupCycle(
 static auto GetInterfaceIdFromConstantId(Context& context, SemIR::LocId loc_id,
                                          SemIR::ConstantId interface_const_id)
     -> SemIR::InterfaceId {
+  // The `interface_const_id` is a constant value for some facet type. We do
+  // this long chain of steps to go from that constant value to the
+  // `FacetTypeId` found on the `FacetType` instruction of this constant value,
+  // and finally to the `CompleteFacetType`.
   auto facet_type_inst_id =
       context.constant_values().GetInstId(interface_const_id);
-  auto facet_type_id =
-      context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id).facet_type_id;
-  const auto& facet_type_info = context.facet_types().Get(facet_type_id);
-  if (facet_type_info.impls_constraints.empty()) {
+  auto facet_type_inst =
+      context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
+  auto facet_type_id = facet_type_inst.facet_type_id;
+  auto complete_facet_type_id =
+      context.complete_facet_types().TryGetId(facet_type_id);
+  // The facet type will already be completed before coming here. If we're
+  // converting from a concrete type to a facet type, the conversion step
+  // requires everything to be complete before doing impl lookup.
+  CARBON_CHECK(complete_facet_type_id.has_value());
+  const auto& complete_facet_type =
+      context.complete_facet_types().Get(complete_facet_type_id);
+
+  if (complete_facet_type.required_interfaces.empty()) {
+    // This should never happen - a FacetType either requires or is bounded by
+    // some `.Self impls` clause. Otherwise you would just have `type` (aka
+    // `TypeType` in the toolchain implementation) which is not a facet type.
     context.TODO(loc_id,
                  "impl lookup for a FacetType with no interface (using "
                  "`where .Self impls ...` instead?)");
     return SemIR::InterfaceId::None;
   }
-  if (facet_type_info.impls_constraints.size() > 1) {
+  if (complete_facet_type.required_interfaces.size() > 1) {
     context.TODO(loc_id,
                  "impl lookup for a FacetType with more than one interface");
     return SemIR::InterfaceId::None;
   }
-  return facet_type_info.impls_constraints[0].interface_id;
+  return complete_facet_type.required_interfaces[0].interface_id;
 }
 
 static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,

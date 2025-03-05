@@ -63,19 +63,19 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner] {} {}
 // CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [concrete = constants.%MakeInner] {
 // CHECK:STDOUT:     %return.patt: %Inner = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Inner = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Inner = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
-// CHECK:STDOUT:     %return.param: ref %Inner = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %Inner = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Inner = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [concrete = constants.%MakeOuter] {
 // CHECK:STDOUT:     %return.patt: %Outer = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Outer = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Outer = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
-// CHECK:STDOUT:     %return.param: ref %Outer = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %Outer = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Outer = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

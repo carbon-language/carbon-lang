@@ -31,10 +31,10 @@ interface Generic {}
 interface DifferentParams(T:! type);
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:27: error: type `()` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
 // CHECK:STDERR: interface DifferentParams(T:! ()) {}
-// CHECK:STDERR:                           ^~~~~~
+// CHECK:STDERR:                           ^
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: interface DifferentParams(T:! type);
-// CHECK:STDERR:                           ^~~~~~~~
+// CHECK:STDERR:                           ^
 // CHECK:STDERR:
 interface DifferentParams(T:! ()) {}
 
@@ -72,36 +72,28 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [concrete = constants.%NotGeneric.type] {} {}
 // CHECK:STDOUT:   %.decl.loc19: %.type.abf52e.1 = interface_decl @.1 [concrete = constants.%.generic.0a9e18.1] {
 // CHECK:STDOUT:     %T.patt.loc19_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc19_22.1, runtime_param<none> [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc19_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_22.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc19_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc19_22.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %T.patt.loc21_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_19.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc21_19.1, runtime_param<none> [symbolic = %T.patt.loc21_19.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc21_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_19.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc21_19.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_19.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [concrete = constants.%.type.4ea] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [concrete = constants.%DifferentParams.generic] {
 // CHECK:STDOUT:     %T.patt.loc31_27.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc31_27.2 (constants.%T.patt.e01)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc31_27.1, runtime_param<none> [symbolic = %T.patt.loc31_27.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc31_27.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc31_27.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc31_27.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc31_27.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc39: %.type.abf52e.2 = interface_decl @.3 [concrete = constants.%.generic.0a9e18.2] {
 // CHECK:STDOUT:     %T.patt.loc39_27.1: %empty_tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc39_27.2 (constants.%T.patt.e60)]
-// CHECK:STDOUT:     %T.param_patt: %empty_tuple.type = value_param_pattern %T.patt.loc39_27.1, runtime_param<none> [symbolic = %T.patt.loc39_27.2 (constants.%T.patt.e60)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %empty_tuple.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc39_32.1: type = splice_block %.loc39_32.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc39_32.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc39_32.3: type = converted %.loc39_32.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc39_27.1: %empty_tuple.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc39_27.2 (constants.%T.7a6)]
+// CHECK:STDOUT:     %T.loc39_27.1: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic = %T.loc39_27.2 (constants.%T.7a6)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

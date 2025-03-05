@@ -66,9 +66,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %s.patt: %struct_type.a.b.501 = binding_pattern s
-// CHECK:STDOUT:     %s.param_patt: %struct_type.a.b.501 = value_param_pattern %s.patt, runtime_param0
+// CHECK:STDOUT:     %s.param_patt: %struct_type.a.b.501 = value_param_pattern %s.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %s.param: %struct_type.a.b.501 = value_param runtime_param0
+// CHECK:STDOUT:     %s.param: %struct_type.a.b.501 = value_param call_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
 // CHECK:STDOUT:       %int_32.loc11_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc11_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -80,9 +80,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %cond.patt: bool = binding_pattern cond
-// CHECK:STDOUT:     %cond.param_patt: bool = value_param_pattern %cond.patt, runtime_param0
+// CHECK:STDOUT:     %cond.param_patt: bool = value_param_pattern %cond.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %cond.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %cond.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc13_12.2: type = value_of_initializer %bool.make_type [concrete = bool]

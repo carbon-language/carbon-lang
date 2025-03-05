@@ -9,6 +9,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "toolchain/base/llvm_tools.h"
 
 namespace Carbon {
 
@@ -91,6 +92,9 @@ class InstallPaths {
   auto lld_path() const -> std::string;
   auto ld_lld_path() const -> std::string;
   auto ld64_lld_path() const -> std::string;
+
+  // The path to any of the LLVM tools.
+  auto llvm_tool_path(LLVMTool tool) const -> std::string;
 
  private:
   friend class InstallPathsTestPeer;

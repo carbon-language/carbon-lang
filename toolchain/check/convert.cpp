@@ -1195,11 +1195,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (!target.diagnose) {
         return context.emitter().BuildSuppressed();
       }
+      // TODO: Should this message change to say "object of type" when
+      // converting from a reference expression?
       CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                        "cannot implicitly convert from {0} to {1}",
+                        "cannot implicitly convert value of type {0} to {1}",
                         TypeOfInstId, SemIR::TypeId);
       CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
-                        "cannot convert from {0} to {1} with `as`",
+                        "cannot convert value of type {0} to {1} with `as`",
                         TypeOfInstId, SemIR::TypeId);
       return context.emitter().Build(loc_id,
                                      target.kind == ConversionTarget::ExplicitAs

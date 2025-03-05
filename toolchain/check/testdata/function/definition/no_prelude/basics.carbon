@@ -38,9 +38,9 @@ fn F(n: C) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %n.patt: %C = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %C = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %C = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %n: %C = bind_name n, %n.param
 // CHECK:STDOUT:   }
