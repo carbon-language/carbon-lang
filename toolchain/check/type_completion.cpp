@@ -11,7 +11,6 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
