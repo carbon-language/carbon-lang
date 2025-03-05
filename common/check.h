@@ -13,6 +13,7 @@ namespace Carbon {
 // error message, then exits. This should be used for unexpected errors, such as
 // a bug in the application.
 //
+//
 // For example:
 //   CARBON_CHECK(is_valid, "Data is not valid!");
 //
