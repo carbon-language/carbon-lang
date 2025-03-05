@@ -55,7 +55,7 @@ interface Eats {}
 interface Animal {}
 interface Tame {}
 
-impl forall [T:! Tame] T as Eats {}
+impl forall [A:! Animal] A as Eats {}
 
 fn FeedTame2[V:! Tame & Eats](v: V) {}
 
