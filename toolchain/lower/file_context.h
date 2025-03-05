@@ -104,10 +104,9 @@ class FileContext {
       const SemIR::Function& function, SemIR::SpecificId specific_id,
       llvm::ArrayRef<SemIR::InstId> implicit_param_patterns,
       llvm::ArrayRef<SemIR::InstId> param_patterns,
-      const SemIR::ReturnTypeInfo& return_info,
-      llvm::SmallVector<llvm::Type*>& param_types,
       llvm::SmallVector<SemIR::InstId>& param_inst_ids,
-      llvm::Type*& return_type, SemIR::InstId& return_param_id) -> void;
+      llvm::Type*& return_type, SemIR::InstId& return_param_id)
+      -> llvm::FunctionType*;
 
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
