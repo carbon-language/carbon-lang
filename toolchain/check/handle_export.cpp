@@ -37,6 +37,8 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
     return true;
   }
 
+  // Exporting uses the decl name primarily for lookup, so treat poisoning the
+  // same as "not found".
   auto inst_id =
       name_context.state == DeclNameStack::NameContext::State::Poisoned
           ? SemIR::InstId::None
