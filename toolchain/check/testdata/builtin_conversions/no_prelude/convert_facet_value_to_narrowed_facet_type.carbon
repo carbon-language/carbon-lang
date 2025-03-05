@@ -46,6 +46,23 @@ fn HandleTameAnimal[W:! Eats & Animal & Tame](w: W) {
   FeedTame(w);
 }
 
+// --- with_blanket.carbon
+library "[[@TEST_NAME]]";
+
+import Core;
+
+interface Eats {}
+interface Animal {}
+interface Tame {}
+
+impl forall [T:! Tame] T as Eats {}
+
+fn FeedTame2[V:! Tame & Eats](v: V) {}
+
+fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
+  FeedTame2(w);
+}
+
 // CHECK:STDOUT: --- core.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
