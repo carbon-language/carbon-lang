@@ -1170,6 +1170,19 @@ struct PointerType {
   TypeId pointee_id;
 };
 
+// An action that performs an unqualified name reference, `x`.
+struct ReferenceNameAction {
+  static constexpr auto Kind =
+      InstKind::ReferenceNameAction.Define<Parse::NodeId>(
+          {.ir_name = "reference_name_action",
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  TypeId value_type_id;
+  AbsoluteInstId value_id;
+};
+
 // Requires a type to be complete. This is only created for generic types and
 // produces a witness that the type is complete.
 //

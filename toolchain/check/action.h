@@ -15,6 +15,9 @@ namespace Carbon::Check {
 // Performs a member access action. Defined in member_access.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::AccessMemberAction action) -> SemIR::InstId;
+// Performs a name reference action. Defined in handle_name.cpp.
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ReferenceNameAction action) -> SemIR::InstId;
 
 // Determines whether the given action depends on a template parameter in a way
 // that means it cannot be performed immediately.
@@ -24,6 +27,10 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool;
 // in a way that means the action cannot be performed immediately.
 auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id)
     -> bool;
+
+// Determines whether the given type depends on a template parameter
+// in a way that means the action cannot be performed immediately.
+auto OperandIsDependent(Context& context, SemIR::TypeId type_id) -> bool;
 
 // Adds an instruction to the current block to splice in the result of
 // performing a dependent action.
@@ -37,7 +44,8 @@ template <typename ActionT>
 auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
                   SemIR::TypeId result_type_id = SemIR::TypeId::None)
     -> SemIR::InstId {
-  if (ActionIsDependent(context, action_inst)) {
+  if (ActionIsDependent(context, action_inst) ||
+      OperandIsDependent(context, result_type_id)) {
     return AddDependentActionSplice(
         context, SemIR::LocIdAndInst(loc_id, action_inst), result_type_id);
   }

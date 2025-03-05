@@ -6,6 +6,7 @@
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/id_kind.h"
 
 namespace Carbon::Check {
 
@@ -20,8 +21,7 @@ static auto OperandIsDependent(Context& context, SemIR::ConstantId const_id)
          SemIR::ConstantDependence::Template;
 }
 
-static auto OperandIsDependent(Context& context, SemIR::TypeId type_id)
-    -> bool {
+auto OperandIsDependent(Context& context, SemIR::TypeId type_id) -> bool {
   // A type operand makes the instruction dependent if it is a
   // template-dependent type.
   return OperandIsDependent(context, context.types().GetConstantId(type_id));
@@ -35,21 +35,29 @@ auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id)
          OperandIsDependent(context, context.constant_values().Get(inst_id));
 }
 
+static auto OperandIsDependent(Context& context, SemIR::IdKind kind,
+                               int32_t arg) -> bool {
+  if (kind == SemIR::IdKind::For<SemIR::MetaInstId>) {
+    return OperandIsDependent(context, SemIR::MetaInstId(arg));
+  }
+  if (kind == SemIR::IdKind::For<SemIR::TypeId>) {
+    return OperandIsDependent(context, SemIR::TypeId(arg));
+  }
+  if (kind == SemIR::IdKind::For<SemIR::AbsoluteInstId> ||
+      kind == SemIR::IdKind::For<SemIR::NameId>) {
+    return false;
+  }
+  // TODO: Properly handle different argument kinds.
+  CARBON_FATAL("Unexpected argument kind for action");
+}
+
 auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
   if (OperandIsDependent(context, action_inst.type_id())) {
     return true;
   }
-  // TODO: Properly handle different argument kinds.
   auto [arg0_kind, arg1_kind] = action_inst.ArgKinds();
-  if (arg0_kind == SemIR::IdKind::For<SemIR::MetaInstId> &&
-      OperandIsDependent(context, SemIR::MetaInstId(action_inst.arg0()))) {
-    return true;
-  }
-  if (arg1_kind == SemIR::IdKind::For<SemIR::MetaInstId> &&
-      OperandIsDependent(context, SemIR::MetaInstId(action_inst.arg1()))) {
-    return true;
-  }
-  return false;
+  return OperandIsDependent(context, arg0_kind, action_inst.arg0()) ||
+         OperandIsDependent(context, arg1_kind, action_inst.arg1());
 }
 
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,

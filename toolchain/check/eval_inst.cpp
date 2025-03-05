@@ -317,7 +317,9 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst_value->inst_id));
   }
-  return ConstantEvalResult::NewSamePhase(inst);
+  // TODO: Consider creating a `ValueOfInst` instruction here to defer
+  // determining the constant value until we know the instruction.
+  return ConstantEvalResult::NotConstant;
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,

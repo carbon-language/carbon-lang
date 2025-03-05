@@ -105,11 +105,8 @@ class EvalContext {
               specifics().Get(specific_id_).generic_id &&
           symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-        CARBON_CHECK(inst_id.has_value(),
-                     "Forward reference in eval block: index {0} referenced "
-                     "before evaluation",
-                     symbolic_info.index.index());
-        return constant_values().Get(inst_id);
+        return inst_id.has_value() ? constant_values().Get(inst_id)
+                                   : SemIR::ConstantId::NotConstant;
       }
     }
 
@@ -379,7 +376,10 @@ static auto GetConstantValue(EvalContext& eval_context,
     if (auto spliced_inst_id =
             GetConstantValue(eval_context, splice->inst_id, phase);
         spliced_inst_id.has_value()) {
-      return splice->inst_id;
+      if (auto inst_value_id = eval_context.insts().TryGetAs<SemIR::InstValue>(
+              spliced_inst_id)) {
+        return inst_value_id->inst_id;
+      }
     }
   }
 
@@ -1633,21 +1633,20 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
-      if (phase < Phase::TemplateSymbolic) {
-        auto result_inst_id = PerformDelayedAction(
-            eval_context.context(), eval_context.insts().GetLocId(inst_id),
-            inst.As<InstT>());
-        if (result_inst_id.has_value()) {
-          // The result is an instruction.
-          return MakeConstantResult(
-              eval_context.context(),
-              SemIR::InstValue{.type_id = SemIR::InstType::SingletonTypeId,
-                               .inst_id = result_inst_id},
-              Phase::Concrete);
-        }
+      auto result_inst_id = PerformDelayedAction(
+          eval_context.context(), eval_context.insts().GetLocId(inst_id),
+          inst.As<InstT>());
+      if (result_inst_id.has_value()) {
+        // The result is an instruction.
+        return MakeConstantResult(
+            eval_context.context(),
+            SemIR::InstValue{.type_id = SemIR::InstType::SingletonTypeId,
+                             .inst_id = result_inst_id},
+            Phase::Concrete);
       }
       // Couldn't perform the action because it's still dependent.
-      return MakeConstantResult(eval_context.context(), inst, phase);
+      return MakeConstantResult(eval_context.context(), inst,
+                                Phase::TemplateSymbolic);
     } else {
       return ConvertEvalResultToConstantId(
           eval_context.context(),
@@ -1860,7 +1859,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
-    CARBON_CHECK(result[i].has_value());
   }
 
   return context.inst_blocks().Add(result);

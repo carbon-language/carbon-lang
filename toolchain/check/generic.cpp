@@ -294,6 +294,7 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
     // in the eval block.
     if ((dep_kind & GenericRegionStack::DependencyKind::Template) !=
         GenericRegionStack::DependencyKind::None) {
+      constants_in_generic.Insert(inst_id, inst_id);
       context.inst_block_stack().AddInstId(inst_id);
     }
   }

@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -121,9 +122,21 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                                           .specific_id = result.specific_id});
   }
 
-  return AddInst<SemIR::NameRef>(
+  return HandleAction<SemIR::ReferenceNameAction>(
       context, node_id,
-      {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
+      {.type_id = SemIR::InstType::SingletonTypeId,
+       .value_type_id = type_id,
+       .value_id = inst_id},
+      type_id);
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ReferenceNameAction action) -> SemIR::InstId {
+  return AddInst<SemIR::NameRef>(context, loc_id,
+                                 {.type_id = action.value_type_id,
+                                  // TODO: Also track this.
+                                  .name_id = SemIR::NameId::None,
+                                  .value_id = action.value_id});
 }
 
 auto HandleParseNode(Context& context,
