@@ -196,19 +196,16 @@ auto FileContext::BuildFunctionTypeInfo(
     llvm::ArrayRef<SemIR::InstId> param_patterns,
     llvm::SmallVector<SemIR::InstId>& param_inst_ids, llvm::Type*& return_type,
     SemIR::InstId& return_param_id) -> llvm::FunctionType* {
-  return_type = nullptr;
   const auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
 
-  if (return_info.type_id.has_value()) {
-    if (!types_[return_info.type_id.index]) {
-      // The return type has not been completed, create a trivial type instead.
-      return llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
-                                     /*isVarArg=*/false);
-    }
-    return_type = GetType(return_info.type_id);
+  if (!return_info.is_valid()) {
+    // The return type has not been completed, create a trivial type instead.
+    return llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
+                                   /*isVarArg=*/false);
   }
-  CARBON_CHECK(return_info.is_valid(), "Should not lower invalid functions.");
+  return_type =
+      return_info.type_id.has_value() ? GetType(return_info.type_id) : nullptr;
 
   // Compute the return type to use for the LLVM function. If the initializing
   // representation doesn't produce a value, set the return type to void.
