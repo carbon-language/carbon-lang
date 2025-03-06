@@ -7,6 +7,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/id_kind.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -62,20 +63,14 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
 
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
                               SemIR::TypeId result_type_id) -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(context, action);
-  context.generic_region_stack().AddDependentInst(
-      {.inst_id = inst_id,
-       .kind = GenericRegionStack::DependencyKind::Template});
-
+  auto inst_id = AddDependentActionInst(context, action);
   if (!result_type_id.has_value()) {
-    auto type_inst_id = AddInstInNoBlock(
-        context, action.loc_id,
-        SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
-                          .inst_id = inst_id});
-    context.generic_region_stack().AddDependentInst(
-        {.inst_id = type_inst_id,
-         .kind = GenericRegionStack::DependencyKind::Template});
-
+    auto type_inst_id = AddDependentActionInst(
+        context,
+        SemIR::LocIdAndInst(
+            action.loc_id,
+            SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
+                              .inst_id = inst_id}));
     result_type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
   }
   return AddInst(

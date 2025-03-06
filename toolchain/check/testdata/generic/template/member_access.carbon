@@ -63,12 +63,12 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [template]
-// CHECK:STDOUT:   %.8c8: <instruction> = reference_name_action %T, @F.%x [template]
-// CHECK:STDOUT:   %.9a3: <instruction> = access_member_action @F.%.loc8_3.1, n [template]
-// CHECK:STDOUT:   %.34b: type = type_of_inst %.9a3 [template]
+// CHECK:STDOUT:   %require_complete.9df: <witness> = require_complete_type @F.%.loc8_4.3 (@F.%.loc8_4.3) [template]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
+// CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
@@ -171,16 +171,16 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc8_3.2: <instruction> = reference_name_action @F.%T.loc4_15.2 (%T), %x [template = %.loc8_3.2 (constants.%.8c8)]
-// CHECK:STDOUT:   %.loc8_3.3: <instruction> = reference_name_action %T, %x [template = %.loc8_3.2 (constants.%.8c8)]
-// CHECK:STDOUT:   %.loc8_4.2: <instruction> = access_member_action %.loc8_3.1, n [template = constants.%.9a3]
-// CHECK:STDOUT:   %.loc8_4.3: type = type_of_inst %.loc8_4.2 [template = constants.%.34b]
+// CHECK:STDOUT:   %require_complete.loc4: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete.loc4 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc8_3.2: <instruction> = reference_name_action @F.%T.loc4_15.2 (%T), %x [template]
+// CHECK:STDOUT:   %.loc8_4.2: <instruction> = access_member_action %.loc8_3.1, n [template]
+// CHECK:STDOUT:   %.loc8_4.3: type = type_of_inst %.loc8_4.2 [template]
+// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type @F.%.loc8_4.3 (@F.%.loc8_4.3) [template = %require_complete.loc8 (constants.%require_complete.9df)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_3.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc8_3.3
-// CHECK:STDOUT:     %.loc8_4.1: %.34b = splice_inst %.loc8_4.2
+// CHECK:STDOUT:     %.loc8_3.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc8_3.2
+// CHECK:STDOUT:     %.loc8_4.1: @F.%.loc8_4.3 (@F.%.loc8_4.3) = splice_inst %.loc8_4.2
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -213,11 +213,11 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.54b
+// CHECK:STDOUT:   %require_complete.loc4 => constants.%complete_type.54b
 // CHECK:STDOUT:   %.loc8_3.2 => constants.%inst.name_ref.2d0
-// CHECK:STDOUT:   %.loc8_3.3 => constants.%.8c8
 // CHECK:STDOUT:   %.loc8_4.2 => constants.%inst.splice_block
-// CHECK:STDOUT:   %.loc8_4.3 => constants.%.34b
+// CHECK:STDOUT:   %.loc8_4.3 => constants.%i32
+// CHECK:STDOUT:   %require_complete.loc8 => constants.%complete_type.f8a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%struct_type.m.n) {
@@ -225,11 +225,11 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%struct_type.m.n
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.622
+// CHECK:STDOUT:   %require_complete.loc4 => constants.%complete_type.622
 // CHECK:STDOUT:   %.loc8_3.2 => constants.%inst.name_ref.511
-// CHECK:STDOUT:   %.loc8_3.3 => constants.%.8c8
 // CHECK:STDOUT:   %.loc8_4.2 => constants.%inst.struct_access
-// CHECK:STDOUT:   %.loc8_4.3 => constants.%.34b
+// CHECK:STDOUT:   %.loc8_4.3 => constants.%i32
+// CHECK:STDOUT:   %require_complete.loc8 => constants.%complete_type.f8a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_such_member.carbon
@@ -241,9 +241,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [template]
-// CHECK:STDOUT:   %.8c8: <instruction> = reference_name_action %T, @F.%x [template]
-// CHECK:STDOUT:   %.9a3: <instruction> = access_member_action @F.%.loc8_3.1, n [template]
-// CHECK:STDOUT:   %.34b: type = type_of_inst %.9a3 [template]
+// CHECK:STDOUT:   %require_complete.9df: <witness> = require_complete_type @F.%.loc8_4.3 (@F.%.loc8_4.3) [template]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -320,16 +318,16 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc8_3.2: <instruction> = reference_name_action @F.%T.loc4_15.2 (%T), %x [template = %.loc8_3.2 (constants.%.8c8)]
-// CHECK:STDOUT:   %.loc8_3.3: <instruction> = reference_name_action %T, %x [template = %.loc8_3.2 (constants.%.8c8)]
-// CHECK:STDOUT:   %.loc8_4.2: <instruction> = access_member_action %.loc8_3.1, n [template = constants.%.9a3]
-// CHECK:STDOUT:   %.loc8_4.3: type = type_of_inst %.loc8_4.2 [template = constants.%.34b]
+// CHECK:STDOUT:   %require_complete.loc4: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete.loc4 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc8_3.2: <instruction> = reference_name_action @F.%T.loc4_15.2 (%T), %x [template]
+// CHECK:STDOUT:   %.loc8_4.2: <instruction> = access_member_action %.loc8_3.1, n [template]
+// CHECK:STDOUT:   %.loc8_4.3: type = type_of_inst %.loc8_4.2 [template]
+// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type @F.%.loc8_4.3 (@F.%.loc8_4.3) [template = %require_complete.loc8 (constants.%require_complete.9df)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_3.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc8_3.3
-// CHECK:STDOUT:     %.loc8_4.1: %.34b = splice_inst %.loc8_4.2
+// CHECK:STDOUT:     %.loc8_3.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc8_3.2
+// CHECK:STDOUT:     %.loc8_4.1: @F.%.loc8_4.3 (@F.%.loc8_4.3) = splice_inst %.loc8_4.2
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -353,10 +351,10 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%D
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.218
+// CHECK:STDOUT:   %require_complete.loc4 => constants.%complete_type.218
 // CHECK:STDOUT:   %.loc8_3.2 => constants.%inst.name_ref.0e6
-// CHECK:STDOUT:   %.loc8_3.3 => constants.%.8c8
 // CHECK:STDOUT:   %.loc8_4.2 => constants.%inst.name_ref.050
-// CHECK:STDOUT:   %.loc8_4.3 => constants.%.34b
+// CHECK:STDOUT:   %.loc8_4.3 => <error>
+// CHECK:STDOUT:   %require_complete.loc8 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
