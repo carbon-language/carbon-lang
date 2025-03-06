@@ -320,8 +320,6 @@ static auto FindWitnessInFacet(
     if (complete_facet_type_id.has_value()) {
       const auto& complete_facet_type =
           context.complete_facet_types().Get(complete_facet_type_id);
-      // This assumes required_interfaces are in the same order as
-      // `FacetTypeInfo::impl_constraints`.
       for (auto [index, interface] :
            llvm::enumerate(complete_facet_type.required_interfaces)) {
         if (interface == specific_interface) {

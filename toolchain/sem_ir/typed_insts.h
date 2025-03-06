@@ -684,8 +684,9 @@ struct FacetValue {
   // The type that you will get if you cast this value to `type`.
   InstId type_inst_id;
   // The set of `ImplWitness` instructions for a `FacetType`. The witnesses are
-  // in the same order as the set of `impls_constraints` in the `FacetTypeInfo`
-  // of the `FacetType` so that an index from one can be used with the other.
+  // in the same order as the set of `required_interfaces` in the
+  // `CompleteFacetType` of the `FacetType` from `type_id`, so that an index
+  // from one can be used with the other.
   InstBlockId witnesses_block_id;
 };
 
