@@ -265,3 +265,21 @@ class C {
   // CHECK:STDERR:
   fn B();
 }
+
+// --- todo_fail_poisoned_name_in_extend.carbon
+
+library "[[@TEST_NAME]]";
+
+base class B {
+  fn F1();
+}
+
+class F1 {}
+
+class C {
+  // Use `package.F1` and poison `C.F1`.
+  fn F2(x: F1);
+
+  // TODO: #4622 This should diagnose since `C.F1` is poisoned.
+  extend base: B;
+}

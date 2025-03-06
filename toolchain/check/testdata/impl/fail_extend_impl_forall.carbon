@@ -83,9 +83,9 @@ class C {
 // CHECK:STDOUT:     %Self.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @GenericInterface.%F.type (%F.type.a4b) = fn_decl @F.1 [symbolic = @GenericInterface.%F (constants.%F.3d9)] {
 // CHECK:STDOUT:       %x.patt: @F.1.%T (%T) = binding_pattern x
-// CHECK:STDOUT:       %x.param_patt: @F.1.%T (%T) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:       %x.param_patt: @F.1.%T (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %x.param: @F.1.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %x.param: @F.1.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc11_28.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x: @F.1.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
@@ -113,9 +113,9 @@ class C {
 // CHECK:STDOUT:   impl: %Self.ref as %GenericInterface.type.loc20_54.1 {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2cb) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.4b1)] {
 // CHECK:STDOUT:       %x.patt: @F.2.%T (%T) = binding_pattern x
-// CHECK:STDOUT:       %x.param_patt: @F.2.%T (%T) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:       %x.param_patt: @F.2.%T (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %x.param: @F.2.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %x.param: @F.2.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc20_23.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }

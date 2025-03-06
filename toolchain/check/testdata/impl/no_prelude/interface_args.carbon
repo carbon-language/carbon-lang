@@ -150,12 +150,12 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type) = fn_decl @Convert [symbolic = @ImplicitAs.%Convert (constants.%Convert)] {
 // CHECK:STDOUT:       %self.patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Convert.%Dest (%Dest) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_22.1 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_20.1: type = splice_block %.loc4_20.3 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc4_20.2: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = name_ref Self, %.loc4_20.2 [symbolic = %Self (constants.%Self)]
@@ -163,7 +163,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:         %.loc4_20.3: type = converted %Self.ref, %Self.as_type.loc4_20.2 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Convert.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc4_35.1: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %Convert.decl [symbolic = %assoc0.loc4_35.2 (constants.%assoc0)]
@@ -260,9 +260,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -284,9 +284,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %Self.1: @Action.%Action.type (%Action.type.cca) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Op.decl: @Action.%Op.type (%Op.type.036) = fn_decl @Op.1 [symbolic = @Action.%Op (constants.%Op.6ed)] {
 // CHECK:STDOUT:       %self.patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_15.1: type = splice_block %.loc5_15.3 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc5_15.2: @Op.1.%Action.type (%Action.type.cca) = specific_constant @Action.%Self.1, @Action(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @Op.1.%Action.type (%Action.type.cca) = name_ref Self, %.loc5_15.2 [symbolic = %Self (constants.%Self)]
@@ -307,9 +307,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: impl @impl: %A.ref as %Action.type {
 // CHECK:STDOUT:   %Op.decl: %Op.type.4b4 = fn_decl @Op.2 [concrete = constants.%Op.40d] {
 // CHECK:STDOUT:     %self.patt: %A = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %A = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %A = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %A = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%A.ref [concrete = constants.%A]
 // CHECK:STDOUT:     %self: %A = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -477,9 +477,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -651,9 +651,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -846,21 +846,21 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %Self.1: @Factory.%Factory.type (%Factory.type.c96) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Make.decl: @Factory.%Make.type (%Make.type.598) = fn_decl @Make.1 [symbolic = @Factory.%Make (constants.%Make.737)] {
 // CHECK:STDOUT:       %return.patt: @Make.1.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Make.1.%T (%T) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @Make.1.%T (%T) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Factory.%T.loc4_19.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %return.param: ref @Make.1.%T (%T) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @Make.1.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Make.1.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc6_17.1: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element0, %Make.decl [symbolic = %assoc0.loc6_17.2 (constants.%assoc0.d7a)]
 // CHECK:STDOUT:     %Method.decl: @Factory.%Method.type (%Method.type.7ee) = fn_decl @Method.1 [symbolic = @Factory.%Method (constants.%Method.a71)] {
 // CHECK:STDOUT:       %self.patt: @Method.1.%Self.as_type.loc8_19.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Method.1.%Self.as_type.loc8_19.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Method.1.%Self.as_type.loc8_19.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Method.1.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Method.1.%T (%T) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Method.1.%T (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Factory.%T.loc4_19.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %self.param: @Method.1.%Self.as_type.loc8_19.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Method.1.%Self.as_type.loc8_19.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc8_19.1: type = splice_block %.loc8_19.3 [symbolic = %Self.as_type.loc8_19.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc8_19.2: @Method.1.%Factory.type (%Factory.type.c96) = specific_constant @Factory.%Self.1, @Factory(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @Method.1.%Factory.type (%Factory.type.c96) = name_ref Self, %.loc8_19.2 [symbolic = %Self (constants.%Self)]
@@ -868,7 +868,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:         %.loc8_19.3: type = converted %Self.ref, %Self.as_type.loc8_19.2 [symbolic = %Self.as_type.loc8_19.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Method.1.%Self.as_type.loc8_19.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Method.1.%T (%T) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Method.1.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Method.1.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc1.loc8_31.1: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element1, %Method.decl [symbolic = %assoc1.loc8_31.2 (constants.%assoc1.157)]
@@ -885,23 +885,23 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: impl @impl: %A.ref as %Factory.type {
 // CHECK:STDOUT:   %Make.decl: %Make.type.ec4 = fn_decl @Make.2 [concrete = constants.%Make.377] {
 // CHECK:STDOUT:     %return.patt: %B = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Method.decl: %Method.type.af5 = fn_decl @Method.2 [concrete = constants.%Method.3d4] {
 // CHECK:STDOUT:     %self.patt: %A = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %A = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %A = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %B = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %self.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %A = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%A.ref [concrete = constants.%A]
 // CHECK:STDOUT:     %self: %A = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %B = out_param call_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -1075,23 +1075,23 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %MakeB.decl: %MakeB.type = fn_decl @MakeB [concrete = constants.%MakeB] {
 // CHECK:STDOUT:     %return.patt: %B = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref.loc4: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceB.decl: %InstanceB.type = fn_decl @InstanceB [concrete = constants.%InstanceB] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %B = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref.loc11: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %B = out_param call_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1312,23 +1312,23 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceC.decl: %InstanceC.type = fn_decl @InstanceC [concrete = constants.%InstanceC] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

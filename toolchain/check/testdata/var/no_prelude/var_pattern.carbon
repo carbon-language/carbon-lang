@@ -192,18 +192,18 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %y.patt: %empty_tuple.type = binding_pattern y
-// CHECK:STDOUT:     %y.param_patt: %empty_tuple.type = ref_param_pattern %y.patt, runtime_param1
+// CHECK:STDOUT:     %y.param_patt: %empty_tuple.type = ref_param_pattern %y.patt, call_param1
 // CHECK:STDOUT:     %.loc4_13: %empty_tuple.type = var_pattern %y.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
-// CHECK:STDOUT:     %y.param: ref %empty_tuple.type = ref_param runtime_param1
+// CHECK:STDOUT:     %y.param: ref %empty_tuple.type = ref_param call_param1
 // CHECK:STDOUT:     %.loc4_21.1: type = splice_block %.loc4_21.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc4_21.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc4_21.3: type = converted %.loc4_21.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -353,10 +353,10 @@ class C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = ref_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = ref_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc5: %C = var_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %C = ref_param runtime_param0
+// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: ref %C = bind_name self, %self.param
 // CHECK:STDOUT:   }

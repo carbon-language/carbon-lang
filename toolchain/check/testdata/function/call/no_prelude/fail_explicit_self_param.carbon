@@ -36,9 +36,9 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc15_13.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc15_13.3: type = converted %.loc15_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

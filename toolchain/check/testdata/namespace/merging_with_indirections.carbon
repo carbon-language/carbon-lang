@@ -118,11 +118,11 @@ fn Run() {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [concrete = imports.%NS1]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Other.A [concrete = constants.%A]
-// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %A = out_param call_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

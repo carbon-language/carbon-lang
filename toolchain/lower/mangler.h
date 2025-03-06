@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "clang/AST/Mangle.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
@@ -37,6 +38,9 @@ class Mangler {
                                        SemIR::NameScopeId name_scope_id)
       -> void;
 
+  // Generates a mangled name using Clang mangling for imported C++ functions.
+  auto MangleCppClang(const clang::NamedDecl* decl) -> std::string;
+
   auto sem_ir() const -> const SemIR::File& { return file_context_.sem_ir(); }
 
   auto names() const -> SemIR::NameStoreWrapper { return sem_ir().names(); }
@@ -54,6 +58,11 @@ class Mangler {
   // TODO: If `file_context_` has an `InstNamer`, we could share its
   // fingerprinter.
   SemIR::InstFingerprinter fingerprinter_;
+
+  // Clang Mangler lazily initialized when necessary. We create it once under
+  // the assumption all declarations we need to mangle can use the same Mangler
+  // (same AST Context).
+  std::unique_ptr<clang::MangleContext> cpp_mangle_context_;
 };
 
 }  // namespace Carbon::Lower

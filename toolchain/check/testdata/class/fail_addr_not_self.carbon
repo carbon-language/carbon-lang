@@ -65,9 +65,9 @@ class Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %ptr = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %ptr = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %ptr = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc22: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr]

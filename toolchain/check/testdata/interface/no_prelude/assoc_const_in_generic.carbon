@@ -92,11 +92,11 @@ fn H() {
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.2ae) = fn_decl @F [symbolic = @I.%F (constants.%F.bb2)] {
 // CHECK:STDOUT:       %U.patt.loc12_8.1: type = symbolic_binding_pattern U, 2 [symbolic = %U.patt.loc12_8.2 (constants.%U.patt)]
 // CHECK:STDOUT:       %return.patt: @F.%U.loc12_8.1 (%U) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @F.%U.loc12_8.1 (%U) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @F.%U.loc12_8.1 (%U) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, %U.loc12_8.2 [symbolic = %U.loc12_8.1 (constants.%U)]
 // CHECK:STDOUT:       %U.loc12_8.2: type = bind_symbolic_name U, 2 [symbolic = %U.loc12_8.1 (constants.%U)]
-// CHECK:STDOUT:       %return.param: ref @F.%U.loc12_8.1 (%U) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @F.%U.loc12_8.1 (%U) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @F.%U.loc12_8.1 (%U) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc12_22.1: @I.%I.assoc_type (%I.assoc_type.955) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc12_22.2 (constants.%assoc0.fef)]

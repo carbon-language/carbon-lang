@@ -104,18 +104,18 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc12_9.1: type = splice_block %.loc12_9.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc12_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:       %.loc12_9.3: type = converted %bool.make_type, %.loc12_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {

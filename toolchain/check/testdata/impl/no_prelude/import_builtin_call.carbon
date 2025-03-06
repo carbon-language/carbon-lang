@@ -119,18 +119,18 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [concrete = constants.%Add.type] {} {}
 // CHECK:STDOUT:   %IntLiteral.decl: %IntLiteral.type = fn_decl @IntLiteral [concrete = constants.%IntLiteral] {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
 // CHECK:STDOUT:     %n.patt: Core.IntLiteral = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc9_22.1: type = splice_block %.loc9_22.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
@@ -138,7 +138,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:       %.loc9_22.3: type = converted %int_literal.make_type, %.loc9_22.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: Core.IntLiteral = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyInt.decl: %MyInt.type = class_decl @MyInt [concrete = constants.%MyInt.generic] {
@@ -171,9 +171,9 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Double.decl: %Double.type = fn_decl @Double [concrete = constants.%Double] {
 // CHECK:STDOUT:     %N.patt.loc19_11.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc19_11.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %x.patt: @Double.%MyInt.loc19_39.2 (%MyInt) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @Double.%MyInt.loc19_39.2 (%MyInt) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Double.%MyInt.loc19_39.2 (%MyInt) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Double.%MyInt.loc19_39.2 (%MyInt) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Double.%MyInt.loc19_39.2 (%MyInt) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @Double.%MyInt.loc19_39.2 (%MyInt) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %MyInt.ref.loc19_45: %MyInt.type = name_ref MyInt, file.%MyInt.decl [concrete = constants.%MyInt.generic]
 // CHECK:STDOUT:     %N.ref.loc19_51: Core.IntLiteral = name_ref N, %N.loc19_11.1 [symbolic = %N.loc19_11.2 (constants.%N)]
@@ -185,14 +185,14 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:       %.loc19_26.3: type = converted %int_literal.make_type, %.loc19_26.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc19_11.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc19_11.2 (constants.%N)]
-// CHECK:STDOUT:     %x.param: @Double.%MyInt.loc19_39.2 (%MyInt) = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: @Double.%MyInt.loc19_39.2 (%MyInt) = value_param call_param0
 // CHECK:STDOUT:     %.loc19_39: type = splice_block %MyInt.loc19_39.1 [symbolic = %MyInt.loc19_39.2 (constants.%MyInt)] {
 // CHECK:STDOUT:       %MyInt.ref.loc19_32: %MyInt.type = name_ref MyInt, file.%MyInt.decl [concrete = constants.%MyInt.generic]
 // CHECK:STDOUT:       %N.ref.loc19_38: Core.IntLiteral = name_ref N, %N.loc19_11.1 [symbolic = %N.loc19_11.2 (constants.%N)]
 // CHECK:STDOUT:       %MyInt.loc19_39.1: type = class_type @MyInt, @MyInt(constants.%N) [symbolic = %MyInt.loc19_39.2 (constants.%MyInt)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @Double.%MyInt.loc19_39.2 (%MyInt) = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref @Double.%MyInt.loc19_39.2 (%MyInt) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @Double.%MyInt.loc19_39.2 (%MyInt) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Double.%MyInt.loc19_39.2 (%MyInt) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -201,30 +201,30 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type.31b = fn_decl @Op.1 [concrete = constants.%Op.d59] {
 // CHECK:STDOUT:     %self.patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %other.patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %other.patt, call_param1
 // CHECK:STDOUT:     %return.patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_37: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc5_37: type = converted %Self.ref.loc5_37, %Self.as_type.loc5_37 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %self.param: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_15.2: type = facet_access_type %Self.ref.loc5_15 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_15.2: type = converted %Self.ref.loc5_15, %Self.as_type.loc5_15.2 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param runtime_param1
+// CHECK:STDOUT:     %other.param: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param call_param1
 // CHECK:STDOUT:     %.loc5_28.1: type = splice_block %.loc5_28.2 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_28: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_28: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_28.2: type = converted %Self.ref.loc5_28, %Self.as_type.loc5_28 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %other: @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = bind_name other, %other.param
-// CHECK:STDOUT:     %return.param: ref @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @Op.1.%Self.as_type.loc5_15.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, %Op.decl [concrete = constants.%assoc0]
@@ -249,20 +249,20 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   impl: %MyInt.loc15_39.1 as %Add.ref {
 // CHECK:STDOUT:     %Op.decl: @impl.%Op.type (%Op.type.883) = fn_decl @Op.2 [symbolic = @impl.%Op (constants.%Op.8bc)] {
 // CHECK:STDOUT:       %self.patt: @Op.2.%MyInt (%MyInt) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Op.2.%MyInt (%MyInt) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Op.2.%MyInt (%MyInt) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %other.patt: @Op.2.%MyInt (%MyInt) = binding_pattern other
-// CHECK:STDOUT:       %other.param_patt: @Op.2.%MyInt (%MyInt) = value_param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:       %other.param_patt: @Op.2.%MyInt (%MyInt) = value_param_pattern %other.patt, call_param1
 // CHECK:STDOUT:       %return.patt: @Op.2.%MyInt (%MyInt) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Op.2.%MyInt (%MyInt) = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:       %return.param_patt: @Op.2.%MyInt (%MyInt) = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.ref.loc16_37: type = name_ref Self, @impl.%MyInt.loc15_39.1 [symbolic = %MyInt (constants.%MyInt)]
-// CHECK:STDOUT:       %self.param: @Op.2.%MyInt (%MyInt) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Op.2.%MyInt (%MyInt) = value_param call_param0
 // CHECK:STDOUT:       %Self.ref.loc16_15: type = name_ref Self, @impl.%MyInt.loc15_39.1 [symbolic = %MyInt (constants.%MyInt)]
 // CHECK:STDOUT:       %self: @Op.2.%MyInt (%MyInt) = bind_name self, %self.param
-// CHECK:STDOUT:       %other.param: @Op.2.%MyInt (%MyInt) = value_param runtime_param1
+// CHECK:STDOUT:       %other.param: @Op.2.%MyInt (%MyInt) = value_param call_param1
 // CHECK:STDOUT:       %Self.ref.loc16_28: type = name_ref Self, @impl.%MyInt.loc15_39.1 [symbolic = %MyInt (constants.%MyInt)]
 // CHECK:STDOUT:       %other: @Op.2.%MyInt (%MyInt) = bind_name other, %other.param
-// CHECK:STDOUT:       %return.param: ref @Op.2.%MyInt (%MyInt) = out_param runtime_param2
+// CHECK:STDOUT:       %return.param: ref @Op.2.%MyInt (%MyInt) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @Op.2.%MyInt (%MyInt) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
@@ -484,40 +484,40 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %LocalDouble.decl: %LocalDouble.type = fn_decl @LocalDouble [concrete = constants.%LocalDouble] {
 // CHECK:STDOUT:     %x.patt: %MyInt.f30 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %MyInt.f30 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %MyInt.f30 = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %MyInt.f30 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %MyInt.f30 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %MyInt.f30 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %MyInt.ref.loc8_33: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [concrete = constants.%MyInt.generic]
 // CHECK:STDOUT:     %int_64.loc8_39: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %MyInt.loc8_41: type = class_type @MyInt, @MyInt(constants.%int_64) [concrete = constants.%MyInt.f30]
-// CHECK:STDOUT:     %x.param: %MyInt.f30 = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: %MyInt.f30 = value_param call_param0
 // CHECK:STDOUT:     %.loc8: type = splice_block %MyInt.loc8_27 [concrete = constants.%MyInt.f30] {
 // CHECK:STDOUT:       %MyInt.ref.loc8_19: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [concrete = constants.%MyInt.generic]
 // CHECK:STDOUT:       %int_64.loc8_25: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %MyInt.loc8_27: type = class_type @MyInt, @MyInt(constants.%int_64) [concrete = constants.%MyInt.f30]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %MyInt.f30 = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref %MyInt.f30 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %MyInt.f30 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %MyInt.f30 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallImportedDouble.decl: %CallImportedDouble.type = fn_decl @CallImportedDouble [concrete = constants.%CallImportedDouble] {
 // CHECK:STDOUT:     %n.patt: %MyInt.f30 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %MyInt.f30 = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %MyInt.f30 = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %MyInt.f30 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %MyInt.f30 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %MyInt.f30 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %MyInt.ref.loc12_40: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [concrete = constants.%MyInt.generic]
 // CHECK:STDOUT:     %int_64.loc12_46: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %MyInt.loc12_48: type = class_type @MyInt, @MyInt(constants.%int_64) [concrete = constants.%MyInt.f30]
-// CHECK:STDOUT:     %n.param: %MyInt.f30 = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: %MyInt.f30 = value_param call_param0
 // CHECK:STDOUT:     %.loc12: type = splice_block %MyInt.loc12_34 [concrete = constants.%MyInt.f30] {
 // CHECK:STDOUT:       %MyInt.ref.loc12_26: %MyInt.type = name_ref MyInt, imports.%Main.MyInt [concrete = constants.%MyInt.generic]
 // CHECK:STDOUT:       %int_64.loc12_32: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %MyInt.loc12_34: type = class_type @MyInt, @MyInt(constants.%int_64) [concrete = constants.%MyInt.f30]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %MyInt.f30 = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref %MyInt.f30 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %MyInt.f30 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %MyInt.f30 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -762,18 +762,18 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IntLiteral.decl: %IntLiteral.type = fn_decl @IntLiteral [concrete = constants.%IntLiteral] {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
 // CHECK:STDOUT:     %n.patt: Core.IntLiteral = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc5_22.1: type = splice_block %.loc5_22.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
@@ -781,20 +781,20 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:       %.loc5_22.3: type = converted %int_literal.make_type, %.loc5_22.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: Core.IntLiteral = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ToLiteral.decl.loc6: %ToLiteral.type.e7c = fn_decl @ToLiteral.1 [concrete = constants.%ToLiteral.cf3] {
 // CHECK:STDOUT:     %n.patt: %i32.builtin = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32.builtin = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %i32.builtin = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc6_40.1: type = value_of_initializer %int_literal.make_type [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc6_40.2: type = converted %int_literal.make_type, %.loc6_40.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %n.param: %i32.builtin = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: %i32.builtin = value_param call_param0
 // CHECK:STDOUT:     %.loc6_23.1: type = splice_block %.loc6_23.3 [concrete = constants.%i32.builtin] {
 // CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, file.%Int.decl [concrete = constants.%Int]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -803,21 +803,21 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:       %.loc6_23.3: type = converted %int.make_type_signed, %.loc6_23.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32.builtin = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FromLiteral.decl: %FromLiteral.type = fn_decl @FromLiteral [concrete = constants.%FromLiteral] {
 // CHECK:STDOUT:     %n.patt: Core.IntLiteral = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32.builtin = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32.builtin = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32.builtin = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, file.%Int.decl [concrete = constants.%Int]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%int_32) [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc7_42.1: type = value_of_initializer %int.make_type_signed [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc7_42.2: type = converted %int.make_type_signed, %.loc7_42.1 [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc7_30.1: type = splice_block %.loc7_30.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
@@ -825,13 +825,13 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:       %.loc7_30.3: type = converted %int_literal.make_type, %.loc7_30.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: Core.IntLiteral = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
 // CHECK:STDOUT:     %N.patt.loc9_9.1: %i32.builtin = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc9_9.2 (constants.%N.patt.36b)]
 // CHECK:STDOUT:     %return.patt: @Make.%iN.builtin (%iN.builtin.016) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Make.%iN.builtin (%iN.builtin.016) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @Make.%iN.builtin (%iN.builtin.016) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref.loc9_25: %Int.type = name_ref Int, file.%Int.decl [concrete = constants.%Int]
 // CHECK:STDOUT:     %ToLiteral.ref: %ToLiteral.type.e7c = name_ref ToLiteral, file.%ToLiteral.decl.loc6 [concrete = constants.%ToLiteral.cf3]
@@ -850,30 +850,30 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:       %.loc9_19.3: type = converted %int.make_type_signed.loc9_19, %.loc9_19.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc9_9.1: %i32.builtin = bind_symbolic_name N, 0 [symbolic = %N.loc9_9.2 (constants.%N.987)]
-// CHECK:STDOUT:     %return.param: ref @Make.%iN.builtin (%iN.builtin.016) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @Make.%iN.builtin (%iN.builtin.016) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @Make.%iN.builtin (%iN.builtin.016) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %OtherInt.decl: type = class_decl @OtherInt [concrete = constants.%OtherInt] {} {}
 // CHECK:STDOUT:   %ToLiteral.decl.loc16: %ToLiteral.type.67d = fn_decl @ToLiteral.2 [concrete = constants.%ToLiteral.ec2] {
 // CHECK:STDOUT:     %self.patt: %OtherInt = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %OtherInt = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %OtherInt = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntLiteral.ref.loc16: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type.loc16: init type = call %IntLiteral.ref.loc16() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc16_51.1: type = value_of_initializer %int_literal.make_type.loc16 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc16_51.2: type = converted %int_literal.make_type.loc16, %.loc16_51.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %self.param.loc16: %OtherInt = value_param runtime_param0
+// CHECK:STDOUT:     %self.param.loc16: %OtherInt = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%OtherInt [concrete = constants.%OtherInt]
 // CHECK:STDOUT:     %self.loc16: %OtherInt = bind_name self, %self.param.loc16
-// CHECK:STDOUT:     %return.param.loc16: ref Core.IntLiteral = out_param runtime_param1
+// CHECK:STDOUT:     %return.param.loc16: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return.loc16: ref Core.IntLiteral = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeFromClass.decl: %MakeFromClass.type = fn_decl @MakeFromClass [concrete = constants.%MakeFromClass] {
 // CHECK:STDOUT:     %N.patt.loc18_18.1: %OtherInt = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc18_18.2 (constants.%N.patt.59d)]
 // CHECK:STDOUT:     %return.patt: @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, file.%Int.decl [concrete = constants.%Int]
 // CHECK:STDOUT:     %N.ref.loc18_39: %OtherInt = name_ref N, %N.loc18_18.1 [symbolic = %N.loc18_18.2 (constants.%N.335)]
@@ -887,7 +887,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %.loc18_52.2: type = converted %int.make_type_signed, %.loc18_52.1 [symbolic = %iN.builtin (constants.%iN.builtin.9ef)]
 // CHECK:STDOUT:     %OtherInt.ref: type = name_ref OtherInt, file.%OtherInt.decl [concrete = constants.%OtherInt]
 // CHECK:STDOUT:     %N.loc18_18.1: %OtherInt = bind_symbolic_name N, 0 [symbolic = %N.loc18_18.2 (constants.%N.335)]
-// CHECK:STDOUT:     %return.param: ref @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @MakeFromClass.%iN.builtin (%iN.builtin.9ef) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -901,18 +901,18 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   adapt_decl %.loc12_16.2 [concrete]
 // CHECK:STDOUT:   %ToLiteral.decl: %ToLiteral.type.67d = fn_decl @ToLiteral.2 [concrete = constants.%ToLiteral.ec2] {
 // CHECK:STDOUT:     %self.patt: %OtherInt = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %OtherInt = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %OtherInt = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntLiteral.ref.loc13: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type.loc13: init type = call %IntLiteral.ref.loc13() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc13_44.1: type = value_of_initializer %int_literal.make_type.loc13 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc13_44.2: type = converted %int_literal.make_type.loc13, %.loc13_44.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %self.param.loc13: %OtherInt = value_param runtime_param0
+// CHECK:STDOUT:     %self.param.loc13: %OtherInt = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%OtherInt [concrete = constants.%OtherInt]
 // CHECK:STDOUT:     %self.loc13: %OtherInt = bind_name self, %self.param.loc13
-// CHECK:STDOUT:     %return.param.loc13: ref Core.IntLiteral = out_param runtime_param1
+// CHECK:STDOUT:     %return.param.loc13: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return.loc13: ref Core.IntLiteral = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [concrete = constants.%complete_type]

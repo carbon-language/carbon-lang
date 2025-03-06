@@ -98,10 +98,10 @@ fn G() {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Make.decl: @Wrap.%Make.type (%Make.type.652) = fn_decl @Make [symbolic = @Wrap.%Make (constants.%Make.eb2)] {
 // CHECK:STDOUT:       %return.patt: @Make.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Make.%T (%T) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @Make.%T (%T) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11_12.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %return.param: ref @Make.%T (%T) = out_param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]

@@ -69,9 +69,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConditionIsNonConstant.decl: %ConditionIsNonConstant.type = fn_decl @ConditionIsNonConstant [concrete = constants.%ConditionIsNonConstant] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_30.1: type = splice_block %.loc4_30.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc4_30.2: type = value_of_initializer %bool.make_type [concrete = bool]
@@ -143,9 +143,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: %ChosenBranchIsNonConstant.type = fn_decl @ChosenBranchIsNonConstant [concrete = constants.%ChosenBranchIsNonConstant] {
 // CHECK:STDOUT:     %t.patt: type = binding_pattern t
-// CHECK:STDOUT:     %t.param_patt: type = value_param_pattern %t.patt, runtime_param0
+// CHECK:STDOUT:     %t.param_patt: type = value_param_pattern %t.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %t.param: type = value_param runtime_param0
+// CHECK:STDOUT:     %t.param: type = value_param call_param0
 // CHECK:STDOUT:     %t: type = bind_name t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

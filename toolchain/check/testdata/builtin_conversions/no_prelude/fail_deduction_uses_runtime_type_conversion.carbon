@@ -92,12 +92,12 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type) = fn_decl @Convert [symbolic = @ImplicitAs.%Convert (constants.%Convert)] {
 // CHECK:STDOUT:       %self.patt: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Convert.%Dest (%Dest) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Convert.%Dest (%Dest) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc4_22.1 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_20.1: type = splice_block %.loc5_20.3 [symbolic = %Self.as_type.loc5_20.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc5_20.2: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = name_ref Self, %.loc5_20.2 [symbolic = %Self (constants.%Self)]
@@ -105,7 +105,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:         %.loc5_20.3: type = converted %Self.ref, %Self.as_type.loc5_20.2 [symbolic = %Self.as_type.loc5_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Convert.%Self.as_type.loc5_20.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Convert.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Convert.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_35.1: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %Convert.decl [symbolic = %assoc0.loc5_35.2 (constants.%assoc0)]
@@ -245,7 +245,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:     %T.patt.loc16_6.1: %tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %A.patt.loc16_20.1: @F.%tuple.elem0.loc16_25.2 (%tuple.elem0) = symbolic_binding_pattern A, 1 [symbolic = %A.patt.loc16_20.2 (constants.%A.patt)]
 // CHECK:STDOUT:     %x.patt: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_17.1: type = splice_block %.loc16_17.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.loc16_17.2: %tuple.type = tuple_literal (type)
@@ -258,7 +258,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:       %tuple.elem0.loc16_25.1: type = tuple_access %T.ref.loc16_24, element0 [symbolic = %tuple.elem0.loc16_25.2 (constants.%tuple.elem0)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc16_20.1: @F.%tuple.elem0.loc16_25.2 (%tuple.elem0) = bind_symbolic_name A, 1 [symbolic = %A.loc16_20.2 (constants.%A)]
-// CHECK:STDOUT:     %x.param: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: @F.%HoldsType.loc16_43.2 (%HoldsType.cc9) = value_param call_param0
 // CHECK:STDOUT:     %.loc16_43: type = splice_block %HoldsType.loc16_43.1 [symbolic = %HoldsType.loc16_43.2 (constants.%HoldsType.cc9)] {
 // CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
 // CHECK:STDOUT:       %T.ref.loc16_42: %tuple.type = name_ref T, %T.loc16_6.1 [symbolic = %T.loc16_6.2 (constants.%T)]
@@ -268,9 +268,9 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %holds_to.patt: %HoldsType.066 = binding_pattern holds_to
-// CHECK:STDOUT:     %holds_to.param_patt: %HoldsType.066 = value_param_pattern %holds_to.patt, runtime_param0
+// CHECK:STDOUT:     %holds_to.param_patt: %HoldsType.066 = value_param_pattern %holds_to.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %holds_to.param: %HoldsType.066 = value_param runtime_param0
+// CHECK:STDOUT:     %holds_to.param: %HoldsType.066 = value_param call_param0
 // CHECK:STDOUT:     %.loc18_46.1: type = splice_block %HoldsType [concrete = constants.%HoldsType.066] {
 // CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
 // CHECK:STDOUT:       %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
@@ -306,15 +306,15 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: impl @impl: %RuntimeConvertFrom.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.e8b = fn_decl @Convert.2 [concrete = constants.%Convert.e81] {
 // CHECK:STDOUT:     %self.patt: %RuntimeConvertFrom = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %RuntimeConvertFrom = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %RuntimeConvertFrom = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %RuntimeConvertTo = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %RuntimeConvertTo = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %RuntimeConvertTo = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
-// CHECK:STDOUT:     %self.param: %RuntimeConvertFrom = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %RuntimeConvertFrom = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:     %self: %RuntimeConvertFrom = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %RuntimeConvertTo = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %RuntimeConvertTo = out_param call_param1
 // CHECK:STDOUT:     %return: ref %RuntimeConvertTo = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

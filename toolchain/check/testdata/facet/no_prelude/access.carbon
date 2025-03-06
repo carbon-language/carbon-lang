@@ -188,14 +188,14 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %return.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc8_18.1: type = facet_access_type %T.ref.loc8 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc8: type = converted %T.ref.loc8, %T.as_type.loc8_18.1 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:     %return.param: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -204,12 +204,12 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: @Make.%Self.as_type.loc5_16.1 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Make.%Self.as_type.loc5_16.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: @Make.%Self.as_type.loc5_16.1 (%Self.as_type) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_16.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc5: type = converted %Self.ref, %Self.as_type.loc5_16.2 [symbolic = %Self.as_type.loc5_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %return.param: ref @Make.%Self.as_type.loc5_16.1 (%Self.as_type) = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref @Make.%Self.as_type.loc5_16.1 (%Self.as_type) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @Make.%Self.as_type.loc5_16.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %Make.decl [concrete = constants.%assoc0]
@@ -305,23 +305,23 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_24: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc8_24: type = facet_access_type %T.ref.loc8_24 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc8_24: type = converted %T.ref.loc8_24, %T.as_type.loc8_24 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.2 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref.loc8_18: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc8_18.1: type = facet_access_type %T.ref.loc8_18 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc8_18.2: type = converted %T.ref.loc8_18, %T.as_type.loc8_18.1 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @Use.%T.as_type.loc8_18.2 (%T.as_type) = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Use.%T.as_type.loc8_18.2 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -330,21 +330,21 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Copy.decl: %Copy.type = fn_decl @Copy [concrete = constants.%Copy] {
 // CHECK:STDOUT:     %self.patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_28: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_28: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc5_28: type = converted %Self.ref.loc5_28, %Self.as_type.loc5_28 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %self.param: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_17.1: type = splice_block %.loc5_17.2 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_17: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_17.2: type = facet_access_type %Self.ref.loc5_17 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_17.2: type = converted %Self.ref.loc5_17, %Self.as_type.loc5_17.2 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %Copy.decl [concrete = constants.%assoc0]
@@ -439,11 +439,11 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt.loc8_8.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: @Use.%T.as_type.loc8_18.2 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.2 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc8_18.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
@@ -538,23 +538,23 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %UseIndirect.decl: %UseIndirect.type = fn_decl @UseIndirect [concrete = constants.%UseIndirect] {
 // CHECK:STDOUT:     %T.patt.loc8_16.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_32: %I.type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc8_32: type = facet_access_type %T.ref.loc8_32 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc8_32: type = converted %T.ref.loc8_32, %T.as_type.loc8_32 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc8_16.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_16.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %x.param: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_26.1: type = splice_block %.loc8_26.2 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref.loc8_26: %I.type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc8_26.1: type = facet_access_type %T.ref.loc8_26 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc8_26.2: type = converted %T.ref.loc8_26, %T.as_type.loc8_26.1 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -563,21 +563,21 @@ fn UseIndirect[T:! I](x: T) -> T {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Copy.decl: %Copy.type = fn_decl @Copy [concrete = constants.%Copy] {
 // CHECK:STDOUT:     %self.patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_28: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_28: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc5_28: type = converted %Self.ref.loc5_28, %Self.as_type.loc5_28 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %self.param: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_17.1: type = splice_block %.loc5_17.2 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_17: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_17.2: type = facet_access_type %Self.ref.loc5_17 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_17.2: type = converted %Self.ref.loc5_17, %Self.as_type.loc5_17.2 [symbolic = %Self.as_type.loc5_17.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Copy.%Self.as_type.loc5_17.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %Copy.decl [concrete = constants.%assoc0]

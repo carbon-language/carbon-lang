@@ -58,7 +58,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {
 // CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc12_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -66,7 +66,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     %i32.loc12_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc12_23.1: %tuple.type.24b = tuple_literal (%i32.loc12_15, %i32.loc12_20)
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %.loc12_23.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
-// CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.d07 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

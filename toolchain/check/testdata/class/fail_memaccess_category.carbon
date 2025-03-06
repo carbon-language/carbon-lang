@@ -76,17 +76,17 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {
 // CHECK:STDOUT:     %s.patt: %struct_type.a.72c = binding_pattern s
-// CHECK:STDOUT:     %s.param_patt: %struct_type.a.72c = value_param_pattern %s.patt, runtime_param0
+// CHECK:STDOUT:     %s.param_patt: %struct_type.a.72c = value_param_pattern %s.patt, call_param0
 // CHECK:STDOUT:     %b.patt: %B = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %B = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %B = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %s.param: %struct_type.a.72c = value_param runtime_param0
+// CHECK:STDOUT:     %s.param: %struct_type.a.72c = value_param call_param0
 // CHECK:STDOUT:     %.loc19: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.72c] {
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %struct_type.a: type = struct_type {.a: %A} [concrete = constants.%struct_type.a.72c]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %struct_type.a.72c = bind_name s, %s.param
-// CHECK:STDOUT:     %b.param: %B = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: %B = value_param call_param1
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %b: %B = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -95,10 +95,10 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.649 = fn_decl @F.1 [concrete = constants.%F.485] {
 // CHECK:STDOUT:     %self.patt: %ptr.6db = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.6db = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ptr.6db = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.6db = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %ptr.6db = value_param call_param0
 // CHECK:STDOUT:     %.loc12_20: type = splice_block %ptr [concrete = constants.%ptr.6db] {
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %ptr: type = ptr_type %A [concrete = constants.%ptr.6db]

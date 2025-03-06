@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
+#include "clang/AST/Decl.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -49,6 +50,13 @@ struct FunctionFields {
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
+
+  // If the function is imported from C++, points to the Clang declaration in
+  // the AST. Used for mangling. The AST is owned by `CompileSubcommand` so we
+  // expect it to be live from `Function` creation to mangling.
+  // TODO: #4666 Ensure we can easily serialize/deserialize this. Consider decl
+  // ID to point into the AST.
+  const clang::NamedDecl* cpp_decl = nullptr;
 };
 
 // A function. See EntityWithParamsBase regarding the inheritance here.

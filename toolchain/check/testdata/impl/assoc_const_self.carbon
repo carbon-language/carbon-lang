@@ -468,18 +468,18 @@ fn CallF() {
 // CHECK:STDOUT: impl @impl.e86: %.loc10_7.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.721 = fn_decl @Convert.2 [concrete = constants.%Convert.155] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc11_21.1: type = splice_block %.loc11_21.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc11_21.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_21.3: type = converted %.loc11_21.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
