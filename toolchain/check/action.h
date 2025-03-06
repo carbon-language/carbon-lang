@@ -15,9 +15,11 @@ namespace Carbon::Check {
 // Performs a member access action. Defined in member_access.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::AccessMemberAction action) -> SemIR::InstId;
-// Performs a name reference action. Defined in handle_name.cpp.
+// Performs a type refinement action, by creating a conversion from an
+// instruction with a template-dependent symbolic type to the corresponding
+// instantiated type.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::ReferenceNameAction action) -> SemIR::InstId;
+                   SemIR::RefineTypeAction action) -> SemIR::InstId;
 
 // Determines whether the given action depends on a template parameter in a way
 // that means it cannot be performed immediately.

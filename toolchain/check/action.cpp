@@ -8,8 +8,16 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::RefineTypeAction action) -> SemIR::InstId {
+  return AddInst<SemIR::AsCompatible>(
+      context, loc_id,
+      {.type_id = action.inst_type_id, .source_id = action.inst_id});
+}
 
 static auto OperandIsDependent(Context& context, SemIR::ConstantId const_id)
     -> bool {
@@ -53,6 +61,12 @@ static auto OperandIsDependent(Context& context, SemIR::IdKind kind,
 }
 
 auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
+  if (auto refine_action = action_inst.TryAs<SemIR::RefineTypeAction>()) {
+    // `RefineTypeAction` can be performed whenever the type is non-dependent,
+    // even if we don't know the instruction yet.
+    return OperandIsDependent(context, refine_action->inst_type_id);
+  }
+
   if (OperandIsDependent(context, action_inst.type_id())) {
     return true;
   }
@@ -61,21 +75,75 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
          OperandIsDependent(context, arg1_kind, action_inst.arg1());
 }
 
-auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
-                              SemIR::TypeId result_type_id) -> SemIR::InstId {
+static auto AddDependentActionSpliceImpl(Context& context,
+                                         SemIR::LocIdAndInst action,
+                                         SemIR::TypeId result_type_id)
+    -> SemIR::InstId {
   auto inst_id = AddDependentActionInst(context, action);
   if (!result_type_id.has_value()) {
     auto type_inst_id = AddDependentActionInst(
-        context,
-        SemIR::LocIdAndInst(
-            action.loc_id,
-            SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
-                              .inst_id = inst_id}));
+        context, action.loc_id,
+        SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
+                          .inst_id = inst_id});
     result_type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
   }
   return AddInst(
       context, action.loc_id,
       SemIR::SpliceInst{.type_id = result_type_id, .inst_id = inst_id});
+}
+
+// Refine one operand of an action. Given an argument from a template, this
+// produces an argument that has the template-dependent parts replaced with
+// their concrete values, so that the action doesn't need to know which specific
+// it is operating on.
+static auto RefineOperand(Context& context, SemIR::LocId loc_id,
+                          SemIR::IdKind kind, int32_t arg) -> int32_t {
+  if (kind == SemIR::IdKind::For<SemIR::MetaInstId>) {
+    auto inst_id = SemIR::MetaInstId(arg);
+    auto inst = context.insts().Get(inst_id);
+    if (inst.Is<SemIR::SpliceInst>()) {
+      // The argument will evaluate to the spliced instruction, which is already
+      // refined.
+      return arg;
+    }
+
+    // If the type of the action argument is dependent, refine to an instruction
+    // with a concrete type.
+    if (OperandIsDependent(context, inst.type_id())) {
+      inst_id = AddDependentActionSpliceImpl(
+          context,
+          SemIR::LocIdAndInst(loc_id,
+                              SemIR::RefineTypeAction{
+                                  .type_id = SemIR::InstType::SingletonTypeId,
+                                  .inst_id = inst_id,
+                                  .inst_type_id = inst.type_id()}),
+          inst.type_id());
+    }
+
+    // TODO: Handle the case where the constant value of the instruction is
+    // template-dependent.
+
+    return inst_id.index;
+  }
+
+  return arg;
+}
+
+// Refine the operands of an action, ensuring that they will refer to concrete
+// instructions that don't have template-dependent types.
+static auto RefineOperands(Context& context, SemIR::LocId loc_id, SemIR::Inst action)
+    -> SemIR::Inst {
+  auto [arg0_kind, arg1_kind] = action.ArgKinds();
+  auto arg0 = RefineOperand(context, loc_id, arg0_kind, action.arg0());
+  auto arg1 = RefineOperand(context, loc_id, arg0_kind, action.arg1());
+  action.SetArgs(arg0, arg1);
+  return action;
+}
+
+auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
+                              SemIR::TypeId result_type_id) -> SemIR::InstId {
+  action.inst = RefineOperands(context, action.loc_id, action.inst);
+  return AddDependentActionSpliceImpl(context, action, result_type_id);
 }
 
 auto BeginPerformDelayedAction(Context& context) -> void {

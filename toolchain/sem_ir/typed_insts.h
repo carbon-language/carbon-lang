@@ -1170,17 +1170,17 @@ struct PointerType {
   TypeId pointee_id;
 };
 
-// An action that performs an unqualified name reference, `x`.
-struct ReferenceNameAction {
-  static constexpr auto Kind =
-      InstKind::ReferenceNameAction.Define<Parse::NodeId>(
-          {.ir_name = "reference_name_action",
-           .constant_kind = InstConstantKind::InstAction,
-           .is_lowered = false});
+// An action that performs type refinement for an instruction, by creating an
+// instruction that converts from a template symbolic type to a concrete type.
+struct RefineTypeAction {
+  static constexpr auto Kind = InstKind::RefineTypeAction.Define<Parse::NodeId>(
+      {.ir_name = "refine_type_action",
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
 
   TypeId type_id;
-  TypeId value_type_id;
-  AbsoluteInstId value_id;
+  MetaInstId inst_id;
+  TypeId inst_type_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and

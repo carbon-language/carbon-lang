@@ -281,7 +281,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case LegacyFloatType::Kind:
       case NamespaceType::Kind:
       case PointerType::Kind:
-      case ReferenceNameAction::Kind:
+      case RefineTypeAction::Kind:
       case RequireCompleteType::Kind:
       case SpecificFunction::Kind:
       case SpecificFunctionType::Kind:
