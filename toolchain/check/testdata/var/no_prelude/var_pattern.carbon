@@ -68,15 +68,19 @@ fn f() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+8]]:10: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:10: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
 // CHECK:STDERR: fn F[var u: ()]();
 // CHECK:STDERR:          ^~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:6: error: found `var` pattern in implicit parameter list [VarInImplicitParams]
-// CHECK:STDERR: fn F[var u: ()]();
-// CHECK:STDERR:      ^~~~~~~~~
-// CHECK:STDERR:
 fn F[var u: ()]();
+
+// --- var_self.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  fn F[var self: Self]();
+}
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -189,7 +193,7 @@ fn F[var u: ()]();
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
-// CHECK:STDOUT:     %y.param: ref %empty_tuple.type = ref_param runtime_param1, y
+// CHECK:STDOUT:     %y.param: ref %empty_tuple.type = ref_param runtime_param1
 // CHECK:STDOUT:     %.loc4_21.1: type = splice_block %.loc4_21.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc4_21.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc4_21.3: type = converted %.loc4_21.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -322,9 +326,49 @@ fn F[var u: ()]();
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc12: <error> = var_pattern <error>
-// CHECK:STDOUT:   } {}
+// CHECK:STDOUT:     %.param_patt: <error> = ref_param_pattern <error>, runtime_param0
+// CHECK:STDOUT:     %.loc8: <error> = var_pattern %.param_patt
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.param: ref <error> = ref_param runtime_param0
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%.loc12: <error>]();
+// CHECK:STDOUT: fn @F[%.loc8: <error>]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- var_self.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = ref_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc5: %C = var_pattern %self.param_patt
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %C = ref_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: ref %C = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F[%.loc5: %C]();
 // CHECK:STDOUT:

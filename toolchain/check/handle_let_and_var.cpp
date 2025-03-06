@@ -103,10 +103,10 @@ auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
 }
 
-// Returns a VarStorage inst for the given pattern. If the pattern
+// Returns a VarStorage inst for the given `var` pattern. If the pattern
 // is the body of a returned var, this reuses the return slot, and otherwise it
 // adds a new inst.
-static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
+static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
     -> SemIR::InstId {
   if (context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
           KeywordModifierSet::Returned)) {
@@ -117,7 +117,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
       return GetCurrentReturnSlot(context);
     }
   }
-  auto pattern = context.insts().GetWithLocId(pattern_id);
+  auto pattern = context.insts().GetWithLocId(var_pattern_id);
 
   return AddInst(
       context,
@@ -139,16 +139,12 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
   // even if it contains multiple binding patterns.
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ExplicitParamList:
+    case FullPatternStack::Kind::ImplicitParamList:
       subpattern_id = AddPatternInst<SemIR::RefParamPattern>(
           context, node_id,
           {.type_id = type_id,
            .subpattern_id = subpattern_id,
            .index = SemIR::CallParamIndex::None});
-      break;
-    case FullPatternStack::Kind::ImplicitParamList:
-      CARBON_DIAGNOSTIC(VarInImplicitParams, Error,
-                        "found `var` pattern in implicit parameter list");
-      context.emitter().Emit(node_id, VarInImplicitParams);
       break;
     case FullPatternStack::Kind::NameBindingDecl:
       break;
