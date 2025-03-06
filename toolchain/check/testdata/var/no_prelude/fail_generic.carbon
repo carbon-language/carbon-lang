@@ -13,7 +13,7 @@ fn Main() {
   // CHECK:STDERR:   var x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:14: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:14: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   var x:! () = ();
   // CHECK:STDERR:              ^
   // CHECK:STDERR:

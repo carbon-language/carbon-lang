@@ -211,6 +211,11 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::RefParam /*inst*/) -> void {
+  // Parameters are lowered by `BuildFunctionDefinition`.
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::ValueParam /*inst*/) -> void {
   // Parameters are lowered by `BuildFunctionDefinition`.
 }

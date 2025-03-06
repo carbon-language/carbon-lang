@@ -9,11 +9,17 @@ namespace Carbon::Parse {
 
 auto HandlePattern(Context& context) -> void {
   auto state = context.PopState();
-  if (context.PositionKind() == Lex::TokenKind::OpenParen) {
-    context.PushStateForPattern(State::PatternListAsTuple,
-                                state.in_var_pattern);
-  } else {
-    context.PushStateForPattern(State::BindingPattern, state.in_var_pattern);
+  switch (context.PositionKind()) {
+    case Lex::TokenKind::OpenParen:
+      context.PushStateForPattern(State::PatternListAsTuple,
+                                  state.in_var_pattern);
+      break;
+    case Lex::TokenKind::Var:
+      context.PushStateForPattern(State::VariablePattern, state.in_var_pattern);
+      break;
+    default:
+      context.PushStateForPattern(State::BindingPattern, state.in_var_pattern);
+      break;
   }
 }
 

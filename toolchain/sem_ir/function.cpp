@@ -88,32 +88,6 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
            .entity_name_id = binding_pattern.entity_name_id}};
 }
 
-auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
-    -> SemIR::NameId {
-  auto inst_id = pattern_id;
-  auto inst = sem_ir.insts().Get(inst_id);
-
-  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
-    inst_id = addr_pattern->inner_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (inst_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::NameId::None;
-  }
-
-  if (auto param_pattern_inst = inst.TryAs<SemIR::AnyParamPattern>()) {
-    inst_id = param_pattern_inst->subpattern_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (inst.Is<ReturnSlotPattern>()) {
-    return SemIR::NameId::ReturnSlot;
-  }
-  auto binding_pattern = inst.As<AnyBindingPattern>();
-  return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
-}
-
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_slot_pattern_id.has_value()) {

@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -267,13 +268,11 @@ static auto BuildFunctionDecl(Context& context,
   auto self_param_id = SemIR::InstId::None;
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(name.implicit_param_patterns_id);
-  if (const auto* i =
-          llvm::find_if(implicit_param_patterns,
-                        [&](auto implicit_param_id) {
-                          return SemIR::Function::GetNameFromPatternId(
-                                     context.sem_ir(), implicit_param_id) ==
-                                 SemIR::NameId::SelfValue;
-                        });
+  if (const auto* i = llvm::find_if(implicit_param_patterns,
+                                    [&](auto implicit_param_id) {
+                                      return SemIR::IsSelfPattern(
+                                          context.sem_ir(), implicit_param_id);
+                                    });
       i != implicit_param_patterns.end()) {
     self_param_id = *i;
   }

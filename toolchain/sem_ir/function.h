@@ -94,11 +94,6 @@ struct Function : public EntityWithParamsBase,
                                                InstId param_pattern_id)
       -> std::optional<ParamPatternInfo>;
 
-  // Gets the name from the name binding instruction, or `None` if this pattern
-  // has been replaced with BuiltinErrorInst.
-  static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
-      -> SemIR::NameId;
-
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `None` if no return type was specified, in which
