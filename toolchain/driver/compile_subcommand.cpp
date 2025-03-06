@@ -229,6 +229,15 @@ Whether to use the implicit prelude import. Enabled by default.
       });
   b.AddStringOption(
       {
+          .name = "prelude-path-for-testing",
+          .value_name = "PRELUDE_PATH_FOR_TESTING",
+          .help = R"""(
+Path to the prelude. Uses the prelude shipped with the toolchain by default.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&prelude_path_for_testing); });
+  b.AddStringOption(
+      {
           .name = "exclude-dump-file-prefix",
           .value_name = "PREFIX",
           .help = R"""(
@@ -741,7 +750,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   llvm::SmallVector<std::string> prelude;
   if (options_.prelude_import &&
       options_.phase >= CompileOptions::Phase::Check) {
-    if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
+    if (!options_.prelude_path_for_testing.empty()) {
+      prelude.push_back(std::string(options_.prelude_path_for_testing));
+    } else if (auto find = driver_env.installation->ReadPreludeManifest();
+               find.ok()) {
       prelude = std::move(*find);
     } else {
       // TODO: Change ReadPreludeManifest to produce diagnostics.

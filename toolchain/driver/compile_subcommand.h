@@ -58,6 +58,7 @@ struct CompileOptions {
   bool prelude_import = false;
   bool include_debug_info = true;
 
+  llvm::StringRef prelude_path_for_testing;
   llvm::StringRef exclude_dump_file_prefix;
 };
 

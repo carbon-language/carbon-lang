@@ -492,6 +492,21 @@ static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
   return true;
 }
 
+static auto TryConsumeMinimalPrelude(
+    llvm::StringRef line, llvm::StringRef line_trimmed,
+    std::optional<std::string>* minimal_prelude_path) -> ErrorOr<bool> {
+  if (!line_trimmed.consume_front("// PRELUDE: ")) {
+    return false;
+  }
+
+  if (minimal_prelude_path->has_value()) {
+    return ErrorBuilder() << "PRELUDE specified multiple tmies: " << line.str();
+  }
+
+  minimal_prelude_path->emplace(line_trimmed);
+  return true;
+}
+
 // Processes AUTOUPDATE lines when found. Returns true if the line is consumed.
 static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
                                  bool* found_autoupdate,
@@ -599,6 +614,12 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
       continue;
     }
     CARBON_ASSIGN_OR_RETURN(
+        is_consumed, TryConsumeMinimalPrelude(line, line_trimmed,
+                                              &test_file.minimal_prelude_path));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(
         is_consumed,
         TryConsumeAutoupdate(line_index, line_trimmed, &found_autoupdate,
                              &test_file.autoupdate_line_number));
@@ -621,7 +642,8 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
   }
 
   if (!found_autoupdate) {
-    return Error("Missing AUTOUPDATE/NOAUTOUPDATE setting");
+    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting: "
+                          << test_name;
   }
 
   test_file.has_splits = split.has_splits();

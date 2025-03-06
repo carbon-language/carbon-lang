@@ -22,6 +22,13 @@ filegroup(
     ],
 )
 
+filegroup(
+    name = "minimal_preludes",
+    data = [
+        "//toolchain/testing/min_prelude",
+    ],
+)
+
 cc_library(
     name = "compile_helper",
     testonly = 1,
@@ -54,6 +61,7 @@ file_test(
     size = "small",
     timeout = "moderate",  # Taking >60 seconds in GitHub actions
     srcs = ["file_test.cpp"],
+    data = [":minimal_preludes"],
     tests = [":all_testdata"],
     deps = [
         "//common:all_llvm_targets",

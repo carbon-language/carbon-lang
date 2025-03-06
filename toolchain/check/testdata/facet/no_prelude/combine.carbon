@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// PRELUDE: toolchain/testing/min_prelude/facet_types.carbon
 // EXTRA-ARGS: --no-dump-sem-ir
 //
 // AUTOUPDATE
@@ -10,29 +11,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/no_prelude/combine.carbon
 
-// --- core.carbon
-package Core;
-
-interface As(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
-}
-
-interface ImplicitAs(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
-}
-
-interface BitAnd {
-  fn Op[self: Self](other: Self) -> Self;
-}
-
-impl forall [T:! type] T as BitAnd {
-  fn Op[self: Self](other: Self) -> Self = "type.and";
-}
-
 // --- fail_combine_with_non_facet_type.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface A {}
 class C {}
@@ -86,8 +66,6 @@ fn F() {
 // --- same.carbon
 library "[[@TEST_NAME]]";
 
-import Core;
-
 interface A {}
 
 class C {}
@@ -103,8 +81,6 @@ fn F() {
 
 // --- fail_name_collision.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface A {
   fn G();
@@ -134,8 +110,6 @@ fn F() {
 // --- combine.carbon
 library "[[@TEST_NAME]]";
 
-import Core;
-
 interface A {}
 interface B {
   fn BB[self: Self]();
@@ -161,8 +135,6 @@ fn F() {
 // --- generic_interface.carbon
 library "[[@TEST_NAME]]";
 
-import Core;
-
 interface A(T:! type) {}
 interface B {}
 
@@ -181,8 +153,6 @@ fn F() {
 
 // --- fail_wrong_generic_interface.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface A(T:! type) {}
 interface B {}
@@ -212,8 +182,6 @@ fn F() {
 
 // --- generic_forall_impl.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface Iface {}
 interface GenericIface(T:! type) {}

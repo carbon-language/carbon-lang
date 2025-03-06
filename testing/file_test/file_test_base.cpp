@@ -391,6 +391,10 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
       output_lock = std::unique_lock<std::mutex>(output_mutex);
     }
 
+    if ((*test.test_result)->minimal_prelude_path) {
+      test_instance->SetPreludePath(*(*test.test_result)->minimal_prelude_path);
+    }
+
     if (single_threaded) {
       RunSingleTestHelper(test, *test_instance);
     } else {

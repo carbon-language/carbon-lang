@@ -56,6 +56,11 @@ class FileTestBase {
   explicit FileTestBase(llvm::StringRef test_name) : test_name_(test_name) {}
   virtual ~FileTestBase() = default;
 
+  // Set up the path to the prelude, relative to the repository root. If a
+  // test-defined prelude is being used, this method is called before getting
+  // arguments from this class, and before Run().
+  virtual auto SetPreludePath(llvm::StringRef /*prelude_path*/) -> void {}
+
   // Implemented by children to run the test. The framework will validate the
   // content written to `output_stream` and `error_stream`. Children should use
   // `fs` for file content, and may add more files.
