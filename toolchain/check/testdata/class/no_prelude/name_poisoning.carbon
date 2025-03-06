@@ -266,7 +266,7 @@ class C {
   fn B();
 }
 
-// --- poisoned_name_in_extend.carbon
+// --- todo_fail_poisoned_name_in_extend.carbon
 
 library "[[@TEST_NAME]]";
 
