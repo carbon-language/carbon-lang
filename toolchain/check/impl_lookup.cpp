@@ -320,15 +320,18 @@ static auto FindWitnessInFacet(
     if (complete_facet_type_id.has_value()) {
       const auto& complete_facet_type =
           context.complete_facet_types().Get(complete_facet_type_id);
-      for (auto interface : complete_facet_type.required_interfaces) {
+      // This assumes required_interfaces are in the same order as
+      // `FacetTypeInfo::impl_constraints`.
+      for (auto [index, interface] :
+           llvm::enumerate(complete_facet_type.required_interfaces)) {
         if (interface == specific_interface) {
-          // TODO: Need to get the right witness when there are multiple.
           return GetOrAddInst(
               context, loc_id,
               SemIR::FacetAccessWitness{
                   .type_id = GetSingletonType(
                       context, SemIR::WitnessType::SingletonInstId),
-                  .facet_value_inst_id = facet_inst_id});
+                  .facet_value_inst_id = facet_inst_id,
+                  .index = SemIR::ElementIndex(index)});
         }
       }
     }
