@@ -164,7 +164,8 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
 auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
   if (!cpp_mangle_context_) {
     // We assume all declarations are from the same AST Context.
-    // TODO: #4666 Consider initializing this in the constructor. See
+    // TODO: Consider initializing this in the constructor. This is related to:
+    // https://github.com/carbon-language/carbon-lang/issues/4666. See
     // https://github.com/carbon-language/carbon-lang/pull/5062/files/89e56d51858bcc18d4242d4e5c9ee0e7496d887e#r1979993815
     cpp_mangle_context_.reset(decl->getASTContext().createMangleContext());
   }
