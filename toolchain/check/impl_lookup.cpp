@@ -401,6 +401,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // them in the same order as they are found in the `CompleteFacetType`, which
   // is the same order as in `interfaces` here.
   for (const auto& interface : interfaces) {
+    // TODO: Since both `interfaces` and `type_const_id` are sorted lists, do an
+    // O(N+M) merge instead of O(N*M) nested loops.
     auto result_witness_id =
         FindWitnessInFacet(context, loc_id, type_const_id, interface);
     if (!result_witness_id.has_value()) {
