@@ -6,7 +6,10 @@
 
 #include <fstream>
 
+#include "common/check.h"
+#include "common/error.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/JSON.h"
 #include "testing/base/file_helpers.h"
 
 namespace Carbon::Testing {
@@ -93,9 +96,47 @@ struct SplitState {
   int file_index = 0;
 };
 
+static auto ExtractFilePathFromUri(llvm::StringRef uri) -> llvm::StringRef {
+  static constexpr llvm::StringRef FilePrefix = "file:/";
+  if (uri.starts_with(FilePrefix)) {
+    return uri.drop_front(FilePrefix.size());
+  }
+  return uri;
+}
+
+static auto AutoFillDidOpenParams(llvm::json::Object* params,
+                                  llvm::ArrayRef<TestFile::Split> splits)
+    -> ErrorOr<Success> {
+  auto* text_document = params->getObject("textDocument");
+  if (text_document == nullptr) {
+    return Success{};
+  }
+
+  auto attr_it = text_document->find("text");
+  if (attr_it == text_document->end() || attr_it->second != "AUTOFILL") {
+    return Success{};
+  }
+
+  auto uri = text_document->getString("uri");
+  CARBON_CHECK(uri.has_value());
+
+  auto file_path = ExtractFilePathFromUri(*uri);
+  const auto* split_it =
+      llvm::find_if(splits, [&](const TestFile::Split& split) {
+        return split.filename == file_path;
+      });
+  if (split_it == splits.end()) {
+    return ErrorBuilder() << "No split found for uri: " << *uri;
+  }
+  attr_it->second = split_it->content;
+  return Success{};
+}
+
 // Reformats `[[@LSP:` and similar keyword as an LSP call with headers.
 static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
-                                int& lsp_call_id) -> ErrorOr<size_t> {
+                                int& lsp_call_id,
+                                llvm::ArrayRef<TestFile::Split> splits)
+    -> ErrorOr<size_t> {
   llvm::StringRef content_at_keyword =
       llvm::StringRef(*content).substr(keyword_pos);
 
@@ -133,30 +174,52 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
   llvm::StringRef body = body_start.take_front(body_end);
   auto [method_or_id, extra_content] = body.split(":");
 
-  // Form the JSON.
-  std::string json = llvm::formatv(R"({{"jsonrpc": "2.0", "{0}": "{1}")",
-                                   method_or_id_label, method_or_id);
-  if (use_call_id) {
-    // Omit quotes on the ID because we know it's an integer.
-    json += llvm::formatv(R"(, "id": {0})", ++lsp_call_id);
-  }
+  llvm::json::Value parsed_extra_content = nullptr;
   if (!extra_content.empty()) {
-    json += ",";
-    if (extra_content_label.empty()) {
-      if (!extra_content.starts_with("\n")) {
-        json += " ";
-      }
-      json += extra_content;
-    } else {
-      json += llvm::formatv(R"( "{0}": {{{1}})", extra_content_label,
-                            extra_content);
+    std::string bracketed_extra_content =
+        llvm::formatv("{{{0}}", extra_content);
+    auto parse_result = llvm::json::parse(bracketed_extra_content);
+    if (auto err = parse_result.takeError()) {
+      return ErrorBuilder() << "Error parsing extra content: " << err;
+    }
+    parsed_extra_content = std::move(*parse_result);
+    CARBON_CHECK(parsed_extra_content.kind() == llvm::json::Value::Object);
+    if (extra_content_label == "params" &&
+        method_or_id == "textDocument/didOpen") {
+      CARBON_RETURN_IF_ERROR(
+          AutoFillDidOpenParams(parsed_extra_content.getAsObject(), splits));
     }
   }
-  json += "}";
+
+  // Form the JSON.
+  std::string buffer;
+
+  {
+    llvm::raw_string_ostream json_sstream(buffer);
+    llvm::json::OStream json(json_sstream);
+
+    json.object([&] {
+      json.attribute("jsonrpc", "2.0");
+      json.attribute(method_or_id_label, method_or_id);
+
+      if (use_call_id) {
+        json.attribute("id", ++lsp_call_id);
+      }
+      if (parsed_extra_content != nullptr) {
+        if (!extra_content_label.empty()) {
+          json.attribute(extra_content_label, parsed_extra_content);
+        } else {
+          for (const auto& [key, value] : *parsed_extra_content.getAsObject()) {
+            json.attribute(key, value);
+          }
+        }
+      }
+    });
+  }
 
   // Add the Content-Length header. The `2` accounts for extra newlines.
   auto json_with_header =
-      llvm::formatv("Content-Length: {0}\n\n{1}\n", json.size() + 2, json)
+      llvm::formatv("Content-Length: {0}\n\n{1}\n", buffer.size() + 2, buffer)
           .str();
   int keyword_len =
       (body_start.data() + body_end + LspEnd.size()) - keyword.data();
@@ -167,7 +230,8 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
 // Replaces the keyword at the given position. Returns the position to start a
 // find for the next keyword.
 static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
-                                    llvm::StringRef test_name, int& lsp_call_id)
+                                    llvm::StringRef test_name, int& lsp_call_id,
+                                    llvm::ArrayRef<TestFile::Split> splits)
     -> ErrorOr<size_t> {
   auto keyword = llvm::StringRef(*content).substr(keyword_pos);
 
@@ -186,7 +250,7 @@ static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
   }
 
   if (keyword.starts_with("[[@LSP")) {
-    return ReplaceLspKeywordAt(content, keyword_pos, lsp_call_id);
+    return ReplaceLspKeywordAt(content, keyword_pos, lsp_call_id, splits);
   }
 
   return ErrorBuilder() << "Unexpected use of `[[@` at `"
@@ -198,7 +262,9 @@ static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
 // TEST_NAME is the only content keyword at present, but we do validate that
 // other names are reserved.
 static auto ReplaceContentKeywords(llvm::StringRef filename,
-                                   std::string* content) -> ErrorOr<Success> {
+                                   std::string* content,
+                                   llvm::ArrayRef<TestFile::Split> splits)
+    -> ErrorOr<Success> {
   static constexpr llvm::StringLiteral Prefix = "[[@";
 
   auto keyword_pos = content->find(Prefix);
@@ -227,7 +293,8 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
   while (keyword_pos != std::string::npos) {
     CARBON_ASSIGN_OR_RETURN(
         auto keyword_end,
-        ReplaceContentKeywordAt(content, keyword_pos, test_name, lsp_call_id));
+        ReplaceContentKeywordAt(content, keyword_pos, test_name, lsp_call_id,
+                                splits));
     keyword_pos = content->find(Prefix, keyword_end);
   }
   return Success();
@@ -237,7 +304,8 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
 static auto AddSplit(llvm::StringRef filename, std::string* content,
                      llvm::SmallVector<TestFile::Split>* file_splits)
     -> ErrorOr<Success> {
-  CARBON_RETURN_IF_ERROR(ReplaceContentKeywords(filename, content));
+  CARBON_RETURN_IF_ERROR(
+      ReplaceContentKeywords(filename, content, *file_splits));
   file_splits->push_back(
       {.filename = filename.str(), .content = std::move(*content)});
   content->clear();
@@ -290,17 +358,18 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
   if (split->filename.empty()) {
     return ErrorBuilder() << "Missing filename for split.";
   }
-  // The split line is added to non_check_lines for retention in autoupdate, but
-  // is not added to the test file content.
+  // The split line is added to non_check_lines for retention in autoupdate,
+  // but is not added to the test file content.
   *line_index = 0;
   non_check_lines->push_back(
       FileTestLine(split->file_index, *line_index, line));
   return true;
 }
 
-// Converts a `FileCheck`-style expectation string into a single complete regex
-// string by escaping all regex characters outside of the designated `{{...}}`
-// regex sequences, and switching those to a normal regex sub-pattern syntax.
+// Converts a `FileCheck`-style expectation string into a single complete
+// regex string by escaping all regex characters outside of the designated
+// `{{...}}` regex sequences, and switching those to a normal regex
+// sub-pattern syntax.
 static auto ConvertExpectationStringToRegex(std::string& str) -> void {
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
@@ -492,7 +561,8 @@ static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
   return true;
 }
 
-// Processes AUTOUPDATE lines when found. Returns true if the line is consumed.
+// Processes AUTOUPDATE lines when found. Returns true if the line is
+// consumed.
 static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
                                  bool* found_autoupdate,
                                  std::optional<int>* autoupdate_line_number)
