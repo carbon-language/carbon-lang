@@ -69,8 +69,7 @@ using ConstantsInGenericMap = Map<SemIR::InstId, SemIR::InstId, 256>;
 
 // Substitution callbacks to rebuild a generic constant in the eval block for a
 // generic region.
-class RebuildGenericConstantInEvalBlockCallbacks
-    : public SubstInstCallbacks {
+class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
  public:
   RebuildGenericConstantInEvalBlockCallbacks(
       Context& context, SemIR::GenericId generic_id,

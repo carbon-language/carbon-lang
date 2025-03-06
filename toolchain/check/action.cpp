@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/action.h"
+
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/constant.h"
@@ -36,8 +37,7 @@ auto OperandIsDependent(Context& context, SemIR::TypeId type_id) -> bool {
   return OperandIsDependent(context, context.types().GetConstantId(type_id));
 }
 
-auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id)
-    -> bool {
+auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id) -> bool {
   // An instruction operand makes the instruction dependent if its type or
   // constant value is dependent.
   return OperandIsDependent(context, context.insts().Get(inst_id).type_id()) ||
@@ -131,8 +131,8 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
 
 // Refine the operands of an action, ensuring that they will refer to concrete
 // instructions that don't have template-dependent types.
-static auto RefineOperands(Context& context, SemIR::LocId loc_id, SemIR::Inst action)
-    -> SemIR::Inst {
+static auto RefineOperands(Context& context, SemIR::LocId loc_id,
+                           SemIR::Inst action) -> SemIR::Inst {
   auto [arg0_kind, arg1_kind] = action.ArgKinds();
   auto arg0 = RefineOperand(context, loc_id, arg0_kind, action.arg0());
   auto arg1 = RefineOperand(context, loc_id, arg0_kind, action.arg1());
@@ -153,7 +153,8 @@ auto BeginPerformDelayedAction(Context& context) -> void {
   context.inst_block_stack().Push();
 }
 
-auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id) -> SemIR::InstId {
+auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
+    -> SemIR::InstId {
   // If the only created instruction is the result, then we can use it directly.
   auto contents = context.inst_block_stack().PeekCurrentBlockContents();
   if (contents.size() == 1 && contents[0] == result_id) {

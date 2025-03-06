@@ -83,7 +83,7 @@ auto AddDependentActionInst(Context& context,
   // Register the instruction to be added to the eval block.
   context.generic_region_stack().AddDependentInst(
       {.inst_id = inst_id,
-        .kind = GenericRegionStack::DependencyKind::Template});
+       .kind = GenericRegionStack::DependencyKind::Template});
   return inst_id;
 }
 

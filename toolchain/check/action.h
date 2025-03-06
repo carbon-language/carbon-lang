@@ -32,8 +32,7 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool;
 
 // Determines whether the given action operand depends on a template parameter
 // in a way that means the action cannot be performed immediately.
-auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id)
-    -> bool;
+auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id) -> bool;
 
 // Determines whether the given type depends on a template parameter
 // in a way that means the action cannot be performed immediately.
