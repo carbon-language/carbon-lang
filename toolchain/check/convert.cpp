@@ -11,6 +11,7 @@
 #include "common/map.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -1113,6 +1114,13 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
   return SemIR::ErrorInst::SingletonInstId;
 }
 
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertToValueAction action) -> SemIR::InstId {
+  return Convert(
+      context, loc_id, action.inst_id,
+      {.kind = ConversionTarget::Value, .type_id = action.target_type_id});
+}
+
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
@@ -1178,6 +1186,20 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);
   if (expr_id == SemIR::ErrorInst::SingletonInstId) {
     return expr_id;
+  }
+
+  // Defer the action if it's dependent.
+  // TODO: Support this for targets other than `Value`.
+  if (sem_ir.insts().Get(expr_id).type_id() != target.type_id &&
+      target.kind == ConversionTarget::Value &&
+      (OperandIsDependent(context, expr_id) ||
+       OperandIsDependent(context, target.type_id))) {
+    return AddDependentActionSplice(
+        context, loc_id,
+        SemIR::ConvertToValueAction{.type_id = SemIR::InstType::SingletonTypeId,
+                                    .inst_id = expr_id,
+                                    .target_type_id = target.type_id},
+        target.type_id);
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.

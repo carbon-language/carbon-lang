@@ -591,6 +591,20 @@ struct ConstType {
   TypeId inner_id;
 };
 
+// An action that performs simple conversion to a value expression of a given
+// type.
+struct ConvertToValueAction {
+  static constexpr auto Kind =
+      InstKind::ConvertToValueAction.Define<Parse::NodeId>(
+          {.ir_name = "convert_to_value_action",
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId inst_id;
+  TypeId target_type_id;
+};
+
 // Records that a type conversion `original as new_type` was done, producing the
 // result.
 struct Converted {

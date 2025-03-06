@@ -556,7 +556,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         // Print the constant value if we've already computed the inst.
         auto const_inst_id =
             sem_ir.constant_values().GetConstantInstId(step.inst_id);
-        if (const_inst_id.has_value()) {
+        if (const_inst_id.has_value() && const_inst_id != step.inst_id) {
           step_stack.PushInstId(const_inst_id);
           break;
         }
@@ -597,6 +597,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ClassElementAccess::Kind:
       case ClassInit::Kind:
       case CompleteTypeWitness::Kind:
+      case ConvertToValueAction::Kind:
       case Converted::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:

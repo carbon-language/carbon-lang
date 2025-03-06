@@ -15,6 +15,11 @@ namespace Carbon::Check {
 // Performs a member access action. Defined in member_access.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::AccessMemberAction action) -> SemIR::InstId;
+
+// Performs a conversion action. Defined in convert.cpp.
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertToValueAction action) -> SemIR::InstId;
+
 // Performs a type refinement action, by creating a conversion from an
 // instruction with a template-dependent symbolic type to the corresponding
 // instantiated type.
@@ -38,6 +43,17 @@ auto OperandIsDependent(Context& context, SemIR::TypeId type_id) -> bool;
 // performing a dependent action.
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
                               SemIR::TypeId result_type_id) -> SemIR::InstId;
+
+// Convenience wrapper for `AddDependentActionSplice`.
+template <typename LocT, typename InstT>
+auto AddDependentActionSplice(Context& context, LocT loc, InstT inst,
+                              SemIR::TypeId result_type_id)
+    -> decltype(AddDependentActionSplice(context,
+                                         SemIR::LocIdAndInst(loc, inst),
+                                         result_type_id)) {
+  return AddDependentActionSplice(context, SemIR::LocIdAndInst(loc, inst),
+                                  result_type_id);
+}
 
 // Handles a new action. If the action is not dependent, it is performed
 // immediately. Otherwise, adds the action to the enclosing template's eval
