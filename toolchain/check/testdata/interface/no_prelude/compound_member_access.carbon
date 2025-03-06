@@ -265,27 +265,21 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc3_14.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_14.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc3_14.1, runtime_param<none> [symbolic = %Dest.patt.loc3_14.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc3_14.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc3_14.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc3_14.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc3_14.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc7_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc7_22.2 (constants.%Dest.patt)]
-// CHECK:STDOUT:     %Dest.param_patt: type = value_param_pattern %Dest.patt.loc7_22.1, runtime_param<none> [symbolic = %Dest.patt.loc7_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Dest.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %Dest.loc7_22.1: type = bind_symbolic_name Dest, 0, %Dest.param [symbolic = %Dest.loc7_22.2 (constants.%Dest)]
+// CHECK:STDOUT:     %Dest.loc7_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc7_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BitAnd.decl: type = interface_decl @BitAnd [concrete = constants.%BitAnd.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {
 // CHECK:STDOUT:     %T.patt.loc15_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc15_14.1, runtime_param<none> [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_14.1 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:     %BitAnd.ref: type = name_ref BitAnd, file.%BitAnd.decl [concrete = constants.%BitAnd.type]
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc15_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl), @impl(constants.%T) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
 // CHECK:STDOUT: }
@@ -306,12 +300,12 @@ fn Works() {
 // CHECK:STDOUT:     %Self.1: @As.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b4e)]
 // CHECK:STDOUT:     %Convert.decl: @As.%Convert.type (%Convert.type.ad1) = fn_decl @Convert.1 [symbolic = @As.%Convert (constants.%Convert.0ed)] {
 // CHECK:STDOUT:       %self.patt: @Convert.1.%Self.as_type.loc4_20.1 (%Self.as_type.7f0) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.1.%Self.as_type.loc4_20.1 (%Self.as_type.7f0) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Convert.1.%Self.as_type.loc4_20.1 (%Self.as_type.7f0) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Convert.1.%Dest (%Dest) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.1.%Dest (%Dest) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Convert.1.%Dest (%Dest) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @As.%Dest.loc3_14.1 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %self.param: @Convert.1.%Self.as_type.loc4_20.1 (%Self.as_type.7f0) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Convert.1.%Self.as_type.loc4_20.1 (%Self.as_type.7f0) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_20.1: type = splice_block %.loc4_20.3 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type.7f0)] {
 // CHECK:STDOUT:         %.loc4_20.2: @Convert.1.%As.type (%As.type.8ba) = specific_constant @As.%Self.1, @As(constants.%Dest) [symbolic = %Self (constants.%Self.b4e)]
 // CHECK:STDOUT:         %Self.ref: @Convert.1.%As.type (%As.type.8ba) = name_ref Self, %.loc4_20.2 [symbolic = %Self (constants.%Self.b4e)]
@@ -319,7 +313,7 @@ fn Works() {
 // CHECK:STDOUT:         %.loc4_20.3: type = converted %Self.ref, %Self.as_type.loc4_20.2 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type.7f0)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Convert.1.%Self.as_type.loc4_20.1 (%Self.as_type.7f0) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Convert.1.%Dest (%Dest) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Convert.1.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Convert.1.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc4_35.1: @As.%As.assoc_type (%As.assoc_type) = assoc_entity element0, %Convert.decl [symbolic = %assoc0.loc4_35.2 (constants.%assoc0.ac5)]
@@ -348,12 +342,12 @@ fn Works() {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.0f3)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type.4cf) = fn_decl @Convert.2 [symbolic = @ImplicitAs.%Convert (constants.%Convert.147)] {
 // CHECK:STDOUT:       %self.patt: @Convert.2.%Self.as_type.loc8_20.1 (%Self.as_type.419) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.2.%Self.as_type.loc8_20.1 (%Self.as_type.419) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Convert.2.%Self.as_type.loc8_20.1 (%Self.as_type.419) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %return.patt: @Convert.2.%Dest (%Dest) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.2.%Dest (%Dest) = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @Convert.2.%Dest (%Dest) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc7_22.1 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %self.param: @Convert.2.%Self.as_type.loc8_20.1 (%Self.as_type.419) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Convert.2.%Self.as_type.loc8_20.1 (%Self.as_type.419) = value_param call_param0
 // CHECK:STDOUT:       %.loc8_20.1: type = splice_block %.loc8_20.3 [symbolic = %Self.as_type.loc8_20.1 (constants.%Self.as_type.419)] {
 // CHECK:STDOUT:         %.loc8_20.2: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.07f) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self.0f3)]
 // CHECK:STDOUT:         %Self.ref: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.07f) = name_ref Self, %.loc8_20.2 [symbolic = %Self (constants.%Self.0f3)]
@@ -361,7 +355,7 @@ fn Works() {
 // CHECK:STDOUT:         %.loc8_20.3: type = converted %Self.ref, %Self.as_type.loc8_20.2 [symbolic = %Self.as_type.loc8_20.1 (constants.%Self.as_type.419)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Convert.2.%Self.as_type.loc8_20.1 (%Self.as_type.419) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Convert.2.%Dest (%Dest) = out_param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @Convert.2.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Convert.2.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc8_35.1: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %Convert.decl [symbolic = %assoc0.loc8_35.2 (constants.%assoc0.a50)]
@@ -378,30 +372,30 @@ fn Works() {
 // CHECK:STDOUT:   %Self: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.e44]
 // CHECK:STDOUT:   %Op.decl: %Op.type.613 = fn_decl @Op.1 [concrete = constants.%Op.d98] {
 // CHECK:STDOUT:     %self.patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %other.patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param_pattern %other.patt, call_param1
 // CHECK:STDOUT:     %return.patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12_37: %BitAnd.type = name_ref Self, @BitAnd.%Self [symbolic = %Self (constants.%Self.e44)]
 // CHECK:STDOUT:     %Self.as_type.loc12_37: type = facet_access_type %Self.ref.loc12_37 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)]
 // CHECK:STDOUT:     %.loc12_37: type = converted %Self.ref.loc12_37, %Self.as_type.loc12_37 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)]
-// CHECK:STDOUT:     %self.param: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param call_param0
 // CHECK:STDOUT:     %.loc12_15.1: type = splice_block %.loc12_15.2 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)] {
 // CHECK:STDOUT:       %Self.ref.loc12_15: %BitAnd.type = name_ref Self, @BitAnd.%Self [symbolic = %Self (constants.%Self.e44)]
 // CHECK:STDOUT:       %Self.as_type.loc12_15.2: type = facet_access_type %Self.ref.loc12_15 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)]
 // CHECK:STDOUT:       %.loc12_15.2: type = converted %Self.ref.loc12_15, %Self.as_type.loc12_15.2 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param runtime_param1
+// CHECK:STDOUT:     %other.param: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = value_param call_param1
 // CHECK:STDOUT:     %.loc12_28.1: type = splice_block %.loc12_28.2 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)] {
 // CHECK:STDOUT:       %Self.ref.loc12_28: %BitAnd.type = name_ref Self, @BitAnd.%Self [symbolic = %Self (constants.%Self.e44)]
 // CHECK:STDOUT:       %Self.as_type.loc12_28: type = facet_access_type %Self.ref.loc12_28 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)]
 // CHECK:STDOUT:       %.loc12_28.2: type = converted %Self.ref.loc12_28, %Self.as_type.loc12_28 [symbolic = %Self.as_type.loc12_15.1 (constants.%Self.as_type.560)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %other: @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = bind_name other, %other.param
-// CHECK:STDOUT:     %return.param: ref @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = out_param runtime_param2
+// CHECK:STDOUT:     %return.param: ref @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @Op.1.%Self.as_type.loc12_15.1 (%Self.as_type.560) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %BitAnd.assoc_type = assoc_entity element0, %Op.decl [concrete = constants.%assoc0.121]
@@ -425,20 +419,20 @@ fn Works() {
 // CHECK:STDOUT:   impl: %T.ref as %BitAnd.ref {
 // CHECK:STDOUT:     %Op.decl: @impl.%Op.type (%Op.type.28d) = fn_decl @Op.2 [symbolic = @impl.%Op (constants.%Op.902)] {
 // CHECK:STDOUT:       %self.patt: @Op.2.%T (%T) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Op.2.%T (%T) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Op.2.%T (%T) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:       %other.patt: @Op.2.%T (%T) = binding_pattern other
-// CHECK:STDOUT:       %other.param_patt: @Op.2.%T (%T) = value_param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:       %other.param_patt: @Op.2.%T (%T) = value_param_pattern %other.patt, call_param1
 // CHECK:STDOUT:       %return.patt: @Op.2.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Op.2.%T (%T) = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:       %return.param_patt: @Op.2.%T (%T) = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.ref.loc16_37: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %self.param: @Op.2.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %self.param: @Op.2.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %Self.ref.loc16_15: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self: @Op.2.%T (%T) = bind_name self, %self.param
-// CHECK:STDOUT:       %other.param: @Op.2.%T (%T) = value_param runtime_param1
+// CHECK:STDOUT:       %other.param: @Op.2.%T (%T) = value_param call_param1
 // CHECK:STDOUT:       %Self.ref.loc16_28: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %other: @Op.2.%T (%T) = bind_name other, %other.param
-// CHECK:STDOUT:       %return.param: ref @Op.2.%T (%T) = out_param runtime_param2
+// CHECK:STDOUT:       %return.param: ref @Op.2.%T (%T) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @Op.2.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
@@ -568,14 +562,10 @@ fn Works() {
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %Simple1.decl: %Simple1.type = fn_decl @Simple1 [concrete = constants.%Simple1] {
 // CHECK:STDOUT:     %T.patt.loc8_12.1: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %J.type = value_param_pattern %T.patt.loc8_12.1, runtime_param<none> [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %S.patt.loc8_19.1: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0) = symbolic_binding_pattern S, 1 [symbolic = %S.patt.loc8_19.2 (constants.%S.patt)]
-// CHECK:STDOUT:     %S.param_patt: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0) = value_param_pattern %S.patt.loc8_19.1, runtime_param<none> [symbolic = %S.patt.loc8_19.2 (constants.%S.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %J.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
-// CHECK:STDOUT:     %T.loc8_12.1: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_12.2 (constants.%T)]
-// CHECK:STDOUT:     %S.param: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0) = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc8_12.1: %J.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_12.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_24.1: type = splice_block %impl.elem0.loc8_24.1 [symbolic = %impl.elem0.loc8_24.2 (constants.%impl.elem0)] {
 // CHECK:STDOUT:       %T.ref: %J.type = name_ref T, %T.loc8_12.1 [symbolic = %T.loc8_12.2 (constants.%T)]
 // CHECK:STDOUT:       %U.ref: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0]
@@ -584,24 +574,20 @@ fn Works() {
 // CHECK:STDOUT:       %T.as_wit.loc8_24.1: <witness> = facet_access_witness %T.ref [symbolic = %T.as_wit.loc8_24.2 (constants.%T.as_wit)]
 // CHECK:STDOUT:       %impl.elem0.loc8_24.1: type = impl_witness_access %T.as_wit.loc8_24.1, element0 [symbolic = %impl.elem0.loc8_24.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %S.loc8_19.1: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0) = bind_symbolic_name S, 1, %S.param [symbolic = %S.loc8_19.2 (constants.%S)]
+// CHECK:STDOUT:     %S.loc8_19.1: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0) = bind_symbolic_name S, 1 [symbolic = %S.loc8_19.2 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound1.decl: %Compound1.type = fn_decl @Compound1 [concrete = constants.%Compound1] {
 // CHECK:STDOUT:     %V.patt.loc15_14.1: %J.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc15_14.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %J.type = value_param_pattern %V.patt.loc15_14.1, runtime_param<none> [symbolic = %V.patt.loc15_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:     %W.patt.loc15_21.1: <error> = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc15_21.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: <error> = value_param_pattern %W.patt.loc15_21.1, runtime_param<none> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %J.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %J.ref.loc15_18: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
-// CHECK:STDOUT:     %V.loc15_14.1: %J.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc15_14.2 (constants.%V)]
-// CHECK:STDOUT:     %W.param: <error> = value_param runtime_param<none>
+// CHECK:STDOUT:     %V.loc15_14.1: %J.type = bind_symbolic_name V, 0 [symbolic = %V.loc15_14.2 (constants.%V)]
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %V.ref: %J.type = name_ref V, %V.loc15_14.1 [symbolic = %V.loc15_14.2 (constants.%V)]
 // CHECK:STDOUT:       %J.ref.loc15_28: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %U.ref: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W: <error> = bind_symbolic_name W, 1, %W.param [concrete = <error>]
+// CHECK:STDOUT:     %W: <error> = bind_symbolic_name W, 1 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -632,7 +618,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %J.type, %S.param_patt: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0)) {
+// CHECK:STDOUT:   fn(%T.patt.loc8_12.1: %J.type, %S.patt.loc8_19.1: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -645,7 +631,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %J.type, %W.param_patt: <error>) {
+// CHECK:STDOUT:   fn(%V.patt.loc15_14.1: %J.type, %W.patt.loc15_21.1: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -706,19 +692,15 @@ fn Works() {
 // CHECK:STDOUT:   %K1.decl: type = interface_decl @K1 [concrete = constants.%K1.type] {} {}
 // CHECK:STDOUT:   %Simple2.decl: %Simple2.type = fn_decl @Simple2 [concrete = constants.%Simple2] {
 // CHECK:STDOUT:     %T.patt.loc8_12.1: %K1.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %K1.type = value_param_pattern %T.patt.loc8_12.1, runtime_param<none> [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %K1.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %K1.ref: type = name_ref K1, file.%K1.decl [concrete = constants.%K1.type]
-// CHECK:STDOUT:     %T.loc8_12.1: %K1.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_12.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_12.1: %K1.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound2.decl: %Compound2.type = fn_decl @Compound2 [concrete = constants.%Compound2] {
 // CHECK:STDOUT:     %V.patt.loc13_14.1: %K1.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_14.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %K1.type = value_param_pattern %V.patt.loc13_14.1, runtime_param<none> [symbolic = %V.patt.loc13_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %K1.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %K1.ref.loc13: type = name_ref K1, file.%K1.decl [concrete = constants.%K1.type]
-// CHECK:STDOUT:     %V.loc13_14.1: %K1.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc13_14.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc13_14.1: %K1.type = bind_symbolic_name V, 0 [symbolic = %V.loc13_14.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -749,7 +731,7 @@ fn Works() {
 // CHECK:STDOUT:   %impl.elem0.loc9_4.2: @Simple2.%.loc9_4.2 (%.aaf) = impl_witness_access %T.as_wit.loc9_4.2, element0 [symbolic = %impl.elem0.loc9_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_fn.loc9_4.2: <specific function> = specific_function %impl.elem0.loc9_4.2, @Q1(%K1.facet) [symbolic = %specific_fn.loc9_4.2 (constants.%specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %K1.type) {
+// CHECK:STDOUT:   fn(%T.patt.loc8_12.1: %K1.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %K1.type = name_ref T, %T.loc8_12.1 [symbolic = %T.loc8_12.2 (constants.%T)]
 // CHECK:STDOUT:     %Q1.ref: %K1.assoc_type = name_ref Q1, @K1.%assoc0 [concrete = constants.%assoc0]
@@ -769,7 +751,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %K1.type) {
+// CHECK:STDOUT:   fn(%V.patt.loc13_14.1: %K1.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %V.ref: %K1.type = name_ref V, %V.loc13_14.1 [symbolic = %V.loc13_14.2 (constants.%V)]
 // CHECK:STDOUT:     %K1.ref.loc18: type = name_ref K1, file.%K1.decl [concrete = constants.%K1.type]
@@ -840,14 +822,12 @@ fn Works() {
 // CHECK:STDOUT:   %K2.decl: type = interface_decl @K2 [concrete = constants.%K2.type] {} {}
 // CHECK:STDOUT:   %Simple3.decl: %Simple3.type = fn_decl @Simple3 [concrete = constants.%Simple3] {
 // CHECK:STDOUT:     %T.patt.loc11_12.1: %K2.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %K2.type = value_param_pattern %T.patt.loc11_12.1, runtime_param<none> [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Simple3.%T.as_type.loc11_23.2 (%T.as_type) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @Simple3.%T.as_type.loc11_23.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Simple3.%T.as_type.loc11_23.2 (%T.as_type) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %K2.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %K2.ref: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
-// CHECK:STDOUT:     %T.loc11_12.1: %K2.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_12.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @Simple3.%T.as_type.loc11_23.2 (%T.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %T.loc11_12.1: %K2.type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @Simple3.%T.as_type.loc11_23.2 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc11_23.1: type = splice_block %.loc11_23.2 [symbolic = %T.as_type.loc11_23.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %K2.type = name_ref T, %T.loc11_12.1 [symbolic = %T.loc11_12.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc11_23.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc11_23.2 (constants.%T.as_type)]
@@ -857,14 +837,12 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound3.decl: %Compound3.type = fn_decl @Compound3 [concrete = constants.%Compound3] {
 // CHECK:STDOUT:     %V.patt.loc17_14.1: %K2.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc17_14.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %K2.type = value_param_pattern %V.patt.loc17_14.1, runtime_param<none> [symbolic = %V.patt.loc17_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:     %y.patt: @Compound3.%V.as_type.loc17_25.2 (%V.as_type) = binding_pattern y
-// CHECK:STDOUT:     %y.param_patt: @Compound3.%V.as_type.loc17_25.2 (%V.as_type) = value_param_pattern %y.patt, runtime_param0
+// CHECK:STDOUT:     %y.param_patt: @Compound3.%V.as_type.loc17_25.2 (%V.as_type) = value_param_pattern %y.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %K2.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %K2.ref.loc17: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
-// CHECK:STDOUT:     %V.loc17_14.1: %K2.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc17_14.2 (constants.%V)]
-// CHECK:STDOUT:     %y.param: @Compound3.%V.as_type.loc17_25.2 (%V.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %V.loc17_14.1: %K2.type = bind_symbolic_name V, 0 [symbolic = %V.loc17_14.2 (constants.%V)]
+// CHECK:STDOUT:     %y.param: @Compound3.%V.as_type.loc17_25.2 (%V.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc17_25.1: type = splice_block %.loc17_25.2 [symbolic = %V.as_type.loc17_25.2 (constants.%V.as_type)] {
 // CHECK:STDOUT:       %V.ref: %K2.type = name_ref V, %V.loc17_14.1 [symbolic = %V.loc17_14.2 (constants.%V)]
 // CHECK:STDOUT:       %V.as_type.loc17_25.1: type = facet_access_type %V.ref [symbolic = %V.as_type.loc17_25.2 (constants.%V.as_type)]
@@ -902,7 +880,7 @@ fn Works() {
 // CHECK:STDOUT:   %impl.elem0.loc12_4.2: @Simple3.%.loc12_4.2 (%.813) = impl_witness_access %T.as_wit.loc12_4.2, element0 [symbolic = %impl.elem0.loc12_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_fn.loc12_4.2: <specific function> = specific_function %impl.elem0.loc12_4.2, @Q2(%K2.facet) [symbolic = %specific_fn.loc12_4.2 (constants.%specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %K2.type, %x.param_patt: @Simple3.%T.as_type.loc11_23.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn(%T.patt.loc11_12.1: %K2.type, %x.param_patt: @Simple3.%T.as_type.loc11_23.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Simple3.%T.as_type.loc11_23.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %Q2.ref: %K2.assoc_type = name_ref Q2, @K2.%assoc0 [concrete = constants.%assoc0]
@@ -924,7 +902,7 @@ fn Works() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Compound3.%V.as_type.loc17_25.2 (%V.as_type) [symbolic = %require_complete (constants.%require_complete.022e81.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %K2.type, %y.param_patt: @Compound3.%V.as_type.loc17_25.2 (%V.as_type)) {
+// CHECK:STDOUT:   fn(%V.patt.loc17_14.1: %K2.type, %y.param_patt: @Compound3.%V.as_type.loc17_25.2 (%V.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %y.ref: @Compound3.%V.as_type.loc17_25.2 (%V.as_type) = name_ref y, %y
 // CHECK:STDOUT:     %K2.ref.loc22: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
@@ -997,14 +975,12 @@ fn Works() {
 // CHECK:STDOUT:   %L1.decl: type = interface_decl @L1 [concrete = constants.%L1.type] {} {}
 // CHECK:STDOUT:   %Simple4.decl: %Simple4.type = fn_decl @Simple4 [concrete = constants.%Simple4] {
 // CHECK:STDOUT:     %T.patt.loc10_12.1: %L1.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %L1.type = value_param_pattern %T.patt.loc10_12.1, runtime_param<none> [symbolic = %T.patt.loc10_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Simple4.%T.as_type.loc10_23.2 (%T.as_type) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @Simple4.%T.as_type.loc10_23.2 (%T.as_type) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Simple4.%T.as_type.loc10_23.2 (%T.as_type) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %L1.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %L1.ref: type = name_ref L1, file.%L1.decl [concrete = constants.%L1.type]
-// CHECK:STDOUT:     %T.loc10_12.1: %L1.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_12.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @Simple4.%T.as_type.loc10_23.2 (%T.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %T.loc10_12.1: %L1.type = bind_symbolic_name T, 0 [symbolic = %T.loc10_12.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @Simple4.%T.as_type.loc10_23.2 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc10_23.1: type = splice_block %.loc10_23.2 [symbolic = %T.as_type.loc10_23.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref.loc10: %L1.type = name_ref T, %T.loc10_12.1 [symbolic = %T.loc10_12.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc10_23.1: type = facet_access_type %T.ref.loc10 [symbolic = %T.as_type.loc10_23.2 (constants.%T.as_type)]
@@ -1014,14 +990,12 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound4.decl: %Compound4.type = fn_decl @Compound4 [concrete = constants.%Compound4] {
 // CHECK:STDOUT:     %V.patt.loc17_14.1: %L1.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc17_14.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %L1.type = value_param_pattern %V.patt.loc17_14.1, runtime_param<none> [symbolic = %V.patt.loc17_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:     %y.patt: @Compound4.%V.as_type.loc17_25.2 (%V.as_type) = binding_pattern y
-// CHECK:STDOUT:     %y.param_patt: @Compound4.%V.as_type.loc17_25.2 (%V.as_type) = value_param_pattern %y.patt, runtime_param0
+// CHECK:STDOUT:     %y.param_patt: @Compound4.%V.as_type.loc17_25.2 (%V.as_type) = value_param_pattern %y.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %L1.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %L1.ref.loc17: type = name_ref L1, file.%L1.decl [concrete = constants.%L1.type]
-// CHECK:STDOUT:     %V.loc17_14.1: %L1.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc17_14.2 (constants.%V)]
-// CHECK:STDOUT:     %y.param: @Compound4.%V.as_type.loc17_25.2 (%V.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %V.loc17_14.1: %L1.type = bind_symbolic_name V, 0 [symbolic = %V.loc17_14.2 (constants.%V)]
+// CHECK:STDOUT:     %y.param: @Compound4.%V.as_type.loc17_25.2 (%V.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc17_25.1: type = splice_block %.loc17_25.2 [symbolic = %V.as_type.loc17_25.2 (constants.%V.as_type)] {
 // CHECK:STDOUT:       %V.ref.loc17: %L1.type = name_ref V, %V.loc17_14.1 [symbolic = %V.loc17_14.2 (constants.%V)]
 // CHECK:STDOUT:       %V.as_type.loc17_25.1: type = facet_access_type %V.ref.loc17 [symbolic = %V.as_type.loc17_25.2 (constants.%V.as_type)]
@@ -1035,9 +1009,9 @@ fn Works() {
 // CHECK:STDOUT:   %Self: %L1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %R1.decl: %R1.type = fn_decl @R1 [concrete = constants.%R1] {
 // CHECK:STDOUT:     %self.patt: @R1.%Self.as_type.loc4_15.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @R1.%Self.as_type.loc4_15.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @R1.%Self.as_type.loc4_15.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @R1.%Self.as_type.loc4_15.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @R1.%Self.as_type.loc4_15.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %L1.type = name_ref Self, @L1.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc4_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
@@ -1048,10 +1022,10 @@ fn Works() {
 // CHECK:STDOUT:   %assoc0: %L1.assoc_type = assoc_entity element0, %R1.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %S1.decl: %S1.type = fn_decl @S1 [concrete = constants.%S1] {
 // CHECK:STDOUT:     %self.patt: @S1.%ptr.loc5_24.1 (%ptr.72f01d.1) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @S1.%ptr.loc5_24.1 (%ptr.72f01d.1) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @S1.%ptr.loc5_24.1 (%ptr.72f01d.1) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc5_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @S1.%ptr.loc5_24.1 (%ptr.72f01d.1) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @S1.%ptr.loc5_24.1 (%ptr.72f01d.1) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_24.1: type = splice_block %ptr.loc5_24.2 [symbolic = %ptr.loc5_24.1 (constants.%ptr.72f01d.1)] {
 // CHECK:STDOUT:       %Self.ref: %L1.type = name_ref Self, @L1.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_24.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_24.1 (constants.%Self.as_type)]
@@ -1100,7 +1074,7 @@ fn Works() {
 // CHECK:STDOUT:   %ptr: type = ptr_type @Simple4.%T.as_type.loc10_23.2 (%T.as_type) [symbolic = %ptr (constants.%ptr.72f01d.2)]
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @Simple4.%ptr (%ptr.72f01d.2) [symbolic = %require_complete.loc13 (constants.%require_complete.932)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %L1.type, %x.param_patt: @Simple4.%T.as_type.loc10_23.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn(%T.patt.loc10_12.1: %L1.type, %x.param_patt: @Simple4.%T.as_type.loc10_23.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref.loc11: @Simple4.%T.as_type.loc10_23.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %R1.ref: %L1.assoc_type = name_ref R1, @L1.%assoc0 [concrete = constants.%assoc0]
@@ -1146,7 +1120,7 @@ fn Works() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Compound4.%V.as_type.loc17_25.2 (%V.as_type) [symbolic = %require_complete (constants.%require_complete.97cd40.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %L1.type, %y.param_patt: @Compound4.%V.as_type.loc17_25.2 (%V.as_type)) {
+// CHECK:STDOUT:   fn(%V.patt.loc17_14.1: %L1.type, %y.param_patt: @Compound4.%V.as_type.loc17_25.2 (%V.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %y.ref.loc22: @Compound4.%V.as_type.loc17_25.2 (%V.as_type) = name_ref y, %y
 // CHECK:STDOUT:     %L1.ref.loc22: type = name_ref L1, file.%L1.decl [concrete = constants.%L1.type]
@@ -1249,19 +1223,15 @@ fn Works() {
 // CHECK:STDOUT:   %L2.decl: type = interface_decl @L2 [concrete = constants.%L2.type] {} {}
 // CHECK:STDOUT:   %Simple5.decl: %Simple5.type = fn_decl @Simple5 [concrete = constants.%Simple5] {
 // CHECK:STDOUT:     %T.patt.loc10_12.1: %L2.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %L2.type = value_param_pattern %T.patt.loc10_12.1, runtime_param<none> [symbolic = %T.patt.loc10_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: %L2.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %L2.ref: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
-// CHECK:STDOUT:     %T.loc10_12.1: %L2.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_12.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc10_12.1: %L2.type = bind_symbolic_name T, 0 [symbolic = %T.loc10_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound5.decl: %Compound5.type = fn_decl @Compound5 [concrete = constants.%Compound5] {
 // CHECK:STDOUT:     %V.patt.loc30_14.1: %L2.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc30_14.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %L2.type = value_param_pattern %V.patt.loc30_14.1, runtime_param<none> [symbolic = %V.patt.loc30_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %V.param: %L2.type = value_param runtime_param<none>
 // CHECK:STDOUT:     %L2.ref.loc30: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
-// CHECK:STDOUT:     %V.loc30_14.1: %L2.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc30_14.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc30_14.1: %L2.type = bind_symbolic_name V, 0 [symbolic = %V.loc30_14.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1269,9 +1239,9 @@ fn Works() {
 // CHECK:STDOUT:   %Self: %L2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %R2.decl: %R2.type = fn_decl @R2 [concrete = constants.%R2] {
 // CHECK:STDOUT:     %self.patt: @R2.%Self.as_type.loc5_15.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @R2.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @R2.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @R2.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @R2.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %L2.type = name_ref Self, @L2.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
@@ -1282,10 +1252,10 @@ fn Works() {
 // CHECK:STDOUT:   %assoc0: %L2.assoc_type = assoc_entity element0, %R2.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %S2.decl: %S2.type = fn_decl @S2 [concrete = constants.%S2] {
 // CHECK:STDOUT:     %self.patt: @S2.%ptr.loc6_24.1 (%ptr.f3e54b.1) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @S2.%ptr.loc6_24.1 (%ptr.f3e54b.1) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @S2.%ptr.loc6_24.1 (%ptr.f3e54b.1) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %.loc6_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @S2.%ptr.loc6_24.1 (%ptr.f3e54b.1) = value_param runtime_param0
+// CHECK:STDOUT:     %self.param: @S2.%ptr.loc6_24.1 (%ptr.f3e54b.1) = value_param call_param0
 // CHECK:STDOUT:     %.loc6_24.1: type = splice_block %ptr.loc6_24.2 [symbolic = %ptr.loc6_24.1 (constants.%ptr.f3e54b.1)] {
 // CHECK:STDOUT:       %Self.ref: %L2.type = name_ref Self, @L2.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc6_24.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_24.1 (constants.%Self.as_type)]
@@ -1333,7 +1303,7 @@ fn Works() {
 // CHECK:STDOUT:   %impl.elem1.loc26_4.2: @Simple5.%.loc26_4.2 (%.3ca) = impl_witness_access %T.as_wit.loc18_4.2, element1 [symbolic = %impl.elem1.loc26_4.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:   %specific_fn.loc26_4.2: <specific function> = specific_function %impl.elem1.loc26_4.2, @S2(%L2.facet) [symbolic = %specific_fn.loc26_4.2 (constants.%specific_fn.cf2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %L2.type) {
+// CHECK:STDOUT:   fn(%T.patt.loc10_12.1: %L2.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref.loc18: %L2.type = name_ref T, %T.loc10_12.1 [symbolic = %T.loc10_12.2 (constants.%T)]
 // CHECK:STDOUT:     %R2.ref: %L2.assoc_type = name_ref R2, @L2.%assoc0 [concrete = constants.%assoc0]
@@ -1362,7 +1332,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %L2.type) {
+// CHECK:STDOUT:   fn(%V.patt.loc30_14.1: %L2.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %V.ref.loc35: %L2.type = name_ref V, %V.loc30_14.1 [symbolic = %V.loc30_14.2 (constants.%V)]
 // CHECK:STDOUT:     %L2.ref.loc35: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
@@ -1459,16 +1429,16 @@ fn Works() {
 // CHECK:STDOUT:     .BitAnd = %Core.BitAnd
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//default, inst104 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//default, inst100 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//default, loc12_41, loaded [concrete = constants.%assoc0.a63]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//default, Op, unloaded
 // CHECK:STDOUT:   %Core.import_ref.51c: <witness> = import_ref Core//default, loc15_36, loaded [symbolic = @impl.f92.%impl_witness (constants.%impl_witness.b81)]
-// CHECK:STDOUT:   %Core.import_ref.f6b058.1: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.601: type = import_ref Core//default, loc15_24, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.583: type = import_ref Core//default, loc15_24, loaded [symbolic = @impl.f92.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//default, loc15_29, loaded [concrete = constants.%BitAnd.type]
 // CHECK:STDOUT:   %Core.import_ref.1e6: @impl.f92.%Op.type (%Op.type.f99) = import_ref Core//default, loc16_42, loaded [symbolic = @impl.f92.%Op (constants.%Op.05a)]
-// CHECK:STDOUT:   %Core.import_ref.f6b058.2: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//default, inst104 [no loc], loaded [symbolic = constants.%Self.25f]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//default, inst100 [no loc], loaded [symbolic = constants.%Self.25f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1515,7 +1485,7 @@ fn Works() {
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.f92(imports.%Core.import_ref.f6b058.1: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic impl @impl.f92(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(%T) [symbolic = %impl_witness (constants.%impl_witness.db8)]
@@ -1525,7 +1495,7 @@ fn Works() {
 // CHECK:STDOUT:   %Op: @impl.f92.%Op.type (%Op.type.f99) = struct_value () [symbolic = %Op (constants.%Op.05a)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.f92.%T (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%Core.import_ref.601 as imports.%Core.import_ref.9c1 {
+// CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     witness = imports.%Core.import_ref.51c
 // CHECK:STDOUT:   }
@@ -1619,7 +1589,7 @@ fn Works() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.f6b058.2: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.5ab3ec.2: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1718,16 +1688,16 @@ fn Works() {
 // CHECK:STDOUT:     .BitAnd = %Core.BitAnd
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//default, inst104 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//default, inst100 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//default, loc12_41, loaded [concrete = constants.%assoc0.a63]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//default, Op, unloaded
 // CHECK:STDOUT:   %Core.import_ref.51c: <witness> = import_ref Core//default, loc15_36, loaded [symbolic = @impl.f92.%impl_witness (constants.%impl_witness.b81)]
-// CHECK:STDOUT:   %Core.import_ref.f6b058.1: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.601: type = import_ref Core//default, loc15_24, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.583: type = import_ref Core//default, loc15_24, loaded [symbolic = @impl.f92.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//default, loc15_29, loaded [concrete = constants.%BitAnd.type]
 // CHECK:STDOUT:   %Core.import_ref.1e6: @impl.f92.%Op.type (%Op.type.f99) = import_ref Core//default, loc16_42, loaded [symbolic = @impl.f92.%Op (constants.%Op.05a)]
-// CHECK:STDOUT:   %Core.import_ref.f6b058.2: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//default, inst104 [no loc], loaded [symbolic = constants.%Self.25f]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc15_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//default, inst100 [no loc], loaded [symbolic = constants.%Self.25f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1774,7 +1744,7 @@ fn Works() {
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.f92(imports.%Core.import_ref.f6b058.1: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic impl @impl.f92(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(%T) [symbolic = %impl_witness (constants.%impl_witness.db8)]
@@ -1784,7 +1754,7 @@ fn Works() {
 // CHECK:STDOUT:   %Op: @impl.f92.%Op.type (%Op.type.f99) = struct_value () [symbolic = %Op (constants.%Op.05a)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.f92.%T (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%Core.import_ref.601 as imports.%Core.import_ref.9c1 {
+// CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     witness = imports.%Core.import_ref.51c
 // CHECK:STDOUT:   }
@@ -1851,7 +1821,7 @@ fn Works() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.f6b058.2: type) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.5ab3ec.2: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

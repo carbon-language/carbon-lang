@@ -70,17 +70,17 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Float.decl: %Float.type = fn_decl @Float [concrete = constants.%Float] {
 // CHECK:STDOUT:     %size.patt: %i32 = binding_pattern size
-// CHECK:STDOUT:     %size.param_patt: %i32 = value_param_pattern %size.patt, runtime_param0
+// CHECK:STDOUT:     %size.param_patt: %i32 = value_param_pattern %size.patt, call_param0
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %size.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %size.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %size: %i32 = bind_name size, %size.param
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -150,17 +150,17 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
 // CHECK:STDOUT:   %GetFloat.decl: %GetFloat.type = fn_decl @GetFloat [concrete = constants.%GetFloat] {
 // CHECK:STDOUT:     %dyn_size.patt: %i32 = binding_pattern dyn_size
-// CHECK:STDOUT:     %dyn_size.param_patt: %i32 = value_param_pattern %dyn_size.patt, runtime_param0
+// CHECK:STDOUT:     %dyn_size.param_patt: %i32 = value_param_pattern %dyn_size.patt, call_param0
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %dyn_size.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %dyn_size.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc8: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %dyn_size: %i32 = bind_name dyn_size, %dyn_size.param
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

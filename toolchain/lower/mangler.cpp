@@ -136,6 +136,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
+  if (function.cpp_decl) {
+    return MangleCppClang(function.cpp_decl);
+  }
   RawStringOstream os;
   os << "_C";
 
@@ -156,6 +159,21 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   }
 
   return os.TakeStr();
+}
+
+auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
+  if (!cpp_mangle_context_) {
+    // We assume all declarations are from the same AST Context.
+    // TODO: Consider initializing this in the constructor. This is related to:
+    // https://github.com/carbon-language/carbon-lang/issues/4666. See
+    // https://github.com/carbon-language/carbon-lang/pull/5062/files/89e56d51858bcc18d4242d4e5c9ee0e7496d887e#r1979993815
+    cpp_mangle_context_.reset(decl->getASTContext().createMangleContext());
+  }
+
+  RawStringOstream cpp_mangled_name;
+  cpp_mangle_context_->mangleName(decl, cpp_mangled_name);
+
+  return cpp_mangled_name.TakeStr();
 }
 
 }  // namespace Carbon::Lower

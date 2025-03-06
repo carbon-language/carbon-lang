@@ -168,21 +168,21 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %return.patt: %struct_type.a.ba9 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %struct_type.a.ba9 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %struct_type.a.ba9 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
-// CHECK:STDOUT:     %return.param: ref %struct_type.a.ba9 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %struct_type.a.ba9 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.ba9 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddressOfLiteral.decl: %AddressOfLiteral.type = fn_decl @AddressOfLiteral [concrete = constants.%AddressOfLiteral] {} {}
@@ -192,9 +192,9 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfTupleElementValue.decl: %AddressOfTupleElementValue.type = fn_decl @AddressOfTupleElementValue [concrete = constants.%AddressOfTupleElementValue] {} {}
 // CHECK:STDOUT:   %AddressOfParam.decl: %AddressOfParam.type = fn_decl @AddressOfParam [concrete = constants.%AddressOfParam] {
 // CHECK:STDOUT:     %param.patt: %i32 = binding_pattern param
-// CHECK:STDOUT:     %param.param_patt: %i32 = value_param_pattern %param.patt, runtime_param0
+// CHECK:STDOUT:     %param.param_patt: %i32 = value_param_pattern %param.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %param.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc95: type = splice_block %i32.loc95 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc95: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc95: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

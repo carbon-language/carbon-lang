@@ -195,7 +195,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_pattern_id = SemIR::InstId::None;
       bool had_error = false;
       switch (introducer.kind) {
         case Lex::TokenKind::Fn: {
@@ -242,23 +241,23 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         default:
           break;
       }
+      auto result_inst_id = SemIR::InstId::None;
       if (had_error) {
         AddNameToLookup(context, name_id, SemIR::ErrorInst::SingletonInstId);
         // Replace the parameter with `ErrorInst` so that we don't try
         // constructing a generic based on it.
-        param_pattern_id = SemIR::ErrorInst::SingletonInstId;
+        result_inst_id = SemIR::ErrorInst::SingletonInstId;
       } else {
-        auto pattern_inst_id = make_binding_pattern();
-        param_pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
-            context, node_id,
-            {
-                .type_id = context.insts().Get(pattern_inst_id).type_id(),
-                .subpattern_id = pattern_inst_id,
-                .runtime_index = is_generic ? SemIR::RuntimeParamIndex::None
-                                            : SemIR::RuntimeParamIndex::Unknown,
-            });
+        result_inst_id = make_binding_pattern();
+        if (node_kind == Parse::NodeKind::LetBindingPattern) {
+          result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
+              context, node_id,
+              {.type_id = context.insts().Get(result_inst_id).type_id(),
+               .subpattern_id = result_inst_id,
+               .index = SemIR::CallParamIndex::None});
+        }
       }
-      context.node_stack().Push(node_id, param_pattern_id);
+      context.node_stack().Push(node_id, result_inst_id);
       break;
     }
 

@@ -55,12 +55,12 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %const = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %const = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %const = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %const: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:     %return.param: ref %const = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %const = out_param call_param0
 // CHECK:STDOUT:     %return: ref %const = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {

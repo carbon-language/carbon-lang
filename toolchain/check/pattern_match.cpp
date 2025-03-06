@@ -80,7 +80,7 @@ class MatchContext {
 
  private:
   // Allocates the next unallocated RuntimeParamIndex, starting from 0.
-  auto NextRuntimeIndex() -> SemIR::RuntimeParamIndex {
+  auto NextRuntimeIndex() -> SemIR::CallParamIndex {
     auto result = next_index_;
     ++next_index_.index;
     return result;
@@ -125,9 +125,13 @@ class MatchContext {
   llvm::SmallVector<WorkItem> stack_;
 
   // The next index to be allocated by `NextRuntimeIndex`.
-  SemIR::RuntimeParamIndex next_index_;
+  SemIR::CallParamIndex next_index_;
 
   // The pending results that will be returned by the current `DoWork` call.
+  // It represents the contents of the `Call` arguments block when kind_
+  // is Caller, or the `Call` parameters block when kind_ is Callee
+  // (it is empty when kind_ is Local). Consequently, it is populated
+  // only by DoEmitPatternMatch for *ParamPattern insts.
   llvm::SmallVector<SemIR::InstId> results_;
 
   // The kind of pattern match being performed.
@@ -200,6 +204,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::AnyBindingPattern binding_pattern,
                                       SemIR::LocId /*pattern_loc_id*/,
                                       MatchContext::WorkItem entry) -> void {
+  if (kind_ == MatchKind::Caller) {
+    CARBON_CHECK(binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind,
+                 "Found runtime binding pattern during caller pattern match");
+    return;
+  }
   // We're logically consuming this map entry, so we invalidate it in order
   // to avoid accidentally consuming it twice.
   auto [bind_name_id, type_expr_region_id] =
@@ -207,24 +216,13 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                     {.bind_name_id = SemIR::InstId::None,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
   InsertHere(context, type_expr_region_id);
-  auto value_id = entry.scrutinee_id;
-  switch (kind_) {
-    case MatchKind::Local: {
-      value_id = ConvertToValueOrRefOfType(
-          context, context.insts().GetLocId(entry.scrutinee_id),
-          entry.scrutinee_id, binding_pattern.type_id);
-      break;
-    }
-    case MatchKind::Callee: {
-      if (context.insts()
-              .GetAs<SemIR::AnyParam>(value_id)
-              .runtime_index.has_value()) {
-        results_.push_back(value_id);
-      }
-      break;
-    }
-    case MatchKind::Caller:
-      CARBON_FATAL("Found binding pattern during caller pattern match");
+  auto value_id = SemIR::InstId::None;
+  if (kind_ == MatchKind::Local) {
+    value_id = ConvertToValueOrRefOfType(
+        context, context.insts().GetLocId(entry.scrutinee_id),
+        entry.scrutinee_id, binding_pattern.type_id);
+  } else {
+    value_id = entry.scrutinee_id;
   }
   auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
   CARBON_CHECK(!bind_name.value_id.has_value());
@@ -259,8 +257,10 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       context.emitter().Emit(
           TokenOnly(context.insts().GetLocId(entry.scrutinee_id)),
           AddrSelfIsNonRef);
-      results_.push_back(SemIR::ErrorInst::SingletonInstId);
-      return;
+      // Add fake reference expression to preserve invariants.
+      auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
+      scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(
+          context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
   }
   auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
   auto new_scrutinee = AddInst<SemIR::AddrOf>(
@@ -274,11 +274,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::ValueParamPattern param_pattern,
                                       SemIR::LocId pattern_loc_id,
                                       WorkItem entry) -> void {
-  CARBON_CHECK(param_pattern.runtime_index.index < 0 ||
-                   static_cast<size_t>(param_pattern.runtime_index.index) ==
-                       results_.size(),
-               "Parameters out of order; expecting {0} but got {1}",
-               results_.size(), param_pattern.runtime_index.index);
+  CARBON_CHECK(
+      param_pattern.index.index < 0 ||
+          static_cast<size_t>(param_pattern.index.index) == results_.size(),
+      "Parameters out of order; expecting {0} but got {1}", results_.size(),
+      param_pattern.index.index);
   switch (kind_) {
     case MatchKind::Caller: {
       CARBON_CHECK(entry.scrutinee_id.has_value());
@@ -296,16 +296,18 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      if (param_pattern.runtime_index == SemIR::RuntimeParamIndex::Unknown) {
-        param_pattern.runtime_index = NextRuntimeIndex();
+      if (!param_pattern.index.has_value()) {
+        param_pattern.index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
+      auto param_id = AddInst<SemIR::ValueParam>(
+          context, pattern_loc_id,
+          {.type_id = param_pattern.type_id,
+           .index = param_pattern.index,
+           .pretty_name_id = GetPrettyName(context, param_pattern)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
-               .scrutinee_id = AddInst<SemIR::ValueParam>(
-                   context, pattern_loc_id,
-                   {.type_id = param_pattern.type_id,
-                    .runtime_index = param_pattern.runtime_index,
-                    .pretty_name_id = GetPrettyName(context, param_pattern)})});
+               .scrutinee_id = param_id});
+      results_.push_back(param_id);
       break;
     }
     case MatchKind::Local: {
@@ -333,16 +335,18 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case MatchKind::Callee: {
       // TODO: Consider ways to address near-duplication with the
       // ValueParamPattern case.
-      if (param_pattern.runtime_index == SemIR::RuntimeParamIndex::Unknown) {
-        param_pattern.runtime_index = NextRuntimeIndex();
+      if (!param_pattern.index.has_value()) {
+        param_pattern.index = NextRuntimeIndex();
         ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       }
+      auto param_id = AddInst<SemIR::OutParam>(
+          context, pattern_loc_id,
+          {.type_id = param_pattern.type_id,
+           .index = param_pattern.index,
+           .pretty_name_id = GetPrettyName(context, param_pattern)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
-               .scrutinee_id = AddInst<SemIR::OutParam>(
-                   context, pattern_loc_id,
-                   {.type_id = param_pattern.type_id,
-                    .runtime_index = param_pattern.runtime_index,
-                    .pretty_name_id = GetPrettyName(context, param_pattern)})});
+               .scrutinee_id = param_id});
+      results_.push_back(param_id);
       break;
     }
     case MatchKind::Local: {
@@ -365,7 +369,6 @@ auto MatchContext::DoEmitPatternMatch(
           .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
           .has_value();
   CARBON_CHECK(!already_in_lookup);
-  results_.push_back(entry.scrutinee_id);
 }
 
 auto MatchContext::DoEmitPatternMatch(Context& context,
@@ -459,7 +462,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::ErrorInst::SingletonInstId) {
-    results_.push_back(SemIR::ErrorInst::SingletonInstId);
     return;
   }
   DiagnosticAnnotationScope annotate_diagnostics(
@@ -566,14 +568,6 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   // Check type conversions per-element.
   for (auto [arg_id, param_pattern_id] : llvm::reverse(llvm::zip_equal(
            arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id)))) {
-    auto runtime_index = SemIR::Function::GetParamPatternInfoFromPatternId(
-                             context.sem_ir(), param_pattern_id)
-                             .inst.runtime_index;
-    if (!runtime_index.has_value()) {
-      // Not a runtime parameter: we don't pass an argument.
-      continue;
-    }
-
     match.AddWork({.pattern_id = param_pattern_id, .scrutinee_id = arg_id});
   }
 
