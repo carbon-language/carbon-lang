@@ -74,6 +74,16 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn F[var u: ()]();
 
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+8]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn G[var T:! type]();
+// CHECK:STDERR:          ^~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+// CHECK:STDERR: fn G[var T:! type]();
+// CHECK:STDERR:                  ^
+// CHECK:STDERR:
+fn G[var T:! type]();
+
 // --- var_self.carbon
 
 library "[[@TEST_NAME]]";
@@ -317,21 +327,9 @@ class C {
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.param_patt: <error> = ref_param_pattern <error>, runtime_param0
-// CHECK:STDOUT:     %.loc8: <error> = var_pattern %.param_patt
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.param: ref <error> = ref_param runtime_param0
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%.loc8: <error>]();
 // CHECK:STDOUT:
