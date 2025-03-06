@@ -56,7 +56,7 @@ fn f() {
   // CHECK:STDERR:   var T:! type;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:15: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:15: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   var T:! type;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -78,7 +78,7 @@ fn F[var u: ()]();
 // CHECK:STDERR: fn G[var T:! type]();
 // CHECK:STDERR:          ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
 // CHECK:STDERR: fn G[var T:! type]();
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:

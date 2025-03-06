@@ -41,7 +41,7 @@ interface I {
   // CHECK:STDERR:   let var T:! type;
   // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+4]]:19: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+4]]:19: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   let var T:! type;
   // CHECK:STDERR:                   ^
   // CHECK:STDERR:
@@ -57,7 +57,7 @@ interface I {
   // CHECK:STDERR:   default let var T:! type = {};
   // CHECK:STDERR:                   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+4]]:28: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+4]]:28: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   default let var T:! type = {};
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
