@@ -35,16 +35,6 @@ interface Animal {}
 
 fn Feed[T:! Eats](e: T) {}
 
-// CHECK:STDERR: fail_todo_convert_to_narrowed_facet_type.carbon:[[@LINE+10]]:44: error: cannot implicitly convert value of type `type` to `Eats` [ImplicitAsConversionFailure]
-// CHECK:STDERR: fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
-// CHECK:STDERR:                                            ^~~~~~~
-// CHECK:STDERR: fail_todo_convert_to_narrowed_facet_type.carbon:[[@LINE+7]]:44: note: type `type` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
-// CHECK:STDERR:                                            ^~~~~~~
-// CHECK:STDERR: fail_todo_convert_to_narrowed_facet_type.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn Feed[T:! Eats](e: T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 
 // CHECK:STDOUT: --- core.carbon
@@ -285,12 +275,13 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   %T.patt.6be: %Eats.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.27d: type = facet_access_type %T.1b5 [symbolic]
 // CHECK:STDOUT:   %Feed.type: type = fn_type @Feed [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Feed: %Feed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.c75: <witness> = require_complete_type %T.as_type.27d [symbolic]
 // CHECK:STDOUT:   %BitAnd.type: type = facet_type <@BitAnd> [concrete]
 // CHECK:STDOUT:   %Self.25f: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %BitAnd.assoc_type: type = assoc_entity_type %BitAnd.type [concrete]
-// CHECK:STDOUT:   %assoc0.a63: %BitAnd.assoc_type = assoc_entity element0, imports.%Core.import_ref.a93 [concrete]
+// CHECK:STDOUT:   %assoc0: %BitAnd.assoc_type = assoc_entity element0, imports.%Core.import_ref.a93 [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.e01: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %impl_witness.db8: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl(%T.8b3) [symbolic]
@@ -303,7 +294,7 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Op.444: %Op.type.eb8 = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness type [concrete]
 // CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.2 [concrete]
-// CHECK:STDOUT:   %Self.as_type.19f: type = facet_access_type %Self.25f [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.25f [symbolic]
 // CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value type, %impl_witness.3ea [concrete]
 // CHECK:STDOUT:   %.d4d: type = fn_type_with_self_type %Op.type.27a, %BitAnd.facet [concrete]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %Animal.type, %Op.444 [concrete]
@@ -316,29 +307,18 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   %HandleAnimal.type: type = fn_type @HandleAnimal [concrete]
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.680: <witness> = require_complete_type %T.as_type.3bf [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%T.8b3)> [symbolic]
-// CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%T.8b3) [symbolic]
-// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.as_type.40a: type = facet_access_type %Self.519 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
-// CHECK:STDOUT:   %assoc0.43db8b.1: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.af9: type = facet_type <@ImplicitAs, @ImplicitAs(%Eats.type)> [concrete]
-// CHECK:STDOUT:   %Convert.type.9a9: type = fn_type @Convert, @ImplicitAs(%Eats.type) [concrete]
-// CHECK:STDOUT:   %Convert.35d: %Convert.type.9a9 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.9a7: type = assoc_entity_type %ImplicitAs.type.af9 [concrete]
-// CHECK:STDOUT:   %assoc0.152: %ImplicitAs.assoc_type.9a7 = assoc_entity element0, imports.%Core.import_ref.207961.1 [concrete]
-// CHECK:STDOUT:   %assoc0.43db8b.2: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207961.2 [symbolic]
+// CHECK:STDOUT:   %T.as_wit: <witness> = facet_access_witness %T.ec1 [symbolic]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %T.as_type.3bf, %T.as_wit [symbolic]
+// CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .BitAnd = %Core.BitAnd
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//default, inst59 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//default, loc9_41, loaded [concrete = constants.%assoc0.a63]
+// CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//default, loc9_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//default, Op, unloaded
 // CHECK:STDOUT:   %Core.import_ref.51c: <witness> = import_ref Core//default, loc12_36, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.b81)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc12_14, loaded [symbolic = @impl.%T (constants.%T.8b3)]
@@ -347,13 +327,6 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Core.import_ref.1e6: @impl.%Op.type (%Op.type.f99) = import_ref Core//default, loc13_42, loaded [symbolic = @impl.%Op (constants.%Op.05a)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc12_14, loaded [symbolic = @impl.%T (constants.%T.8b3)]
 // CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//default, inst59 [no loc], loaded [symbolic = constants.%Self.25f]
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//default, loc4_22, loaded [symbolic = @ImplicitAs.%T (constants.%T.8b3)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst24 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc5_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43db8b.2)]
-// CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//default, loc4_22, loaded [symbolic = @ImplicitAs.%T (constants.%T.8b3)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst24 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Core.import_ref.207961.1 = import_ref Core//default, loc5_32, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -432,26 +405,6 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   witness = (imports.%Core.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.3: type) [from "core.carbon"] {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.e01)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%T) [symbolic = %Convert.type (constants.%Convert.type.275)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.837)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic = %assoc0 (constants.%assoc0.43db8b.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.630
-// CHECK:STDOUT:     witness = (imports.%Core.Convert)
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.e01)]
@@ -492,9 +445,9 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(imports.%Core.import_ref.040: %BitAnd.type) [from "core.carbon"] {
 // CHECK:STDOUT:   %Self: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.25f)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.19f)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self.as_type (%Self.as_type.19f)](%other.param_patt: @Op.2.%Self.as_type (%Self.as_type.19f)) -> @Op.2.%Self.as_type (%Self.as_type.19f);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.2.%Self.as_type (%Self.as_type)) -> @Op.2.%Self.as_type (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HandleAnimal(%T.loc21_17.1: %facet_type) {
@@ -504,23 +457,24 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleAnimal.%T.as_type.loc21_39.2 (%T.as_type.3bf) [symbolic = %require_complete (constants.%require_complete.680)]
+// CHECK:STDOUT:   %T.as_wit.loc21_50.3: <witness> = facet_access_witness %T.loc21_17.2 [symbolic = %T.as_wit.loc21_50.3 (constants.%T.as_wit)]
+// CHECK:STDOUT:   %Eats.facet.loc21_50.3: %Eats.type = facet_value %T.as_type.loc21_39.2, %T.as_wit.loc21_50.3 [symbolic = %Eats.facet.loc21_50.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:   %Feed.specific_fn.loc21_44.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc21_50.3) [symbolic = %Feed.specific_fn.loc21_44.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc21_17.1: %facet_type](%a.param_patt: @HandleAnimal.%T.as_type.loc21_39.2 (%T.as_type.3bf)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.as_type.loc21_39.2 (%T.as_type.3bf) = name_ref a, %a
-// CHECK:STDOUT:     %.loc21_50: %Eats.type = converted constants.%T.as_type.3bf, <error> [concrete = <error>]
+// CHECK:STDOUT:     %T.as_wit.loc21_50.1: <witness> = facet_access_witness constants.%T.ec1 [symbolic = %T.as_wit.loc21_50.3 (constants.%T.as_wit)]
+// CHECK:STDOUT:     %Eats.facet.loc21_50.1: %Eats.type = facet_value constants.%T.as_type.3bf, %T.as_wit.loc21_50.1 [symbolic = %Eats.facet.loc21_50.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %.loc21_50.1: %Eats.type = converted constants.%T.as_type.3bf, %Eats.facet.loc21_50.1 [symbolic = %Eats.facet.loc21_50.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %T.as_wit.loc21_50.2: <witness> = facet_access_witness constants.%T.ec1 [symbolic = %T.as_wit.loc21_50.3 (constants.%T.as_wit)]
+// CHECK:STDOUT:     %Eats.facet.loc21_50.2: %Eats.type = facet_value constants.%T.as_type.3bf, %T.as_wit.loc21_50.2 [symbolic = %Eats.facet.loc21_50.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %.loc21_50.2: %Eats.type = converted constants.%T.as_type.3bf, %Eats.facet.loc21_50.2 [symbolic = %Eats.facet.loc21_50.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %Feed.specific_fn.loc21_44.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [symbolic = %Feed.specific_fn.loc21_44.2 (constants.%Feed.specific_fn)]
+// CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc21_44.1(%a.ref)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.4: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.40a)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type.40a)]() -> @Convert.%T (%T.8b3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T.1b5) {
@@ -554,7 +508,7 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%Self.25f) {
 // CHECK:STDOUT:   %Self => constants.%Self.25f
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.19f
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(type) {
@@ -569,32 +523,14 @@ fn HandleAnimal[T:! Animal & Eats](a: T) { Feed(a); }
 // CHECK:STDOUT:   %T.as_type.loc21_39.2 => constants.%T.as_type.3bf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%T.8b3) {
-// CHECK:STDOUT:   %T => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt => constants.%T.8b3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert(constants.%T.8b3, constants.%Self.519) {
-// CHECK:STDOUT:   %T => constants.%T.8b3
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
-// CHECK:STDOUT:   %Self => constants.%Self.519
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.40a
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Eats.type) {
-// CHECK:STDOUT:   %T => constants.%Eats.type
-// CHECK:STDOUT:   %T.patt => constants.%Eats.type
+// CHECK:STDOUT: specific @Feed(constants.%Eats.facet) {
+// CHECK:STDOUT:   %T.loc9_9.2 => constants.%Eats.facet
+// CHECK:STDOUT:   %T.patt.loc9_9.2 => constants.%Eats.facet
+// CHECK:STDOUT:   %T.as_type.loc9_22.2 => constants.%T.as_type.3bf
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.af9
-// CHECK:STDOUT:   %Self => constants.%Self.519
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.9a9
-// CHECK:STDOUT:   %Convert => constants.%Convert.35d
-// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.9a7
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.152
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.680
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Feed(@HandleAnimal.%Eats.facet.loc21_50.3) {}
 // CHECK:STDOUT:
