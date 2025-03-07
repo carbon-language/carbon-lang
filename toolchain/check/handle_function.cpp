@@ -23,6 +23,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -125,7 +126,7 @@ static auto DiagnoseModifiers(Context& context,
   if (!self_param_id.has_value() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
     CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
-    context.emitter().Build(node_id, VirtualWithoutSelf).Emit();
+    context.emitter().Emit(node_id, VirtualWithoutSelf);
     introducer.modifier_set.Remove(KeywordModifierSet::Method);
   }
 }
@@ -329,12 +330,98 @@ static auto RequestVtableIfVirtual(
   if (virtual_modifier == SemIR::Function::VirtualModifier::Impl &&
       !class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
-    context.emitter().Build(node_id, ImplWithoutBase).Emit();
+    context.emitter().Emit(node_id, ImplWithoutBase);
   }
   // TODO: If this is an `impl` function, check there's a matching base
   // function that's impl or virtual.
   class_info.is_dynamic = true;
   context.vtable_stack().AddInstId(decl_id);
+}
+
+// Validates the `destroy` function's signature. May replace invalid values for
+// recovery.
+static auto ValidateIfDestroy(Context& context, bool is_redecl,
+                              std::optional<SemIR::Inst> parent_scope_inst,
+                              SemIR::Function& function_info) -> void {
+  if (function_info.name_id != SemIR::NameId::Destroy) {
+    return;
+  }
+
+  // For recovery, always force explicit parameters to be empty. We do this
+  // before any of the returns for simplicity.
+  auto orig_param_patterns_id = function_info.param_patterns_id;
+  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
+
+  // Use differences on merge to diagnose remaining issues.
+  if (is_redecl) {
+    return;
+  }
+
+  if (!parent_scope_inst || !parent_scope_inst->Is<SemIR::ClassDecl>()) {
+    CARBON_DIAGNOSTIC(DestroyFunctionOutsideClass, Error,
+                      "declaring `fn destroy` in non-class scope");
+    context.emitter().Emit(function_info.latest_decl_id(),
+                           DestroyFunctionOutsideClass);
+    return;
+  }
+
+  if (!function_info.self_param_id.has_value()) {
+    CARBON_DIAGNOSTIC(DestroyFunctionMissingSelf, Error,
+                      "missing implicit `self` parameter");
+    context.emitter().Emit(function_info.latest_decl_id(),
+                           DestroyFunctionMissingSelf);
+    return;
+  }
+
+  // `self` must be the only implicit parameter.
+  if (auto block =
+          context.inst_blocks().Get(function_info.implicit_param_patterns_id);
+      block.size() > 1) {
+    // Point at the first non-`self` parameter.
+    auto param_id = block[function_info.self_param_id == block[0] ? 1 : 0];
+    CARBON_DIAGNOSTIC(DestroyFunctionUnexpectedImplicitParam, Error,
+                      "unexpected implicit parameter");
+    context.emitter().Emit(param_id, DestroyFunctionUnexpectedImplicitParam);
+    return;
+  }
+
+  CARBON_CHECK(
+      orig_param_patterns_id.has_value(),
+      "TODO: Positional parameters are currently rejected as part of requiring "
+      "implicit parameters, because it's an invalid parse tree; add a "
+      "diagnostic once this is testable");
+
+  if (orig_param_patterns_id != SemIR::InstBlockId::Empty) {
+    CARBON_DIAGNOSTIC(DestroyFunctionNonEmptyExplicitParams, Error,
+                      "unexpected parameter");
+    context.emitter().Emit(context.inst_blocks().Get(orig_param_patterns_id)[0],
+                           DestroyFunctionNonEmptyExplicitParams);
+    return;
+  }
+
+  if (auto return_type_id =
+          function_info.GetDeclaredReturnType(context.sem_ir());
+      return_type_id.has_value() &&
+      return_type_id != GetTupleType(context, {})) {
+    CARBON_DIAGNOSTIC(DestroyFunctionIncorrectReturnType, Error,
+                      "incorrect return type; must be unspecified or `()`");
+    context.emitter().Emit(function_info.return_slot_pattern_id,
+                           DestroyFunctionIncorrectReturnType);
+    return;
+  }
+}
+
+// Diagnoses when positional params aren't supported. Reassigns the pattern
+// block if needed.
+static auto DiagnosePositionalParams(Context& context,
+                                     SemIR::Function& function_info) -> void {
+  if (function_info.param_patterns_id.has_value()) {
+    return;
+  }
+
+  context.TODO(function_info.latest_decl_id(),
+               "function with positional parameters");
+  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
 }
 
 // Build a FunctionDecl describing the signature of a function. This
@@ -352,16 +439,13 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   auto name = PopNameComponent(context, return_slot_pattern_id);
-  if (!name.param_patterns_id.has_value()) {
-    context.TODO(node_id, "function with positional parameters");
-    name.param_patterns_id = SemIR::InstBlockId::Empty;
-  }
-  auto self_param_id =
-      FindSelfPattern(context, name.implicit_param_patterns_id);
-
   auto name_context = context.decl_name_stack().FinishName(name);
+
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
+
+  auto self_param_id =
+      FindSelfPattern(context, name.implicit_param_patterns_id);
 
   // Process modifiers.
   auto [parent_scope_inst_id, parent_scope_inst] =
@@ -393,6 +477,14 @@ static auto BuildFunctionDecl(Context& context,
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
+
+  // Analyze standard function signatures before positional parameters, so that
+  // we can have more specific diagnostics and recovery.
+  bool is_redecl =
+      name_context.state == DeclNameStack::NameContext::State::Resolved;
+  ValidateIfDestroy(context, is_redecl, parent_scope_inst, function_info);
+
+  DiagnosePositionalParams(context, function_info);
 
   TryMergeRedecl(context, node_id, name_context, function_decl, function_info,
                  is_definition);

@@ -23,6 +23,8 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return "discriminant";
     case NameId::SpecialNameId::Core:
       return "Core";
+    case NameId::SpecialNameId::Destroy:
+      return "destroy";
     case NameId::SpecialNameId::PackageNamespace:
       return "package";
     case NameId::SpecialNameId::PeriodSelf:

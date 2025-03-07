@@ -237,6 +237,12 @@ CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
 
+CARBON_DIAGNOSTIC_KIND(DestroyFunctionOutsideClass)
+CARBON_DIAGNOSTIC_KIND(DestroyFunctionMissingSelf)
+CARBON_DIAGNOSTIC_KIND(DestroyFunctionUnexpectedImplicitParam)
+CARBON_DIAGNOSTIC_KIND(DestroyFunctionNonEmptyExplicitParams)
+CARBON_DIAGNOSTIC_KIND(DestroyFunctionIncorrectReturnType)
+
 // Class checking.
 CARBON_DIAGNOSTIC_KIND(AdaptDeclRepeated)
 CARBON_DIAGNOSTIC_KIND(AdaptWithBase)
