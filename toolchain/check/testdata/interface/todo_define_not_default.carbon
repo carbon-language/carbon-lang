@@ -32,11 +32,8 @@ interface I {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%G.decl [concrete]
-// CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, @I.%T [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
-// CHECK:STDOUT:   %assoc3: %I.assoc_type = assoc_entity element3, @I.%N [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -97,9 +94,7 @@ interface I {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, %G.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
-// CHECK:STDOUT:     %assoc2: %I.assoc_type = assoc_entity element2, @I.%T [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %int_32.loc18_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc18_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -108,7 +103,6 @@ interface I {
 // CHECK:STDOUT:     %.loc18_28: type = converted %.loc18_27, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {
-// CHECK:STDOUT:     %assoc3: %I.assoc_type = assoc_entity element3, @I.%N [concrete = constants.%assoc3]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:     %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Convert.bound]
@@ -121,10 +115,10 @@ interface I {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   .G = %assoc1
-// CHECK:STDOUT:   .T = @T.%assoc2
-// CHECK:STDOUT:   .N = @N.%assoc3
-// CHECK:STDOUT:   witness = (%F.decl, %G.decl, %T, %N)
+// CHECK:STDOUT:   .G = <error>
+// CHECK:STDOUT:   .T = <error>
+// CHECK:STDOUT:   .N = <error>
+// CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {

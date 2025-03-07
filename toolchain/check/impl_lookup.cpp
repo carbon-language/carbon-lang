@@ -162,7 +162,6 @@ static auto FindAndDiagnoseImplLookupCycle(
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value).
 static auto GetInterfacesFromConstantId(Context& context,
-                                        SemIR::LocId /* FIXME loc_id */,
                                         SemIR::ConstantId interface_const_id,
                                         bool& has_other_requirements)
     -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface> {
@@ -388,8 +387,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
 
   bool has_other_requirements = false;
-  auto interfaces = GetInterfacesFromConstantId(
-      context, loc_id, interface_const_id, has_other_requirements);
+  auto interfaces = GetInterfacesFromConstantId(context, interface_const_id,
+                                                has_other_requirements);
   if (interfaces.empty()) {
     // TODO: Remove this when the context.TODO() is removed in
     // GetInterfacesFromConstantId.

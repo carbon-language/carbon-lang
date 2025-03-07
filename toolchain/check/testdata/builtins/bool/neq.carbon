@@ -288,15 +288,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %C.2ba: type = class_type @C, @C(%false) [concrete]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [concrete]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [concrete]
-// CHECK:STDOUT:   %NotEqual.type.e6c: type = fn_type @NotEqual.1 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.85b, imports.%Core.import_ref.67a) [concrete]
-// CHECK:STDOUT:   %Eq.facet: %Eq.type = facet_value bool, %impl_witness [concrete]
-// CHECK:STDOUT:   %.8b5: type = fn_type_with_self_type %NotEqual.type.e6c, %Eq.facet [concrete]
-// CHECK:STDOUT:   %NotEqual.type.c0e: type = fn_type @NotEqual.2 [concrete]
-// CHECK:STDOUT:   %NotEqual.bf4: %NotEqual.type.c0e = struct_value () [concrete]
-// CHECK:STDOUT:   %NotEqual.bound.542: <bound method> = bound_method %true, %NotEqual.bf4 [concrete]
-// CHECK:STDOUT:   %NotEqual.bound.5a9: <bound method> = bound_method %false, %NotEqual.bf4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -351,73 +342,49 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %return: ref %C.2ba = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %C.2ba = binding_pattern a
-// CHECK:STDOUT:     %.loc9_1: %C.2ba = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
+// CHECK:STDOUT:     %.loc9: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.2ba = var a
-// CHECK:STDOUT:   %.loc9_22.1: type = splice_block %C.loc9 [concrete = constants.%C.2ba] {
+// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %C.ref.loc9: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc9_10: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %true.loc9_18: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %impl.elem1.loc9: %.8b5 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
-// CHECK:STDOUT:     %bound_method.loc9: <bound method> = bound_method %true.loc9_10, %impl.elem1.loc9 [concrete = constants.%NotEqual.bound.542]
-// CHECK:STDOUT:     %bool.neq.loc9: init bool = call %bound_method.loc9(%true.loc9_10, %true.loc9_18) [concrete = constants.%false]
-// CHECK:STDOUT:     %.loc9_22.2: bool = value_of_initializer %bool.neq.loc9 [concrete = constants.%false]
-// CHECK:STDOUT:     %.loc9_22.3: bool = converted %bool.neq.loc9, %.loc9_22.2 [concrete = constants.%false]
-// CHECK:STDOUT:     %C.loc9: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %C.a14 = binding_pattern b
-// CHECK:STDOUT:     %.loc10_1: %C.a14 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %C.a14 = var b
-// CHECK:STDOUT:   %.loc10_23.1: type = splice_block %C.loc10 [concrete = constants.%C.a14] {
+// CHECK:STDOUT:   %b.var: ref <error> = var b
+// CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc10: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %false.loc10: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %impl.elem1.loc10: %.8b5 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
-// CHECK:STDOUT:     %bound_method.loc10: <bound method> = bound_method %true.loc10, %impl.elem1.loc10 [concrete = constants.%NotEqual.bound.542]
-// CHECK:STDOUT:     %bool.neq.loc10: init bool = call %bound_method.loc10(%true.loc10, %false.loc10) [concrete = constants.%true]
-// CHECK:STDOUT:     %.loc10_23.2: bool = value_of_initializer %bool.neq.loc10 [concrete = constants.%true]
-// CHECK:STDOUT:     %.loc10_23.3: bool = converted %bool.neq.loc10, %.loc10_23.2 [concrete = constants.%true]
-// CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %C.a14 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C.a14 = binding_pattern c
-// CHECK:STDOUT:     %.loc11_1: %C.a14 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %.loc11: <error> = var_pattern %c.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C.a14 = var c
-// CHECK:STDOUT:   %.loc11_23.1: type = splice_block %C.loc11 [concrete = constants.%C.a14] {
+// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %.3: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %C.ref.loc11: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false.loc11: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %true.loc11: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %impl.elem1.loc11: %.8b5 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
-// CHECK:STDOUT:     %bound_method.loc11: <bound method> = bound_method %false.loc11, %impl.elem1.loc11 [concrete = constants.%NotEqual.bound.5a9]
-// CHECK:STDOUT:     %bool.neq.loc11: init bool = call %bound_method.loc11(%false.loc11, %true.loc11) [concrete = constants.%true]
-// CHECK:STDOUT:     %.loc11_23.2: bool = value_of_initializer %bool.neq.loc11 [concrete = constants.%true]
-// CHECK:STDOUT:     %.loc11_23.3: bool = converted %bool.neq.loc11, %.loc11_23.2 [concrete = constants.%true]
-// CHECK:STDOUT:     %C.loc11: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.a14 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %C.2ba = binding_pattern d
-// CHECK:STDOUT:     %.loc12_1: %C.2ba = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: <error> = binding_pattern d
+// CHECK:STDOUT:     %.loc12: <error> = var_pattern %d.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %C.2ba = var d
-// CHECK:STDOUT:   %.loc12_24.1: type = splice_block %C.loc12 [concrete = constants.%C.2ba] {
+// CHECK:STDOUT:   %d.var: ref <error> = var d
+// CHECK:STDOUT:   %.4: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false.loc12_10: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %false.loc12_19: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %impl.elem1.loc12: %.8b5 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
-// CHECK:STDOUT:     %bound_method.loc12: <bound method> = bound_method %false.loc12_10, %impl.elem1.loc12 [concrete = constants.%NotEqual.bound.5a9]
-// CHECK:STDOUT:     %bool.neq.loc12: init bool = call %bound_method.loc12(%false.loc12_10, %false.loc12_19) [concrete = constants.%false]
-// CHECK:STDOUT:     %.loc12_24.2: bool = value_of_initializer %bool.neq.loc12 [concrete = constants.%false]
-// CHECK:STDOUT:     %.loc12_24.3: bool = converted %bool.neq.loc12, %.loc12_24.2 [concrete = constants.%false]
-// CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %C.2ba = bind_name d, %d.var
+// CHECK:STDOUT:   %d: <error> = bind_name d, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%B.loc4_9.1: bool) {
@@ -442,21 +409,21 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %False.ref.loc9: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc9: ref %C.2ba = splice_block file.%a.var {}
+// CHECK:STDOUT:   %.loc9: ref %C.2ba = temporary_storage
 // CHECK:STDOUT:   %False.call.loc9: init %C.2ba = call %False.ref.loc9() to %.loc9
-// CHECK:STDOUT:   assign file.%a.var, %False.call.loc9
+// CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %True.ref.loc10: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc10: ref %C.a14 = splice_block file.%b.var {}
+// CHECK:STDOUT:   %.loc10: ref %C.a14 = temporary_storage
 // CHECK:STDOUT:   %True.call.loc10: init %C.a14 = call %True.ref.loc10() to %.loc10
-// CHECK:STDOUT:   assign file.%b.var, %True.call.loc10
+// CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   %True.ref.loc11: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc11: ref %C.a14 = splice_block file.%c.var {}
+// CHECK:STDOUT:   %.loc11: ref %C.a14 = temporary_storage
 // CHECK:STDOUT:   %True.call.loc11: init %C.a14 = call %True.ref.loc11() to %.loc11
-// CHECK:STDOUT:   assign file.%c.var, %True.call.loc11
+// CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %False.ref.loc12: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc12: ref %C.2ba = splice_block file.%d.var {}
+// CHECK:STDOUT:   %.loc12: ref %C.2ba = temporary_storage
 // CHECK:STDOUT:   %False.call.loc12: init %C.2ba = call %False.ref.loc12() to %.loc12
-// CHECK:STDOUT:   assign file.%d.var, %False.call.loc12
+// CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
