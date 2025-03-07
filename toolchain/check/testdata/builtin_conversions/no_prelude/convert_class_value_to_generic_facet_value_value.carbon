@@ -1012,10 +1012,6 @@ fn B() {
 // CHECK:STDOUT:   %V.patt.loc5_13.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %W.loc5_23.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %W.patt.loc5_23.2 => constants.%empty_struct_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type => constants.%I.type.906
-// CHECK:STDOUT:   %Self.2 => constants.%Self.770
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T.4b2) {

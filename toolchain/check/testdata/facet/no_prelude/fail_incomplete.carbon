@@ -39,43 +39,37 @@ fn G[T:! A](t: T) {}
 fn H[T:! A & B](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: invalid use of incomplete type `A` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert value of type `type` to `A` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   ({} as C) as (C as A);
   // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-11]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface A;
-  // CHECK:STDERR: ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.As(A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   ({} as C) as (C as A);
+  // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:
   ({} as C) as (C as A);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: invalid use of incomplete type `A & B` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
   // CHECK:STDERR:   ({} as C) as (C as (A & B));
   // CHECK:STDERR:                 ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-20]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface A;
-  // CHECK:STDERR: ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   ({} as C) as (C as (A & B));
+  // CHECK:STDERR:                 ^~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (A & B));
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: forming value of incomplete type `A` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-29]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface A;
-  // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-25]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn G[T:! A](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   G({} as C);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: forming value of incomplete type `A & B` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
   // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-41]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface A;
-  // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-39]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-33]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn H[T:! A & B](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

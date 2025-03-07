@@ -1139,7 +1139,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // We can only perform initialization for complete, non-abstract types.
-  if (!RequireConcreteType(
+  // Facet types are okay though, since their representation is fixed and we
+  // want to support using the `Self` of an interface inside its definition.
+  if (!context.types().Is<SemIR::FacetType>(target.type_id) &&
+      !RequireConcreteType(
           context, target.type_id, loc_id,
           [&] {
             CARBON_CHECK(!target.is_initializer(),
