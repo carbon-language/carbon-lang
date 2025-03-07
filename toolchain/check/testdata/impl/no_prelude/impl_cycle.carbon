@@ -62,10 +62,6 @@ class Point {
 
 fn F() {
   // TODO: A cycle should be found in the `impl forall T as Z` above.
-  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+4]]:21: error: semantics TODO: `impl lookup for a FacetType with no interface (using `where .Self impls ...` instead?)` [SemanticsTodo]
-  // CHECK:STDERR:   ({} as Point) as (Point as Z);
-  // CHECK:STDERR:                     ^~~~~~~~~~
-  // CHECK:STDERR:
   ({} as Point) as (Point as Z);
 }
 
@@ -181,6 +177,21 @@ fn F() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Compare({} as C, {} as D);
+
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+13]]:3: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR:   Compare({} as D, {} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-50]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-53]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-49]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Compare({} as D, {} as C);
 }
 
 // --- impl_recurse_with_simpler_type_no_cycle.carbon

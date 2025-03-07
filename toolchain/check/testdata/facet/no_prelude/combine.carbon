@@ -37,6 +37,26 @@ import Core;
 interface A {}
 class C {}
 
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn AC[T:! A & C](t: T) {}
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:
+fn AC[T:! A & C](t: T) {}
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn CA[T:! C & A](t: T) {}
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:
+fn CA[T:! C & A](t: T) {}
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+8]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn CC[T:! C & C](t: T) {}
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:11: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn CC[T:! C & C](t: T) {}
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:
+fn CC[T:! C & C](t: T) {}
+
 fn F() {
   // CHECK:STDERR: fail_combine_with_non_facet_type.carbon:[[@LINE+4]]:23: error: non-facet type `C` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
   // CHECK:STDERR:   ({} as C) as (C as (A & C));
@@ -57,6 +77,10 @@ fn F() {
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (C & C));
+
+  AC({} as C);
+  CA({} as C);
+  CC({} as C);
 }
 
 // --- same.carbon
@@ -64,22 +88,17 @@ library "[[@TEST_NAME]]";
 
 import Core;
 
-// Non-instance versions of these tests are in
-// .../interface/no_prelude/compound_member_access.carbon.
-
-interface A {
-  fn G[self: Self]();
-}
+interface A {}
 
 class C {}
-impl C as A {
-  fn G[self: Self]() {}
-}
+impl C as A {}
+
+fn AA[T:! A & A](t: T) {}
 
 fn F() {
-  ({} as C).((A & A).G)();
-  (({} as C) as (C as (A & A))).((A & A).G)();
-  (({} as C) as (C as (A & A))).(A.G)();
+  ({} as C) as (C as (A & A));
+
+  AA({} as C);
 }
 
 // --- fail_name_collision.carbon
@@ -112,95 +131,105 @@ fn F() {
   ({} as C).((A & B).G)();
 }
 
-// --- fail_todo_combine.carbon
+// --- combine.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
 
 interface A {}
 interface B {
-  fn G[self: Self]();
+  fn BB[self: Self]();
 }
 
 class C {}
 impl C as A {}
 impl C as B {
-  fn G[self: Self]() {}
+  fn BB[self: Self]() {}
 }
+
+fn G[T:! A & B](t: T) {}
 
 fn F() {
-  ({} as C).((A & B).G)();
+  ({} as C).((A & B).BB)();
 
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+11]]:18: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).G)();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  (({} as C) as (C as (A & B))).((A & B).G)();
+  (({} as C) as (C as (A & B))).((A & B).BB)();
+  (({} as C) as (C as (A & B))).(B.BB)();
 
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+11]]:18: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+7]]:18: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_combine.carbon:[[@LINE+4]]:18: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((B).G)();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  (({} as C) as (C as (A & B))).((B).G)();
+  G({} as C);
 }
 
-// --- fail_todo_generic_combine.carbon
-
+// --- generic_interface.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
 
-interface A {
-}
-interface B {
-  fn G[self: Self]();
-}
+interface A(T:! type) {}
+interface B {}
 
-fn H[T:! A & B](t: T) {
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+4]]:3: error: cannot access member of interface `B` in type `T` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   t.(B.G)();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  t.(B.G)();
-}
+class P1 {}
+class P2 {}
 
 class C {}
-impl C as A {}
-impl C as B {
-  fn G[self: Self]() {}
-}
+impl C as A(P1) {}
+impl C as B {}
+
+fn G[T:! A(P1) & B](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+17]]:3: error: semantics TODO: `impl lookup for a FacetType with more than one interface` [SemanticsTodo]
-  // CHECK:STDERR:   H({} as C);
+  G({} as C);
+}
+
+// --- fail_wrong_generic_interface.carbon
+library "[[@TEST_NAME]]";
+
+import Core;
+
+interface A(T:! type) {}
+interface B {}
+
+class P1 {}
+class P2 {}
+
+class C {}
+impl C as A(P1) {}
+impl C as B {}
+
+fn G[T:! A(P2) & B](t: T) {}
+
+fn F() {
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A(P2) & B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-18]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn H[T:! A & B](t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A(P2) & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn G[T:! A(P2) & B](t: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A & B` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   H({} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   H({} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_combine.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn H[T:! A & B](t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  H({} as C);
+  G({} as C);
+}
+
+// --- generic_forall_impl.carbon
+library "[[@TEST_NAME]]";
+
+import Core;
+
+interface Iface {}
+interface GenericIface(T:! type) {}
+
+class GenericClass(T:! type) {}
+
+class ImplIface {}
+impl ImplIface as Iface {}
+
+class C {}
+impl C as Iface {}
+
+impl forall [IfaceType:! Iface] C as GenericIface(GenericClass(IfaceType)) {}
+
+fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](t: T) {}
+
+fn F() {
+  G({} as C);
 }

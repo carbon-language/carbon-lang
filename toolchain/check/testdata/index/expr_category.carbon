@@ -91,20 +91,20 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %array_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %array_type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %array_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %i32 [concrete = constants.%array_type]
-// CHECK:STDOUT:     %return.param: ref %array_type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %array_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %array_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %array_type = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %array_type = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %array_type = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %array_type = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: %array_type = value_param call_param0
 // CHECK:STDOUT:     %.loc13: type = splice_block %array_type.loc13 [concrete = constants.%array_type] {
 // CHECK:STDOUT:       %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -115,9 +115,9 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ValueBinding.decl: %ValueBinding.type = fn_decl @ValueBinding [concrete = constants.%ValueBinding] {
 // CHECK:STDOUT:     %b.patt: %array_type = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %array_type = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %array_type = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %array_type = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: %array_type = value_param call_param0
 // CHECK:STDOUT:     %.loc21: type = splice_block %array_type.loc21 [concrete = constants.%array_type] {
 // CHECK:STDOUT:       %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

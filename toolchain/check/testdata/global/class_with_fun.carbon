@@ -44,10 +44,10 @@ var a: A = {};
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %ret_a.decl: %ret_a.type = fn_decl @ret_a [concrete = constants.%ret_a] {
 // CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %A = out_param call_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {

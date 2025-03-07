@@ -64,38 +64,38 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: bool = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: bool = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: bool = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:     %c.patt: bool = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: bool = value_param_pattern %c.patt, runtime_param2
+// CHECK:STDOUT:     %c.param_patt: bool = value_param_pattern %c.patt, call_param2
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param3
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param3
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %a.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc11_9.1: type = splice_block %.loc11_9.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc11_9: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc11_9.2: type = value_of_initializer %bool.make_type.loc11_9 [concrete = bool]
 // CHECK:STDOUT:       %.loc11_9.3: type = converted %bool.make_type.loc11_9, %.loc11_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: bool = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: bool = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc11_18.1: type = splice_block %.loc11_18.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc11_18: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc11_18.2: type = value_of_initializer %bool.make_type.loc11_18 [concrete = bool]
 // CHECK:STDOUT:       %.loc11_18.3: type = converted %bool.make_type.loc11_18, %.loc11_18.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
-// CHECK:STDOUT:     %c.param: bool = value_param runtime_param2
+// CHECK:STDOUT:     %c.param: bool = value_param call_param2
 // CHECK:STDOUT:     %.loc11_27.1: type = splice_block %.loc11_27.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc11_27: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc11_27.2: type = value_of_initializer %bool.make_type.loc11_27 [concrete = bool]
 // CHECK:STDOUT:       %.loc11_27.3: type = converted %bool.make_type.loc11_27, %.loc11_27.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: bool = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param3
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

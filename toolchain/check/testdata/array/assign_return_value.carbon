@@ -60,13 +60,13 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %tuple.type.a1c = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.a1c = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.a1c = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc11_16.1: %tuple.type.85c = tuple_literal (%i32)
 // CHECK:STDOUT:     %.loc11_16.2: type = converted %.loc11_16.1, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
-// CHECK:STDOUT:     %return.param: ref %tuple.type.a1c = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %tuple.type.a1c = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.a1c = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {} {}

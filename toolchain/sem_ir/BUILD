@@ -126,6 +126,7 @@ cc_library(
         "//toolchain/lex:token_kind",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
+        "@llvm-project//clang:ast",
         "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Support",
     ],

@@ -171,6 +171,21 @@ import library "use_non_export_then_base";
 
 var indirect_c: C = {.x = ()};
 
+// --- fail_export_poisoned.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_export_poisoned.carbon:[[@LINE+4]]:11: error: name `Poison` not found [NameNotFound]
+// CHECK:STDERR: fn F() -> Poison;
+// CHECK:STDERR:           ^~~~~~
+// CHECK:STDERR:
+fn F() -> Poison;
+// CHECK:STDERR: fail_export_poisoned.carbon:[[@LINE+4]]:1: error: name `Poison` not found [NameNotFound]
+// CHECK:STDERR: export Poison;
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+export Poison;
+
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -831,4 +846,28 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   assign file.%indirect_c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_export_poisoned.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Poison = <poisoned>
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Poison.ref: <error> = name_ref Poison, <error> [concrete = <error>]
+// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> <error>;
 // CHECK:STDOUT:

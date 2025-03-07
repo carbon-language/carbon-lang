@@ -77,15 +77,11 @@ impl i32 as I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_9.1, runtime_param<none> [symbolic = %T.patt.loc11_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %X.patt.loc11_19.1: @C.%T.loc11_9.2 (%T) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc11_19.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: @C.%T.loc11_9.2 (%T) = value_param_pattern %X.patt.loc11_19.1, runtime_param<none> [symbolic = %X.patt.loc11_19.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc11_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_9.2 (constants.%T)]
-// CHECK:STDOUT:     %X.param: @C.%T.loc11_9.2 (%T) = value_param runtime_param<none>
+// CHECK:STDOUT:     %T.loc11_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_9.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_9.1 [symbolic = %T.loc11_9.2 (constants.%T)]
-// CHECK:STDOUT:     %X.loc11_19.1: @C.%T.loc11_9.2 (%T) = bind_symbolic_name X, 1, %X.param [symbolic = %X.loc11_19.2 (constants.%X)]
+// CHECK:STDOUT:     %X.loc11_19.1: @C.%T.loc11_9.2 (%T) = bind_symbolic_name X, 1 [symbolic = %X.loc11_19.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
@@ -100,9 +96,9 @@ impl i32 as I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [concrete = constants.%F.bc6] {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0 [concrete = <error>]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, call_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc29: type = splice_block %C [concrete = <error>] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
@@ -122,9 +118,9 @@ impl i32 as I {
 // CHECK:STDOUT: impl @impl: %i32 as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.066 = fn_decl @F.2 [concrete = constants.%F.9ec] {
 // CHECK:STDOUT:     %c.patt: %C.6fb = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %C.6fb = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %C.6fb = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %C.6fb = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %C.6fb = value_param call_param0
 // CHECK:STDOUT:     %.loc33: type = splice_block %C [concrete = constants.%C.6fb] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
