@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
+#include "clang/AST/Decl.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -49,6 +50,13 @@ struct FunctionFields {
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
+
+  // If the function is imported from C++, points to the Clang declaration in
+  // the AST. Used for mangling. The AST is owned by `CompileSubcommand` so we
+  // expect it to be live from `Function` creation to mangling.
+  // TODO: #4666 Ensure we can easily serialize/deserialize this. Consider decl
+  // ID to point into the AST.
+  const clang::NamedDecl* cpp_decl = nullptr;
 };
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
@@ -75,18 +83,16 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
-  // Given an instruction from `param_patterns_id` or
+  // Given the ID of an instruction from `param_patterns_id` or
   // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
-  // corresponding instruction, its ID, and the entity_name_id of the underlying
-  // binding pattern.
+  // corresponding `Call` parameter pattern, its ID, and the entity_name_id of
+  // the underlying binding pattern, or std::nullopt if there is no
+  // corresponding `Call` parameter.
+  // TODO: Remove this, by exposing `Call` parameter patterns instead of `Call`
+  // parameters in EntityWithParams.
   static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                InstId param_pattern_id)
-      -> ParamPatternInfo;
-
-  // Gets the name from the name binding instruction, or `None` if this pattern
-  // has been replaced with BuiltinErrorInst.
-  static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
-      -> SemIR::NameId;
+      -> std::optional<ParamPatternInfo>;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
@@ -115,7 +121,9 @@ struct CalleeFunction {
 };
 
 // Returns information for the function corresponding to callee_id.
-auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction;
+auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
+                       SpecificId specific_id = SpecificId::None)
+    -> CalleeFunction;
 
 }  // namespace Carbon::SemIR
 

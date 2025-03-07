@@ -56,14 +56,14 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [concrete = constants.%MemberNamedSelf] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [concrete = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %MemberNamedSelf = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %MemberNamedSelf = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %MemberNamedSelf = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %y.patt: %Self = binding_pattern y
-// CHECK:STDOUT:     %y.param_patt: %Self = value_param_pattern %y.patt, runtime_param1
+// CHECK:STDOUT:     %y.param_patt: %Self = value_param_pattern %y.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc24: %MemberNamedSelf = value_param runtime_param0
+// CHECK:STDOUT:     %x.param.loc24: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc24_25: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc24: %MemberNamedSelf = bind_name x, %x.param.loc24
-// CHECK:STDOUT:     %y.param.loc24: %Self = value_param runtime_param1
+// CHECK:STDOUT:     %y.param.loc24: %Self = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc24_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self]
 // CHECK:STDOUT:     %y.loc24: %Self = bind_name y, %y.param.loc24
 // CHECK:STDOUT:   }
@@ -83,14 +83,14 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Self.decl: type = class_decl @Self [concrete = constants.%Self] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [concrete = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %MemberNamedSelf = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %MemberNamedSelf = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %MemberNamedSelf = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %y.patt: %Self = binding_pattern y
-// CHECK:STDOUT:     %y.param_patt: %Self = value_param_pattern %y.patt, runtime_param1
+// CHECK:STDOUT:     %y.param_patt: %Self = value_param_pattern %y.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc21: %MemberNamedSelf = value_param runtime_param0
+// CHECK:STDOUT:     %x.param.loc21: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21_11: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc21: %MemberNamedSelf = bind_name x, %x.param.loc21
-// CHECK:STDOUT:     %y.param.loc21: %Self = value_param runtime_param1
+// CHECK:STDOUT:     %y.param.loc21: %Self = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc21_20: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self]
 // CHECK:STDOUT:     %y.loc21: %Self = bind_name y, %y.param.loc21
 // CHECK:STDOUT:   }

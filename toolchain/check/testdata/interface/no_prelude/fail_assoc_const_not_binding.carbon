@@ -37,13 +37,13 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+8]]:7: error: expected name in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+8]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   let var T:! type;
-  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+4]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+4]]:19: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   let var T:! type;
-  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR:                   ^
   // CHECK:STDERR:
   let var T:! type;
 }
@@ -53,13 +53,13 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+8]]:15: error: expected name in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+8]]:19: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   default let var T:! type = {};
-  // CHECK:STDERR:               ^~~
+  // CHECK:STDERR:                   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+4]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+4]]:28: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   default let var T:! type = {};
-  // CHECK:STDERR:               ^~~
+  // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   default let var T:! type = {};
 }

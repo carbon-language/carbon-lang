@@ -91,9 +91,9 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {
 // CHECK:STDOUT:     %a.patt: %ptr.5df = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %ptr.5df = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %ptr.5df = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.5df = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %ptr.5df = value_param call_param0
 // CHECK:STDOUT:     %.loc41: type = splice_block %ptr.loc41 [concrete = constants.%ptr.5df] {
 // CHECK:STDOUT:       %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:       %ptr.loc41: type = ptr_type %Outer [concrete = constants.%ptr.5df]

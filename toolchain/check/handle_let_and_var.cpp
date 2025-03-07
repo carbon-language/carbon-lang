@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -102,10 +103,10 @@ auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
 }
 
-// Returns a VarStorage inst for the given pattern. If the pattern
+// Returns a VarStorage inst for the given `var` pattern. If the pattern
 // is the body of a returned var, this reuses the return slot, and otherwise it
 // adds a new inst.
-static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
+static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
     -> SemIR::InstId {
   if (context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
           KeywordModifierSet::Returned)) {
@@ -116,28 +117,38 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
       return GetCurrentReturnSlot(context);
     }
   }
-  auto pattern = context.insts().GetWithLocId(pattern_id);
-  auto subpattern =
-      context.insts().Get(pattern.inst.As<SemIR::VarPattern>().subpattern_id);
+  auto pattern = context.insts().GetWithLocId(var_pattern_id);
 
-  // Try to populate name_id on a best-effort basis.
-  auto name_id = SemIR::NameId::None;
-  if (auto binding_pattern = subpattern.TryAs<SemIR::BindingPattern>()) {
-    name_id =
-        context.entity_names().Get(binding_pattern->entity_name_id).name_id;
-  }
   return AddInst(
       context,
       SemIR::LocIdAndInst::UncheckedLoc(
-          pattern.loc_id, SemIR::VarStorage{.type_id = pattern.inst.type_id(),
-                                            .pretty_name_id = name_id}));
+          pattern.loc_id,
+          SemIR::VarStorage{
+              .type_id = pattern.inst.type_id(),
+              .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
+                  context.sem_ir(),
+                  pattern.inst.As<SemIR::VarPattern>().subpattern_id)}));
 }
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
-  auto subpattern_id = SemIR::InstId::None;
-  subpattern_id = context.node_stack().PopPattern();
+  auto subpattern_id = context.node_stack().PopPattern();
   auto type_id = context.insts().Get(subpattern_id).type_id();
+
+  // In a parameter list, a `var` pattern is always a single `Call` parameter,
+  // even if it contains multiple binding patterns.
+  switch (context.full_pattern_stack().CurrentKind()) {
+    case FullPatternStack::Kind::ExplicitParamList:
+    case FullPatternStack::Kind::ImplicitParamList:
+      subpattern_id = AddPatternInst<SemIR::RefParamPattern>(
+          context, node_id,
+          {.type_id = type_id,
+           .subpattern_id = subpattern_id,
+           .index = SemIR::CallParamIndex::None});
+      break;
+    case FullPatternStack::Kind::NameBindingDecl:
+      break;
+  }
 
   auto pattern_id = AddPatternInst<SemIR::VarPattern>(
       context, node_id, {.type_id = type_id, .subpattern_id = subpattern_id});

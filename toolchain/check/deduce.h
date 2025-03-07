@@ -22,7 +22,8 @@ auto DeduceGenericCallArguments(
 // `None` if deduction fails.
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                          const SemIR::Impl& impl, SemIR::ConstantId self_id,
-                         SemIR::ConstantId constraint_id) -> SemIR::SpecificId;
+                         SemIR::SpecificId constraint_specific_id)
+    -> SemIR::SpecificId;
 
 }  // namespace Carbon::Check
 

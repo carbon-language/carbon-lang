@@ -214,9 +214,9 @@ fn P(o: O) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -385,9 +385,9 @@ fn P(o: O) {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
 // CHECK:STDOUT:     %d.patt: %D = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %D = value_param_pattern %d.patt, runtime_param0
+// CHECK:STDOUT:     %d.param_patt: %D = value_param_pattern %d.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %d.param: %D = value_param runtime_param0
+// CHECK:STDOUT:     %d.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %d: %D = bind_name d, %d.param
 // CHECK:STDOUT:   }
@@ -539,9 +539,9 @@ fn P(o: O) {
 // CHECK:STDOUT:   %E.decl: type = class_decl @E [concrete = constants.%E] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %e.patt: %E = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %E = value_param_pattern %e.patt, runtime_param0
+// CHECK:STDOUT:     %e.param_patt: %E = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %e.param: %E = value_param runtime_param0
+// CHECK:STDOUT:     %e.param: %E = value_param call_param0
 // CHECK:STDOUT:     %E.ref.loc19: type = name_ref E, file.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:     %e: %E = bind_name e, %e.param
 // CHECK:STDOUT:   }
@@ -685,9 +685,9 @@ fn P(o: O) {
 // CHECK:STDOUT:   %L.decl: type = class_decl @L [concrete = constants.%L] {} {}
 // CHECK:STDOUT:   %M.decl: %M.type = fn_decl @M [concrete = constants.%M] {
 // CHECK:STDOUT:     %l.patt: %L = binding_pattern l
-// CHECK:STDOUT:     %l.param_patt: %L = value_param_pattern %l.patt, runtime_param0
+// CHECK:STDOUT:     %l.param_patt: %L = value_param_pattern %l.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %l.param: %L = value_param runtime_param0
+// CHECK:STDOUT:     %l.param: %L = value_param call_param0
 // CHECK:STDOUT:     %L.ref.loc19: type = name_ref L, file.%L.decl [concrete = constants.%L]
 // CHECK:STDOUT:     %l: %L = bind_name l, %l.param
 // CHECK:STDOUT:   }
@@ -833,9 +833,9 @@ fn P(o: O) {
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
 // CHECK:STDOUT:   %P.decl: %P.type = fn_decl @P [concrete = constants.%P] {
 // CHECK:STDOUT:     %o.patt: %O = binding_pattern o
-// CHECK:STDOUT:     %o.param_patt: %O = value_param_pattern %o.patt, runtime_param0
+// CHECK:STDOUT:     %o.param_patt: %O = value_param_pattern %o.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %o.param: %O = value_param runtime_param0
+// CHECK:STDOUT:     %o.param: %O = value_param call_param0
 // CHECK:STDOUT:     %O.ref.loc27: type = name_ref O, file.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %o: %O = bind_name o, %o.param
 // CHECK:STDOUT:   }

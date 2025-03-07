@@ -50,9 +50,9 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %Eats.type = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %Eats.type = value_param_pattern %e.patt, runtime_param0
+// CHECK:STDOUT:     %e.param_patt: %Eats.type = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %e.param: %Eats.type = value_param runtime_param0
+// CHECK:STDOUT:     %e.param: %Eats.type = value_param call_param0
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     %e: %Eats.type = bind_name e, %e.param
 // CHECK:STDOUT:   }

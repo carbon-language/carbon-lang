@@ -291,7 +291,7 @@ struct Worklist {
     requires(std::same_as<T, BoolValue> ||
              std::same_as<T, CompileTimeBindIndex> ||
              std::same_as<T, ElementIndex> || std::same_as<T, FloatKind> ||
-             std::same_as<T, IntKind> || std::same_as<T, RuntimeParamIndex>)
+             std::same_as<T, IntKind> || std::same_as<T, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
     contents.push_back(arg.index);

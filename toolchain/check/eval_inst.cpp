@@ -8,6 +8,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -199,6 +200,14 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
     auto elements = context.inst_blocks().Get(witness->elements_id);
     auto index = static_cast<size_t>(inst.index.index);
+    // TODO: Remove this block when LookupImplWitness returns all the witnesses
+    // for a facet type instead of just one. We just don't want to introduce
+    // crashes in the meantime.
+    if (index >= elements.size()) {
+      context.TODO(loc,
+                   "incorrect witness for multiple interfaces in a facet type");
+      return ConstantEvalResult::Error;
+    }
     CARBON_CHECK(index < elements.size(), "Access out of bounds.");
     auto element = elements[index];
     if (!element.has_value()) {

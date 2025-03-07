@@ -58,7 +58,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: var x:! () = ();
 // CHECK:STDERR:     ^~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:12: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:12: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
 // CHECK:STDERR: var x:! () = ();
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -117,11 +117,11 @@ fn A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_10.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_10.2: type = converted %.loc7_10.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

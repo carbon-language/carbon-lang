@@ -127,78 +127,78 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ConvertCToB.decl: %ConvertCToB.type = fn_decl @ConvertCToB [concrete = constants.%ConvertCToB] {
 // CHECK:STDOUT:     %p.patt: %ptr.019 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.019 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr.019 = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %ptr.e79 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.e79 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %ptr.e79 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr.loc25_27: type = ptr_type %B [concrete = constants.%ptr.e79]
-// CHECK:STDOUT:     %p.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc25_20: type = splice_block %ptr.loc25_20 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc25_20: type = ptr_type %C [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.e79 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %ptr.e79 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.e79 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: %ConvertBToA.type = fn_decl @ConvertBToA [concrete = constants.%ConvertBToA] {
 // CHECK:STDOUT:     %p.patt: %ptr.e79 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.e79 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr.e79 = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %ptr.6db = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc26_27: type = ptr_type %A [concrete = constants.%ptr.6db]
-// CHECK:STDOUT:     %p.param: %ptr.e79 = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr.e79 = value_param call_param0
 // CHECK:STDOUT:     %.loc26_20: type = splice_block %ptr.loc26_20 [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:       %ptr.loc26_20: type = ptr_type %B [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.e79 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: %ConvertCToA.type = fn_decl @ConvertCToA [concrete = constants.%ConvertCToA] {
 // CHECK:STDOUT:     %p.patt: %ptr.019 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.019 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %ptr.019 = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %ptr.6db = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc27_27: type = ptr_type %A [concrete = constants.%ptr.6db]
-// CHECK:STDOUT:     %p.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %p.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc27_20: type = splice_block %ptr.loc27_20 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc27_20: type = ptr_type %C [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [concrete = constants.%ConvertValue] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [concrete = constants.%ConvertRef] {
 // CHECK:STDOUT:     %c.patt: %ptr.019 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %ptr.019 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %ptr.019 = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %ptr.6db = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc33_26: type = ptr_type %A [concrete = constants.%ptr.6db]
-// CHECK:STDOUT:     %c.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc33: type = splice_block %ptr.loc33_19 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc33_19: type = ptr_type %C [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %ptr.019 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertInit.decl: %ConvertInit.type = fn_decl @ConvertInit [concrete = constants.%ConvertInit] {} {}

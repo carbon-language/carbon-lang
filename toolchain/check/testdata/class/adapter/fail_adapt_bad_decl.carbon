@@ -130,9 +130,9 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [concrete = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: %Bad = value_param call_param0
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [concrete = constants.%Bad]
 // CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -184,9 +184,9 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [concrete = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
+// CHECK:STDOUT:     %b.param: %Bad = value_param call_param0
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [concrete = constants.%Bad]
 // CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
