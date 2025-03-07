@@ -43,9 +43,9 @@ fn Run() -> String {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {
 // CHECK:STDOUT:     %return.patt: String = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: String = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: String = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: ref String = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref String = out_param call_param0
 // CHECK:STDOUT:     %return: ref String = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

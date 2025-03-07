@@ -43,6 +43,48 @@ struct TestData : Printable<TestData> {
   }
 };
 
+static_assert(std::is_copy_constructible_v<TestData>);
+
+// Non-trivial type for testing.
+struct MoveOnlyTestData : Printable<TestData> {
+  int value;
+
+  // NOLINTNEXTLINE: google-explicit-constructor
+  MoveOnlyTestData(int v) : value(v) { CARBON_CHECK(value >= 0); }
+  ~MoveOnlyTestData() {
+    CARBON_CHECK(value >= 0);
+    value = -1;
+  }
+  MoveOnlyTestData(MoveOnlyTestData&& other) noexcept
+      : MoveOnlyTestData(other.value) {
+    other.value = 0;
+  }
+  auto operator=(MoveOnlyTestData&& other) noexcept -> MoveOnlyTestData& {
+    value = other.value;
+    other.value = 0;
+    return *this;
+  }
+  auto Print(llvm::raw_ostream& out) const -> void { out << value; }
+
+  friend auto operator==(const MoveOnlyTestData& lhs,
+                         const MoveOnlyTestData& rhs) -> bool {
+    return lhs.value == rhs.value;
+  }
+
+  friend auto operator<=>(const MoveOnlyTestData& lhs,
+                          const MoveOnlyTestData& rhs) -> std::strong_ordering {
+    return lhs.value <=> rhs.value;
+  }
+
+  friend auto CarbonHashValue(const MoveOnlyTestData& data, uint64_t seed)
+      -> HashCode {
+    return Carbon::HashValue(data.value, seed);
+  }
+};
+
+static_assert(!std::is_copy_constructible_v<MoveOnlyTestData>);
+static_assert(std::is_move_constructible_v<MoveOnlyTestData>);
+
 // Test stateless key context that produces different hashes from normal.
 // Changing the hash values should result in test failures if the context ever
 // fails to be used.

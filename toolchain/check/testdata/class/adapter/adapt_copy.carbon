@@ -157,29 +157,29 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptCopyable.decl: type = class_decl @AdaptCopyable [concrete = constants.%AdaptCopyable] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %AdaptCopyable = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %AdaptCopyable = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %AdaptCopyable = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %AdaptCopyable = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %AdaptCopyable = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %AdaptCopyable = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc10_27: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
-// CHECK:STDOUT:     %c.param: %AdaptCopyable = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %AdaptCopyable = value_param call_param0
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc10_9: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %c: %AdaptCopyable = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %AdaptCopyable = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %AdaptCopyable = out_param call_param1
 // CHECK:STDOUT:     %return: ref %AdaptCopyable = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [concrete = constants.%InTuple] {
 // CHECK:STDOUT:     %c.patt: %tuple.type.2a3 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %tuple.type.2a3 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %tuple.type.2a3 = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %tuple.type.2a3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.2a3 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.2a3 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc15_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %int_32.loc15_56: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32.loc15_56: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:     %.loc15_59.1: %tuple.type.24b = tuple_literal (%AdaptCopyable.ref.loc15_41, %u32.loc15_56)
 // CHECK:STDOUT:     %.loc15_59.2: type = converted %.loc15_59.1, constants.%tuple.type.2a3 [concrete = constants.%tuple.type.2a3]
-// CHECK:STDOUT:     %c.param: %tuple.type.2a3 = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %tuple.type.2a3 = value_param call_param0
 // CHECK:STDOUT:     %.loc15_34.1: type = splice_block %.loc15_34.3 [concrete = constants.%tuple.type.2a3] {
 // CHECK:STDOUT:       %AdaptCopyable.ref.loc15_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
 // CHECK:STDOUT:       %int_32.loc15_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -188,7 +188,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:       %.loc15_34.3: type = converted %.loc15_34.2, constants.%tuple.type.2a3 [concrete = constants.%tuple.type.2a3]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2a3 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %tuple.type.2a3 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %tuple.type.2a3 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.2a3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -296,29 +296,29 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptTuple.decl: type = class_decl @AdaptTuple [concrete = constants.%AdaptTuple] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %AdaptTuple = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %AdaptTuple = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %AdaptTuple = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %AdaptTuple = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %AdaptTuple = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %AdaptTuple = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptTuple.ref.loc8_24: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
-// CHECK:STDOUT:     %c.param: %AdaptTuple = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %AdaptTuple = value_param call_param0
 // CHECK:STDOUT:     %AdaptTuple.ref.loc8_9: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
 // CHECK:STDOUT:     %c: %AdaptTuple = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %AdaptTuple = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %AdaptTuple = out_param call_param1
 // CHECK:STDOUT:     %return: ref %AdaptTuple = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [concrete = constants.%InTuple] {
 // CHECK:STDOUT:     %c.patt: %tuple.type.f69 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %tuple.type.f69 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %tuple.type.f69 = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %tuple.type.f69 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.f69 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.f69 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptTuple.ref.loc13_38: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
 // CHECK:STDOUT:     %int_32.loc13_50: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32.loc13_50: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:     %.loc13_53.1: %tuple.type.24b = tuple_literal (%AdaptTuple.ref.loc13_38, %u32.loc13_50)
 // CHECK:STDOUT:     %.loc13_53.2: type = converted %.loc13_53.1, constants.%tuple.type.f69 [concrete = constants.%tuple.type.f69]
-// CHECK:STDOUT:     %c.param: %tuple.type.f69 = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %tuple.type.f69 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_31.1: type = splice_block %.loc13_31.3 [concrete = constants.%tuple.type.f69] {
 // CHECK:STDOUT:       %AdaptTuple.ref.loc13_16: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
 // CHECK:STDOUT:       %int_32.loc13_28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -327,7 +327,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:       %.loc13_31.3: type = converted %.loc13_31.2, constants.%tuple.type.f69 [concrete = constants.%tuple.type.f69]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.f69 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %tuple.type.f69 = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %tuple.type.f69 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.f69 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -476,15 +476,15 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptNoncopyable.decl: type = class_decl @AdaptNoncopyable [concrete = constants.%AdaptNoncopyable] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %AdaptNoncopyable = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %AdaptNoncopyable = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %AdaptNoncopyable = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %AdaptNoncopyable = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %AdaptNoncopyable = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %AdaptNoncopyable = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNoncopyable.ref.loc12_30: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
-// CHECK:STDOUT:     %a.param: %AdaptNoncopyable = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %AdaptNoncopyable = value_param call_param0
 // CHECK:STDOUT:     %AdaptNoncopyable.ref.loc12_9: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:     %a: %AdaptNoncopyable = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %AdaptNoncopyable = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %AdaptNoncopyable = out_param call_param1
 // CHECK:STDOUT:     %return: ref %AdaptNoncopyable = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -560,15 +560,15 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptNoncopyableIndirect.decl: type = class_decl @AdaptNoncopyableIndirect [concrete = constants.%AdaptNoncopyableIndirect] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %a.patt: %AdaptNoncopyableIndirect = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %AdaptNoncopyableIndirect = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %AdaptNoncopyableIndirect = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %AdaptNoncopyableIndirect = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %AdaptNoncopyableIndirect = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %AdaptNoncopyableIndirect = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNoncopyableIndirect.ref.loc12_38: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [concrete = constants.%AdaptNoncopyableIndirect]
-// CHECK:STDOUT:     %a.param: %AdaptNoncopyableIndirect = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %AdaptNoncopyableIndirect = value_param call_param0
 // CHECK:STDOUT:     %AdaptNoncopyableIndirect.ref.loc12_9: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [concrete = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:     %a: %AdaptNoncopyableIndirect = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %AdaptNoncopyableIndirect = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %AdaptNoncopyableIndirect = out_param call_param1
 // CHECK:STDOUT:     %return: ref %AdaptNoncopyableIndirect = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -664,29 +664,29 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptStruct.decl: type = class_decl @AdaptStruct [concrete = constants.%AdaptStruct] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [concrete = constants.%I] {
 // CHECK:STDOUT:     %g.patt: %AdaptStruct = binding_pattern g
-// CHECK:STDOUT:     %g.param_patt: %AdaptStruct = value_param_pattern %g.patt, runtime_param0
+// CHECK:STDOUT:     %g.param_patt: %AdaptStruct = value_param_pattern %g.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %AdaptStruct = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %AdaptStruct = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %AdaptStruct = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptStruct.ref.loc8_25: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
-// CHECK:STDOUT:     %g.param: %AdaptStruct = value_param runtime_param0
+// CHECK:STDOUT:     %g.param: %AdaptStruct = value_param call_param0
 // CHECK:STDOUT:     %AdaptStruct.ref.loc8_9: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
 // CHECK:STDOUT:     %g: %AdaptStruct = bind_name g, %g.param
-// CHECK:STDOUT:     %return.param: ref %AdaptStruct = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %AdaptStruct = out_param call_param1
 // CHECK:STDOUT:     %return: ref %AdaptStruct = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [concrete = constants.%InTuple] {
 // CHECK:STDOUT:     %c.patt: %tuple.type.80b = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %tuple.type.80b = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %tuple.type.80b = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %tuple.type.80b = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.80b = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.80b = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptStruct.ref.loc13_39: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
 // CHECK:STDOUT:     %int_32.loc13_52: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32.loc13_52: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:     %.loc13_55.1: %tuple.type.24b = tuple_literal (%AdaptStruct.ref.loc13_39, %u32.loc13_52)
 // CHECK:STDOUT:     %.loc13_55.2: type = converted %.loc13_55.1, constants.%tuple.type.80b [concrete = constants.%tuple.type.80b]
-// CHECK:STDOUT:     %c.param: %tuple.type.80b = value_param runtime_param0
+// CHECK:STDOUT:     %c.param: %tuple.type.80b = value_param call_param0
 // CHECK:STDOUT:     %.loc13_32.1: type = splice_block %.loc13_32.3 [concrete = constants.%tuple.type.80b] {
 // CHECK:STDOUT:       %AdaptStruct.ref.loc13_16: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
 // CHECK:STDOUT:       %int_32.loc13_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -695,7 +695,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:       %.loc13_32.3: type = converted %.loc13_32.2, constants.%tuple.type.80b [concrete = constants.%tuple.type.80b]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.80b = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %tuple.type.80b = out_param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %tuple.type.80b = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.80b = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

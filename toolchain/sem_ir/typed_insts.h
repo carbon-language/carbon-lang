@@ -1093,16 +1093,14 @@ struct NamespaceType {
   TypeId type_id;
 };
 
-// A parameter for a function or other parameterized block, as exposed in the
-// SemIR calling convention. The sub-kinds differ only in their expression
-// category.
+// A `Call` parameter for a function or other parameterized block.
 struct AnyParam {
-  static constexpr InstKind Kinds[] = {InstKind::OutParam,
+  static constexpr InstKind Kinds[] = {InstKind::OutParam, InstKind::RefParam,
                                        InstKind::ValueParam};
 
   InstKind kind;
   TypeId type_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 
   // A name to associate with this Param in pretty-printed IR. This is not
   // necessarily unique, and can even be `None`; it has no semantic
@@ -1110,42 +1108,54 @@ struct AnyParam {
   NameId pretty_name_id;
 };
 
-// An output parameter. See AnyParam for member documentation.
+// An output `Call` parameter. See AnyParam for member documentation.
 struct OutParam {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::OutParam.Define<Parse::NodeId>(
       {.ir_name = "out_param", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
   NameId pretty_name_id;
 };
 
-// A by-value parameter. See AnyParam for member documentation.
+// A by-reference `Call` parameter. See AnyParam for member documentation.
+struct RefParam {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeId>(
+      {.ir_name = "ref_param", .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  CallParamIndex index;
+  NameId pretty_name_id;
+};
+
+// A by-value `Call` parameter. See AnyParam for member documentation.
 struct ValueParam {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::ValueParam.Define<Parse::NodeId>(
       {.ir_name = "value_param", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
   NameId pretty_name_id;
 };
 
-// A pattern that represents a parameter. It delegates to subpattern_id
+// A pattern that represents a `Call` parameter. It delegates to subpattern_id
 // in pattern matching. The sub-kinds differ only in the expression category
 // of the corresponding parameter inst.
 struct AnyParamPattern {
   static constexpr InstKind Kinds[] = {InstKind::OutParamPattern,
+                                       InstKind::RefParamPattern,
                                        InstKind::ValueParamPattern};
 
   InstKind kind;
   TypeId type_id;
   InstId subpattern_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 };
 
-// A pattern that represents an output parameter.
+// A pattern that represents an output `Call` parameter.
 struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
@@ -1155,10 +1165,23 @@ struct OutParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 };
 
-// A pattern that represents a by-value parameter.
+// A pattern that represents a by-reference `Call` parameter.
+struct RefParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "ref_param_pattern",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  CallParamIndex index;
+};
+
+// A pattern that represents a by-value `Call` parameter.
 struct ValueParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
@@ -1167,7 +1190,7 @@ struct ValueParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  RuntimeParamIndex runtime_index;
+  CallParamIndex index;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in

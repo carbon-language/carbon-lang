@@ -116,7 +116,8 @@ class DeclNameStack {
       };
     }
 
-    // Returns any name collision found, or `None`.
+    // Returns any name collision found, or `None`. Requires a non-poisoned
+    // value.
     auto prev_inst_id() -> SemIR::InstId;
 
     // Returns the name_id for a new instruction. This is `None` when the name
@@ -251,6 +252,13 @@ class DeclNameStack {
   auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id,
                        SemIR::AccessKind access_kind)
       -> SemIR::ScopeLookupResult;
+
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void {
+    CARBON_CHECK(decl_name_stack_.empty(),
+                 "decl_name_stack still has {0} entries",
+                 decl_name_stack_.size());
+  }
 
  private:
   // Returns a name context corresponding to an empty name.

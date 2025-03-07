@@ -57,6 +57,7 @@ cc_library(
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_namer",
         "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//clang:ast",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TransformUtils",

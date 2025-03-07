@@ -23,13 +23,12 @@
 
 CARBON_DIAGNOSTIC_KIND(DriverInstallInvalid)
 CARBON_DIAGNOSTIC_KIND(DriverCommandLineParseFailed)
-CARBON_DIAGNOSTIC_KIND(ClangFuzzingDisallowed)
 CARBON_DIAGNOSTIC_KIND(CompilePhaseFlagConflict)
 CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
 CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
 CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
-CARBON_DIAGNOSTIC_KIND(LLDFuzzingDisallowed)
+CARBON_DIAGNOSTIC_KIND(ToolFuzzingDisallowed)
 
 // ============================================================================
 // SourceBuffer diagnostics
@@ -93,6 +92,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedVarAfterReturned)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableDecl)
 CARBON_DIAGNOSTIC_KIND(ExpectedChoiceDefinition)
 CARBON_DIAGNOSTIC_KIND(ExpectedChoiceAlternativeName)
+CARBON_DIAGNOSTIC_KIND(NestedVar)
 CARBON_DIAGNOSTIC_KIND(OperatorRequiresParentheses)
 CARBON_DIAGNOSTIC_KIND(StatementOperatorAsSubExpr)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresParentheses)
@@ -318,6 +318,7 @@ CARBON_DIAGNOSTIC_KIND(QualifiedDeclInUndefinedInterfaceScope)
 
 // Name lookup.
 CARBON_DIAGNOSTIC_KIND(FromExtendHere)
+CARBON_DIAGNOSTIC_KIND(InCppNameLookup)
 CARBON_DIAGNOSTIC_KIND(InNameLookup)
 CARBON_DIAGNOSTIC_KIND(NameAmbiguousDueToExtend)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)

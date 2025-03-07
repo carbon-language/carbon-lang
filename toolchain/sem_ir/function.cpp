@@ -10,13 +10,20 @@
 
 namespace Carbon::SemIR {
 
-auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
+auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
+                       SpecificId specific_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::None,
                            .enclosing_specific_id = SpecificId::None,
                            .resolved_specific_id = SpecificId::None,
                            .self_type_id = InstId::None,
                            .self_id = InstId::None,
                            .is_error = false};
+  if (specific_id.has_value()) {
+    callee_id = sem_ir.constant_values().GetInstIdIfValid(
+        GetConstantValueInSpecific(sem_ir, specific_id, callee_id));
+    CARBON_CHECK(callee_id.has_value(),
+                 "Invalid callee id in a specific context");
+  }
 
   if (auto specific_function =
           sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
@@ -57,7 +64,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
 
 auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                 InstId pattern_id)
-    -> ParamPatternInfo {
+    -> std::optional<ParamPatternInfo> {
   auto inst_id = pattern_id;
   auto inst = sem_ir.insts().Get(inst_id);
 
@@ -66,42 +73,19 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
     inst = sem_ir.insts().Get(inst_id);
   }
 
+  auto param_pattern_inst = inst.TryAs<SemIR::AnyParamPattern>();
+  if (!param_pattern_inst) {
+    return std::nullopt;
+  }
   auto param_pattern_id = inst_id;
-  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
 
-  inst_id = param_pattern_inst.subpattern_id;
+  inst_id = param_pattern_inst->subpattern_id;
   inst = sem_ir.insts().Get(inst_id);
 
   auto binding_pattern = inst.As<AnyBindingPattern>();
-  return {.inst_id = param_pattern_id,
-          .inst = param_pattern_inst,
-          .entity_name_id = binding_pattern.entity_name_id};
-}
-
-auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
-    -> SemIR::NameId {
-  auto inst_id = pattern_id;
-  auto inst = sem_ir.insts().Get(inst_id);
-
-  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
-    inst_id = addr_pattern->inner_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (inst_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::NameId::None;
-  }
-
-  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
-
-  inst_id = param_pattern_inst.subpattern_id;
-  inst = sem_ir.insts().Get(inst_id);
-
-  if (inst.Is<ReturnSlotPattern>()) {
-    return SemIR::NameId::ReturnSlot;
-  }
-  auto binding_pattern = inst.As<AnyBindingPattern>();
-  return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
+  return {{.inst_id = param_pattern_id,
+           .inst = *param_pattern_inst,
+           .entity_name_id = binding_pattern.entity_name_id}};
 }
 
 auto Function::GetDeclaredReturnType(const File& file,

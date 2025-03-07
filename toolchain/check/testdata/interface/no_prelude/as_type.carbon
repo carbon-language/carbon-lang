@@ -29,9 +29,9 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %Empty.type = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %Empty.type = value_param_pattern %e.patt, runtime_param0
+// CHECK:STDOUT:     %e.param_patt: %Empty.type = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %e.param: %Empty.type = value_param runtime_param0
+// CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     %e: %Empty.type = bind_name e, %e.param
 // CHECK:STDOUT:   }

@@ -106,9 +106,9 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
 // CHECK:STDOUT:     %i.patt: %I.type = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: %I.type = value_param_pattern %i.patt, runtime_param0
+// CHECK:STDOUT:     %i.param_patt: %I.type = value_param_pattern %i.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i.param: %I.type = value_param runtime_param0
+// CHECK:STDOUT:     %i.param: %I.type = value_param call_param0
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %i: %I.type = bind_name i, %i.param
 // CHECK:STDOUT:   }

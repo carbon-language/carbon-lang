@@ -242,13 +242,15 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
   }
 
-  new_param_pattern = context.insts().Get(
-      new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
-  prev_param_pattern = context.insts().Get(
-      prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
-  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
-    emit_diagnostic();
-    return false;
+  if (new_param_pattern.Is<SemIR::AnyParamPattern>()) {
+    new_param_pattern = context.insts().Get(
+        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
+    prev_param_pattern = context.insts().Get(
+        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
+    if (new_param_pattern.kind() != prev_param_pattern.kind()) {
+      emit_diagnostic();
+      return false;
+    }
   }
 
   auto new_name_id =

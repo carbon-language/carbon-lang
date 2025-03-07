@@ -44,9 +44,9 @@ var b: Bool() = false;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Bool.decl: %Bool.type = fn_decl @Bool [concrete = constants.%Bool] {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -52,12 +52,12 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {
 // CHECK:STDOUT:     %return.patt: %struct_type.a.ba9 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %struct_type.a.ba9 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %struct_type.a.ba9 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
-// CHECK:STDOUT:     %return.param: ref %struct_type.a.ba9 = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %struct_type.a.ba9 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.ba9 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

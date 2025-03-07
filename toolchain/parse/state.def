@@ -980,6 +980,11 @@ CARBON_PARSE_STATE(ParenExprFinish)
 // ^
 //   1. PatternListAsTuple
 //
+//  var ...
+// ^
+//
+//   1. VariablePattern
+//
 //  ...
 // ^
 //   1. BindingPattern
@@ -1026,6 +1031,21 @@ CARBON_PARSE_STATE(BindingPatternAddr)
 //           ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
+
+// Handles `var` in a pattern context.
+//
+// var ...
+// ^~~
+//   1. Pattern
+//   2. FinishVariablePattern
+CARBON_PARSE_STATE(VariablePattern)
+
+// Finishes `var` in a pattern context.
+//
+// var ...
+//        ^
+//   (state done)
+CARBON_PARSE_STATE(FinishVariablePattern)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and

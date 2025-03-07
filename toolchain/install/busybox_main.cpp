@@ -52,8 +52,27 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
     auto subcommand_args =
         llvm::StringSwitch<llvm::SmallVector<llvm::StringRef>>(
             *busybox_info.mode)
+            // The `clang` program name used configures the default for its
+            // `--driver-mode` flag. The first of these is redundant with the
+            // default, but we group it here for clarity.
+            .Case("clang", {"clang", "--"})
+            .Case("clang++", {"clang", "--", "--driver-mode=g++"})
+            .Case("clang-cl", {"clang", "--", "--driver-mode=cl"})
+            .Case("clang-cpp", {"clang", "--", "--driver-mode=cpp"})
+
+            // LLD has platform-specific program names that we translate into
+            // platform flags.
             .Case("ld.lld", {"lld", "--platform=gnu", "--"})
             .Case("ld64.lld", {"lld", "--platform=darwin", "--"})
+
+    // We also support a number of LLVM tools with a trivial translation
+    // to subcommands. If any of these end up needing more advanced
+    // translation, that can be factored into the `.def` file to provide custom
+    // expansion here.
+#define CARBON_LLVM_TOOL(Id, Name, BinName, MainFn) \
+  .Case(BinName, {"llvm", Name, "--"})
+#include "toolchain/base/llvm_tools.def"
+
             .Default({*busybox_info.mode, "--"});
     args.append(subcommand_args);
   }

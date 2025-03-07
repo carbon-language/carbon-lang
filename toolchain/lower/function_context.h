@@ -19,6 +19,7 @@ namespace Carbon::Lower {
 class FunctionContext {
  public:
   explicit FunctionContext(FileContext& file_context, llvm::Function* function,
+                           SemIR::SpecificId specific_id,
                            llvm::DISubprogram* di_subprogram,
                            llvm::raw_ostream* vlog_stream);
 
@@ -58,7 +59,7 @@ class FunctionContext {
       return result.value();
     }
 
-    return file_context_->GetGlobal(inst_id);
+    return file_context_->GetGlobal(inst_id, specific_id_);
   }
 
   // Sets the value for the given instruction.
@@ -130,6 +131,7 @@ class FunctionContext {
   }
   auto llvm_module() -> llvm::Module& { return file_context_->llvm_module(); }
   auto llvm_function() -> llvm::Function& { return *function_; }
+  auto specific_id() -> SemIR::SpecificId { return specific_id_; }
   auto builder() -> llvm::IRBuilderBase& { return builder_; }
   auto sem_ir() -> const SemIR::File& { return file_context_->sem_ir(); }
 
@@ -173,6 +175,9 @@ class FunctionContext {
 
   // The IR function we're generating.
   llvm::Function* function_;
+
+  // The specific id, if the function is a specific.
+  SemIR::SpecificId specific_id_;
 
   // Builder for creating code in this function. The insertion point is held at
   // the location of the current SemIR instruction.

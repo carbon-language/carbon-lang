@@ -131,13 +131,19 @@ using EmptyDecl =
 // to be followed by parameters.
 using IdentifierNameBeforeParams =
     LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
+using KeywordNameBeforeParams =
+    LeafNode<NodeKind::KeywordNameBeforeParams, Lex::TokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in a non-expression context, such as a declaration, that is known
 // to not be followed by parameters.
 using IdentifierNameNotBeforeParams =
     LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
+using KeywordNameNotBeforeParams =
+    LeafNode<NodeKind::KeywordNameNotBeforeParams, Lex::TokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
 using IdentifierNameExpr =
@@ -174,11 +180,20 @@ struct NameQualifierWithParams {
 };
 
 // A name qualifier without parameters, such as `A.`.
-struct NameQualifierWithoutParams {
-  static constexpr auto Kind = NodeKind::NameQualifierWithoutParams.Define(
-      {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
+struct IdentifierNameQualifierWithoutParams {
+  static constexpr auto Kind =
+      NodeKind::IdentifierNameQualifierWithoutParams.Define(
+          {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
 
   IdentifierNameNotBeforeParamsId name;
+  Lex::PeriodTokenIndex token;
+};
+struct KeywordNameQualifierWithoutParams {
+  static constexpr auto Kind =
+      NodeKind::KeywordNameQualifierWithoutParams.Define(
+          {.bracketed_by = KeywordNameNotBeforeParams::Kind});
+
+  KeywordNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
 };
 
@@ -186,9 +201,10 @@ struct NameQualifierWithoutParams {
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
   llvm::SmallVector<
-      NodeIdOneOf<NameQualifierWithParams, NameQualifierWithoutParams>>
+      NodeIdOneOf<NameQualifierWithParams, IdentifierNameQualifierWithoutParams,
+                  KeywordNameQualifierWithoutParams>>
       qualifiers;
-  AnyNonExprIdentifierNameId name;
+  AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> params;
 };
@@ -1157,7 +1173,7 @@ struct ChoiceDefinition {
 
   ChoiceDefinitionStartId signature;
   struct Alternative {
-    AnyNonExprIdentifierNameId name;
+    AnyNonExprNameId name;
     std::optional<ExplicitParamListId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;

@@ -160,11 +160,11 @@ These tools are essential for work on Carbon.
     -   [Homebrew](https://brew.sh/) (for macOS)
         -   To upgrade versions of `brew` packages, it will be necessary to
             periodically run `brew upgrade`.
-    -   [`python3` and `pip3`](https://python.org)
+    -   [Python](https://python.org)
         -   Carbon requires Python 3.9 or newer.
-        -   To upgrade versions of `pip3` packages, it will be necessary to
-            periodically run `pip3 list --outdated`, then
-            `pip3 install -U <package>` to upgrade desired packages.
+        -   To upgrade versions of pip-installed packages, it will be necessary
+            to periodically run `pipx list --outdated`, then
+            `pipx install -U <package>` to upgrade desired packages.
         -   When upgrading, version dependencies may mean packages _should_ be
             outdated, and not be upgraded.
 -   Main tools

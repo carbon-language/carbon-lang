@@ -37,7 +37,12 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
     return true;
   }
 
-  auto inst_id = name_context.prev_inst_id();
+  // Exporting uses the decl name primarily for lookup, so treat poisoning the
+  // same as "not found".
+  auto inst_id =
+      name_context.state == DeclNameStack::NameContext::State::Poisoned
+          ? SemIR::InstId::None
+          : name_context.prev_inst_id();
   if (!inst_id.has_value()) {
     DiagnoseNameNotFound(context, node_id, name_context.name_id_for_new_inst());
     return true;

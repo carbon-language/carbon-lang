@@ -102,9 +102,9 @@ fn Main() {
 // CHECK:STDOUT:   %Run0.decl: %Run0.type = fn_decl @Run0 [concrete = constants.%Run0] {} {}
 // CHECK:STDOUT:   %Run1.decl: %Run1.type = fn_decl @Run1 [concrete = constants.%Run1] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc12: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -113,17 +113,17 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [concrete = constants.%Run2] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_12: type = splice_block %i32.loc13_12 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc13_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13_12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc13_20: type = splice_block %i32.loc13_20 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc13_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

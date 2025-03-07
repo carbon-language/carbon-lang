@@ -74,21 +74,17 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc12_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_6.1, runtime_param<none> [symbolic = %T.patt.loc12_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = value_param runtime_param<none>
-// CHECK:STDOUT:     %T.loc12_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc12_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %N.patt.loc18_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc18_6.2 (constants.%N.patt.8e2)]
-// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc18_6.1, runtime_param<none> [symbolic = %N.patt.loc18_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc18: type = splice_block %i32.loc18 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc18_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc18_6.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc18_6.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc18_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,7 +102,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.loc15_20.2: type = array_type constants.%int_5, @F.%T.loc12_6.2 (%T) [symbolic = %array_type.loc15_20.2 (constants.%array_type.ec2)]
 // CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @F.%array_type.loc15_20.2 (%array_type.ec2) [symbolic = %require_complete.loc15 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type) {
+// CHECK:STDOUT:   fn(%T.patt.loc12_6.1: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %u.patt: @F.%tuple.type (%tuple.type.4f2) = binding_pattern u
@@ -158,7 +154,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.loc19_22.2: type = array_type %int.convert_checked.loc19_21.2, %i32 [symbolic = %array_type.loc19_22.2 (constants.%array_type.b04)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc19_22.2 (%array_type.b04) [symbolic = %require_complete (constants.%require_complete.9dc)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.param_patt: %i32) {
+// CHECK:STDOUT:   fn(%N.patt.loc18_6.1: %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %k.patt: @G.%array_type.loc19_22.2 (%array_type.b04) = binding_pattern k

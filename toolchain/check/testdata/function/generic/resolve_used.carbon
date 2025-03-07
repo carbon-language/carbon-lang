@@ -76,9 +76,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ErrorIfNIsZero.decl: %ErrorIfNIsZero.type = fn_decl @ErrorIfNIsZero [concrete = constants.%ErrorIfNIsZero] {
 // CHECK:STDOUT:     %N.patt.loc4_19.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc4_19.1, runtime_param<none> [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc4_39.1: type = splice_block %.loc4_39.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
@@ -86,7 +84,7 @@ fn CallNegative() {
 // CHECK:STDOUT:       %.loc4_39.2: type = value_of_initializer %int_literal.make_type [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_39.3: type = converted %int_literal.make_type, %.loc4_39.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_19.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_19.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_19.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallNegative.decl: %CallNegative.type = fn_decl @CallNegative [concrete = constants.%CallNegative] {} {}
 // CHECK:STDOUT: }
@@ -99,7 +97,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Int.loc15_20.2: type = class_type @Int, @Int(%N.loc4_19.2) [symbolic = %Int.loc15_20.2 (constants.%Int)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @ErrorIfNIsZero.%Int.loc15_20.2 (%Int) [symbolic = %require_complete (constants.%require_complete.b4f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral) {
+// CHECK:STDOUT:   fn(%N.patt.loc4_19.1: Core.IntLiteral) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @ErrorIfNIsZero.%Int.loc15_20.2 (%Int) = binding_pattern v

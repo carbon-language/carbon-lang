@@ -1008,13 +1008,19 @@ class FormatterImpl {
   }
 
   auto FormatInstRhs(ValueParam inst) -> void {
-    FormatArgs(inst.runtime_index);
+    FormatArgs(inst.index);
+    // Omit pretty_name because it's an implementation detail of
+    // pretty-printing.
+  }
+
+  auto FormatInstRhs(RefParam inst) -> void {
+    FormatArgs(inst.index);
     // Omit pretty_name because it's an implementation detail of
     // pretty-printing.
   }
 
   auto FormatInstRhs(OutParam inst) -> void {
-    FormatArgs(inst.runtime_index);
+    FormatArgs(inst.index);
     // Omit pretty_name because it's an implementation detail of
     // pretty-printing.
   }
@@ -1277,7 +1283,7 @@ class FormatterImpl {
 
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
-  auto FormatArg(RuntimeParamIndex index) -> void { out_ << index; }
+  auto FormatArg(CallParamIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
     OpenBrace();

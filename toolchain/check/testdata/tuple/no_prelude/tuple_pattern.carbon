@@ -216,7 +216,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT:   %MakeTuple.decl: %MakeTuple.type = fn_decl @MakeTuple [concrete = constants.%MakeTuple] {
 // CHECK:STDOUT:     %return.patt: %tuple.type.b6b = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.b6b = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.b6b = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_21: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc14_25: %empty_struct_type = struct_literal ()
@@ -224,7 +224,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc14_26.2: type = converted %.loc14_21, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc14_26.3: type = converted %.loc14_25, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc14_26.4: type = converted %.loc14_26.1, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]
-// CHECK:STDOUT:     %return.param: ref %tuple.type.b6b = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %tuple.type.b6b = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.b6b = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}

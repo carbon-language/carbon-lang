@@ -227,9 +227,9 @@ fn Var5() {
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %Abstract3 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %Abstract3 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %Abstract3 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %Abstract3 = value_param runtime_param0
+// CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
 // CHECK:STDOUT:     %a: %Abstract3 = bind_name a, %a.param
 // CHECK:STDOUT:   }

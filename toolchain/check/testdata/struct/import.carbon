@@ -34,16 +34,16 @@ impl package Implicit;
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:6: in import [InImport]
-// CHECK:STDERR: implicit.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: implicit.carbon:8:9: note: initializing generic parameter `S` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:         ^
 // CHECK:STDERR:
 var c_bad: C({.c = 1, .d = 2}) = F();
 
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `C({.a = 1, .b = 2})` to `C({.a = 3, .b = 4})` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert value of type `C({.a = 1, .b = 2})` to `C({.a = 3, .b = 4})` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+4]]:1: note: type `C({.a = 1, .b = 2})` does not implement interface `Core.ImplicitAs(C({.a = 3, .b = 4}))` [MissingImplInMemberAccessNote]
@@ -153,9 +153,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %b_ref: ref %struct_type.a.d.3d9 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %S.patt.loc8_9.1: %struct_type.a.b.501 = symbolic_binding_pattern S, 0 [symbolic = %S.patt.loc8_9.2 (constants.%S.patt)]
-// CHECK:STDOUT:     %S.param_patt: %struct_type.a.b.501 = value_param_pattern %S.patt.loc8_9.1, runtime_param<none> [symbolic = %S.patt.loc8_9.2 (constants.%S.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %S.param: %struct_type.a.b.501 = value_param runtime_param<none>
 // CHECK:STDOUT:     %.loc8: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
 // CHECK:STDOUT:       %int_32.loc8_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc8_18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -163,11 +161,11 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:       %i32.loc8_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %S.loc8_9.1: %struct_type.a.b.501 = bind_symbolic_name S, 0, %S.param [symbolic = %S.loc8_9.2 (constants.%S)]
+// CHECK:STDOUT:     %S.loc8_9.1: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.2 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C.c8f = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.c8f = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.c8f = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -188,7 +186,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %struct: %struct_type.a.b.501 = struct_value (%.loc9_28.3, %.loc9_28.5) [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:     %.loc9_29: %struct_type.a.b.501 = converted %.loc9_28.1, %struct [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%struct.ed5) [concrete = constants.%C.c8f]
-// CHECK:STDOUT:     %return.param: ref %C.c8f = out_param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.c8f = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C.c8f = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -320,9 +318,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.a11: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1177 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1151 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -397,7 +395,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c: ref %C.a8a = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.a11: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81: %struct_type.a.b.5ca) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b.5ca = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
@@ -495,9 +493,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.a11: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1177 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1151 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -526,7 +524,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: <error> = bind_name c_bad, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.a11: %struct_type.a.b) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81: %struct_type.a.b) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
@@ -611,9 +609,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.a11: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1177 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1151 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -657,7 +655,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: ref %C.5a7 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.a11: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81: %struct_type.a.b.5ca) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b.5ca = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
