@@ -8,20 +8,20 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/template/unimplemented.carbon
 
-// --- todo_unimplemented.carbon
+// --- fail_unimplemented.carbon
 
 library "[[@TEST_NAME]]";
 
 // Check that we get a reasonable diagnostic for an unimplemented operation on a template dependent expression.
 fn F[template T:! type](x: T) -> i32 {
-  // CHECK:STDERR: todo_unimplemented.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Mul` in type `<dependent type>` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_unimplemented.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Mul` in type `<dependent type>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return x.n * 3;
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
   return x.n * 3;
 }
 
-// CHECK:STDOUT: --- todo_unimplemented.carbon
+// CHECK:STDOUT: --- fail_unimplemented.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
