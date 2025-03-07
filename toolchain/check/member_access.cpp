@@ -555,6 +555,12 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
     auto assoc_entities =
         context.inst_blocks().Get(interface.associated_entities_id);
     auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
+    // TODO: According to
+    // https://docs.carbon-lang.dev/docs/design/expressions/member_access.html#member-resolution
+    // > For a compound member access, the second operand is evaluated as a
+    // > compile-time constant to determine the member being accessed. The
+    // > evaluation is required to succeed [...]
+    // However, we are currently not enforcing that.
     auto assoc_entity =
         context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
     auto decl_id = assoc_entities[assoc_entity.index.index];
