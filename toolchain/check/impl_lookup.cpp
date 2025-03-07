@@ -378,7 +378,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::None;
   }
   if (interfaces.empty()) {
-    return SemIR::InstBlockId::None;
+    return SemIR::InstBlockId::Empty;
   }
 
   llvm::SmallVector<SemIR::InstId> result_witness_ids;
