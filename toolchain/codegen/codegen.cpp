@@ -23,7 +23,7 @@ auto CodeGen::Make(llvm::Module& module, llvm::StringRef target_triple,
     errors << "error: invalid target: " << error << "\n";
     return {};
   }
-  module.setTargetTriple(target_triple);
+  module.setTargetTriple(llvm::Triple(target_triple));
 
   constexpr llvm::StringLiteral CPU = "generic";
   constexpr llvm::StringLiteral Features = "";
