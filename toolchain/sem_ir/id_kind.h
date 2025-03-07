@@ -140,12 +140,12 @@ using IdKind = TypeEnum<
     IntId, RealId, FloatId, StringLiteralValueId,
     // From sem_ir/ids.h.
     InstId, AbsoluteInstId, DestInstId, MetaInstId, AnyRawId, ConstantId,
-    EntityNameId, CompileTimeBindIndex, CallParamIndex, FacetTypeId,
-    FunctionId, ClassId, InterfaceId, AssociatedConstantId, ImplId, GenericId,
-    SpecificId, ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId,
-    NameScopeId, InstBlockId, AbsoluteInstBlockId, DeclInstBlockId, LabelId,
-    ExprRegionId, StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex,
-    LibraryNameId, FloatKind>;
+    EntityNameId, CompileTimeBindIndex, CallParamIndex, FacetTypeId, FunctionId,
+    ClassId, InterfaceId, AssociatedConstantId, ImplId, GenericId, SpecificId,
+    ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId, NameScopeId,
+    InstBlockId, AbsoluteInstBlockId, DeclInstBlockId, LabelId, ExprRegionId,
+    StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex, LibraryNameId,
+    FloatKind>;
 
 }  // namespace Carbon::SemIR
 
