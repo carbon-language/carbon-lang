@@ -101,7 +101,7 @@ fn F() -> i32 {
   return 1;
 }
 
-// --- fail_return_in_interface.carbon
+// --- return_in_interface.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -731,7 +731,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   return %.loc9_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_return_in_interface.carbon
+// CHECK:STDOUT: --- return_in_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
