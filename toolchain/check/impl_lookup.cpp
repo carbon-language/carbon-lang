@@ -178,6 +178,8 @@ static auto GetInterfacesFromConstantId(Context& context,
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
   has_other_requirements = facet_type_info.other_requirements;
+  // TODO: Once we add support for named constraints, we will need to change
+  // this so return the same interfaces as in the complete facet type.
   return facet_type_info.impls_constraints;
 #else
   auto facet_type_id = facet_type_inst.facet_type_id;

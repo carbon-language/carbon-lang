@@ -46,7 +46,7 @@ fn F() {
   ({} as Point) as (Point as Z);
 }
 
-// --- fail_impl_simple_where_cycle.carbon
+// --- todo_fail_impl_simple_where_cycle.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
