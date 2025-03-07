@@ -84,14 +84,15 @@ using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 
 // NodeId with kind that matches one of the `T::Kind`s.
 template <typename... T>
+  requires(sizeof...(T) >= 2)
 struct NodeIdOneOf : public NodeId {
-  static_assert(sizeof...(T) >= 2, "Expected at least two types.");
   constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
+
   template <const NodeKind& Kind>
+    requires((T::Kind == Kind) || ...)
   // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
-    static_assert(((T::Kind == Kind) || ...));
-  }
+  NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {}
+
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
