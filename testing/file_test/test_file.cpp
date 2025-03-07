@@ -361,18 +361,17 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
   if (split->filename.empty()) {
     return ErrorBuilder() << "Missing filename for split.";
   }
-  // The split line is added to non_check_lines for retention in autoupdate,
-  // but is not added to the test file content.
+  // The split line is added to non_check_lines for retention in autoupdate, but
+  // is not added to the test file content.
   *line_index = 0;
   non_check_lines->push_back(
       FileTestLine(split->file_index, *line_index, line));
   return true;
 }
 
-// Converts a `FileCheck`-style expectation string into a single complete
-// regex string by escaping all regex characters outside of the designated
-// `{{...}}` regex sequences, and switching those to a normal regex
-// sub-pattern syntax.
+// Converts a `FileCheck`-style expectation string into a single complete regex
+// string by escaping all regex characters outside of the designated `{{...}}`
+// regex sequences, and switching those to a normal regex sub-pattern syntax.
 static auto ConvertExpectationStringToRegex(std::string& str) -> void {
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
@@ -564,8 +563,7 @@ static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
   return true;
 }
 
-// Processes AUTOUPDATE lines when found. Returns true if the line is
-// consumed.
+// Processes AUTOUPDATE lines when found. Returns true if the line is consumed.
 static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
                                  bool* found_autoupdate,
                                  std::optional<int>* autoupdate_line_number)
