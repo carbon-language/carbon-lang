@@ -163,8 +163,8 @@ static auto FindAndDiagnoseImplLookupCycle(
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value).
 static auto GetInterfacesFromConstantId(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_facet_type_const_id, bool& has_other_requirements)
+    Context& context, SemIR::ConstantId query_facet_type_const_id,
+    bool& has_other_requirements)
     -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface> {
   // The `query_facet_type_const_id` is a constant value for some facet type. We
   // do this long chain of steps to go from that constant value to the
@@ -186,16 +186,6 @@ static auto GetInterfacesFromConstantId(
 
   has_other_requirements =
       context.facet_types().Get(facet_type_id).other_requirements;
-
-  if (complete_facet_type.required_interfaces.empty()) {
-    // This should never happen - a FacetType either requires or is bounded by
-    // some `.Self impls` clause. Otherwise you would just have `type` (aka
-    // `TypeType` in the toolchain implementation) which is not a facet type.
-    context.TODO(loc_id,
-                 "impl lookup for a FacetType with no interface (using "
-                 "`where .Self impls ...` instead?)");
-    return {};
-  }
   return complete_facet_type.required_interfaces;
 }
 
@@ -382,14 +372,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 
   bool has_other_requirements = false;
   auto interfaces = GetInterfacesFromConstantId(
-      context, loc_id, query_facet_type_const_id, has_other_requirements);
-  if (interfaces.empty()) {
-    // TODO: Remove this when the context.TODO() is removed in
-    // GetInterfacesFromConstantId.
-    return SemIR::InstBlockId::None;
-  }
+      context, query_facet_type_const_id, has_other_requirements);
   if (has_other_requirements) {
     // TODO: Remove this when other requirements go away.
+    return SemIR::InstBlockId::None;
+  }
+  if (interfaces.empty()) {
     return SemIR::InstBlockId::None;
   }
 

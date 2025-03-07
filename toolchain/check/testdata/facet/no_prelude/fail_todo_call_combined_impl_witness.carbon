@@ -781,10 +781,10 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc41: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:     %AA.ref.loc41: %A.assoc_type = name_ref AA, @A.%assoc0 [concrete = constants.%assoc0.f33]
 // CHECK:STDOUT:     %.loc41: %A.type = converted %T.ref.loc41, <error> [concrete = <error>]
-// CHECK:STDOUT:     %T.ref.loc45: %facet_type.242 = name_ref T, %T.loc24_6.1 [symbolic = %T.loc24_6.2 (constants.%T.2df)]
-// CHECK:STDOUT:     %B.ref.loc45: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
-// CHECK:STDOUT:     %BB.ref.loc45: %B.assoc_type = name_ref BB, @B.%assoc0 [concrete = constants.%assoc0.019]
-// CHECK:STDOUT:     %.loc45: %B.type = converted %T.ref.loc45, <error> [concrete = <error>]
+// CHECK:STDOUT:     %T.ref.loc49: %facet_type.242 = name_ref T, %T.loc24_6.1 [symbolic = %T.loc24_6.2 (constants.%T.2df)]
+// CHECK:STDOUT:     %B.ref.loc49: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
+// CHECK:STDOUT:     %BB.ref.loc49: %B.assoc_type = name_ref BB, @B.%assoc0 [concrete = constants.%assoc0.019]
+// CHECK:STDOUT:     %.loc49: %B.type = converted %T.ref.loc49, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -801,19 +801,19 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc49_6.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc53_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc49_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc49_6.3: init %C = class_init (), %.loc49_6.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc49_6.4: ref %C = temporary %.loc49_6.2, %.loc49_6.3
-// CHECK:STDOUT:   %.loc49_8.1: ref %C = converted %.loc49_6.1, %.loc49_6.4
-// CHECK:STDOUT:   %facet_value.loc49_12.1: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc49_12.1: %facet_type.242 = converted constants.%C, %facet_value.loc49_12.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc49_12.2: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc49_12.2: %facet_type.242 = converted constants.%C, %facet_value.loc49_12.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc53_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc53_6.3: init %C = class_init (), %.loc53_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc53_6.4: ref %C = temporary %.loc53_6.2, %.loc53_6.3
+// CHECK:STDOUT:   %.loc53_8.1: ref %C = converted %.loc53_6.1, %.loc53_6.4
+// CHECK:STDOUT:   %facet_value.loc53_12.1: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc53_12.1: %facet_type.242 = converted constants.%C, %facet_value.loc53_12.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc53_12.2: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc53_12.2: %facet_type.242 = converted constants.%C, %facet_value.loc53_12.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%facet_value) [concrete = constants.%G.specific_fn]
-// CHECK:STDOUT:   %.loc49_8.2: %C = bind_value %.loc49_8.1
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc49_8.2)
+// CHECK:STDOUT:   %.loc53_8.2: %C = bind_value %.loc53_8.1
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc53_8.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

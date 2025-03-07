@@ -15,9 +15,9 @@ namespace Carbon::Check {
 // possible constraints on those interfaces.
 //
 // The return value is one of:
-// - A non-empty InstBlockId value, containing an `ImplWitness` instruction for
-//   each required interface in the `query_facet_type_const_id`. This verifies
-//   the facet type is satisfied for the type in `type_const_id`, and provides a
+// - An InstBlockId value, containing an `ImplWitness` instruction for each
+//   required interface in the `query_facet_type_const_id`. This verifies the
+//   facet type is satisfied for the type in `type_const_id`, and provides a
 //   witness for accessing the impl of each interface.
 //
 // - `InstBlockId::None`, indicating lookup failed for at least one required
@@ -26,7 +26,6 @@ namespace Carbon::Check {
 //
 // - An error value, indicating lookup failed and a diagonstic has been
 //   produced, either in this function or before.
-
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId type_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
