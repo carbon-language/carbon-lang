@@ -514,6 +514,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: specific @Generic(constants.%B) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%B
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%B
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.4ce
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.bae) {
