@@ -35,13 +35,13 @@ class Class {
   // CHECK:STDERR:   var C:! type = Class;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:16: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:16: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   var C:! type = Class;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
   var C:! type = Class;
 
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:25: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:25: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   var template D:! type = Class;
   // CHECK:STDERR:                         ^
   // CHECK:STDERR:

@@ -192,6 +192,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case NameBindingDecl::Kind:
       case Namespace::Kind:
       case OutParamPattern::Kind:
+      case RefParamPattern::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:
@@ -368,6 +369,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         return ExprCategory::EphemeralRef;
 
       case OutParam::Kind:
+      case RefParam::Kind:
         // TODO: Consider introducing a separate category for OutParam:
         // unlike other DurableRefs, it permits initialization.
         return ExprCategory::DurableRef;

@@ -74,10 +74,6 @@ fn F() {
   // Even if the `impl` is diagnosed above, we must not add the impl of the
   // interface to itself in a way that allows it to be used during impl lookup,
   // or we end up with infinite impl lookup recursion here.
-  // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z` in type `type` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   Point.(Z.Zero)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Point.(Z.Zero)();
   ({} as Point).(Z.Method)();
 }
@@ -240,6 +236,7 @@ class X {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.c03: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
 // CHECK:STDOUT:   %.6a1: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
 // CHECK:STDOUT: }
@@ -391,21 +388,26 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Point.ref.loc39: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %Z.ref.loc39: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Point.ref.loc35: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %Z.ref.loc35: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %.loc40_5.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %Point.ref.loc40: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %.loc40_5.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc40_5.3: init %Point = class_init (), %.loc40_5.2 [concrete = constants.%Point.val]
-// CHECK:STDOUT:   %.loc40_5.4: ref %Point = temporary %.loc40_5.2, %.loc40_5.3
-// CHECK:STDOUT:   %.loc40_7.1: ref %Point = converted %.loc40_5.1, %.loc40_5.4
-// CHECK:STDOUT:   %Z.ref.loc40: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%Point, constants.%impl_witness [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %.loc35: %Z.type = converted %Point.ref.loc35, %Z.facet [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %as_wit: <witness> = facet_access_witness %.loc35 [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl.elem0: %.c03 = impl_witness_access %as_wit, element0 [concrete = constants.%Zero.dec]
+// CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:   %.loc36_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Point.ref.loc36: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %.loc36_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc36_5.3: init %Point = class_init (), %.loc36_5.2 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc36_5.4: ref %Point = temporary %.loc36_5.2, %.loc36_5.3
+// CHECK:STDOUT:   %.loc36_7.1: ref %Point = converted %.loc36_5.1, %.loc36_5.4
+// CHECK:STDOUT:   %Z.ref.loc36: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Method.ref: %Z.assoc_type = name_ref Method, @Z.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %impl.elem1: %.6a1 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%Method.2c2]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc40_7.1, %impl.elem1
-// CHECK:STDOUT:   %.loc40_7.2: %Point = bind_value %.loc40_7.1
-// CHECK:STDOUT:   %Method.call: init %empty_tuple.type = call %bound_method(%.loc40_7.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc36_7.1, %impl.elem1
+// CHECK:STDOUT:   %.loc36_7.2: %Point = bind_value %.loc36_7.1
+// CHECK:STDOUT:   %Method.call: init %empty_tuple.type = call %bound_method(%.loc36_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

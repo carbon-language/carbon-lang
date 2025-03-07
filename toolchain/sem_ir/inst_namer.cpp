@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -790,15 +791,16 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case OutParam::Kind:
+      case RefParam::Kind:
       case ValueParam::Kind: {
         add_inst_name_id(untyped_inst.As<AnyParam>().pretty_name_id, ".param");
         continue;
       }
       case OutParamPattern::Kind:
+      case RefParamPattern::Kind:
       case ValueParamPattern::Kind: {
-        add_inst_name_id(
-            SemIR::Function::GetNameFromPatternId(*sem_ir_, inst_id),
-            ".param_patt");
+        add_inst_name_id(SemIR::GetPrettyNameFromPatternId(*sem_ir_, inst_id),
+                         ".param_patt");
         continue;
       }
       case PointerType::Kind: {

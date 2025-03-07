@@ -15,6 +15,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/pattern.h"
 
 namespace Carbon::Check {
 
@@ -193,8 +194,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     case FullPatternStack::Kind::ExplicitParamList: {
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
-      // TODO: A tuple pattern can appear in other places than function
-      // parameters.
       bool had_error = false;
       switch (introducer.kind) {
         case Lex::TokenKind::Fn: {
@@ -250,6 +249,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       } else {
         result_inst_id = make_binding_pattern();
         if (node_kind == Parse::NodeKind::LetBindingPattern) {
+          // A value binding pattern in a function signature is a `Call`
+          // parameter, but a variable binding pattern is not (instead the
+          // enclosing `var` pattern is), and a symbolic binding pattern is not
+          // (because it's not passed to the `Call` inst).
           result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
               context, node_id,
               {.type_id = context.insts().Get(result_inst_id).type_id(),
@@ -347,8 +350,7 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto param_pattern_id = context.node_stack().PopPattern();
-  if (SemIR::Function::GetNameFromPatternId(
-          context.sem_ir(), param_pattern_id) == SemIR::NameId::SelfValue) {
+  if (SemIR::IsSelfPattern(context.sem_ir(), param_pattern_id)) {
     auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
         context.insts().Get(param_pattern_id).type_id());
     if (pointer_type) {

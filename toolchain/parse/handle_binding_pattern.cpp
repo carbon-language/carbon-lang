@@ -92,9 +92,8 @@ static auto HandleBindingPatternFinish(Context& context, bool is_compile_time)
   if (state.in_var_pattern) {
     node_kind = NodeKind::VarBindingPattern;
     if (is_compile_time) {
-      CARBON_DIAGNOSTIC(
-          CompileTimeBindingInVarDecl, Error,
-          "`var` declaration cannot declare a compile-time binding");
+      CARBON_DIAGNOSTIC(CompileTimeBindingInVarDecl, Error,
+                        "`var` pattern cannot declare a compile-time binding");
       context.emitter().Emit(*context.position(), CompileTimeBindingInVarDecl);
       state.has_error = true;
     }

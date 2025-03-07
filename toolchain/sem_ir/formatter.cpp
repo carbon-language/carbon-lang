@@ -1013,6 +1013,12 @@ class FormatterImpl {
     // pretty-printing.
   }
 
+  auto FormatInstRhs(RefParam inst) -> void {
+    FormatArgs(inst.index);
+    // Omit pretty_name because it's an implementation detail of
+    // pretty-printing.
+  }
+
   auto FormatInstRhs(OutParam inst) -> void {
     FormatArgs(inst.index);
     // Omit pretty_name because it's an implementation detail of

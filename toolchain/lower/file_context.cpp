@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -220,9 +221,10 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
   };
 
+  // TODO: expose the `Call` parameter patterns in `Function`, and use them here
+  // instead of reconstructing them via the syntactic parameter lists.
   auto implicit_param_patterns =
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  // TODO: Include parameters corresponding to positional parameters.
   auto param_patterns =
       sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
 
@@ -334,7 +336,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), function_type_info.return_type));
     } else {
-      name_id = SemIR::Function::GetNameFromPatternId(sem_ir(), inst_id);
+      name_id = SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id);
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
