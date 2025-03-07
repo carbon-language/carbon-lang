@@ -162,49 +162,19 @@ static auto FindAndDiagnoseImplLookupCycle(
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value).
 static auto GetInterfacesFromConstantId(Context& context,
-                                        SemIR::ConstantId interface_const_id,
+                                        SemIR::ConstantId facet_type_const_id,
                                         bool& has_other_requirements)
     -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface> {
-  // The `interface_const_id` is a constant value for some facet type. We do
-  // this long chain of steps to go from that constant value to the
-  // `FacetTypeId` found on the `FacetType` instruction of this constant value,
-  // and finally to the `CompleteFacetType`.
   auto facet_type_inst_id =
-      context.constant_values().GetInstId(interface_const_id);
+      context.constant_values().GetInstId(facet_type_const_id);
   auto facet_type_inst =
       context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
-#if 1
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
   has_other_requirements = facet_type_info.other_requirements;
   // TODO: Once we add support for named constraints, we will need to change
-  // this so return the same interfaces as in the complete facet type.
+  // this to return the same interfaces as in the complete facet type.
   return facet_type_info.impls_constraints;
-#else  // FIXME
-  auto facet_type_id = facet_type_inst.facet_type_id;
-  auto complete_facet_type_id =
-      context.complete_facet_types().TryGetId(facet_type_id);
-  // The facet type will already be completed before coming here. If we're
-  // converting from a concrete type to a facet type, the conversion step
-  // requires everything to be complete before doing impl lookup.
-  CARBON_CHECK(complete_facet_type_id.has_value());
-  const auto& complete_facet_type =
-      context.complete_facet_types().Get(complete_facet_type_id);
-
-  has_other_requirements =
-      context.facet_types().Get(facet_type_id).other_requirements;
-
-  if (complete_facet_type.required_interfaces.empty()) {
-    // This should never happen - a FacetType either requires or is bounded by
-    // some `.Self impls` clause. Otherwise you would just have `type` (aka
-    // `TypeType` in the toolchain implementation) which is not a facet type.
-    context.TODO(loc_id,
-                 "impl lookup for a FacetType with no interface (using "
-                 "`where .Self impls ...` instead?)");
-    return {};
-  }
-  return complete_facet_type.required_interfaces;
-#endif
 }
 
 static auto GetWitnessIdForImpl(

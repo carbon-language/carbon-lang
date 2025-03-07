@@ -108,17 +108,20 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
       if (scope.is_interface_definition()) {
         SemIR::InstId target_inst_id =
             non_lexical_result.scope_result.target_inst_id();
-        // FIXME: Any reason to check the constant value instead of the
-        // instruction itself? Or the type is an `SemIR::AssociatedEntityType`?
         if (auto inst = context.insts().TryGetAs<SemIR::AssociatedEntity>(
                 target_inst_id)) {
           auto interface_decl =
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
-          // FIXME: pass in missing_impl_diagnoser
           SemIR::InstId result_inst_id = PerformCompoundMemberAccess(
-              context, node_id, interface.self_param_id, target_inst_id);
+              context, node_id, interface.self_param_id, target_inst_id,
+              [&]() -> DiagnosticBuilder {
+                // TODO: Find test that triggers this code path.
+                CARBON_FATAL(
+                    "Missing impl when adding `Self.` to associated constant "
+                    "in interface");
+              });
           non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
               result_inst_id, non_lexical_result.scope_result.access_kind());
         }
