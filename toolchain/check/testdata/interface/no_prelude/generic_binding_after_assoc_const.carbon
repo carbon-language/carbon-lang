@@ -27,8 +27,10 @@ interface I {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
+// CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%U [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, @I.%G.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,19 +48,22 @@ interface I {
 // CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc12_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {}
+// CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
+// CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.%U [concrete = constants.%assoc1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc16_8.1: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc16_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc16_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, %G.decl [concrete = constants.%assoc2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   .U = <error>
-// CHECK:STDOUT:   .G = <error>
-// CHECK:STDOUT:   witness = (%F.decl)
+// CHECK:STDOUT:   .U = @U.%assoc1
+// CHECK:STDOUT:   .G = %assoc2
+// CHECK:STDOUT:   witness = (%F.decl, %U, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@I.%Self: %I.type) {

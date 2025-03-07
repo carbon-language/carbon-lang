@@ -33,10 +33,6 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
   auto index = SemIR::ElementIndex(
       context.args_type_info_stack().PeekCurrentBlockContents().size());
   context.args_type_info_stack().AddInstId(decl_id);
-  if (index.index == 0 && !interface_info.associated_entities_id.has_value()) {
-    interface_info.associated_entities_id =
-        context.args_type_info_stack().PeekOrAdd();
-  }
 
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.

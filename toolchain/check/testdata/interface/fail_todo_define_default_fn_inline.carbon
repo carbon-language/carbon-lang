@@ -35,6 +35,7 @@ interface Interface {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.%G.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,12 +84,13 @@ interface Interface {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, %G.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   .G = <error>
-// CHECK:STDOUT:   witness = (%F.decl)
+// CHECK:STDOUT:   .G = %assoc1
+// CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@Interface.%Self: %Interface.type) {

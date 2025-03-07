@@ -99,6 +99,10 @@ fn MakeC() -> C {
 }
 
 fn InstanceC(a: A) -> C {
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   return a.(Factory(C).Method)();
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return a.(Factory(C).Method)();
 }
 
@@ -779,6 +783,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Method.type.7ee: type = fn_type @Method.1, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Method.a71: %Method.type.7ee = struct_value () [symbolic]
+// CHECK:STDOUT:   %assoc1.157: %Factory.assoc_type.ca7 = assoc_entity element1, @Factory.%Method.decl [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -790,7 +795,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.40c: %Factory.assoc_type.668 = assoc_entity element0, @Factory.%Make.decl [concrete]
 // CHECK:STDOUT:   %Method.type.117: type = fn_type @Method.1, @Factory(%B) [concrete]
 // CHECK:STDOUT:   %Method.ea9: %Method.type.117 = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl) [concrete]
+// CHECK:STDOUT:   %assoc1.523: %Factory.assoc_type.668 = assoc_entity element1, @Factory.%Method.decl [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl, @impl.%Method.decl) [concrete]
 // CHECK:STDOUT:   %Make.type.ec4: type = fn_type @Make.2 [concrete]
 // CHECK:STDOUT:   %Make.377: %Make.type.ec4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Method.type.af5: type = fn_type @Method.2 [concrete]
@@ -817,7 +823,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl, @impl.%Method.decl) [concrete = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Factory(%T.loc4_19.1: type) {
@@ -833,6 +839,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.loc6_17.2: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element0, %Make.decl [symbolic = %assoc0.loc6_17.2 (constants.%assoc0.d7a)]
 // CHECK:STDOUT:   %Method.type: type = fn_type @Method.1, @Factory(%T.loc4_19.2) [symbolic = %Method.type (constants.%Method.type.7ee)]
 // CHECK:STDOUT:   %Method: @Factory.%Method.type (%Method.type.7ee) = struct_value () [symbolic = %Method (constants.%Method.a71)]
+// CHECK:STDOUT:   %assoc1.loc8_31.2: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element1, %Method.decl [symbolic = %assoc1.loc8_31.2 (constants.%assoc1.157)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Factory.%Factory.type (%Factory.type.c96) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
@@ -863,13 +870,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:       %return.param: ref @Method.1.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Method.1.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %assoc1.loc8_31.1: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element1, %Method.decl [symbolic = %assoc1.loc8_31.2 (constants.%assoc1.157)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Make = %assoc0.loc6_17.1
-// CHECK:STDOUT:     .Method = <error>
-// CHECK:STDOUT:     witness = (%Make.decl)
+// CHECK:STDOUT:     .Method = %assoc1.loc8_31.1
+// CHECK:STDOUT:     witness = (%Make.decl, %Method.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -971,10 +979,18 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.loc6_17.2 => constants.%assoc0.40c
 // CHECK:STDOUT:   %Method.type => constants.%Method.type.117
 // CHECK:STDOUT:   %Method => constants.%Method.ea9
+// CHECK:STDOUT:   %assoc1.loc8_31.2 => constants.%assoc1.523
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%B, constants.%Factory.facet) {
 // CHECK:STDOUT:   %T => constants.%B
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Method.1(constants.%B, constants.%Factory.facet) {
+// CHECK:STDOUT:   %T => constants.%B
+// CHECK:STDOUT:   %Factory.type => constants.%Factory.type.a5d
+// CHECK:STDOUT:   %Self => constants.%Factory.facet
+// CHECK:STDOUT:   %Self.as_type.loc8_19.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- factory.impl.carbon
@@ -995,25 +1011,31 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Make.737: %Make.type.598 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Factory.assoc_type.ca7: type = assoc_entity_type %Factory.type.c96 [symbolic]
 // CHECK:STDOUT:   %assoc0.35472f.1: %Factory.assoc_type.ca7 = assoc_entity element0, imports.%Main.import_ref.21018a.1 [symbolic]
-// CHECK:STDOUT:   %Method.type.7ee: type = fn_type @Method, @Factory(%T) [symbolic]
+// CHECK:STDOUT:   %Method.type.7ee: type = fn_type @Method.1, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Method.a71: %Method.type.7ee = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %assoc1.1fdf32.1: %Factory.assoc_type.ca7 = assoc_entity element1, imports.%Main.import_ref.46fc3c.1 [symbolic]
 // CHECK:STDOUT:   %Make.type.c59: type = fn_type @Make.1, @Factory(%B) [concrete]
 // CHECK:STDOUT:   %Make.efe: %Make.type.c59 = struct_value () [concrete]
 // CHECK:STDOUT:   %Factory.assoc_type.668: type = assoc_entity_type %Factory.type.a5d [concrete]
 // CHECK:STDOUT:   %assoc0.503: %Factory.assoc_type.668 = assoc_entity element0, imports.%Main.import_ref.1aa [concrete]
-// CHECK:STDOUT:   %Method.type.117: type = fn_type @Method, @Factory(%B) [concrete]
+// CHECK:STDOUT:   %Method.type.117: type = fn_type @Method.1, @Factory(%B) [concrete]
 // CHECK:STDOUT:   %Method.ea9: %Method.type.117 = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1.51f: %Factory.assoc_type.668 = assoc_entity element1, imports.%Main.import_ref.5be [concrete]
 // CHECK:STDOUT:   %MakeB.type: type = fn_type @MakeB [concrete]
 // CHECK:STDOUT:   %MakeB: %MakeB.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.35472f.2: %Factory.assoc_type.ca7 = assoc_entity element0, imports.%Main.import_ref.21018a.2 [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.9ec) [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.9ec, imports.%Main.import_ref.7dd) [concrete]
 // CHECK:STDOUT:   %Factory.facet: %Factory.type.a5d = facet_value %A, %impl_witness [concrete]
-// CHECK:STDOUT:   %.357: type = fn_type_with_self_type %Make.type.c59, %Factory.facet [concrete]
+// CHECK:STDOUT:   %.161: type = fn_type_with_self_type %Make.type.c59, %Factory.facet [concrete]
 // CHECK:STDOUT:   %Make.type.ec4: type = fn_type @Make.2 [concrete]
 // CHECK:STDOUT:   %Make.377: %Make.type.ec4 = struct_value () [concrete]
 // CHECK:STDOUT:   %InstanceB.type: type = fn_type @InstanceB [concrete]
 // CHECK:STDOUT:   %InstanceB: %InstanceB.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1.1fdf32.2: %Factory.assoc_type.ca7 = assoc_entity element1, imports.%Main.import_ref.46fc3c.2 [symbolic]
+// CHECK:STDOUT:   %.478: type = fn_type_with_self_type %Method.type.117, %Factory.facet [concrete]
+// CHECK:STDOUT:   %Method.type.af5: type = fn_type @Method.2 [concrete]
+// CHECK:STDOUT:   %Method.3d4: %Method.type.af5 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1021,15 +1043,16 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.A: type = import_ref Main//factory, A, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//factory, B, loaded [concrete = constants.%B]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst74 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst77 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8d5: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.35472f.2)]
-// CHECK:STDOUT:   %Main.import_ref.5f0: <error> = import_ref Main//factory, inst(ErrorInst) [no loc], loaded [concrete = <error>]
+// CHECK:STDOUT:   %Main.import_ref.ff7: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc8_31, loaded [symbolic = @Factory.%assoc1 (constants.%assoc1.1fdf32.2)]
 // CHECK:STDOUT:   %Main.Make = import_ref Main//factory, Make, unloaded
-// CHECK:STDOUT:   %Main.import_ref.72b: <witness> = import_ref Main//factory, loc14_22, loaded [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Main.Method = import_ref Main//factory, Method, unloaded
+// CHECK:STDOUT:   %Main.import_ref.f8d: <witness> = import_ref Main//factory, loc14_22, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc11_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst72 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.984: type = import_ref Main//factory, loc14_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.bd2: type = import_ref Main//factory, loc14_20, loaded [concrete = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   %Main.import_ref.a27 = import_ref Main//factory, loc15_17, unloaded
@@ -1039,6 +1062,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.21018a.1 = import_ref Main//factory, loc6_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.91b53a.2: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst24 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Main.import_ref.46fc3c.1 = import_ref Main//factory, loc8_31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1085,15 +1109,16 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Make: @Factory.%Make.type (%Make.type.598) = struct_value () [symbolic = %Make (constants.%Make.737)]
 // CHECK:STDOUT:   %Factory.assoc_type: type = assoc_entity_type @Factory.%Factory.type (%Factory.type.c96) [symbolic = %Factory.assoc_type (constants.%Factory.assoc_type.ca7)]
 // CHECK:STDOUT:   %assoc0: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element0, imports.%Main.import_ref.21018a.1 [symbolic = %assoc0 (constants.%assoc0.35472f.1)]
-// CHECK:STDOUT:   %Method.type: type = fn_type @Method, @Factory(%T) [symbolic = %Method.type (constants.%Method.type.7ee)]
+// CHECK:STDOUT:   %Method.type: type = fn_type @Method.1, @Factory(%T) [symbolic = %Method.type (constants.%Method.type.7ee)]
 // CHECK:STDOUT:   %Method: @Factory.%Method.type (%Method.type.7ee) = struct_value () [symbolic = %Method (constants.%Method.a71)]
+// CHECK:STDOUT:   %assoc1: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element1, imports.%Main.import_ref.46fc3c.1 [symbolic = %assoc1 (constants.%assoc1.1fdf32.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.fbb
 // CHECK:STDOUT:     .Make = imports.%Main.import_ref.8d5
-// CHECK:STDOUT:     .Method = imports.%Main.import_ref.5f0
-// CHECK:STDOUT:     witness = (imports.%Main.Make)
+// CHECK:STDOUT:     .Method = imports.%Main.import_ref.ff7
+// CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1101,7 +1126,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%Main.import_ref.a27
 // CHECK:STDOUT:   .Method = imports.%Main.import_ref.163
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.72b
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.f8d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B [from "factory.carbon"] {
@@ -1124,13 +1149,13 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   fn() -> @Make.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Method(imports.%Main.import_ref.5ab3ec.3: type, imports.%Main.import_ref.91b53a.2: @Factory.%Factory.type (%Factory.type.c96)) [from "factory.carbon"] {
+// CHECK:STDOUT: generic fn @Method.1(imports.%Main.import_ref.5ab3ec.3: type, imports.%Main.import_ref.91b53a.2: @Factory.%Factory.type (%Factory.type.c96)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(%T)> [symbolic = %Factory.type (constants.%Factory.type.c96)]
 // CHECK:STDOUT:   %Self: %Factory.type.c96 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Method.%Self.as_type (%Self.as_type)]() -> @Method.%T (%T);
+// CHECK:STDOUT:   fn[%self.param_patt: @Method.1.%Self.as_type (%Self.as_type)]() -> @Method.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeB() -> %return.param_patt: %B {
@@ -1144,7 +1169,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.facet: %Factory.type.a5d = facet_value constants.%A, constants.%impl_witness [concrete = constants.%Factory.facet]
 // CHECK:STDOUT:   %.loc5_11: %Factory.type.a5d = converted %A.ref, %Factory.facet [concrete = constants.%Factory.facet]
 // CHECK:STDOUT:   %as_wit: <witness> = facet_access_witness %.loc5_11 [concrete = constants.%impl_witness]
-// CHECK:STDOUT:   %impl.elem0: %.357 = impl_witness_access %as_wit, element0 [concrete = constants.%Make.377]
+// CHECK:STDOUT:   %impl.elem0: %.161 = impl_witness_access %as_wit, element0 [concrete = constants.%Make.377]
 // CHECK:STDOUT:   %.loc4: ref %B = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %B = call %impl.elem0() to %.loc4
 // CHECK:STDOUT:   return %Make.call to %return
@@ -1158,9 +1183,16 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
 // CHECK:STDOUT:   %B.ref.loc8: type = name_ref B, imports.%Main.B [concrete = constants.%B]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.a5d]
-// CHECK:STDOUT:   %Method.ref: <error> = name_ref Method, imports.%Main.import_ref.5f0 [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   %.loc8: %Factory.assoc_type.668 = specific_constant imports.%Main.import_ref.ff7, @Factory(constants.%B) [concrete = constants.%assoc1.51f]
+// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.668 = name_ref Method, %.loc8 [concrete = constants.%assoc1.51f]
+// CHECK:STDOUT:   %impl.elem1: %.478 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%Method.3d4]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %.loc7: ref %B = splice_block %return {}
+// CHECK:STDOUT:   %Method.call: init %B = call %bound_method(%a.ref) to %.loc7
+// CHECK:STDOUT:   return %Method.call to %return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Method.2[%self.param_patt: %A]() -> %B [from "factory.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1180,6 +1212,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.503
 // CHECK:STDOUT:   %Method.type => constants.%Method.type.117
 // CHECK:STDOUT:   %Method => constants.%Method.ea9
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.51f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(%T) {}
@@ -1188,9 +1221,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(@Method.%T) {}
+// CHECK:STDOUT: specific @Factory(@Method.1.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Method(constants.%T, constants.%Self) {
+// CHECK:STDOUT: specific @Method.1(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Factory.type => constants.%Factory.type.c96
 // CHECK:STDOUT:   %Self => constants.%Self
@@ -1218,12 +1251,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Method.type.7ee: type = fn_type @Method, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Method.a71: %Method.type.7ee = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type.56c: type = facet_access_type %Self.9ba [symbolic]
+// CHECK:STDOUT:   %assoc1.7f7: %Factory.assoc_type.ca7 = assoc_entity element1, imports.%Main.import_ref.5be [symbolic]
 // CHECK:STDOUT:   %Make.type.c59: type = fn_type @Make, @Factory(%B) [concrete]
 // CHECK:STDOUT:   %Make.efe: %Make.type.c59 = struct_value () [concrete]
 // CHECK:STDOUT:   %Factory.assoc_type.668: type = assoc_entity_type %Factory.type.a5d [concrete]
 // CHECK:STDOUT:   %assoc0.228: %Factory.assoc_type.668 = assoc_entity element0, imports.%Main.import_ref.21018a.1 [concrete]
 // CHECK:STDOUT:   %Method.type.117: type = fn_type @Method, @Factory(%B) [concrete]
 // CHECK:STDOUT:   %Method.ea9: %Method.type.117 = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1.7a1: %Factory.assoc_type.668 = assoc_entity element1, imports.%Main.import_ref.46fc3c.1 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [concrete]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [concrete]
@@ -1234,6 +1269,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.b47: %Factory.assoc_type.709 = assoc_entity element0, imports.%Main.import_ref.1aa [concrete]
 // CHECK:STDOUT:   %Method.type.d46: type = fn_type @Method, @Factory(%C) [concrete]
 // CHECK:STDOUT:   %Method.f9e: %Method.type.d46 = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1.90c: %Factory.assoc_type.709 = assoc_entity element1, imports.%Main.import_ref.5be [concrete]
 // CHECK:STDOUT:   %assoc0.354: %Factory.assoc_type.ca7 = assoc_entity element0, imports.%Main.import_ref.21018a.2 [symbolic]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
@@ -1252,6 +1288,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT:   %InstanceC.type: type = fn_type @InstanceC [concrete]
 // CHECK:STDOUT:   %InstanceC: %InstanceC.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1.1fd: %Factory.assoc_type.ca7 = assoc_entity element1, imports.%Main.import_ref.46fc3c.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1263,15 +1300,16 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst74 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst77 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8d5: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.354)]
-// CHECK:STDOUT:   %Main.import_ref.5f0: <error> = import_ref Main//factory, inst(ErrorInst) [no loc], loaded [concrete = <error>]
+// CHECK:STDOUT:   %Main.import_ref.ff7: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = import_ref Main//factory, loc8_31, loaded [symbolic = @Factory.%assoc1 (constants.%assoc1.1fd)]
 // CHECK:STDOUT:   %Main.Make = import_ref Main//factory, Make, unloaded
-// CHECK:STDOUT:   %Main.import_ref.3e9 = import_ref Main//factory, loc14_22, unloaded
+// CHECK:STDOUT:   %Main.Method = import_ref Main//factory, Method, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e41 = import_ref Main//factory, loc14_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc11_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst72 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.984: type = import_ref Main//factory, loc14_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.bd2: type = import_ref Main//factory, loc14_20, loaded [concrete = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   %Main.import_ref.a27 = import_ref Main//factory, loc15_17, unloaded
@@ -1281,6 +1319,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.1aa: @Factory.%Make.type (%Make.type.598) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%Make (constants.%Make.737)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.91b53a.2: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst24 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self.9ba)]
+// CHECK:STDOUT:   %Main.import_ref.5be: @Factory.%Method.type (%Method.type.7ee) = import_ref Main//factory, loc8_31, loaded [symbolic = @Factory.%Method (constants.%Method.a71)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
@@ -1340,13 +1379,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element0, imports.%Main.import_ref.1aa [symbolic = %assoc0 (constants.%assoc0.4f7)]
 // CHECK:STDOUT:   %Method.type: type = fn_type @Method, @Factory(%T) [symbolic = %Method.type (constants.%Method.type.7ee)]
 // CHECK:STDOUT:   %Method: @Factory.%Method.type (%Method.type.7ee) = struct_value () [symbolic = %Method (constants.%Method.a71)]
+// CHECK:STDOUT:   %assoc1: @Factory.%Factory.assoc_type (%Factory.assoc_type.ca7) = assoc_entity element1, imports.%Main.import_ref.5be [symbolic = %assoc1 (constants.%assoc1.7f7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.fbb
 // CHECK:STDOUT:     .Make = imports.%Main.import_ref.8d5
-// CHECK:STDOUT:     .Method = imports.%Main.import_ref.5f0
-// CHECK:STDOUT:     witness = (imports.%Main.Make)
+// CHECK:STDOUT:     .Method = imports.%Main.import_ref.ff7
+// CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1374,7 +1414,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%Main.import_ref.a27
 // CHECK:STDOUT:   .Method = imports.%Main.import_ref.163
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.3e9
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.e41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B [from "factory.carbon"] {
@@ -1439,9 +1479,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %C.ref.loc20: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.5c5]
-// CHECK:STDOUT:   %Method.ref: <error> = name_ref Method, imports.%Main.import_ref.5f0 [concrete = <error>]
+// CHECK:STDOUT:   %.loc24: %Factory.assoc_type.709 = specific_constant imports.%Main.import_ref.ff7, @Factory(constants.%C) [concrete = constants.%assoc1.90c]
+// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.709 = name_ref Method, %.loc24 [concrete = constants.%assoc1.90c]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1463,6 +1504,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.228
 // CHECK:STDOUT:   %Method.type => constants.%Method.type.117
 // CHECK:STDOUT:   %Method => constants.%Method.ea9
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.7a1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(%T) {}
@@ -1493,6 +1535,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b47
 // CHECK:STDOUT:   %Method.type => constants.%Method.type.d46
 // CHECK:STDOUT:   %Method => constants.%Method.f9e
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.90c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {

@@ -32,6 +32,7 @@ interface Modifiers {
 // CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, @Modifiers.%Final.decl [concrete]
 // CHECK:STDOUT:   %Default.type: type = fn_type @Default [concrete]
 // CHECK:STDOUT:   %Default: %Default.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1: %Modifiers.assoc_type = assoc_entity element1, @Modifiers.%Default.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,12 +47,13 @@ interface Modifiers {
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [concrete = constants.%Final] {} {}
 // CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, %Final.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Default.decl: %Default.type = fn_decl @Default [concrete = constants.%Default] {} {}
+// CHECK:STDOUT:   %assoc1: %Modifiers.assoc_type = assoc_entity element1, %Default.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Final = %assoc0
-// CHECK:STDOUT:   .Default = <error>
-// CHECK:STDOUT:   witness = (%Final.decl)
+// CHECK:STDOUT:   .Default = %assoc1
+// CHECK:STDOUT:   witness = (%Final.decl, %Default.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Final(@Modifiers.%Self: %Modifiers.type) {

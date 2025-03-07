@@ -127,6 +127,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%Second [concrete]
 // CHECK:STDOUT:   %.Self.258: %I.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [concrete]
 // CHECK:STDOUT:   %U: %I_where.type = bind_symbolic_name U, 0 [symbolic]
@@ -238,14 +239,16 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Second: %J.type = assoc_const_decl @Second [concrete] {}
+// CHECK:STDOUT:   %Second: %J.type = assoc_const_decl @Second [concrete] {
+// CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.%Second [concrete = constants.%assoc1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Member = @Member.%assoc0
 // CHECK:STDOUT:   .J = <poisoned>
-// CHECK:STDOUT:   .Second = <error>
-// CHECK:STDOUT:   witness = (%Member)
+// CHECK:STDOUT:   .Second = @Second.%assoc1
+// CHECK:STDOUT:   witness = (%Member, %Second)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Member(@I.%Self: %I.type) {
