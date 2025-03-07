@@ -19,7 +19,7 @@ class A {
   "textDocument": {
     "uri": "file:/class.carbon",
     "languageId": "carbon",
-    "text": "AUTOFILL"
+    "text": "FROM_FILE_SPLIT"
   }
 ]]
 [[@LSP-CALL:textDocument/documentSymbol:

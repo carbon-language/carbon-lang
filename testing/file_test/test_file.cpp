@@ -96,12 +96,13 @@ struct SplitState {
   int file_index = 0;
 };
 
-static auto ExtractFilePathFromUri(llvm::StringRef uri) -> llvm::StringRef {
+static auto ExtractFilePathFromUri(llvm::StringRef uri)
+    -> std::optional<llvm::StringRef> {
   static constexpr llvm::StringRef FilePrefix = "file:/";
-  if (uri.starts_with(FilePrefix)) {
-    return uri.drop_front(FilePrefix.size());
+  if (!uri.starts_with(FilePrefix)) {
+    return std::nullopt;
   }
-  return uri;
+  return uri.drop_front(FilePrefix.size());
 }
 
 static auto AutoFillDidOpenParams(llvm::json::Object* params,
@@ -113,14 +114,19 @@ static auto AutoFillDidOpenParams(llvm::json::Object* params,
   }
 
   auto attr_it = text_document->find("text");
-  if (attr_it == text_document->end() || attr_it->second != "AUTOFILL") {
+  if (attr_it == text_document->end() || attr_it->second != "FROM_FILE_SPLIT") {
     return Success{};
   }
 
   auto uri = text_document->getString("uri");
-  CARBON_CHECK(uri.has_value());
+  if (!uri) {
+    return ErrorBuilder() << "missing uri in params.textDocument";
+  }
 
   auto file_path = ExtractFilePathFromUri(*uri);
+  if (!file_path) {
+    return ErrorBuilder() << "uri `" << *uri << "` is not a file uri";
+  }
   const auto* split_it =
       llvm::find_if(splits, [&](const TestFile::Split& split) {
         return split.filename == file_path;
@@ -193,29 +199,26 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
 
   // Form the JSON.
   std::string buffer;
+  llvm::raw_string_ostream buffer_os(buffer);
+  llvm::json::OStream json(buffer_os);
 
-  {
-    llvm::raw_string_ostream json_sstream(buffer);
-    llvm::json::OStream json(json_sstream);
+  json.object([&] {
+    json.attribute("jsonrpc", "2.0");
+    json.attribute(method_or_id_label, method_or_id);
 
-    json.object([&] {
-      json.attribute("jsonrpc", "2.0");
-      json.attribute(method_or_id_label, method_or_id);
-
-      if (use_call_id) {
-        json.attribute("id", ++lsp_call_id);
-      }
-      if (parsed_extra_content != nullptr) {
-        if (!extra_content_label.empty()) {
-          json.attribute(extra_content_label, parsed_extra_content);
-        } else {
-          for (const auto& [key, value] : *parsed_extra_content.getAsObject()) {
-            json.attribute(key, value);
-          }
+    if (use_call_id) {
+      json.attribute("id", ++lsp_call_id);
+    }
+    if (parsed_extra_content != nullptr) {
+      if (!extra_content_label.empty()) {
+        json.attribute(extra_content_label, parsed_extra_content);
+      } else {
+        for (const auto& [key, value] : *parsed_extra_content.getAsObject()) {
+          json.attribute(key, value);
         }
       }
-    });
-  }
+    }
+  });
 
   // Add the Content-Length header. The `2` accounts for extra newlines.
   auto json_with_header =
