@@ -560,7 +560,10 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
     // > For a compound member access, the second operand is evaluated as a
     // > compile-time constant to determine the member being accessed. The
     // > evaluation is required to succeed [...]
-    // However, we are currently not enforcing that.
+    if (!value_inst_id.has_value()) {
+      context.TODO(loc_id, "Non-constant associated entity value");
+      return SemIR::ErrorInst::SingletonInstId;
+    }
     auto assoc_entity =
         context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
     auto decl_id = assoc_entities[assoc_entity.index.index];
