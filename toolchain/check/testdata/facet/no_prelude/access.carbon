@@ -68,7 +68,7 @@ fn UseIndirect[T:! I](x: T) -> T {
   return x.(T.Copy)();
 }
 
-// --- non_const_associated.carbon
+// --- fail_non_const_associated.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let T:! type; }
@@ -76,7 +76,7 @@ fn Id[U:! type](x: U) -> U { return x; }
 impl () as I where .T = () {}
 // Type of member expr is associated entity type,
 // but value is not constant.
-// CHECK:STDERR: non_const_associated.carbon:[[@LINE+4]]:8: error: semantics TODO: `Non-constant associated entity value` [SemanticsTodo]
+// CHECK:STDERR: fail_non_const_associated.carbon:[[@LINE+4]]:8: error: semantics TODO: `Non-constant associated entity value` [SemanticsTodo]
 // CHECK:STDERR: var v: ().(Id(I.T));
 // CHECK:STDERR:        ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -655,7 +655,7 @@ var v: ().(Id(I.T));
 // CHECK:STDOUT:   %Self.as_type.loc5_17.1 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_const_associated.carbon
+// CHECK:STDOUT: --- fail_non_const_associated.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
