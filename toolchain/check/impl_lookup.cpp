@@ -164,7 +164,7 @@ static auto FindAndDiagnoseImplLookupCycle(
 static auto GetInterfacesFromConstantId(Context& context,
                                         SemIR::ConstantId facet_type_const_id,
                                         bool& has_other_requirements)
-    -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface> {
+    -> llvm::SmallVector<SemIR::SpecificInterface> {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(facet_type_const_id);
   auto facet_type_inst =

@@ -17,6 +17,10 @@ interface As(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
+interface ImplicitAs(Dest:! type) {
+  fn Convert[self: Self]() -> Dest;
+}
+
 interface BitAnd {
   fn Op[self: Self](other: Self) -> Self;
 }
@@ -57,19 +61,25 @@ fn F() {
   // CHECK:STDERR:
   ({} as C) as (C as (A & B));
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-25]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn G[T:! A](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   G({} as C);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A & B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-33]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   H({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-39]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn H[T:! A & B](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
