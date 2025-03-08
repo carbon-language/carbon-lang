@@ -5,7 +5,9 @@
 #include "toolchain/check/eval_inst.h"
 
 #include "toolchain/check/facet_type.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -297,6 +299,20 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   // Pull the constant value out of the specific.
   return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
       context.sem_ir(), inst.specific_id, inst.inst_id));
+}
+
+auto EvalConstantInst(Context& context, SemIRLoc loc,
+                      SemIR::SpecificFunction inst) -> ConstantEvalResult {
+  // Create new constant for a specific function.
+  auto callee_function =
+      SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+  if (callee_function.self_type_id.has_value()) {
+    // This is an associated function, and will be required to be defined as
+    // part of checking that the impl is complete.
+  } else {
+    context.function_definitions_required().push_back({loc, inst.specific_id});
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,

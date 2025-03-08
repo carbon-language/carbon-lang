@@ -149,6 +149,11 @@ class Context {
     return definitions_required_;
   }
 
+  auto function_definitions_required()
+      -> llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>& {
+    return function_definitions_required_;
+  }
+
   auto global_init() -> GlobalInit& { return global_init_; }
 
   auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
@@ -333,6 +338,11 @@ class Context {
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.
   llvm::SmallVector<SemIR::InstId> definitions_required_;
+
+  // Functions that should have definitions by the end of the current source
+  // file.
+  llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>
+      function_definitions_required_;
 
   // State for global initialization.
   GlobalInit global_init_;

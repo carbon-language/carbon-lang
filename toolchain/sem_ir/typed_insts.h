@@ -1309,7 +1309,7 @@ struct SpecificConstant {
 struct SpecificFunction {
   static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
       {.ir_name = "specific_function",
-       .constant_kind = InstConstantKind::WheneverPossible});
+       .constant_kind = InstConstantKind::Conditional});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;

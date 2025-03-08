@@ -47,11 +47,25 @@ fn G[T:! A & Empty & B](t: T) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   T.(A.AA)();
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `Empty & A & B` to `B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+21]]:3: error: cannot implicitly convert value of type `Empty & A & B` to `B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   T.(B.BB)();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+4]]:3: note: type `Empty & A & B` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+18]]:3: note: type `Empty & A & B` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   T.(B.BB)();
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE-24]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
+  // CHECK:STDERR:   t.AA();
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE-43]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:   fn AA();
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE-30]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
+  // CHECK:STDERR:   t.BB();
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE-47]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:   fn BB();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   T.(B.BB)();
@@ -451,10 +465,10 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc49: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:     %AA.ref.loc49: %A.assoc_type = name_ref AA, @A.%assoc0 [concrete = constants.%assoc0.f33]
 // CHECK:STDOUT:     %.loc49: %A.type = converted %T.ref.loc49, <error> [concrete = <error>]
-// CHECK:STDOUT:     %T.ref.loc57: %facet_type.242 = name_ref T, %T.loc32_6.1 [symbolic = %T.loc32_6.2 (constants.%T.2df)]
-// CHECK:STDOUT:     %B.ref.loc57: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
-// CHECK:STDOUT:     %BB.ref.loc57: %B.assoc_type = name_ref BB, @B.%assoc0 [concrete = constants.%assoc0.019]
-// CHECK:STDOUT:     %.loc57: %B.type = converted %T.ref.loc57, <error> [concrete = <error>]
+// CHECK:STDOUT:     %T.ref.loc71: %facet_type.242 = name_ref T, %T.loc32_6.1 [symbolic = %T.loc32_6.2 (constants.%T.2df)]
+// CHECK:STDOUT:     %B.ref.loc71: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
+// CHECK:STDOUT:     %BB.ref.loc71: %B.assoc_type = name_ref BB, @B.%assoc0 [concrete = constants.%assoc0.019]
+// CHECK:STDOUT:     %.loc71: %B.type = converted %T.ref.loc71, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -471,19 +485,19 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc61_6.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc75_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc61_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc61_6.3: init %C = class_init (), %.loc61_6.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc61_6.4: ref %C = temporary %.loc61_6.2, %.loc61_6.3
-// CHECK:STDOUT:   %.loc61_8.1: ref %C = converted %.loc61_6.1, %.loc61_6.4
-// CHECK:STDOUT:   %facet_value.loc61_12.1: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc61_12.1: %facet_type.242 = converted constants.%C, %facet_value.loc61_12.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc61_12.2: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc61_12.2: %facet_type.242 = converted constants.%C, %facet_value.loc61_12.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc75_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc75_6.3: init %C = class_init (), %.loc75_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc75_6.4: ref %C = temporary %.loc75_6.2, %.loc75_6.3
+// CHECK:STDOUT:   %.loc75_8.1: ref %C = converted %.loc75_6.1, %.loc75_6.4
+// CHECK:STDOUT:   %facet_value.loc75_12.1: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc75_12.1: %facet_type.242 = converted constants.%C, %facet_value.loc75_12.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc75_12.2: %facet_type.242 = facet_value constants.%C, (constants.%impl_witness.1bc, constants.%impl_witness.97a, constants.%impl_witness.fe4) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc75_12.2: %facet_type.242 = converted constants.%C, %facet_value.loc75_12.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%facet_value) [concrete = constants.%G.specific_fn]
-// CHECK:STDOUT:   %.loc61_8.2: %C = bind_value %.loc61_8.1
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc61_8.2)
+// CHECK:STDOUT:   %.loc75_8.2: %C = bind_value %.loc75_8.1
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc75_8.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

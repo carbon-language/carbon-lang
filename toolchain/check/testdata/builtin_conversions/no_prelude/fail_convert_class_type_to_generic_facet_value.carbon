@@ -463,7 +463,5 @@ fn G() {
 // CHECK:STDOUT:   %Generic.type.loc16_45.2 => constants.%Generic.type.c3b
 // CHECK:STDOUT:   %U.loc16_32.2 => <error>
 // CHECK:STDOUT:   %U.patt.loc16_32.2 => <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

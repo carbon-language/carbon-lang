@@ -318,5 +318,8 @@ fn F() {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %T.as_type.loc8_30.2 => constants.%Goat
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

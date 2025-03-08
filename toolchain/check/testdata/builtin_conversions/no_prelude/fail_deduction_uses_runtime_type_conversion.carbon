@@ -485,8 +485,5 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %A.loc16_20.2 => <error>
 // CHECK:STDOUT:   %A.patt.loc16_20.2 => <error>
 // CHECK:STDOUT:   %HoldsType.loc16_43.2 => constants.%HoldsType.066
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

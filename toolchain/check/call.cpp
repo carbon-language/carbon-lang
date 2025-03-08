@@ -192,12 +192,6 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
               .specific_id = *callee_specific_id});
       inner_callee_id = callee_id;
     }
-    if (callee_function.self_type_id.has_value()) {
-      // This is an associated function, and will be required to be defined as
-      // part of checking that the impl is complete.
-    } else {
-      context.definitions_required().push_back(inner_callee_id);
-    }
   }
 
   // If there is a return slot, build storage for the result.

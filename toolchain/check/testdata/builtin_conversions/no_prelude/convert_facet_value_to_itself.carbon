@@ -277,5 +277,7 @@ fn F() {
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%Animal.facet
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

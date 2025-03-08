@@ -636,5 +636,9 @@ fn F() {
 // CHECK:STDOUT:   %T.loc22_24.2 => constants.%Eats.facet.fa6
 // CHECK:STDOUT:   %T.patt.loc22_24.2 => constants.%Eats.facet.fa6
 // CHECK:STDOUT:   %T.as_type.loc22_43.2 => constants.%Goat
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc22_41 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc22_50 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
