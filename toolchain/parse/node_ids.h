@@ -86,7 +86,11 @@ using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 template <typename... T>
   requires(sizeof...(T) >= 2)
 struct NodeIdOneOf : public NodeId {
-  constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
+  // Provide a factory function for construction from `NodeId`. This doesn't
+  // validate the type, so it's unsafe.
+  static constexpr auto UnsafeMake(NodeId node_id) -> NodeIdOneOf {
+    return NodeIdOneOf(node_id);
+  }
 
   template <const NodeKind& Kind>
     requires((T::Kind == Kind) || ...)
@@ -95,6 +99,11 @@ struct NodeIdOneOf : public NodeId {
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
+
+ private:
+  // Private to prevent accidentals explicit construction from an untyped
+  // NodeId.
+  explicit constexpr NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
 };
 
 using AnyClassDeclId =

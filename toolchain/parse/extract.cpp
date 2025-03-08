@@ -227,7 +227,7 @@ struct Extractable<NodeIdOneOf<T...>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdOneOf<T...>> {
     if (extractor.MatchesNodeIdOneOf({T::Kind...})) {
-      return NodeIdOneOf<T...>(extractor.ExtractNode());
+      return NodeIdOneOf<T...>::UnsafeMake(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }

@@ -133,8 +133,9 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
           ? MakeImportedLocIdAndInst(context, import_loc_id.import_ir_inst_id(),
                                      namespace_inst)
           // TODO: Check that this actually is an `AnyNamespaceId`.
-          : SemIR::LocIdAndInst(Parse::AnyNamespaceId(import_loc_id.node_id()),
-                                namespace_inst);
+          : SemIR::LocIdAndInst(
+                Parse::AnyNamespaceId::UnsafeMake(import_loc_id.node_id()),
+                namespace_inst);
   auto namespace_id =
       AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc);
   context.import_ref_ids().push_back(namespace_id);

@@ -145,20 +145,14 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto TryAs(NodeId n) const -> std::optional<T> {
     CARBON_DCHECK(n.has_value());
-    if (ConvertTo<T>::AllowedFor(node_kind(n))) {
-      return T(n);
-    } else {
-      return std::nullopt;
-    }
+    return NodeIdConverter<T>::TryAs(n, node_kind(n));
   }
 
   // Converts to `n` to a constrained node id `T`. Checks that the
   // `node_kind(n)` matches the constraint on `T`.
   template <typename T>
   auto As(NodeId n) const -> T {
-    CARBON_DCHECK(n.has_value());
-    CARBON_CHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
-    return T(n);
+    return *TryAs<T>(n);
   }
 
   auto packaging_decl() const -> const std::optional<PackagingDecl>& {
@@ -192,7 +186,7 @@ class Tree : public Printable<Tree> {
   friend class TypedNodesTestPeer;
 
   template <typename T>
-  struct ConvertTo;
+  struct NodeIdConverter;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
@@ -325,21 +319,35 @@ class Tree::PostorderIterator
 };
 
 template <const NodeKind& K>
-struct Tree::ConvertTo<NodeIdForKind<K>> {
-  static auto AllowedFor(NodeKind kind) -> bool { return kind == K; }
+struct Tree::NodeIdConverter<NodeIdForKind<K>> {
+  static auto TryAs(NodeId n, NodeKind kind)
+      -> std::optional<NodeIdForKind<K>> {
+    if (kind != K) {
+      return std::nullopt;
+    }
+    return NodeIdForKind<K>(n);
+  }
 };
 
 template <NodeCategory::RawEnumType C>
-struct Tree::ConvertTo<NodeIdInCategory<C>> {
-  static auto AllowedFor(NodeKind kind) -> bool {
-    return kind.category().HasAnyOf(C);
+struct Tree::NodeIdConverter<NodeIdInCategory<C>> {
+  static auto TryAs(NodeId n, NodeKind kind)
+      -> std::optional<NodeIdInCategory<C>> {
+    if (!kind.category().HasAnyOf(C)) {
+      return std::nullopt;
+    }
+    return NodeIdInCategory<C>(n);
   }
 };
 
 template <typename... T>
-struct Tree::ConvertTo<NodeIdOneOf<T...>> {
-  static auto AllowedFor(NodeKind kind) -> bool {
-    return ((kind == T::Kind) || ...);
+struct Tree::NodeIdConverter<NodeIdOneOf<T...>> {
+  static auto TryAs(NodeId n, NodeKind kind)
+      -> std::optional<NodeIdOneOf<T...>> {
+    if (((kind != T::Kind) && ...)) {
+      return std::nullopt;
+    }
+    return NodeIdOneOf<T...>::UnsafeMake(n);
   }
 };
 
