@@ -108,8 +108,8 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
       if (scope.is_interface_definition()) {
         SemIR::InstId target_inst_id =
             non_lexical_result.scope_result.target_inst_id();
-        if (auto inst = context.insts().TryGetAs<SemIR::AssociatedEntity>(
-                target_inst_id)) {
+        if (context.types().Is<SemIR::AssociatedEntityType>(
+                context.insts().Get(target_inst_id).type_id())) {
           auto interface_decl =
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
