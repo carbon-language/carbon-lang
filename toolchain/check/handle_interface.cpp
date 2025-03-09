@@ -156,7 +156,7 @@ auto HandleParseNode(Context& context,
       interface_decl_id, SemIR::NameId::None, interface_info.parent_scope_id);
   context.name_scopes()
       .Get(interface_info.scope_id)
-      .set_is_interface_definition(true);
+      .set_is_interface_definition();
 
   auto self_specific_id =
       context.generics().GetSelfSpecific(interface_info.generic_id);

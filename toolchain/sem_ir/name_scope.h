@@ -237,8 +237,8 @@ class NameScope : public Printable<NameScope> {
     return is_interface_definition_;
   }
 
-  auto set_is_interface_definition(bool is_interface_definition) -> void {
-    is_interface_definition_ = is_interface_definition;
+  auto set_is_interface_definition() -> void {
+    is_interface_definition_ = true;
   }
 
  private:

@@ -10,14 +10,15 @@
 
 class C[T:! type](X:! T) {}
 
-// This tests that inside the definition of `I`, `Self` has type `I`. As a
-// result, in `impl T as I`, `Self` is `T as I`.
-
 interface I {
+  // Uses of `Self` inside the definition of `I` have type `I`.
   fn F(c: C(Self));
 }
 
 impl bool as I {
+  // In this scope, `Self` is `bool`, but the signature of `F` uses the `Self`
+  // from the interface, not the `Self` from the impl.
+
   fn F(c: C(bool as I));
 }
 
