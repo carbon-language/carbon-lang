@@ -22,9 +22,10 @@ namespace Carbon::Check {
 //
 // - `InstBlockId::None`, indicating lookup failed for at least one required
 //   interface in the `query_facet_type_const_id`. The facet type is not
-//   satisfied for the type in `type_const_id`.
+//   satisfied for the type in `type_const_id`. This represents lookup failure,
+//   but is not an error, so no diagnostic is emitted.
 //
-// - An error value, indicating lookup failed and a diagonstic has been
+// - An error value, indicating the program is invalid and a diagonstic has been
 //   produced, either in this function or before.
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId type_const_id,
