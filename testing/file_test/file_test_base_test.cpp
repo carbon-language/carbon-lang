@@ -143,21 +143,6 @@ static auto TestFailExample(TestParams& params)
   return {{.success = false}};
 }
 
-// Prints and returns expected results for example.carbon.
-static auto TestIncludeFile(TestParams& params)
-    -> ErrorOr<FileTestBaseTest::RunResult> {
-  int delta_line = 10;
-  params.output_stream << "something\n"
-                       << "\n"
-                       << "example.carbon:" << delta_line + 1
-                       << ": Line delta\n"
-                       << "example.carbon:" << delta_line
-                       << ": Negative line delta\n"
-                       << "+*[]{}\n"
-                       << "Foo baz\n";
-  return {{.success = true}};
-}
-
 // Prints and returns expected results for
 // file_only_re_multi_file.carbon.
 static auto TestFileOnlyREMultiFile(TestParams& params)
@@ -279,9 +264,9 @@ auto FileTestBaseTest::Run(
   PrintArgs(test_args, output_stream);
 
   auto filename = std::filesystem::path(test_name().str()).filename();
-  if (filename == "args.carbon") {
-    // 'args.carbon' has custom arguments, so don't do regular argument
-    // validation for it.
+  if (filename == "args.carbon" || filename == "include_file.carbon") {
+    // 'args.carbon' and 'include_file.carbon' have custom arguments, so don't
+    // do regular argument validation for them.
     return {{.success = true}};
   }
 
@@ -293,7 +278,6 @@ auto FileTestBaseTest::Run(
           .Case("capture_console_output.carbon", &TestCaptureConsoleOutput)
           .Case("escaping.carbon", &TestEscaping)
           .Case("example.carbon", &TestExample)
-          .Case("include_file.carbon", &TestIncludeFile)
           .Case("fail_example.carbon", &TestFailExample)
           .Case("file_only_re_one_file.carbon", &TestFileOnlyREOneFile)
           .Case("file_only_re_multi_file.carbon", &TestFileOnlyREMultiFile)

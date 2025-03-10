@@ -11,8 +11,8 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "testing/file_test/file_test_base.h"
 #include "testing/file_test/file_system.h"
+#include "testing/file_test/file_test_base.h"
 #include "testing/file_test/test_file.h"
 
 namespace Carbon::Testing {
