@@ -710,14 +710,21 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
 
   if (class_info.is_dynamic) {
     llvm::SmallVector<SemIR::InstId> vtable;
+    bool vtable_incomplete_due_to_error = false;
     if (!defining_vptr) {
       LoadImportRef(context, base_class_info->vtable_id);
       auto base_vtable_id = context.constant_values().GetConstantInstId(
           base_class_info->vtable_id);
+      if (base_vtable_id == SemIR::ErrorInst::SingletonInstId) {
+        vtable_incomplete_due_to_error = true;
+      }
       auto base_vtable_inst_block =
-          context.inst_blocks().Get(context.insts()
-                                        .GetAs<SemIR::Vtable>(base_vtable_id)
-                                        .virtual_functions_id);
+          vtable_incomplete_due_to_error
+              ? llvm::ArrayRef<SemIR::InstId>{}
+              : context.inst_blocks().Get(
+                    context.insts()
+                        .GetAs<SemIR::Vtable>(base_vtable_id)
+                        .virtual_functions_id);
       // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
       // elements of the top of `vtable_stack`.
       for (auto fn_decl_id : base_vtable_inst_block) {
@@ -752,11 +759,14 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
         vtable.push_back(inst_id);
       }
     }
-    class_info.vtable_id = AddInst<SemIR::Vtable>(
-        context, node_id,
-        {.type_id =
-             GetSingletonType(context, SemIR::VtableType::SingletonInstId),
-         .virtual_functions_id = context.inst_blocks().Add(vtable)});
+    class_info.vtable_id =
+        vtable_incomplete_due_to_error
+            ? SemIR::ErrorInst::SingletonInstId
+            : AddInst<SemIR::Vtable>(
+                  context, node_id,
+                  {.type_id = GetSingletonType(
+                       context, SemIR::VtableType::SingletonInstId),
+                   .virtual_functions_id = context.inst_blocks().Add(vtable)});
   }
 
   return AddInst<SemIR::CompleteTypeWitness>(
