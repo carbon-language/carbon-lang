@@ -101,7 +101,7 @@ struct NodeIdOneOf : public NodeId {
   constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 
  private:
-  // Private to prevent accidentals explicit construction from an untyped
+  // Private to prevent accidental explicit construction from an untyped
   // NodeId.
   explicit constexpr NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
 };
