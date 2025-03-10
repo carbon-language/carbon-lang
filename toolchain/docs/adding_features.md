@@ -507,7 +507,8 @@ example:
 ```
 
 We have a set of minimal `Core` preludes for testing different compiler feature
-areas in `//toolchain/testing/min_prelude/`.
+areas in `//toolchain/testing/min_prelude/`. Each file begins with the line
+`package Core library "prelude";` to make it provide a prelude.
 
 ### Verbose output
 
