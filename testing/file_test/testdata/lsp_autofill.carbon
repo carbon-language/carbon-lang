@@ -19,7 +19,7 @@ class Foo {
   "textDocument": {
     "uri": "file:/foo.carbon",
     "languageId": "carbon",
-    "text": "AUTOFILL"
+    "text": "FROM_FILE_SPLIT"
   }
 ]]
 
