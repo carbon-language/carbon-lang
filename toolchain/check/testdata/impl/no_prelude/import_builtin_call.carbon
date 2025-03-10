@@ -106,6 +106,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [concrete]
 // CHECK:STDOUT:   %Double: %Double.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.9b8: type = fn_type_with_self_type %Op.type.31b, %Add.facet [symbolic]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.8bc, @Op.2(%N) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -330,6 +331,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %.loc20_11: type = fn_type_with_self_type constants.%Op.type.31b, %Add.facet [symbolic = %.loc20_11 (constants.%.9b8)]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N.loc19_11.2) [symbolic = %Op.type (constants.%Op.type.883)]
 // CHECK:STDOUT:   %Op: @Double.%Op.type (%Op.type.883) = struct_value () [symbolic = %Op (constants.%Op.8bc)]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op, @Op.2(%N.loc19_11.2) [symbolic = %Op.specific_fn (constants.%Op.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.patt.loc19_11.1: Core.IntLiteral](%x.param_patt: @Double.%MyInt.loc19_39.2 (%MyInt)) -> @Double.%MyInt.loc19_39.2 (%MyInt) {
 // CHECK:STDOUT:   !entry:
@@ -337,10 +339,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, file.%Add.decl [concrete = constants.%Add.type]
 // CHECK:STDOUT:     %Op.ref: %Add.assoc_type = name_ref Op, @Add.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0: @Double.%.loc20_11 (%.9b8) = impl_witness_access constants.%impl_witness, element0 [symbolic = %Op (constants.%Op.8bc)]
-// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %x.ref.loc20_10, %impl.elem0
+// CHECK:STDOUT:     %bound_method.loc20_11: <bound method> = bound_method %x.ref.loc20_10, %impl.elem0
 // CHECK:STDOUT:     %x.ref.loc20_21: @Double.%MyInt.loc19_39.2 (%MyInt) = name_ref x, %x
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %bound_method, @Op.2(constants.%N)
-// CHECK:STDOUT:     %int.sadd: init @Double.%MyInt.loc19_39.2 (%MyInt) = call %specific_fn(%x.ref.loc20_10, %x.ref.loc20_21)
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%N) [symbolic = %Op.specific_fn (constants.%Op.specific_fn)]
+// CHECK:STDOUT:     %bound_method.loc20_22: <bound method> = bound_method %x.ref.loc20_10, %specific_fn
+// CHECK:STDOUT:     %int.sadd: init @Double.%MyInt.loc19_39.2 (%MyInt) = call %bound_method.loc20_22(%x.ref.loc20_10, %x.ref.loc20_21)
 // CHECK:STDOUT:     %.loc20_23.1: @Double.%MyInt.loc19_39.2 (%MyInt) = value_of_initializer %int.sadd
 // CHECK:STDOUT:     %.loc20_23.2: @Double.%MyInt.loc19_39.2 (%MyInt) = converted %int.sadd, %.loc20_23.1
 // CHECK:STDOUT:     return %.loc20_23.2
@@ -402,6 +405,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(@Double.%N.loc19_11.2) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(@Double.%N.loc19_11.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- use_generic_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -436,6 +441,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Op.cf9: %Op.type.5a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.facet.8db: %Add.type = facet_value %MyInt.f30, (%impl_witness.8d6) [concrete]
 // CHECK:STDOUT:   %.1ca: type = fn_type_with_self_type %Op.type.31b, %Add.facet.8db [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.16a: <specific function> = specific_function %Op.cf9, @Op.2(%int_64) [concrete]
 // CHECK:STDOUT:   %CallImportedDouble.type: type = fn_type @CallImportedDouble [concrete]
 // CHECK:STDOUT:   %CallImportedDouble: %CallImportedDouble.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [concrete]
@@ -443,6 +449,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %impl_witness.7e5be3.2: <witness> = impl_witness (imports.%Main.import_ref.464c51.2), @impl(%N) [symbolic]
 // CHECK:STDOUT:   %Add.facet.afa: %Add.type = facet_value %MyInt.09f, (%impl_witness.7e5be3.2) [symbolic]
 // CHECK:STDOUT:   %.207: type = fn_type_with_self_type %Op.type.31b, %Add.facet.afa [symbolic]
+// CHECK:STDOUT:   %Op.specific_fn.6c0: <specific function> = specific_function %Op.8bc, @Op.2(%N) [symbolic]
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double, @Double(%int_64) [concrete]
 // CHECK:STDOUT:   %impl_witness.bb3: <witness> = impl_witness (imports.%Main.import_ref.464c51.2), @impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Add.facet.287: %Add.type = facet_value %MyInt.f30, (%impl_witness.bb3) [concrete]
@@ -570,10 +577,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.db7 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.1ca = impl_witness_access constants.%impl_witness.8d6, element0 [concrete = constants.%Op.cf9]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref.loc9_10, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc9_11: <bound method> = bound_method %x.ref.loc9_10, %impl.elem0
 // CHECK:STDOUT:   %x.ref.loc9_21: %MyInt.f30 = name_ref x, %x
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Op.2(constants.%int_64)
-// CHECK:STDOUT:   %int.sadd: init %MyInt.f30 = call %specific_fn(%x.ref.loc9_10, %x.ref.loc9_21)
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%int_64) [concrete = constants.%Op.specific_fn.16a]
+// CHECK:STDOUT:   %bound_method.loc9_22: <bound method> = bound_method %x.ref.loc9_10, %specific_fn
+// CHECK:STDOUT:   %int.sadd: init %MyInt.f30 = call %bound_method.loc9_22(%x.ref.loc9_10, %x.ref.loc9_21)
 // CHECK:STDOUT:   %.loc9_23.1: %MyInt.f30 = value_of_initializer %int.sadd
 // CHECK:STDOUT:   %.loc9_23.2: %MyInt.f30 = converted %int.sadd, %.loc9_23.1
 // CHECK:STDOUT:   return %.loc9_23.2
@@ -618,6 +626,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %.1: type = fn_type_with_self_type constants.%Op.type.31b, %Add.facet [symbolic = %.1 (constants.%.207)]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]
 // CHECK:STDOUT:   %Op: @Double.%Op.type (%Op.type.883) = struct_value () [symbolic = %Op (constants.%Op.8bc)]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op, @Op.2(%N) [symbolic = %Op.specific_fn (constants.%Op.specific_fn.6c0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.patt.1: Core.IntLiteral](%x.param_patt: @Double.%MyInt (%MyInt.09f)) -> @Double.%MyInt (%MyInt.09f);
 // CHECK:STDOUT: }
@@ -701,6 +710,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(@Double.%N) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(@Double.%N) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%int_64) {
 // CHECK:STDOUT:   %N => constants.%int_64
 // CHECK:STDOUT:   %N.patt.2 => constants.%int_64
@@ -713,6 +724,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %.1 => constants.%.fc5
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.5a6
 // CHECK:STDOUT:   %Op => constants.%Op.cf9
+// CHECK:STDOUT:   %Op.specific_fn => constants.%Op.specific_fn.16a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- convert_symbolic.carbon

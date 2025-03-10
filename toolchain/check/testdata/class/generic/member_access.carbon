@@ -86,10 +86,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
 // CHECK:STDOUT:   %MethodCall.type: type = fn_type @MethodCall [concrete]
 // CHECK:STDOUT:   %MethodCall: %MethodCall.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.a40, @Get(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.f7c: type = ptr_type %Class.247 [concrete]
 // CHECK:STDOUT:   %AddrMethodCall.type: type = fn_type @AddrMethodCall [concrete]
 // CHECK:STDOUT:   %AddrMethodCall: %AddrMethodCall.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %GetAddr.909, @GetAddr(%i32) [concrete]
 // CHECK:STDOUT:   %complete_type.3d0: <witness> = complete_type_witness %ptr.235 [concrete]
 // CHECK:STDOUT:   %complete_type.6ee: <witness> = complete_type_witness %ptr.f7c [concrete]
 // CHECK:STDOUT: }
@@ -301,8 +303,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc15_11: %Get.type.59d = specific_constant @Class.%Get.decl, @Class(constants.%i32) [concrete = constants.%Get.a40]
 // CHECK:STDOUT:   %Get.ref: %Get.type.59d = name_ref Get, %.loc15_11 [concrete = constants.%Get.a40]
 // CHECK:STDOUT:   %Get.bound: <bound method> = bound_method %x.ref, %Get.ref
-// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.bound, @Get(constants.%i32)
-// CHECK:STDOUT:   %Get.call: init %i32 = call %Get.specific_fn(%x.ref)
+// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.ref, @Get(constants.%i32) [concrete = constants.%Get.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %Get.specific_fn
+// CHECK:STDOUT:   %Get.call: init %i32 = call %bound_method(%x.ref)
 // CHECK:STDOUT:   %.loc15_17.1: %i32 = value_of_initializer %Get.call
 // CHECK:STDOUT:   %.loc15_17.2: %i32 = converted %Get.call, %.loc15_17.1
 // CHECK:STDOUT:   return %.loc15_17.2
@@ -315,9 +318,10 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc19_12.2: %GetAddr.type.be7 = specific_constant @Class.%GetAddr.decl, @Class(constants.%i32) [concrete = constants.%GetAddr.909]
 // CHECK:STDOUT:   %GetAddr.ref: %GetAddr.type.be7 = name_ref GetAddr, %.loc19_12.2 [concrete = constants.%GetAddr.909]
 // CHECK:STDOUT:   %GetAddr.bound: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
-// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %GetAddr.bound, @GetAddr(constants.%i32)
+// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %GetAddr.ref, @GetAddr(constants.%i32) [concrete = constants.%GetAddr.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_12.1, %GetAddr.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.f7c = addr_of %.loc19_12.1
-// CHECK:STDOUT:   %GetAddr.call: init %ptr.235 = call %GetAddr.specific_fn(%addr)
+// CHECK:STDOUT:   %GetAddr.call: init %ptr.235 = call %bound_method(%addr)
 // CHECK:STDOUT:   %.loc19_22.1: %ptr.235 = value_of_initializer %GetAddr.call
 // CHECK:STDOUT:   %.loc19_22.2: %ptr.235 = converted %GetAddr.call, %.loc19_22.1
 // CHECK:STDOUT:   %.loc19_10.1: ref %i32 = deref %.loc19_22.2
