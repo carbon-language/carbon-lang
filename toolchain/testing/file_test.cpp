@@ -15,6 +15,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/file_test/file_system.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
 
@@ -27,14 +28,6 @@ class ToolchainFileTest : public FileTestBase {
  public:
   explicit ToolchainFileTest(llvm::StringRef exe_path,
                              llvm::StringRef test_name);
-
-  // Set up the paths to the files to be included in the test, with each path
-  // being relative to the repository root. The files named here are added to
-  // the compile command for each test, making any package they export available
-  // to the tests. In particular, they can provide a customized `Core` package
-  // for the test if the command line args include `--custom-core`.
-  auto SetIncludeFiles(llvm::ArrayRef<std::string> include_files)
-      -> void override;
 
   // Adds a replacement for `core_package_dir`.
   auto GetArgReplacements() const -> llvm::StringMap<std::string> override;
@@ -68,19 +61,11 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
-  // Adds a file to the fs.
-  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path) const
-      -> ErrorOr<Success>;
-
   // Controls whether `Run()` includes the prelude.
   auto is_no_prelude() const -> bool {
     return test_name().find("/no_prelude/") != llvm::StringRef::npos;
   }
 
-  // The path of files to be included in the compile command for each test,
-  // relative to the repository root. Commonly used to provide a minimal `Core`
-  // library for the test along with the `--custom-core` flag.
-  llvm::ArrayRef<std::string> include_files_;
   // The toolchain component subdirectory, such as `lex` or `language_server`.
   const llvm::StringRef component_;
   // The toolchain install information.
@@ -108,11 +93,6 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
       component_(GetComponent(test_name)),
       installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
-auto ToolchainFileTest::SetIncludeFiles(
-    llvm::ArrayRef<std::string> include_files) -> void {
-  include_files_ = include_files;
-}
-
 auto ToolchainFileTest::GetArgReplacements() const
     -> llvm::StringMap<std::string> {
   return {{"core_package_dir", installation_.core_package()}};
@@ -128,10 +108,6 @@ auto ToolchainFileTest::Run(
     for (const auto& file : prelude) {
       CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
     }
-  }
-
-  for (llvm::StringRef file_path : include_files_) {
-    CARBON_RETURN_IF_ERROR(AddFile(*fs, file_path));
   }
 
   Driver driver(fs, &installation_, input_stream, &output_stream,
@@ -243,21 +219,6 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
   }
-}
-
-auto ToolchainFileTest::AddFile(llvm::vfs::InMemoryFileSystem& fs,
-                                llvm::StringRef path) const
-    -> ErrorOr<Success> {
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
-      llvm::MemoryBuffer::getFile(path);
-  if (file.getError()) {
-    return ErrorBuilder() << "Getting `" << path
-                          << "`: " << file.getError().message();
-  }
-  if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
-    return ErrorBuilder() << "Duplicate file: `" << path << "`";
-  }
-  return Success();
 }
 
 }  // namespace Carbon::Testing

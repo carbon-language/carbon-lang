@@ -119,7 +119,7 @@ fn Call() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -268,8 +268,8 @@ fn Call() {
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.742) [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [concrete]
-// CHECK:STDOUT:   %.076: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %.bfe: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -330,7 +330,7 @@ fn Call() {
 // CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc9_7.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.076 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.a2e]
+// CHECK:STDOUT:   %impl.elem0: %.bfe = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.a2e]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %Get.call, %impl.elem0
 // CHECK:STDOUT:   %.loc9_7.2: ref %C = temporary %.loc9_7.1, %Get.call
 // CHECK:STDOUT:   %.loc9_7.3: %C = bind_value %.loc9_7.2

@@ -391,8 +391,6 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
       output_lock = std::unique_lock<std::mutex>(output_mutex);
     }
 
-    test_instance->SetIncludeFiles((*test.test_result)->include_files);
-
     if (single_threaded) {
       RunSingleTestHelper(test, *test_instance);
     } else {

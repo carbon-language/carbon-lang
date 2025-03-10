@@ -21,6 +21,14 @@ interface ImplicitAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
+interface BitAnd {
+  fn Op[self: Self](other: Self) -> Self;
+}
+
+impl forall [T:! type] T as BitAnd {
+  fn Op[self: Self](other: Self) -> Self = "type.and";
+}
+
 // --- fail_impl_simple_cycle.carbon
 library "[[@TEST_NAME]]";
 
@@ -46,7 +54,7 @@ fn F() {
   ({} as Point) as (Point as Z);
 }
 
-// --- fail_impl_simple_where_cycle.carbon
+// --- todo_fail_impl_simple_where_cycle.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
@@ -62,10 +70,6 @@ class Point {
 
 fn F() {
   // TODO: A cycle should be found in the `impl forall T as Z` above.
-  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+4]]:21: error: semantics TODO: `impl lookup for a FacetType with no interface (using `where .Self impls ...` instead?)` [SemanticsTodo]
-  // CHECK:STDERR:   ({} as Point) as (Point as Z);
-  // CHECK:STDERR:                     ^~~~~~~~~~
-  // CHECK:STDERR:
   ({} as Point) as (Point as Z);
 }
 
@@ -78,10 +82,6 @@ interface Z {}
 interface Y {}
 
 // This creates a dependency cycle with itself.
-// CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:18: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
-// CHECK:STDERR:                  ^~~~~
-// CHECK:STDERR:
 impl forall [T:! Z & Y] T as Z {}
 
 class Point {
@@ -90,6 +90,13 @@ class Point {
 
 fn F() {
   // TODO: A cycle should be found in the `impl forall T as Z` above.
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:21: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as Point) as (Point as Z);
+  // CHECK:STDERR:                     ^~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-11]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   ({} as Point) as (Point as Z);
 }
 

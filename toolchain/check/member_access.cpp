@@ -193,10 +193,10 @@ static auto PerformImplLookup(
   // An associated entity is always associated with a single interface.
   CARBON_CHECK(interface_type);
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
-  auto witness_id =
+  auto lookup_result =
       LookupImplWitness(context, loc_id, type_const_id,
                         assoc_type.interface_type_id.AsConstantId());
-  if (!witness_id.has_value()) {
+  if (!lookup_result.has_value()) {
     auto interface_type_id = GetInterfaceType(
         context, interface_type->interface_id, interface_type->specific_id);
     if (missing_impl_diagnoser) {
@@ -219,6 +219,19 @@ static auto PerformImplLookup(
     }
     return SemIR::ErrorInst::SingletonInstId;
   }
+
+  // The query facet type given to `LookupImplWitness()` had only a single
+  // interface in it, so the returned witness set will have the same. Convert
+  // from the InstBlockId to the single ImplWitness instruction.
+  auto witness_id = SemIR::InstId::None;
+  if (lookup_result.has_error_value()) {
+    witness_id = SemIR::ErrorInst::SingletonInstId;
+  } else {
+    auto witnesses = context.inst_blocks().Get(lookup_result.inst_block_id());
+    CARBON_CHECK(witnesses.size() == 1);
+    witness_id = witnesses[0];
+  }
+
   return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
                                    interface_type->specific_id, member_id);
 }
@@ -311,19 +324,24 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
             context.facet_types().Get(facet_type->facet_type_id);
         // Witness that `T` implements the `*assoc_interface`.
         SemIR::InstId witness_inst_id = SemIR::InstId::None;
-        for (auto base_interface : facet_type_info.impls_constraints) {
+        // TODO: This assumes `impls_constraints` are in the same order as
+        // `CompleteFacetType::required_interfaces`, and come first in the list.
+        // Once we add support for named constraints there may be more
+        // interfaces in the `CompleteFacetType`, and we will require those
+        // additional interfaces in the `CompleteFacetType` to come after the
+        // ones we see in `impls_constraints` in order to not invalidate the
+        // index computed here.
+        for (auto [index, base_interface] :
+             llvm::enumerate(facet_type_info.impls_constraints)) {
           // Get the witness that `T` implements `base_type_id`.
           if (base_interface == *assoc_interface) {
-            witness_inst_id = GetOrAddInst<SemIR::FacetAccessWitness>(
+            witness_inst_id = GetOrAddInst(
                 context, loc_id,
-                {.type_id = GetSingletonType(
-                     context, SemIR::WitnessType::SingletonInstId),
-                 .facet_value_inst_id = base_id});
-            // TODO: Result will eventually be a facet type witness instead of
-            // an interface witness. Will need to use the index
-            // `*assoc_interface` was found in
-            // `facet_type_info.impls_constraints` to get the correct interface
-            // witness out.
+                SemIR::FacetAccessWitness{
+                    .type_id = GetSingletonType(
+                        context, SemIR::WitnessType::SingletonInstId),
+                    .facet_value_inst_id = base_id,
+                    .index = SemIR::ElementIndex(index)});
             break;
           }
         }
@@ -594,11 +612,14 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                                  .facet_value_inst_id = facet_inst_id});
       auto self_type_id =
           context.types().GetTypeIdForTypeConstantId(self_type_const_id);
-      auto witness_id = GetOrAddInst<SemIR::FacetAccessWitness>(
-          context, loc_id,
-          {.type_id =
-               GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-           .facet_value_inst_id = facet_inst_id});
+      auto witness_id =
+          GetOrAddInst(context, loc_id,
+                       SemIR::FacetAccessWitness{
+                           .type_id = GetSingletonType(
+                               context, SemIR::WitnessType::SingletonInstId),
+                           .facet_value_inst_id = facet_inst_id,
+                           // There's only one interface in this facet type.
+                           .index = SemIR::ElementIndex(0)});
       // Before we can access the element of the witness, we need to figure out
       // the type of that element. It depends on the self type and the specific
       // interface.

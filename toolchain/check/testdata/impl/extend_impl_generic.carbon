@@ -75,7 +75,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %impl_witness.9bf: <witness> = impl_witness (@impl.3b1.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.94c: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.901: %F.type.94c = struct_value () [concrete]
-// CHECK:STDOUT:   %HasF.facet: %HasF.type.b18 = facet_value %C, %impl_witness.9bf [concrete]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type.b18 = facet_value %C, (%impl_witness.9bf) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
@@ -85,8 +85,8 @@ class X(U:! type) {
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
-// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
+// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.ecc, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
@@ -94,7 +94,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Param.val: %Param = struct_value (%int_2.ef8) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.da8: type = fn_type_with_self_type %F.type.7f1, %HasF.facet [concrete]
+// CHECK:STDOUT:   %.75e: type = fn_type_with_self_type %F.type.7f1, %HasF.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -224,7 +224,7 @@ class X(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc15_21.1: %struct_type.x.c96 = struct_literal (%int_2)
-// CHECK:STDOUT:   %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15_21.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_21.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method]
@@ -245,7 +245,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc21_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [concrete = constants.%assoc0.a6b]
 // CHECK:STDOUT:   %F.ref.loc21: %HasF.assoc_type.dc4 = name_ref F, %.loc21_17 [concrete = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %impl.elem0.loc21: %.da8 = impl_witness_access constants.%impl_witness.9bf, element0 [concrete = constants.%F.901]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.75e = impl_witness_access constants.%impl_witness.9bf, element0 [concrete = constants.%F.901]
 // CHECK:STDOUT:   %.loc21_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc21: init %Param = call %impl.elem0.loc21() to %.loc21_20.1
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
@@ -264,7 +264,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc22_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [concrete = constants.%assoc0.a6b]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type.dc4 = name_ref F, %.loc22_17 [concrete = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %impl.elem0.loc22: %.da8 = impl_witness_access constants.%impl_witness.9bf, element0 [concrete = constants.%F.901]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.75e = impl_witness_access constants.%impl_witness.9bf, element0 [concrete = constants.%F.901]
 // CHECK:STDOUT:   %.loc22_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc22: init %Param = call %impl.elem0.loc22() to %.loc22_20.1
 // CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %F.call.loc22
@@ -336,7 +336,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(%U) [symbolic]
 // CHECK:STDOUT:   %F.type.e88: type = fn_type @F.2, @impl(%U) [symbolic]
 // CHECK:STDOUT:   %F.b02: %F.type.e88 = struct_value () [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type.325e65.2 = facet_value %X, %impl_witness [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.325e65.2 = facet_value %X, (%impl_witness) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.441: <witness> = require_complete_type %X [symbolic]

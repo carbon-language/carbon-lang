@@ -31,8 +31,8 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
-// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
+// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.221: <bound method> = bound_method %int_12.6a3, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.dae: <bound method> = bound_method %int_12.6a3, %Convert.specific_fn [concrete]
@@ -44,8 +44,8 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete]
 // CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.14 [concrete]
 // CHECK:STDOUT:   %impl_witness.0f6: <witness> = impl_witness (imports.%Core.import_ref.c15) [concrete]
-// CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value Core.IntLiteral, %impl_witness.0f6 [concrete]
-// CHECK:STDOUT:   %.45d: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value Core.IntLiteral, (%impl_witness.0f6) [concrete]
+// CHECK:STDOUT:   %.690: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [concrete]
 // CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.15 [concrete]
 // CHECK:STDOUT:   %Op.bba: %Op.type.1be = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %Op.bba [concrete]
@@ -100,7 +100,7 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12.6a3]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
 // CHECK:STDOUT:   %.loc11_27.1: %tuple.type.f94 = tuple_literal (%int_12, %int_6)
-// CHECK:STDOUT:   %impl.elem0.loc11_27.1: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_27.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_27.1: <bound method> = bound_method %int_12, %impl.elem0.loc11_27.1 [concrete = constants.%Convert.bound.221]
 // CHECK:STDOUT:   %specific_fn.loc11_27.1: <specific function> = specific_function %impl.elem0.loc11_27.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_27.2: <bound method> = bound_method %int_12, %specific_fn.loc11_27.1 [concrete = constants.%bound_method.dae]
@@ -108,7 +108,7 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %.loc11_27.2: init %i32 = converted %int_12, %int.convert_checked.loc11_27.1 [concrete = constants.%int_12.1e1]
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access file.%a.var, element0
 // CHECK:STDOUT:   %.loc11_27.3: init %i32 = initialize_from %.loc11_27.2 to %tuple.elem0 [concrete = constants.%int_12.1e1]
-// CHECK:STDOUT:   %impl.elem0.loc11_27.2: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc11_27.2: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_27.3: <bound method> = bound_method %int_6, %impl.elem0.loc11_27.2 [concrete = constants.%Convert.bound.ce9]
 // CHECK:STDOUT:   %specific_fn.loc11_27.2: <specific function> = specific_function %impl.elem0.loc11_27.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_27.4: <bound method> = bound_method %int_6, %specific_fn.loc11_27.2 [concrete = constants.%bound_method.efa]
@@ -121,7 +121,7 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_1
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete = constants.%int_10]
-// CHECK:STDOUT:   %impl.elem0.loc16: %.45d = impl_witness_access constants.%impl_witness.0f6, element0 [concrete = constants.%Op.bba]
+// CHECK:STDOUT:   %impl.elem0.loc16: %.690 = impl_witness_access constants.%impl_witness.0f6, element0 [concrete = constants.%Op.bba]
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %int_10, %impl.elem0.loc16 [concrete = constants.%Op.bound]
 // CHECK:STDOUT:   %int.snegate: init Core.IntLiteral = call %bound_method.loc16(%int_10) [concrete = constants.%int_-10]
 // CHECK:STDOUT:   %.loc16_17.1: Core.IntLiteral = value_of_initializer %int.snegate [concrete = constants.%int_-10]

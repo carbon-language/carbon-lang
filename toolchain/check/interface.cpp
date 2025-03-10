@@ -88,11 +88,13 @@ static auto GetSelfFacet(Context& context,
   // TODO: Pass this in instead of creating it here. The caller sometimes
   // already has a facet value.
   auto type_inst_id = context.types().GetInstId(self_type_id);
+  auto witnesses_block_id =
+      context.inst_blocks().AddCanonical({self_witness_id});
   auto self_value_const_id =
       TryEvalInst(context, SemIR::InstId::None,
                   SemIR::FacetValue{.type_id = self_facet_type_id,
                                     .type_inst_id = type_inst_id,
-                                    .witness_inst_id = self_witness_id});
+                                    .witnesses_block_id = witnesses_block_id});
   return context.constant_values().GetInstId(self_value_const_id);
 }
 

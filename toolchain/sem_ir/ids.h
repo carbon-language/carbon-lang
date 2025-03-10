@@ -551,6 +551,51 @@ constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 
+// Contains either an `InstBlockId` value, an error value, or
+// `InstBlockId::None`.
+//
+// Error values are treated as values, though they are not representable as an
+// `InstBlockId` (unlike for the singleton error `InstId`).
+class InstBlockIdOrError {
+ public:
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  InstBlockIdOrError(SemIR::InstBlockId inst_block_id)
+      : InstBlockIdOrError(inst_block_id, false) {}
+
+  static auto MakeError() -> InstBlockIdOrError {
+    return {SemIR::InstBlockId::None, true};
+  }
+
+  // Returns whether this class contains either an InstBlockId (other than
+  // `None`) or an error.
+  //
+  // An error is treated as a value (as same for the singleton error `InstId`),
+  // but it can not actually be materialized as an error value outside of this
+  // class.
+  auto has_value() const -> bool {
+    return has_error_value() || inst_block_id_.has_value();
+  }
+
+  // Returns whether this class contains an error value.
+  auto has_error_value() const -> bool { return error_; }
+
+  // Returns the id of a non-empty inst block, or `None` if `has_value()` is
+  // false.
+  //
+  // Only valid to call if `has_error_value()` is false.
+  auto inst_block_id() const -> SemIR::InstBlockId {
+    CARBON_CHECK(!has_error_value());
+    return inst_block_id_;
+  }
+
+ private:
+  InstBlockIdOrError(SemIR::InstBlockId inst_block_id, bool error)
+      : inst_block_id_(inst_block_id), error_(error) {}
+
+  SemIR::InstBlockId inst_block_id_;
+  bool error_;
+};
+
 // An ID of an instruction block that is referenced absolutely by an
 // instruction. This should only be used as the type of a field within a typed
 // instruction class. See AbsoluteInstId.

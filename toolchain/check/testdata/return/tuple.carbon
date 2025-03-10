@@ -30,8 +30,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
-// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
+// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.75f: <bound method> = bound_method %int_15.447, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.984: <bound method> = bound_method %int_15.447, %Convert.specific_fn [concrete]
@@ -77,7 +77,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %int_15: Core.IntLiteral = int_value 15 [concrete = constants.%int_15.447]
 // CHECK:STDOUT:   %int_35: Core.IntLiteral = int_value 35 [concrete = constants.%int_35.c79]
 // CHECK:STDOUT:   %.loc13_17.1: %tuple.type.f94 = tuple_literal (%int_15, %int_35)
-// CHECK:STDOUT:   %impl.elem0.loc13_17.1: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc13_17.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc13_17.1: <bound method> = bound_method %int_15, %impl.elem0.loc13_17.1 [concrete = constants.%Convert.bound.75f]
 // CHECK:STDOUT:   %specific_fn.loc13_17.1: <specific function> = specific_function %impl.elem0.loc13_17.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_17.2: <bound method> = bound_method %int_15, %specific_fn.loc13_17.1 [concrete = constants.%bound_method.984]
@@ -85,7 +85,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc13_17.2: init %i32 = converted %int_15, %int.convert_checked.loc13_17.1 [concrete = constants.%int_15.7f7]
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc13_17.3: init %i32 = initialize_from %.loc13_17.2 to %tuple.elem0 [concrete = constants.%int_15.7f7]
-// CHECK:STDOUT:   %impl.elem0.loc13_17.2: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc13_17.2: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc13_17.3: <bound method> = bound_method %int_35, %impl.elem0.loc13_17.2 [concrete = constants.%Convert.bound.76a]
 // CHECK:STDOUT:   %specific_fn.loc13_17.2: <specific function> = specific_function %impl.elem0.loc13_17.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_17.4: <bound method> = bound_method %int_35, %specific_fn.loc13_17.2 [concrete = constants.%bound_method.231]

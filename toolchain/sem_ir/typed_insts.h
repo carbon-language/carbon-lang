@@ -655,6 +655,9 @@ struct FacetAccessWitness {
   TypeId type_id;
   // An instruction that evaluates to a `FacetValue`.
   InstId facet_value_inst_id;
+  // An index to a single `ImplWitness` in the witness block of the `FacetValue`
+  // from `facet_value_inst_id`.
+  ElementIndex index;
 };
 
 // A facet type value.
@@ -670,8 +673,8 @@ struct FacetType {
   FacetTypeId facet_type_id;
 };
 
-// A facet value, the value of a facet type. This consists of a type and a
-// witness that it satisfies the facet type.
+// A facet value, the value of a facet type. This consists of a type and a set
+// of witnesses that it satisfies the required interfaces of the facet type.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value", .constant_kind = InstConstantKind::Always});
@@ -680,8 +683,11 @@ struct FacetValue {
   TypeId type_id;
   // The type that you will get if you cast this value to `type`.
   InstId type_inst_id;
-  // An `ImplWitness` instruction (TODO: `FacetTypeWitness`).
-  InstId witness_inst_id;
+  // The set of `ImplWitness` instructions for a `FacetType`. The witnesses are
+  // in the same order as the set of `required_interfaces` in the
+  // `CompleteFacetType` of the `FacetType` from `type_id`, so that an index
+  // from one can be used with the other.
+  InstBlockId witnesses_block_id;
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
@@ -838,7 +844,7 @@ struct ImplWitness {
        // constants.
        .is_lowered = false});
 
-  // Always the builtin witness type.
+  // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
   AbsoluteInstBlockId elements_id;
   SpecificId specific_id;
@@ -1647,7 +1653,7 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of witnesses.
+// The type of `ImplWitness` instructions.
 struct WitnessType {
   static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
       {.ir_name = "<witness>",

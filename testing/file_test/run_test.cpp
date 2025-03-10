@@ -12,6 +12,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "testing/file_test/file_test_base.h"
+#include "testing/file_test/file_system.h"
 #include "testing/file_test/test_file.h"
 
 namespace Carbon::Testing {
@@ -126,6 +127,11 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
       return ErrorBuilder() << "File is repeated: " << split.filename;
     }
   }
+
+  for (llvm::StringRef file_path : test_file.include_files) {
+    CARBON_RETURN_IF_ERROR(AddFile(*fs, file_path));
+  }
+
   // Convert the arguments to StringRef and const char* to match the
   // expectations of PrettyStackTraceProgram and Run.
   llvm::SmallVector<llvm::StringRef> test_args_ref;
