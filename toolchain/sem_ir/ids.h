@@ -434,6 +434,8 @@ struct FloatKind : public IdBase<FloatKind> {
   X(SelfType)                                                    \
   /* The name of `self`. */                                      \
   X(SelfValue)                                                   \
+  /* The name of `_` */                                          \
+  X(Underscore)                                                  \
   /* The name of `vptr`. */                                      \
   X(Vptr)
 

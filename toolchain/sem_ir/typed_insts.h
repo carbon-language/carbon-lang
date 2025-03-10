@@ -336,6 +336,10 @@ struct AnyBindingPattern {
 
   InstKind kind;
   TypeId type_id;
+
+  // The name declared by the binding pattern. `None` indicates that the
+  // pattern has `_` in the name position, and so does not truly declare
+  // a name.
   EntityNameId entity_name_id;
 };
 

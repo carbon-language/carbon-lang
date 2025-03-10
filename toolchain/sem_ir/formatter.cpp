@@ -1208,6 +1208,10 @@ class FormatterImpl {
   auto FormatArg(BoolValue v) -> void { out_ << v; }
 
   auto FormatArg(EntityNameId id) -> void {
+    if (!id.has_value()) {
+      out_ << "_";
+      return;
+    }
     const auto& info = sem_ir_->entity_names().Get(id);
     FormatName(info.name_id);
     if (info.bind_index().has_value()) {

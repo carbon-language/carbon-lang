@@ -33,6 +33,8 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return "Self";
     case NameId::SpecialNameId::SelfValue:
       return "self";
+    case NameId::SpecialNameId::Underscore:
+      return "_";
     case NameId::SpecialNameId::Vptr:
       return for_ir ? "vptr" : "<vptr>";
   }

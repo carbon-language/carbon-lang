@@ -532,8 +532,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case BindingPattern::Kind:
       case SymbolicBindingPattern::Kind: {
         auto inst = untyped_inst.As<AnyBindingPattern>();
-        add_inst_name_id(
-            sem_ir_->entity_names().Get(inst.entity_name_id).name_id, ".patt");
+        auto name_id = NameId::Underscore;
+        if (inst.entity_name_id.has_value()) {
+          name_id = sem_ir_->entity_names().Get(inst.entity_name_id).name_id;
+        }
+        add_inst_name_id(name_id, ".patt");
         continue;
       }
       case CARBON_KIND(BoolLiteral inst): {
