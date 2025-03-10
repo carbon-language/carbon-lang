@@ -42,6 +42,7 @@ struct CompileOptions {
 
   bool asm_output = false;
   bool force_obj_output = false;
+  bool custom_core = false;
   bool dump_shared_values = false;
   bool dump_tokens = false;
   bool omit_file_boundary_tokens = false;
@@ -58,7 +59,6 @@ struct CompileOptions {
   bool prelude_import = false;
   bool include_debug_info = true;
 
-  llvm::StringRef prelude_path_for_testing;
   llvm::StringRef exclude_dump_file_prefix;
 };
 

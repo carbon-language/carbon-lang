@@ -492,18 +492,14 @@ static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
   return true;
 }
 
-static auto TryConsumeMinimalPrelude(
-    llvm::StringRef line, llvm::StringRef line_trimmed,
-    std::optional<std::string>* minimal_prelude_path) -> ErrorOr<bool> {
-  if (!line_trimmed.consume_front("// PRELUDE: ")) {
+static auto TryConsumeIncludeFile(llvm::StringRef line_trimmed,
+                                  llvm::SmallVector<std::string>* include_files)
+    -> ErrorOr<bool> {
+  if (!line_trimmed.consume_front("// INCLUDE-FILE: ")) {
     return false;
   }
 
-  if (minimal_prelude_path->has_value()) {
-    return ErrorBuilder() << "PRELUDE specified multiple tmies: " << line.str();
-  }
-
-  minimal_prelude_path->emplace(line_trimmed);
+  include_files->push_back(std::string(line_trimmed));
   return true;
 }
 
@@ -614,8 +610,8 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
       continue;
     }
     CARBON_ASSIGN_OR_RETURN(
-        is_consumed, TryConsumeMinimalPrelude(line, line_trimmed,
-                                              &test_file.minimal_prelude_path));
+        is_consumed,
+        TryConsumeIncludeFile(line_trimmed, &test_file.include_files));
     if (is_consumed) {
       continue;
     }

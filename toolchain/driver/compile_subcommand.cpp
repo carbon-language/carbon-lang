@@ -227,15 +227,23 @@ Whether to use the implicit prelude import. Enabled by default.
         arg_b.Default(true);
         arg_b.Set(&prelude_import);
       });
-  b.AddStringOption(
+  b.AddFlag(
       {
-          .name = "prelude-path-for-testing",
-          .value_name = "PRELUDE_PATH_FOR_TESTING",
+          .name = "custom-core",
+          .value_name = "CUSTOM_CORE",
           .help = R"""(
-Path to the prelude. Uses the prelude shipped with the toolchain by default.
+Whether to use a custom Core package, the files for which must all be included
+in the compile command line.
+
+The prelude library in the Core package is imported automatically. By default,
+the Core package shipped with the toolchain is used, and its files do not need
+to be specified in the compile command line.
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&prelude_path_for_testing); });
+      [&](auto& arg_b) {
+        arg_b.Default(false);
+        arg_b.Set(&custom_core);
+      });
   b.AddStringOption(
       {
           .name = "exclude-dump-file-prefix",
@@ -748,12 +756,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Replace this with a search for library api files in a
   // package-specific search path based on the library name.
   llvm::SmallVector<std::string> prelude;
-  if (options_.prelude_import &&
+  if (options_.prelude_import && !options_.custom_core &&
       options_.phase >= CompileOptions::Phase::Check) {
-    if (!options_.prelude_path_for_testing.empty()) {
-      prelude.push_back(std::string(options_.prelude_path_for_testing));
-    } else if (auto find = driver_env.installation->ReadPreludeManifest();
-               find.ok()) {
+    if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
       // TODO: Change ReadPreludeManifest to produce diagnostics.

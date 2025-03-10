@@ -28,9 +28,13 @@ class ToolchainFileTest : public FileTestBase {
   explicit ToolchainFileTest(llvm::StringRef exe_path,
                              llvm::StringRef test_name);
 
-  // Sets up the minimal prelude path, which will replace the production
-  // prelude. This is relative to the repository root.
-  auto SetPreludePath(llvm::StringRef minimal_prelude_path) -> void override;
+  // Set up the paths to the files to be included in the test, with each path
+  // being relative to the repository root. The files named here are added to
+  // the compile command for each test, making any package they export available
+  // to the tests. In particular, they can provide a customized `Core` package
+  // for the test if the command line args include `--custom-core`.
+  auto SetIncludeFiles(llvm::ArrayRef<std::string> include_files)
+      -> void override;
 
   // Adds a replacement for `core_package_dir`.
   auto GetArgReplacements() const -> llvm::StringMap<std::string> override;
@@ -73,9 +77,10 @@ class ToolchainFileTest : public FileTestBase {
     return test_name().find("/no_prelude/") != llvm::StringRef::npos;
   }
 
-  // The path of the minimal prelude for the test, if there is one, relative to
-  // the repository root.
-  std::optional<llvm::StringRef> minimal_prelude_path_;
+  // The path of files to be included in the compile command for each test,
+  // relative to the repository root. Commonly used to provide a minimal `Core`
+  // library for the test along with the `--custom-core` flag.
+  llvm::ArrayRef<std::string> include_files_;
   // The toolchain component subdirectory, such as `lex` or `language_server`.
   const llvm::StringRef component_;
   // The toolchain install information.
@@ -103,9 +108,9 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
       component_(GetComponent(test_name)),
       installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
-auto ToolchainFileTest::SetPreludePath(llvm::StringRef minimal_prelude_path)
-    -> void {
-  minimal_prelude_path_ = minimal_prelude_path;
+auto ToolchainFileTest::SetIncludeFiles(
+    llvm::ArrayRef<std::string> include_files) -> void {
+  include_files_ = include_files;
 }
 
 auto ToolchainFileTest::GetArgReplacements() const
@@ -118,20 +123,15 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
-  llvm::SmallVector<std::string> prelude;
+  CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
   if (!is_no_prelude()) {
-    if (minimal_prelude_path_.has_value()) {
-      return ErrorBuilder()
-             << "PRELUDE may only be specified in `no_prelude` tests";
-    }
-
-    CARBON_ASSIGN_OR_RETURN(prelude, installation_.ReadPreludeManifest());
     for (const auto& file : prelude) {
       CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
     }
-  } else if (minimal_prelude_path_) {
-    prelude.push_back(std::string(*minimal_prelude_path_));
-    CARBON_RETURN_IF_ERROR(AddFile(*fs, *minimal_prelude_path_));
+  }
+
+  for (llvm::StringRef file_path : include_files_) {
+    CARBON_RETURN_IF_ERROR(AddFile(*fs, file_path));
   }
 
   Driver driver(fs, &installation_, input_stream, &output_stream,
@@ -194,13 +194,8 @@ auto ToolchainFileTest::GetDefaultArgs() const
   // For `lex` and `parse`, we don't need to import the prelude; exclude it to
   // focus errors. In other phases we only do this for explicit "no_prelude"
   // tests.
-  if (component_ == "lex" || component_ == "parse" ||
-      (is_no_prelude() && !minimal_prelude_path_)) {
+  if (component_ == "lex" || component_ == "parse" || is_no_prelude()) {
     args.push_back("--no-prelude-import");
-  }
-  if (minimal_prelude_path_) {
-    args.push_back("--prelude-path-for-testing=" +
-                   std::string(*minimal_prelude_path_));
   }
 
   args.insert(

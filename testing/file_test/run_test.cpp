@@ -93,6 +93,9 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
     test_file.test_args = test_base.GetDefaultArgs();
     test_file.test_args.append(test_file.extra_args);
   }
+  for (const auto& include_file : test_file.include_files) {
+    test_file.test_args.push_back(include_file);
+  }
   CARBON_RETURN_IF_ERROR(DoArgReplacements(test_file.test_args,
                                            test_base.GetArgReplacements(),
                                            test_file.file_splits));

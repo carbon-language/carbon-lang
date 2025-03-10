@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// PRELUDE: toolchain/testing/min_prelude/facet_types.carbon
-// EXTRA-ARGS: --no-dump-sem-ir
+// INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
+// EXTRA-ARGS: --no-dump-sem-ir --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/facet/no_prelude/combine.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/facet/min_prelude/combine.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/no_prelude/combine.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/min_prelude/combine.carbon
 
 // --- fail_combine_with_non_facet_type.carbon
 library "[[@TEST_NAME]]";
