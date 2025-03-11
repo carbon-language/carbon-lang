@@ -114,14 +114,11 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
+          // TODO: Refactor the code so that we can call the "no instance
+          // binding" case from `PerformCompoundMemberAccess` as a separate
+          // function (`GetAssociatedValue`).
           SemIR::InstId result_inst_id = PerformCompoundMemberAccess(
-              context, node_id, interface.self_param_id, target_inst_id,
-              [&]() -> DiagnosticBuilder {
-                // TODO: Find test that triggers this code path.
-                CARBON_FATAL(
-                    "Missing impl when adding `Self.` to associated constant "
-                    "in interface");
-              });
+              context, node_id, interface.self_param_id, target_inst_id);
           non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
               result_inst_id, non_lexical_result.scope_result.access_kind());
         }
