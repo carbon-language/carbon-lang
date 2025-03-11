@@ -204,7 +204,7 @@ Supported comment markers are:
 
     This can be used to provide a minimal `Core` package (and `prelude` library)
     in toolchain tests. See the
-    [toolchain docs](../../toolchain/docs/adding_features.md) for how.
+    [toolchain docs](/toolchain/docs/adding_features.md) for how.
 
 -   ```
     // SET-CAPTURE-CONSOLE-OUTPUT
