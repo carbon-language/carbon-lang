@@ -47,6 +47,7 @@ cc_library(
         "subst.cpp",
         "type.cpp",
         "type_completion.cpp",
+        "type_structure.cpp",
     ],
     hdrs = [
         "call.h",
@@ -87,6 +88,7 @@ cc_library(
         "subst.h",
         "type.h",
         "type_completion.h",
+        "type_structure.h",
     ],
     deps = [
         ":node_stack",

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/impl_lookup.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -11,6 +12,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
@@ -300,10 +302,16 @@ static auto FindWitnessInFacet(
   return SemIR::InstId::None;
 }
 
+// Finds the best impl among all available impls that provides the
+// `specific_interface` for the type in `type_const_id`, and returns a witness
+// for that impl. Returns `None` if no match was found.
 static auto FindWitnessInImpls(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     const SemIR::SpecificInterface& specific_interface) -> SemIR::InstId {
   auto& stack = context.impl_lookup_stack();
+
+  auto best_type_structure = TypeStructure::None;
+
   // TODO: Build this candidate list by matching against type structures to
   // narrow it down.
   llvm::SmallVector<std::pair<SemIR::ImplId, SemIR::InstId>> candidate_impl_ids;
@@ -346,12 +354,17 @@ static auto FindWitnessInImpls(
     // be imported, invalidating any pointer into `context.impls()`.
     auto result_witness_id = GetWitnessIdForImpl(context, loc_id, type_const_id,
                                                  specific_interface, impl_id);
-    if (result_witness_id.has_value()) {
-      // We found a matching impl; don't keep looking for this interface.
-      return result_witness_id;
+    // TODO: Allow Carbon code to provide a priority ordering explicitly. For
+    // now they have all the same priority, so the priority is the order in
+    // which they are found in code. Since the matching algorithm here only
+    // takes _better_ matches over previous ones.
+    auto result_type_structure = BuildTypeStructure(
+        context, context.impls().Get(impl_id), result_witness_id);
+    if (result_type_structure > best_type_structure) {
+      best_type_structure = result_type_structure;
     }
   }
-  return SemIR::InstId::None;
+  return best_type_structure.witness_id();
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
