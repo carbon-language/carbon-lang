@@ -141,7 +141,7 @@ class NodeStack {
     Entry back = PopEntry<SemIR::InstId>();
     RequireIdKind(RequiredParseKind, Id::Kind::None);
     RequireParseKind<RequiredParseKind>(back.node_id);
-    return Parse::NodeIdForKind<RequiredParseKind>(back.node_id);
+    return Parse::NodeIdForKind<RequiredParseKind>::UnsafeMake(back.node_id);
   }
 
   // Pops the top of the stack if it is the given kind, and returns the
@@ -192,7 +192,7 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithNodeId() -> auto {
     auto id = Peek<RequiredParseKind>();
-    Parse::NodeIdForKind<RequiredParseKind> node_id(
+    auto node_id = Parse::NodeIdForKind<RequiredParseKind>::UnsafeMake(
         stack_.pop_back_val().node_id);
     return std::make_pair(node_id, id);
   }
@@ -201,7 +201,7 @@ class NodeStack {
   template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PopWithNodeId() -> auto {
     auto id = Peek<RequiredParseCategory>();
-    Parse::NodeIdInCategory<RequiredParseCategory> node_id(
+    auto node_id = Parse::NodeIdInCategory<RequiredParseCategory>::UnsafeMake(
         stack_.pop_back_val().node_id);
     return std::make_pair(node_id, id);
   }

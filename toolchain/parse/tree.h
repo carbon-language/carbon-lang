@@ -145,7 +145,11 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto TryAs(NodeId n) const -> std::optional<T> {
     CARBON_DCHECK(n.has_value());
-    return NodeIdConverter<T>::TryAs(n, node_kind(n));
+    if (ConvertTo<T>::AllowedFor(node_kind(n))) {
+      return T::UnsafeMake(n);
+    } else {
+      return std::nullopt;
+    }
   }
 
   // Converts to `n` to a constrained node id `T`. Checks that the
@@ -186,7 +190,7 @@ class Tree : public Printable<Tree> {
   friend class TypedNodesTestPeer;
 
   template <typename T>
-  struct NodeIdConverter;
+  struct ConvertTo;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
@@ -319,35 +323,21 @@ class Tree::PostorderIterator
 };
 
 template <const NodeKind& K>
-struct Tree::NodeIdConverter<NodeIdForKind<K>> {
-  static auto TryAs(NodeId n, NodeKind kind)
-      -> std::optional<NodeIdForKind<K>> {
-    if (kind != K) {
-      return std::nullopt;
-    }
-    return NodeIdForKind<K>(n);
-  }
+struct Tree::ConvertTo<NodeIdForKind<K>> {
+  static auto AllowedFor(NodeKind kind) -> bool { return kind == K; }
 };
 
 template <NodeCategory::RawEnumType C>
-struct Tree::NodeIdConverter<NodeIdInCategory<C>> {
-  static auto TryAs(NodeId n, NodeKind kind)
-      -> std::optional<NodeIdInCategory<C>> {
-    if (!kind.category().HasAnyOf(C)) {
-      return std::nullopt;
-    }
-    return NodeIdInCategory<C>(n);
+struct Tree::ConvertTo<NodeIdInCategory<C>> {
+  static auto AllowedFor(NodeKind kind) -> bool {
+    return kind.category().HasAnyOf(C);
   }
 };
 
 template <typename... T>
-struct Tree::NodeIdConverter<NodeIdOneOf<T...>> {
-  static auto TryAs(NodeId n, NodeKind kind)
-      -> std::optional<NodeIdOneOf<T...>> {
-    if (((kind != T::Kind) && ...)) {
-      return std::nullopt;
-    }
-    return NodeIdOneOf<T...>::UnsafeMake(n);
+struct Tree::ConvertTo<NodeIdOneOf<T...>> {
+  static auto AllowedFor(NodeKind kind) -> bool {
+    return ((kind == T::Kind) || ...);
   }
 };
 
