@@ -348,7 +348,7 @@ fn G() {
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, (constants.%impl_witness) [concrete = constants.%Generic.facet]
 // CHECK:STDOUT:   %.loc20: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet]
-// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, %.loc20) [concrete = constants.%CallGenericMethod.specific_fn.934]
+// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%CallGenericMethod.specific_fn.934]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -381,7 +381,7 @@ fn G() {
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, (constants.%impl_witness) [concrete = constants.%Generic.facet]
 // CHECK:STDOUT:   %.loc28: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet]
-// CHECK:STDOUT:   %PassThroughToGenericMethod.specific_fn: <specific function> = specific_function %PassThroughToGenericMethod.ref, @PassThroughToGenericMethod(constants.%GenericParam, %.loc28) [concrete = constants.%PassThroughToGenericMethod.specific_fn]
+// CHECK:STDOUT:   %PassThroughToGenericMethod.specific_fn: <specific function> = specific_function %PassThroughToGenericMethod.ref, @PassThroughToGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%PassThroughToGenericMethod.specific_fn]
 // CHECK:STDOUT:   %PassThroughToGenericMethod.call: init %empty_tuple.type = call %PassThroughToGenericMethod.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -427,7 +427,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc17_22.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, @G.%.loc20) {
+// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
 // CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc17_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc17_45.2 => constants.%Generic.type.769
@@ -435,14 +435,6 @@ fn G() {
 // CHECK:STDOUT:   %U.patt.loc17_32.2 => constants.%Generic.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
-// CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam
-// CHECK:STDOUT:   %T.patt.loc17_22.2 => constants.%GenericParam
-// CHECK:STDOUT:   %Generic.type.loc17_45.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc17_32.2 => constants.%Generic.facet
-// CHECK:STDOUT:   %U.patt.loc17_32.2 => constants.%Generic.facet
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%T, constants.%U) {
@@ -457,7 +449,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(@PassThroughToGenericMethod.%T.loc23_31.2, @PassThroughToGenericMethod.%U.loc23_41.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%GenericParam, @H.%.loc28) {
+// CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
 // CHECK:STDOUT:   %T.loc23_31.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc23_31.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc23_54.2 => constants.%Generic.type.769
@@ -466,14 +458,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn.loc24_3.2 => constants.%CallGenericMethod.specific_fn.934
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @PassThroughToGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
-// CHECK:STDOUT:   %T.loc23_31.2 => constants.%GenericParam
-// CHECK:STDOUT:   %T.patt.loc23_31.2 => constants.%GenericParam
-// CHECK:STDOUT:   %Generic.type.loc23_54.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc23_41.2 => constants.%Generic.facet
-// CHECK:STDOUT:   %U.patt.loc23_41.2 => constants.%Generic.facet
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_facet_type_from_implicit_param.carbon
@@ -652,7 +636,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc20_38.1: ref %GenericParam = converted %.loc20_36.1, %.loc20_36.4
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, (constants.%impl_witness) [concrete = constants.%Generic.facet]
 // CHECK:STDOUT:   %.loc20_53: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet]
-// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, %.loc20_53) [concrete = constants.%CallGenericMethod.specific_fn]
+// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%CallGenericMethod.specific_fn]
 // CHECK:STDOUT:   %.loc20_38.2: %GenericParam = bind_value %.loc20_38.1
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc20_38.2)
 // CHECK:STDOUT:   return
@@ -697,7 +681,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc17_22.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, @G.%.loc20_53) {
+// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
 // CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc17_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc17_45.2 => constants.%Generic.type.769
@@ -706,13 +690,5 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
-// CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam
-// CHECK:STDOUT:   %T.patt.loc17_22.2 => constants.%GenericParam
-// CHECK:STDOUT:   %Generic.type.loc17_45.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc17_32.2 => constants.%Generic.facet
-// CHECK:STDOUT:   %U.patt.loc17_32.2 => constants.%Generic.facet
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -432,7 +432,7 @@ fn B() {
 // CHECK:STDOUT:   %.loc22_44.1: ref %GenericParam = converted %.loc22_42.1, %.loc22_42.4
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.769 = facet_value constants.%ImplsGeneric, (constants.%impl_witness) [concrete = constants.%Generic.facet.8bd]
 // CHECK:STDOUT:   %.loc22_59: %Generic.type.769 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet.8bd]
-// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, %.loc22_59) [concrete = constants.%CallGenericMethod.specific_fn]
+// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet.8bd) [concrete = constants.%CallGenericMethod.specific_fn]
 // CHECK:STDOUT:   %.loc22_24.2: %ImplsGeneric = bind_value %.loc22_24.1
 // CHECK:STDOUT:   %.loc22_44.2: %GenericParam = bind_value %.loc22_44.1
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc22_24.2, %.loc22_44.2)
@@ -491,7 +491,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(@CallGenericMethod.%T.loc17_22.2, @CallGenericMethod.%Generic.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, @G.%.loc22_59) {
+// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet.8bd) {
 // CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %T.patt.loc17_22.2 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc17_45.2 => constants.%Generic.type.769
@@ -511,15 +511,6 @@ fn B() {
 // CHECK:STDOUT:   %.loc18_4.3 => constants.%.1eb
 // CHECK:STDOUT:   %impl.elem0.loc18_4.2 => constants.%F.a56
 // CHECK:STDOUT:   %specific_fn.loc18_4.2 => constants.%F.specific_fn
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet.8bd) {
-// CHECK:STDOUT:   %T.loc17_22.2 => constants.%GenericParam
-// CHECK:STDOUT:   %T.patt.loc17_22.2 => constants.%GenericParam
-// CHECK:STDOUT:   %Generic.type.loc17_45.2 => constants.%Generic.type.769
-// CHECK:STDOUT:   %U.loc17_32.2 => constants.%Generic.facet.8bd
-// CHECK:STDOUT:   %U.patt.loc17_32.2 => constants.%Generic.facet.8bd
-// CHECK:STDOUT:   %U.as_type.loc17_51.2 => constants.%ImplsGeneric
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- multiple_generic_params_one_fixed_one_deduced.carbon

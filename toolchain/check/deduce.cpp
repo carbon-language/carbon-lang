@@ -587,8 +587,10 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       // Replace the deduced arg with its value converted to the parameter
       // type. The conversion of the argument type must produce a constant value
       // to be used in deduction.
-      if (context().constant_values().Get(converted_arg_id).is_constant()) {
-        deduced_arg_id = converted_arg_id;
+      if (auto const_inst_id =
+              context().constant_values().GetConstantInstId(converted_arg_id);
+          const_inst_id.has_value()) {
+        deduced_arg_id = const_inst_id;
       } else {
         if (diagnose_) {
           CARBON_DIAGNOSTIC(RuntimeConversionDuringCompTimeDeduction, Error,

@@ -452,7 +452,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc23_76.7: %Animal.type = converted constants.%T.as_type.2ad, constants.%T.fd4 [symbolic = %T.loc23_17.2 (constants.%T.fd4)]
 // CHECK:STDOUT:     %Eats.facet.loc23_76.1: @HandleAnimal.%Eats.type (%Eats.type.f54c3d.2) = facet_value constants.%T.as_type.2ad, (constants.%impl_witness.c7c36b.2) [symbolic = %Eats.facet.loc23_76.2 (constants.%Eats.facet.97e)]
 // CHECK:STDOUT:     %.loc23_76.8: @HandleAnimal.%Eats.type (%Eats.type.f54c3d.2) = converted constants.%T.as_type.2ad, %Eats.facet.loc23_76.1 [symbolic = %Eats.facet.loc23_76.2 (constants.%Eats.facet.97e)]
-// CHECK:STDOUT:     %Feed.specific_fn.loc23_64.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Food.5fe, %.loc23_76.8) [symbolic = %Feed.specific_fn.loc23_64.2 (constants.%Feed.specific_fn.387)]
+// CHECK:STDOUT:     %Feed.specific_fn.loc23_64.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Food.5fe, constants.%Eats.facet.97e) [symbolic = %Feed.specific_fn.loc23_64.2 (constants.%Feed.specific_fn.387)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc23_64.1(%a.ref, %food.ref)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -569,7 +569,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Feed(constants.%Food.5fe, @HandleAnimal.%.loc23_76.8) {
+// CHECK:STDOUT: specific @Feed(constants.%Food.5fe, constants.%Eats.facet.97e) {
 // CHECK:STDOUT:   %Food.loc22_9.2 => constants.%Food.5fe
 // CHECK:STDOUT:   %Food.patt.loc22_9.2 => constants.%Food.5fe
 // CHECK:STDOUT:   %Food.as_type.loc22_37.2 => constants.%Food.as_type.fae
@@ -581,16 +581,6 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc22_41 => constants.%require_complete.234
 // CHECK:STDOUT:   %require_complete.loc22_50 => constants.%require_complete.444
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Feed(constants.%Food.5fe, constants.%Eats.facet.97e) {
-// CHECK:STDOUT:   %Food.loc22_9.2 => constants.%Food.5fe
-// CHECK:STDOUT:   %Food.patt.loc22_9.2 => constants.%Food.5fe
-// CHECK:STDOUT:   %Food.as_type.loc22_37.2 => constants.%Food.as_type.fae
-// CHECK:STDOUT:   %Eats.type.loc22_37.2 => constants.%Eats.type.f54c3d.2
-// CHECK:STDOUT:   %T.loc22_24.2 => constants.%Eats.facet.97e
-// CHECK:STDOUT:   %T.patt.loc22_24.2 => constants.%Eats.facet.97e
-// CHECK:STDOUT:   %T.as_type.loc22_43.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(@HandleAnimal.%Food.as_type.loc23_56.2) {}
