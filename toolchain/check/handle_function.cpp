@@ -126,8 +126,7 @@ static auto DiagnoseModifiers(Context& context,
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
     CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
     context.emitter().Build(node_id, VirtualWithoutSelf).Emit();
-    // TODO: Remove the incorrect modifier.
-    // introducer.modifier_set.Remove(KeywordModifierSet::Method);
+    introducer.modifier_set.Remove(KeywordModifierSet::Method);
   }
 }
 
