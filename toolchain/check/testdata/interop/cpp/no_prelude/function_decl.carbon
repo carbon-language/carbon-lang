@@ -154,7 +154,7 @@ fn F() {
 
 // --- non_void_return_function_decl.h
 
-int foo();
+bool foo();
 
 // --- fail_import_non_void_return_function_decl.carbon
 
@@ -163,7 +163,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_void_return_function_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Function with non-void return type` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Function return type` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]

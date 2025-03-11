@@ -19,6 +19,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -210,8 +211,10 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Function with parameters");
     return SemIR::ErrorInst::SingletonInstId;
   }
-  if (!clang_decl->getReturnType()->isVoidType()) {
-    context.TODO(loc_id, "Unsupported: Function with non-void return type");
+
+  if (!clang_decl->getReturnType()->isVoidType() &&
+      clang_decl->getReturnType().getAsString() != "int") {
+    context.TODO(loc_id, "Unsupported: Function return type");
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -219,6 +222,25 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::TypeId::None, SemIR::FunctionId::None, SemIR::InstBlockId::Empty};
   auto decl_id = AddPlaceholderInst(
       context, SemIR::LocIdAndInst(Parse::NodeId::None, function_decl));
+
+  auto return_slot_pattern_id = SemIR::InstId::None;
+  if (clang_decl->getReturnType().getAsString() == "int") {
+    auto size_id = context.ints().Add(32);
+    auto type_id = MakeIntType(context, Parse::NodeId::None,
+                               SemIR::IntKind::Signed, size_id);
+    auto type_inst_id = MakeIntTypeLiteral(context, Parse::NodeId::None,
+                                           SemIR::IntKind::Signed, size_id);
+
+    return_slot_pattern_id = AddInstInNoBlock(
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
+                     {.type_id = type_id, .type_inst_id = type_inst_id})));
+    auto param_pattern_id = AddInstInNoBlock(
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
+                     {.type_id = type_id,
+                      .subpattern_id = return_slot_pattern_id,
+                      .index = SemIR::CallParamIndex::None})));
+    return_slot_pattern_id = param_pattern_id;
+  }
 
   auto function_info = SemIR::Function{
       {.name_id = name_id,
@@ -235,7 +257,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .non_owning_decl_id = SemIR::InstId::None,
        .first_owning_decl_id = decl_id,
        .definition_id = SemIR::InstId::None},
-      {.return_slot_pattern_id = SemIR::InstId::None,
+      {.return_slot_pattern_id = return_slot_pattern_id,
        .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
        .self_param_id = SemIR::InstId::None}};
 
