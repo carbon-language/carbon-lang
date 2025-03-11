@@ -328,8 +328,7 @@ struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName>
-      name;
+  AnyRuntimeBindingPatternName name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -339,8 +338,7 @@ struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName>
-      name;
+  AnyRuntimeBindingPatternName name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -351,8 +349,7 @@ struct TemplateBindingName {
       NodeKind::TemplateBindingName.Define({.child_count = 1});
 
   Lex::TemplateTokenIndex token;
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName>
-      name;
+  AnyRuntimeBindingPatternName name;
 };
 
 // `name:! Type`
@@ -360,6 +357,7 @@ struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
   NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
               TemplateBindingName>
       name;

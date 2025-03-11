@@ -25,6 +25,7 @@ auto HandleParseNode(Context& context, Parse::UnderscoreNameId node_id)
   return true;
 }
 
+// TODO: make this function shorter by factoring pieces out.
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     Parse::NodeKind node_kind) -> bool {
   // TODO: split this into smaller, more focused functions.

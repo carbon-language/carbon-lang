@@ -110,6 +110,9 @@ using AnyInterfaceDeclId =
 using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDeclId>;
 using AnyPointerDeferenceExprId =
     NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
+using AnyRuntimeBindingPatternName =
+    NodeIdOneOf<IdentifierNameNotBeforeParamsId, SelfValueNameId,
+                UnderscoreNameId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>
