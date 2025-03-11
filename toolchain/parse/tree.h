@@ -156,7 +156,9 @@ class Tree : public Printable<Tree> {
   // `node_kind(n)` matches the constraint on `T`.
   template <typename T>
   auto As(NodeId n) const -> T {
-    return *TryAs<T>(n);
+    CARBON_DCHECK(n.has_value());
+    CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
+    return T(n);
   }
 
   auto packaging_decl() const -> const std::optional<PackagingDecl>& {
