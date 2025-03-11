@@ -1163,8 +1163,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.as_wit.iface0.e75: <witness> = facet_access_witness %.Self.9aa, element0 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.a31: type = impl_witness_access %.Self.as_wit.iface0.e75, element0 [symbolic_self]
 // CHECK:STDOUT:   %N_where.type: type = facet_type <@N where %impl.elem0.a31 = %empty_struct_type> [concrete]
-// CHECK:STDOUT:   %T.patt.68f: %N_where.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.8dd: %N_where.type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NestedRewrite.type: type = fn_type @NestedRewrite [concrete]
@@ -1199,7 +1199,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Main.import_ref.169 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.020 = import_ref Main//equal_constraint, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.P = import_ref Main//equal_constraint, P, unloaded
-// CHECK:STDOUT:   %Main.import_ref.3bc: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T.8dd)]
+// CHECK:STDOUT:   %Main.import_ref.3bc: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b61 = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.91a = import_ref Main//nested_rewrites, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.55d = import_ref Main//nested_rewrites, loc6_8, unloaded
@@ -1250,8 +1250,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.1(imports.%Main.import_ref.3bc: %N_where.type) [from "equal_constraint.carbon"] {
-// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8dd)]
-// CHECK:STDOUT:   %T.patt.2: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt.68f)]
+// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt.2: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.1: %N_where.type);
 // CHECK:STDOUT: }
@@ -1263,9 +1263,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   fn(%D.patt.1: %A_where.type.248);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal.1(constants.%T.8dd) {
-// CHECK:STDOUT:   %T => constants.%T.8dd
-// CHECK:STDOUT:   %T.patt.2 => constants.%T.8dd
+// CHECK:STDOUT: specific @Equal.1(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
