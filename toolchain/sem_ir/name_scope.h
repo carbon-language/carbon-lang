@@ -237,6 +237,8 @@ class NameScope : public Printable<NameScope> {
     return is_interface_definition_;
   }
 
+  // TODO: Figure out a better way of setting this and is_cpp_scope() than
+  // calling a function immediately after construction.
   auto set_is_interface_definition() -> void {
     is_interface_definition_ = true;
   }
