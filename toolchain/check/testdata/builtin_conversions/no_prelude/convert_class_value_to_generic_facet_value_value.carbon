@@ -72,13 +72,16 @@ impl forall [T:! type] C as I(T, ()) {}
 fn A[T:! I({}, {})](t: T) {}
 
 fn B() {
-  // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `I({}, {})` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `type` to `I({}, {})` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   A({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+10]]:3: note: expected type implementing `I({}, {})`; found type `C` [ConversionFailureTypeToFacetNote]
   // CHECK:STDERR:   A({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(I({}, {}))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   A({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn A[T:! I({}, {})](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -99,13 +102,16 @@ impl forall [T:! type] C(T, ()) as I {}
 fn A[T:! I](t: T) {}
 
 fn B() {
-  // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `I` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `type` to `I` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   A({} as C({}, {}));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+10]]:3: note: expected type implementing `I`; found type `C({}, {})` [ConversionFailureTypeToFacetNote]
   // CHECK:STDERR:   A({} as C({}, {}));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   A({} as C({}, {}));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn A[T:! I](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -947,13 +953,13 @@ fn B() {
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc24_6.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc27_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc24_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc24_6.3: init %C = class_init (), %.loc24_6.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc24_6.4: ref %C = temporary %.loc24_6.2, %.loc24_6.3
-// CHECK:STDOUT:   %.loc24_8: ref %C = converted %.loc24_6.1, %.loc24_6.4
-// CHECK:STDOUT:   %.loc24_12: %I.type.906 = converted constants.%C, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc27_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc27_6.3: init %C = class_init (), %.loc27_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc27_6.4: ref %C = temporary %.loc27_6.2, %.loc27_6.3
+// CHECK:STDOUT:   %.loc27_8: ref %C = converted %.loc27_6.1, %.loc27_6.4
+// CHECK:STDOUT:   %.loc27_12: %I.type.906 = converted constants.%C, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1246,18 +1252,18 @@ fn B() {
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc24_6.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc27_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:   %.loc24_14: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc24_18: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc24_19.1: type = converted %.loc24_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc24_19.2: type = converted %.loc24_18, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc27_14: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc27_18: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc27_19.1: type = converted %.loc27_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc27_19.2: type = converted %.loc27_18, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%empty_struct_type, constants.%empty_struct_type) [concrete = constants.%C.c74]
-// CHECK:STDOUT:   %.loc24_6.2: ref %C.c74 = temporary_storage
-// CHECK:STDOUT:   %.loc24_6.3: init %C.c74 = class_init (), %.loc24_6.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc24_6.4: ref %C.c74 = temporary %.loc24_6.2, %.loc24_6.3
-// CHECK:STDOUT:   %.loc24_8: ref %C.c74 = converted %.loc24_6.1, %.loc24_6.4
-// CHECK:STDOUT:   %.loc24_20: %I.type = converted constants.%C.c74, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc27_6.2: ref %C.c74 = temporary_storage
+// CHECK:STDOUT:   %.loc27_6.3: init %C.c74 = class_init (), %.loc27_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc27_6.4: ref %C.c74 = temporary %.loc27_6.2, %.loc27_6.3
+// CHECK:STDOUT:   %.loc27_8: ref %C.c74 = converted %.loc27_6.1, %.loc27_6.4
+// CHECK:STDOUT:   %.loc27_20: %I.type = converted constants.%C.c74, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

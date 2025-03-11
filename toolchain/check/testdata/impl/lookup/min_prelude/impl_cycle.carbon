@@ -124,7 +124,7 @@ impl C as ComparableWith(D) {}
 fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+23]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as C, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-13]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
@@ -134,13 +134,16 @@ fn F() {
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `ComparableWith(C)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `type` to `ComparableWith(C)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   Compare({} as C, {} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: note: expected type implementing `ComparableWith(C)`; found type `C` [ConversionFailureTypeToFacetNote]
   // CHECK:STDERR:   Compare({} as C, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(C))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Compare({} as C, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-22]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -149,13 +152,13 @@ fn F() {
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+13]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as C, {} as D);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-35]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-38]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-34]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-41]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-37]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -164,13 +167,13 @@ fn F() {
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+13]]:3: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as D, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-50]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-53]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-49]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-56]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-52]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

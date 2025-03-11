@@ -36,13 +36,16 @@ impl Goat as Eats {}
 fn Feed(e:! Eats) {}
 
 fn F() {
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Animal` to `Eats` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `Animal` to `Eats` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   Feed(Goat as Animal);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+10]]:3: note: expected type implementing `Eats`; found non-type value [ConversionFailureNonTypeToFacetNote]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+7]]:3: note: type `Animal` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE-9]]:9: note: initializing generic parameter `e` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE-12]]:9: note: initializing generic parameter `e` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Feed(e:! Eats) {}
   // CHECK:STDERR:         ^
   // CHECK:STDERR:
@@ -378,8 +381,8 @@ fn F() {
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc26_13: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc26_22: %Eats.type = converted %.loc26_13, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_13: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc29_22: %Eats.type = converted %.loc29_13, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

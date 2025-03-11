@@ -88,7 +88,10 @@ import Core;
 class C {}
 
 fn MakeC() -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+7]]:10: error: cannot implicitly convert value of type `type` to `Factory(C)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+10]]:10: error: cannot implicitly convert value of type `type` to `Factory(C)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   return A.(Factory(C).Make)();
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+7]]:10: note: expected type implementing `Factory(C)`; found type `A` [ConversionFailureTypeToFacetNote]
   // CHECK:STDERR:   return A.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: note: type `type` does not implement interface `Core.ImplicitAs(Factory(C))` [MissingImplInMemberAccessNote]
@@ -1357,7 +1360,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
@@ -1458,11 +1461,11 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %C.ref.loc16: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc19: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.5c5]
-// CHECK:STDOUT:   %.loc16_23: %Factory.assoc_type.709 = specific_constant imports.%Main.import_ref.8d5, @Factory(constants.%C) [concrete = constants.%assoc0.ef9]
-// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.709 = name_ref Make, %.loc16_23 [concrete = constants.%assoc0.ef9]
-// CHECK:STDOUT:   %.loc16_11: %Factory.type.5c5 = converted %A.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_23: %Factory.assoc_type.709 = specific_constant imports.%Main.import_ref.8d5, @Factory(constants.%C) [concrete = constants.%assoc0.ef9]
+// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.709 = name_ref Make, %.loc19_23 [concrete = constants.%assoc0.ef9]
+// CHECK:STDOUT:   %.loc19_11: %Factory.type.5c5 = converted %A.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1479,10 +1482,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.5c5]
-// CHECK:STDOUT:   %.loc24: %Factory.assoc_type.709 = specific_constant imports.%Main.import_ref.ff7, @Factory(constants.%C) [concrete = constants.%assoc1.ae5]
-// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.709 = name_ref Method, %.loc24 [concrete = constants.%assoc1.ae5]
+// CHECK:STDOUT:   %.loc27: %Factory.assoc_type.709 = specific_constant imports.%Main.import_ref.ff7, @Factory(constants.%C) [concrete = constants.%assoc1.ae5]
+// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.709 = name_ref Method, %.loc27 [concrete = constants.%assoc1.ae5]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

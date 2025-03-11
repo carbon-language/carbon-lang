@@ -35,13 +35,16 @@ impl ImplsGeneric as Generic(GenericParam) {
 fn CallGenericMethod(T:! type, U:! Generic(T)) {}
 
 fn G() {
-  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `Generic(WrongGenericParam)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `type` to `Generic(WrongGenericParam)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   CallGenericMethod(WrongGenericParam, ImplsGeneric);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+10]]:3: note: expected type implementing `Generic(WrongGenericParam)`; found type `ImplsGeneric` [ConversionFailureTypeToFacetNote]
   // CHECK:STDERR:   CallGenericMethod(WrongGenericParam, ImplsGeneric);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(Generic(WrongGenericParam))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   CallGenericMethod(WrongGenericParam, ImplsGeneric);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn CallGenericMethod(T:! type, U:! Generic(T)) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -361,7 +364,7 @@ fn G() {
 // CHECK:STDOUT:   %CallGenericMethod.ref: %CallGenericMethod.type = name_ref CallGenericMethod, file.%CallGenericMethod.decl [concrete = constants.%CallGenericMethod]
 // CHECK:STDOUT:   %WrongGenericParam.ref: type = name_ref WrongGenericParam, file.%WrongGenericParam.decl [concrete = constants.%WrongGenericParam]
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
-// CHECK:STDOUT:   %.loc29: %Generic.type.c3b = converted constants.%ImplsGeneric, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc32: %Generic.type.c3b = converted constants.%ImplsGeneric, <error> [concrete = <error>]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%WrongGenericParam, <error>) [concrete = <error>]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn() [concrete = <error>]
 // CHECK:STDOUT:   return

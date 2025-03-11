@@ -1213,11 +1213,43 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
                         "cannot convert value of type {0} to {1} with `as`",
                         TypeOfInstId, SemIR::TypeId);
-      return context.emitter().Build(loc_id,
-                                     target.kind == ConversionTarget::ExplicitAs
-                                         ? ExplicitAsConversionFailure
-                                         : ImplicitAsConversionFailure,
-                                     expr_id, target.type_id);
+      auto builder =
+          context.emitter().Build(loc_id,
+                                  target.kind == ConversionTarget::ExplicitAs
+                                      ? ExplicitAsConversionFailure
+                                      : ImplicitAsConversionFailure,
+                                  expr_id, target.type_id);
+      if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+        if (auto facet_access_type =
+                context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
+          CARBON_DIAGNOSTIC(
+              ConversionFailureFacetAccessTypeToFacetNote, Note,
+              "expected type implementing {1}; found type {0} implementing {2}",
+              SemIR::TypeId, SemIR::TypeId, SemIR::TypeId);
+          builder.Note(loc_id, ConversionFailureFacetAccessTypeToFacetNote,
+                       context.types().GetTypeIdForTypeInstId(expr_id),
+                       target.type_id,
+                       context.insts()
+                           .Get(facet_access_type->facet_value_inst_id)
+                           .type_id());
+        } else if (context.insts().Get(expr_id).type_id() ==
+                   SemIR::TypeType::SingletonTypeId) {
+          CARBON_DIAGNOSTIC(ConversionFailureTypeToFacetNote, Note,
+                            "expected type implementing {1}; found type {0}",
+                            SemIR::TypeId, SemIR::TypeId);
+          builder.Note(loc_id, ConversionFailureTypeToFacetNote,
+                       context.types().GetTypeIdForTypeInstId(expr_id),
+                       target.type_id);
+        } else {
+          CARBON_DIAGNOSTIC(
+              ConversionFailureNonTypeToFacetNote, Note,
+              "expected type implementing {0}; found non-type value",
+              SemIR::TypeId);
+          builder.Note(loc_id, ConversionFailureNonTypeToFacetNote,
+                       target.type_id);
+        }
+      }
+      return builder;
     });
 
     // Pull a value directly out of the initializer if possible and wanted.
