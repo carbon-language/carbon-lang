@@ -368,9 +368,9 @@ interface C {
 // CHECK:STDOUT:   %.Self: %I2.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic_self]
-// CHECK:STDOUT:   %I2.facet: %I2.type = facet_value %.Self.as_type, %.Self.as_wit [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_wit.iface0: <witness> = facet_access_witness %.Self, element0 [symbolic_self]
+// CHECK:STDOUT:   %I2.facet: %I2.type = facet_value %.Self.as_type, (%.Self.as_wit.iface0) [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self]
 // CHECK:STDOUT:   %I2_where.type: type = facet_type <@I2 where %impl.elem0 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_tuple.type), @impl(%V) [symbolic]
 // CHECK:STDOUT:   %Self.541: %J2.type = bind_symbolic_name Self, 0 [symbolic]
@@ -435,8 +435,8 @@ interface C {
 // CHECK:STDOUT:     %T2.ref: %I2.assoc_type = name_ref T2, @T2.%assoc0 [concrete = constants.%assoc0.166]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc11_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic_self = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:     %.Self.as_wit.iface0: <witness> = facet_access_witness %.Self.ref, element0 [symbolic_self = constants.%.Self.as_wit.iface0]
+// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc11_43.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_43.2: type = converted %.loc11_43.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc11_30: type = where_expr %.Self [concrete = constants.%I2_where.type] {
@@ -711,10 +711,11 @@ interface C {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1: %C.assoc_type = assoc_entity element1, @C.%G.decl [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
-// CHECK:STDOUT:   %Self.as_wit: <witness> = facet_access_witness %Self [symbolic]
-// CHECK:STDOUT:   %C.facet: %C.type = facet_value %Self.as_type, %Self.as_wit [symbolic]
-// CHECK:STDOUT:   %.4cc: type = fn_type_with_self_type %F.type, %C.facet [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %.4cc = impl_witness_access %Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %Self.as_wit.iface0: <witness> = facet_access_witness %Self, element0 [symbolic]
+// CHECK:STDOUT:   %C.facet: %C.type = facet_value %Self.as_type, (%Self.as_wit.iface0) [symbolic]
+// CHECK:STDOUT:   %.70a: type = fn_type_with_self_type %F.type, %C.facet [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.70a = impl_witness_access %Self.as_wit.iface0, element0 [symbolic]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F(%C.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -781,10 +782,11 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%Self.as_type.loc8_14.1 (%Self.as_type) [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %Self.as_wit.loc10_9.2: <witness> = facet_access_witness %Self [symbolic = %Self.as_wit.loc10_9.2 (constants.%Self.as_wit)]
-// CHECK:STDOUT:   %C.facet: %C.type = facet_value %Self.as_type.loc8_14.1, %Self.as_wit.loc10_9.2 [symbolic = %C.facet (constants.%C.facet)]
-// CHECK:STDOUT:   %.loc10_9.2: type = fn_type_with_self_type constants.%F.type, %C.facet [symbolic = %.loc10_9.2 (constants.%.4cc)]
-// CHECK:STDOUT:   %impl.elem0.loc10_9.2: @G.%.loc10_9.2 (%.4cc) = impl_witness_access %Self.as_wit.loc10_9.2, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %Self.as_wit.iface0.loc10_9.2: <witness> = facet_access_witness %Self, element0 [symbolic = %Self.as_wit.iface0.loc10_9.2 (constants.%Self.as_wit.iface0)]
+// CHECK:STDOUT:   %C.facet: %C.type = facet_value %Self.as_type.loc8_14.1, (%Self.as_wit.iface0.loc10_9.2) [symbolic = %C.facet (constants.%C.facet)]
+// CHECK:STDOUT:   %.loc10_9.2: type = fn_type_with_self_type constants.%F.type, %C.facet [symbolic = %.loc10_9.2 (constants.%.70a)]
+// CHECK:STDOUT:   %impl.elem0.loc10_9.2: @G.%.loc10_9.2 (%.70a) = impl_witness_access %Self.as_wit.iface0.loc10_9.2, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_fn.loc10_9.2: <specific function> = specific_function %impl.elem0.loc10_9.2, @F(%C.facet) [symbolic = %specific_fn.loc10_9.2 (constants.%specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @G.%Self.as_type.loc8_14.1 (%Self.as_type)]() {
 // CHECK:STDOUT:   !entry:
@@ -792,11 +794,12 @@ interface C {
 // CHECK:STDOUT:     %F.ref.loc10: %C.assoc_type = name_ref F, @C.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %Self.as_type.loc10: type = facet_access_type constants.%Self [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc10_9.1: type = converted constants.%Self, %Self.as_type.loc10 [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %Self.as_wit.loc10_9.1: <witness> = facet_access_witness constants.%Self [symbolic = %Self.as_wit.loc10_9.2 (constants.%Self.as_wit)]
-// CHECK:STDOUT:     %impl.elem0.loc10_9.1: @G.%.loc10_9.2 (%.4cc) = impl_witness_access %Self.as_wit.loc10_9.1, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %self.ref.loc10, %impl.elem0.loc10_9.1
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %bound_method, @F(constants.%C.facet)
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %specific_fn(%self.ref.loc10)
+// CHECK:STDOUT:     %Self.as_wit.iface0.loc10_9.1: <witness> = facet_access_witness constants.%Self, element0 [symbolic = %Self.as_wit.iface0.loc10_9.2 (constants.%Self.as_wit.iface0)]
+// CHECK:STDOUT:     %impl.elem0.loc10_9.1: @G.%.loc10_9.2 (%.70a) = impl_witness_access %Self.as_wit.iface0.loc10_9.1, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc10_9: <bound method> = bound_method %self.ref.loc10, %impl.elem0.loc10_9.1
+// CHECK:STDOUT:     %specific_fn.loc10_9.1: <specific function> = specific_function %impl.elem0.loc10_9.1, @F(constants.%C.facet) [symbolic = %specific_fn.loc10_9.2 (constants.%specific_fn)]
+// CHECK:STDOUT:     %bound_method.loc10_12: <bound method> = bound_method %self.ref.loc10, %specific_fn.loc10_9.1
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %bound_method.loc10_12(%self.ref.loc10)
 // CHECK:STDOUT:     %self.ref.loc15: @G.%Self.as_type.loc8_14.1 (%Self.as_type) = name_ref self, %self
 // CHECK:STDOUT:     %F.ref.loc15: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
@@ -817,4 +820,6 @@ interface C {
 // CHECK:STDOUT:   %Self => constants.%C.facet
 // CHECK:STDOUT:   %Self.as_type.loc6_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(@G.%C.facet) {}
 // CHECK:STDOUT:

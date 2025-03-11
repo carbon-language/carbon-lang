@@ -492,6 +492,17 @@ static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
   return true;
 }
 
+static auto TryConsumeIncludeFile(llvm::StringRef line_trimmed,
+                                  llvm::SmallVector<std::string>* include_files)
+    -> ErrorOr<bool> {
+  if (!line_trimmed.consume_front("// INCLUDE-FILE: ")) {
+    return false;
+  }
+
+  include_files->push_back(std::string(line_trimmed));
+  return true;
+}
+
 // Processes AUTOUPDATE lines when found. Returns true if the line is consumed.
 static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
                                  bool* found_autoupdate,
@@ -600,6 +611,12 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
     }
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
+        TryConsumeIncludeFile(line_trimmed, &test_file.include_files));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
         TryConsumeAutoupdate(line_index, line_trimmed, &found_autoupdate,
                              &test_file.autoupdate_line_number));
     if (is_consumed) {
@@ -621,7 +638,8 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
   }
 
   if (!found_autoupdate) {
-    return Error("Missing AUTOUPDATE/NOAUTOUPDATE setting");
+    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting: "
+                          << test_name;
   }
 
   test_file.has_splits = split.has_splits();

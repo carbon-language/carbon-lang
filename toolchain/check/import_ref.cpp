@@ -2439,7 +2439,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
                                    SemIR::WitnessType::SingletonInstId),
-       .facet_value_inst_id = facet_value_inst_id});
+       .facet_value_inst_id = facet_value_inst_id,
+       .index = inst.index});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2489,7 +2490,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetValue inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
   auto type_inst_id = GetLocalConstantInstId(resolver, inst.type_inst_id);
-  auto witness_inst_id = GetLocalConstantInstId(resolver, inst.witness_inst_id);
+  auto witnesses = GetLocalInstBlockContents(resolver, inst.witnesses_block_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2499,7 +2500,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
        .type_inst_id = type_inst_id,
-       .witness_inst_id = witness_inst_id});
+       .witnesses_block_id = GetLocalCanonicalInstBlockId(
+           resolver, inst.witnesses_block_id, witnesses)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

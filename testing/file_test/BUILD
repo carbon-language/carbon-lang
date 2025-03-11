@@ -27,6 +27,19 @@ cc_library(
 )
 
 cc_library(
+    name = "file_system",
+    testonly = 1,
+    srcs = [
+        "file_system.cpp",
+    ],
+    hdrs = ["file_system.h"],
+    deps = [
+        "//common:error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "file_test_base",
     testonly = 1,
     srcs = [
@@ -39,6 +52,7 @@ cc_library(
     hdrs = ["file_test_base.h"],
     deps = [
         ":autoupdate",
+        ":file_system",
         ":manifest",
         "//common:check",
         "//common:error",

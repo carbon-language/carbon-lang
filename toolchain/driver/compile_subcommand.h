@@ -42,6 +42,7 @@ struct CompileOptions {
 
   bool asm_output = false;
   bool force_obj_output = false;
+  bool custom_core = false;
   bool dump_shared_values = false;
   bool dump_tokens = false;
   bool omit_file_boundary_tokens = false;

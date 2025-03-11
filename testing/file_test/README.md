@@ -196,6 +196,17 @@ Supported comment markers are:
     `ARGS` and `EXTRA-ARGS`.
 
 -   ```
+    // INCLUDE-FILE: <path/from/repository/root>
+    ```
+
+    Includes the specified file in the test's virtual file system and adds the
+    path to the test's arguments.
+
+    This can be used to provide a minimal `Core` package (and `prelude` library)
+    in toolchain tests. See the
+    [toolchain docs](/toolchain/docs/adding_features.md) for how.
+
+-   ```
     // SET-CAPTURE-CONSOLE-OUTPUT
     ```
 

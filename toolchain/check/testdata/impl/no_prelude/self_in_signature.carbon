@@ -54,12 +54,12 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %impl_witness.9ff: <witness> = impl_witness (@impl.c4a.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.fc6: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.5e2: %F.type.fc6 = struct_value () [concrete]
-// CHECK:STDOUT:   %UseSelf.facet.e62: %UseSelf.type = facet_value %C, %impl_witness.9ff [concrete]
+// CHECK:STDOUT:   %UseSelf.facet.692: %UseSelf.type = facet_value %C, (%impl_witness.9ff) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %impl_witness.320: <witness> = impl_witness (@impl.659.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.0aa: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.f71: %F.type.0aa = struct_value () [concrete]
-// CHECK:STDOUT:   %UseSelf.facet.848: %UseSelf.type = facet_value %D, %impl_witness.320 [concrete]
+// CHECK:STDOUT:   %UseSelf.facet.5ea: %UseSelf.type = facet_value %D, (%impl_witness.320) [concrete]
 // CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [concrete]
 // CHECK:STDOUT:   %Self.2ff: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic]
@@ -78,14 +78,14 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type.a17: type = tuple_type (%ptr.019, %struct_type.x.y.2f0) [concrete]
 // CHECK:STDOUT:   %F.type.ef0: type = fn_type @F.5 [concrete]
 // CHECK:STDOUT:   %F.9a9: %F.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %SelfNested.facet.f66: %SelfNested.type = facet_value %C, %impl_witness.f4e [concrete]
+// CHECK:STDOUT:   %SelfNested.facet.5ec: %SelfNested.type = facet_value %C, (%impl_witness.f4e) [concrete]
 // CHECK:STDOUT:   %impl_witness.4b5: <witness> = impl_witness (@impl.82d.%F.decl) [concrete]
 // CHECK:STDOUT:   %ptr.19c: type = ptr_type %D [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.527: type = struct_type {.x: %D, .y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %tuple.type.a5f: type = tuple_type (%ptr.19c, %struct_type.x.y.527) [concrete]
 // CHECK:STDOUT:   %F.type.a9d: type = fn_type @F.6 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.a9d = struct_value () [concrete]
-// CHECK:STDOUT:   %SelfNested.facet.2c0: %SelfNested.type = facet_value %D, %impl_witness.4b5 [concrete]
+// CHECK:STDOUT:   %SelfNested.facet.821: %SelfNested.type = facet_value %D, (%impl_witness.4b5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -348,13 +348,13 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type.599
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.e62) {
-// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.e62
+// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.692) {
+// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.692
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.848) {
-// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.848
+// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.5ea) {
+// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.5ea
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,16 +366,16 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.46b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.f66) {
-// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.f66
+// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.5ec) {
+// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.5ec
 // CHECK:STDOUT:   %Self.as_type.loc28_16.1 => constants.%C
 // CHECK:STDOUT:   %ptr.loc28_16.1 => constants.%ptr.019
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1 => constants.%struct_type.x.y.2f0
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.a17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.2c0) {
-// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.2c0
+// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.821) {
+// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.821
 // CHECK:STDOUT:   %Self.as_type.loc28_16.1 => constants.%D
 // CHECK:STDOUT:   %ptr.loc28_16.1 => constants.%ptr.19c
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1 => constants.%struct_type.x.y.527

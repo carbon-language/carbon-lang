@@ -40,6 +40,7 @@ class StepStack {
       Inst,
       FixedString,
       Name,
+      Index,
     };
 
     Kind kind;
@@ -51,6 +52,8 @@ class StepStack {
       const char* fixed_string;
       // The name to print, when kind is Name.
       NameId name_id;
+      // The element index to print, when kind is Index.
+      ElementIndex element_index;
     };
   };
 
@@ -70,6 +73,9 @@ class StepStack {
   }
   auto PushNameId(NameId name_id) -> void {
     steps_.push_back({.kind = Step::Name, .name_id = name_id});
+  }
+  auto PushElementIndex(ElementIndex element_index) -> void {
+    steps_.push_back({.kind = Step::Index, .element_index = element_index});
   }
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
@@ -162,6 +168,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case StepStack::Step::FixedString:
         out << step.fixed_string;
         continue;
+      case StepStack::Step::Index:
+        out << step.element_index.index;
+        continue;
       case StepStack::Step::Name:
         out << sem_ir.names().GetFormatted(step.name_id);
         continue;
@@ -253,6 +262,8 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(FacetAccessWitness inst): {
         out << "<witness for ";
         step_stack.PushString(">");
+        step_stack.PushElementIndex(inst.index);
+        step_stack.PushString(", interface ");
         step_stack.PushInstId(inst.facet_value_inst_id);
         break;
       }

@@ -150,10 +150,12 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   auto prev_function_id = SemIR::FunctionId::None;
+  auto prev_type_id = SemIR::TypeId::None;
   auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       prev_function_id = function_decl.function_id;
+      prev_type_id = function_decl.type_id;
       break;
     }
     case SemIR::ImportRefLoaded::Kind: {
@@ -172,6 +174,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
         if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
                 struct_value->type_id)) {
           prev_function_id = function_type->function_id;
+          prev_type_id = struct_value->type_id;
           prev_import_ir_id = import_ir_inst.ir_id;
         }
       }
@@ -190,6 +193,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                           prev_function_id, prev_import_ir_id)) {
     // When merging, use the existing function rather than adding a new one.
     function_decl.function_id = prev_function_id;
+    function_decl.type_id = prev_type_id;
   }
 }
 
@@ -313,13 +317,13 @@ static auto BuildFunctionDecl(Context& context,
     }
     function_info.generic_id = BuildGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
+    function_decl.type_id =
+        GetFunctionType(context, function_decl.function_id,
+                        context.scope_stack().PeekSpecificId());
   } else {
     FinishGenericRedecl(context, decl_id, function_info.generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
-  function_decl.type_id =
-      GetFunctionType(context, function_decl.function_id,
-                      context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
   ReplaceInstBeforeConstantUse(context, decl_id, function_decl);

@@ -10,6 +10,7 @@
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -164,19 +165,38 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
+
   if (callee_specific_id->has_value()) {
-    callee_id = GetOrAddInst(
-        context, context.insts().GetLocId(callee_id),
-        SemIR::SpecificFunction{
-            .type_id = GetSingletonType(
-                context, SemIR::SpecificFunctionType::SingletonInstId),
-            .callee_id = callee_id,
-            .specific_id = *callee_specific_id});
+    auto inner_callee_id = callee_id;
+    if (auto bound_method =
+            context.insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
+      inner_callee_id = GetOrAddInst(
+          context, context.insts().GetLocId(bound_method->function_decl_id),
+          SemIR::SpecificFunction{
+              .type_id = GetSingletonType(
+                  context, SemIR::SpecificFunctionType::SingletonInstId),
+              .callee_id = bound_method->function_decl_id,
+              .specific_id = *callee_specific_id});
+      callee_id = GetOrAddInst<SemIR::BoundMethod>(
+          context, loc_id,
+          {.type_id = bound_method->type_id,
+           .object_id = bound_method->object_id,
+           .function_decl_id = inner_callee_id});
+    } else {
+      callee_id = GetOrAddInst(
+          context, context.insts().GetLocId(callee_id),
+          SemIR::SpecificFunction{
+              .type_id = GetSingletonType(
+                  context, SemIR::SpecificFunctionType::SingletonInstId),
+              .callee_id = callee_id,
+              .specific_id = *callee_specific_id});
+      inner_callee_id = callee_id;
+    }
     if (callee_function.self_type_id.has_value()) {
       // This is an associated function, and will be required to be defined as
       // part of checking that the impl is complete.
     } else {
-      context.definitions_required().push_back(callee_id);
+      context.definitions_required().push_back(inner_callee_id);
     }
   }
 

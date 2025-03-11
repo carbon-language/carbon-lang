@@ -2,29 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
+// EXTRA-ARGS: --no-dump-sem-ir --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/impl_cycle.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/min_prelude/impl_cycle.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/impl_cycle.carbon
-
-// --- core.carbon
-package Core;
-
-interface As(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
-}
-
-interface ImplicitAs(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
-}
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/min_prelude/impl_cycle.carbon
 
 // --- fail_impl_simple_cycle.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface Z {}
 
@@ -49,8 +37,6 @@ fn F() {
 // --- todo_fail_impl_simple_where_cycle.carbon
 library "[[@TEST_NAME]]";
 
-import Core;
-
 interface Z {}
 
 // This creates a dependency cycle with itself.
@@ -68,16 +54,10 @@ fn F() {
 // --- fail_impl_simple_two_interfaces.carbon
 library "[[@TEST_NAME]]";
 
-import Core;
-
 interface Z {}
 interface Y {}
 
 // This creates a dependency cycle with itself.
-// CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:18: error: name `Core.BitAnd` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
-// CHECK:STDERR:                  ^~~~~
-// CHECK:STDERR:
 impl forall [T:! Z & Y] T as Z {}
 
 class Point {
@@ -86,13 +66,18 @@ class Point {
 
 fn F() {
   // TODO: A cycle should be found in the `impl forall T as Z` above.
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:21: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR:   ({} as Point) as (Point as Z);
+  // CHECK:STDERR:                     ^~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-11]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   ({} as Point) as (Point as Z);
 }
 
 // --- fail_impl_long_cycle.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface X {}
 interface Y {}
@@ -125,8 +110,6 @@ fn F() {
 
 // --- fail_impl_cycle_one_generic_param.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface ComparableWith(T:! type) {}
 
@@ -197,8 +180,6 @@ fn F() {
 // --- impl_recurse_with_simpler_type_no_cycle.carbon
 library "[[@TEST_NAME]]";
 
-import Core;
-
 class Wraps(T:! type) {}
 
 interface Printable {}
@@ -216,8 +197,6 @@ fn F() {
 
 // --- impl_recurse_with_simpler_type_in_generic_param_no_cycle.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 class Wraps(T:! type) {}
 
@@ -241,8 +220,6 @@ fn F() {
 
 // --- impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
 library "[[@TEST_NAME]]";
-
-import Core;
 
 // Implement this for a type in one direction.
 interface ComparableTo(T:! type) {}

@@ -150,8 +150,8 @@ fn F() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, %impl_witness [concrete]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, %impl_witness [concrete]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -244,9 +244,9 @@ fn F() {
 // CHECK:STDOUT:   %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, constants.%impl_witness [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc19_13: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, constants.%impl_witness [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, (constants.%impl_witness) [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %.loc19_22: %Eats.type = converted %.loc19_13, %Eats.facet [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [concrete = constants.%Feed.specific_fn]
 // CHECK:STDOUT:   %Feed.call: init %empty_tuple.type = call %Feed.specific_fn()

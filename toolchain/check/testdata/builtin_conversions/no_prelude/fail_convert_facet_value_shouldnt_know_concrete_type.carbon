@@ -242,7 +242,7 @@ fn F() {
 // CHECK:STDOUT:   %Feed: %Feed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, %impl_witness [concrete]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
@@ -377,7 +377,7 @@ fn F() {
 // CHECK:STDOUT:   %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, constants.%impl_witness [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc26_13: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc26_22: %Eats.type = converted %.loc26_13, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
