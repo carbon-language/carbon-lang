@@ -2,25 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/min_prelude/convert.carbon
+// EXTRA-ARGS: --custom-core
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtin_conversions/no_prelude/convert_class_type_to_generic_facet_value.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtin_conversions/no_prelude/convert_class_type_to_generic_facet_value.carbon
 
-// --- core.carbon
-
-package Core;
-
-interface ImplicitAs(T:! type) {
-  fn Convert[self: Self]() -> T;
-}
-
 // --- generic_facet_type.carbon
 
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface Generic(Scalar:! type) {
   fn F();
@@ -50,8 +43,6 @@ fn H() {
 // --- generic_facet_type_from_implicit_param.carbon
 
 library "[[@TEST_NAME]]";
-
-import Core;
 
 interface Generic(Scalar:! type) {
   fn F();
