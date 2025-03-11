@@ -126,11 +126,12 @@ static auto DiagnoseModifiers(Context& context,
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
     CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
     context.emitter().Build(node_id, VirtualWithoutSelf).Emit();
-    introducer.modifier_set.Remove(KeywordModifierSet::Method);
+    // TODO: Remove the incorrect modifier.
+    // introducer.modifier_set.Remove(KeywordModifierSet::Method);
   }
 }
 
-// Returns virtual-family modifier as an enum.
+// Returns the virtual-family modifier as an enum.
 static auto GetVirtualModifier(const KeywordModifierSet& modifier_set)
     -> SemIR::Function::VirtualModifier {
   return modifier_set.ToEnum<SemIR::Function::VirtualModifier>()
