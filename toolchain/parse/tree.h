@@ -158,7 +158,7 @@ class Tree : public Printable<Tree> {
   auto As(NodeId n) const -> T {
     CARBON_DCHECK(n.has_value());
     CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
-    return T(n);
+    return T::MakeUnsafe(n);
   }
 
   auto packaging_decl() const -> const std::optional<PackagingDecl>& {
