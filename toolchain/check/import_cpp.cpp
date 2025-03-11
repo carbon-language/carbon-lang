@@ -136,7 +136,8 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   auto name_scope_id = AddNamespace(context, package_id, imports);
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
-  name_scope.set_is_cpp_scope(true);
+  name_scope.set_cpp_decl_context(
+      generated_ast->getASTContext().getTranslationUnitDecl());
 
   context.sem_ir().set_cpp_ast(generated_ast.get());
 
@@ -147,10 +148,10 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   return std::move(generated_ast);
 }
 
-// Look ups the given name in the Clang AST. Returns the lookup result if lookup
-// was successful.
+// Look ups the given name in the Clang AST in a specific scope. Returns the
+// lookup result if lookup was successful.
 static auto ClangLookup(Context& context, SemIR::LocId loc_id,
-                        SemIR::NameId name_id)
+                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> std::optional<clang::LookupResult> {
   std::optional<llvm::StringRef> name =
       context.names().GetAsStringIfIdentifier(name_id);
@@ -172,7 +173,7 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
   bool found = sema.LookupQualifiedName(
-      lookup, ast->getASTContext().getTranslationUnitDecl());
+      lookup, context.name_scopes().Get(scope_id).cpp_decl_context());
 
   if (lookup.isClassLookup()) {
     // TODO: To support class lookup, also return the AccessKind for storage.
@@ -250,16 +251,47 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   return decl_id;
 }
 
+// Imports a namespace declaration from Clang to Carbon. If successful, returns
+// the new Carbon namespace declaration `InstId`.
+static auto ImportNamespaceDecl(Context& context, SemIR::LocId loc_id,
+                                SemIR::NameScopeId parent_scope_id,
+                                SemIR::NameId name_id,
+                                clang::NamespaceDecl* clang_decl)
+    -> SemIR::InstId {
+  auto namespace_inst =
+      SemIR::Namespace{.type_id = GetSingletonType(
+                           context, SemIR::NamespaceType::SingletonInstId),
+                       .name_scope_id = SemIR::NameScopeId::None,
+                       .import_id = SemIR::InstId::None};
+  auto namespace_inst_and_loc = SemIR::LocIdAndInst(
+      Parse::AnyNamespaceId(loc_id.node_id()), namespace_inst);
+  auto namespace_id =
+      AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc);
+  namespace_inst.name_scope_id =
+      context.name_scopes().Add(namespace_id, name_id, parent_scope_id);
+  ReplaceInstBeforeConstantUse(context, namespace_id, namespace_inst);
+
+  context.name_scopes()
+      .Get(namespace_inst.name_scope_id)
+      .set_cpp_decl_context(clang_decl);
+
+  return namespace_id;
+}
+
 // Imports a declaration from Clang to Carbon. If successful, returns the
 // instruction for the new Carbon declaration.
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
                            SemIR::NameScopeId scope_id, SemIR::NameId name_id,
-                           const clang::NamedDecl* clang_decl)
-    -> SemIR::InstId {
+                           clang::NamedDecl* clang_decl) -> SemIR::InstId {
   if (const auto* clang_function_decl =
           clang::dyn_cast<clang::FunctionDecl>(clang_decl)) {
     return ImportFunctionDecl(context, loc_id, scope_id, name_id,
                               clang_function_decl);
+  }
+  if (auto* clang_namespace_decl =
+          clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
+    return ImportNamespaceDecl(context, loc_id, scope_id, name_id,
+                               clang_namespace_decl);
   }
 
   context.TODO(loc_id, llvm::formatv("Unsupported: Declaration type {0}",
@@ -271,7 +303,7 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  auto lookup = ClangLookup(context, loc_id, name_id);
+  auto lookup = ClangLookup(context, loc_id, scope_id, name_id);
   if (!lookup) {
     return SemIR::InstId::None;
   }
