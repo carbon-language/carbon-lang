@@ -307,8 +307,8 @@ static auto FindWitnessInFacet(
     auto complete_facet_type_id = RequireCompleteFacetType(
         context, facet_type_id, loc_id, *facet_type_inst,
         [&]() -> DiagnosticBuilder {
-          // TODO: Find test that triggers this code path.
-          CARBON_FATAL("impl lookup for with incomplete facet type");
+          context.TODO(loc_id, "impl lookup on incomplete facet type");
+          return context.emitter().BuildSuppressed();
         });
     if (complete_facet_type_id.has_value()) {
       const auto& complete_facet_type =
