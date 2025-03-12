@@ -1220,26 +1220,29 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                       : ImplicitAsConversionFailure,
                                   expr_id, target.type_id);
       if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+        auto type_of_expr_id = context.insts().Get(expr_id).type_id();
         if (auto facet_access_type =
                 context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
-          CARBON_DIAGNOSTIC(
-              ConversionFailureFacetAccessTypeToFacetNote, Note,
-              "expected type implementing {1}; found type {0} implementing {2}",
-              SemIR::TypeId, SemIR::TypeId, SemIR::TypeId);
+          CARBON_DIAGNOSTIC(ConversionFailureFacetAccessTypeToFacetNote, Note,
+                            "expected type implementing {0}; found type {1} "
+                            "implementing {2}",
+                            SemIR::TypeId, InstIdAsType, TypeOfInstId);
           builder.Note(loc_id, ConversionFailureFacetAccessTypeToFacetNote,
-                       context.types().GetTypeIdForTypeInstId(expr_id),
-                       target.type_id,
-                       context.insts()
-                           .Get(facet_access_type->facet_value_inst_id)
-                           .type_id());
-        } else if (context.insts().Get(expr_id).type_id() ==
-                   SemIR::TypeType::SingletonTypeId) {
+                       target.type_id, expr_id,
+                       facet_access_type->facet_value_inst_id);
+        } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
+          CARBON_DIAGNOSTIC(ConversionFailureFacetToFacetNote, Note,
+                            "expected type implementing {0}; found type {1} "
+                            "implementing {2}",
+                            SemIR::TypeId, InstIdAsType, TypeOfInstId);
+          builder.Note(loc_id, ConversionFailureFacetToFacetNote,
+                       target.type_id, expr_id, expr_id);
+        } else if (type_of_expr_id == SemIR::TypeType::SingletonTypeId) {
           CARBON_DIAGNOSTIC(ConversionFailureTypeToFacetNote, Note,
-                            "expected type implementing {1}; found type {0}",
-                            SemIR::TypeId, SemIR::TypeId);
-          builder.Note(loc_id, ConversionFailureTypeToFacetNote,
-                       context.types().GetTypeIdForTypeInstId(expr_id),
-                       target.type_id);
+                            "expected type implementing {0}; found type {1}",
+                            SemIR::TypeId, InstIdAsType);
+          builder.Note(loc_id, ConversionFailureTypeToFacetNote, target.type_id,
+                       expr_id);
         } else {
           CARBON_DIAGNOSTIC(
               ConversionFailureNonTypeToFacetNote, Note,

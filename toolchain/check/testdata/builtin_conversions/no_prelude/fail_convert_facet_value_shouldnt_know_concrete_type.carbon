@@ -39,7 +39,7 @@ fn F() {
   // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `Animal` to `Eats` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+10]]:3: note: expected type implementing `Eats`; found non-type value [ConversionFailureNonTypeToFacetNote]
+  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+10]]:3: note: expected type implementing `Eats`; found type `Goat as Animal` implementing `Animal` [ConversionFailureFacetToFacetNote]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+7]]:3: note: type `Animal` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]

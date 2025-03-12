@@ -48,7 +48,7 @@ interface Different {}
 // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+10]]:24: error: cannot implicitly convert value of type `Different` to `Interface` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:24: note: expected type implementing `Interface`; found non-type value [ConversionFailureNonTypeToFacetNote]
+// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:24: note: expected type implementing `Interface`; found type `U` implementing `Different` [ConversionFailureFacetToFacetNote]
 // CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:24: note: type `Different` does not implement interface `Core.ImplicitAs(Interface)` [MissingImplInMemberAccessNote]

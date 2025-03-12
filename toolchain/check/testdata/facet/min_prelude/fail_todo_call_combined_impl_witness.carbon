@@ -42,7 +42,7 @@ fn G[T:! A & Empty & B](t: T) {
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Empty & A & B` to `A` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   T.(A.AA)();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: note: expected type implementing `A`; found non-type value [ConversionFailureNonTypeToFacetNote]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: note: expected type implementing `A`; found type `T` implementing `Empty & A & B` [ConversionFailureFacetToFacetNote]
   // CHECK:STDERR:   T.(A.AA)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+4]]:3: note: type `Empty & A & B` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
@@ -53,7 +53,7 @@ fn G[T:! A & Empty & B](t: T) {
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Empty & A & B` to `B` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   T.(B.BB)();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: note: expected type implementing `B`; found non-type value [ConversionFailureNonTypeToFacetNote]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: note: expected type implementing `B`; found type `T` implementing `Empty & A & B` [ConversionFailureFacetToFacetNote]
   // CHECK:STDERR:   T.(B.BB)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+4]]:3: note: type `Empty & A & B` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]

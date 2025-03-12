@@ -76,7 +76,7 @@ fn WithBool(R:! O where .P = bool) {
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `O where .(O.P) = bool` to `O where .(O.P) = i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: note: expected type implementing `O where .(O.P) = i32`; found non-type value [ConversionFailureNonTypeToFacetNote]
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: note: expected type implementing `O where .(O.P) = i32`; found type `R` implementing `O where .(O.P) = bool` [ConversionFailureFacetToFacetNote]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: note: type `O where .(O.P) = bool` does not implement interface `Core.ImplicitAs(O where .(O.P) = i32)` [MissingImplInMemberAccessNote]
@@ -104,7 +104,7 @@ fn WithU(W:! S where .U = ()) {
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `S where .(S.U) = ()` to `S where .(S.T) = ()` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+10]]:3: note: expected type implementing `S where .(S.T) = ()`; found non-type value [ConversionFailureNonTypeToFacetNote]
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+10]]:3: note: expected type implementing `S where .(S.T) = ()`; found type `W` implementing `S where .(S.U) = ()` [ConversionFailureFacetToFacetNote]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: note: type `S where .(S.U) = ()` does not implement interface `Core.ImplicitAs(S where .(S.T) = ())` [MissingImplInMemberAccessNote]
