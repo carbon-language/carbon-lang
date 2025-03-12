@@ -157,7 +157,8 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto As(NodeId n) const -> T {
     CARBON_DCHECK(n.has_value());
-    CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
+    CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)),
+                  "cannot convert {0} to {1}", node_kind(n), typeid(T).name());
     return T::UnsafeMake(n);
   }
 
