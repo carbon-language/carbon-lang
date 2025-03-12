@@ -136,7 +136,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %.591: type = fn_type_with_self_type %F.type.13d, %A.facet.834 [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.591 = impl_witness_access %T.as_wit.iface0, element0 [symbolic]
 // CHECK:STDOUT:   %tuple.type.e28: type = tuple_type (%X, %T.as_type, %Z) [symbolic]
-// CHECK:STDOUT:   %.400: <specific function> = specific_impl_function %impl.elem0, @F.1(%X, %A.facet.834, %Z) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @F.1(%X, %A.facet.834, %Z) [symbolic]
 // CHECK:STDOUT:   %require_complete.500: <witness> = require_complete_type %tuple.type.e28 [symbolic]
 // CHECK:STDOUT:   %CallIndirect.type: type = fn_type @CallIndirect [concrete]
 // CHECK:STDOUT:   %CallIndirect: %CallIndirect.type = struct_value () [concrete]
@@ -361,9 +361,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %T.as_type.loc26_4.2: type = facet_access_type %T.loc25_16.2 [symbolic = %T.as_type.loc26_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc26_4.2: <witness> = facet_access_witness %T.loc25_16.2, element0 [symbolic = %T.as_wit.iface0.loc26_4.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %A.facet: %A.type.91f = facet_value %T.as_type.loc26_4.2, (%T.as_wit.iface0.loc26_4.2) [symbolic = %A.facet (constants.%A.facet.834)]
-// CHECK:STDOUT:   %.loc26_4.4: type = fn_type_with_self_type constants.%F.type.13d, %A.facet [symbolic = %.loc26_4.4 (constants.%.591)]
-// CHECK:STDOUT:   %impl.elem0.loc26_4.2: @CallGeneric.%.loc26_4.4 (%.591) = impl_witness_access %T.as_wit.iface0.loc26_4.2, element0 [symbolic = %impl.elem0.loc26_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %.loc26_4.5: <specific function> = specific_impl_function %impl.elem0.loc26_4.2, @F.1(constants.%X, %A.facet, constants.%Z) [symbolic = %.loc26_4.5 (constants.%.400)]
+// CHECK:STDOUT:   %.loc26_4.3: type = fn_type_with_self_type constants.%F.type.13d, %A.facet [symbolic = %.loc26_4.3 (constants.%.591)]
+// CHECK:STDOUT:   %impl.elem0.loc26_4.2: @CallGeneric.%.loc26_4.3 (%.591) = impl_witness_access %T.as_wit.iface0.loc26_4.2, element0 [symbolic = %impl.elem0.loc26_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc26_4.2: <specific function> = specific_impl_function %impl.elem0.loc26_4.2, @F.1(constants.%X, %A.facet, constants.%Z) [symbolic = %specific_impl_fn.loc26_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%X, @CallGeneric.%T.as_type.loc26_4.2 (%T.as_type), %Z) [symbolic = %tuple.type (constants.%tuple.type.e28)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGeneric.%tuple.type (%tuple.type.e28) [symbolic = %require_complete (constants.%require_complete.500)]
 // CHECK:STDOUT:
@@ -375,17 +375,17 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %T.as_type.loc26_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc26_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc26_4.2: type = converted %T.ref, %T.as_type.loc26_4.1 [symbolic = %T.as_type.loc26_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %T.as_wit.iface0.loc26_4.1: <witness> = facet_access_witness %T.ref, element0 [symbolic = %T.as_wit.iface0.loc26_4.2 (constants.%T.as_wit.iface0)]
-// CHECK:STDOUT:     %impl.elem0.loc26_4.1: @CallGeneric.%.loc26_4.4 (%.591) = impl_witness_access %T.as_wit.iface0.loc26_4.1, element0 [symbolic = %impl.elem0.loc26_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc26_4.1: @CallGeneric.%.loc26_4.3 (%.591) = impl_witness_access %T.as_wit.iface0.loc26_4.1, element0 [symbolic = %impl.elem0.loc26_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
 // CHECK:STDOUT:     %.loc26_11.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc26_4.3: <specific function> = specific_impl_function %impl.elem0.loc26_4.1, @F.1(constants.%X, constants.%A.facet.834, constants.%Z) [symbolic = %.loc26_4.5 (constants.%.400)]
+// CHECK:STDOUT:     %specific_impl_fn.loc26_4.1: <specific function> = specific_impl_function %impl.elem0.loc26_4.1, @F.1(constants.%X, constants.%A.facet.834, constants.%Z) [symbolic = %specific_impl_fn.loc26_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %.loc26_12.1: ref @CallGeneric.%tuple.type (%tuple.type.e28) = temporary_storage
 // CHECK:STDOUT:     %.loc26_11.2: ref %Z = temporary_storage
 // CHECK:STDOUT:     %.loc26_11.3: init %Z = class_init (), %.loc26_11.2 [concrete = constants.%Z.val]
 // CHECK:STDOUT:     %.loc26_11.4: ref %Z = temporary %.loc26_11.2, %.loc26_11.3
 // CHECK:STDOUT:     %.loc26_11.5: ref %Z = converted %.loc26_11.1, %.loc26_11.4
 // CHECK:STDOUT:     %.loc26_11.6: %Z = bind_value %.loc26_11.5
-// CHECK:STDOUT:     %.loc26_12.2: init @CallGeneric.%tuple.type (%tuple.type.e28) = call %.loc26_4.3(%.loc26_11.6) to %.loc26_12.1
+// CHECK:STDOUT:     %.loc26_12.2: init @CallGeneric.%tuple.type (%tuple.type.e28) = call %specific_impl_fn.loc26_4.1(%.loc26_11.6) to %.loc26_12.1
 // CHECK:STDOUT:     %.loc26_12.3: ref @CallGeneric.%tuple.type (%tuple.type.e28) = temporary %.loc26_12.1, %.loc26_12.2
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -489,9 +489,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %T.as_type.loc26_4.2 => constants.%Y
 // CHECK:STDOUT:   %T.as_wit.iface0.loc26_4.2 => constants.%impl_witness
 // CHECK:STDOUT:   %A.facet => constants.%A.facet.166
-// CHECK:STDOUT:   %.loc26_4.4 => constants.%.6fe
+// CHECK:STDOUT:   %.loc26_4.3 => constants.%.6fe
 // CHECK:STDOUT:   %impl.elem0.loc26_4.2 => constants.%F.ce9
-// CHECK:STDOUT:   %.loc26_4.5 => constants.%F.specific_fn
+// CHECK:STDOUT:   %specific_impl_fn.loc26_4.2 => constants.%F.specific_fn
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.f6b
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.a64
 // CHECK:STDOUT: }
@@ -590,7 +590,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %impl.elem0: %.591 = impl_witness_access %T.as_wit.iface0, element0 [symbolic]
 // CHECK:STDOUT:   %tuple.type.a0c: type = tuple_type (type, %A.type.91f, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.e28: type = tuple_type (%X, %T.as_type, %Z) [symbolic]
-// CHECK:STDOUT:   %.400: <specific function> = specific_impl_function %impl.elem0, @F.1(%X, %A.facet.834, %Z) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @F.1(%X, %A.facet.834, %Z) [symbolic]
 // CHECK:STDOUT:   %require_complete.500: <witness> = require_complete_type %tuple.type.e28 [symbolic]
 // CHECK:STDOUT:   %CallIndirect.type: type = fn_type @CallIndirect [concrete]
 // CHECK:STDOUT:   %CallIndirect: %CallIndirect.type = struct_value () [concrete]
@@ -885,9 +885,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %T.as_type.loc28_4.2: type = facet_access_type %T.loc27_16.2 [symbolic = %T.as_type.loc28_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc28_4.2: <witness> = facet_access_witness %T.loc27_16.2, element0 [symbolic = %T.as_wit.iface0.loc28_4.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %A.facet: %A.type.91f = facet_value %T.as_type.loc28_4.2, (%T.as_wit.iface0.loc28_4.2) [symbolic = %A.facet (constants.%A.facet.834)]
-// CHECK:STDOUT:   %.loc28_4.4: type = fn_type_with_self_type constants.%F.type.13d, %A.facet [symbolic = %.loc28_4.4 (constants.%.591)]
-// CHECK:STDOUT:   %impl.elem0.loc28_4.2: @CallGeneric.%.loc28_4.4 (%.591) = impl_witness_access %T.as_wit.iface0.loc28_4.2, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %.loc28_4.5: <specific function> = specific_impl_function %impl.elem0.loc28_4.2, @F.1(constants.%X, %A.facet, constants.%Z) [symbolic = %.loc28_4.5 (constants.%.400)]
+// CHECK:STDOUT:   %.loc28_4.3: type = fn_type_with_self_type constants.%F.type.13d, %A.facet [symbolic = %.loc28_4.3 (constants.%.591)]
+// CHECK:STDOUT:   %impl.elem0.loc28_4.2: @CallGeneric.%.loc28_4.3 (%.591) = impl_witness_access %T.as_wit.iface0.loc28_4.2, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc28_4.2: <specific function> = specific_impl_function %impl.elem0.loc28_4.2, @F.1(constants.%X, %A.facet, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%X, @CallGeneric.%T.as_type.loc28_4.2 (%T.as_type), %Z) [symbolic = %tuple.type (constants.%tuple.type.e28)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGeneric.%tuple.type (%tuple.type.e28) [symbolic = %require_complete (constants.%require_complete.500)]
 // CHECK:STDOUT:
@@ -899,17 +899,17 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %T.as_type.loc28_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc28_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc28_4.2: type = converted %T.ref, %T.as_type.loc28_4.1 [symbolic = %T.as_type.loc28_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %T.as_wit.iface0.loc28_4.1: <witness> = facet_access_witness %T.ref, element0 [symbolic = %T.as_wit.iface0.loc28_4.2 (constants.%T.as_wit.iface0)]
-// CHECK:STDOUT:     %impl.elem0.loc28_4.1: @CallGeneric.%.loc28_4.4 (%.591) = impl_witness_access %T.as_wit.iface0.loc28_4.1, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc28_4.1: @CallGeneric.%.loc28_4.3 (%.591) = impl_witness_access %T.as_wit.iface0.loc28_4.1, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
 // CHECK:STDOUT:     %.loc28_11.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc28_4.3: <specific function> = specific_impl_function %impl.elem0.loc28_4.1, @F.1(constants.%X, constants.%A.facet.834, constants.%Z) [symbolic = %.loc28_4.5 (constants.%.400)]
+// CHECK:STDOUT:     %specific_impl_fn.loc28_4.1: <specific function> = specific_impl_function %impl.elem0.loc28_4.1, @F.1(constants.%X, constants.%A.facet.834, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %.loc28_12.1: ref @CallGeneric.%tuple.type (%tuple.type.e28) = temporary_storage
 // CHECK:STDOUT:     %.loc28_11.2: ref %Z = temporary_storage
 // CHECK:STDOUT:     %.loc28_11.3: init %Z = class_init (), %.loc28_11.2 [concrete = constants.%Z.val]
 // CHECK:STDOUT:     %.loc28_11.4: ref %Z = temporary %.loc28_11.2, %.loc28_11.3
 // CHECK:STDOUT:     %.loc28_11.5: ref %Z = converted %.loc28_11.1, %.loc28_11.4
 // CHECK:STDOUT:     %.loc28_11.6: %Z = bind_value %.loc28_11.5
-// CHECK:STDOUT:     %.loc28_12.2: init @CallGeneric.%tuple.type (%tuple.type.e28) = call %.loc28_4.3(%.loc28_11.6) to %.loc28_12.1
+// CHECK:STDOUT:     %.loc28_12.2: init @CallGeneric.%tuple.type (%tuple.type.e28) = call %specific_impl_fn.loc28_4.1(%.loc28_11.6) to %.loc28_12.1
 // CHECK:STDOUT:     %.loc28_12.3: ref @CallGeneric.%tuple.type (%tuple.type.e28) = temporary %.loc28_12.1, %.loc28_12.2
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -1096,9 +1096,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %T.as_type.loc28_4.2 => constants.%tuple.type.a46
 // CHECK:STDOUT:   %T.as_wit.iface0.loc28_4.2 => constants.%impl_witness.14a
 // CHECK:STDOUT:   %A.facet => constants.%A.facet.058
-// CHECK:STDOUT:   %.loc28_4.4 => constants.%.0b0
+// CHECK:STDOUT:   %.loc28_4.3 => constants.%.0b0
 // CHECK:STDOUT:   %impl.elem0.loc28_4.2 => constants.%F.93b
-// CHECK:STDOUT:   %.loc28_4.5 => constants.%F.specific_fn.79b
+// CHECK:STDOUT:   %specific_impl_fn.loc28_4.2 => constants.%F.specific_fn.79b
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.415
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.aa8
 // CHECK:STDOUT: }

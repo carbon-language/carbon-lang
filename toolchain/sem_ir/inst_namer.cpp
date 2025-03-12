@@ -819,16 +819,22 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(SpecificFunction inst): {
-        InstId callee_id = inst.callee_id;
-        if (auto method = sem_ir_->insts().TryGetAs<BoundMethod>(callee_id)) {
-          callee_id = method->function_decl_id;
-        }
-        auto type_id = sem_ir_->insts().Get(callee_id).type_id();
+        auto type_id = sem_ir_->insts().Get(inst.callee_id).type_id();
         if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {
           add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
                            ".specific_fn");
         } else {
           add_inst_name("specific_fn");
+        }
+        continue;
+      }
+      case CARBON_KIND(SpecificImplFunction inst): {
+        auto type_id = sem_ir_->insts().Get(inst.callee_id).type_id();
+        if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {
+          add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
+                           ".specific_impl_fn");
+        } else {
+          add_inst_name("specific_impl_fn");
         }
         continue;
       }
