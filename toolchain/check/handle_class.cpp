@@ -673,15 +673,15 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
   llvm::SmallVector<SemIR::InstId> vtable;
   if (base_vtable_id.has_value()) {
     LoadImportRef(context, base_vtable_id);
-    base_vtable_id =
+    auto canonical_base_vtable_id =
         context.constant_values().GetConstantInstId(base_vtable_id);
-    if (base_vtable_id == SemIR::ErrorInst::SingletonInstId) {
+    if (canonical_base_vtable_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
     }
-    auto base_vtable_inst_block =
-        context.inst_blocks().Get(context.insts()
-                                      .GetAs<SemIR::Vtable>(base_vtable_id)
-                                      .virtual_functions_id);
+    auto base_vtable_inst_block = context.inst_blocks().Get(
+        context.insts()
+            .GetAs<SemIR::Vtable>(canonical_base_vtable_id)
+            .virtual_functions_id);
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto fn_decl_id : base_vtable_inst_block) {
