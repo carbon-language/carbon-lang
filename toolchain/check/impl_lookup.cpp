@@ -165,28 +165,17 @@ static auto FindAndDiagnoseImplLookupCycle(
 static auto GetInterfacesFromConstantId(
     Context& context, SemIR::ConstantId query_facet_type_const_id,
     bool& has_other_requirements)
-    -> llvm::SmallVector<SemIR::CompleteFacetType::RequiredInterface> {
-  // The `query_facet_type_const_id` is a constant value for some facet type. We
-  // do this long chain of steps to go from that constant value to the
-  // `FacetTypeId` found on the `FacetType` instruction of this constant value,
-  // and finally to the `CompleteFacetType`.
+    -> llvm::SmallVector<SemIR::SpecificInterface> {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(query_facet_type_const_id);
   auto facet_type_inst =
       context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
-  auto facet_type_id = facet_type_inst.facet_type_id;
-  auto complete_facet_type_id =
-      context.complete_facet_types().TryGetId(facet_type_id);
-  // The facet type will already be completed before coming here. If we're
-  // converting from a concrete type to a facet type, the conversion step
-  // requires everything to be complete before doing impl lookup.
-  CARBON_CHECK(complete_facet_type_id.has_value());
-  const auto& complete_facet_type =
-      context.complete_facet_types().Get(complete_facet_type_id);
-
-  has_other_requirements =
-      context.facet_types().Get(facet_type_id).other_requirements;
-  return complete_facet_type.required_interfaces;
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type_inst.facet_type_id);
+  has_other_requirements = facet_type_info.other_requirements;
+  // TODO: Once we add support for named constraints, we will need to change
+  // this to return the same interfaces as in the complete facet type.
+  return facet_type_info.impls_constraints;
 }
 
 static auto GetWitnessIdForImpl(
@@ -257,15 +246,12 @@ static auto GetWitnessIdForImpl(
       context.insts()
           .GetAs<SemIR::FacetType>(deduced_constraint_id)
           .facet_type_id;
-  const auto& deduced_constraint_complete_facet_type =
-      context.complete_facet_types().Get(
-          context.complete_facet_types().TryGetId(
-              deduced_constraint_facet_type_id));
-  CARBON_CHECK(deduced_constraint_complete_facet_type.num_to_impl == 1);
+  const auto& deduced_constraint_facet_type_info =
+      context.facet_types().Get(deduced_constraint_facet_type_id);
+  CARBON_CHECK(deduced_constraint_facet_type_info.impls_constraints.size() ==
+               1);
 
-  if (context.facet_types()
-          .Get(deduced_constraint_facet_type_id)
-          .other_requirements) {
+  if (deduced_constraint_facet_type_info.other_requirements) {
     // TODO: Remove this when other requirements goes away.
     return SemIR::InstId::None;
   }
@@ -273,7 +259,7 @@ static auto GetWitnessIdForImpl(
   // The specifics in the queried interface must match the deduced specifics in
   // the impl's constraint facet type.
   auto impl_interface_specific_id =
-      deduced_constraint_complete_facet_type.required_interfaces[0].specific_id;
+      deduced_constraint_facet_type_info.impls_constraints[0].specific_id;
   auto query_interface_specific_id = interface.specific_id;
   if (impl_interface_specific_id != query_interface_specific_id) {
     return SemIR::InstId::None;

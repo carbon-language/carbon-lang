@@ -203,9 +203,8 @@ Supported comment markers are:
     path to the test's arguments.
 
     This can be used to provide a minimal `Core` package (and `prelude` library)
-    in toolchain tests by providing a path to a file with
-    `package Core library "prelude";` as its first line and adding
-    `--custom-core` to `EXTRA-ARGS`.
+    in toolchain tests. See the
+    [toolchain docs](/toolchain/docs/adding_features.md) for how.
 
 -   ```
     // SET-CAPTURE-CONSOLE-OUTPUT

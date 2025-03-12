@@ -568,10 +568,6 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
     auto interface_type = GetInterfaceFromFacetType(context, interface_type_id);
     // An associated entity is always associated with a single interface.
     CARBON_CHECK(interface_type);
-    const auto& interface =
-        context.interfaces().Get(interface_type->interface_id);
-    auto assoc_entities =
-        context.inst_blocks().Get(interface.associated_entities_id);
     auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
     // TODO: According to
     // https://docs.carbon-lang.dev/docs/design/expressions/member_access.html#member-resolution
@@ -584,7 +580,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
     }
     auto assoc_entity =
         context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
-    auto decl_id = assoc_entities[assoc_entity.index.index];
+    auto decl_id = assoc_entity.decl_id;
     LoadImportRef(context, decl_id);
     auto decl_value_id = context.constant_values().GetConstantInstId(decl_id);
     auto decl_type_id = context.insts().Get(decl_value_id).type_id();

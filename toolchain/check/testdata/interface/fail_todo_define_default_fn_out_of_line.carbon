@@ -227,7 +227,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %C.7e5 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.7e5 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt]

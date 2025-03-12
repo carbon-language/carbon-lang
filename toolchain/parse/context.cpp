@@ -449,8 +449,8 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
     -> void {
   if (ParsingInDeferredDefinitionScope(*this)) {
     deferred_definition_stack_.push_back(tree_->deferred_definitions_.Add(
-        {.start_id =
-             FunctionDefinitionStartId(NodeId(tree_->node_impls_.size()))}));
+        {.start_id = FunctionDefinitionStartId::UnsafeMake(
+             NodeId(tree_->node_impls_.size()))}));
   }
 
   AddNode(NodeKind::FunctionDefinitionStart, token, has_error);
@@ -462,7 +462,7 @@ auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
     auto definition_index = deferred_definition_stack_.pop_back_val();
     auto& definition = tree_->deferred_definitions_.Get(definition_index);
     definition.definition_id =
-        FunctionDefinitionId(NodeId(tree_->node_impls_.size()));
+        FunctionDefinitionId::UnsafeMake(NodeId(tree_->node_impls_.size()));
     definition.next_definition_index =
         DeferredDefinitionIndex(tree_->deferred_definitions().size());
   }

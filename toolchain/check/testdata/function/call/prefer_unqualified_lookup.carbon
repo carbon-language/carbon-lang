@@ -76,7 +76,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %F.loc5_13.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc5_13.2 (constants.%F.8b3)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
+// CHECK:STDOUT:   %G.decl: @Inner.%G.type (%G.type) = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {

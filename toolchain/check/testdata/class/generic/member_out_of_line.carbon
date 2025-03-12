@@ -143,7 +143,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %n.patt: %T = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %T = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %T = return_slot_pattern
@@ -157,7 +157,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %return.param.loc10: ref %T = out_param call_param1
 // CHECK:STDOUT:     %return.loc10: ref %T = return_slot %return.param.loc10
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
+// CHECK:STDOUT:   %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %T = return_slot_pattern
@@ -338,7 +338,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: @B.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %a.patt: %T = binding_pattern a

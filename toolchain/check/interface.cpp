@@ -126,8 +126,9 @@ static auto GetGenericArgsWithSelfType(Context& context,
 
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
     Context& context, SemIRLoc loc, SemIR::SpecificId interface_specific_id,
-    SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::SpecificId {
+    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id,
+    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
+    -> SemIR::SpecificId {
   const auto& generic = context.generics().Get(generic_id);
   auto self_specific_args = context.inst_blocks().Get(
       context.specifics().Get(generic.self_specific_id).args_id);
@@ -136,11 +137,36 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
       context, interface_specific_id, generic_id, self_type_id, witness_inst_id,
       self_specific_args.size());
 
+  // Determine the number of specific arguments that enclose the point where
+  // this self specific will be used from. In an impl, this will be the number
+  // of parameters that the impl has.
+  int num_enclosing_specific_args =
+      context.inst_blocks()
+          .Get(context.specifics().GetArgsOrEmpty(enclosing_specific_id))
+          .size();
+  // The index of each remaining generic parameter is adjusted to match the
+  // numbering at the point where the self specific is used.
+  int index_delta = num_enclosing_specific_args - arg_ids.size();
+
   // Take any trailing argument values from the self specific.
   // TODO: If these refer to outer arguments, for example in their types, we may
   // need to perform extra substitutions here.
   for (auto arg_id : self_specific_args.drop_front(arg_ids.size())) {
-    arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
+    auto new_arg_id = context.constant_values().GetConstantInstId(arg_id);
+    if (index_delta) {
+      // If this parameter would have a new index in the context described by
+      // `enclosing_specific_id`, form a new binding with an adjusted index.
+      auto bind_name = context.insts().GetAs<SemIR::BindSymbolicName>(
+          context.constant_values().GetConstantInstId(arg_id));
+      auto entity_name = context.entity_names().Get(bind_name.entity_name_id);
+      entity_name.bind_index_value += index_delta;
+      CARBON_CHECK(entity_name.bind_index_value >= 0);
+      bind_name.entity_name_id =
+          context.entity_names().AddCanonical(entity_name);
+      new_arg_id = context.constant_values().GetInstId(
+          TryEvalInst(context, arg_id, bind_name));
+    }
+    arg_ids.push_back(new_arg_id);
   }
 
   return MakeSpecific(context, loc, generic_id, arg_ids);

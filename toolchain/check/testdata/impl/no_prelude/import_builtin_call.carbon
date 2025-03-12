@@ -429,7 +429,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [concrete]
 // CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %Op.d59: %Op.type.31b = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %impl_witness.3a3: <witness> = impl_witness (imports.%Main.import_ref.19b), @impl(%N) [symbolic]
 // CHECK:STDOUT:   %Op.type.883: type = fn_type @Op.2, @impl(%N) [symbolic]
@@ -467,7 +466,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.import_ref.697 = import_ref Main//generic_impl, inst87 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//generic_impl, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.db7: %Add.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.Op: %Op.type.31b = import_ref Main//generic_impl, Op, loaded [concrete = constants.%Op.d59]
+// CHECK:STDOUT:   %Main.Op = import_ref Main//generic_impl, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//generic_impl, inst15 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.33b: <witness> = import_ref Main//generic_impl, loc15_48, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.7e5be3.1)]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.2: Core.IntLiteral = import_ref Main//generic_impl, loc15_14, loaded [symbolic = @impl.%N (constants.%N)]

@@ -140,8 +140,8 @@ class NodeStack {
   auto PopForSoloNodeId() -> Parse::NodeIdForKind<RequiredParseKind> {
     Entry back = PopEntry<SemIR::InstId>();
     RequireIdKind(RequiredParseKind, Id::Kind::None);
-    RequireParseKind<RequiredParseKind>(back.node_id);
-    return Parse::NodeIdForKind<RequiredParseKind>(back.node_id);
+    return parse_tree_->As<Parse::NodeIdForKind<RequiredParseKind>>(
+        back.node_id);
   }
 
   // Pops the top of the stack if it is the given kind, and returns the
@@ -192,7 +192,7 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithNodeId() -> auto {
     auto id = Peek<RequiredParseKind>();
-    Parse::NodeIdForKind<RequiredParseKind> node_id(
+    auto node_id = parse_tree_->As<Parse::NodeIdForKind<RequiredParseKind>>(
         stack_.pop_back_val().node_id);
     return std::make_pair(node_id, id);
   }
@@ -201,8 +201,9 @@ class NodeStack {
   template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PopWithNodeId() -> auto {
     auto id = Peek<RequiredParseCategory>();
-    Parse::NodeIdInCategory<RequiredParseCategory> node_id(
-        stack_.pop_back_val().node_id);
+    auto node_id =
+        parse_tree_->As<Parse::NodeIdInCategory<RequiredParseCategory>>(
+            stack_.pop_back_val().node_id);
     return std::make_pair(node_id, id);
   }
 
@@ -302,7 +303,9 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto Peek() const -> auto {
     Entry back = stack_.back();
-    RequireParseKind<RequiredParseKind>(back.node_id);
+    CARBON_CHECK(RequiredParseKind == parse_tree_->node_kind(back.node_id),
+                 "Expected {0}, found {1}", RequiredParseKind,
+                 parse_tree_->node_kind(back.node_id));
     constexpr Id::Kind RequiredIdKind = NodeKindToIdKind(RequiredParseKind);
     return Peek<RequiredIdKind>();
   }
@@ -587,14 +590,6 @@ class NodeStack {
                  "Unexpected Id::Kind mapping for {0}: expected {1}, found {2}",
                  parse_kind, SemIR::IdKind(id_kind),
                  SemIR::IdKind(NodeKindToIdKind(parse_kind)));
-  }
-
-  // Require an entry to have the given Parse::NodeKind.
-  template <const Parse::NodeKind& RequiredParseKind>
-  auto RequireParseKind(Parse::NodeId node_id) const -> void {
-    auto actual_kind = parse_tree_->node_kind(node_id);
-    CARBON_CHECK(RequiredParseKind == actual_kind, "Expected {0}, found {1}",
-                 RequiredParseKind, actual_kind);
   }
 
   // Require an entry to have the given Parse::NodeCategory.

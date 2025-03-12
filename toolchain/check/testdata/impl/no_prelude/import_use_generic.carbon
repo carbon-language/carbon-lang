@@ -194,9 +194,8 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.777 [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [concrete]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %impl_witness.681: <witness> = impl_witness (imports.%Main.import_ref.e2c), @impl(%T) [symbolic]
@@ -221,7 +220,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//import_generic, inst23 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//import_generic, inst29 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//import_generic, loc7_9, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F: %F.type.cf0 = import_ref Main//import_generic, F, loaded [concrete = constants.%F.bc6]
+// CHECK:STDOUT:   %Main.F = import_ref Main//import_generic, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//import_generic, inst29 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.d91: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.bbe)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @impl.%T (constants.%T)]
