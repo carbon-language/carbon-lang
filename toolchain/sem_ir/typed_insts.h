@@ -1334,6 +1334,29 @@ struct SpecificFunctionType {
   TypeId type_id;
 };
 
+// A specific instance of a function from an impl, named as the function from
+// the interface.
+//
+// This value is the callee in a call of the form `(T as Interface).F()`. The
+// specific that we determine for such a call is a specific for `Interface.F`,
+// but what we nned is a specific for the function in the `impl`. This
+// instruction computes that specific function.
+struct SpecificImplFunction {
+  static constexpr auto Kind =
+      InstKind::SpecificImplFunction.Define<Parse::NodeId>(
+          {.ir_name = "specific_impl_function",
+           .constant_kind = InstConstantKind::SymbolicOnly});
+
+  // Always the builtin SpecificFunctionType.
+  TypeId type_id;
+  // The expression denoting the callee. This will be a function from an impl
+  // witness.
+  InstId callee_id;
+  // The specific instance of the interface function that was called, including
+  // all the compile-time arguments.
+  SpecificId specific_id;
+};
+
 // Splices a block into the location where this appears. This may be an
 // expression, producing a result with a given type. For example, when
 // constructing from aggregates we may figure out which conversions are required

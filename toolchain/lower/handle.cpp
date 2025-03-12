@@ -260,6 +260,11 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // Nothing to do. This value should never be consumed.
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::SpecificImplFunction /*inst*/) -> void {
+  // Nothing to do. This value should never be consumed.
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlockContents(inst.block_id);

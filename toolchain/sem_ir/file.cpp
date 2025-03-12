@@ -282,6 +282,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case RequireCompleteType::Kind:
       case SpecificFunction::Kind:
       case SpecificFunctionType::Kind:
+      case SpecificImplFunction::Kind:
       case StringLiteral::Kind:
       case StringType::Kind:
       case StructType::Kind:
