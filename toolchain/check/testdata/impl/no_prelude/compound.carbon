@@ -44,10 +44,7 @@ impl {.b: ()} as NonInstance2 {
 }
 
 fn NonInstanceCall2(n: {.b: ()}) {
-  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+10]]:3: error: cannot convert value of type `{.b: ()}` to `NonInstance2` implicitly [ConversionFailure]
-  // CHECK:STDERR:   n.(NonInstance2.F2)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+7]]:3: note: expected type implementing `NonInstance2`; found non-type value [ConversionFailureNonTypeToFacetNote]
+  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `{.b: ()}` to type implementing `NonInstance2` [ConversionFailureNonTypeToTypeOrFacet]
   // CHECK:STDERR:   n.(NonInstance2.F2)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+4]]:3: note: type `{.b: ()}` does not implement interface `Core.ImplicitAs(NonInstance2)` [MissingImplInMemberAccessNote]
@@ -71,10 +68,7 @@ impl {.c: ()} as NonInstance3 {
 }
 
 fn NonInstanceCallIndirect(p: {.c: ()}*) {
-  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+10]]:3: error: cannot convert value of type `{.c: ()}` to `NonInstance3` implicitly [ConversionFailure]
-  // CHECK:STDERR:   p->(NonInstance3.F3)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+7]]:3: note: expected type implementing `NonInstance3`; found non-type value [ConversionFailureNonTypeToFacetNote]
+  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `{.c: ()}` to type implementing `NonInstance3` [ConversionFailureNonTypeToTypeOrFacet]
   // CHECK:STDERR:   p->(NonInstance3.F3)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+4]]:3: note: type `{.c: ()}` does not implement interface `Core.ImplicitAs(NonInstance3)` [MissingImplInMemberAccessNote]
@@ -429,7 +423,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %n.ref: %struct_type.b = name_ref n, %n
 // CHECK:STDOUT:   %NonInstance2.ref: type = name_ref NonInstance2, file.%NonInstance2.decl [concrete = constants.%NonInstance2.type]
 // CHECK:STDOUT:   %F2.ref: %NonInstance2.assoc_type = name_ref F2, @NonInstance2.%assoc0 [concrete = constants.%assoc0.97a]
-// CHECK:STDOUT:   %.loc24: %NonInstance2.type = converted %n.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21: %NonInstance2.type = converted %n.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -607,8 +601,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %NonInstance3.ref: type = name_ref NonInstance3, file.%NonInstance3.decl [concrete = constants.%NonInstance3.type]
 // CHECK:STDOUT:   %F3.ref: %NonInstance3.assoc_type = name_ref F3, @NonInstance3.%assoc0 [concrete = constants.%assoc0.140]
-// CHECK:STDOUT:   %.loc24_4.1: ref %struct_type.c = deref %p.ref
-// CHECK:STDOUT:   %.loc24_4.2: %NonInstance3.type = converted %.loc24_4.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_4.1: ref %struct_type.c = deref %p.ref
+// CHECK:STDOUT:   %.loc21_4.2: %NonInstance3.type = converted %.loc21_4.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

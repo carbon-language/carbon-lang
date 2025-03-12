@@ -35,16 +35,13 @@ fn WalkAnimal(a:! Animal) {}
 
 fn F() {
   let x:! type = Goat;
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+13]]:3: error: cannot convert value of type `type` to `Animal` implicitly [ConversionFailure]
-  // CHECK:STDERR:   WalkAnimal(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+10]]:3: note: expected type implementing `Animal`; found type `x` [ConversionFailureTypeToFacetNote]
+  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `x` to type implementing `Animal`; type `x` does not implement the required interface(s) [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   WalkAnimal(x);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(Animal)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WalkAnimal(x);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE-13]]:15: note: initializing generic parameter `a` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE-10]]:15: note: initializing generic parameter `a` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn WalkAnimal(a:! Animal) {}
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -362,7 +359,7 @@ fn F() {
 // CHECK:STDOUT:   %x: type = bind_symbolic_name x, 0, %Goat.ref [symbolic = constants.%x]
 // CHECK:STDOUT:   %WalkAnimal.ref: %WalkAnimal.type = name_ref WalkAnimal, file.%WalkAnimal.decl [concrete = constants.%WalkAnimal]
 // CHECK:STDOUT:   %x.ref: type = name_ref x, %x [symbolic = constants.%x]
-// CHECK:STDOUT:   %.loc28: %Animal.type = converted %x.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %Animal.type = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

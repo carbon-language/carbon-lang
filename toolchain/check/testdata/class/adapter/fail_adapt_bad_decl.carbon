@@ -13,7 +13,7 @@
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot convert value of type `Core.IntLiteral` to `type` implicitly [ConversionFailure]
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToTypeOrFacet]
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
@@ -34,7 +34,7 @@ fn Use(b: Bad) { b.F(); }
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot convert value of type `Core.IntLiteral` to `type` implicitly [ConversionFailure]
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToTypeOrFacet]
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
