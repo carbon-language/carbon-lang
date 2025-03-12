@@ -648,7 +648,7 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:   %BitAnd.assoc_type: type = assoc_entity_type %BitAnd.type [concrete]
 // CHECK:STDOUT:   %assoc0: %BitAnd.assoc_type = assoc_entity element0, imports.%Core.import_ref.a93 [concrete]
 // CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %Self.as_type.19f: type = facet_access_type %Self.25f [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.25f [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %impl_witness.db8: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(%T) [symbolic]
@@ -684,21 +684,9 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:   %W.as_wit.iface0: <witness> = facet_access_witness %W, element0 [symbolic]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %W.as_type, (%W.as_wit.iface0) [symbolic]
 // CHECK:STDOUT:   %impl_witness.1d8: <witness> = impl_witness (), @impl.e7b(%Animal.facet) [symbolic]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.as_type.40a: type = facet_access_type %Self.519 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
-// CHECK:STDOUT:   %assoc0.02f: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.dbb: type = facet_type <@ImplicitAs, @ImplicitAs(%facet_type.6ff)> [concrete]
-// CHECK:STDOUT:   %Convert.type.bd1: type = fn_type @Convert, @ImplicitAs(%facet_type.6ff) [concrete]
-// CHECK:STDOUT:   %Convert.af7: %Convert.type.bd1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.f1b: type = assoc_entity_type %ImplicitAs.type.dbb [concrete]
-// CHECK:STDOUT:   %assoc0.15b: %ImplicitAs.assoc_type.f1b = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
-// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %W.as_wit.iface1: <witness> = facet_access_witness %W, element1 [symbolic]
+// CHECK:STDOUT:   %facet_value: %facet_type.6ff = facet_value %W.as_type, (%impl_witness.1d8, %W.as_wit.iface1) [symbolic]
+// CHECK:STDOUT:   %FeedTame2.specific_fn: <specific function> = specific_function %FeedTame2, @FeedTame2(%facet_value) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -707,7 +695,7 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//prelude, inst100 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//prelude, loc18_41, loaded [concrete = constants.%assoc0.a63]
+// CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//prelude, loc18_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//prelude, Op, unloaded
 // CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//prelude, inst100 [no loc], loaded [symbolic = constants.%Self.25f]
 // CHECK:STDOUT:   %Core.import_ref.51c: <witness> = import_ref Core//prelude, loc21_36, loaded [symbolic = @impl.f92.%impl_witness (constants.%impl_witness.b81)]
@@ -716,13 +704,6 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//prelude, loc21_29, loaded [concrete = constants.%BitAnd.type]
 // CHECK:STDOUT:   %Core.import_ref.1e6: @impl.f92.%Op.type (%Op.type.f99) = import_ref Core//prelude, loc22_42, loaded [symbolic = @impl.f92.%Op (constants.%Op.05a)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//prelude, inst65 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
-// CHECK:STDOUT:   %Core.Convert = import_ref Core//prelude, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//prelude, inst65 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -830,26 +811,6 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:   .Self = imports.%Core.import_ref.ad0
 // CHECK:STDOUT:   .Op = imports.%Core.import_ref.08d
 // CHECK:STDOUT:   witness = (imports.%Core.Op)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.3: type) [from "toolchain/testing/min_prelude/facet_types.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.275)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.837)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.02f)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.630
-// CHECK:STDOUT:     witness = (imports.%Core.Convert)
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.e7b(%A.loc7_14.1: %Animal.type) {
@@ -1027,12 +988,7 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:   %V.as_type.loc9_34.2 => constants.%W.as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.dbb
-// CHECK:STDOUT:   %Self => constants.%Self.519
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.bd1
-// CHECK:STDOUT:   %Convert => constants.%Convert.af7
-// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.f1b
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.15b
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.ba9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.e7b(@HandleTameAnimal2.%Animal.facet.loc12_14.5) {}
