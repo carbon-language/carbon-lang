@@ -27,7 +27,7 @@ interface Animal {}
 
 fn Feed[T:! Eats](e: T) {}
 
-// CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+13]]:37: error: cannot implicitly convert value of type `type` to `Eats` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+13]]:37: error: cannot convert value of type `type` to `Eats` implicitly [ConversionFailure]
 // CHECK:STDERR: fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDERR:                                     ^~~~~~~
 // CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+10]]:37: note: expected type implementing `Eats`; found type `T` implementing `Animal` [ConversionFailureFacetAccessTypeToFacetNote]

@@ -28,7 +28,7 @@ interface I {
   let V:! Self;
 }
 
-// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+7]]:12: error: cannot implicitly convert value of type `Core.IntLiteral` to `{}` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+7]]:12: error: cannot convert value of type `Core.IntLiteral` to `{}` implicitly [ConversionFailure]
 // CHECK:STDERR: impl {} as I where .V = 0 {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+4]]:12: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
@@ -86,7 +86,7 @@ fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
 
 fn CallF() {
   // TODO: This call should eventually work.
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `{}` to `I where .(I.V) = {} and...` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+13]]:3: error: cannot convert value of type `{}` to `I where .(I.V) = {} and...` implicitly [ConversionFailure]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+10]]:3: note: expected type implementing `I where .(I.V) = {} and...`; found non-type value [ConversionFailureNonTypeToFacetNote]

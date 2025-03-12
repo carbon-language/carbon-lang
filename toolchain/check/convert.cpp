@@ -1205,21 +1205,23 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (!target.diagnose) {
         return context.emitter().BuildSuppressed();
       }
+      bool explicit_as = target.kind == ConversionTarget::ExplicitAs;
       // TODO: Should this message change to say "object of type" when
       // converting from a reference expression?
-      CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                        "cannot implicitly convert value of type {0} to {1}",
-                        TypeOfInstId, SemIR::TypeId);
-      CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
-                        "cannot convert value of type {0} to {1} with `as`",
-                        TypeOfInstId, SemIR::TypeId);
-      auto builder =
-          context.emitter().Build(loc_id,
-                                  target.kind == ConversionTarget::ExplicitAs
-                                      ? ExplicitAsConversionFailure
-                                      : ImplicitAsConversionFailure,
-                                  expr_id, target.type_id);
-      if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+      CARBON_DIAGNOSTIC(
+          ConversionFailure, Error,
+          "cannot convert value of type {1} to {2} {0:with as|implicitly}",
+          BoolAsSelect, TypeOfInstId, SemIR::TypeId);
+      auto builder = context.emitter().Build(
+          loc_id, ConversionFailure, explicit_as, expr_id, target.type_id);
+      if (target.type_id == SemIR::TypeType::SingletonTypeId) {
+        CARBON_DIAGNOSTIC(
+            ConversionToTypeFailure, Error,
+            "cannot convert type {1} to `type` {0:with as|implicitly}",
+            BoolAsSelect, TypeOfInstId);
+        return context.emitter().Build(loc_id, ConversionFailure, explicit_as,
+                                       expr_id);
+      } else if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
         auto type_of_expr_id = context.insts().Get(expr_id).type_id();
         if (auto facet_access_type =
                 context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {

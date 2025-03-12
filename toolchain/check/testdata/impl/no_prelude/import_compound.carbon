@@ -50,7 +50,7 @@ import library "lib";
 import Core;
 
 fn NonInstanceCallImportFail(n: {.i: ()}) {
-  // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `{.i: ()}` to `NonInstance` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+10]]:3: error: cannot convert value of type `{.i: ()}` to `NonInstance` implicitly [ConversionFailure]
   // CHECK:STDERR:   n.(NonInstance.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+7]]:3: note: expected type implementing `NonInstance`; found non-type value [ConversionFailureNonTypeToFacetNote]
@@ -70,7 +70,7 @@ import library "lib";
 import Core;
 
 fn NonInstanceCallIndirectImport(p: {.i: ()}*) {
-  // CHECK:STDERR: fail_import_non-instance_indirect.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `{.i: ()}` to `NonInstance` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_import_non-instance_indirect.carbon:[[@LINE+10]]:3: error: cannot convert value of type `{.i: ()}` to `NonInstance` implicitly [ConversionFailure]
   // CHECK:STDERR:   p->(NonInstance.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non-instance_indirect.carbon:[[@LINE+7]]:3: note: expected type implementing `NonInstance`; found non-type value [ConversionFailureNonTypeToFacetNote]

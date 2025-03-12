@@ -88,7 +88,7 @@ import Core;
 class C {}
 
 fn MakeC() -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+10]]:10: error: cannot implicitly convert value of type `type` to `Factory(C)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+10]]:10: error: cannot convert value of type `type` to `Factory(C)` implicitly [ConversionFailure]
   // CHECK:STDERR:   return A.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+7]]:10: note: expected type implementing `Factory(C)`; found type `A` [ConversionFailureTypeToFacetNote]

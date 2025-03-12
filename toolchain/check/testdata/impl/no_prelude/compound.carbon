@@ -44,7 +44,7 @@ impl {.b: ()} as NonInstance2 {
 }
 
 fn NonInstanceCall2(n: {.b: ()}) {
-  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `{.b: ()}` to `NonInstance2` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+10]]:3: error: cannot convert value of type `{.b: ()}` to `NonInstance2` implicitly [ConversionFailure]
   // CHECK:STDERR:   n.(NonInstance2.F2)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+7]]:3: note: expected type implementing `NonInstance2`; found non-type value [ConversionFailureNonTypeToFacetNote]
@@ -71,7 +71,7 @@ impl {.c: ()} as NonInstance3 {
 }
 
 fn NonInstanceCallIndirect(p: {.c: ()}*) {
-  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `{.c: ()}` to `NonInstance3` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+10]]:3: error: cannot convert value of type `{.c: ()}` to `NonInstance3` implicitly [ConversionFailure]
   // CHECK:STDERR:   p->(NonInstance3.F3)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+7]]:3: note: expected type implementing `NonInstance3`; found non-type value [ConversionFailureNonTypeToFacetNote]

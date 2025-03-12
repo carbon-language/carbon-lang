@@ -57,7 +57,7 @@ fn Simple3(T:! K2, x: T) {
 // Compound member access does not. It tries to convert `y` to `K2`, but only
 // its type `V` can.
 fn Compound3(V:! K2, y: V) {
-  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `V` to `K2` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+10]]:3: error: cannot convert value of type `V` to `K2` implicitly [ConversionFailure]
   // CHECK:STDERR:   y.(K2.Q2)();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+7]]:3: note: expected type implementing `K2`; found non-type value [ConversionFailureNonTypeToFacetNote]
@@ -159,7 +159,7 @@ impl C as A {
 // Since `A.G` is a non-instance method, compound member access may only be
 // used with a type, not an instance.
 fn Fails() {
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+10]]:3: error: cannot convert value of type `C` to `A` implicitly [ConversionFailure]
   // CHECK:STDERR:   ({} as C).((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: note: expected type implementing `A`; found non-type value [ConversionFailureNonTypeToFacetNote]
@@ -170,7 +170,7 @@ fn Fails() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as C).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+10]]:3: error: cannot convert value of type `C` to `A` implicitly [ConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: note: expected type implementing `A`; found non-type value [ConversionFailureNonTypeToFacetNote]
@@ -181,7 +181,7 @@ fn Fails() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+10]]:3: error: cannot convert value of type `C` to `A` implicitly [ConversionFailure]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: note: expected type implementing `A`; found non-type value [ConversionFailureNonTypeToFacetNote]

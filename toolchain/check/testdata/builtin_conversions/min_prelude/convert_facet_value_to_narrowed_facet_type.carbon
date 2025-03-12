@@ -46,7 +46,7 @@ impl forall [A:! Animal] A as Eats {}
 fn FeedTame2[V:! Tame & Eats](v: V) {}
 
 fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
-  // CHECK:STDERR: fail_todo_with_blanket.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `type` to `Eats & Tame` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_with_blanket.carbon:[[@LINE+13]]:3: error: cannot convert value of type `type` to `Eats & Tame` implicitly [ConversionFailure]
   // CHECK:STDERR:   FeedTame2(w);
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_with_blanket.carbon:[[@LINE+10]]:3: note: expected type implementing `Eats & Tame`; found type `W` implementing `Animal & Tame` [ConversionFailureFacetAccessTypeToFacetNote]

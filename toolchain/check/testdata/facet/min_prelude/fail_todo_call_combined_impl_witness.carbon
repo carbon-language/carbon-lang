@@ -39,7 +39,7 @@ fn G[T:! A & Empty & B](t: T) {
   // TODO: Qualified lookup of `AA` and `BB` should also be possible here, using
   // the witnesses found in type deduction.
 
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Empty & A & B` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+10]]:3: error: cannot convert value of type `Empty & A & B` to `A` implicitly [ConversionFailure]
   // CHECK:STDERR:   T.(A.AA)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: note: expected type implementing `A`; found type `T` implementing `Empty & A & B` [ConversionFailureFacetToFacetNote]
@@ -50,7 +50,7 @@ fn G[T:! A & Empty & B](t: T) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   T.(A.AA)();
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Empty & A & B` to `B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+10]]:3: error: cannot convert value of type `Empty & A & B` to `B` implicitly [ConversionFailure]
   // CHECK:STDERR:   T.(B.BB)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: note: expected type implementing `B`; found type `T` implementing `Empty & A & B` [ConversionFailureFacetToFacetNote]

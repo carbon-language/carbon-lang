@@ -35,7 +35,7 @@ fn WalkAnimal(a:! Animal) {}
 
 fn F() {
   let x:! type = Goat;
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+13]]:3: error: cannot implicitly convert value of type `type` to `Animal` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+13]]:3: error: cannot convert value of type `type` to `Animal` implicitly [ConversionFailure]
   // CHECK:STDERR:   WalkAnimal(x);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+10]]:3: note: expected type implementing `Animal`; found type `x` [ConversionFailureTypeToFacetNote]
