@@ -58,6 +58,11 @@ static auto CheckAssociatedFunctionImplementation(
     return SemIR::ErrorInst::SingletonInstId;
   }
 
+  auto impl_enclosing_specific_id =
+      context.types()
+          .GetAs<SemIR::FunctionType>(impl_function_decl->type_id)
+          .specific_id;
+
   // Map from the specific for the function type to the specific for the
   // function signature. The function signature may have additional generic
   // parameters.
@@ -67,7 +72,7 @@ static auto CheckAssociatedFunctionImplementation(
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,
-          self_type_id, witness_inst_id);
+          impl_enclosing_specific_id, self_type_id, witness_inst_id);
 
   if (!CheckFunctionTypeMatches(
           context, context.functions().Get(impl_function_decl->function_id),

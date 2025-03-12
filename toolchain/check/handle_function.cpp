@@ -15,6 +15,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/keyword_modifier_set.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
@@ -22,6 +23,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
@@ -75,11 +77,33 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
+// Returns the ID of the self parameter pattern, or None.
+// TODO: Do this during initial traversal of implicit params.
+static auto FindSelfPattern(Context& context,
+                            SemIR::InstBlockId implicit_param_patterns_id)
+    -> SemIR::InstId {
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
+  if (const auto* i = llvm::find_if(implicit_param_patterns,
+                                    [&](auto implicit_param_id) {
+                                      return SemIR::IsSelfPattern(
+                                          context.sem_ir(), implicit_param_id);
+                                    });
+      i != implicit_param_patterns.end()) {
+    return *i;
+  }
+  return SemIR::InstId::None;
+}
+
+// Diagnoses issues with the modifiers, removing modifiers that shouldn't be
+// present.
+static auto DiagnoseModifiers(Context& context,
+                              Parse::AnyFunctionDeclId node_id,
+                              DeclIntroducerState& introducer,
                               bool is_definition,
                               SemIR::InstId parent_scope_inst_id,
-                              std::optional<SemIR::Inst> parent_scope_inst)
-    -> void {
+                              std::optional<SemIR::Inst> parent_scope_inst,
+                              SemIR::InstId self_param_id) -> void {
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
@@ -90,6 +114,33 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
+
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
+    // TODO: Once we are saving the modifiers for a function, add check that
+    // the function may only be defined if it is marked `default` or `final`.
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
+                 "interface modifier");
+  }
+
+  if (!self_param_id.has_value() &&
+      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
+    CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
+    context.emitter().Build(node_id, VirtualWithoutSelf).Emit();
+    // TODO: Remove the incorrect modifier.
+    // introducer.modifier_set.Remove(KeywordModifierSet::Method);
+  }
+}
+
+// Returns the virtual-family modifier as an enum.
+static auto GetVirtualModifier(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::VirtualModifier {
+  return modifier_set.ToEnum<SemIR::Function::VirtualModifier>()
+      .Case(KeywordModifierSet::Virtual,
+            SemIR::Function::VirtualModifier::Virtual)
+      .Case(KeywordModifierSet::Abstract,
+            SemIR::Function::VirtualModifier::Abstract)
+      .Case(KeywordModifierSet::Impl, SemIR::Function::VirtualModifier::Impl)
+      .Default(SemIR::Function::VirtualModifier::None);
 }
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
@@ -140,11 +191,17 @@ static auto MergeFunctionRedecl(Context& context,
 
 // Check whether this is a redeclaration, merging if needed.
 static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           SemIR::NameId name_id, SemIR::InstId prev_id,
-                           SemIR::LocId name_loc_id,
+                           const DeclNameStack::NameContext& name_context,
                            SemIR::FunctionDecl& function_decl,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
+  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
+    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                         name_context.poisoning_loc_id, name_context.loc_id);
+    return;
+  }
+
+  auto prev_id = name_context.prev_inst_id();
   if (!prev_id.has_value()) {
     return;
   }
@@ -185,7 +242,8 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_id, name_loc_id, prev_id);
+    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
+                          prev_id);
     return;
   }
 
@@ -195,6 +253,89 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     function_decl.function_id = prev_function_id;
     function_decl.type_id = prev_type_id;
   }
+}
+
+// Adds the declaration to name lookup when appropriate.
+static auto MaybeAddToNameLookup(
+    Context& context, const DeclNameStack::NameContext& name_context,
+    const KeywordModifierSet& modifier_set,
+    const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id)
+    -> void {
+  if (name_context.state == DeclNameStack::NameContext::State::Poisoned ||
+      name_context.prev_inst_id().has_value()) {
+    return;
+  }
+
+  // At interface scope, a function declaration introduces an associated
+  // function.
+  auto lookup_result_id = decl_id;
+  if (parent_scope_inst && !name_context.has_qualifiers) {
+    if (auto interface_scope =
+            parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
+      lookup_result_id = BuildAssociatedEntity(
+          context, interface_scope->interface_id, decl_id);
+    }
+  }
+
+  context.decl_name_stack().AddName(name_context, lookup_result_id,
+                                    modifier_set.GetAccessKind());
+}
+
+// If the function is the entry point, do corresponding validation.
+static auto ValidateForEntryPoint(Context& context,
+                                  Parse::AnyFunctionDeclId node_id,
+                                  SemIR::FunctionId function_id,
+                                  const SemIR::Function& function_info)
+    -> void {
+  if (!SemIR::IsEntryPoint(context.sem_ir(), function_id)) {
+    return;
+  }
+
+  auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
+  // TODO: Update this once valid signatures for the entry point are decided.
+  if (function_info.implicit_param_patterns_id.has_value() ||
+      !function_info.param_patterns_id.has_value() ||
+      !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
+      (return_type_id.has_value() &&
+       return_type_id != GetTupleType(context, {}) &&
+       // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
+       // have an interface for this.
+       return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                                     context.ints().Add(32)))) {
+    CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
+                      "invalid signature for `Main.Run` function; expected "
+                      "`fn ()` or `fn () -> i32`");
+    context.emitter().Emit(node_id, InvalidMainRunSignature);
+  }
+}
+
+// Requests a vtable be created when processing a virtual function.
+static auto RequestVtableIfVirtual(
+    Context& context, Parse::AnyFunctionDeclId node_id,
+    SemIR::Function::VirtualModifier virtual_modifier,
+    const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id)
+    -> void {
+  // In order to request a vtable, the function must be virtual, and in a class
+  // scope.
+  if (virtual_modifier == SemIR::Function::VirtualModifier::None ||
+      !parent_scope_inst) {
+    return;
+  }
+  auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>();
+  if (!class_decl) {
+    return;
+  }
+
+  auto& class_info = context.classes().Get(class_decl->class_id);
+  if (virtual_modifier == SemIR::Function::VirtualModifier::Impl &&
+      !class_info.base_id.has_value()) {
+    CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
+    context.emitter().Build(node_id, ImplWithoutBase).Emit();
+  }
+  // TODO: If this is an `impl` function, check there's a matching base
+  // function that's impl or virtual.
+  class_info.is_dynamic = true;
+  context.vtable_stack().AddInstId(decl_id);
 }
 
 // Build a FunctionDecl describing the signature of a function. This
@@ -216,6 +357,8 @@ static auto BuildFunctionDecl(Context& context,
     context.TODO(node_id, "function with positional parameters");
     name.param_patterns_id = SemIR::InstBlockId::Empty;
   }
+  auto self_param_id =
+      FindSelfPattern(context, name.implicit_param_patterns_id);
 
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
@@ -226,89 +369,34 @@ static auto BuildFunctionDecl(Context& context,
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Fn>();
-  DiagnoseModifiers(context, introducer, is_definition, parent_scope_inst_id,
-                    parent_scope_inst);
+  DiagnoseModifiers(context, node_id, introducer, is_definition,
+                    parent_scope_inst_id, parent_scope_inst, self_param_id);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
-  auto virtual_modifier =
-      introducer.modifier_set.ToEnum<SemIR::Function::VirtualModifier>()
-          .Case(KeywordModifierSet::Virtual,
-                SemIR::Function::VirtualModifier::Virtual)
-          .Case(KeywordModifierSet::Abstract,
-                SemIR::Function::VirtualModifier::Abstract)
-          .Case(KeywordModifierSet::Impl,
-                SemIR::Function::VirtualModifier::Impl)
-          .Default(SemIR::Function::VirtualModifier::None);
-  SemIR::Class* virtual_class_info = nullptr;
-  if (virtual_modifier != SemIR::Function::VirtualModifier::None &&
-      parent_scope_inst) {
-    if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
-      virtual_class_info = &context.classes().Get(class_decl->class_id);
-      if (virtual_modifier == SemIR::Function::VirtualModifier::Impl &&
-          !virtual_class_info->base_id.has_value()) {
-        CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
-        context.emitter().Build(node_id, ImplWithoutBase).Emit();
-      }
-      // TODO: If this is an `impl` function, check there's a matching base
-      // function that's impl or virtual.
-      virtual_class_info->is_dynamic = true;
-    }
-  }
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
-    // TODO: Once we are saving the modifiers for a function, add check that
-    // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
-                 "interface modifier");
-  }
+  auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
 
   // Add the function declaration.
-  auto decl_block_id = context.inst_block_stack().Pop();
-  auto function_decl = SemIR::FunctionDecl{
-      SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
+  SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
+                                       SemIR::FunctionId::None,
+                                       context.inst_block_stack().Pop()};
   auto decl_id =
       AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, function_decl));
+  RequestVtableIfVirtual(context, node_id, virtual_modifier, parent_scope_inst,
+                         decl_id);
 
-  // Find self parameter pattern.
-  // TODO: Do this during initial traversal of implicit params.
-  auto self_param_id = SemIR::InstId::None;
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(name.implicit_param_patterns_id);
-  if (const auto* i = llvm::find_if(implicit_param_patterns,
-                                    [&](auto implicit_param_id) {
-                                      return SemIR::IsSelfPattern(
-                                          context.sem_ir(), implicit_param_id);
-                                    });
-      i != implicit_param_patterns.end()) {
-    self_param_id = *i;
-  }
-
-  if (virtual_modifier != SemIR::Function::VirtualModifier::None &&
-      !self_param_id.has_value()) {
-    CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
-    context.emitter().Build(node_id, VirtualWithoutSelf).Emit();
-  }
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
   auto function_info =
-      SemIR::Function{{name_context.MakeEntityWithParamsBase(
-                          name, decl_id, is_extern, introducer.extern_library)},
+      SemIR::Function{name_context.MakeEntityWithParamsBase(
+                          name, decl_id, is_extern, introducer.extern_library),
                       {.return_slot_pattern_id = name.return_slot_pattern_id,
                        .virtual_modifier = virtual_modifier,
                        .self_param_id = self_param_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
-  if (virtual_class_info) {
-    context.vtable_stack().AddInstId(decl_id);
-  }
 
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                         name_context.poisoning_loc_id, name_context.loc_id);
-  } else {
-    TryMergeRedecl(context, node_id, name_context.name_id,
-                   name_context.prev_inst_id(), name_context.loc_id,
-                   function_decl, function_info, is_definition);
-  }
+  TryMergeRedecl(context, node_id, name_context, function_decl, function_info,
+                 is_definition);
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.has_value()) {
@@ -338,43 +426,12 @@ static auto BuildFunctionDecl(Context& context,
     context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
   }
 
-  // Check if we need to add this to name lookup, now that the function decl is
-  // done.
-  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
-      !name_context.prev_inst_id().has_value()) {
-    // At interface scope, a function declaration introduces an associated
-    // function.
-    auto lookup_result_id = decl_id;
-    if (parent_scope_inst && !name_context.has_qualifiers) {
-      if (auto interface_scope =
-              parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
-        lookup_result_id = BuildAssociatedEntity(
-            context, interface_scope->interface_id, decl_id);
-      }
-    }
+  // Add to name lookup if needed, now that the decl is built.
+  MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
+                       parent_scope_inst, decl_id);
 
-    context.decl_name_stack().AddName(name_context, lookup_result_id,
-                                      introducer.modifier_set.GetAccessKind());
-  }
-
-  if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
-    auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
-    // TODO: Update this once valid signatures for the entry point are decided.
-    if (function_info.implicit_param_patterns_id.has_value() ||
-        !function_info.param_patterns_id.has_value() ||
-        !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
-        (return_type_id.has_value() &&
-         return_type_id != GetTupleType(context, {}) &&
-         // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
-         // have an interface for this.
-         return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
-                                       context.ints().Add(32)))) {
-      CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
-                        "invalid signature for `Main.Run` function; expected "
-                        "`fn ()` or `fn () -> i32`");
-      context.emitter().Emit(node_id, InvalidMainRunSignature);
-    }
-  }
+  ValidateForEntryPoint(context, node_id, function_decl.function_id,
+                        function_info);
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required().push_back(decl_id);

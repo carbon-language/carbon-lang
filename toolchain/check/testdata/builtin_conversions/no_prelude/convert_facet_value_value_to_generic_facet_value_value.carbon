@@ -432,7 +432,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc23_45: <witness> = require_complete_type @HandleAnimal.%T.as_type.loc23_47.2 (%T.as_type.2ad) [symbolic = %require_complete.loc23_45 (constants.%require_complete.234)]
 // CHECK:STDOUT:   %require_complete.loc23_54: <witness> = require_complete_type @HandleAnimal.%Food.as_type.loc23_56.2 (%Food.as_type.fae) [symbolic = %require_complete.loc23_54 (constants.%require_complete.444)]
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats, @Eats(%Food.as_type.loc23_56.2)> [symbolic = %Eats.type (constants.%Eats.type.f54c3d.2)]
-// CHECK:STDOUT:   %require_complete.loc23_76: <witness> = require_complete_type @HandleAnimal.%Eats.type (%Eats.type.f54c3d.2) [symbolic = %require_complete.loc23_76 (constants.%require_complete.42532a.2)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.009(%T.loc23_17.2, %Food.loc23_29.2) [symbolic = %impl_witness (constants.%impl_witness.c7c36b.2)]
 // CHECK:STDOUT:   %Eats.facet.loc23_76.2: @HandleAnimal.%Eats.type (%Eats.type.f54c3d.2) = facet_value %T.as_type.loc23_47.2, (%impl_witness) [symbolic = %Eats.facet.loc23_76.2 (constants.%Eats.facet.97e)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc23_64.2: <specific function> = specific_function constants.%Feed, @Feed(%Food.loc23_29.2, %Eats.facet.loc23_76.2) [symbolic = %Feed.specific_fn.loc23_64.2 (constants.%Feed.specific_fn.387)]
@@ -549,10 +548,6 @@ fn F() {
 // CHECK:STDOUT: specific @Eats(constants.%Food.as_type.fae) {
 // CHECK:STDOUT:   %Food.loc12_16.2 => constants.%Food.as_type.fae
 // CHECK:STDOUT:   %Food.patt.loc12_16.2 => constants.%Food.as_type.fae
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Eats.type => constants.%Eats.type.f54c3d.2
-// CHECK:STDOUT:   %Self.2 => constants.%Self.4eb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.009(constants.%T.fd4, constants.%Food.5fe) {
@@ -601,7 +596,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc23_45 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc23_54 => constants.%complete_type.357
 // CHECK:STDOUT:   %Eats.type => constants.%Eats.type.1ae
-// CHECK:STDOUT:   %require_complete.loc23_76 => constants.%complete_type.004
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.4f1
 // CHECK:STDOUT:   %Eats.facet.loc23_76.2 => constants.%Eats.facet.fa6
 // CHECK:STDOUT:   %Feed.specific_fn.loc23_64.2 => constants.%Feed.specific_fn.d82
