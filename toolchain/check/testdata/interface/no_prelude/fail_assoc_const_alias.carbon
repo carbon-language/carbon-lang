@@ -715,7 +715,7 @@ interface C {
 // CHECK:STDOUT:   %C.facet: %C.type = facet_value %Self.as_type, (%Self.as_wit.iface0) [symbolic]
 // CHECK:STDOUT:   %.70a: type = fn_type_with_self_type %F.type, %C.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.70a = impl_witness_access %Self.as_wit.iface0, element0 [symbolic]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F(%C.facet) [symbolic]
+// CHECK:STDOUT:   %.337: <specific function> = specific_impl_function %impl.elem0, @F(%C.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -784,9 +784,9 @@ interface C {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%Self.as_type.loc8_14.1 (%Self.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Self.as_wit.iface0.loc10_9.2: <witness> = facet_access_witness %Self, element0 [symbolic = %Self.as_wit.iface0.loc10_9.2 (constants.%Self.as_wit.iface0)]
 // CHECK:STDOUT:   %C.facet: %C.type = facet_value %Self.as_type.loc8_14.1, (%Self.as_wit.iface0.loc10_9.2) [symbolic = %C.facet (constants.%C.facet)]
-// CHECK:STDOUT:   %.loc10_9.2: type = fn_type_with_self_type constants.%F.type, %C.facet [symbolic = %.loc10_9.2 (constants.%.70a)]
-// CHECK:STDOUT:   %impl.elem0.loc10_9.2: @G.%.loc10_9.2 (%.70a) = impl_witness_access %Self.as_wit.iface0.loc10_9.2, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %specific_fn.loc10_9.2: <specific function> = specific_function %impl.elem0.loc10_9.2, @F(%C.facet) [symbolic = %specific_fn.loc10_9.2 (constants.%specific_fn)]
+// CHECK:STDOUT:   %.loc10_9.3: type = fn_type_with_self_type constants.%F.type, %C.facet [symbolic = %.loc10_9.3 (constants.%.70a)]
+// CHECK:STDOUT:   %impl.elem0.loc10_9.2: @G.%.loc10_9.3 (%.70a) = impl_witness_access %Self.as_wit.iface0.loc10_9.2, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc10_9.4: <specific function> = specific_impl_function %impl.elem0.loc10_9.2, @F(%C.facet) [symbolic = %.loc10_9.4 (constants.%.337)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @G.%Self.as_type.loc8_14.1 (%Self.as_type)]() {
 // CHECK:STDOUT:   !entry:
@@ -795,11 +795,11 @@ interface C {
 // CHECK:STDOUT:     %Self.as_type.loc10: type = facet_access_type constants.%Self [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc10_9.1: type = converted constants.%Self, %Self.as_type.loc10 [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %Self.as_wit.iface0.loc10_9.1: <witness> = facet_access_witness constants.%Self, element0 [symbolic = %Self.as_wit.iface0.loc10_9.2 (constants.%Self.as_wit.iface0)]
-// CHECK:STDOUT:     %impl.elem0.loc10_9.1: @G.%.loc10_9.2 (%.70a) = impl_witness_access %Self.as_wit.iface0.loc10_9.1, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc10_9.1: @G.%.loc10_9.3 (%.70a) = impl_witness_access %Self.as_wit.iface0.loc10_9.1, element0 [symbolic = %impl.elem0.loc10_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc10_9: <bound method> = bound_method %self.ref.loc10, %impl.elem0.loc10_9.1
-// CHECK:STDOUT:     %specific_fn.loc10_9.1: <specific function> = specific_function %impl.elem0.loc10_9.1, @F(constants.%C.facet) [symbolic = %specific_fn.loc10_9.2 (constants.%specific_fn)]
-// CHECK:STDOUT:     %bound_method.loc10_12: <bound method> = bound_method %self.ref.loc10, %specific_fn.loc10_9.1
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %bound_method.loc10_12(%self.ref.loc10)
+// CHECK:STDOUT:     %.loc10_9.2: <specific function> = specific_impl_function %impl.elem0.loc10_9.1, @F(constants.%C.facet) [symbolic = %.loc10_9.4 (constants.%.337)]
+// CHECK:STDOUT:     %bound_method.loc10_12: <bound method> = bound_method %self.ref.loc10, %.loc10_9.2
+// CHECK:STDOUT:     %.loc10_12: init %empty_tuple.type = call %bound_method.loc10_12(%self.ref.loc10)
 // CHECK:STDOUT:     %self.ref.loc15: @G.%Self.as_type.loc8_14.1 (%Self.as_type) = name_ref self, %self
 // CHECK:STDOUT:     %F.ref.loc15: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
