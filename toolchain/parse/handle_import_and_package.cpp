@@ -40,7 +40,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
                               llvm::function_ref<auto()->void> on_parse_error)
     -> void {
   Tree::PackagingNames names{
-      .node_id = ImportDeclId(NodeId(state.subtree_start)),
+      .node_id = ImportDeclId::UnsafeMake(NodeId(state.subtree_start)),
       .is_export = is_export};
 
   // Parse the package name.

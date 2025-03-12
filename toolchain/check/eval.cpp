@@ -1661,6 +1661,8 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
   // argument value.
   if (auto value = eval_context.GetCompileTimeBindValue(bind_name.bind_index());
       value.has_value()) {
+    // TODO: This seems incorrect: patterns don't typically evaluate to the
+    // value matched by the pattern.
     return value;
   }
 

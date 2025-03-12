@@ -76,8 +76,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // TODO: Update callers to be able to deal with facet types that aren't a
-  // single interface and then remove this function.
+  // In some cases, a facet type is expected to represent a single interface.
+  // For example, an interface declaration or an associated constant are
+  // associated with a facet type that will always be a single interface.
   auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
     // We are ignoring other requirements for the moment, since this function is
     // (hopefully) temporary.

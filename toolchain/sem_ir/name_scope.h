@@ -233,6 +233,16 @@ class NameScope : public Printable<NameScope> {
     import_ir_scopes_.push_back(import_ir_scope);
   }
 
+  auto is_interface_definition() const -> bool {
+    return is_interface_definition_;
+  }
+
+  // TODO: Figure out a better way of setting this and is_cpp_scope() than
+  // calling a function immediately after construction.
+  auto set_is_interface_definition() -> void {
+    is_interface_definition_ = true;
+  }
+
  private:
   // Names in the scope, including poisoned names.
   //
@@ -280,6 +290,10 @@ class NameScope : public Printable<NameScope> {
 
   // True if this is the `Cpp` namescope used when importing C++ code.
   bool is_cpp_scope_ = false;
+
+  // True if this is the scope of an interface definition, where associated
+  // entities will be bound to the interface's `Self` symbolic type.
+  bool is_interface_definition_ = false;
 
   // Imported IR scopes that compose this namespace. This will be empty for
   // scopes that correspond to the current package.

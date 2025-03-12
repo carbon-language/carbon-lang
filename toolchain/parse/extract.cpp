@@ -155,7 +155,7 @@ struct Extractable<NodeIdForKind<Kind>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdForKind<Kind>> {
     if (extractor.MatchesNodeIdForKind(Kind)) {
-      return NodeIdForKind<Kind>(extractor.ExtractNode());
+      return NodeIdForKind<Kind>::UnsafeMake(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
@@ -182,7 +182,7 @@ struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdInCategory<Category>> {
     if (extractor.MatchesNodeIdInCategory(Category)) {
-      return NodeIdInCategory<Category>(extractor.ExtractNode());
+      return NodeIdInCategory<Category>::UnsafeMake(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
@@ -227,7 +227,7 @@ struct Extractable<NodeIdOneOf<T...>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdOneOf<T...>> {
     if (extractor.MatchesNodeIdOneOf({T::Kind...})) {
-      return NodeIdOneOf<T...>(extractor.ExtractNode());
+      return NodeIdOneOf<T...>::UnsafeMake(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
