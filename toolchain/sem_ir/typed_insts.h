@@ -1339,7 +1339,7 @@ struct SpecificFunctionType {
 //
 // This value is the callee in a call of the form `(T as Interface).F()`. The
 // specific that we determine for such a call is a specific for `Interface.F`,
-// but what we nned is a specific for the function in the `impl`. This
+// but what we need is a specific for the function in the `impl`. This
 // instruction computes that specific function.
 struct SpecificImplFunction {
   static constexpr auto Kind =

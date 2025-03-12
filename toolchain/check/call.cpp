@@ -170,8 +170,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     auto generic_callee_id = callee_id;
 
     // Strip off a bound_method so that we can form a constant specific callee.
-    auto bound_method =
-            context.insts().TryGetAs<SemIR::BoundMethod>(callee_id);
+    auto bound_method = context.insts().TryGetAs<SemIR::BoundMethod>(callee_id);
     if (bound_method) {
       generic_callee_id = bound_method->function_decl_id;
     }
