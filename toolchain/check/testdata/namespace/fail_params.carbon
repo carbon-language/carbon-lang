@@ -42,14 +42,14 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT: --- fail_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.bd7: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.199: %F.type.bd7 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,9 +70,9 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .F = %F.decl.loc18
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc18: %F.type.bd7 = fn_decl @F.1 [concrete = constants.%F.199] {} {}
 // CHECK:STDOUT:   %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:   %.loc24: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -86,17 +86,17 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %x: %T = bind_name x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {} {
+// CHECK:STDOUT:   %F.decl.loc40: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {} {
 // CHECK:STDOUT:     %T.loc40_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc40_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(%T.loc40_6.1: type) {
+// CHECK:STDOUT: generic fn @F.2(%T.loc40_6.1: type) {
 // CHECK:STDOUT:   %T.loc40_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc40_6.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -108,7 +108,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(constants.%T) {
+// CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc40_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }

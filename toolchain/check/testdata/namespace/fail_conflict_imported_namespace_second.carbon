@@ -70,8 +70,8 @@ fn NS.Foo();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [concrete]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -90,10 +90,10 @@ fn NS.Foo();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %.loc14: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {} {}
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS() [from "fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
+// CHECK:STDOUT: fn @Foo();
 // CHECK:STDOUT:

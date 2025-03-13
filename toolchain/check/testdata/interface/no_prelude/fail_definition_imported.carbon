@@ -47,13 +47,13 @@ interface I {}
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %.type: type = facet_type <@.1> [concrete]
-// CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type.733a85.1: type = facet_type <@I.1> [concrete]
+// CHECK:STDOUT:   %I.type.733a85.2: type = facet_type <@I.2> [concrete]
+// CHECK:STDOUT:   %Self: %I.type.733a85.2 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [concrete = constants.%I.type]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [concrete = constants.%I.type.733a85.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,13 +61,13 @@ interface I {}
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [concrete = constants.%.type] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [concrete = constants.%I.type.733a85.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I [from "a.carbon"];
+// CHECK:STDOUT: interface @I.1 [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @.1 {
-// CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @I.2 {
+// CHECK:STDOUT:   %Self: %I.type.733a85.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

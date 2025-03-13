@@ -778,24 +778,24 @@ class Class(U:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
-// CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
-// CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.type.cf06d9.1: type = generic_class_type @Class.1 [concrete]
+// CHECK:STDOUT:   %Class.generic.9545f5.1: %Class.type.cf06d9.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.type: type = generic_class_type @.1 [concrete]
-// CHECK:STDOUT:   %.generic: %.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.e41: type = class_type @.1, @.1(%U) [symbolic]
+// CHECK:STDOUT:   %Class.type.cf06d9.2: type = generic_class_type @Class.2 [concrete]
+// CHECK:STDOUT:   %Class.generic.9545f5.2: %Class.type.cf06d9.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.fe1b2d.2: type = class_type @Class.2, @Class.2(%U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.Class: %Class.type = import_ref Main//foo, Class, loaded [concrete = constants.%Class.generic]
+// CHECK:STDOUT:   %Main.Class: %Class.type.cf06d9.1 = import_ref Main//foo, Class, loaded [concrete = constants.%Class.generic.9545f5.1]
 // CHECK:STDOUT:   %Main.CompleteClass = import_ref Main//foo, CompleteClass, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//foo, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//foo, loc4_13, loaded [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//foo, loc4_13, loaded [symbolic = @Class.1.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -809,21 +809,21 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
+// CHECK:STDOUT:   %Class.decl: %Class.type.cf06d9.2 = class_decl @Class.2 [concrete = constants.%Class.generic.9545f5.2] {
 // CHECK:STDOUT:     %U.patt.loc12_13.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_13.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.loc12_13.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc12_13.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(imports.%Main.import_ref.5ab: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @Class.1(imports.%Main.import_ref.5ab: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%U.loc12_13.1: type) {
+// CHECK:STDOUT: generic class @Class.2(%U.loc12_13.1: type) {
 // CHECK:STDOUT:   %U.loc12_13.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc12_13.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc12_13.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_13.2 (constants.%U.patt)]
 // CHECK:STDOUT:
@@ -839,18 +839,18 @@ class Class(U:! type) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.e41
+// CHECK:STDOUT:     .Self = constants.%Class.fe1b2d.2
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc17_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%T) {
+// CHECK:STDOUT: specific @Class.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(constants.%U) {
+// CHECK:STDOUT: specific @Class.2(constants.%U) {
 // CHECK:STDOUT:   %U.loc12_13.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc12_13.2 => constants.%U
 // CHECK:STDOUT: }

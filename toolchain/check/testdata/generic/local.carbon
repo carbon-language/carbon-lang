@@ -185,11 +185,11 @@ class C(C:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = bind_symbolic_name C, 0 [symbolic]
+// CHECK:STDOUT:   %C.8b3: type = bind_symbolic_name C, 0 [symbolic]
 // CHECK:STDOUT:   %C.patt: type = symbolic_binding_pattern C, 0 [symbolic]
-// CHECK:STDOUT:   %.type: type = generic_class_type @.1 [concrete]
-// CHECK:STDOUT:   %.generic: %.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.de1: type = class_type @.1, @.1(%C) [symbolic]
+// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.f06: type = class_type @C, @C(%C.8b3) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -210,8 +210,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%C.loc13_11.1: type) {
-// CHECK:STDOUT:   %C.loc13_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C)]
+// CHECK:STDOUT: generic class @C(%C.loc13_11.1: type) {
+// CHECK:STDOUT:   %C.loc13_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C.8b3)]
 // CHECK:STDOUT:   %C.patt.loc13_11.2: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -221,23 +221,23 @@ class C(C:! type) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.de1
+// CHECK:STDOUT:     .Self = constants.%C.f06
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %C.patt.loc13_11.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C)]
+// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(constants.%C) {
-// CHECK:STDOUT:   %C.loc13_11.2 => constants.%C
-// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C
+// CHECK:STDOUT: specific @C(constants.%C.8b3) {
+// CHECK:STDOUT:   %C.loc13_11.2 => constants.%C.8b3
+// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon

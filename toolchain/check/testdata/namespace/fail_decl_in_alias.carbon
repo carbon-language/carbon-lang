@@ -27,8 +27,8 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -62,7 +62,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [concrete = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [concrete = %NS]
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -73,7 +73,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() -> %i32 {
+// CHECK:STDOUT: fn @A() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]

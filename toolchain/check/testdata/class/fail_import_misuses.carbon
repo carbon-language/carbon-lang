@@ -84,15 +84,15 @@ var a: Incomplete;
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Empty: type = class_type @Empty [concrete]
+// CHECK:STDOUT:   %Empty.f48899.1: type = class_type @Empty.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.a95: type = class_type @.1 [concrete]
+// CHECK:STDOUT:   %Empty.f48899.2: type = class_type @Empty.2 [concrete]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.Empty: type = import_ref Main//a, Empty, loaded [concrete = constants.%Empty]
+// CHECK:STDOUT:   %Main.Empty: type = import_ref Main//a, Empty, loaded [concrete = constants.%Empty.f48899.1]
 // CHECK:STDOUT:   %Main.Incomplete: type = import_ref Main//a, Incomplete, loaded [concrete = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
@@ -111,7 +111,7 @@ var a: Incomplete;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [concrete = constants.%.a95] {} {}
+// CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty.2 [concrete = constants.%Empty.f48899.2] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
 // CHECK:STDOUT:     %.loc25: <error> = var_pattern %a.patt
@@ -121,19 +121,19 @@ var a: Incomplete;
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty [from "a.carbon"] {
+// CHECK:STDOUT: class @Empty.1 [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.fd7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: class @Empty.2 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.a95
+// CHECK:STDOUT:   .Self = constants.%Empty.f48899.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete [from "a.carbon"];
