@@ -532,4 +532,17 @@ auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
   }
 }
 
+auto DiagnoseIfGenericMissingExplicitParameters(
+    Context& context, SemIR::EntityWithParamsBase& entity_base) -> void {
+  if (!entity_base.implicit_param_patterns_id.has_value() ||
+      entity_base.param_patterns_id.has_value()) {
+    return;
+  }
+
+  CARBON_DIAGNOSTIC(GenericMissingExplicitParameters, Error,
+                    "expected explicit parameters after implicit parameters");
+  context.emitter().Emit(entity_base.last_param_node_id,
+                         GenericMissingExplicitParameters);
+}
+
 }  // namespace Carbon::Check

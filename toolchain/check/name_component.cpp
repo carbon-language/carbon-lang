@@ -15,20 +15,20 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
 
   // Explicit params.
-  auto [params_loc_id, param_patterns_id] =
+  auto [params_node_id, param_patterns_id] =
       context.node_stack()
           .PopWithNodeIdIf<Parse::NodeKind::ExplicitParamList>();
   if (param_patterns_id) {
     first_param_node_id =
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::ExplicitParamListStart>();
-    last_param_node_id = params_loc_id;
+    last_param_node_id = params_node_id;
   } else {
     param_patterns_id = SemIR::InstBlockId::None;
   }
 
   // Implicit params.
-  auto [implicit_params_loc_id, implicit_param_patterns_id] =
+  auto [implicit_params_node_id, implicit_param_patterns_id] =
       context.node_stack()
           .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
   if (implicit_param_patterns_id) {
@@ -37,9 +37,9 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Only use the end of implicit params if there weren't explicit params.
-    CARBON_CHECK(last_param_node_id.has_value(),
-                 "Implicit parameters currently only occur before explicit "
-                 "parameters, update and test when this changes");
+    if (!last_param_node_id.has_value()) {
+      last_param_node_id = implicit_params_node_id;
+    }
   } else {
     implicit_param_patterns_id = SemIR::InstBlockId::None;
   }
@@ -64,9 +64,9 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
       .name_id = name_id,
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = last_param_node_id,
-      .implicit_params_loc_id = implicit_params_loc_id,
+      .implicit_params_loc_id = implicit_params_node_id,
       .implicit_param_patterns_id = *implicit_param_patterns_id,
-      .params_loc_id = params_loc_id,
+      .params_loc_id = params_node_id,
       .param_patterns_id = *param_patterns_id,
       .call_params_id = call_params_id,
       .return_slot_pattern_id = return_slot_pattern_id,

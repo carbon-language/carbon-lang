@@ -54,6 +54,26 @@ fn F(T:! type) {
   A(T);
 }
 
+// --- fail_implicit_params_only_empty.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_implicit_params_only_empty.carbon:[[@LINE+4]]:10: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
+// CHECK:STDERR: class Foo[];
+// CHECK:STDERR:          ^~
+// CHECK:STDERR:
+class Foo[];
+
+// --- fail_implicit_params_only.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_implicit_params_only.carbon:[[@LINE+4]]:10: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
+// CHECK:STDERR: class Foo[T:! type];
+// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
+class Foo[T:! type];
+
 // CHECK:STDOUT: --- params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -410,5 +430,53 @@ fn F(T:! type) {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [concrete]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Foo = %Foo.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_implicit_params_only.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [concrete]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Foo = %Foo.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
+// CHECK:STDOUT:     %T.patt.loc8_11.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_11.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc8_11.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_11.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @Foo(%T.loc8_11.1: type) {
+// CHECK:STDOUT:   %T.loc8_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_11.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_11.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%T) {
+// CHECK:STDOUT:   %T.loc8_11.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_11.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

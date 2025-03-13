@@ -138,7 +138,6 @@ CARBON_DIAGNOSTIC_KIND(ExpectedDeclName)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclNameAfterPeriod)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclSemi)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclSemiOrDefinition)
-CARBON_DIAGNOSTIC_KIND(ParamsRequiredAfterImplicit)
 CARBON_DIAGNOSTIC_KIND(ExpectedAfterBase)
 CARBON_DIAGNOSTIC_KIND(ExpectedBuiltinName)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAfterForall)
@@ -240,6 +239,7 @@ CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionOutsideClass)
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionMissingSelf)
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionUnexpectedImplicitParam)
+CARBON_DIAGNOSTIC_KIND(DestroyFunctionPositionalParams)
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionNonEmptyExplicitParams)
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionIncorrectReturnType)
 
@@ -464,6 +464,9 @@ CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
 
 // Facet type combination.
 CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
+
+// Generics.
+CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)

@@ -46,6 +46,31 @@ fn Foo(a: C);
 // CHECK:STDERR:
 fn Foo(a: (C)) {}
 
+// --- fail_only_implicit_params.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {}
+
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
+// CHECK:STDERR: fn Foo[a: C];
+// CHECK:STDERR:        ^~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fn Foo[a: C];
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+fn Foo[a: C];
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
+// CHECK:STDERR: fn Foo[a: (C)] {}
+// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fn Foo[a: (C)] {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn Foo[a: (C)] {}
+
 // --- todo_fail_raw_identifier.carbon
 
 library "[[@TEST_NAME]]";
@@ -337,6 +362,43 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.1(%a.param_patt: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo.2(%a.param_patt: %C) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_only_implicit_params.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.2 [concrete]
+// CHECK:STDOUT:   %Foo.ddeb7d.2: %Foo.type.a02530.2 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .Foo = %Foo.decl.loc14
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.a02530.1 = fn_decl @Foo.1 [concrete = constants.%Foo.ddeb7d.1] {} {}
+// CHECK:STDOUT:   %Foo.decl.loc23: %Foo.type.a02530.2 = fn_decl @Foo.2 [concrete = constants.%Foo.ddeb7d.2] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo.1[<error>: <error>]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo.2[<error>: <error>]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

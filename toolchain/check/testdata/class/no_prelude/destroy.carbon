@@ -73,11 +73,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_positional_params.carbon:[[@LINE+8]]:25: error: a `(` for parameters is required after implicit parameters [ParamsRequiredAfterImplicit]
-  // CHECK:STDERR:   fn destroy[self: Self];
-  // CHECK:STDERR:                         ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_positional_params.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_positional_params.carbon:[[@LINE+4]]:3: error: missing empty explicit parameter list [DestroyFunctionPositionalParams]
   // CHECK:STDERR:   fn destroy[self: Self];
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -435,16 +431,37 @@ fn C.destroy.Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %destroy.type: type = fn_type @destroy [concrete]
+// CHECK:STDOUT:   %destroy: %destroy.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:   %destroy.decl: %destroy.type = fn_decl @destroy [concrete = constants.%destroy] {
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .destroy = %destroy.decl
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy[%self.param_patt: %C]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_explicit_params.carbon
 // CHECK:STDOUT:

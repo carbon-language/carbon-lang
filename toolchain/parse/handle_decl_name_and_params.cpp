@@ -87,11 +87,6 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   auto state = context.PopState();
 
   if (!context.PositionIs(Lex::TokenKind::OpenParen)) {
-    CARBON_DIAGNOSTIC(
-        ParamsRequiredAfterImplicit, Error,
-        "a `(` for parameters is required after implicit parameters");
-    context.emitter().Emit(*context.position(), ParamsRequiredAfterImplicit);
-    context.ReturnErrorOnState();
     return;
   }
 

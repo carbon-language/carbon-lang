@@ -385,11 +385,13 @@ static auto ValidateIfDestroy(Context& context, bool is_redecl,
     return;
   }
 
-  CARBON_CHECK(
-      orig_param_patterns_id.has_value(),
-      "TODO: Positional parameters are currently rejected as part of requiring "
-      "implicit parameters, because it's an invalid parse tree; add a "
-      "diagnostic once this is testable");
+  if (!orig_param_patterns_id.has_value()) {
+    CARBON_DIAGNOSTIC(DestroyFunctionPositionalParams, Error,
+                      "missing empty explicit parameter list");
+    context.emitter().Emit(function_info.latest_decl_id(),
+                           DestroyFunctionPositionalParams);
+    return;
+  }
 
   if (orig_param_patterns_id != SemIR::InstBlockId::Empty) {
     CARBON_DIAGNOSTIC(DestroyFunctionNonEmptyExplicitParams, Error,
