@@ -132,6 +132,7 @@ class Context {
   }
 
   // Adds a node to the parse tree that has children.
+  // TODO: Look into switching to a typed node return.
   auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> NodeId {
     CARBON_CHECK(has_error || (kind != NodeKind::InvalidParse &&
                                kind != NodeKind::InvalidParseStart &&
@@ -142,8 +143,8 @@ class Context {
   }
 
   // Adds an invalid parse node.
-  auto AddInvalidParse(Lex::TokenIndex token) -> NodeId {
-    return AddNode(NodeKind::InvalidParse, token, /*has_error=*/true);
+  auto AddInvalidParse(Lex::TokenIndex token) -> void {
+    AddNode(NodeKind::InvalidParse, token, /*has_error=*/true);
   }
 
   // Replaces the placeholder node at the indicated position with a leaf node.
