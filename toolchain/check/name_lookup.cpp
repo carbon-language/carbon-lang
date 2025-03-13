@@ -108,17 +108,16 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
       if (scope.is_interface_definition()) {
         SemIR::InstId target_inst_id =
             non_lexical_result.scope_result.target_inst_id();
-        if (context.types().Is<SemIR::AssociatedEntityType>(
-                context.insts().Get(target_inst_id).type_id())) {
+        if (auto assoc_type =
+                context.types().TryGetAs<SemIR::AssociatedEntityType>(
+                    context.insts().Get(target_inst_id).type_id())) {
           auto interface_decl =
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
-          // TODO: Refactor the code so that we can call the "no instance
-          // binding" case from `PerformCompoundMemberAccess` as a separate
-          // function (`GetAssociatedValue`).
-          SemIR::InstId result_inst_id = PerformCompoundMemberAccess(
-              context, node_id, interface.self_param_id, target_inst_id);
+          SemIR::InstId result_inst_id =
+              GetAssociatedValue(context, node_id, interface.self_param_id,
+                                 target_inst_id, assoc_type->interface_type_id);
           non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
               result_inst_id, non_lexical_result.scope_result.access_kind());
         }
