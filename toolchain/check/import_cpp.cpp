@@ -22,6 +22,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 
@@ -253,7 +254,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
 // Imports a namespace declaration from Clang to Carbon. If successful, returns
 // the new Carbon namespace declaration `InstId`.
-static auto ImportNamespaceDecl(Context& context, SemIR::LocId loc_id,
+static auto ImportNamespaceDecl(Context& context,
                                 SemIR::NameScopeId parent_scope_id,
                                 SemIR::NameId name_id,
                                 clang::NamespaceDecl* clang_decl)
@@ -263,8 +264,9 @@ static auto ImportNamespaceDecl(Context& context, SemIR::LocId loc_id,
                            context, SemIR::NamespaceType::SingletonInstId),
                        .name_scope_id = SemIR::NameScopeId::None,
                        .import_id = SemIR::InstId::None};
-  auto namespace_inst_and_loc = SemIR::LocIdAndInst(
-      Parse::AnyNamespaceId(loc_id.node_id()), namespace_inst);
+  // TODO: Associate the namespace with a proper location. This is related to:
+  // https://github.com/carbon-language/carbon-lang/issues/4666.
+  auto namespace_inst_and_loc = SemIR::LocIdAndInst::NoLoc(namespace_inst);
   auto namespace_id =
       AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc);
   namespace_inst.name_scope_id =
@@ -290,7 +292,7 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
   }
   if (auto* clang_namespace_decl =
           clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
-    return ImportNamespaceDecl(context, loc_id, scope_id, name_id,
+    return ImportNamespaceDecl(context, scope_id, name_id,
                                clang_namespace_decl);
   }
 
