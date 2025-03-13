@@ -11,20 +11,41 @@
 
 namespace Carbon::Check {
 
+enum class AddImportNamespaceNameBehavior : int8_t {
+  // Do not try to add the namespace name to the scope and don't check if it
+  // already exists. Used when we want to add the name outside this function.
+  DontAdd,
+
+  // Try to add the namespace name to the scope. If the name already exists,
+  // diagnose only if it doesn't refer to a namespace. Used when handling a
+  // cross-package import, where an existing namespace is in the current package
+  // and the new namespace is a different package.
+  AddAllowExisting,
+
+  // Try to add the namespace name to the scope and diagnose if it already
+  // exists.
+  AddDiagnoseExisting,
+};
+
 struct AddImportNamespaceResult {
+  // The namespace scope id.
   SemIR::NameScopeId name_scope_id;
+
+  // The namespace instruction id.
   SemIR::InstId inst_id;
+
+  // When trying to add the namespace name, whether it already exists and refers
+  // to a namespace.
   bool is_duplicate_of_namespace_in_current_package;
 };
 
-// Adds a namespace to the IR. The bool on return is true if there was a name
-// conflict. diagnose_duplicate_namespace is used when handling a cross-package
-// import, where an existing namespace is in the current package and the new
-// namespace is a different package.
+// Adds a namespace to the IR. Associates the namespace with the import returned
+// from `make_import_id`. If `make_import_id` returns `None`, the namespace will
+// not be associated with an import.
 auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                         SemIR::NameId name_id,
                         SemIR::NameScopeId parent_scope_id,
-                        bool diagnose_duplicate_namespace,
+                        AddImportNamespaceNameBehavior name_behavior,
                         llvm::function_ref<SemIR::InstId()> make_import_id)
     -> AddImportNamespaceResult;
 

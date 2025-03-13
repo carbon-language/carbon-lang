@@ -108,7 +108,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
              GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
              SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
-             /*diagnose_duplicate_namespace=*/false,
+             AddImportNamespaceNameBehavior::AddAllowExisting,
              [&]() {
                return AddInst<SemIR::ImportCppDecl>(
                    context, imports.front().node_id, {});
@@ -259,26 +259,14 @@ static auto ImportNamespaceDecl(Context& context,
                                 SemIR::NameId name_id,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
-  auto namespace_inst =
-      SemIR::Namespace{.type_id = GetSingletonType(
-                           context, SemIR::NamespaceType::SingletonInstId),
-                       .name_scope_id = SemIR::NameScopeId::None,
-                       .import_id = SemIR::InstId::None};
-  // TODO: Associate the namespace with a proper location. This is related to:
-  // https://github.com/carbon-language/carbon-lang/issues/4666.
-  auto namespace_inst_and_loc = SemIR::LocIdAndInst::NoLoc(namespace_inst);
-  auto namespace_id =
-      AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc);
-  namespace_inst.name_scope_id =
-      context.name_scopes().Add(namespace_id, name_id, parent_scope_id);
-  ReplaceInstBeforeConstantUse(context, namespace_id, namespace_inst);
-
+  auto result = AddImportNamespace(
+      context, GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
+      name_id, parent_scope_id, AddImportNamespaceNameBehavior::DontAdd,
+      [&]() { return SemIR::InstId::None; });
   context.name_scopes()
-      .Get(namespace_inst.name_scope_id)
+      .Get(result.name_scope_id)
       .set_cpp_decl_context(clang_decl);
-  context.import_ref_ids().push_back(namespace_id);
-
-  return namespace_id;
+  return result.inst_id;
 }
 
 // Imports a declaration from Clang to Carbon. If successful, returns the
