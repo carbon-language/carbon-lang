@@ -125,7 +125,8 @@ Some keywords can be inserted for content:
             "text": "FROM_FILE_SPLIT"
         }]]
         ```
-        the keyword `FROM_FILE_SPLIT` is substituted with the content of the
+
+        The keyword `FROM_FILE_SPLIT` is substituted with the content of the
         file split `<filename>`. All other properties are unchanged.
 
 -   ```
