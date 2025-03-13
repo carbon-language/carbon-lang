@@ -1212,26 +1212,21 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       auto type_of_expr_id = context.insts().Get(expr_id).type_id();
       if (target.type_id == SemIR::TypeType::SingletonTypeId ||
           sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
-        if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
+        if (context.types().Is<SemIR::FacetType>(type_of_expr_id) ||
+            context.insts().Is<SemIR::FacetAccessType>(expr_id)) {
+          auto facet_value_inst_id = expr_id;
+          if (auto facet_access_type =
+                  context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
+            facet_value_inst_id = facet_access_type->facet_value_inst_id;
+          }
           CARBON_DIAGNOSTIC(
               ConversionFailureFacetToFacet, Error,
               "cannot{0:| implicitly} convert type {1} that implements {2} "
               "into type implementing {3}{0: with `as`|}",
               BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
           return context.emitter().Build(loc_id, ConversionFailureFacetToFacet,
-                                         explicit_as, expr_id, expr_id,
-                                         target.type_id);
-        } else if (auto facet_access_type =
-                       context.insts().TryGetAs<SemIR::FacetAccessType>(
-                           expr_id)) {
-          CARBON_DIAGNOSTIC(
-              ConversionFailureFacetAccessTypeToFacet, Error,
-              "cannot{0:| implicitly} convert type {1} that implements {2} "
-              "into type implementing {3}{0: with `as`|}",
-              BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
-          return context.emitter().Build(
-              loc_id, ConversionFailureFacetAccessTypeToFacet, explicit_as,
-              expr_id, facet_access_type->facet_value_inst_id, target.type_id);
+                                         explicit_as, expr_id,
+                                         facet_value_inst_id, target.type_id);
         } else if (type_of_expr_id == SemIR::TypeType::SingletonTypeId) {
           CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
                             "cannot{0:| implicitly} convert type {1} into type "
