@@ -151,9 +151,9 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, %impl_witness [concrete]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal, @HandleAnimal(%Animal.facet) [concrete]
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.9d8: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.5d0: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -277,9 +277,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_17.3: init %Goat = class_init (), %.loc16_17.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc16_17.4: ref %Goat = temporary %.loc16_17.2, %.loc16_17.3
 // CHECK:STDOUT:   %.loc16_19.1: ref %Goat = converted %.loc16_17.1, %.loc16_17.4
-// CHECK:STDOUT:   %Animal.facet.loc16_26.1: %Animal.type = facet_value constants.%Goat, constants.%impl_witness [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc16_26.1: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc16_26.1: %Animal.type = converted constants.%Goat, %Animal.facet.loc16_26.1 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %Animal.facet.loc16_26.2: %Animal.type = facet_value constants.%Goat, constants.%impl_witness [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc16_26.2: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc16_26.2: %Animal.type = converted constants.%Goat, %Animal.facet.loc16_26.2 [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal.ref, @HandleAnimal(constants.%Animal.facet) [concrete = constants.%HandleAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc16_19.2: %Goat = bind_value %.loc16_19.1
@@ -311,7 +311,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc10_37.2 => constants.%FeedAnimal.specific_fn.9d8
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc10_37.2 => constants.%FeedAnimal.specific_fn.5d0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {

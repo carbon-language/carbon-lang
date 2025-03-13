@@ -146,7 +146,7 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, %impl_witness [concrete]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal, @WalkAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,9 +234,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_15.3: init %Goat = class_init (), %.loc14_15.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc14_15.4: ref %Goat = temporary %.loc14_15.2, %.loc14_15.3
 // CHECK:STDOUT:   %.loc14_17.1: ref %Goat = converted %.loc14_15.1, %.loc14_15.4
-// CHECK:STDOUT:   %Animal.facet.loc14_24.1: %Animal.type = facet_value constants.%Goat, constants.%impl_witness [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc14_24.1: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc14_24.1: %Animal.type = converted constants.%Goat, %Animal.facet.loc14_24.1 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %Animal.facet.loc14_24.2: %Animal.type = facet_value constants.%Goat, constants.%impl_witness [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc14_24.2: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc14_24.2: %Animal.type = converted constants.%Goat, %Animal.facet.loc14_24.2 [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc14_17.2: %Goat = bind_value %.loc14_17.1

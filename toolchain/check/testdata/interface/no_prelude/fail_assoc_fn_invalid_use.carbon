@@ -39,11 +39,11 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
-// CHECK:STDOUT:   %T.as_wit: <witness> = facet_access_witness %T [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type, %T.as_wit [symbolic]
-// CHECK:STDOUT:   %.de3: type = fn_type_with_self_type %F.type, %I.facet [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %.de3 = impl_witness_access %T.as_wit, element0 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.de3 [symbolic]
+// CHECK:STDOUT:   %T.as_wit.iface0: <witness> = facet_access_witness %T, element0 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type, (%T.as_wit.iface0) [symbolic]
+// CHECK:STDOUT:   %.3d7: type = fn_type_with_self_type %F.type, %I.facet [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.3d7 = impl_witness_access %T.as_wit.iface0, element0 [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.3d7 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,11 +95,11 @@ fn Use(T:! I) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc13_4.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %T.as_wit.loc13_4.2: <witness> = facet_access_witness %T.loc8_8.2 [symbolic = %T.as_wit.loc13_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc13_4.2, %T.as_wit.loc13_4.2 [symbolic = %I.facet (constants.%I.facet)]
-// CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type constants.%F.type, %I.facet [symbolic = %.loc13_4.2 (constants.%.de3)]
-// CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.de3) = impl_witness_access %T.as_wit.loc13_4.2, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%.loc13_4.2 (%.de3) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %T.as_wit.iface0.loc13_4.2: <witness> = facet_access_witness %T.loc8_8.2, element0 [symbolic = %T.as_wit.iface0.loc13_4.2 (constants.%T.as_wit.iface0)]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc13_4.2, (%T.as_wit.iface0.loc13_4.2) [symbolic = %I.facet (constants.%I.facet)]
+// CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type constants.%F.type, %I.facet [symbolic = %.loc13_4.2 (constants.%.3d7)]
+// CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.3d7) = impl_witness_access %T.as_wit.iface0.loc13_4.2, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%.loc13_4.2 (%.3d7) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc8_8.1: %I.type) {
 // CHECK:STDOUT:   !entry:
@@ -107,8 +107,8 @@ fn Use(T:! I) {
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %T.as_type.loc13_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc13_4.1: type = converted %T.ref, %T.as_type.loc13_4.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.as_wit.loc13_4.1: <witness> = facet_access_witness %T.ref [symbolic = %T.as_wit.loc13_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:     %impl.elem0.loc13_4.1: @Use.%.loc13_4.2 (%.de3) = impl_witness_access %T.as_wit.loc13_4.1, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %T.as_wit.iface0.loc13_4.1: <witness> = facet_access_witness %T.ref, element0 [symbolic = %T.as_wit.iface0.loc13_4.2 (constants.%T.as_wit.iface0)]
+// CHECK:STDOUT:     %impl.elem0.loc13_4.1: @Use.%.loc13_4.2 (%.3d7) = impl_witness_access %T.as_wit.iface0.loc13_4.1, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

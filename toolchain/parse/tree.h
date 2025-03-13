@@ -146,7 +146,7 @@ class Tree : public Printable<Tree> {
   auto TryAs(NodeId n) const -> std::optional<T> {
     CARBON_DCHECK(n.has_value());
     if (ConvertTo<T>::AllowedFor(node_kind(n))) {
-      return T(n);
+      return T::UnsafeMake(n);
     } else {
       return std::nullopt;
     }
@@ -157,8 +157,8 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto As(NodeId n) const -> T {
     CARBON_DCHECK(n.has_value());
-    CARBON_CHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
-    return T(n);
+    CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
+    return T::UnsafeMake(n);
   }
 
   auto packaging_decl() const -> const std::optional<PackagingDecl>& {

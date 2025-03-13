@@ -68,7 +68,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.40c: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.071: %F.type.40c = struct_value () [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%impl_witness) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -194,9 +194,8 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.777 [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [concrete]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %impl_witness.681: <witness> = impl_witness (imports.%Main.import_ref.e2c), @impl(%T) [symbolic]
@@ -206,8 +205,8 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %impl_witness.bbe: <witness> = impl_witness (imports.%Main.import_ref.c57), @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.4a4: type = fn_type @F.2, @impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %F.9e6: %F.type.4a4 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.7a7, %impl_witness.02b [concrete]
-// CHECK:STDOUT:   %.c06: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.7a7, (%impl_witness.02b) [concrete]
+// CHECK:STDOUT:   %.dd0: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.9e6, @F.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
@@ -221,7 +220,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//import_generic, inst23 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//import_generic, inst29 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bcb: %I.assoc_type = import_ref Main//import_generic, loc7_9, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F: %F.type.cf0 = import_ref Main//import_generic, F, loaded [concrete = constants.%F.bc6]
+// CHECK:STDOUT:   %Main.F = import_ref Main//import_generic, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//import_generic, inst29 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.d91: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.bbe)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @impl.%T (constants.%T)]
@@ -273,10 +272,10 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.7a7]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.bcb [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %I.facet: %I.type = facet_value constants.%C.7a7, constants.%impl_witness.02b [concrete = constants.%I.facet]
+// CHECK:STDOUT:     %I.facet: %I.type = facet_value constants.%C.7a7, (constants.%impl_witness.02b) [concrete = constants.%I.facet]
 // CHECK:STDOUT:     %.loc25_16: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
-// CHECK:STDOUT:     %as_wit: <witness> = facet_access_witness %.loc25_16 [concrete = constants.%impl_witness.02b]
-// CHECK:STDOUT:     %impl.elem0: %.c06 = impl_witness_access %as_wit, element0 [concrete = constants.%F.9e6]
+// CHECK:STDOUT:     %as_wit.iface0: <witness> = facet_access_witness %.loc25_16, element0 [concrete = constants.%impl_witness.02b]
+// CHECK:STDOUT:     %impl.elem0: %.dd0 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%F.9e6]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %specific_fn()
 // CHECK:STDOUT:     %.loc25_23.1: ref %empty_tuple.type = temporary_storage

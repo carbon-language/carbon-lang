@@ -171,8 +171,10 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::FacetAccessWitness inst) -> ConstantEvalResult {
   if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
           inst.facet_value_inst_id)) {
+    auto impl_witness_inst_id = context.inst_blocks().Get(
+        facet_value->witnesses_block_id)[inst.index.index];
     return ConstantEvalResult::Existing(
-        context.constant_values().Get(facet_value->witness_inst_id));
+        context.constant_values().Get(impl_witness_inst_id));
   }
   return ConstantEvalResult::NewSamePhase(inst);
 }
@@ -200,14 +202,6 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
     auto elements = context.inst_blocks().Get(witness->elements_id);
     auto index = static_cast<size_t>(inst.index.index);
-    // TODO: Remove this block when LookupImplWitness returns all the witnesses
-    // for a facet type instead of just one. We just don't want to introduce
-    // crashes in the meantime.
-    if (index >= elements.size()) {
-      context.TODO(loc,
-                   "incorrect witness for multiple interfaces in a facet type");
-      return ConstantEvalResult::Error;
-    }
     CARBON_CHECK(index < elements.size(), "Access out of bounds.");
     auto element = elements[index];
     if (!element.has_value()) {

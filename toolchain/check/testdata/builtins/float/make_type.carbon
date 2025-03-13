@@ -100,8 +100,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %impl_witness.b97: <witness> = impl_witness (imports.%Core.import_ref.a86), @impl.c81(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.c81(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, %impl_witness.b97 [concrete]
-// CHECK:STDOUT:   %.39b: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, (%impl_witness.b97) [concrete]
+// CHECK:STDOUT:   %.b14: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_64.fab, %Convert.16d [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.16d, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_64.fab, %Convert.specific_fn [concrete]
@@ -138,7 +138,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %.loc6_16.1: type = splice_block %.loc6_16.3 [concrete = f64] {
 // CHECK:STDOUT:     %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64.fab]
-// CHECK:STDOUT:     %impl.elem0: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
+// CHECK:STDOUT:     %impl.elem0: %.b14 = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
 // CHECK:STDOUT:     %bound_method.loc6_14.1: <bound method> = bound_method %int_64, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_14.2: <bound method> = bound_method %int_64, %specific_fn [concrete = constants.%bound_method]
@@ -198,8 +198,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %impl_witness.b97: <witness> = impl_witness (imports.%Core.import_ref.a86), @impl.c81(%int_32.be0) [concrete]
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.c81(%int_32.be0) [concrete]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, %impl_witness.b97 [concrete]
-// CHECK:STDOUT:   %.39b: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, (%impl_witness.b97) [concrete]
+// CHECK:STDOUT:   %.b14: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.cce: <bound method> = bound_method %int_32.be0, %Convert.16d [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.16d, @Convert.2(%int_32.be0) [concrete]
 // CHECK:STDOUT:   %bound_method.480: <bound method> = bound_method %int_32.be0, %Convert.specific_fn [concrete]
@@ -238,7 +238,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %.loc10_28.1: type = splice_block %.loc10_28.3 [concrete = <error>] {
 // CHECK:STDOUT:     %Float.ref.loc10: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32.be0]
-// CHECK:STDOUT:     %impl.elem0: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
+// CHECK:STDOUT:     %impl.elem0: %.b14 = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
 // CHECK:STDOUT:     %bound_method.loc10_26.1: <bound method> = bound_method %int_32.loc10, %impl.elem0 [concrete = constants.%Convert.bound.cce]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32.be0) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc10_26.2: <bound method> = bound_method %int_32.loc10, %specific_fn [concrete = constants.%bound_method.480]
@@ -281,7 +281,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64.fab]
-// CHECK:STDOUT:   %impl.elem0: %.39b = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
+// CHECK:STDOUT:   %impl.elem0: %.b14 = impl_witness_access constants.%impl_witness.b97, element0 [concrete = constants.%Convert.16d]
 // CHECK:STDOUT:   %bound_method.loc12_1.1: <bound method> = bound_method %int_64, %impl.elem0 [concrete = constants.%Convert.bound.575]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32.be0) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_1.2: <bound method> = bound_method %int_64, %specific_fn [concrete = constants.%bound_method.767]

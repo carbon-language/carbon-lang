@@ -33,7 +33,7 @@ impl C as Simple {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.f9e: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.f50: %F.type.f9e = struct_value () [concrete]
-// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

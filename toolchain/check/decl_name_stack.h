@@ -118,7 +118,7 @@ class DeclNameStack {
 
     // Returns any name collision found, or `None`. Requires a non-poisoned
     // value.
-    auto prev_inst_id() -> SemIR::InstId;
+    auto prev_inst_id() const -> SemIR::InstId;
 
     // Returns the name_id for a new instruction. This is `None` when the name
     // resolved.

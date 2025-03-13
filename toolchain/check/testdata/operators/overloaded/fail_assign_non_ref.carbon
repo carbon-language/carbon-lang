@@ -54,19 +54,19 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.73a: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.0c9: %Op.type.73a = struct_value () [concrete]
-// CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, %impl_witness.ec3 [concrete]
+// CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%impl_witness.ec3) [concrete]
 // CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.421: type = fn_type @Op.3 [concrete]
 // CHECK:STDOUT:   %impl_witness.95d: <witness> = impl_witness (@impl.14c.%Op.decl) [concrete]
 // CHECK:STDOUT:   %Op.type.0b8: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.d8e: %Op.type.0b8 = struct_value () [concrete]
-// CHECK:STDOUT:   %AddAssign.facet: %AddAssign.type = facet_value %C, %impl_witness.95d [concrete]
+// CHECK:STDOUT:   %AddAssign.facet: %AddAssign.type = facet_value %C, (%impl_witness.95d) [concrete]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [concrete]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.e6d: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
+// CHECK:STDOUT:   %.295: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.499: type = fn_type_with_self_type %Op.type.421, %AddAssign.facet [concrete]
+// CHECK:STDOUT:   %.22d: type = fn_type_with_self_type %Op.type.421, %AddAssign.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -184,7 +184,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.e6d = impl_witness_access constants.%impl_witness.ec3, element0 [concrete = constants.%Op.0c9]
+// CHECK:STDOUT:   %impl.elem0: %.295 = impl_witness_access constants.%impl_witness.ec3, element0 [concrete = constants.%Op.0c9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc30: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc30
@@ -196,7 +196,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.499 = impl_witness_access constants.%impl_witness.95d, element0 [concrete = constants.%Op.d8e]
+// CHECK:STDOUT:   %impl.elem0: %.22d = impl_witness_access constants.%impl_witness.95d, element0 [concrete = constants.%Op.d8e]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc41: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc41
