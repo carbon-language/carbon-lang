@@ -132,14 +132,20 @@ class Context {
   }
 
   // Adds a node to the parse tree that has children.
-  // TODO: Look into switching to a typed node return.
-  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> NodeId {
+  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void {
     CARBON_CHECK(has_error || (kind != NodeKind::InvalidParse &&
                                kind != NodeKind::InvalidParseStart &&
                                kind != NodeKind::InvalidParseSubtree),
                  "{0} nodes must always have an error", kind);
     tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-    return NodeId(tree_->node_impls_.size() - 1);
+  }
+
+  // Adds a node and returns its typed NodeId.
+  template <const Parse::NodeKind& Kind>
+  auto AddNode(Lex::TokenIndex token, bool has_error) -> NodeIdForKind<Kind> {
+    AddNode(Kind, token, has_error);
+    return NodeIdForKind<Kind>::UnsafeMake(
+        NodeId(tree_->node_impls_.size() - 1));
   }
 
   // Adds an invalid parse node.

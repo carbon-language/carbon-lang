@@ -34,16 +34,16 @@ static auto HasModifier(Context& context, Context::StateStackEntry state,
 }
 
 // Handles everything after the declaration's introducer.
+template <const Parse::NodeKind& DeclKind>
 static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
-                              NodeKind declaration, bool is_export,
-                              bool is_impl,
+                              bool is_export, bool is_impl,
                               llvm::function_ref<auto()->void> on_parse_error)
     -> void {
   Tree::PackagingNames names = {.is_export = is_export};
 
   // Parse the package name.
-  if (declaration == NodeKind::LibraryDecl ||
-      (declaration == NodeKind::ImportDecl &&
+  if (DeclKind == NodeKind::LibraryDecl ||
+      (DeclKind == NodeKind::ImportDecl &&
        context.PositionIs(Lex::TokenKind::Library))) {
     // This is either `library ...` or `import library ...`, so no package name
     // is expected.
@@ -64,7 +64,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterImport, Error,
                         "expected identifier or `library` after `import`");
       context.emitter().Emit(package_name_position,
-                             declaration == NodeKind::PackageDecl
+                             DeclKind == NodeKind::PackageDecl
                                  ? ExpectedIdentifierAfterPackage
                                  : ExpectedIdentifierAfterImport);
       on_parse_error();
@@ -83,7 +83,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
 
   // Parse the optional library keyword.
   bool accept_default = !names.package_id.has_value();
-  if (declaration == NodeKind::LibraryDecl) {
+  if constexpr (DeclKind == NodeKind::LibraryDecl) {
     auto library_id = context.ParseLibraryName(accept_default);
     if (!library_id) {
       on_parse_error();
@@ -113,10 +113,9 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
   }
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    auto node_id = context.AddNode(declaration, *semi, state.has_error);
-    names.node_id = context.tree().As<AnyPackagingDeclId>(node_id);
+    names.node_id = context.AddNode<DeclKind>(*semi, state.has_error);
 
-    if (declaration == NodeKind::ImportDecl) {
+    if constexpr (DeclKind == NodeKind::ImportDecl) {
       context.AddImport(names);
     } else {
       context.set_packaging_decl(names, is_impl);
@@ -179,8 +178,9 @@ static auto RestrictExportToApi(Context& context,
 auto HandleImport(Context& context) -> void {
   auto state = context.PopState();
 
-  auto declaration = NodeKind::ImportDecl;
-  auto on_parse_error = [&] { OnParseError(context, state, declaration); };
+  auto on_parse_error = [&] {
+    OnParseError(context, state, NodeKind::ImportDecl);
+  };
 
   if (VerifyInImports(context, state.token)) {
     // Scan the modifiers to see if this import declaration is exported.
@@ -189,8 +189,8 @@ auto HandleImport(Context& context) -> void {
       RestrictExportToApi(context, state);
     }
 
-    HandleDeclContent(context, state, declaration, is_export,
-                      /*is_impl=*/false, on_parse_error);
+    HandleDeclContent<NodeKind::ImportDecl>(context, state, is_export,
+                                            /*is_impl=*/false, on_parse_error);
   } else {
     on_parse_error();
   }
@@ -214,14 +214,15 @@ auto HandleExportNameFinish(Context& context) -> void {
 }
 
 // Handles common logic for `package` and `library`.
+template <const Parse::NodeKind& DeclKind>
 static auto HandlePackageAndLibraryDecls(Context& context,
-                                         Lex::TokenKind intro_token_kind,
-                                         NodeKind declaration) -> void {
+                                         Lex::TokenKind intro_token_kind)
+    -> void {
   auto state = context.PopState();
 
   bool is_impl = HasModifier(context, state, Lex::TokenKind::Impl);
 
-  auto on_parse_error = [&] { OnParseError(context, state, declaration); };
+  auto on_parse_error = [&] { OnParseError(context, state, DeclKind); };
 
   if (state.token != Lex::TokenIndex::FirstNonCommentToken) {
     CARBON_DIAGNOSTIC(
@@ -241,18 +242,18 @@ static auto HandlePackageAndLibraryDecls(Context& context,
   // `package`/`library` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
 
-  HandleDeclContent(context, state, declaration, /*is_export=*/false, is_impl,
-                    on_parse_error);
+  HandleDeclContent<DeclKind>(context, state, /*is_export=*/false, is_impl,
+                              on_parse_error);
 }
 
 auto HandlePackage(Context& context) -> void {
-  HandlePackageAndLibraryDecls(context, Lex::TokenKind::Package,
-                               NodeKind::PackageDecl);
+  HandlePackageAndLibraryDecls<NodeKind::PackageDecl>(context,
+                                                      Lex::TokenKind::Package);
 }
 
 auto HandleLibrary(Context& context) -> void {
-  HandlePackageAndLibraryDecls(context, Lex::TokenKind::Library,
-                               NodeKind::LibraryDecl);
+  HandlePackageAndLibraryDecls<NodeKind::LibraryDecl>(context,
+                                                      Lex::TokenKind::Library);
 }
 
 }  // namespace Carbon::Parse
