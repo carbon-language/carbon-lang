@@ -1188,7 +1188,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return expr_id;
   }
 
-  // Defer the action if it's dependent.
+  // Defer the action if it's dependent. We do this now rather than before
+  // attempting any conversion so that we can still perform builtin conversions
+  // on dependent arguments. This matters for things like converting a
+  // `template T:! SomeInterface` to `type`, where it's important to form a
+  // `FacetAccessType` when checking the template. But when running the action
+  // later, we need to try builtin conversions again, because one may apply that
+  // didn't apply in the template definition.
   // TODO: Support this for targets other than `Value`.
   if (sem_ir.insts().Get(expr_id).type_id() != target.type_id &&
       target.kind == ConversionTarget::Value &&

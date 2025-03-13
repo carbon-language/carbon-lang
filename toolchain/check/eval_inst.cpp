@@ -326,8 +326,9 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst_value->inst_id));
   }
-  // TODO: Consider creating a `ValueOfInst` instruction here to defer
-  // determining the constant value until we know the instruction.
+  // TODO: Consider creating a new `ValueOfInst` instruction analogous to
+  // `TypeOfInst` to defer determining the constant value until we know the
+  // instruction. Alternatively, produce a symbolic `SpliceInst` constant.
   return ConstantEvalResult::NotConstant;
 }
 

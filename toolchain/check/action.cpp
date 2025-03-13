@@ -52,7 +52,8 @@ static auto OperandIsDependent(Context& context, SemIR::IdKind kind,
   if (kind == SemIR::IdKind::For<SemIR::TypeId>) {
     return OperandIsDependent(context, SemIR::TypeId(arg));
   }
-  if (kind == SemIR::IdKind::For<SemIR::AbsoluteInstId> ||
+  if (kind == SemIR::IdKind::None ||
+      kind == SemIR::IdKind::For<SemIR::AbsoluteInstId> ||
       kind == SemIR::IdKind::For<SemIR::NameId>) {
     return false;
   }

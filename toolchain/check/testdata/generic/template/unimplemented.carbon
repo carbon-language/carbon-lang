@@ -8,20 +8,44 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/template/unimplemented.carbon
 
-// --- fail_unimplemented.carbon
+// --- fail_unimplemented_operator.carbon
 
 library "[[@TEST_NAME]]";
 
 // Check that we get a reasonable diagnostic for an unimplemented operation on a template dependent expression.
 fn F[template T:! type](x: T) -> i32 {
-  // CHECK:STDERR: fail_unimplemented.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Mul` in type `<dependent type>` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_unimplemented_operator.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Mul` in type `<dependent type>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return x.n * 3;
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
   return x.n * 3;
 }
 
-// CHECK:STDOUT: --- fail_unimplemented.carbon
+// --- fail_unimplemented_convert.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F[template T:! type](x: T) {
+  // CHECK:STDERR: fail_unimplemented_convert.carbon:[[@LINE+8]]:3: error: member name of type `<dependent type>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:   var v: T = 0;
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_unimplemented_convert.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
+  // CHECK:STDERR:   var v: T = 0;
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  var v: T = 0;
+  // CHECK:STDERR: fail_unimplemented_convert.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `T` to `i32` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   var w: i32 = x;
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_unimplemented_convert.carbon:[[@LINE+4]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   var w: i32 = x;
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
+  var w: i32 = x;
+}
+
+// CHECK:STDOUT: --- fail_unimplemented_operator.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
@@ -90,5 +114,91 @@ fn F[template T:! type](x: T) -> i32 {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_15.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc5_15.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_unimplemented_convert.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T.8b3d5d.1: type = bind_symbolic_name T, 0, template [template]
+// CHECK:STDOUT:   %T.patt.e017e3.1: type = symbolic_binding_pattern T, 0, template [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %require_complete.4aeca8.1: <witness> = require_complete_type %T.8b3d5d.1 [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.d628ce.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.8b3d5d.1)> [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt.e017e3.1)]
+// CHECK:STDOUT:     %x.patt: @F.%T.loc4_15.2 (%T.8b3d5d.1) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @F.%T.loc4_15.2 (%T.8b3d5d.1) = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:     %x.param: @F.%T.loc4_15.2 (%T.8b3d5d.1) = value_param call_param0
+// CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:     %x: @F.%T.loc4_15.2 (%T.8b3d5d.1) = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
+// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt.e017e3.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T.8b3d5d.1) [template = %require_complete (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc4_15.2)> [template = %ImplicitAs.type (constants.%ImplicitAs.type.d628ce.2)]
+// CHECK:STDOUT:   %.loc13_3.4: <instruction> = access_member_action %ImplicitAs.type, Convert [template]
+// CHECK:STDOUT:   %.loc13_3.5: type = type_of_inst %.loc13_3.4 [template]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T.8b3d5d.1)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %v.patt: @F.%T.loc4_15.2 (%T.8b3d5d.1) = binding_pattern v
+// CHECK:STDOUT:       %.loc13_3.1: @F.%T.loc4_15.2 (%T.8b3d5d.1) = var_pattern %v.patt
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %v.var: ref @F.%T.loc4_15.2 (%T.8b3d5d.1) = var v
+// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:     %.loc13_3.2: @F.%.loc13_3.5 (@F.%.loc13_3.5) = splice_inst %.loc13_3.4
+// CHECK:STDOUT:     %.loc13_3.3: @F.%T.loc4_15.2 (%T.8b3d5d.1) = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:     assign %v.var, <error>
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:     %v: ref @F.%T.loc4_15.2 (%T.8b3d5d.1) = bind_name v, %v.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %w.patt: %i32 = binding_pattern w
+// CHECK:STDOUT:       %.loc21_3.1: %i32 = var_pattern %w.patt
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %w.var: ref %i32 = var w
+// CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T.8b3d5d.1) = name_ref x, %x
+// CHECK:STDOUT:     %.loc21_3.2: %i32 = converted %x.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     assign %w.var, <error>
+// CHECK:STDOUT:     %.loc21_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %w: ref %i32 = bind_name w, %w.var
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T.8b3d5d.1) {
+// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T.8b3d5d.1
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.8b3d5d.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

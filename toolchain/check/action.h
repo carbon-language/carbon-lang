@@ -70,10 +70,14 @@ auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
   return PerformAction(context, loc_id, action_inst);
 }
 
-// Performs setup steps for performing a delayed action.
+// Performs setup steps for performing a delayed action. This is an
+// implementation detail of PerformDelayedAction and should not be called
+// directly.
 auto BeginPerformDelayedAction(Context& context) -> void;
 
-// Performs cleanup steps for performing a delayed action.
+// Performs cleanup steps for performing a delayed action. This is an
+// implementation detail of PerformDelayedAction and should not be called
+// directly.
 auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
     -> SemIR::InstId;
 

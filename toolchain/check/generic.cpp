@@ -174,7 +174,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
 
 // Substitution callbacks to rebuild a template action. This rebuilds the action
 // instruction in-place if it needs to be modified.
-class RebuildTemplateActionInEvalBlockCallbacks
+class RebuildTemplateActionInEvalBlockCallbacks final
     : public RebuildGenericConstantInEvalBlockCallbacks {
  public:
   RebuildTemplateActionInEvalBlockCallbacks(

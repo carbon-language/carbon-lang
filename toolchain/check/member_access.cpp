@@ -431,6 +431,10 @@ static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
 auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
                          SemIR::InstId base_id, SemIR::NameId name_id)
     -> SemIR::InstId {
+  // TODO: Member access for dependent member names is supposed to perform a
+  // lookup in both the template definition context and the template
+  // instantiation context, and reject if both succeed but find different
+  // things.
   return HandleAction<SemIR::AccessMemberAction>(
       context, loc_id,
       {.type_id = SemIR::InstType::SingletonTypeId,
