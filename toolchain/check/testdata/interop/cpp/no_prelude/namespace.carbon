@@ -113,10 +113,10 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
 // CHECK:STDOUT:     .my_namespace = %my_namespace
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [C++], [concrete] {
 // CHECK:STDOUT:     .foo = @MyF.%foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -159,18 +159,18 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
 // CHECK:STDOUT:     .my_namespace1 = %my_namespace1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace1: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %my_namespace1: <namespace> = namespace [C++], [concrete] {
 // CHECK:STDOUT:     .foo1 = @MyF.%foo1.decl
 // CHECK:STDOUT:     .my_namespace2 = %my_namespace2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace2: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %my_namespace2: <namespace> = namespace [C++], [concrete] {
 // CHECK:STDOUT:     .foo2 = @MyF.%foo2.decl
 // CHECK:STDOUT:     .my_namespace3 = %my_namespace3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace3: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %my_namespace3: <namespace> = namespace [C++], [concrete] {
 // CHECK:STDOUT:     .foo3 = @MyF.%foo3.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -223,10 +223,10 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
 // CHECK:STDOUT:     .my_namespace = %my_namespace
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [C++], [concrete] {
 // CHECK:STDOUT:     .not_foo = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -258,7 +258,7 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
 // CHECK:STDOUT:     .not_my_namespace = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -290,7 +290,7 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -323,10 +323,10 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
 // CHECK:STDOUT:     .r#base = %base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %base: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %base: <namespace> = namespace [C++], [concrete] {
 // CHECK:STDOUT:     .foo = @MyF.%foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

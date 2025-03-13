@@ -1277,6 +1277,9 @@ class FormatterImpl {
   auto FormatArg(CallParamIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
+    if (sem_ir_->name_scopes().Get(id).is_cpp_scope()) {
+      out_ << "[C++], ";
+    }
     OpenBrace();
     FormatNameScope(id);
     CloseBrace();
