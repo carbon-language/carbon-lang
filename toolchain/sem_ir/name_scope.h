@@ -285,7 +285,11 @@ class NameScope : public Printable<NameScope> {
   bool is_closed_import_ = false;
 
   // Set if this is the `Cpp` scope or a scope inside `Cpp`. Points to the
-  // matching Clang declaration context to look for names.
+  // matching Clang declaration context to look for names. This is mutable since
+  // `clang::Sema::LookupQualifiedName()` requires a mutable `DeclContext`.
+  // TODO: Ensure we can easily serialize/deserialize this. Consider decl ID to
+  // point into the AST. This is related to:
+  // https://github.com/carbon-language/carbon-lang/issues/4666.
   clang::DeclContext* cpp_decl_context_ = nullptr;
 
   // Imported IR scopes that compose this namespace. This will be empty for
