@@ -393,17 +393,12 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.40a: type = facet_access_type %Self.519 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
 // CHECK:STDOUT:   %assoc0.02f: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.40d: type = facet_type <@ImplicitAs, @ImplicitAs(%J2.type)> [concrete]
-// CHECK:STDOUT:   %Convert.type.099: type = fn_type @Convert, @ImplicitAs(%J2.type) [concrete]
-// CHECK:STDOUT:   %Convert.7ee: %Convert.type.099 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.4e8: type = assoc_entity_type %ImplicitAs.type.40d [concrete]
-// CHECK:STDOUT:   %assoc0.78f: %ImplicitAs.assoc_type.4e8 = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
-// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2eb: type = facet_type <@ImplicitAs, @ImplicitAs(%I2.type)> [concrete]
 // CHECK:STDOUT:   %Convert.type.b16: type = fn_type @Convert, @ImplicitAs(%I2.type) [concrete]
 // CHECK:STDOUT:   %Convert.b2c: %Convert.type.b16 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ede: type = assoc_entity_type %ImplicitAs.type.2eb [concrete]
 // CHECK:STDOUT:   %assoc0.76a: %ImplicitAs.assoc_type.ede = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
+// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT:   %F2.type: type = fn_type @F2 [concrete]
 // CHECK:STDOUT:   %F2: %F2.type = struct_value () [concrete]
 // CHECK:STDOUT:   %J2.assoc_type: type = assoc_entity_type %J2.type [concrete]
@@ -483,8 +478,7 @@ interface C {
 // CHECK:STDOUT:     %Self.as_type.loc26_14.2: type = facet_access_type constants.%Self.541 [symbolic = %Self.as_type.loc26_14.1 (constants.%Self.as_type.f5c)]
 // CHECK:STDOUT:     %.loc26_14.1: type = converted constants.%Self.541, %Self.as_type.loc26_14.2 [symbolic = %Self.as_type.loc26_14.1 (constants.%Self.as_type.f5c)]
 // CHECK:STDOUT:     %.loc26_14.2: %J2.type = converted %.loc26_14.1, constants.%Self.541 [symbolic = %Self (constants.%Self.541)]
-// CHECK:STDOUT:     %.loc26_14.3: %J2.type = converted constants.%J2.type, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc26_14.4: %I2.type = converted @J2.%Self, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc26_14.3: %I2.type = converted @J2.%Self, <error> [concrete = <error>]
 // CHECK:STDOUT:     %U2.ref: <error> = name_ref U2, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
@@ -587,19 +581,6 @@ interface C {
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
 // CHECK:STDOUT:   %Self => constants.%Self.519
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.40a
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%J2.type) {
-// CHECK:STDOUT:   %Dest => constants.%J2.type
-// CHECK:STDOUT:   %Dest.patt => constants.%J2.type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.40d
-// CHECK:STDOUT:   %Self => constants.%Self.519
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.099
-// CHECK:STDOUT:   %Convert => constants.%Convert.7ee
-// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.4e8
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.78f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%I2.type) {

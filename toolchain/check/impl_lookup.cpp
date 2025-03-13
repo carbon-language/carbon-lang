@@ -19,7 +19,7 @@
 namespace Carbon::Check {
 
 static auto FindAssociatedImportIRs(Context& context,
-                                    SemIR::ConstantId type_const_id,
+                                    SemIR::ConstantId query_self_const_id,
                                     SemIR::ConstantId query_facet_type_const_id)
     -> llvm::SmallVector<SemIR::ImportIRId> {
   llvm::SmallVector<SemIR::ImportIRId> result;
@@ -39,7 +39,7 @@ static auto FindAssociatedImportIRs(Context& context,
   };
 
   llvm::SmallVector<SemIR::InstId> worklist;
-  worklist.push_back(context.constant_values().GetInstId(type_const_id));
+  worklist.push_back(context.constant_values().GetInstId(query_self_const_id));
   worklist.push_back(
       context.constant_values().GetInstId(query_facet_type_const_id));
 
@@ -121,7 +121,7 @@ static auto FindAssociatedImportIRs(Context& context,
 static auto FindAndDiagnoseImplLookupCycle(
     Context& context,
     const llvm::SmallVector<Context::ImplLookupStackEntry>& stack,
-    SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
+    SemIR::LocId loc_id, SemIR::ConstantId query_self_const_id,
     SemIR::ConstantId query_facet_type_const_id) -> bool {
   // Deduction of the interface parameters can do further impl lookups, and we
   // need to ensure we terminate.
@@ -136,7 +136,7 @@ static auto FindAndDiagnoseImplLookupCycle(
   // complexity of the types on the top of (or throughout?) the stack:
   // https://docs.carbon-lang.dev/docs/design/generics/details.html#termination-rule
   for (auto [i, entry] : llvm::enumerate(stack)) {
-    if (entry.type_const_id == type_const_id &&
+    if (entry.query_self_const_id == query_self_const_id &&
         entry.query_facet_type_const_id == query_facet_type_const_id) {
       auto facet_type_type_id =
           context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id);
@@ -145,7 +145,7 @@ static auto FindAndDiagnoseImplLookupCycle(
                         SemIR::TypeId, SemIR::TypeId);
       auto builder = context.emitter().Build(
           loc_id, ImplLookupCycle, facet_type_type_id,
-          context.types().GetTypeIdForTypeConstantId(type_const_id));
+          context.types().GetTypeIdForTypeConstantId(query_self_const_id));
       for (const auto& active_entry : llvm::drop_begin(stack, i)) {
         if (active_entry.impl_loc.has_value()) {
           CARBON_DIAGNOSTIC(ImplLookupCycleNote, Note,
@@ -179,7 +179,8 @@ static auto GetInterfacesFromConstantId(
 }
 
 static auto GetWitnessIdForImpl(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
     const SemIR::CompleteFacetType::RequiredInterface& interface,
     const SemIR::Impl& impl) -> SemIR::InstId {
   // If the impl's interface_id differs from the query, then this impl can not
@@ -216,8 +217,8 @@ static auto GetWitnessIdForImpl(
   // that specific to map values in the impl to the deduced values.
   auto specific_id = SemIR::SpecificId::None;
   if (impl.generic_id.has_value()) {
-    specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
-                                      interface.specific_id);
+    specific_id = DeduceImplArguments(
+        context, loc_id, impl, query_self_const_id, interface.specific_id);
     if (!specific_id.has_value()) {
       return SemIR::InstId::None;
     }
@@ -227,7 +228,7 @@ static auto GetWitnessIdForImpl(
   // `impl T as ...` for some other type `T` and should not be considered.
   auto deduced_self_const_id = SemIR::GetConstantValueInSpecific(
       context.sem_ir(), specific_id, impl.self_id);
-  if (type_const_id != deduced_self_const_id) {
+  if (query_self_const_id != deduced_self_const_id) {
     return SemIR::InstId::None;
   }
 
@@ -317,13 +318,14 @@ static auto FindWitnessInFacet(
 }
 
 static auto FindWitnessInImpls(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
     const SemIR::SpecificInterface& specific_interface) -> SemIR::InstId {
   auto& stack = context.impl_lookup_stack();
   for (const auto& impl : context.impls().array_ref()) {
     stack.back().impl_loc = impl.definition_id;
-    auto result_witness_id = GetWitnessIdForImpl(context, loc_id, type_const_id,
-                                                 specific_interface, impl);
+    auto result_witness_id = GetWitnessIdForImpl(
+        context, loc_id, query_self_const_id, specific_interface, impl);
     if (result_witness_id.has_value()) {
       // We found a matching impl; don't keep looking for this interface.
       return result_witness_id;
@@ -333,14 +335,28 @@ static auto FindWitnessInImpls(
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
-                       SemIR::ConstantId type_const_id,
+                       SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
     -> SemIR::InstBlockIdOrError {
-  if (type_const_id == SemIR::ErrorInst::SingletonConstantId ||
+  if (query_self_const_id == SemIR::ErrorInst::SingletonConstantId ||
       query_facet_type_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
-  auto import_irs = FindAssociatedImportIRs(context, type_const_id,
+
+  {
+    // The query self value is a type value or a facet value.
+    auto query_self_type_id =
+        context.insts()
+            .Get(context.constant_values().GetInstId(query_self_const_id))
+            .type_id();
+    CARBON_CHECK(context.types().Is<SemIR::TypeType>(query_self_type_id) ||
+                 context.types().Is<SemIR::FacetType>(query_self_type_id));
+    // The query facet type value is indeed a facet type.
+    CARBON_CHECK(context.insts().Is<SemIR::FacetType>(
+        context.constant_values().GetInstId(query_facet_type_const_id)));
+  }
+
+  auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,
                                             query_facet_type_const_id);
   for (auto import_ir : import_irs) {
     // TODO: Instead of importing all impls, only import ones that are in some
@@ -354,7 +370,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
 
   if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
-                                     loc_id, type_const_id,
+                                     loc_id, query_self_const_id,
                                      query_facet_type_const_id)) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
@@ -374,20 +390,20 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 
   auto& stack = context.impl_lookup_stack();
   stack.push_back({
-      .type_const_id = type_const_id,
+      .query_self_const_id = query_self_const_id,
       .query_facet_type_const_id = query_facet_type_const_id,
   });
   // We need to find a witness for each interface in `interfaces`. We return
   // them in the same order as they are found in the `CompleteFacetType`, which
   // is the same order as in `interfaces` here.
   for (const auto& interface : interfaces) {
-    // TODO: Since both `interfaces` and `type_const_id` are sorted lists, do an
-    // O(N+M) merge instead of O(N*M) nested loops.
+    // TODO: Since both `interfaces` and `query_self_const_id` are sorted lists,
+    // do an O(N+M) merge instead of O(N*M) nested loops.
     auto result_witness_id =
-        FindWitnessInFacet(context, loc_id, type_const_id, interface);
+        FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
     if (!result_witness_id.has_value()) {
       result_witness_id =
-          FindWitnessInImpls(context, loc_id, type_const_id, interface);
+          FindWitnessInImpls(context, loc_id, query_self_const_id, interface);
     }
     if (result_witness_id.has_value()) {
       result_witness_ids.push_back(result_witness_id);
@@ -402,8 +418,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // `interface_const_id`.
 
   // All interfaces in the query facet type must have been found to be available
-  // through some impl (TODO: or directly on the type itself if `type_const_id`
-  // is a facet type).
+  // through some impl, or directly on the value's facet type if
+  // `query_self_const_id` is a facet value.
   if (result_witness_ids.size() != interfaces.size()) {
     return SemIR::InstBlockId::None;
   }
