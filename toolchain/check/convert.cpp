@@ -1235,8 +1235,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         } else if (type_of_expr_id == SemIR::TypeType::SingletonTypeId) {
           CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
                             "cannot{0:| implicitly} convert type {1} into type "
-                            "implementing {2}{0: with `as`|}; type {1} does "
-                            "not implement the required interface(s)",
+                            "implementing {2}{0: with `as`|}",
                             BoolAsSelect, InstIdAsType, SemIR::TypeId);
           return context.emitter().Build(loc_id, ConversionFailureTypeToFacet,
                                          explicit_as, expr_id, target.type_id);
