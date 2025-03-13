@@ -1862,6 +1862,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
+    CARBON_CHECK(result[i].has_value());
   }
 
   return context.inst_blocks().Add(result);
