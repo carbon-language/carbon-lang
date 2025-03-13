@@ -26,7 +26,7 @@ class Foo {
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: --- STDIN:
-// CHECK:STDERR: Content-Length: 181
+// CHECK:STDERR: Content-Length: 182
 // CHECK:STDERR:
 // CHECK:STDERR: {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"languageId":"carbon","text":"class Foo {\n  fn foo();\n  fn bar() {}\n}\n\n","uri":"file:/foo.carbon"}}}
 // CHECK:STDERR:
