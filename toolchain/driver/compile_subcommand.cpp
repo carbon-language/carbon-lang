@@ -598,9 +598,10 @@ auto CompilationUnit::RunLower(
     // TODO: Consider disabling instruction naming by default if we're not
     // producing textual LLVM IR.
     SemIR::InstNamer inst_namer(&*sem_ir_);
-    module_ = Lower::LowerToLLVM(
-        *llvm_context_, tree_and_subtrees_getters_for_debug_info,
-        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
+    module_ = Lower::LowerToLLVM(*llvm_context_,
+                                 tree_and_subtrees_getters_for_debug_info,
+                                 input_filename_, *sem_ir_, sem_ir_->cpp_ast(),
+                                 &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");

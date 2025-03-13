@@ -1724,15 +1724,12 @@ class T2 {
 // CHECK:STDOUT:   %F.1a5: %F.type.ba7 = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %.e62: <vtable> = vtable (%F.1a5, %G) [concrete]
-// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
-// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T2: type = class_type @T2 [concrete]
 // CHECK:STDOUT:   %T2.elem: type = unbound_element_type %T2, %T1 [concrete]
 // CHECK:STDOUT:   %F.type.834: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.a48: %F.type.834 = struct_value () [concrete]
-// CHECK:STDOUT:   %.025: <vtable> = vtable (%F.a48, %G) [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1} [concrete]
 // CHECK:STDOUT:   %complete_type.e14: <witness> = complete_type_witness %struct_type.base [concrete]
 // CHECK:STDOUT: }
@@ -1758,8 +1755,7 @@ class T2 {
 // CHECK:STDOUT: class @T1 {
 // CHECK:STDOUT:   %F.decl: %F.type.ba7 = fn_decl @F.1 [concrete = constants.%F.1a5] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
-// CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl, %G.decl) [concrete = constants.%.e62]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1772,7 +1768,6 @@ class T2 {
 // CHECK:STDOUT:   %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:   %.loc18: %T2.elem = base_decl %T1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.834 = fn_decl @F.2 [concrete = constants.%F.a48] {} {}
-// CHECK:STDOUT:   %.loc24: <vtable> = vtable (%F.decl, constants.%G) [concrete = constants.%.025]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.e14]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1784,11 +1779,11 @@ class T2 {
 // CHECK:STDOUT:   extend %T1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1();
+// CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @G();
+// CHECK:STDOUT: fn @G();
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2();
+// CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_addr_self_mismatch.carbon
 // CHECK:STDOUT:
