@@ -105,8 +105,11 @@ class EvalContext {
               specifics().Get(specific_id_).generic_id &&
           symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-        return inst_id.has_value() ? constant_values().Get(inst_id)
-                                   : SemIR::ConstantId::NotConstant;
+        CARBON_CHECK(inst_id.has_value(),
+                     "Forward reference in eval block: index {0} referenced "
+                     "before evaluation",
+                     symbolic_info.index.index());
+        return constant_values().Get(inst_id);
       }
     }
 
