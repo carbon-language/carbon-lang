@@ -276,6 +276,7 @@ static auto ImportNamespaceDecl(Context& context,
   context.name_scopes()
       .Get(namespace_inst.name_scope_id)
       .set_cpp_decl_context(clang_decl);
+  context.import_ref_ids().push_back(namespace_id);
 
   return namespace_id;
 }

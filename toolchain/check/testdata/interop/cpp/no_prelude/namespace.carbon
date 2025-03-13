@@ -114,7 +114,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .my_namespace = <unexpected>.inst20
+// CHECK:STDOUT:     .my_namespace = %my_namespace
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .foo = @MyF.%foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -132,7 +135,7 @@ fn MyF() {
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %my_namespace.ref: <namespace> = name_ref my_namespace, <unexpected>.inst20 [concrete = <unexpected>.inst20]
+// CHECK:STDOUT:   %my_namespace.ref: <namespace> = name_ref my_namespace, imports.%my_namespace [concrete = imports.%my_namespace]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, %foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
@@ -157,7 +160,18 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .my_namespace1 = <unexpected>.inst20
+// CHECK:STDOUT:     .my_namespace1 = %my_namespace1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %my_namespace1: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .foo1 = @MyF.%foo1.decl
+// CHECK:STDOUT:     .my_namespace2 = %my_namespace2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %my_namespace2: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .foo2 = @MyF.%foo2.decl
+// CHECK:STDOUT:     .my_namespace3 = %my_namespace3
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %my_namespace3: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .foo3 = @MyF.%foo3.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -175,20 +189,20 @@ fn MyF() {
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %my_namespace1.ref.loc7: <namespace> = name_ref my_namespace1, <unexpected>.inst20 [concrete = <unexpected>.inst20]
+// CHECK:STDOUT:   %my_namespace1.ref.loc7: <namespace> = name_ref my_namespace1, imports.%my_namespace1 [concrete = imports.%my_namespace1]
 // CHECK:STDOUT:   %foo1.decl: %foo1.type = fn_decl @foo1 [concrete = constants.%foo1] {} {}
 // CHECK:STDOUT:   %foo1.ref: %foo1.type = name_ref foo1, %foo1.decl [concrete = constants.%foo1]
 // CHECK:STDOUT:   %foo1.call: init %empty_tuple.type = call %foo1.ref()
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %my_namespace1.ref.loc8: <namespace> = name_ref my_namespace1, <unexpected>.inst20 [concrete = <unexpected>.inst20]
-// CHECK:STDOUT:   %my_namespace2.ref.loc8: <namespace> = name_ref my_namespace2, <unexpected>.inst29 [concrete = <unexpected>.inst29]
+// CHECK:STDOUT:   %my_namespace1.ref.loc8: <namespace> = name_ref my_namespace1, imports.%my_namespace1 [concrete = imports.%my_namespace1]
+// CHECK:STDOUT:   %my_namespace2.ref.loc8: <namespace> = name_ref my_namespace2, imports.%my_namespace2 [concrete = imports.%my_namespace2]
 // CHECK:STDOUT:   %foo2.decl: %foo2.type = fn_decl @foo2 [concrete = constants.%foo2] {} {}
 // CHECK:STDOUT:   %foo2.ref: %foo2.type = name_ref foo2, %foo2.decl [concrete = constants.%foo2]
 // CHECK:STDOUT:   %foo2.call: init %empty_tuple.type = call %foo2.ref()
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %my_namespace1.ref.loc9: <namespace> = name_ref my_namespace1, <unexpected>.inst20 [concrete = <unexpected>.inst20]
-// CHECK:STDOUT:   %my_namespace2.ref.loc9: <namespace> = name_ref my_namespace2, <unexpected>.inst29 [concrete = <unexpected>.inst29]
-// CHECK:STDOUT:   %my_namespace3.ref: <namespace> = name_ref my_namespace3, <unexpected>.inst39 [concrete = <unexpected>.inst39]
+// CHECK:STDOUT:   %my_namespace1.ref.loc9: <namespace> = name_ref my_namespace1, imports.%my_namespace1 [concrete = imports.%my_namespace1]
+// CHECK:STDOUT:   %my_namespace2.ref.loc9: <namespace> = name_ref my_namespace2, imports.%my_namespace2 [concrete = imports.%my_namespace2]
+// CHECK:STDOUT:   %my_namespace3.ref: <namespace> = name_ref my_namespace3, imports.%my_namespace3 [concrete = imports.%my_namespace3]
 // CHECK:STDOUT:   %foo3.decl: %foo3.type = fn_decl @foo3 [concrete = constants.%foo3] {} {}
 // CHECK:STDOUT:   %foo3.ref: %foo3.type = name_ref foo3, %foo3.decl [concrete = constants.%foo3]
 // CHECK:STDOUT:   %foo3.call: init %empty_tuple.type = call %foo3.ref()
@@ -210,7 +224,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .my_namespace = <unexpected>.inst20
+// CHECK:STDOUT:     .my_namespace = %my_namespace
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .not_foo = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,7 +245,7 @@ fn MyF() {
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %my_namespace.ref: <namespace> = name_ref my_namespace, <unexpected>.inst20 [concrete = <unexpected>.inst20]
+// CHECK:STDOUT:   %my_namespace.ref: <namespace> = name_ref my_namespace, imports.%my_namespace [concrete = imports.%my_namespace]
 // CHECK:STDOUT:   %not_foo.ref: <error> = name_ref not_foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -307,7 +324,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .r#base = <unexpected>.inst20
+// CHECK:STDOUT:     .r#base = %base
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %base: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .foo = @MyF.%foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,7 +345,7 @@ fn MyF() {
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %base.ref: <namespace> = name_ref r#base, <unexpected>.inst20 [concrete = <unexpected>.inst20]
+// CHECK:STDOUT:   %base.ref: <namespace> = name_ref r#base, imports.%base [concrete = imports.%base]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, %foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
