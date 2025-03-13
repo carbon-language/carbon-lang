@@ -268,6 +268,31 @@ impl () as I where .N = 2 {
   fn F[self: Self]() -> array(bool, 2) { return (true, false); }
 }
 
+// --- fail_todo_symbolic_associated_type_in_concrete_context.carbon
+
+interface Z {
+  let X:! type;
+}
+
+class C(T:! type) {}
+class D {}
+
+impl forall [T:! type] T as Z where .X = C(T) {}
+
+fn F() {
+  // TODO: `D.(Z.X)` is `C(D)`, but is incorrecty treated only as the symbolic
+  // `C(T)` here which fails to convert.
+
+  // CHECK:STDERR: dana.carbon:[[@LINE+7]]:20: error: cannot implicitly convert value of type `C(D)` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   let a: D.(Z.X) = {} as C(D);
+  // CHECK:STDERR:                    ^~~~~~~~~~
+  // CHECK:STDERR: dana.carbon:[[@LINE+4]]:20: note: type `C(D)` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: D.(Z.X) = {} as C(D);
+  // CHECK:STDERR:                    ^~~~~~~~~~
+  // CHECK:STDERR:
+  let a: D.(Z.X) = {} as C(D);
+}
+
 // CHECK:STDOUT: --- associated_type_in_method_signature.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
