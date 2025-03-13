@@ -52,8 +52,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc1_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc1_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc1_17.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc1_17.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
@@ -106,8 +106,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc1_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc1_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc1_17.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc1_17.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {

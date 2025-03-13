@@ -12,6 +12,6 @@
 
 // CHECK:STDERR: fail_fuzzing.carbon:[[@LINE+4]]:1: error: `Cpp` import found during fuzzing [CppInteropFuzzing]
 // CHECK:STDERR: import Cpp library "file.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "file.h";

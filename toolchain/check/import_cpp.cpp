@@ -99,8 +99,9 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
   auto& import_cpps = context.sem_ir().import_cpps();
   import_cpps.Reserve(imports.size());
   for (const Parse::Tree::PackagingNames& import : imports) {
-    import_cpps.Add(
-        {.node_id = import.node_id, .library_id = import.library_id});
+    import_cpps.Add({.node_id = context.parse_tree().As<Parse::ImportDeclId>(
+                         import.node_id),
+                     .library_id = import.library_id});
   }
 
   return AddImportNamespaceToScope(
@@ -111,7 +112,10 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
              /*diagnose_duplicate_namespace=*/false,
              [&]() {
                return AddInst<SemIR::ImportCppDecl>(
-                   context, imports.front().node_id, {});
+                   context,
+                   context.parse_tree().As<Parse::ImportDeclId>(
+                       imports.front().node_id),
+                   {});
              })
       .add_result.name_scope_id;
 }

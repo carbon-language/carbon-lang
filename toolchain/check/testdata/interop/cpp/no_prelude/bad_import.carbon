@@ -14,7 +14,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp;
 
@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp library "";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "";
 
@@ -38,7 +38,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |          ^~~~~~~~~~~
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "\"foo.h\"";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";
 

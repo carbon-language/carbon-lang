@@ -14,7 +14,7 @@ package A;
 
 // CHECK:STDERR: fail_default_api.carbon:[[@LINE+4]]:1: error: file cannot import itself [ImportSelf]
 // CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import library default;
 
@@ -24,7 +24,7 @@ impl package A;
 
 // CHECK:STDERR: fail_default.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
 // CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import library default;
 
@@ -32,7 +32,7 @@ import library default;
 
 // CHECK:STDERR: fail_main_import_default.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
 // CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import library default;
 
@@ -42,7 +42,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_main_lib_import_default.carbon:[[@LINE+4]]:1: error: cannot import `Main//default` [ImportMainDefaultLibrary]
 // CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import library default;
 

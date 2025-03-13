@@ -72,7 +72,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Foo(a:! C) {}
 // CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: two_file.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
@@ -81,7 +81,7 @@ interface Foo(a:! C) {}
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Bar` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Bar(a:! D) {}
 // CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:6: in import [InImport]
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:1: in import [InImport]
 // CHECK:STDERR: two_file.carbon:8:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Bar(a:! D);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
@@ -159,7 +159,7 @@ alias D = C;
 // CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Foo(a:! D) {}
 // CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:6: in import [InImport]
+// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:1: in import [InImport]
 // CHECK:STDERR: alias_two_file.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
@@ -618,8 +618,8 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     .Foo = imports.%Main.Foo
 // CHECK:STDOUT:     .Bar = imports.%Main.Bar
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_24.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_24.2 = import <none>
 // CHECK:STDOUT:   %Foo.decl: %Foo.type.5380b8.2 = interface_decl @Foo.2 [concrete = constants.%Foo.generic.ec3175.2] {
 // CHECK:STDOUT:     %a.patt.loc12_15.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc12_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -1040,8 +1040,8 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     .Foo = imports.%Main.Foo
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_30.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_30.2 = import <none>
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type.5380b8.2 = interface_decl @Foo.2 [concrete = constants.%Foo.generic.ec3175.2] {

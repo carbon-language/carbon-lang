@@ -21,7 +21,7 @@ import Cpp library "header.h";
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Cpp library "header.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 namespace Cpp;
 
@@ -53,7 +53,7 @@ import Cpp library "header.h";
 // CHECK:STDERR:       ^~~
 // CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: import Cpp library "header.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 class Cpp.C {};
 
@@ -194,7 +194,7 @@ import Cpp library "header.h";
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Cpp = imports.%Cpp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_28.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_28.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

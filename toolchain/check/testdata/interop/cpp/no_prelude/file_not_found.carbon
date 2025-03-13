@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |          ^~~~~~~~~~~~~
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "not_found.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "not_found.h";
 

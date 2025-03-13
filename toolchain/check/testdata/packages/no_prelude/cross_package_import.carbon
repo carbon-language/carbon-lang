@@ -126,7 +126,7 @@ library "[[@TEST_NAME]]";
 import library "main_other_ns";
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: in import [InImport]
 // CHECK:STDERR: main_other_ns.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace Other;
@@ -155,7 +155,7 @@ import Other library "other_fn";
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 namespace Other;
 
@@ -173,7 +173,7 @@ import Other library "other_fn";
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 namespace Other.Nested;
 
@@ -191,7 +191,7 @@ import Other library "other_fn";
 // CHECK:STDERR:    ^~~~~
 // CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Other.G() {}
 

@@ -78,7 +78,7 @@ class Tree : public Printable<Tree> {
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {
-    ImportDeclId node_id;
+    AnyPackagingDeclId node_id;
     PackageNameId package_id = PackageNameId::None;
     // TODO: Move LibraryNameId to Base and use it here.
     StringLiteralValueId library_id = StringLiteralValueId::None;
