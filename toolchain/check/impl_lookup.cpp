@@ -181,47 +181,30 @@ static auto GetInterfacesFromConstantId(
 static auto GetWitnessIdForImpl(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     const SemIR::CompleteFacetType::RequiredInterface& interface,
-    const SemIR::Impl& impl) -> SemIR::InstId {
-  // If the impl's interface_id differs from the query, then this impl can not
-  // possibly provide the queried interface, and we don't need to proceed.
-  if (impl.interface.interface_id != interface.interface_id) {
-    return SemIR::InstId::None;
-  }
-
-  // When the impl's interface_id matches, but the interface is generic, the
-  // impl may or may not match based on restrictions in the generic parameters
-  // of the impl.
-  //
-  // As a shortcut, if the impl's constraint is not symbolic (does not depend on
-  // any generic parameters), then we can determine that we match if the
-  // specific ids match exactly.
-  auto impl_interface_const_id =
-      context.constant_values().Get(impl.constraint_id);
-  if (!impl_interface_const_id.is_symbolic()) {
-    if (impl.interface.specific_id != interface.specific_id) {
-      return SemIR::InstId::None;
-    }
-  }
-
-  // This check comes first to avoid deduction with an invalid impl. We use an
-  // error value to indicate an error during creation of the impl, such as a
-  // recursive impl which will cause deduction to recurse infinitely.
-  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::InstId::None;
-  }
-  CARBON_CHECK(impl.witness_id.has_value());
-
+    SemIR::ImplId impl_id) -> SemIR::InstId {
   // The impl may have generic arguments, in which case we need to deduce them
   // to find what they are given the specific type and interface query. We use
   // that specific to map values in the impl to the deduced values.
   auto specific_id = SemIR::SpecificId::None;
-  if (impl.generic_id.has_value()) {
-    specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
-                                      interface.specific_id);
-    if (!specific_id.has_value()) {
-      return SemIR::InstId::None;
+  {
+    // DeduceImplArguments can import new impls which can invalidate any
+    // pointers into `context.impls()`.
+    const SemIR::Impl& impl = context.impls().Get(impl_id);
+    if (impl.generic_id.has_value()) {
+      specific_id =
+          DeduceImplArguments(context, loc_id,
+                              {.self_id = impl.self_id,
+                               .generic_id = impl.generic_id,
+                               .specific_id = impl.interface.specific_id},
+                              type_const_id, interface.specific_id);
+      if (!specific_id.has_value()) {
+        return SemIR::InstId::None;
+      }
     }
   }
+
+  // Get a pointer again after DeduceImplArguments() is complete.
+  const SemIR::Impl& impl = context.impls().Get(impl_id);
 
   // The self type of the impl must match the type in the query, or this is an
   // `impl T as ...` for some other type `T` and should not be considered.
@@ -321,10 +304,48 @@ static auto FindWitnessInImpls(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     const SemIR::SpecificInterface& specific_interface) -> SemIR::InstId {
   auto& stack = context.impl_lookup_stack();
-  for (const auto& impl : context.impls().array_ref()) {
-    stack.back().impl_loc = impl.definition_id;
+  // TODO: Build this candidate list by matching against type structures to
+  // narrow it down.
+  llvm::SmallVector<std::pair<SemIR::ImplId, SemIR::InstId>> candidate_impl_ids;
+  for (auto [id, impl] : context.impls().enumerate()) {
+    // If the impl's interface_id differs from the query, then this impl can not
+    // possibly provide the queried interface.
+    if (impl.interface.interface_id != specific_interface.interface_id) {
+      continue;
+    }
+
+    // When the impl's interface_id matches, but the interface is generic, the
+    // impl may or may not match based on restrictions in the generic parameters
+    // of the impl.
+    //
+    // As a shortcut, if the impl's constraint is not symbolic (does not depend
+    // on any generic parameters), then we can determine that we match if the
+    // specific ids match exactly.
+    auto impl_interface_const_id =
+        context.constant_values().Get(impl.constraint_id);
+    if (!impl_interface_const_id.is_symbolic()) {
+      if (impl.interface.specific_id != specific_interface.specific_id) {
+        continue;
+      }
+    }
+
+    // This check comes first to avoid deduction with an invalid impl. We use an
+    // error value to indicate an error during creation of the impl, such as a
+    // recursive impl which will cause deduction to recurse infinitely.
+    if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+      continue;
+    }
+    CARBON_CHECK(impl.witness_id.has_value());
+
+    candidate_impl_ids.push_back({id, impl.definition_id});
+  }
+
+  for (auto [impl_id, loc_inst_id] : candidate_impl_ids) {
+    stack.back().impl_loc = loc_inst_id;
+    // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls to
+    // be imported, invalidating any pointer into `context.impls()`.
     auto result_witness_id = GetWitnessIdForImpl(context, loc_id, type_const_id,
-                                                 specific_interface, impl);
+                                                 specific_interface, impl_id);
     if (result_witness_id.has_value()) {
       // We found a matching impl; don't keep looking for this interface.
       return result_witness_id;
