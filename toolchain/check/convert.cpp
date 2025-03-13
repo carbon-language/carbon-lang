@@ -1038,27 +1038,11 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
       // Conversion from a `FacetAccessType` to a `FacetValue` of the target
       // `FacetType` if the instruction in the `FacetAccessType` is of a
       // `FacetType` that satisfies the requirements of the target `FacetType`.
-      auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
-
       // If the `FacetType` exactly matches the target `FacetType` then we can
       // shortcut and use that value, and avoid impl lookup.
+      auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
         return facet_value_inst_id;
-      }
-
-      auto lookup_result = LookupImplWitness(
-          context, loc_id, context.constant_values().Get(facet_value_inst_id),
-          context.types().GetConstantId(target.type_id));
-      if (lookup_result.has_value()) {
-        if (lookup_result.has_error_value()) {
-          return SemIR::ErrorInst::SingletonInstId;
-        } else {
-          return AddInst<SemIR::FacetValue>(
-              context, loc_id,
-              {.type_id = target.type_id,
-               .type_inst_id = lookup_inst_id,
-               .witnesses_block_id = lookup_result.inst_block_id()});
-        }
       }
     }
 

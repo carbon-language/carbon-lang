@@ -879,10 +879,10 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleTameAnimal2.%W.as_type.loc11_44.2 (%W.as_type) [symbolic = %require_complete (constants.%require_complete.ba9)]
-// CHECK:STDOUT:   %W.as_wit.iface0.loc12_14.5: <witness> = facet_access_witness %W.loc11_22.2, element0 [symbolic = %W.as_wit.iface0.loc12_14.5 (constants.%W.as_wit.iface0)]
-// CHECK:STDOUT:   %Animal.facet.loc12_14.5: %Animal.type = facet_value %W.as_type.loc11_44.2, (%W.as_wit.iface0.loc12_14.5) [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
+// CHECK:STDOUT:   %W.as_wit.iface0.loc12_14.3: <witness> = facet_access_witness %W.loc11_22.2, element0 [symbolic = %W.as_wit.iface0.loc12_14.3 (constants.%W.as_wit.iface0)]
+// CHECK:STDOUT:   %Animal.facet.loc12_14.3: %Animal.type = facet_value %W.as_type.loc11_44.2, (%W.as_wit.iface0.loc12_14.3) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:   %W.as_wit.iface1.loc12_14.3: <witness> = facet_access_witness %W.loc11_22.2, element1 [symbolic = %W.as_wit.iface1.loc12_14.3 (constants.%W.as_wit.iface1)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.e7b(%Animal.facet.loc12_14.5) [symbolic = %impl_witness (constants.%impl_witness.1d8)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.e7b(%Animal.facet.loc12_14.3) [symbolic = %impl_witness (constants.%impl_witness.1d8)]
 // CHECK:STDOUT:   %facet_value.loc12_14.3: %facet_type.6ff = facet_value %W.as_type.loc11_44.2, (%impl_witness, %W.as_wit.iface1.loc12_14.3) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:   %FeedTame2.specific_fn.loc12_3.2: <specific function> = specific_function constants.%FeedTame2, @FeedTame2(%facet_value.loc12_14.3) [symbolic = %FeedTame2.specific_fn.loc12_3.2 (constants.%FeedTame2.specific_fn)]
 // CHECK:STDOUT:
@@ -890,28 +890,18 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %FeedTame2.ref: %FeedTame2.type = name_ref FeedTame2, file.%FeedTame2.decl [concrete = constants.%FeedTame2]
 // CHECK:STDOUT:     %w.ref: @HandleTameAnimal2.%W.as_type.loc11_44.2 (%W.as_type) = name_ref w, %w
-// CHECK:STDOUT:     %W.as_type.loc12_14.1: type = facet_access_type constants.%W [symbolic = %W.as_type.loc11_44.2 (constants.%W.as_type)]
-// CHECK:STDOUT:     %.loc12_14.1: type = converted constants.%W, %W.as_type.loc12_14.1 [symbolic = %W.as_type.loc11_44.2 (constants.%W.as_type)]
-// CHECK:STDOUT:     %W.as_wit.iface0.loc12_14.1: <witness> = facet_access_witness constants.%W, element0 [symbolic = %W.as_wit.iface0.loc12_14.5 (constants.%W.as_wit.iface0)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.1: %Animal.type = facet_value constants.%W.as_type, (%W.as_wit.iface0.loc12_14.1) [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %.loc12_14.2: %Animal.type = converted %.loc12_14.1, %Animal.facet.loc12_14.1 [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %W.as_wit.iface0.loc12_14.2: <witness> = facet_access_witness constants.%W, element0 [symbolic = %W.as_wit.iface0.loc12_14.5 (constants.%W.as_wit.iface0)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.2: %Animal.type = facet_value constants.%W.as_type, (%W.as_wit.iface0.loc12_14.2) [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %.loc12_14.3: %Animal.type = converted constants.%W.as_type, %Animal.facet.loc12_14.2 [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
+// CHECK:STDOUT:     %W.as_wit.iface0.loc12_14.1: <witness> = facet_access_witness constants.%W, element0 [symbolic = %W.as_wit.iface0.loc12_14.3 (constants.%W.as_wit.iface0)]
+// CHECK:STDOUT:     %Animal.facet.loc12_14.1: %Animal.type = facet_value constants.%W.as_type, (%W.as_wit.iface0.loc12_14.1) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
+// CHECK:STDOUT:     %.loc12_14.1: %Animal.type = converted constants.%W.as_type, %Animal.facet.loc12_14.1 [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:     %W.as_wit.iface1.loc12_14.1: <witness> = facet_access_witness constants.%W, element1 [symbolic = %W.as_wit.iface1.loc12_14.3 (constants.%W.as_wit.iface1)]
 // CHECK:STDOUT:     %facet_value.loc12_14.1: %facet_type.6ff = facet_value constants.%W.as_type, (constants.%impl_witness.1d8, %W.as_wit.iface1.loc12_14.1) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc12_14.4: %facet_type.6ff = converted constants.%W.as_type, %facet_value.loc12_14.1 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %W.as_type.loc12_14.2: type = facet_access_type constants.%W [symbolic = %W.as_type.loc11_44.2 (constants.%W.as_type)]
-// CHECK:STDOUT:     %.loc12_14.5: type = converted constants.%W, %W.as_type.loc12_14.2 [symbolic = %W.as_type.loc11_44.2 (constants.%W.as_type)]
-// CHECK:STDOUT:     %W.as_wit.iface0.loc12_14.3: <witness> = facet_access_witness constants.%W, element0 [symbolic = %W.as_wit.iface0.loc12_14.5 (constants.%W.as_wit.iface0)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.3: %Animal.type = facet_value constants.%W.as_type, (%W.as_wit.iface0.loc12_14.3) [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %.loc12_14.6: %Animal.type = converted %.loc12_14.5, %Animal.facet.loc12_14.3 [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %W.as_wit.iface0.loc12_14.4: <witness> = facet_access_witness constants.%W, element0 [symbolic = %W.as_wit.iface0.loc12_14.5 (constants.%W.as_wit.iface0)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.4: %Animal.type = facet_value constants.%W.as_type, (%W.as_wit.iface0.loc12_14.4) [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %.loc12_14.7: %Animal.type = converted constants.%W.as_type, %Animal.facet.loc12_14.4 [symbolic = %Animal.facet.loc12_14.5 (constants.%Animal.facet)]
+// CHECK:STDOUT:     %.loc12_14.2: %facet_type.6ff = converted constants.%W.as_type, %facet_value.loc12_14.1 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
+// CHECK:STDOUT:     %W.as_wit.iface0.loc12_14.2: <witness> = facet_access_witness constants.%W, element0 [symbolic = %W.as_wit.iface0.loc12_14.3 (constants.%W.as_wit.iface0)]
+// CHECK:STDOUT:     %Animal.facet.loc12_14.2: %Animal.type = facet_value constants.%W.as_type, (%W.as_wit.iface0.loc12_14.2) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
+// CHECK:STDOUT:     %.loc12_14.3: %Animal.type = converted constants.%W.as_type, %Animal.facet.loc12_14.2 [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:     %W.as_wit.iface1.loc12_14.2: <witness> = facet_access_witness constants.%W, element1 [symbolic = %W.as_wit.iface1.loc12_14.3 (constants.%W.as_wit.iface1)]
 // CHECK:STDOUT:     %facet_value.loc12_14.2: %facet_type.6ff = facet_value constants.%W.as_type, (constants.%impl_witness.1d8, %W.as_wit.iface1.loc12_14.2) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc12_14.8: %facet_type.6ff = converted constants.%W.as_type, %facet_value.loc12_14.2 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
+// CHECK:STDOUT:     %.loc12_14.4: %facet_type.6ff = converted constants.%W.as_type, %facet_value.loc12_14.2 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:     %FeedTame2.specific_fn.loc12_3.1: <specific function> = specific_function %FeedTame2.ref, @FeedTame2(constants.%facet_value) [symbolic = %FeedTame2.specific_fn.loc12_3.2 (constants.%FeedTame2.specific_fn)]
 // CHECK:STDOUT:     %FeedTame2.call: init %empty_tuple.type = call %FeedTame2.specific_fn.loc12_3.1(%w.ref)
 // CHECK:STDOUT:     return
@@ -991,7 +981,7 @@ fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.ba9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.e7b(@HandleTameAnimal2.%Animal.facet.loc12_14.5) {}
+// CHECK:STDOUT: specific @impl.e7b(@HandleTameAnimal2.%Animal.facet.loc12_14.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame2(@HandleTameAnimal2.%facet_value.loc12_14.3) {}
 // CHECK:STDOUT:
