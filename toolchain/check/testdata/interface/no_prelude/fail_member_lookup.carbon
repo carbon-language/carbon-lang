@@ -45,7 +45,7 @@ fn F() {
 
 interface Different {}
 
-// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:24: error: cannot implicitly convert type `U` that implements `Different` to type implementing `Interface` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:24: error: cannot implicitly convert type `U` that implements `Different` into type implementing `Interface` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:24: note: type `Different` does not implement interface `Core.ImplicitAs(Interface)` [MissingImplInMemberAccessNote]

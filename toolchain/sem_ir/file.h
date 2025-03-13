@@ -189,7 +189,8 @@ class File : public Printable<File> {
   }
   auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
   // TODO: When the AST can be created before creating `File`, initialize the
-  // pointer in the constructor and remove this function.
+  // pointer in the constructor and remove this function. This is part of
+  // https://github.com/carbon-language/carbon-lang/issues/4666
   auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());

@@ -73,7 +73,7 @@ interface O {
 fn WithInteger(Q:! O where .P = i32) {}
 
 fn WithBool(R:! O where .P = bool) {
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `R` that implements `O where .(O.P) = bool` to type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: note: type `O where .(O.P) = bool` does not implement interface `Core.ImplicitAs(O where .(O.P) = i32)` [MissingImplInMemberAccessNote]
@@ -98,7 +98,7 @@ interface S {
 fn WithT(V:! S where .T = ()) {}
 
 fn WithU(W:! S where .U = ()) {
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `W` that implements `S where .(S.U) = ()` to type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: note: type `S where .(S.U) = ()` does not implement interface `Core.ImplicitAs(S where .(S.T) = ())` [MissingImplInMemberAccessNote]
@@ -119,7 +119,7 @@ import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `bool` to type implementing `N where .(N.P) = {}`; type `bool` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `bool` into type implementing `N where .(N.P) = {}`; type `bool` does not implement the required interface(s) [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Equal(bool);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `Core.ImplicitAs(N where .(N.P) = {})` [MissingImplInMemberAccessNote]
@@ -132,7 +132,7 @@ fn Calls() {
   // CHECK:STDERR:
   Equal(bool);
 
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `i32` to type implementing `A where .(A.C) = () and .(A.B) = bool`; type `i32` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool`; type `i32` does not implement the required interface(s) [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   NestedRewrite(i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A where .(A.C) = () and .(A.B) = bool)` [MissingImplInMemberAccessNote]
@@ -172,7 +172,7 @@ interface A {}
 class D {}
 impl D as A {}
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+7]]:35: error: cannot implicitly convert type `D` to type implementing `type where...`; type `D` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+7]]:35: error: cannot implicitly convert type `D` into type implementing `type where...`; type `D` does not implement the required interface(s) [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let B: type where .Self impls A = D;
 // CHECK:STDERR:                                   ^
 // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:35: note: type `type` does not implement interface `Core.ImplicitAs(type where...)` [MissingImplInMemberAccessNote]
@@ -192,7 +192,7 @@ interface E {
 // Testing how these types get stringified in error messages.
 
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:42: error: cannot implicitly convert type `f64` to type implementing `E where .(E.G) = () and .(E.F) = bool`; type `f64` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:42: error: cannot implicitly convert type `f64` into type implementing `E where .(E.G) = () and .(E.F) = bool`; type `f64` does not implement the required interface(s) [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let H: (E where .F = bool and .G = ()) = f64;
 // CHECK:STDERR:                                          ^~~
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:42: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.G) = () and .(E.F) = bool)` [MissingImplInMemberAccessNote]
@@ -201,7 +201,7 @@ interface E {
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:45: error: cannot implicitly convert type `bool` to type implementing `E where .(E.G) = i32 and .(E.F) = {}`; type `bool` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:45: error: cannot implicitly convert type `bool` into type implementing `E where .(E.G) = i32 and .(E.F) = {}`; type `bool` does not implement the required interface(s) [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let J: ((E where .F = {}) where .G = i32) = bool;
 // CHECK:STDERR:                                             ^~~~
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:45: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.G) = i32 and .(E.F) = {})` [MissingImplInMemberAccessNote]
@@ -210,7 +210,7 @@ let H: (E where .F = bool and .G = ()) = f64;
 // CHECK:STDERR:
 let J: ((E where .F = {}) where .G = i32) = bool;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:33: error: cannot implicitly convert type `bool` to type implementing `E where .(E.F) = .(E.G)`; type `bool` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:33: error: cannot implicitly convert type `bool` into type implementing `E where .(E.F) = .(E.G)`; type `bool` does not implement the required interface(s) [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let K: (E where .F = .Self.G) = bool;
 // CHECK:STDERR:                                 ^~~~
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:33: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.F) = .(E.G))` [MissingImplInMemberAccessNote]
@@ -1163,8 +1163,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.as_wit.iface0.e75: <witness> = facet_access_witness %.Self.9aa, element0 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.a31: type = impl_witness_access %.Self.as_wit.iface0.e75, element0 [symbolic_self]
 // CHECK:STDOUT:   %N_where.type: type = facet_type <@N where %impl.elem0.a31 = %empty_struct_type> [concrete]
-// CHECK:STDOUT:   %T.patt.68f: %N_where.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.8dd: %N_where.type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NestedRewrite.type: type = fn_type @NestedRewrite [concrete]
@@ -1199,7 +1199,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Main.import_ref.169 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.020 = import_ref Main//equal_constraint, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.P = import_ref Main//equal_constraint, P, unloaded
-// CHECK:STDOUT:   %Main.import_ref.3bc: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T.8dd)]
+// CHECK:STDOUT:   %Main.import_ref.3bc: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b61 = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.91a = import_ref Main//nested_rewrites, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.55d = import_ref Main//nested_rewrites, loc6_8, unloaded
@@ -1250,8 +1250,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.1(imports.%Main.import_ref.3bc: %N_where.type) [from "equal_constraint.carbon"] {
-// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8dd)]
-// CHECK:STDOUT:   %T.patt.2: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt.68f)]
+// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt.2: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.1: %N_where.type);
 // CHECK:STDOUT: }
@@ -1263,9 +1263,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   fn(%D.patt.1: %A_where.type.248);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal.1(constants.%T.8dd) {
-// CHECK:STDOUT:   %T => constants.%T.8dd
-// CHECK:STDOUT:   %T.patt.2 => constants.%T.8dd
+// CHECK:STDOUT: specific @Equal.1(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {

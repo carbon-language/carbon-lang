@@ -86,7 +86,7 @@ impl C as J {}
 
 // TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `C` to type implementing `J where...`; type `C` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `C` into type implementing `J where...`; type `C` does not implement the required interface(s) [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `Core.ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
@@ -104,7 +104,7 @@ fn EmptyStruct(Y:! J where .Self == {});
 
 // TODO: Should report that `C` does not meeet the constraint.
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` to type implementing `J where...`; type `C` does not implement the required interface(s) [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `J where...`; type `C` does not implement the required interface(s) [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(J where...)` [MissingImplInMemberAccessNote]

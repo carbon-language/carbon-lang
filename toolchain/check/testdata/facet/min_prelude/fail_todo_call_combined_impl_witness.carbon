@@ -39,7 +39,7 @@ fn G[T:! A & Empty & B](t: T) {
   // TODO: Qualified lookup of `AA` and `BB` should also be possible here, using
   // the witnesses found in type deduction.
 
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert type `T` that implements `Empty & A & B` to type implementing `A` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert type `T` that implements `Empty & A & B` into type implementing `A` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   T.(A.AA)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+4]]:3: note: type `Empty & A & B` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
@@ -47,7 +47,7 @@ fn G[T:! A & Empty & B](t: T) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   T.(A.AA)();
-  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert type `T` that implements `Empty & A & B` to type implementing `B` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert type `T` that implements `Empty & A & B` into type implementing `B` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   T.(B.BB)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_call_combined_impl_witness.carbon:[[@LINE+4]]:3: note: type `Empty & A & B` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]

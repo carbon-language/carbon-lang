@@ -26,7 +26,7 @@ interface I {
 
 interface J {
   alias U = I.T;
-  // CHECK:STDERR: fail_alias_to_different_interface.carbon:[[@LINE+7]]:13: error: cannot implicitly convert type `Self` that implements `J` to type implementing `I` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_alias_to_different_interface.carbon:[[@LINE+7]]:13: error: cannot implicitly convert type `Self` that implements `J` into type implementing `I` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   fn F() -> U;
   // CHECK:STDERR:             ^
   // CHECK:STDERR: fail_alias_to_different_interface.carbon:[[@LINE+4]]:13: note: type `J` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
@@ -51,7 +51,7 @@ impl forall [V:! J2] V as I2 where .T2 = () {}
 
 interface J2 {
   alias U2 = I2.T2;
-  // CHECK:STDERR: fail_todo_alias_to_different_interface_with_requires.carbon:[[@LINE+7]]:14: error: cannot implicitly convert type `Self` that implements `J2` to type implementing `I2` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_alias_to_different_interface_with_requires.carbon:[[@LINE+7]]:14: error: cannot implicitly convert type `Self` that implements `J2` into type implementing `I2` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   fn F2() -> U2;
   // CHECK:STDERR:              ^~
   // CHECK:STDERR: fail_todo_alias_to_different_interface_with_requires.carbon:[[@LINE+4]]:14: note: type `J2` does not implement interface `Core.ImplicitAs(I2)` [MissingImplInMemberAccessNote]

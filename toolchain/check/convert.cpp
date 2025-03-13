@@ -1215,8 +1215,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
           CARBON_DIAGNOSTIC(
               ConversionFailureFacetToFacet, Error,
-              "cannot{0:| implicitly} convert type {1} that implements {2} to "
-              "type implementing {3}{0: with `as`|}",
+              "cannot{0:| implicitly} convert type {1} that implements {2} "
+              "into type implementing {3}{0: with `as`|}",
               BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
           return context.emitter().Build(loc_id, ConversionFailureFacetToFacet,
                                          explicit_as, expr_id, expr_id,
@@ -1226,26 +1226,25 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                            expr_id)) {
           CARBON_DIAGNOSTIC(
               ConversionFailureFacetAccessTypeToFacet, Error,
-              "cannot{0:| implicitly} convert type {1} that implements {2} to "
-              "type implementing {3}{0: with `as`|}",
+              "cannot{0:| implicitly} convert type {1} that implements {2} "
+              "into type implementing {3}{0: with `as`|}",
               BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
           return context.emitter().Build(
               loc_id, ConversionFailureFacetAccessTypeToFacet, explicit_as,
               expr_id, facet_access_type->facet_value_inst_id, target.type_id);
         } else if (type_of_expr_id == SemIR::TypeType::SingletonTypeId) {
-          CARBON_DIAGNOSTIC(
-              ConversionFailureTypeToFacet, Error,
-              "cannot{0:| implicitly} convert type {1} to type implementing "
-              "{2}{0: with `as`|}; type {1} does not implement the required "
-              "interface(s)",
-              BoolAsSelect, InstIdAsType, SemIR::TypeId);
+          CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
+                            "cannot{0:| implicitly} convert type {1} into type "
+                            "implementing {2}{0: with `as`|}; type {1} does "
+                            "not implement the required interface(s)",
+                            BoolAsSelect, InstIdAsType, SemIR::TypeId);
           return context.emitter().Build(loc_id, ConversionFailureTypeToFacet,
                                          explicit_as, expr_id, target.type_id);
         } else {
           CARBON_DIAGNOSTIC(
               ConversionFailureNonTypeToTypeOrFacet, Error,
-              "cannot{0:| implicitly} convert non-type value of type {1} to "
-              "{2:|type implementing }{3}{0: with `as`|}",
+              "cannot{0:| implicitly} convert non-type value of type {1} "
+              "{2:to|into type implementing} {3}{0: with `as`|}",
               BoolAsSelect, TypeOfInstId, BoolAsSelect, SemIR::TypeId);
           return context.emitter().Build(
               loc_id, ConversionFailureNonTypeToTypeOrFacet, explicit_as,
