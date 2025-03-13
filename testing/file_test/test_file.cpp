@@ -354,7 +354,7 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
     split->content.clear();
     if (split->found_code_pre_split) {
       // For the first split, we make sure there was no content prior.
-      return ErrorBuilder(
+      return Error(
           "When using split files, there must be no content before the first "
           "split file.");
     }
