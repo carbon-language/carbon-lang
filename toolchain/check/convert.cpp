@@ -1165,12 +1165,12 @@ static auto DiagnoseConversionFailureToConstraintValue(Context& context,
     }
   } else {
     CARBON_DIAGNOSTIC(
-        ConversionFailureNonTypeToTypeOrFacet, Error,
+        ConversionFailureNonTypeToFacet, Error,
         "cannot{0:| implicitly} convert non-type value of type {1} "
         "{2:to|into type implementing} {3}{0: with `as`|}",
         BoolAsSelect, TypeOfInstId, BoolAsSelect, SemIR::TypeId);
     return context.emitter().Build(
-        loc_id, ConversionFailureNonTypeToTypeOrFacet,
+        loc_id, ConversionFailureNonTypeToFacet,
         target.kind == ConversionTarget::ExplicitAs, expr_id,
         target.type_id == SemIR::TypeType::SingletonTypeId, target.type_id);
   }
@@ -1263,6 +1263,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       }
       if (target.type_id == SemIR::TypeType::SingletonTypeId ||
           sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+        // TODO: Move this to PerformBuiltinConversion(). See
+        // https://github.com/carbon-language/carbon-lang/issues/5122.
         return DiagnoseConversionFailureToConstraintValue(context, loc_id,
                                                           expr_id, target);
       } else {

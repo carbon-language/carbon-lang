@@ -86,7 +86,7 @@ fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
 
 fn CallF() {
   // TODO: This call should eventually work.
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{}` into type implementing `I where .(I.V) = {} and...` [ConversionFailureNonTypeToTypeOrFacet]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{}` into type implementing `I where .(I.V) = {} and...` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(I where .(I.V) = {} and...)` [MissingImplInMemberAccessNote]
