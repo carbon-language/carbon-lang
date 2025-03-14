@@ -44,16 +44,28 @@ class C {
   fn destroy();
 }
 
-// --- fail_extra_implicit_params.carbon
+// --- fail_extra_implicit_params_second.carbon
 
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_extra_implicit_params.carbon:[[@LINE+4]]:26: error: unexpected implicit parameter [DestroyFunctionUnexpectedImplicitParam]
+  // CHECK:STDERR: fail_extra_implicit_params_second.carbon:[[@LINE+4]]:26: error: unexpected implicit parameter [DestroyFunctionUnexpectedImplicitParam]
   // CHECK:STDERR:   fn destroy[self: Self, T:! type]();
   // CHECK:STDERR:                          ^
   // CHECK:STDERR:
   fn destroy[self: Self, T:! type]();
+}
+
+// --- fail_extra_implicit_params_first.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  // CHECK:STDERR: fail_extra_implicit_params_first.carbon:[[@LINE+4]]:14: error: unexpected implicit parameter [DestroyFunctionUnexpectedImplicitParam]
+  // CHECK:STDERR:   fn destroy[T:! type, self: Self]();
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR:
+  fn destroy[T:! type, self: Self]();
 }
 
 // --- fail_positional_params.carbon
@@ -136,24 +148,39 @@ namespace NS;
 // CHECK:STDERR:
 fn NS.destroy();
 
-// --- fail_invalid_qualifier.carbon
+// --- fail_invalid_qualifier_with_params.carbon
+
+library "[[@TEST_NAME]]";
 
 class C {
   fn destroy[self: Self]();
 }
 
-// CHECK:STDERR: fail_invalid_qualifier.carbon:[[@LINE+11]]:6: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: fn C.destroy.destroy() {}
+// CHECK:STDERR: fail_invalid_qualifier_with_params.carbon:[[@LINE+7]]:6: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
+// CHECK:STDERR: fn C.destroy[self: Self]().Foo() {}
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: fail_invalid_qualifier.carbon:[[@LINE-6]]:3: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR: fail_invalid_qualifier_with_params.carbon:[[@LINE-6]]:3: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR:   fn destroy[self: Self]();
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_qualifier.carbon:[[@LINE+4]]:1: error: missing implicit `self` parameter [DestroyFunctionMissingSelf]
-// CHECK:STDERR: fn C.destroy.destroy() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+fn C.destroy[self: Self]().Foo() {}
+
+// --- fail_invalid_qualifier_no_params.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  fn destroy[self: Self]();
+}
+
+// CHECK:STDERR: fail_invalid_qualifier_no_params.carbon:[[@LINE+7]]:6: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
+// CHECK:STDERR: fn C.destroy.Foo() {}
+// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_invalid_qualifier_no_params.carbon:[[@LINE-6]]:3: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:   fn destroy[self: Self]();
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn C.destroy.destroy() {}
+fn C.destroy.Foo() {}
 
 // CHECK:STDOUT: --- self.carbon
 // CHECK:STDOUT:
@@ -304,7 +331,7 @@ fn C.destroy.destroy() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @destroy();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extra_implicit_params.carbon
+// CHECK:STDOUT: --- fail_extra_implicit_params_second.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -352,6 +379,56 @@ fn C.destroy.destroy() {}
 // CHECK:STDOUT: specific @destroy(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_26.1 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc9_26.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_extra_implicit_params_first.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %destroy.type: type = fn_type @destroy [concrete]
+// CHECK:STDOUT:   %destroy: %destroy.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type = fn_decl @destroy [concrete = constants.%destroy] {
+// CHECK:STDOUT:     %T.patt.loc9_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc9_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_14.1 (constants.%T)]
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .destroy = %destroy.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @destroy(%T.loc9_14.2: type) {
+// CHECK:STDOUT:   %T.loc9_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_14.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc9_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.patt.loc9_14.1: type, %self.param_patt: %C]();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @destroy(constants.%T) {
+// CHECK:STDOUT:   %T.loc9_14.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_14.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_positional_params.carbon
@@ -546,16 +623,16 @@ fn C.destroy.destroy() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @destroy();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_invalid_qualifier.carbon
+// CHECK:STDOUT: --- fail_invalid_qualifier_with_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %destroy.type.bd30b6.1: type = fn_type @destroy.1 [concrete]
-// CHECK:STDOUT:   %destroy.357925.1: %destroy.type.bd30b6.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %destroy.type: type = fn_type @destroy [concrete]
+// CHECK:STDOUT:   %destroy: %destroy.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %destroy.type.bd30b6.2: type = fn_type @destroy.2 [concrete]
-// CHECK:STDOUT:   %destroy.357925.2: %destroy.type.bd30b6.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -563,11 +640,15 @@ fn C.destroy.destroy() {}
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %destroy.decl: %destroy.type.bd30b6.2 = fn_decl @destroy.2 [concrete = constants.%destroy.357925.2] {} {}
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %destroy.decl: %destroy.type.bd30b6.1 = fn_decl @destroy.1 [concrete = constants.%destroy.357925.1] {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type = fn_decl @destroy [concrete = constants.%destroy] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -583,9 +664,53 @@ fn C.destroy.destroy() {}
 // CHECK:STDOUT:   .destroy = %destroy.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %C]();
+// CHECK:STDOUT: fn @destroy[%self.param_patt: %C]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2() {
+// CHECK:STDOUT: fn @Foo() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_invalid_qualifier_no_params.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %destroy.type: type = fn_type @destroy [concrete]
+// CHECK:STDOUT:   %destroy: %destroy.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type = fn_decl @destroy [concrete = constants.%destroy] {
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %C = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .destroy = %destroy.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy[%self.param_patt: %C]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
