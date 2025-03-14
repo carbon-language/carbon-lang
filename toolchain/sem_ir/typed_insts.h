@@ -1590,7 +1590,12 @@ struct TupleValue {
   InstBlockId elements_id;
 };
 
-// Returns the type of the instruction produced by an action.
+// Returns the type of the instruction produced by an action. For example, given
+//
+//   %inst: <instruction> = some_action
+//
+// the instruction `type_of_inst %inst` evaluates to the type of the instruction
+// that the action generates.
 struct TypeOfInst {
   static constexpr auto Kind = InstKind::TypeOfInst.Define<Parse::NodeId>(
       {.ir_name = "type_of_inst",
