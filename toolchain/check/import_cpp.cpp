@@ -103,17 +103,17 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
         {.node_id = import.node_id, .library_id = import.library_id});
   }
 
-  return AddImportNamespace(
+  return AddImportNamespaceAndName(
              context,
              GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
              SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
-             AddImportNamespaceNameBehavior::AddAllowExisting,
+             /*diagnose_duplicate_namespace=*/false,
              [&]() {
                return AddInst<SemIR::ImportCppDecl>(
                    context, imports.front().node_id, {});
              })
-      .name_scope_id;
+      .add_result.name_scope_id;
 }
 
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
@@ -261,8 +261,7 @@ static auto ImportNamespaceDecl(Context& context,
     -> SemIR::InstId {
   auto result = AddImportNamespace(
       context, GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
-      name_id, parent_scope_id, AddImportNamespaceNameBehavior::DontAdd,
-      [&]() { return SemIR::InstId::None; });
+      name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_cpp_decl_context(clang_decl);
