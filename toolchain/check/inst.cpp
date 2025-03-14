@@ -41,10 +41,14 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
     }
   }
 
+  // Template-dependent instructions are handled separately by
+  // `AddDependentActionInst`.
+  CARBON_CHECK(
+      inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
+      "Use AddDependentActionInst to add an action instruction");
+
   // Keep track of dependent instructions.
   if (dep_kind != GenericRegionStack::DependencyKind::None) {
-    // Template-dependent instructions are handled separately by
-    // `AddDependentActionInst`.
     context.generic_region_stack().AddDependentInst(
         {.inst_id = inst_id, .kind = dep_kind});
   }
