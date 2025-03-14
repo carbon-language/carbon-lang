@@ -830,15 +830,19 @@ produce better diagnostics. Alternately, sometimes check will produce
 diagnostics equivalent to what parse could, but with less work overall.
 
 As a consequence, at times we will defer to the check phase to produce
-diagnostics instead of trying to produce those same diagnostics during parse. A
-couple examples of why we might diagnose in check instead of parse are:
+diagnostics instead of trying to produce those same diagnostics during parse.
+Some examples of why we might diagnose in check instead of parse are:
 
 -   To issue better diagnostics based on semantic information.
 -   To diagnose similar invalid uses in one place, versus partly in check and
     partly in parse.
 -   To support syntax highlighting for IDEs in near-correct code, still being
     typed.
+
+Some examples of why we might diagnose in parse are:
+
 -   When it's important to distinguish between multiple possible syntaxes.
+-   When permitting the syntax would require more work than rejecting it.
 
 A few examples of parse designs to avoid are:
 
