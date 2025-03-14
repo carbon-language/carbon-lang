@@ -858,4 +858,5 @@ A few examples of parse designs to avoid are:
 This is a balance. We don't want to unnecessarily shift costs from parse onto
 check, and we don't try to allow clearly invalid constructs. Parse still tries
 to produce a reasonable parse tree. However, parse leans more towards a
-permissive parse.
+permissive parse, and a valid parse tree does not mean the code is grammatically
+correct.
