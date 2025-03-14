@@ -155,6 +155,35 @@ fn M() {
   obj.(PackageHasParam.Y.K)();
 }
 
+// --- has_generic_class.carbon
+
+package PackageGenericClass;
+
+import PackageHasParam;
+
+class GenericClass(U:! type) {}
+
+impl PackageHasParam.AnyParam(GenericClass) as PackageHasParam.Y {
+  fn K[self: Self]() {}
+}
+
+fn L() {
+  var obj: PackageHasParam.AnyParam(GenericClass) = {};
+  obj.(PackageHasParam.Y.K)();
+}
+
+// --- use_generic_class_as_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import PackageHasParam;
+import PackageGenericClass;
+
+fn M() {
+  var obj: PackageHasParam.AnyParam(PackageGenericClass.GenericClass) = {};
+  obj.(PackageHasParam.Y.K)();
+}
+
 // --- has_extra_interfaces.carbon
 
 package HasExtraInterfaces;
@@ -1738,6 +1767,396 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.1(constants.%Self.f64) {
 // CHECK:STDOUT:   %Self => constants.%Self.f64
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- has_generic_class.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %GenericClass.type: type = generic_class_type @GenericClass [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %GenericClass.generic: %GenericClass.type = struct_value () [concrete]
+// CHECK:STDOUT:   %GenericClass: type = class_type @GenericClass, @GenericClass(%U) [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %AnyParam.type: type = generic_class_type @AnyParam [concrete]
+// CHECK:STDOUT:   %AnyParam.generic: %AnyParam.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %X.patt.51ccc0.2: %T = symbolic_binding_pattern X, 1 [symbolic]
+// CHECK:STDOUT:   %AnyParam.0dd: type = class_type @AnyParam, @AnyParam(%GenericClass.type, %GenericClass.generic) [concrete]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
+// CHECK:STDOUT:   %Self: %Y.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %K.type.311: type = fn_type @K.1 [concrete]
+// CHECK:STDOUT:   %K.7a1: %K.type.311 = struct_value () [concrete]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%K.decl) [concrete]
+// CHECK:STDOUT:   %K.type.965: type = fn_type @K.2 [concrete]
+// CHECK:STDOUT:   %K.5a9: %K.type.965 = struct_value () [concrete]
+// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.0dd, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %L.type: type = fn_type @L [concrete]
+// CHECK:STDOUT:   %L: %L.type = struct_value () [concrete]
+// CHECK:STDOUT:   %AnyParam.val: %AnyParam.0dd = struct_value () [concrete]
+// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type %Y.type [concrete]
+// CHECK:STDOUT:   %assoc0: %Y.assoc_type = assoc_entity element0, imports.%PackageHasParam.import_ref.ce2 [concrete]
+// CHECK:STDOUT:   %.e27: type = fn_type_with_self_type %K.type.311, %Y.facet [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %PackageHasParam: <namespace> = namespace file.%PackageHasParam.import, [concrete] {
+// CHECK:STDOUT:     .AnyParam = %PackageHasParam.AnyParam
+// CHECK:STDOUT:     .Y = %PackageHasParam.Y
+// CHECK:STDOUT:     import PackageHasParam//default
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %PackageHasParam.AnyParam: %AnyParam.type = import_ref PackageHasParam//default, AnyParam, loaded [concrete = constants.%AnyParam.generic]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.5ab: type = import_ref PackageHasParam//default, loc4_16, loaded [symbolic = @AnyParam.%T (constants.%T)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.34c: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.601 = import_ref PackageHasParam//default, inst30 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.dc1 = import_ref PackageHasParam//default, inst36 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.import_ref.5e7: %Y.assoc_type = import_ref PackageHasParam//default, loc7_22, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %PackageHasParam.K: %K.type.311 = import_ref PackageHasParam//default, K, loaded [concrete = constants.%K.7a1]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst36 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .PackageHasParam = imports.%PackageHasParam
+// CHECK:STDOUT:     .GenericClass = %GenericClass.decl
+// CHECK:STDOUT:     .L = %L.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %PackageHasParam.import = import PackageHasParam
+// CHECK:STDOUT:   %GenericClass.decl: %GenericClass.type = class_decl @GenericClass [concrete = constants.%GenericClass.generic] {
+// CHECK:STDOUT:     %U.patt.loc6_20.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_20.2 (constants.%U.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %U.loc6_20.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc6_20.2 (constants.%U)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %PackageHasParam.ref.loc8_6: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
+// CHECK:STDOUT:     %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%PackageHasParam.AnyParam [concrete = constants.%AnyParam.generic]
+// CHECK:STDOUT:     %GenericClass.ref: %GenericClass.type = name_ref GenericClass, file.%GenericClass.decl [concrete = constants.%GenericClass.generic]
+// CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) [concrete = constants.%AnyParam.0dd]
+// CHECK:STDOUT:     %PackageHasParam.ref.loc8_48: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
+// CHECK:STDOUT:     %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%K.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %L.decl: %L.type = fn_decl @L [concrete = constants.%L] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Y [from "has_param.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%PackageHasParam.import_ref.dc1
+// CHECK:STDOUT:   .K = imports.%PackageHasParam.import_ref.5e7
+// CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %AnyParam as %Y.ref {
+// CHECK:STDOUT:   %K.decl: %K.type.965 = fn_decl @K.2 [concrete = constants.%K.5a9] {
+// CHECK:STDOUT:     %self.patt: %AnyParam.0dd = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %AnyParam.0dd = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %AnyParam.0dd = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%AnyParam [concrete = constants.%AnyParam.0dd]
+// CHECK:STDOUT:     %self: %AnyParam.0dd = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .K = %K.decl
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @GenericClass(%U.loc6_20.1: type) {
+// CHECK:STDOUT:   %U.loc6_20.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc6_20.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc6_20.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_20.2 (constants.%U.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%GenericClass
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @AnyParam(imports.%PackageHasParam.import_ref.5ab: type, imports.%PackageHasParam.import_ref.34c: @AnyParam.%T (%T)) [from "has_param.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X.patt: %T = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.51ccc0.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     complete_type_witness = imports.%PackageHasParam.import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%PackageHasParam.import_ref.601
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @K.1(imports.%PackageHasParam.import_ref.292: %Y.type) [from "has_param.carbon"] {
+// CHECK:STDOUT:   %Self: %Y.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @K.1.%Self.as_type (%Self.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @K.1.%Self.as_type (%Self.as_type)]();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @K.2[%self.param_patt: %AnyParam.0dd]() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @L() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %obj.patt: %AnyParam.0dd = binding_pattern obj
+// CHECK:STDOUT:     %.loc13_3.1: %AnyParam.0dd = var_pattern %obj.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.0dd = var obj
+// CHECK:STDOUT:   %.loc13_54.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc13_54.2: init %AnyParam.0dd = class_init (), %obj.var [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc13_3.2: init %AnyParam.0dd = converted %.loc13_54.1, %.loc13_54.2 [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   assign %obj.var, %.loc13_3.2
+// CHECK:STDOUT:   %.loc13_49: type = splice_block %AnyParam [concrete = constants.%AnyParam.0dd] {
+// CHECK:STDOUT:     %PackageHasParam.ref.loc13: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
+// CHECK:STDOUT:     %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%PackageHasParam.AnyParam [concrete = constants.%AnyParam.generic]
+// CHECK:STDOUT:     %GenericClass.ref: %GenericClass.type = name_ref GenericClass, file.%GenericClass.decl [concrete = constants.%GenericClass.generic]
+// CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) [concrete = constants.%AnyParam.0dd]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %obj: ref %AnyParam.0dd = bind_name obj, %obj.var
+// CHECK:STDOUT:   %obj.ref: ref %AnyParam.0dd = name_ref obj, %obj
+// CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
+// CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
+// CHECK:STDOUT:   %K.ref: %Y.assoc_type = name_ref K, imports.%PackageHasParam.import_ref.5e7 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0: %.e27 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%K.5a9]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %obj.ref, %impl.elem0
+// CHECK:STDOUT:   %.loc14: %AnyParam.0dd = bind_value %obj.ref
+// CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %bound_method(%.loc14)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericClass(constants.%U) {
+// CHECK:STDOUT:   %U.loc6_20.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc6_20.2 => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) {
+// CHECK:STDOUT:   %T => constants.%GenericClass.type
+// CHECK:STDOUT:   %T.patt => constants.%GenericClass.type
+// CHECK:STDOUT:   %X => constants.%GenericClass.generic
+// CHECK:STDOUT:   %X.patt => constants.%GenericClass.generic
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @K.1(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @K.1(constants.%Y.facet) {
+// CHECK:STDOUT:   %Self => constants.%Y.facet
+// CHECK:STDOUT:   %Self.as_type => constants.%AnyParam.0dd
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- use_generic_class_as_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %M.type: type = fn_type @M [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %M: %M.type = struct_value () [concrete]
+// CHECK:STDOUT:   %AnyParam.type: type = generic_class_type @AnyParam [concrete]
+// CHECK:STDOUT:   %AnyParam.generic: %AnyParam.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %X.patt.51ccc0.2: %T = symbolic_binding_pattern X, 1 [symbolic]
+// CHECK:STDOUT:   %GenericClass.type: type = generic_class_type @GenericClass [concrete]
+// CHECK:STDOUT:   %GenericClass.generic: %GenericClass.type = struct_value () [concrete]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %AnyParam.d71: type = class_type @AnyParam, @AnyParam(%GenericClass.type, %GenericClass.generic) [concrete]
+// CHECK:STDOUT:   %AnyParam.val: %AnyParam.d71 = struct_value () [concrete]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
+// CHECK:STDOUT:   %Self: %Y.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type %Y.type [concrete]
+// CHECK:STDOUT:   %assoc0: %Y.assoc_type = assoc_entity element0, imports.%PackageHasParam.import_ref.ce2 [concrete]
+// CHECK:STDOUT:   %K.type.311: type = fn_type @K.1 [concrete]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%PackageGenericClass.import_ref.fbf) [concrete]
+// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.d71, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %.3b2: type = fn_type_with_self_type %K.type.311, %Y.facet [concrete]
+// CHECK:STDOUT:   %K.type.9cf: type = fn_type @K.2 [concrete]
+// CHECK:STDOUT:   %K.039: %K.type.9cf = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %PackageHasParam: <namespace> = namespace file.%PackageHasParam.import, [concrete] {
+// CHECK:STDOUT:     .AnyParam = %PackageHasParam.AnyParam
+// CHECK:STDOUT:     .Y = %PackageHasParam.Y
+// CHECK:STDOUT:     import PackageHasParam//default
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %PackageGenericClass: <namespace> = namespace file.%PackageGenericClass.import, [concrete] {
+// CHECK:STDOUT:     .GenericClass = %PackageGenericClass.GenericClass
+// CHECK:STDOUT:     import PackageGenericClass//default
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %PackageHasParam.AnyParam: %AnyParam.type = import_ref PackageHasParam//default, AnyParam, loaded [concrete = constants.%AnyParam.generic]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.5ab: type = import_ref PackageHasParam//default, loc4_16, loaded [symbolic = @AnyParam.%T (constants.%T)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.34c: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.601 = import_ref PackageHasParam//default, inst30 [no loc], unloaded
+// CHECK:STDOUT:   %PackageGenericClass.GenericClass: %GenericClass.type = import_ref PackageGenericClass//default, GenericClass, loaded [concrete = constants.%GenericClass.generic]
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.5ab: type = import_ref PackageGenericClass//default, loc6_20, loaded [symbolic = @GenericClass.%U (constants.%U)]
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.8f2: <witness> = import_ref PackageGenericClass//default, loc6_31, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.065 = import_ref PackageGenericClass//default, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.dc1 = import_ref PackageHasParam//default, inst36 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.import_ref.5e7: %Y.assoc_type = import_ref PackageHasParam//default, loc7_22, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %PackageHasParam.K = import_ref PackageHasParam//default, K, unloaded
+// CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst36 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.f23: <witness> = import_ref PackageGenericClass//default, loc8_66, loaded [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.a0e: type = import_ref PackageGenericClass//default, loc8_43, loaded [concrete = constants.%AnyParam.d71]
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.ca6: type = import_ref PackageGenericClass//default, loc8_63, loaded [concrete = constants.%Y.type]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .PackageHasParam = imports.%PackageHasParam
+// CHECK:STDOUT:     .PackageGenericClass = imports.%PackageGenericClass
+// CHECK:STDOUT:     .M = %M.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %PackageHasParam.import = import PackageHasParam
+// CHECK:STDOUT:   %PackageGenericClass.import = import PackageGenericClass
+// CHECK:STDOUT:   %M.decl: %M.type = fn_decl @M [concrete = constants.%M] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Y [from "has_param.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%PackageHasParam.import_ref.dc1
+// CHECK:STDOUT:   .K = imports.%PackageHasParam.import_ref.5e7
+// CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: imports.%PackageGenericClass.import_ref.a0e as imports.%PackageGenericClass.import_ref.ca6 [from "has_generic_class.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = imports.%PackageGenericClass.import_ref.f23
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @AnyParam(imports.%PackageHasParam.import_ref.5ab: type, imports.%PackageHasParam.import_ref.34c: @AnyParam.%T (%T)) [from "has_param.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X.patt: %T = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.51ccc0.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     complete_type_witness = imports.%PackageHasParam.import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%PackageHasParam.import_ref.601
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @GenericClass(imports.%PackageGenericClass.import_ref.5ab: type) [from "has_generic_class.carbon"] {
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt (constants.%U.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     complete_type_witness = imports.%PackageGenericClass.import_ref.8f2
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%PackageGenericClass.import_ref.065
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @M() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %obj.patt: %AnyParam.d71 = binding_pattern obj
+// CHECK:STDOUT:     %.loc8_3.1: %AnyParam.d71 = var_pattern %obj.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.d71 = var obj
+// CHECK:STDOUT:   %.loc8_74.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_74.2: init %AnyParam.d71 = class_init (), %obj.var [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc8_3.2: init %AnyParam.d71 = converted %.loc8_74.1, %.loc8_74.2 [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   assign %obj.var, %.loc8_3.2
+// CHECK:STDOUT:   %.loc8_69: type = splice_block %AnyParam [concrete = constants.%AnyParam.d71] {
+// CHECK:STDOUT:     %PackageHasParam.ref.loc8: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
+// CHECK:STDOUT:     %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%PackageHasParam.AnyParam [concrete = constants.%AnyParam.generic]
+// CHECK:STDOUT:     %PackageGenericClass.ref: <namespace> = name_ref PackageGenericClass, imports.%PackageGenericClass [concrete = imports.%PackageGenericClass]
+// CHECK:STDOUT:     %GenericClass.ref: %GenericClass.type = name_ref GenericClass, imports.%PackageGenericClass.GenericClass [concrete = constants.%GenericClass.generic]
+// CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) [concrete = constants.%AnyParam.d71]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %obj: ref %AnyParam.d71 = bind_name obj, %obj.var
+// CHECK:STDOUT:   %obj.ref: ref %AnyParam.d71 = name_ref obj, %obj
+// CHECK:STDOUT:   %PackageHasParam.ref.loc9: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
+// CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
+// CHECK:STDOUT:   %K.ref: %Y.assoc_type = name_ref K, imports.%PackageHasParam.import_ref.5e7 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0: %.3b2 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%K.039]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %obj.ref, %impl.elem0
+// CHECK:STDOUT:   %.loc9: %AnyParam.d71 = bind_value %obj.ref
+// CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %bound_method(%.loc9)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @K.1(imports.%PackageHasParam.import_ref.292: %Y.type) [from "has_param.carbon"] {
+// CHECK:STDOUT:   %Self: %Y.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @K.1.%Self.as_type (%Self.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @K.1.%Self.as_type (%Self.as_type)]();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @K.2[%self.param_patt: %AnyParam.d71]() [from "has_generic_class.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericClass(constants.%U) {
+// CHECK:STDOUT:   %U => constants.%U
+// CHECK:STDOUT:   %U.patt => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) {
+// CHECK:STDOUT:   %T => constants.%GenericClass.type
+// CHECK:STDOUT:   %T.patt => constants.%GenericClass.type
+// CHECK:STDOUT:   %X => constants.%GenericClass.generic
+// CHECK:STDOUT:   %X.patt => constants.%GenericClass.generic
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @K.1(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
