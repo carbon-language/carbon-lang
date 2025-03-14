@@ -15,37 +15,37 @@
 
 namespace Carbon::Check {
 
+auto TypeStructure::IsCompatibleWith(const TypeStructure& /*other*/) const
+    -> bool {
+  // TODO: Return false sometimes.
+  return true;
+}
+
 // A class that builds a `TypeStructure` for an `Impl` that represents its self
 // type.
 class TypeStructureBuilder {
  public:
   explicit TypeStructureBuilder(Context& context) : context_(context) {}
 
-  auto Run(const SemIR::Impl& impl, SemIR::InstId witness_id,
-           int priority_ordering = 0) -> TypeStructure {
+  auto Run(const SemIR::Impl& impl, int priority_ordering = 0)
+      -> TypeStructure {
     CARBON_CHECK(work_list_.empty());
 
-    int distance_to_first_symbolic_type;
-    if (witness_id.has_value() && impl.generic_id.has_value()) {
-      // Compute distance to the first symbolic type in the impl's self and
-      // constraint types.
-      Push(GetInstIdAsTypeId(impl.constraint_id));
-      Push(GetInstIdAsTypeId(impl.self_id));
-      distance_to_first_symbolic_type = FindDistanceToFirstSymbolicType();
-    } else {
-      // If there's no symbolic type in the impl's self type, then we use an
-      // infinite distance.
-      distance_to_first_symbolic_type = TypeStructure::InfiniteDistance;
-    }
+    position_ = 0;
+    first_symbolic_distance_ = TypeStructure::InfiniteDistance;
+    structure_.clear();
 
-    return TypeStructure(distance_to_first_symbolic_type, priority_ordering,
-                         witness_id, impl.interface.interface_id);
+    Push(GetInstIdAsTypeId(impl.constraint_id));
+    Push(GetInstIdAsTypeId(impl.self_id));
+    BuildTypeStructure();
+
+    return TypeStructure(std::exchange(structure_, {}),
+                         first_symbolic_distance_, priority_ordering,
+                         impl.interface.interface_id);
   }
 
  private:
-  auto FindDistanceToFirstSymbolicType() -> int {
-    int distance = 0;
-
+  auto BuildTypeStructure() -> void {
     while (!work_list_.empty()) {
       SemIR::TypeId next_type_id = work_list_.back();
       work_list_.pop_back();
@@ -54,83 +54,160 @@ class TypeStructureBuilder {
       auto inst = context_.insts().Get(inst_id);
       CARBON_KIND_SWITCH(inst) {
         case CARBON_KIND(SemIR::BindSymbolicName bind): {
-          // We found a symbolic type.
           (void)bind;
-          return distance;
+          // We found a symbolic type.
+          SetFirstSymbolic(position_);
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Symbolic);
+          break;
         }
         case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
-          // We found a symbolic type.
           (void)bind;
-          return distance;
+          // We found a symbolic type.
+          SetFirstSymbolic(position_);
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Symbolic);
+          break;
         }
         case CARBON_KIND(SemIR::FacetAccessType access): {
-          // We found a symbolic type (referenced by the FacetAccessType).
           (void)access;
-          return distance;
+          // We found a symbolic type (referenced by the FacetAccessType).
+          SetFirstSymbolic(position_);
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Symbolic);
+          break;
+        }
+        case CARBON_KIND(SemIR::TypeType type_type): {
+          (void)type_type;
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Concrete);
+          break;
+        }
+        case CARBON_KIND(SemIR::BoolType bool_type): {
+          (void)bool_type;
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Concrete);
+          break;
+        }
+        case CARBON_KIND(SemIR::IntType int_type): {
+          (void)int_type;
+          ++position_;  // Opening of type.
+          if (context_.constant_values().Get(inst_id).is_concrete()) {
+            structure_.push_back(TypeStructure::Structural::Concrete);
+          } else {
+            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            PushArgs({int_type.bit_width_id});
+            ++position_;  // Closing of type.
+            structure_.push_back(TypeStructure::Structural::ConcreteCloseParen);
+          }
+          break;
+        }
+        case CARBON_KIND(SemIR::IntLiteralType int_literal_type): {
+          (void)int_literal_type;
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Concrete);
+          break;
+        }
+        case CARBON_KIND(SemIR::GenericClassType generic_type): {
+          (void)generic_type;
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Concrete);
+          break;
+        }
+        case CARBON_KIND(SemIR::GenericInterfaceType generic_type): {
+          (void)generic_type;
+          ++position_;
+          structure_.push_back(TypeStructure::Structural::Concrete);
+          break;
         }
         case CARBON_KIND(SemIR::ArrayType array_type): {
-          ++distance;
+          ++position_;  // Opening of type.
+          structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
           Push(array_type.element_type_id);
+          ++position_;  // Closing of type.
+          structure_.push_back(TypeStructure::Structural::ConcreteCloseParen);
           break;
         }
         case CARBON_KIND(SemIR::ClassType class_type): {
-          ++distance;
-          if (!PushArgs(class_type.specific_id, distance)) {
-            return distance;
+          auto args = GetSpecificArgs(class_type.specific_id);
+          ++position_;  // Opening of type.
+          if (args.empty()) {
+            structure_.push_back(TypeStructure::Structural::Concrete);
+          } else {
+            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            PushArgs(args);
+            ++position_;  // Closing of type.
+            structure_.push_back(TypeStructure::Structural::ConcreteCloseParen);
           }
           break;
         }
         case CARBON_KIND(SemIR::FacetType facet_type): {
-          ++distance;
-          auto f = context_.facet_types().Get(facet_type.facet_type_id);
-          for (const auto& i : f.impls_constraints) {
-            if (!PushArgs(i.specific_id, distance)) {
-              return distance;
-            }
+          auto facet_type_info =
+              context_.facet_types().Get(facet_type.facet_type_id);
+          ++position_;  // Opening of type.
+          structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+          for (const auto& i : facet_type_info.impls_constraints) {
+            PushArgs(GetSpecificArgs(i.specific_id));
           }
-          if (f.other_requirements) {
+          if (facet_type_info.other_requirements) {
             // TODO: This goes away when other_requirements does. Are there
             // other places we need to look for symbolics in FacetTypeInfo at
             // that point? For now we treat it as having a symbolic at the end
             // of the facet type, so facet types with other_requirements are
             // chosen with lower priority than those without.
-            return distance;
+            SetFirstSymbolic(position_);
+            ++position_;
+            structure_.push_back(TypeStructure::Structural::Symbolic);
+          } else {
+            ++position_;
+            structure_.push_back(TypeStructure::Structural::Concrete);
           }
+          ++position_;  // Closing of type.
+          structure_.push_back(TypeStructure::Structural::ConcreteCloseParen);
           break;
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {
-          ++distance;
-          for (auto type : context_.type_blocks().Get(tuple_type.elements_id)) {
-            Push(type);
+          auto inner_types = context_.type_blocks().Get(tuple_type.elements_id);
+          ++position_;  // Opening of type.
+          if (inner_types.empty()) {
+            structure_.push_back(TypeStructure::Structural::Concrete);
+          } else {
+            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            for (auto type :
+                 context_.type_blocks().Get(tuple_type.elements_id)) {
+              Push(type);
+            }
+            ++position_;  // Closing of type.
+            structure_.push_back(TypeStructure::Structural::ConcreteCloseParen);
           }
           break;
         }
         case CARBON_KIND(SemIR::StructType struct_type): {
-          ++distance;
           auto fields =
               context_.struct_type_fields().Get(struct_type.fields_id);
-          for (const auto& field : fields) {
-            Push(field.type_id);
+          ++position_;  // Opening of type.
+          if (fields.empty()) {
+            structure_.push_back(TypeStructure::Structural::Concrete);
+          } else {
+            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            for (const auto& field : fields) {
+              Push(field.type_id);
+            }
+            ++position_;  // Closing of type.
+            structure_.push_back(TypeStructure::Structural::ConcreteCloseParen);
           }
           break;
         }
-        case CARBON_KIND(SemIR::IntLiteralType int_literal): {
-          (void)int_literal;
-          ++distance;
-          break;
-        }
         default:
-          CARBON_FATAL("Unhandled type instruction");
+          CARBON_FATAL("Unhandled type instruction {0}", inst_id);
       }
     }
-
-    return TypeStructure::InfiniteDistance;  // No symbolic type found.
   }
 
-  struct Symbolic {};
+  struct SymbolicType {};
 
   auto TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
-      -> std::variant<Symbolic, SemIR::TypeId> {
+      -> std::variant<SymbolicType, SemIR::TypeId> {
     if (auto facet_value =
             context_.insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
       inst_id = facet_value->type_inst_id;
@@ -138,7 +215,7 @@ class TypeStructureBuilder {
 
     auto type_id_of_inst_id = context_.insts().Get(inst_id).type_id();
     if (context_.types().Is<SemIR::FacetType>(type_id_of_inst_id)) {
-      return Symbolic();
+      return SymbolicType();
     }
     if (type_id_of_inst_id != SemIR::TypeType::SingletonTypeId) {
       return SemIR::TypeId::None;
@@ -152,41 +229,54 @@ class TypeStructureBuilder {
     return type_id;
   }
 
-  // Push all arguments from the specific. If a symbolic argument is found,
-  // returns false indicating that the caller now knows the final distance to a
-  // symbolic.
-  auto PushArgs(SemIR::SpecificId specific_id, int& distance) -> bool {
+  // Sets the `distance` in `first_symbolic_distance_` if it does not already
+  // have a non-infinite value.
+  auto SetFirstSymbolic(int distance) -> void {
+    if (first_symbolic_distance_ == TypeStructure::InfiniteDistance) {
+      first_symbolic_distance_ = distance;
+    }
+  }
+
+  auto GetSpecificArgs(SemIR::SpecificId specific_id)
+      -> llvm::ArrayRef<SemIR::InstId> {
     if (specific_id == SemIR::SpecificId::None) {
-      return true;
+      return {};
     }
     auto specific = context_.specifics().Get(specific_id);
-    for (auto param_id : context_.inst_blocks().Get(specific.args_id)) {
-      auto maybe_type_id = TryGetInstIdAsTypeId(param_id);
-      if (std::holds_alternative<Symbolic>(maybe_type_id)) {
-        return false;
+    return context_.inst_blocks().Get(specific.args_id);
+  }
+
+  // Push all arguments from the array.
+  auto PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
+    for (auto arg_id : args) {
+      auto maybe_type_id = TryGetInstIdAsTypeId(arg_id);
+      if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
+        SetFirstSymbolic(position_);
+      } else {
+        // We may find non-types, but these are not symbolic, so we just count
+        // their position but don't push anything.
+        if (auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
+            type_id.has_value()) {
+          Push(type_id);
+        }
       }
-      auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
-      ++distance;
-      // If we find a non-type, which is therefore not symbolic, we count it and
-      // move on.
-      if (type_id != SemIR::TypeId::None) {
-        Push(type_id);
-      }
+      ++position_;
     }
-    return true;
   }
 
   auto Push(SemIR::TypeId type_id) -> void { work_list_.push_back(type_id); }
 
   Context& context_;
   llvm::SmallVector<SemIR::TypeId> work_list_;
+  int position_;
+  int first_symbolic_distance_;
+  std::vector<TypeStructure::Structural> structure_;
 };
 
 auto BuildTypeStructure(Context& context, const SemIR::Impl& impl,
-                        SemIR::InstId witness_id, int priority_ordering)
-    -> TypeStructure {
+                        int priority_ordering) -> TypeStructure {
   TypeStructureBuilder builder(context);
-  return builder.Run(impl, witness_id, priority_ordering);
+  return builder.Run(impl, priority_ordering);
 }
 
 }  // namespace Carbon::Check

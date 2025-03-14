@@ -25,25 +25,14 @@ class TypeStructure {
   // A TypeStructure that has no witness, and is the worst possible match.
   static const TypeStructure None;
 
-  // An instruction with an ImplWitness value for the impl declaration this
-  // `TypeStructure` represents.
-  auto witness_id() const -> SemIR::InstId { return witness_id_; }
+  // Returns whether the type structure is compatible with `other`. If false,
+  // they can not possibly match with one being an `impl` for the other as a
+  // lookup query.
+  auto IsCompatibleWith(const TypeStructure& other) const -> bool;
 
   // Ordering of type structures. A higher value is a better match.
-  friend auto operator<=>(TypeStructure lhs, TypeStructure rhs)
+  friend auto operator<=>(const TypeStructure& lhs, const TypeStructure& rhs)
       -> std::weak_ordering {
-    // A `None` for the witness is the worst possible match. In that case there
-    // won't be an interface either.
-    if (!lhs.witness_id_.has_value() || !rhs.witness_id_.has_value()) {
-      if (lhs.witness_id_.has_value()) {
-        return std::weak_ordering::greater;
-      } else if (rhs.witness_id_.has_value()) {
-        return std::weak_ordering::less;
-      } else {
-        return std::weak_ordering::equivalent;
-      }
-    }
-
     CARBON_CHECK(
         lhs.interface_ == rhs.interface_,
         "Comparing type structures from two different interfaces is not valid");
@@ -68,43 +57,48 @@ class TypeStructure {
  private:
   friend class TypeStructureBuilder;
 
-  constexpr explicit TypeStructure(int distance_to_first_symbolic_type,
-                                   int priority_ordering,
-                                   SemIR::InstId witness_id,
-                                   SemIR::InterfaceId interface)
-      : distance_to_first_symbolic_type_(distance_to_first_symbolic_type),
-        priority_ordering_(priority_ordering),
-        witness_id_(witness_id),
-        interface_(interface) {}
+  enum class Structural : uint8_t {
+    Concrete,
+    ConcreteOpenParen,
+    ConcreteCloseParen,
+    Symbolic,
+  };
 
   static constexpr int InfiniteDistance = -1;
+
+  constexpr explicit TypeStructure(std::vector<Structural> structure,
+                                   int distance_to_first_symbolic_type,
+                                   int priority_ordering,
+                                   SemIR::InterfaceId interface)
+      : structure_(std::move(structure)),
+        distance_to_first_symbolic_type_(distance_to_first_symbolic_type),
+        priority_ordering_(priority_ordering),
+        interface_(interface) {}
+
+  // The structural position of concrete and symbolic values in the type.
+  std::vector<Structural> structure_;
 
   // Number of concrete types traversed before finding a symbolic type.
   int distance_to_first_symbolic_type_;
   // Priority of the impl. A higher value is a better match.
   int priority_ordering_;
-  // The witness ID for the impl.
-  SemIR::InstId witness_id_;
   // The interface being implemented by the witness; used to verify type
   // structures are only compared for a single interface.
   SemIR::InterfaceId interface_;
 };
 
 constexpr TypeStructure TypeStructure::None =
-    TypeStructure(0, 0, SemIR::InstId::None, SemIR::InterfaceId::None);
+    TypeStructure({}, 0, 0, SemIR::InterfaceId::None);
 
 // Constructs the TypeStructure for an `impl` declaration, which represents the
 // location of unknown generic types in the signature and which is ordered by
 // them.
 //
-// The `witness_id` is witness for the impl as a convenience for now since they
-// are paired together.
-//
 // The `priority_ordering` is used to specify a higher priority for impl decls
-// in priority blocks.
+// in priority blocks. See
+// https://docs.carbon-lang.dev/docs/design/generics/details.html#prioritization-rule.
 auto BuildTypeStructure(Context& context, const SemIR::Impl& impl,
-                        SemIR::InstId witness_id, int priority_ordering = 0)
-    -> TypeStructure;
+                        int priority_ordering = 0) -> TypeStructure;
 
 }  // namespace Carbon::Check
 

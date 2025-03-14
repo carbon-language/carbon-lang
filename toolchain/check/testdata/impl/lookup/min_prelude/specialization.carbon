@@ -46,6 +46,13 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
+  // CHECK:STDERR: specialized_self_second.carbon:[[@LINE+7]]:23: error: cannot implicitly convert value of type `C` to `()` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   let a: C.(Z(C).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: specialized_self_second.carbon:[[@LINE+4]]:23: note: type `C` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: C.(Z(C).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR:
   let a: C.(Z(C).X) = {} as C;
 }
 
@@ -84,6 +91,13 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
+  // CHECK:STDERR: specialized_constraint_second.carbon:[[@LINE+7]]:23: error: cannot implicitly convert value of type `C` to `()` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   let a: C.(Z(C).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: specialized_constraint_second.carbon:[[@LINE+4]]:23: note: type `C` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: C.(Z(C).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR:
   let a: C.(Z(C).X) = {} as C;
 }
 
@@ -133,10 +147,10 @@ fn F() {
   // which will fail to typecheck here.
   //
   // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `()` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
   // CHECK:STDERR:                               ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+4]]:31: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+4]]:31: note: type `C(())` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
   // CHECK:STDERR:                               ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -248,6 +262,13 @@ impl forall [T:! Z] C(D(E), T) as Z where .X = C(E, E) {}
 impl forall [T:! Z] C(T, T) as Z where .X = () {}
 
 fn F() {
+  // CHECK:STDERR: specialized_class_with_facet_value_param.carbon:[[@LINE+7]]:32: error: cannot implicitly convert value of type `C(E as Z, E as Z)` to `()` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
+  // CHECK:STDERR:                                ^~~~~~~~~~~~~
+  // CHECK:STDERR: specialized_class_with_facet_value_param.carbon:[[@LINE+4]]:32: note: type `C(E as Z, E as Z)` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
+  // CHECK:STDERR:                                ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
 }
 
@@ -258,24 +279,34 @@ interface Z {
   let X:! type;
 }
 
-// This impl makes a cycle, but it's not considered at all for `C` since
+class C(T:! type) {}
+
+// This impl makes a cycle, but it's not considered at all for `C(())` since
 // there is another impl with a better type structure, so no diagnostic is
 // emitted.
 impl forall [T:! Z] T as Z where .X = () {}
+// Also a cycle, and also a worse match for `C(())`.
+impl forall [T:! Z] C(T) as Z where .X = () {}
 
-class C {}
-impl C as Z where .X = C {}
+impl C(()) as Z where .X = C(()) {}
 
 fn F() {
   // TODO: There should be no cycle seen here, as we should only look at the
   // specialized impl.
 
-  // CHECK:STDERR: fail_todo_cycle_in_deduce_avoided_by_specialization.carbon:[[@LINE+7]]:10: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
-  // CHECK:STDERR:   let a: C.(Z.X) = {} as C;
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_todo_cycle_in_deduce_avoided_by_specialization.carbon:[[@LINE-12]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_todo_cycle_in_deduce_avoided_by_specialization.carbon:[[@LINE+14]]:10: error: cycle found in search for impl of `Z` for type `C(())` [ImplLookupCycle]
+  // CHECK:STDERR:   let a: C(()).(Z.X) = {} as C(());
+  // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_cycle_in_deduce_avoided_by_specialization.carbon:[[@LINE-13]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [T:! Z] T as Z where .X = () {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let a: C.(Z.X) = {} as C;
+  // CHECK:STDERR: fail_todo_cycle_in_deduce_avoided_by_specialization.carbon:[[@LINE+7]]:10: error: cycle found in search for impl of `Z` for type `()` [ImplLookupCycle]
+  // CHECK:STDERR:   let a: C(()).(Z.X) = {} as C(());
+  // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_cycle_in_deduce_avoided_by_specialization.carbon:[[@LINE-20]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [T:! Z] T as Z where .X = () {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let a: C(()).(Z.X) = {} as C(());
 }

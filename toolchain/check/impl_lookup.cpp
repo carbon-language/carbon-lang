@@ -310,11 +310,13 @@ static auto FindWitnessInImpls(
     const SemIR::SpecificInterface& specific_interface) -> SemIR::InstId {
   auto& stack = context.impl_lookup_stack();
 
-  auto best_type_structure = TypeStructure::None;
+  struct CandidateImpl {
+    SemIR::ImplId impl_id;
+    SemIR::InstId loc_inst_id;
+    TypeStructure type_structure;
+  };
 
-  // TODO: Build this candidate list by matching against type structures to
-  // narrow it down.
-  llvm::SmallVector<std::pair<SemIR::ImplId, SemIR::InstId>> candidate_impl_ids;
+  llvm::SmallVector<CandidateImpl> candidate_impl_ids;
   for (auto [id, impl] : context.impls().enumerate()) {
     // If the impl's interface_id differs from the query, then this impl can not
     // possibly provide the queried interface.
@@ -345,26 +347,33 @@ static auto FindWitnessInImpls(
     }
     CARBON_CHECK(impl.witness_id.has_value());
 
-    candidate_impl_ids.push_back({id, impl.definition_id});
-  }
-
-  for (auto [impl_id, loc_inst_id] : candidate_impl_ids) {
-    stack.back().impl_loc = loc_inst_id;
-    // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls to
-    // be imported, invalidating any pointer into `context.impls()`.
-    auto result_witness_id = GetWitnessIdForImpl(context, loc_id, type_const_id,
-                                                 specific_interface, impl_id);
     // TODO: Allow Carbon code to provide a priority ordering explicitly. For
     // now they have all the same priority, so the priority is the order in
     // which they are found in code. Since the matching algorithm here only
     // takes _better_ matches over previous ones.
-    auto result_type_structure = BuildTypeStructure(
-        context, context.impls().Get(impl_id), result_witness_id);
-    if (result_type_structure > best_type_structure) {
-      best_type_structure = result_type_structure;
+    auto type_structure = BuildTypeStructure(context, impl);
+
+    candidate_impl_ids.push_back(
+        {id, impl.definition_id, std::move(type_structure)});
+  }
+
+  llvm::sort(candidate_impl_ids, [](auto& lhs, auto& rhs) -> bool {
+    // Sort by their type structures. Higher value in type structure comes
+    // first, so we use `>` comparison.
+    return lhs.type_structure > rhs.type_structure;
+  });
+
+  for (const auto& candidate : candidate_impl_ids) {
+    stack.back().impl_loc = candidate.loc_inst_id;
+    // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls to
+    // be imported, invalidating any pointer into `context.impls()`.
+    auto witness_id = GetWitnessIdForImpl(
+        context, loc_id, type_const_id, specific_interface, candidate.impl_id);
+    if (witness_id.has_value()) {
+      return witness_id;
     }
   }
-  return best_type_structure.witness_id();
+  return SemIR::InstId::None;
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
