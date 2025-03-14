@@ -89,8 +89,10 @@ static auto CopyNameFromImportIR(Context& context,
   return import_name_id;
 }
 
-static auto MakeImportedNamespaceLocIdAndInstId(
-    Context& context, SemIR::InstId import_id, SemIR::Namespace& namespace_inst)
+// Returns the LocIdandInst for the namespace.
+static auto MakeImportedNamespaceLocIdAndInst(Context& context,
+                                              SemIR::InstId import_id,
+                                              SemIR::Namespace& namespace_inst)
     -> SemIR::LocIdAndInst {
   if (import_id.has_value()) {
     SemIR::LocId import_loc_id = context.insts().GetLocId(import_id);
@@ -151,7 +153,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                        .name_scope_id = SemIR::NameScopeId::None,
                        .import_id = import_id};
   auto namespace_inst_and_loc =
-      MakeImportedNamespaceLocIdAndInstId(context, import_id, namespace_inst);
+      MakeImportedNamespaceLocIdAndInst(context, import_id, namespace_inst);
   auto namespace_id =
       AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc);
   context.import_ref_ids().push_back(namespace_id);
