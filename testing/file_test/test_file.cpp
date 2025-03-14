@@ -6,7 +6,11 @@
 
 #include <fstream>
 
+#include "common/check.h"
+#include "common/error.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/JSON.h"
 #include "testing/base/file_helpers.h"
 
 namespace Carbon::Testing {
@@ -93,9 +97,54 @@ struct SplitState {
   int file_index = 0;
 };
 
+// Given a `file:/<filename>` URI, returns the filename.
+static auto ExtractFilePathFromUri(llvm::StringRef uri)
+    -> ErrorOr<llvm::StringRef> {
+  static constexpr llvm::StringRef FilePrefix = "file:/";
+  if (!uri.starts_with(FilePrefix)) {
+    return ErrorBuilder("uri `") << uri << "` is not a file uri";
+  }
+  return uri.drop_front(FilePrefix.size());
+}
+
+// When `FROM_FILE_SPLIT` is used in path `textDocument.text`, populate the
+// value from the split matching the `uri`. Only used for
+// `textDocument/didOpen`.
+static auto AutoFillDidOpenParams(llvm::json::Object* params,
+                                  llvm::ArrayRef<TestFile::Split> splits)
+    -> ErrorOr<Success> {
+  auto* text_document = params->getObject("textDocument");
+  if (text_document == nullptr) {
+    return Success();
+  }
+
+  auto attr_it = text_document->find("text");
+  if (attr_it == text_document->end() || attr_it->second != "FROM_FILE_SPLIT") {
+    return Success();
+  }
+
+  auto uri = text_document->getString("uri");
+  if (!uri) {
+    return Error("missing uri in params.textDocument");
+  }
+
+  CARBON_ASSIGN_OR_RETURN(auto file_path, ExtractFilePathFromUri(*uri));
+  const auto* split_it =
+      llvm::find_if(splits, [&](const TestFile::Split& split) {
+        return split.filename == file_path;
+      });
+  if (split_it == splits.end()) {
+    return ErrorBuilder() << "No split found for uri: " << *uri;
+  }
+  attr_it->second = split_it->content;
+  return Success();
+}
+
 // Reformats `[[@LSP:` and similar keyword as an LSP call with headers.
 static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
-                                int& lsp_call_id) -> ErrorOr<size_t> {
+                                int& lsp_call_id,
+                                llvm::ArrayRef<TestFile::Split> splits)
+    -> ErrorOr<size_t> {
   llvm::StringRef content_at_keyword =
       llvm::StringRef(*content).substr(keyword_pos);
 
@@ -133,31 +182,50 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
   llvm::StringRef body = body_start.take_front(body_end);
   auto [method_or_id, extra_content] = body.split(":");
 
-  // Form the JSON.
-  std::string json = llvm::formatv(R"({{"jsonrpc": "2.0", "{0}": "{1}")",
-                                   method_or_id_label, method_or_id);
-  if (use_call_id) {
-    // Omit quotes on the ID because we know it's an integer.
-    json += llvm::formatv(R"(, "id": {0})", ++lsp_call_id);
-  }
+  llvm::json::Value parsed_extra_content = nullptr;
   if (!extra_content.empty()) {
-    json += ",";
-    if (extra_content_label.empty()) {
-      if (!extra_content.starts_with("\n")) {
-        json += " ";
-      }
-      json += extra_content;
-    } else {
-      json += llvm::formatv(R"( "{0}": {{{1}})", extra_content_label,
-                            extra_content);
+    std::string extra_content_as_object =
+        llvm::formatv("{{{0}}", extra_content);
+    auto parse_result = llvm::json::parse(extra_content_as_object);
+    if (auto err = parse_result.takeError()) {
+      return ErrorBuilder() << "Error parsing extra content: " << err;
+    }
+    parsed_extra_content = std::move(*parse_result);
+    CARBON_CHECK(parsed_extra_content.kind() == llvm::json::Value::Object);
+    if (extra_content_label == "params" &&
+        method_or_id == "textDocument/didOpen") {
+      CARBON_RETURN_IF_ERROR(
+          AutoFillDidOpenParams(parsed_extra_content.getAsObject(), splits));
     }
   }
-  json += "}";
+
+  // Form the JSON.
+  RawStringOstream buffer;
+  llvm::json::OStream json(buffer);
+
+  json.object([&] {
+    json.attribute("jsonrpc", "2.0");
+    json.attribute(method_or_id_label, method_or_id);
+
+    if (use_call_id) {
+      json.attribute("id", ++lsp_call_id);
+    }
+    if (parsed_extra_content != nullptr) {
+      if (!extra_content_label.empty()) {
+        json.attribute(extra_content_label, parsed_extra_content);
+      } else {
+        for (const auto& [key, value] : *parsed_extra_content.getAsObject()) {
+          json.attribute(key, value);
+        }
+      }
+    }
+  });
 
   // Add the Content-Length header. The `2` accounts for extra newlines.
-  auto json_with_header =
-      llvm::formatv("Content-Length: {0}\n\n{1}\n", json.size() + 2, json)
-          .str();
+  int content_length = buffer.size() + 2;
+  auto json_with_header = llvm::formatv("Content-Length: {0}\n\n{1}\n",
+                                        content_length, buffer.TakeStr())
+                              .str();
   int keyword_len =
       (body_start.data() + body_end + LspEnd.size()) - keyword.data();
   content->replace(keyword_pos, keyword_len, json_with_header);
@@ -167,7 +235,8 @@ static auto ReplaceLspKeywordAt(std::string* content, size_t keyword_pos,
 // Replaces the keyword at the given position. Returns the position to start a
 // find for the next keyword.
 static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
-                                    llvm::StringRef test_name, int& lsp_call_id)
+                                    llvm::StringRef test_name, int& lsp_call_id,
+                                    llvm::ArrayRef<TestFile::Split> splits)
     -> ErrorOr<size_t> {
   auto keyword = llvm::StringRef(*content).substr(keyword_pos);
 
@@ -186,7 +255,7 @@ static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
   }
 
   if (keyword.starts_with("[[@LSP")) {
-    return ReplaceLspKeywordAt(content, keyword_pos, lsp_call_id);
+    return ReplaceLspKeywordAt(content, keyword_pos, lsp_call_id, splits);
   }
 
   return ErrorBuilder() << "Unexpected use of `[[@` at `"
@@ -198,7 +267,9 @@ static auto ReplaceContentKeywordAt(std::string* content, size_t keyword_pos,
 // TEST_NAME is the only content keyword at present, but we do validate that
 // other names are reserved.
 static auto ReplaceContentKeywords(llvm::StringRef filename,
-                                   std::string* content) -> ErrorOr<Success> {
+                                   std::string* content,
+                                   llvm::ArrayRef<TestFile::Split> splits)
+    -> ErrorOr<Success> {
   static constexpr llvm::StringLiteral Prefix = "[[@";
 
   auto keyword_pos = content->find(Prefix);
@@ -227,7 +298,8 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
   while (keyword_pos != std::string::npos) {
     CARBON_ASSIGN_OR_RETURN(
         auto keyword_end,
-        ReplaceContentKeywordAt(content, keyword_pos, test_name, lsp_call_id));
+        ReplaceContentKeywordAt(content, keyword_pos, test_name, lsp_call_id,
+                                splits));
     keyword_pos = content->find(Prefix, keyword_end);
   }
   return Success();
@@ -237,7 +309,8 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
 static auto AddSplit(llvm::StringRef filename, std::string* content,
                      llvm::SmallVector<TestFile::Split>* file_splits)
     -> ErrorOr<Success> {
-  CARBON_RETURN_IF_ERROR(ReplaceContentKeywords(filename, content));
+  CARBON_RETURN_IF_ERROR(
+      ReplaceContentKeywords(filename, content, *file_splits));
   file_splits->push_back(
       {.filename = filename.str(), .content = std::move(*content)});
   content->clear();
@@ -268,8 +341,9 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
     // If there's a split, all output is appended at the end of each file
     // before AUTOUPDATE. We may want to change that, but it's not
     // necessary to handle right now.
-    return ErrorBuilder() << "AUTOUPDATE/NOAUTOUPDATE setting must be in "
-                             "the first file.";
+    return Error(
+        "AUTOUPDATE/NOAUTOUPDATE setting must be in "
+        "the first file.");
   }
 
   // On a file split, add the previous file, then start a new one.
@@ -280,15 +354,16 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
     split->content.clear();
     if (split->found_code_pre_split) {
       // For the first split, we make sure there was no content prior.
-      return ErrorBuilder() << "When using split files, there must be no "
-                               "content before the first split file.";
+      return Error(
+          "When using split files, there must be no content before the first "
+          "split file.");
     }
   }
 
   ++split->file_index;
   split->filename = line_trimmed.trim();
   if (split->filename.empty()) {
-    return ErrorBuilder() << "Missing filename for split.";
+    return Error("Missing filename for split.");
   }
   // The split line is added to non_check_lines for retention in autoupdate, but
   // is not added to the test file content.
@@ -514,7 +589,7 @@ static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
     return false;
   }
   if (*found_autoupdate) {
-    return ErrorBuilder() << "Multiple AUTOUPDATE/NOAUTOUPDATE settings found";
+    return Error("Multiple AUTOUPDATE/NOAUTOUPDATE settings found");
   }
   *found_autoupdate = true;
   if (line_trimmed == Autoupdate) {

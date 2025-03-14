@@ -116,6 +116,19 @@ Some keywords can be inserted for content:
         -   `id`: Assigned from `<id>`.
         -   `result`: Optionally assigned from `<extra content>`.
 
+    Additional substitutions are made to `<extra contents>` in the following
+    cases:
+
+    -   ```
+        [[@LSP-NOTIFY:textDocument/didOpen:"textDocument": {
+            "uri": "file:/<filename>",
+            "text": "FROM_FILE_SPLIT"
+        }]]
+        ```
+
+        The keyword `FROM_FILE_SPLIT` is substituted with the content of the
+        file split `<filename>`. All other properties are unchanged.
+
 -   ```
     [[@TEST_NAME]]
     ```
