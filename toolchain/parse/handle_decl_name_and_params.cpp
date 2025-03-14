@@ -86,12 +86,13 @@ auto HandleDeclNameAndParams(Context& context) -> void {
 auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   auto state = context.PopState();
 
+  state.state = State::DeclNameAndParamsAfterParams;
+  context.PushState(state);
+
   if (!context.PositionIs(Lex::TokenKind::OpenParen)) {
     return;
   }
 
-  state.state = State::DeclNameAndParamsAfterParams;
-  context.PushState(state);
   context.PushState(State::PatternListAsExplicit);
 }
 
