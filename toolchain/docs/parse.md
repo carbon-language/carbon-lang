@@ -849,7 +849,7 @@ A few examples of parse designs to avoid are:
         opening brackets to closing brackets that is produced by
         `TokenizedBuffer`. Those are helpful for error recovery.
 -   Building complex context.
-    -   We want parsing to be fast and lightweight.
+    -   We want parsing to be faster and lighter weight than check.
 -   Duplicating diagnostics between parse and check.
     -   When there are closely related invalid variants of syntax, only some of
         which can be diagnosed during parse, consider diagnosing all variants
