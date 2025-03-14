@@ -25,6 +25,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Case 2: parent node is required token after optional clause, with different parent node kinds for different options](#case-2-parent-node-is-required-token-after-optional-clause-with-different-parent-node-kinds-for-different-options)
         -   [Case 3: optional sibling](#case-3-optional-sibling)
     -   [Operators](#operators)
+-   [Alternatives considered](#alternatives-considered)
+    -   [Restrictive parsing](#restrictive-parsing)
 
 <!-- tocstop -->
 
@@ -800,3 +802,60 @@ TODO
 
 An independent description of our approach:
 ["Better operator precedence" on scattered-thoughts.net](https://www.scattered-thoughts.net/writing/better-operator-precedence/)
+
+## Alternatives considered
+
+### Restrictive parsing
+
+The toolchain will often parse code that could theoretically be rejected,
+instead allowing the check phase to reject incorrect structures.
+
+For example, consider the code `abstract var x: i32 = 0;`. When parsing the
+`abstract` modifier, parse could do lookahead to see `var`, and error in the
+parse (`abstract var` is never valid). Instead, we save the modifier and
+diagnose it with check.
+
+The problem with diagnosing this example during parse is there could be other
+modifiers, such as `abstract private returned var x: i32 = 0;`, so additional
+lookahead would be required to determine the entity for `abstract`. Some
+modifiers are also contextually valid; for example, `abstract fn` is only valid
+inside an `abstract class` scope. As a consequence, a form of either arbitrary
+lookahead or additional context would be necessary in parse in order to reliably
+diagnose incorrect uses of `abstract`, and it may miss cases. In contrast with
+parse, check will have the necessary context and semantic understanding to issue
+all necessary modifier diagnostics.
+
+Rejecting incorrect code during parsing can also have negative consequences for
+diagnostics. The check phase collects more context about invalid code, and might
+produce either better diagnostics specific to semantics, or even if the error is
+similar to what parse could produce, might do it with less work.
+
+As a consequence, at times we will defer to the check phase to produce
+diagnostics instead of trying to produce those same diagnostics during parse. A
+couple examples of why we might diagnose in check instead of parse are:
+
+-   To issue better diagnostics based on semantic information.
+-   To diagnose similar invalid uses in one place, versus partly in check and
+    partly in parse.
+-   To support syntax highlighting for IDEs in near-correct code, still being
+    typed.
+
+A few examples of parse designs to avoid are:
+
+-   Using arbitrary lookahead.
+    -   Looking ahead one or two tokens is okay. However, we should never have
+        arbitrary lookahead.
+    -   This includes approaches which would require using the mapping of
+        opening brackets to closing brackets that is produced by
+        `TokenizedBuffer`. Those are helpful for error recovery.
+-   Building complex context.
+    -   We want parsing to be fast and lightweight.
+-   Duplicating diagnostics between parse and check.
+    -   When there are closely related invalid variants of syntax, only some of
+        which can be diagnosed during parse, consider diagnosing all variants
+        during check.
+
+This is a balance. We don't want to unnecessarily shift costs from parse onto
+check, and we don't try to allow clearly invalid constructs. Parse still tries
+to produce a reasonable parse tree. However, parse leans more towards a
+permissive parse.
