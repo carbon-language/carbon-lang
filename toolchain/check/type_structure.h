@@ -58,7 +58,7 @@ class TypeStructure : public Printable<TypeStructure> {
           out << '?';
           break;
         case Structural::ConcreteOpenParen:
-          out << "C(";
+          out << "(";
           break;
         case Structural::ConcreteCloseParen:
           out << ')';

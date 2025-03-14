@@ -74,8 +74,8 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
     // LHS, which means the structures can not match.
     //
     // Example:
-    // - C(C(c))
-    // - C(C(c?))
+    // - ((c))
+    // - ((c?))
     if (*lhs_cursor == Structural::ConcreteCloseParen) {
       return false;
     }
