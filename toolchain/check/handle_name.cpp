@@ -17,8 +17,8 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& context,
-                     Parse::MemberAccessExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::MemberAccessExprId node_id)
+    -> bool {
   auto node_kind = context.node_stack().PeekNodeKind();
 
   if (node_kind == Parse::NodeKind::ParenExpr) {
@@ -44,8 +44,8 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::PointerMemberAccessExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
+    -> bool {
   auto diagnose_not_pointer = [&context,
                                &node_id](SemIR::TypeId not_pointer_type_id) {
     // TODO: Pass in the expression we're trying to dereference to produce a
@@ -148,8 +148,8 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::IdentifierNameExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
+    -> bool {
   auto name_id = GetIdentifierAsNameId(context, node_id);
   context.node_stack().Push(node_id,
                             HandleNameAsExpr(context, node_id, name_id));
@@ -177,8 +177,8 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::KeywordNameBeforeParamsId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::KeywordNameBeforeParamsId node_id)
+    -> bool {
   // Push a pattern block stack entry to handle the parameter pattern.
   context.pattern_block_stack().Push();
   context.full_pattern_stack().PushFullPattern(
@@ -198,8 +198,8 @@ auto HandleParseNode(Context& context, Parse::SelfTypeNameId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::SelfTypeNameExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::SelfTypeNameExprId node_id)
+    -> bool {
   context.node_stack().Push(
       node_id, HandleNameAsExpr(context, node_id, SemIR::NameId::SelfType));
   return true;
@@ -210,8 +210,8 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::SelfValueNameExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
+    -> bool {
   context.node_stack().Push(
       node_id, HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue));
   return true;
@@ -247,8 +247,8 @@ auto HandleParseNode(Context& context,
   return ApplyNameQualifier(context);
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::DesignatorExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
+    -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
 
   if (name_id == SemIR::NameId::SelfType) {
