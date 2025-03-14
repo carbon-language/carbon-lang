@@ -173,15 +173,15 @@ static auto GetInterfacesFromConstantId(
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
   has_other_requirements = facet_type_info.other_requirements;
-  // TODO: Once we add support for named constraints, we will need to change
-  // this to return the same interfaces as in the complete facet type.
+  // TODO: This needs to match the order of witnesses for the facet type, which
+  // will need to be maintained once we add support for named constraints.
   return facet_type_info.impls_constraints;
 }
 
-static auto GetWitnessIdForImpl(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
-    const SemIR::CompleteFacetType::RequiredInterface& interface,
-    SemIR::ImplId impl_id) -> SemIR::InstId {
+static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
+                                SemIR::ConstantId type_const_id,
+                                const SemIR::SpecificInterface& interface,
+                                SemIR::ImplId impl_id) -> SemIR::InstId {
   // The impl may have generic arguments, in which case we need to deduce them
   // to find what they are given the specific type and interface query. We use
   // that specific to map values in the impl to the deduced values.
@@ -274,26 +274,22 @@ static auto FindWitnessInFacet(
   SemIR::TypeId facet_type_id = context.insts().Get(facet_inst_id).type_id();
   if (auto facet_type_inst =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_id)) {
-    auto complete_facet_type_id = RequireCompleteFacetType(
-        context, facet_type_id, loc_id, *facet_type_inst,
-        [&]() -> DiagnosticBuilder {
-          // TODO: Find test that triggers this code path.
-          CARBON_FATAL("impl lookup for with incomplete facet type");
-        });
-    if (complete_facet_type_id.has_value()) {
-      const auto& complete_facet_type =
-          context.complete_facet_types().Get(complete_facet_type_id);
-      for (auto [index, interface] :
-           llvm::enumerate(complete_facet_type.required_interfaces)) {
-        if (interface == specific_interface) {
-          return GetOrAddInst(
-              context, loc_id,
-              SemIR::FacetAccessWitness{
-                  .type_id = GetSingletonType(
-                      context, SemIR::WitnessType::SingletonInstId),
-                  .facet_value_inst_id = facet_inst_id,
-                  .index = SemIR::ElementIndex(index)});
-        }
+    const auto& facet_type_info =
+        context.facet_types().Get(facet_type_inst->facet_type_id);
+    // TODO: This depends on the index into `impls_constraints` matching
+    // the index into the facet type witness. This will have to be maintained
+    // even for facet types that include named constraints, once that is
+    // supported.
+    for (auto [index, interface] :
+         llvm::enumerate(facet_type_info.impls_constraints)) {
+      if (interface == specific_interface) {
+        return GetOrAddInst(
+            context, loc_id,
+            SemIR::FacetAccessWitness{
+                .type_id = GetSingletonType(
+                    context, SemIR::WitnessType::SingletonInstId),
+                .facet_value_inst_id = facet_inst_id,
+                .index = SemIR::ElementIndex(index)});
       }
     }
   }
@@ -399,9 +395,9 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       .type_const_id = type_const_id,
       .query_facet_type_const_id = query_facet_type_const_id,
   });
-  // We need to find a witness for each interface in `interfaces`. We return
-  // them in the same order as they are found in the `CompleteFacetType`, which
-  // is the same order as in `interfaces` here.
+  // We need to find a witness for each interface in `interfaces`. Every
+  // consumer of a facet type needs to agree on the order of interfaces used for
+  // its witnesses.
   for (const auto& interface : interfaces) {
     // TODO: Since both `interfaces` and `type_const_id` are sorted lists, do an
     // O(N+M) merge instead of O(N*M) nested loops.
