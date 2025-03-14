@@ -25,7 +25,8 @@ import Cpp library "not_found.h";
 // CHECK:STDOUT: --- fail_cpp_file_not_found.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -57,7 +57,8 @@ import Cpp library "\"foo.h\"";
 // CHECK:STDOUT: --- fail_import_cpp_library_file_with_quotes.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

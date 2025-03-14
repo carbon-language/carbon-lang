@@ -113,11 +113,13 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .my_namespace = %my_namespace
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [C++], [concrete] {
+// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .foo = @MyF.%foo.decl
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,19 +161,23 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .my_namespace1 = %my_namespace1
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace1: <namespace> = namespace [C++], [concrete] {
+// CHECK:STDOUT:   %my_namespace1: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .foo1 = @MyF.%foo1.decl
 // CHECK:STDOUT:     .my_namespace2 = %my_namespace2
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace2: <namespace> = namespace [C++], [concrete] {
+// CHECK:STDOUT:   %my_namespace2: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .foo2 = @MyF.%foo2.decl
 // CHECK:STDOUT:     .my_namespace3 = %my_namespace3
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace3: <namespace> = namespace [C++], [concrete] {
+// CHECK:STDOUT:   %my_namespace3: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .foo3 = @MyF.%foo3.decl
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,11 +229,13 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .my_namespace = %my_namespace
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [C++], [concrete] {
+// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .not_foo = <poisoned>
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -258,8 +266,9 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .not_my_namespace = <poisoned>
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,7 +299,9 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -323,11 +334,13 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [C++], [concrete] {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .r#base = %base
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %base: <namespace> = namespace [C++], [concrete] {
+// CHECK:STDOUT:   %base: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .foo = @MyF.%foo.decl
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
