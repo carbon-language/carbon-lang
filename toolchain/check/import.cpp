@@ -116,11 +116,11 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                         AddImportNamespaceNameBehavior name_behavior,
                         llvm::function_ref<SemIR::InstId()> make_import_id)
     -> AddImportNamespaceResult {
-  auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
   bool inserted = false;
   SemIR::NameScope::EntryId entry_id = SemIR::NameScope::EntryId::None;
   bool add_name = name_behavior != AddImportNamespaceNameBehavior::DontAdd;
   if (add_name) {
+    auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
     std::tie(inserted, entry_id) = parent_scope->LookupOrAdd(
         name_id,
         // This InstId is temporary and would be overridden if used.
@@ -161,11 +161,10 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
       context.name_scopes().Add(namespace_id, name_id, parent_scope_id);
   ReplaceInstBeforeConstantUse(context, namespace_id, namespace_inst);
 
-  // Note we have to get the parent scope freshly, creating the imported
-  // namespace may invalidate the pointer above.
-  parent_scope = &context.name_scopes().Get(parent_scope_id);
-
   if (add_name) {
+    // Note we have to get the parent scope freshly, creating the imported
+    // namespace may invalidate the pointer above.
+    auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
     // Diagnose if there's a name conflict, but still produce the namespace to
     // supersede the name conflict in order to avoid repeat diagnostics. Names
     // are poisoned optimistically by name lookup before checking for imports,
