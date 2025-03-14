@@ -92,7 +92,7 @@ static auto CopyNameFromImportIR(Context& context,
 // Returns the LocIdandInst for the namespace.
 static auto MakeImportedNamespaceLocIdAndInst(Context& context,
                                               SemIR::InstId import_id,
-                                              SemIR::Namespace& namespace_inst)
+                                              SemIR::Namespace namespace_inst)
     -> SemIR::LocIdAndInst {
   if (import_id.has_value()) {
     SemIR::LocId import_loc_id = context.insts().GetLocId(import_id);
