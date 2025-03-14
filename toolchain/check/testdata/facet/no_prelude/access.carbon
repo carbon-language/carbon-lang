@@ -135,7 +135,7 @@ interface I {
 
 alias U = I.T;
 
-// --- access_alias_in_imported_library.carbon
+// --- fail_access_alias_in_imported_library.carbon
 library "[[@TEST_NAME]]";
 
 import Core;
@@ -144,10 +144,10 @@ import library "to_import";
 interface J {
   // extend I;
   alias V = U;
-  // CHECK:STDERR: access_alias_in_imported_library.carbon:[[@LINE+7]]:13: error: cannot implicitly convert value of type `J` to `I` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_access_alias_in_imported_library.carbon:[[@LINE+7]]:13: error: cannot implicitly convert value of type `J` to `I` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F() -> V;
   // CHECK:STDERR:             ^
-  // CHECK:STDERR: access_alias_in_imported_library.carbon:[[@LINE+4]]:13: note: type `J` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_access_alias_in_imported_library.carbon:[[@LINE+4]]:13: note: type `J` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F() -> V;
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
@@ -1155,7 +1155,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_alias_in_imported_library.carbon
+// CHECK:STDOUT: --- fail_access_alias_in_imported_library.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
