@@ -116,7 +116,7 @@ interface J {
 }
 
 fn GenericCallFI32[T:! J where .U = i32](t: T) -> i32 {
-  // CHECK:STDERR: fail_todo_use_where.carbon:[[@LINE+17]]:14: error: cannot implicitly convert value of type `Core.IntLiteral` to `T.(J.U)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_use_where.carbon:[[@LINE+17]]:14: error: cannot implicitly convert value of type `Core.IntLiteral` to `T.(J.U)` [ConversionFailure]
   // CHECK:STDERR:   return t.F(2);
   // CHECK:STDERR:              ^
   // CHECK:STDERR: fail_todo_use_where.carbon:[[@LINE+14]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(T.(J.U))` [MissingImplInMemberAccessNote]
@@ -126,7 +126,7 @@ fn GenericCallFI32[T:! J where .U = i32](t: T) -> i32 {
   // CHECK:STDERR:   fn F(u: U) -> U;
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_use_where.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `T.(J.U)` to `i32` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_use_where.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `T.(J.U)` to `i32` [ConversionFailure]
   // CHECK:STDERR:   return t.F(2);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_use_where.carbon:[[@LINE+4]]:3: note: type `T.(J.U)` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
@@ -146,14 +146,14 @@ interface J {
 
 class E {
   extend impl as J where .U = i32 {
-    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+14]]:13: error: cannot implicitly convert value of type `<associated entity in J>` to `type` [ImplicitAsConversionFailure]
+    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+14]]:13: error: cannot implicitly convert non-type value of type `<associated entity in J>` to `type` [ConversionFailureNonTypeToFacet]
     // CHECK:STDERR:     fn F(u: U) -> U {
     // CHECK:STDERR:             ^
     // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+11]]:13: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
     // CHECK:STDERR:     fn F(u: U) -> U {
     // CHECK:STDERR:             ^
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+7]]:19: error: cannot implicitly convert value of type `<associated entity in J>` to `type` [ImplicitAsConversionFailure]
+    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+7]]:19: error: cannot implicitly convert non-type value of type `<associated entity in J>` to `type` [ConversionFailureNonTypeToFacet]
     // CHECK:STDERR:     fn F(u: U) -> U {
     // CHECK:STDERR:                   ^
     // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+4]]:19: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
@@ -283,7 +283,7 @@ fn F() {
   // TODO: `D.(Z.X)` is `C(D)`, but is incorrecty treated only as the symbolic
   // `C(T)` here which fails to convert.
 
-  // CHECK:STDERR: fail_todo_symbolic_associated_type_in_concrete_context.carbon:[[@LINE+7]]:20: error: cannot implicitly convert value of type `C(D)` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_symbolic_associated_type_in_concrete_context.carbon:[[@LINE+7]]:20: error: cannot implicitly convert value of type `C(D)` to `C(T)` [ConversionFailure]
   // CHECK:STDERR:   let a: D.(Z.X) = {} as C(D);
   // CHECK:STDERR:                    ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_symbolic_associated_type_in_concrete_context.carbon:[[@LINE+4]]:20: note: type `C(D)` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]

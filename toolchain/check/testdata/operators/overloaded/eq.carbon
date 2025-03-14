@@ -62,7 +62,7 @@ impl C as Core.Eq {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:15: error: cannot implicitly convert value of type `D` to `C` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:15: error: cannot implicitly convert value of type `D` to `C` [ConversionFailure]
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:               ^
   // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:15: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]

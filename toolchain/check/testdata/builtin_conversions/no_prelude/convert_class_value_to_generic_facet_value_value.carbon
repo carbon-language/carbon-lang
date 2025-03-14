@@ -72,7 +72,7 @@ impl forall [T:! type] C as I(T, ()) {}
 fn A[T:! I({}, {})](t: T) {}
 
 fn B() {
-  // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `I({}, {})` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `I({}, {})` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   A({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(I({}, {}))` [MissingImplInMemberAccessNote]
@@ -99,7 +99,7 @@ impl forall [T:! type] C(T, ()) as I {}
 fn A[T:! I](t: T) {}
 
 fn B() {
-  // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `I` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C({}, {})` into type implementing `I` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   A({} as C({}, {}));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]

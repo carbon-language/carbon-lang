@@ -43,7 +43,7 @@ class Goat {}
 impl Goat as Animal {}
 
 fn F() {
-  // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Animal` to `Eats` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `Goat as Animal` that implements `Animal` into type implementing `Eats` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE+7]]:3: note: type `Animal` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]
@@ -76,7 +76,7 @@ impl Goat as Climbs {}
 // These are expected to fail:
 // https://github.com/carbon-language/carbon-lang/issues/4853#issuecomment-2707673344
 fn F() {
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Animal & Climbs` to `Eats` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `Goat as Animal & Climbs` that implements `Animal & Climbs` into type implementing `Eats` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   Feed(Goat as (Animal & Climbs));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+7]]:3: note: type `Animal & Climbs` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]
@@ -88,7 +88,7 @@ fn F() {
   // CHECK:STDERR:
   Feed(Goat as (Animal & Climbs));
 
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `Eats` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `Animal & Climbs` into type implementing `Eats` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Feed(Animal & Climbs);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]

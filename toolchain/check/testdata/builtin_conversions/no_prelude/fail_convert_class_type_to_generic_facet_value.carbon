@@ -35,7 +35,7 @@ impl ImplsGeneric as Generic(GenericParam) {
 fn CallGenericMethod(T:! type, U:! Generic(T)) {}
 
 fn G() {
-  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `Generic(WrongGenericParam)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `ImplsGeneric` into type implementing `Generic(WrongGenericParam)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CallGenericMethod(WrongGenericParam, ImplsGeneric);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(Generic(WrongGenericParam))` [MissingImplInMemberAccessNote]

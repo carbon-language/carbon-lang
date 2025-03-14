@@ -43,7 +43,7 @@ var c_bad: C({.c = 1, .d = 2}) = F();
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert value of type `C({.a = 1, .b = 2})` to `C({.a = 3, .b = 4})` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert value of type `C({.a = 1, .b = 2})` to `C({.a = 3, .b = 4})` [ConversionFailure]
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+4]]:1: note: type `C({.a = 1, .b = 2})` does not implement interface `Core.ImplicitAs(C({.a = 3, .b = 4}))` [MissingImplInMemberAccessNote]

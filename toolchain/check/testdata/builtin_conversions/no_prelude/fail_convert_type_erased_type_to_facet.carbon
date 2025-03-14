@@ -35,7 +35,7 @@ fn WalkAnimal(a:! Animal) {}
 
 fn F() {
   let x:! type = Goat;
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `Animal` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `x` into type implementing `Animal` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   WalkAnimal(x);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(Animal)` [MissingImplInMemberAccessNote]

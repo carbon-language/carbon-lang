@@ -36,7 +36,7 @@ impl Goat as Eats {}
 fn Feed(e:! Eats) {}
 
 fn F() {
-  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `Animal` to `Eats` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `Goat as Animal` that implements `Animal` into type implementing `Eats` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_facet_value_shouldnt_know_concrete_type.carbon:[[@LINE+7]]:3: note: type `Animal` does not implement interface `Core.ImplicitAs(Eats)` [MissingImplInMemberAccessNote]

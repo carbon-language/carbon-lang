@@ -101,7 +101,7 @@ import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert value of type `type` to `N where .(N.P) = {}` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Equal(bool);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `Core.ImplicitAs(N where .(N.P) = {})` [MissingImplInMemberAccessNote]
@@ -114,7 +114,7 @@ fn Calls() {
   // CHECK:STDERR:
   Equal(bool);
 
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert value of type `type` to `A where .(A.C) = () and .(A.B) = bool` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   NestedRewrite(i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A where .(A.C) = () and .(A.B) = bool)` [MissingImplInMemberAccessNote]
@@ -137,7 +137,7 @@ interface I {
 }
 
 // `2` can't be converted to the type of `I.Member`
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert value of type `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
 // CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
@@ -154,7 +154,7 @@ interface A {}
 class D {}
 impl D as A {}
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+7]]:35: error: cannot implicitly convert value of type `type` to `type where...` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+7]]:35: error: cannot implicitly convert type `D` into type implementing `type where...` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let B: type where .Self impls A = D;
 // CHECK:STDERR:                                   ^
 // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:35: note: type `type` does not implement interface `Core.ImplicitAs(type where...)` [MissingImplInMemberAccessNote]
@@ -174,7 +174,7 @@ interface E {
 // Testing how these types get stringified in error messages.
 
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:42: error: cannot implicitly convert value of type `type` to `E where .(E.G) = () and .(E.F) = bool` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:42: error: cannot implicitly convert type `f64` into type implementing `E where .(E.G) = () and .(E.F) = bool` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let H: (E where .F = bool and .G = ()) = f64;
 // CHECK:STDERR:                                          ^~~
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:42: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.G) = () and .(E.F) = bool)` [MissingImplInMemberAccessNote]
@@ -183,7 +183,7 @@ interface E {
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:45: error: cannot implicitly convert value of type `type` to `E where .(E.G) = i32 and .(E.F) = {}` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:45: error: cannot implicitly convert type `bool` into type implementing `E where .(E.G) = i32 and .(E.F) = {}` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let J: ((E where .F = {}) where .G = i32) = bool;
 // CHECK:STDERR:                                             ^~~~
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:45: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.G) = i32 and .(E.F) = {})` [MissingImplInMemberAccessNote]
@@ -192,7 +192,7 @@ let H: (E where .F = bool and .G = ()) = f64;
 // CHECK:STDERR:
 let J: ((E where .F = {}) where .G = i32) = bool;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:33: error: cannot implicitly convert value of type `type` to `E where .(E.F) = .(E.G)` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:33: error: cannot implicitly convert type `bool` into type implementing `E where .(E.F) = .(E.G)` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: let K: (E where .F = .Self.G) = bool;
 // CHECK:STDERR:                                 ^~~~
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:33: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.F) = .(E.G))` [MissingImplInMemberAccessNote]

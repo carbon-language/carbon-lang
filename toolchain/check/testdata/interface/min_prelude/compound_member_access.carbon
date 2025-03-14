@@ -56,7 +56,7 @@ fn Simple3(T:! K2, x: T) {
 // Compound member access does not. It tries to convert `y` to `K2`, but only
 // its type `V` can.
 fn Compound3(V:! K2, y: V) {
-  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `V` to `K2` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `V` into type implementing `K2` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   y.(K2.Q2)();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+4]]:3: note: type `V` does not implement interface `Core.ImplicitAs(K2)` [MissingImplInMemberAccessNote]
@@ -146,7 +146,7 @@ impl C as A {
 // Since `A.G` is a non-instance method, compound member access may only be
 // used with a type, not an instance.
 fn Fails() {
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   ({} as C).((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
@@ -154,7 +154,7 @@ fn Fails() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as C).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
@@ -162,7 +162,7 @@ fn Fails() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `C` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
