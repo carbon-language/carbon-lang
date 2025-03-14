@@ -105,7 +105,7 @@ fn F() {
   // which will fail to typecheck here.
   //
   // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_first.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_first.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
   // CHECK:STDERR:                               ^~~~~~~~~~~
   // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_first.carbon:[[@LINE+4]]:31: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
@@ -133,7 +133,7 @@ fn F() {
   // which will fail to typecheck here.
   //
   // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
   // CHECK:STDERR:                               ^~~~~~~~~~~
   // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+4]]:31: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
@@ -183,7 +183,7 @@ fn F() {
   // which will fail to typecheck here when constructed from a `C` value.
   //
   // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_first.carbon:[[@LINE+7]]:28: error: cannot implicitly convert value of type `C(())` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_first.carbon:[[@LINE+7]]:28: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(()).(Z(()).X) = {} as C(());
   // CHECK:STDERR:                            ^~~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_first.carbon:[[@LINE+4]]:28: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
@@ -212,7 +212,7 @@ fn F() {
   // which will fail to typecheck here when constructed from a `C` value.
   //
   // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_second.carbon:[[@LINE+7]]:28: error: cannot implicitly convert value of type `C(())` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_second.carbon:[[@LINE+7]]:28: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(()).(Z(()).X) = {} as C(());
   // CHECK:STDERR:                            ^~~~~~~~~~~
   // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_second.carbon:[[@LINE+4]]:28: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]

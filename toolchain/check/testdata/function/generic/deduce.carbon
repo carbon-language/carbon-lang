@@ -213,7 +213,7 @@ fn F() {
   // impl forall [E:! type] CC(DD(E)) as Z {}
   // ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  // CHECK:STDERR: fail_todo_deduce_nested_generic_class.carbon:[[@LINE+7]]:3: error: cannot convert value of type `type` to `Z` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_deduce_nested_generic_class.carbon:[[@LINE+7]]:3: error: cannot convert type `CC(DD(EE) as Z)` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CC(DD(EE)) as Z;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_deduce_nested_generic_class.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]

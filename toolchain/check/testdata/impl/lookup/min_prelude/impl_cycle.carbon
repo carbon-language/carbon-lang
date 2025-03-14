@@ -29,7 +29,7 @@ fn F() {
   // CHECK:STDERR: impl forall [T:! Z] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:3: error: cannot convert value of type `type` to `Z` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:3: error: cannot convert type `Point` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
@@ -79,7 +79,7 @@ fn F() {
   // CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:3: error: cannot convert value of type `type` to `Z` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:3: error: cannot convert type `Point` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
@@ -117,7 +117,7 @@ fn F() {
   // CHECK:STDERR: impl forall [T:! Z] T as X {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+7]]:3: error: cannot convert value of type `type` to `Z` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
@@ -177,7 +177,7 @@ fn F() {
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `ComparableWith(C)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `D` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Compare({} as C, {} as D);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(C))` [MissingImplInMemberAccessNote]
@@ -202,7 +202,7 @@ fn F() {
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `ComparableWith(D)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `ComparableWith(D)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Compare({} as D, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(D))` [MissingImplInMemberAccessNote]
