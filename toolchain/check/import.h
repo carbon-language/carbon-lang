@@ -13,7 +13,8 @@ namespace Carbon::Check {
 
 enum class AddImportNamespaceNameBehavior : int8_t {
   // Do not try to add the namespace name to the scope and don't check if it
-  // already exists. Used when we want to add the name outside this function.
+  // already exists. Used when the name is added after the call to
+  // `AddImportNamespace`.
   DontAdd,
 
   // Try to add the namespace name to the scope. If the name already exists,
