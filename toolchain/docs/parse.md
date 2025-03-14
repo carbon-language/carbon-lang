@@ -811,24 +811,23 @@ The toolchain will often parse code that could theoretically be rejected,
 instead allowing the check phase to reject incorrect structures.
 
 For example, consider the code `abstract var x: i32 = 0;`. When parsing the
-`abstract` modifier, parse could do lookahead to see `var`, and error in the
-parse (`abstract var` is never valid). Instead, we save the modifier and
-diagnose it with check.
+`abstract` modifier, parse could do single-token lookahead to see `var`, and
+error in the parse (`abstract var` is never valid). Instead, we save the
+modifier and diagnose it during check.
 
-The problem with diagnosing this example during parse is there could be other
-modifiers, such as `abstract private returned var x: i32 = 0;`, so additional
-lookahead would be required to determine the entity for `abstract`. Some
-modifiers are also contextually valid; for example, `abstract fn` is only valid
-inside an `abstract class` scope. As a consequence, a form of either arbitrary
-lookahead or additional context would be necessary in parse in order to reliably
-diagnose incorrect uses of `abstract`, and it may miss cases. In contrast with
-parse, check will have the necessary context and semantic understanding to issue
-all necessary modifier diagnostics.
+The problem is that code isn't always this simple. Considering the above
+example, there could be other modifiers, such as
+`abstract private returned var x: i32 = 0;`, so single-token lookahead isn't a
+general solution. Some modifiers are also contextually valid; for example,
+`abstract fn` is only valid inside an `abstract class` scope. As a consequence,
+a form of either arbitrary lookahead or additional context would be necessary in
+parse in order to reliably diagnose incorrect uses of `abstract`. In contrast
+with parse, check will have that additional context.
 
 Rejecting incorrect code during parsing can also have negative consequences for
-diagnostics. The check phase collects more context about invalid code, and might
-produce either better diagnostics specific to semantics, or even if the error is
-similar to what parse could produce, might do it with less work.
+diagnostics. The additional information that check has about semantics may
+produce better diagnostics. Alternately, sometimes check will produce
+diagnostics equivalent to what parse could, but with less work overall.
 
 As a consequence, at times we will defer to the check phase to produce
 diagnostics instead of trying to produce those same diagnostics during parse. A
@@ -839,6 +838,7 @@ couple examples of why we might diagnose in check instead of parse are:
     partly in parse.
 -   To support syntax highlighting for IDEs in near-correct code, still being
     typed.
+-   When it's important to distinguish between multiple possible syntaxes.
 
 A few examples of parse designs to avoid are:
 
