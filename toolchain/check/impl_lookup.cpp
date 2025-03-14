@@ -4,6 +4,8 @@
 
 #include "toolchain/check/impl_lookup.h"
 
+#include <algorithm>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -316,6 +318,10 @@ static auto FindWitnessInImpls(
     TypeStructure type_structure;
   };
 
+  auto query_type_structure = BuildTypeStructure(
+      context, context.constant_values().GetInstId(type_const_id),
+      specific_interface);
+
   llvm::SmallVector<CandidateImpl> candidate_impl_ids;
   for (auto [id, impl] : context.impls().enumerate()) {
     // If the impl's interface_id differs from the query, then this impl can not
@@ -347,21 +353,28 @@ static auto FindWitnessInImpls(
     }
     CARBON_CHECK(impl.witness_id.has_value());
 
-    // TODO: Allow Carbon code to provide a priority ordering explicitly. For
-    // now they have all the same priority, so the priority is the order in
-    // which they are found in code. Since the matching algorithm here only
-    // takes _better_ matches over previous ones.
-    auto type_structure = BuildTypeStructure(context, impl);
+    auto type_structure =
+        BuildTypeStructure(context, impl.self_id, impl.interface);
+    if (!query_type_structure.IsCompatibleWith(type_structure)) {
+      continue;
+    }
 
     candidate_impl_ids.push_back(
         {id, impl.definition_id, std::move(type_structure)});
   }
 
-  llvm::sort(candidate_impl_ids, [](auto& lhs, auto& rhs) -> bool {
+  auto compare = [](auto& lhs, auto& rhs) -> bool {
+    // TODO: Allow Carbon code to provide a priority ordering explicitly. For
+    // now they have all the same priority, so the priority is the order in
+    // which they are found in code.
+
     // Sort by their type structures. Higher value in type structure comes
     // first, so we use `>` comparison.
     return lhs.type_structure > rhs.type_structure;
-  });
+  };
+  // Stable sort is used so that impls that are seen first are preferred when
+  // they have an equal priority ordering.
+  std::ranges::stable_sort(candidate_impl_ids, compare);
 
   for (const auto& candidate : candidate_impl_ids) {
     stack.back().impl_loc = candidate.loc_inst_id;
