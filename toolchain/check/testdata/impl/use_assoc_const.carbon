@@ -283,7 +283,7 @@ fn F() {
   // TODO: `D.(Z.X)` is `C(D)`, but is incorrecty treated only as the symbolic
   // `C(T)` here which fails to convert.
 
-  // CHECK:STDERR: fail_todo_symbolic_associated_type_in_concrete_context.carbon:[[@LINE+7]]:20: error: cannot implicitly convert value of type `C(D)` to `C(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_symbolic_associated_type_in_concrete_context.carbon:[[@LINE+7]]:20: error: cannot implicitly convert value of type `C(D)` to `C(T)` [ConversionFailure]
   // CHECK:STDERR:   let a: D.(Z.X) = {} as C(D);
   // CHECK:STDERR:                    ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_symbolic_associated_type_in_concrete_context.carbon:[[@LINE+4]]:20: note: type `C(D)` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
