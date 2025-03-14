@@ -126,8 +126,9 @@ CARBON_PARSE_NODE_KIND(LibraryDecl)
 
 CARBON_PARSE_NODE_KIND(LibrarySpecifier)
 
-CARBON_PARSE_NODE_KIND(NameQualifierWithParams)
+CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithParams)
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithoutParams)
+CARBON_PARSE_NODE_KIND(KeywordNameQualifierWithParams)
 CARBON_PARSE_NODE_KIND(KeywordNameQualifierWithoutParams)
 
 CARBON_PARSE_NODE_KIND(ExportIntroducer)
