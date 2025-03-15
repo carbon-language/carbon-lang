@@ -70,6 +70,7 @@ auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
   return PerformAction(context, loc_id, action_inst);
 }
 
+namespace Internal {
 // Performs setup steps for performing a delayed action. This is an
 // implementation detail of PerformDelayedAction and should not be called
 // directly.
@@ -80,6 +81,7 @@ auto BeginPerformDelayedAction(Context& context) -> void;
 // directly.
 auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
     -> SemIR::InstId;
+}  // namespace Internal
 
 // Performs an action as a result of evaluation of a template's eval block.
 template <typename ActionT>
@@ -88,9 +90,9 @@ auto PerformDelayedAction(Context& context, SemIR::LocId loc_id,
   if (ActionIsDependent(context, action_inst)) {
     return SemIR::InstId::None;
   }
-  BeginPerformDelayedAction(context);
+  Internal::BeginPerformDelayedAction(context);
   auto inst_id = PerformAction(context, loc_id, action_inst);
-  return EndPerformDelayedAction(context, inst_id);
+  return Internal::EndPerformDelayedAction(context, inst_id);
 }
 
 }  // namespace Carbon::Check

@@ -147,14 +147,15 @@ auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
   return AddDependentActionSpliceImpl(context, action, result_type_id);
 }
 
-auto BeginPerformDelayedAction(Context& context) -> void {
+auto Internal::BeginPerformDelayedAction(Context& context) -> void {
   // Push an `InstBlock` to hold any instructions created by the action.
   // Note that we assume that actions don't need to create multiple blocks. If
   // this changes, we should push a region too.
   context.inst_block_stack().Push();
 }
 
-auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
+auto Internal::EndPerformDelayedAction(Context& context,
+                                       SemIR::InstId result_id)
     -> SemIR::InstId {
   // If the only created instruction is the result, then we can use it directly.
   auto contents = context.inst_block_stack().PeekCurrentBlockContents();
