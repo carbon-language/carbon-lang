@@ -164,7 +164,7 @@ auto AddImportNamespaceToScope(
   auto import_id = make_import_id();
   CARBON_CHECK(import_id.has_value());
 
-  auto result = AddImportNamespaceToScopeResult{
+  AddImportNamespaceToScopeResult result = {
       .add_result = AddImportNamespace(context, namespace_type_id, name_id,
                                        parent_scope_id, import_id),
       .is_duplicate_of_namespace_in_current_package = false};
