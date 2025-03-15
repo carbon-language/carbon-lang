@@ -28,7 +28,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                         SemIR::NameScopeId parent_scope_id,
                         SemIR::InstId import_id) -> AddImportNamespaceResult;
 
-struct AddImportNamespaceAndNameResult {
+struct AddImportNamespaceToScopeResult {
   AddImportNamespaceResult add_result;
 
   // When trying to add the namespace name, whether it already exists and refers
@@ -43,11 +43,11 @@ struct AddImportNamespaceAndNameResult {
 // `diagnose_duplicate_namespace` is used when handling a cross-package import,
 // where an existing namespace is in the current package and the new namespace
 // is a different package.
-auto AddImportNamespaceAndName(
+auto AddImportNamespaceToScope(
     Context& context, SemIR::TypeId namespace_type_id, SemIR::NameId name_id,
     SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
     llvm::function_ref<SemIR::InstId()> make_import_id)
-    -> AddImportNamespaceAndNameResult;
+    -> AddImportNamespaceToScopeResult;
 
 // Imports the API file's name lookup information into a corresponding
 // implementation file. Only information for the current package will be copied;

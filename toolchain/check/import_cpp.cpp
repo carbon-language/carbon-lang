@@ -103,7 +103,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
         {.node_id = import.node_id, .library_id = import.library_id});
   }
 
-  return AddImportNamespaceAndName(
+  return AddImportNamespaceToScope(
              context,
              GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
              SemIR::NameId::ForPackageName(cpp_package_id),
