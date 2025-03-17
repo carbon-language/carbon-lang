@@ -302,12 +302,13 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
 
 auto EvalConstantInst(Context& context, SemIRLoc loc,
                       SemIR::SpecificImplFunction inst) -> ConstantEvalResult {
+  auto callee_inst = context.insts().Get(inst.callee_id);
   // If the callee is not a function value, we're not ready to evaluate this
   // yet. Build a symbolic `SpecificImplFunction` constant.
-  if (!context.insts().Is<SemIR::StructValue>(inst.callee_id)) {
+  if (!callee_inst.Is<SemIR::StructValue>()) {
     return ConstantEvalResult::NewSamePhase(inst);
   }
-  auto callee_type_id = context.insts().Get(inst.callee_id).type_id();
+  auto callee_type_id = callee_inst.type_id();
   auto callee_fn_type =
       context.types().TryGetAs<SemIR::FunctionType>(callee_type_id);
   if (!callee_fn_type) {
@@ -340,10 +341,10 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
                         .size();
   llvm::SmallVector<SemIR::InstId> args;
   args.reserve(num_params);
-  args.insert(args.end(), enclosing_args.begin(), enclosing_args.end());
+  args.append(enclosing_args.begin(), enclosing_args.end());
   int remaining_params = num_params - args.size();
   CARBON_CHECK(static_cast<int>(interface_fn_args.size()) >= remaining_params);
-  args.insert(args.end(), interface_fn_args.end() - remaining_params,
+  args.append(interface_fn_args.end() - remaining_params,
               interface_fn_args.end());
   auto specific_id = MakeSpecific(context, loc, generic_id, args);
 
