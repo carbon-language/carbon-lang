@@ -87,7 +87,7 @@ fn F() {
   let a: C.(Z(C).X) = {} as C;
 }
 
-// --- fail_todo_specialized_self_vs_constraint_self_first.carbon
+// --- specialized_self_vs_constraint_self_first.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
@@ -96,26 +96,17 @@ interface Z(T:! type) {
 
 class C(T:! type) {}
 
-impl forall [T:! type] C(()) as Z(T) where .X = C(T) {}
+impl forall [T:! type] C(()) as Z(T) where .X = C(()) {}
 impl forall [T:! type] C(T) as Z(C(())) where .X = () {}
 
 fn F() {
   // The specialization of `C(())` should match in preference to the blanket impl
   // of `C(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  //
-  // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_first.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
-  // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
-  // CHECK:STDERR:                               ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_first.carbon:[[@LINE+4]]:31: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
-  // CHECK:STDERR:                               ^~~~~~~~~~~
-  // CHECK:STDERR:
   let a: C(()).(Z(C(())).X) = {} as C(());
 }
 
-// --- fail_todo_specialized_self_vs_constraint_self_second.carbon
+// --- specialized_self_vs_constraint_self_second.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
@@ -125,21 +116,12 @@ interface Z(T:! type) {
 class C(T:! type) {}
 
 impl forall [T:! type] C(T) as Z(C(())) where .X = () {}
-impl forall [T:! type] C(()) as Z(T) where .X = C(T) {}
+impl forall [T:! type] C(()) as Z(T) where .X = C(()) {}
 
 fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  //
-  // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+7]]:31: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
-  // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
-  // CHECK:STDERR:                               ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_specialized_self_vs_constraint_self_second.carbon:[[@LINE+4]]:31: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: C(()).(Z(C(())).X) = {} as C(());
-  // CHECK:STDERR:                               ^~~~~~~~~~~
-  // CHECK:STDERR:
   let a: C(()).(Z(C(())).X) = {} as C(());
 }
 
@@ -164,7 +146,7 @@ fn F() {
   let a: C(()).(Z(()).X) = {} as C(());
 }
 
-// --- fail_todo_generic_class_with_blanket_impl_first.carbon
+// --- generic_class_with_blanket_impl_first.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
@@ -173,7 +155,7 @@ interface Z(T:! type) {
 
 class C(T:! type) {}
 
-impl forall [T:! type] C(T) as Z(T) where .X = C(T) {}
+impl forall [T:! type] C(T) as Z(T) where .X = C(()) {}
 
 impl forall [T:! type] T as Z(T) where .X = () {}
 
@@ -181,19 +163,10 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
   // impls of `Z(T)`. If a blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here when constructed from a `C` value.
-  //
-  // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_first.carbon:[[@LINE+7]]:28: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
-  // CHECK:STDERR:   let a: C(()).(Z(()).X) = {} as C(());
-  // CHECK:STDERR:                            ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_first.carbon:[[@LINE+4]]:28: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: C(()).(Z(()).X) = {} as C(());
-  // CHECK:STDERR:                            ^~~~~~~~~~~
-  // CHECK:STDERR:
   let a: C(()).(Z(()).X) = {} as C(());
 }
 
-// --- fail_todo_generic_class_with_blanket_impl_second.carbon
+// --- generic_class_with_blanket_impl_second.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
@@ -204,7 +177,7 @@ impl forall [T:! type] T as Z(T) where .X = () {}
 
 class C(T:! type) {}
 
-impl forall [T:! type] C(T) as Z(T) where .X = C(T) {}
+impl forall [T:! type] C(T) as Z(T) where .X = C(()) {}
 
 fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
@@ -212,13 +185,6 @@ fn F() {
   // which will fail to typecheck here when constructed from a `C` value.
   //
   // TODO: C(T) is C(()) so this should work?
-  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_second.carbon:[[@LINE+7]]:28: error: cannot implicitly convert value of type `C(())` to `C(T)` [ConversionFailure]
-  // CHECK:STDERR:   let a: C(()).(Z(()).X) = {} as C(());
-  // CHECK:STDERR:                            ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_class_with_blanket_impl_second.carbon:[[@LINE+4]]:28: note: type `C(())` does not implement interface `Core.ImplicitAs(C(T))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: C(()).(Z(()).X) = {} as C(());
-  // CHECK:STDERR:                            ^~~~~~~~~~~
-  // CHECK:STDERR:
   let a: C(()).(Z(()).X) = {} as C(());
 }
 
