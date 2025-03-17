@@ -92,6 +92,6 @@ impl IntLiteral() as RightShift {
 // associated library of its own.
 
 // Facet type combination.
-impl forall [T:! type] T as BitAnd {
+impl type as BitAnd {
   fn Op[self: Self](other: Self) -> Self = "type.and";
 }

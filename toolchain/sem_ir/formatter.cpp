@@ -663,7 +663,8 @@ class FormatterImpl {
     const auto& scope = sem_ir_->name_scopes().Get(id);
 
     if (scope.entries().empty() && scope.extended_scopes().empty() &&
-        scope.import_ir_scopes().empty() && !scope.has_error()) {
+        scope.import_ir_scopes().empty() && !scope.is_cpp_scope() &&
+        !scope.has_error()) {
       // Name scope is empty.
       return;
     }
@@ -721,6 +722,11 @@ class FormatterImpl {
       }
       Indent();
       out_ << "import " << label << "\n";
+    }
+
+    if (scope.is_cpp_scope()) {
+      Indent();
+      out_ << "import Cpp//...\n";
     }
 
     if (scope.has_error()) {

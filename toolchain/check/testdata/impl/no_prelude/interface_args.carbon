@@ -88,7 +88,7 @@ import Core;
 class C {}
 
 fn MakeC() -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+7]]:10: error: cannot implicitly convert value of type `type` to `Factory(C)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+7]]:10: error: cannot implicitly convert type `A` into type implementing `Factory(C)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   return A.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: note: type `type` does not implement interface `Core.ImplicitAs(Factory(C))` [MissingImplInMemberAccessNote]

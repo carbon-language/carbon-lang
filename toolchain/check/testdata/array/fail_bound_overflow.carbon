@@ -14,7 +14,7 @@
 // CHECK:STDERR:
 var a: array(i32, 39999999999999999993);
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:14: error: cannot implicitly convert value of type `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var b: array(1, 39999999999999999993);
 // CHECK:STDERR:              ^
 // CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]

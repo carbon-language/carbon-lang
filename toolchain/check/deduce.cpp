@@ -641,8 +641,8 @@ auto DeduceGenericCallArguments(
   return deduction.MakeSpecific();
 }
 
-auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
-                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
+auto DeduceImplArguments(Context& context, SemIR::LocId loc_id, DeduceImpl impl,
+                         SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId {
   DeductionContext deduction(context, loc_id, impl.generic_id,
@@ -653,7 +653,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
   // Prepare to perform deduction of the type and interface.
   deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id),
                 /*needs_substitution=*/false);
-  deduction.Add(impl.interface.specific_id, constraint_specific_id,
+  deduction.Add(impl.specific_id, constraint_specific_id,
                 /*needs_substitution=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {

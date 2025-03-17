@@ -89,12 +89,53 @@ static auto CopyNameFromImportIR(Context& context,
   return import_name_id;
 }
 
+// Returns the LocIdandInst for the namespace.
+static auto MakeImportedNamespaceLocIdAndInst(Context& context,
+                                              SemIR::InstId import_id,
+                                              SemIR::Namespace namespace_inst)
+    -> SemIR::LocIdAndInst {
+  if (import_id.has_value()) {
+    SemIR::LocId import_loc_id = context.insts().GetLocId(import_id);
+    return import_loc_id.is_import_ir_inst_id()
+               ? MakeImportedLocIdAndInst(
+                     context, import_loc_id.import_ir_inst_id(), namespace_inst)
+               // TODO: Check that this actually is an `AnyNamespaceId`.
+               : SemIR::LocIdAndInst(
+                     Parse::AnyNamespaceId::UnsafeMake(import_loc_id.node_id()),
+                     namespace_inst);
+  }
+
+  // TODO: Associate the namespace with a proper location. This is related to:
+  // https://github.com/carbon-language/carbon-lang/issues/4666.
+  return SemIR::LocIdAndInst::NoLoc(namespace_inst);
+}
+
 auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                         SemIR::NameId name_id,
                         SemIR::NameScopeId parent_scope_id,
-                        bool diagnose_duplicate_namespace,
-                        llvm::function_ref<SemIR::InstId()> make_import_id)
-    -> AddImportNamespaceResult {
+                        SemIR::InstId import_id) -> AddImportNamespaceResult {
+  auto namespace_inst =
+      SemIR::Namespace{.type_id = namespace_type_id,
+                       .name_scope_id = SemIR::NameScopeId::None,
+                       .import_id = import_id};
+  auto namespace_inst_and_loc =
+      MakeImportedNamespaceLocIdAndInst(context, import_id, namespace_inst);
+  AddImportNamespaceResult result = {
+      .name_scope_id = SemIR::NameScopeId::None,
+      .inst_id = AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc)};
+  context.import_ref_ids().push_back(result.inst_id);
+  namespace_inst.name_scope_id =
+      context.name_scopes().Add(result.inst_id, name_id, parent_scope_id);
+  result.name_scope_id = namespace_inst.name_scope_id;
+  ReplaceInstBeforeConstantUse(context, result.inst_id, namespace_inst);
+  return result;
+}
+
+auto AddImportNamespaceToScope(
+    Context& context, SemIR::TypeId namespace_type_id, SemIR::NameId name_id,
+    SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
+    llvm::function_ref<SemIR::InstId()> make_import_id)
+    -> AddImportNamespaceToScopeResult {
   auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
   auto [inserted, entry_id] = parent_scope->LookupOrAdd(
       name_id,
@@ -113,8 +154,8 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
           // id to get more accurate location.
           DiagnoseDuplicateName(context, name_id, import_id, prev_inst_id);
         }
-        return {.name_scope_id = namespace_inst->name_scope_id,
-                .inst_id = prev_inst_id,
+        return {.add_result = {.name_scope_id = namespace_inst->name_scope_id,
+                               .inst_id = prev_inst_id},
                 .is_duplicate_of_namespace_in_current_package = true};
       }
     }
@@ -122,47 +163,29 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
 
   auto import_id = make_import_id();
   CARBON_CHECK(import_id.has_value());
-  auto import_loc_id = context.insts().GetLocId(import_id);
 
-  auto namespace_inst =
-      SemIR::Namespace{.type_id = namespace_type_id,
-                       .name_scope_id = SemIR::NameScopeId::None,
-                       .import_id = import_id};
-  auto namespace_inst_and_loc =
-      import_loc_id.is_import_ir_inst_id()
-          ? MakeImportedLocIdAndInst(context, import_loc_id.import_ir_inst_id(),
-                                     namespace_inst)
-          // TODO: Check that this actually is an `AnyNamespaceId`.
-          : SemIR::LocIdAndInst(
-                Parse::AnyNamespaceId::UnsafeMake(import_loc_id.node_id()),
-                namespace_inst);
-  auto namespace_id =
-      AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc);
-  context.import_ref_ids().push_back(namespace_id);
-  namespace_inst.name_scope_id =
-      context.name_scopes().Add(namespace_id, name_id, parent_scope_id);
-  ReplaceInstBeforeConstantUse(context, namespace_id, namespace_inst);
+  AddImportNamespaceToScopeResult result = {
+      .add_result = AddImportNamespace(context, namespace_type_id, name_id,
+                                       parent_scope_id, import_id),
+      .is_duplicate_of_namespace_in_current_package = false};
 
   // Note we have to get the parent scope freshly, creating the imported
   // namespace may invalidate the pointer above.
   parent_scope = &context.name_scopes().Get(parent_scope_id);
-
   // Diagnose if there's a name conflict, but still produce the namespace to
-  // supersede the name conflict in order to avoid repeat diagnostics. Names are
-  // poisoned optimistically by name lookup before checking for imports, so we
-  // may be overwriting a poisoned entry here.
-  auto& result = parent_scope->GetEntry(entry_id).result;
-  if (!result.is_poisoned() && !inserted) {
-    // TODO: Pass the import namespace name location instead of the namespace id
-    // to get more accurate location.
-    DiagnoseDuplicateName(context, name_id, namespace_id,
-                          result.target_inst_id());
+  // supersede the name conflict in order to avoid repeat diagnostics. Names
+  // are poisoned optimistically by name lookup before checking for imports,
+  // so we may be overwriting a poisoned entry here.
+  auto& lookup_result = parent_scope->GetEntry(entry_id).result;
+  if (!lookup_result.is_poisoned() && !inserted) {
+    // TODO: Pass the import namespace name location instead of the namespace
+    // id to get more accurate location.
+    DiagnoseDuplicateName(context, name_id, result.add_result.inst_id,
+                          lookup_result.target_inst_id());
   }
-  result = SemIR::ScopeLookupResult::MakeFound(namespace_id,
-                                               SemIR::AccessKind::Public);
-  return {.name_scope_id = namespace_inst.name_scope_id,
-          .inst_id = namespace_id,
-          .is_duplicate_of_namespace_in_current_package = false};
+  lookup_result = SemIR::ScopeLookupResult::MakeFound(
+      result.add_result.inst_id, SemIR::AccessKind::Public);
+  return result;
 }
 
 // Adds a copied namespace to the cache.
@@ -185,7 +208,7 @@ static auto CopySingleNameScopeFromImportIR(
     Map<SemIR::NameScopeId, SemIR::NameScopeId>* copied_namespaces,
     SemIR::ImportIRId ir_id, SemIR::InstId import_inst_id,
     SemIR::NameScopeId import_scope_id, SemIR::NameScopeId parent_scope_id,
-    SemIR::NameId name_id) -> AddImportNamespaceResult {
+    SemIR::NameId name_id) -> AddImportNamespaceToScopeResult {
   // Produce the namespace for the entry.
   auto make_import_id = [&]() {
     auto entity_name_id = context.entity_names().Add(
@@ -201,17 +224,18 @@ static auto CopySingleNameScopeFromImportIR(
     context.import_ref_ids().push_back(inst_id);
     return inst_id;
   };
-  AddImportNamespaceResult result = AddImportNamespace(
+  AddImportNamespaceToScopeResult result = AddImportNamespaceToScope(
       context, namespace_type_id, name_id, parent_scope_id,
       /*diagnose_duplicate_namespace=*/false, make_import_id);
 
-  auto namespace_const_id = context.constant_values().Get(result.inst_id);
+  auto namespace_const_id =
+      context.constant_values().Get(result.add_result.inst_id);
   context.import_ir_constant_values()[ir_id.index].Set(import_inst_id,
                                                        namespace_const_id);
 
   if (copied_namespaces) {
     CacheCopiedNamespace(*copied_namespaces, import_scope_id,
-                         result.name_scope_id);
+                         result.add_result.name_scope_id);
   }
   return result;
 }
@@ -261,7 +285,7 @@ static auto CopyAncestorNameScopesFromImportIR(
         CopySingleNameScopeFromImportIR(
             context, namespace_type_id, &copied_namespaces, ir_id,
             import_scope.inst_id(), import_scope_id, scope_cursor, name_id)
-            .name_scope_id;
+            .add_result.name_scope_id;
   }
 
   return scope_cursor;
@@ -432,7 +456,7 @@ auto ImportApiFile(Context& context, SemIR::TypeId namespace_type_id,
             SemIR::ImportIRId::ApiForImpl, todo_scope.api_inst_id,
             todo_scope.api_scope_id, todo_scope.impl_parent_scope_id,
             todo_scope.impl_name_id)
-            .name_scope_id;
+            .add_result.name_scope_id;
     ImportScopeFromApiFile(context, api_sem_ir, todo_scope.api_scope_id,
                            impl_scope_id, todo_scopes);
   }
@@ -496,12 +520,13 @@ auto ImportLibrariesFromOtherPackage(Context& context,
 
   auto name_id = SemIR::NameId::ForPackageName(package_id);
 
-  AddImportNamespaceResult result = AddImportNamespace(
+  AddImportNamespaceToScopeResult result = AddImportNamespaceToScope(
       context, namespace_type_id, name_id, SemIR::NameScopeId::Package,
       /*diagnose_duplicate_namespace=*/true, [&] { return import_decl_id; });
-  auto namespace_const_id = context.constant_values().Get(result.inst_id);
+  auto namespace_const_id =
+      context.constant_values().Get(result.add_result.inst_id);
 
-  auto& scope = context.name_scopes().Get(result.name_scope_id);
+  auto& scope = context.name_scopes().Get(result.add_result.name_scope_id);
   scope.set_is_closed_import(
       !result.is_duplicate_of_namespace_in_current_package);
   for (auto import_ir : import_irs) {
@@ -563,14 +588,14 @@ static auto AddNamespaceFromOtherPackage(Context& context,
     -> SemIR::InstId {
   auto namespace_type_id =
       GetSingletonType(context, SemIR::NamespaceType::SingletonInstId);
-  AddImportNamespaceResult result = CopySingleNameScopeFromImportIR(
+  AddImportNamespaceToScopeResult result = CopySingleNameScopeFromImportIR(
       context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
       import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);
-  auto& scope = context.name_scopes().Get(result.name_scope_id);
+  auto& scope = context.name_scopes().Get(result.add_result.name_scope_id);
   scope.set_is_closed_import(
       !result.is_duplicate_of_namespace_in_current_package);
   scope.AddImportIRScope({import_ir_id, import_ns.name_scope_id});
-  return result.inst_id;
+  return result.add_result.inst_id;
 }
 
 auto ImportNameFromOtherPackage(

@@ -35,15 +35,15 @@ base class A {
 // CHECK:STDOUT: --- fail_extend_cycle.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %A.466950.1: type = class_type @A.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A [concrete]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A} [concrete]
+// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A.466950.1 [concrete]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A.466950.1} [concrete]
 // CHECK:STDOUT:   %complete_type.020: <witness> = complete_type_witness %struct_type.base [concrete]
-// CHECK:STDOUT:   %.a95: type = class_type @.1 [concrete]
-// CHECK:STDOUT:   %.elem: type = unbound_element_type %.a95, %A [concrete]
+// CHECK:STDOUT:   %A.466950.2: type = class_type @A.2 [concrete]
+// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A.466950.2, %A.466950.1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -56,27 +56,27 @@ base class A {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .A = %A.decl.loc11
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [concrete = constants.%A.466950.1] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [concrete = constants.%.a95] {} {}
+// CHECK:STDOUT:   %A.decl.loc26: type = class_decl @A.2 [concrete = constants.%A.466950.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A.1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   .Self = constants.%A.466950.1
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
 // CHECK:STDOUT:   %.loc16: %B.elem = base_decl %A.ref, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.020]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -88,9 +88,9 @@ base class A {
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc27: %.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT: class @A.2 {
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
+// CHECK:STDOUT:   %.loc27: %A.elem = base_decl %A.ref, element0 [concrete]
 // CHECK:STDOUT:   %.loc32_8: <error> = field_decl c, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %.loc32_3: <error> = var_pattern %.loc32_8
@@ -100,7 +100,7 @@ base class A {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.a95
+// CHECK:STDOUT:   .Self = constants.%A.466950.2
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc27
 // CHECK:STDOUT:   .C = <poisoned>

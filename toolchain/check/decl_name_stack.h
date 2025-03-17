@@ -98,7 +98,7 @@ class DeclNameStack {
                                   SemIR::LibraryNameId extern_library) const
         -> SemIR::EntityWithParamsBase {
       return {
-          .name_id = name_id_for_new_inst(),
+          .name_id = name.name_id,
           .parent_scope_id = parent_scope_id,
           .generic_id = SemIR::GenericId::None,
           .first_param_node_id = name.first_param_node_id,

@@ -39,7 +39,7 @@ class Class(T:! type) {
 }
 
 fn StaticMemberFunctionCall(T:! type) -> Class(T) {
-  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `Class(T)` to `Class(T)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `Class(T)` to `Class(T)` [ConversionFailure]
   // CHECK:STDERR:   return Class(T).Make();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+4]]:3: note: type `Class(T)` does not implement interface `Core.ImplicitAs(Class(T))` [MissingImplInMemberAccessNote]

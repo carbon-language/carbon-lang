@@ -47,10 +47,10 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %D.elem: type = unbound_element_type %D, %B [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [concrete]
 // CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base [concrete]
-// CHECK:STDOUT:   %F.type.319: type = fn_type @F.3 [concrete]
-// CHECK:STDOUT:   %F.34b: %F.type.319 = struct_value () [concrete]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.0e9: %.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.31906b.1: type = fn_type @F.3 [concrete]
+// CHECK:STDOUT:   %F.34b733.1: %F.type.31906b.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.31906b.2: type = fn_type @F.4 [concrete]
+// CHECK:STDOUT:   %F.34b733.2: %F.type.31906b.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,8 +69,8 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.319 = fn_decl @F.3 [concrete = constants.%F.34b] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.0e9] {} {}
+// CHECK:STDOUT:   %F.decl.loc27: %F.type.31906b.1 = fn_decl @F.3 [concrete = constants.%F.34b733.1] {} {}
+// CHECK:STDOUT:   %F.decl.loc33: %F.type.31906b.2 = fn_decl @F.4 [concrete = constants.%F.34b733.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -105,7 +105,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .base = %.loc20
-// CHECK:STDOUT:   .F = file.%F.decl
+// CHECK:STDOUT:   .F = file.%F.decl.loc27
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,7 +118,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: fn @F.4() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
