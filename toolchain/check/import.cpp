@@ -77,9 +77,10 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
 
 // Translate the name to the current IR. It will usually be an identifier, but
 // could also be a builtin name ID which is equivalent cross-IR.
-static auto CopyNameFromImportIR(
-    Context& context, const SemIR::File& import_sem_ir,
-    SemIR::NameId import_name_id) -> SemIR::NameId {
+static auto CopyNameFromImportIR(Context& context,
+                                 const SemIR::File& import_sem_ir,
+                                 SemIR::NameId import_name_id)
+    -> SemIR::NameId {
   if (auto import_identifier_id = import_name_id.AsIdentifierId();
       import_identifier_id.has_value()) {
     auto name = import_sem_ir.identifiers().Get(import_identifier_id);
@@ -89,9 +90,10 @@ static auto CopyNameFromImportIR(
 }
 
 // Returns the LocIdAndInst for the namespace.
-static auto MakeImportedNamespaceLocIdAndInst(
-    Context& context, SemIR::InstId import_id,
-    SemIR::Namespace namespace_inst) -> SemIR::LocIdAndInst {
+static auto MakeImportedNamespaceLocIdAndInst(Context& context,
+                                              SemIR::InstId import_id,
+                                              SemIR::Namespace namespace_inst)
+    -> SemIR::LocIdAndInst {
   if (!import_id.has_value()) {
     // TODO: Associate the namespace with a proper location. This is related to:
     // https://github.com/carbon-language/carbon-lang/issues/4666.
@@ -193,8 +195,8 @@ auto AddImportNamespaceToScope(
 // Adds a copied namespace to the cache.
 static auto CacheCopiedNamespace(
     Map<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces,
-    SemIR::NameScopeId import_scope_id,
-    SemIR::NameScopeId to_scope_id) -> void {
+    SemIR::NameScopeId import_scope_id, SemIR::NameScopeId to_scope_id)
+    -> void {
   auto result = copied_namespaces.Insert(import_scope_id, to_scope_id);
   CARBON_CHECK(result.is_inserted() || result.value() == to_scope_id,
                "Copy result for namespace changed from {0} to {1}",
@@ -399,10 +401,12 @@ static auto AddScopedImportRef(Context& context,
 }
 
 // Imports entries in a specific scope into the current file.
-static auto ImportScopeFromApiFile(
-    Context& context, const SemIR::File& api_sem_ir,
-    SemIR::NameScopeId api_scope_id, SemIR::NameScopeId impl_scope_id,
-    llvm::SmallVector<TodoScope>& todo_scopes) -> void {
+static auto ImportScopeFromApiFile(Context& context,
+                                   const SemIR::File& api_sem_ir,
+                                   SemIR::NameScopeId api_scope_id,
+                                   SemIR::NameScopeId impl_scope_id,
+                                   llvm::SmallVector<TodoScope>& todo_scopes)
+    -> void {
   const auto& api_scope = api_sem_ir.name_scopes().Get(api_scope_id);
   auto& impl_scope = context.name_scopes().Get(impl_scope_id);
 
@@ -543,10 +547,11 @@ auto ImportLibrariesFromOtherPackage(Context& context,
 // Looks up a name in a scope imported from another package. An `identifier` is
 // provided if `name_id` corresponds to an identifier in the current file;
 // otherwise, `name_id` is file-agnostic and can be used directly.
-static auto LookupNameInImport(
-    const SemIR::File& import_ir, SemIR::NameScopeId import_scope_id,
-    SemIR::NameId name_id,
-    llvm::StringRef identifier) -> const Carbon::SemIR::NameScope::Entry* {
+static auto LookupNameInImport(const SemIR::File& import_ir,
+                               SemIR::NameScopeId import_scope_id,
+                               SemIR::NameId name_id,
+                               llvm::StringRef identifier)
+    -> const Carbon::SemIR::NameScope::Entry* {
   // Determine the NameId in the import IR.
   SemIR::NameId import_name_id = name_id;
   if (!identifier.empty()) {
@@ -578,11 +583,13 @@ static auto LookupNameInImport(
 }
 
 // Adds a namespace that points to one in another package.
-static auto AddNamespaceFromOtherPackage(
-    Context& context, SemIR::ImportIRId import_ir_id,
-    SemIR::InstId import_inst_id, SemIR::Namespace import_ns,
-    SemIR::NameScopeId parent_scope_id,
-    SemIR::NameId name_id) -> SemIR::InstId {
+static auto AddNamespaceFromOtherPackage(Context& context,
+                                         SemIR::ImportIRId import_ir_id,
+                                         SemIR::InstId import_inst_id,
+                                         SemIR::Namespace import_ns,
+                                         SemIR::NameScopeId parent_scope_id,
+                                         SemIR::NameId name_id)
+    -> SemIR::InstId {
   auto namespace_type_id =
       GetSingletonType(context, SemIR::NamespaceType::SingletonInstId);
   AddImportNamespaceToScopeResult result = CopySingleNameScopeFromImportIR(
