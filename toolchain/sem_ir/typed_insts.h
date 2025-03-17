@@ -708,7 +708,9 @@ struct FacetType {
 // of witnesses that it satisfies the required interfaces of the facet type.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
-      {.ir_name = "facet_value", .constant_kind = InstConstantKind::Always});
+      {.ir_name = "facet_value",
+       .constant_kind = InstConstantKind::Always,
+       .deduce_through = true});
 
   // A `FacetType`.
   TypeId type_id;
