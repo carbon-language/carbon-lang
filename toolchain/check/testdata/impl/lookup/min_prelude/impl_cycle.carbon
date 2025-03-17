@@ -22,10 +22,14 @@ impl forall [T:! Z] T as Z {}
 class Point {}
 
 fn F() {
+  // TODO: We should just get one diagnostic here, either the conversion fails
+  // with a note about the cycle as the reason for impl lookup failing, or the
+  // cycle causes an error so the conversion is not diagnosed.
+
   // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+14]]:3: error: cycle found in search for impl of `Z` for type `Point` [ImplLookupCycle]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-8]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-12]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [T:! Z] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -71,11 +75,10 @@ impl forall [T:! Z & Y] T as Z {}
 class Point {}
 
 fn F() {
-  // TODO: A cycle should be found in the `impl forall T as Z` above.
   // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+14]]:3: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-9]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-8]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
