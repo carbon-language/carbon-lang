@@ -188,6 +188,43 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
   return lookup;
 }
 
+// Returns the return type of the given function declaration.
+// Currently only void and 32-bit int are supported.
+// TODO: Support more return types.
+static auto GetReturnType(Context& context,
+                          const clang::FunctionDecl* clang_decl)
+    -> SemIR::InstId {
+  auto ret_type = clang_decl->getReturnType().getCanonicalType();
+  if (ret_type->isVoidType()) {
+    return SemIR::InstId::None;
+  }
+  const int supported_int_width = 32;
+  if (ret_type->isSignedIntegerType() &&
+      clang_decl->getASTContext().getTypeSize(ret_type) ==
+          supported_int_width &&
+      clang_decl->getASTContext().getTargetInfo().getIntWidth() ==
+          supported_int_width) {
+    auto size_id = context.ints().Add(supported_int_width);
+    auto type_id = MakeIntType(context, Parse::NodeId::None,
+                               SemIR::IntKind::Signed, size_id);
+    auto type_inst_id = MakeIntTypeLiteral(context, Parse::NodeId::None,
+                                           SemIR::IntKind::Signed, size_id);
+
+    auto return_slot_pattern_id = AddInstInNoBlock(
+        // TODO: have a location for the return type once available.
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
+                     {.type_id = type_id, .type_inst_id = type_inst_id})));
+    auto param_pattern_id = AddInstInNoBlock(
+        // TODO: same here, have a location for the return type once available.
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
+                     {.type_id = type_id,
+                      .subpattern_id = return_slot_pattern_id,
+                      .index = SemIR::CallParamIndex::None})));
+    return param_pattern_id;
+  }
+  return SemIR::ErrorInst::SingletonInstId;
+}
+
 // Imports a function declaration from Clang to Carbon. If successful, returns
 // the new Carbon function declaration `InstId`.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
@@ -212,9 +249,13 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  if (!clang_decl->getReturnType()->isVoidType() &&
-      clang_decl->getReturnType().getAsString() != "int") {
-    context.TODO(loc_id, "Unsupported: Function return type");
+  auto return_slot_pattern_id = GetReturnType(context, clang_decl);
+  if (SemIR::ErrorInst::SingletonInstId == return_slot_pattern_id) {
+    context.TODO(
+        loc_id,
+        llvm::formatv(
+            "Unsupported: return type: {0}",
+            clang_decl->getReturnType().getCanonicalType().getAsString()));
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -222,25 +263,6 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::TypeId::None, SemIR::FunctionId::None, SemIR::InstBlockId::Empty};
   auto decl_id = AddPlaceholderInst(
       context, SemIR::LocIdAndInst(Parse::NodeId::None, function_decl));
-
-  auto return_slot_pattern_id = SemIR::InstId::None;
-  if (clang_decl->getReturnType().getAsString() == "int") {
-    auto size_id = context.ints().Add(32);
-    auto type_id = MakeIntType(context, Parse::NodeId::None,
-                               SemIR::IntKind::Signed, size_id);
-    auto type_inst_id = MakeIntTypeLiteral(context, Parse::NodeId::None,
-                                           SemIR::IntKind::Signed, size_id);
-
-    return_slot_pattern_id = AddInstInNoBlock(
-        context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
-                     {.type_id = type_id, .type_inst_id = type_inst_id})));
-    auto param_pattern_id = AddInstInNoBlock(
-        context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
-                     {.type_id = type_id,
-                      .subpattern_id = return_slot_pattern_id,
-                      .index = SemIR::CallParamIndex::None})));
-    return_slot_pattern_id = param_pattern_id;
-  }
 
   auto function_info = SemIR::Function{
       {.name_id = name_id,
