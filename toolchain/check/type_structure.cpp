@@ -362,9 +362,25 @@ class TypeStructureBuilder {
     }
 
     auto type_id_of_inst_id = context_.insts().Get(inst_id).type_id();
+    // All instructions of type FacetType are symbolic except for FacetValue:
+    // - In non-generic code, values of type FacetType are only created through
+    //   conversion to a FacetType (e.g. `Class as Iface`), which produces a
+    //   non-symbolic FacetValue.
+    // - In generic code, binding values of type FacetType are symbolic as they
+    //   refer to an unknown type. Non-binding values would be FacetValues like
+    //   in non-generic code, but would be symbolic as well.
+    // - In specifics of generic code, when deducing a value for a symbolic
+    //   binding of type FacetType, we always produce a FacetValue (which may or
+    //   may not itself be symbolic) through conversion.
+    //
+    // FacetValues are handled earlier by getting the type instruction from
+    // them. That type instruction is never of type FacetType. If it refers to a
+    // FacetType it does so through a FacetAccessType, which is of type TypeType
+    // and thus does not match here.
     if (context_.types().Is<SemIR::FacetType>(type_id_of_inst_id)) {
       return SymbolicType();
     }
+    // Non-type values are concrete, only types are symbolic.
     if (type_id_of_inst_id != SemIR::TypeType::SingletonTypeId) {
       return SemIR::TypeId::None;
     }
