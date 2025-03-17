@@ -114,7 +114,6 @@ class TypeStructureBuilder {
            SemIR::SpecificInterface interface_constraint) -> TypeStructure {
     CARBON_CHECK(work_list_.empty());
 
-    position_ = 0;
     first_symbolic_distance_ = TypeStructure::InfiniteDistance;
     structure_.clear();
 
@@ -140,28 +139,23 @@ class TypeStructureBuilder {
           case CloseOnly:
             break;
           case CloseWithConcrete:
-            ++position_;
-            structure_.push_back(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete);
             break;
           case CloseWithSymbolic:
-            SetFirstSymbolic(position_);
-            ++position_;
-            structure_.push_back(TypeStructure::Structural::Symbolic);
+            AppendStructural(TypeStructure::Structural::Symbolic);
             break;
         }
-        ++position_;  // Closing of type.
-        structure_.push_back(TypeStructure::Structural::ConcreteCloseParen);
+        AppendStructural(TypeStructure::Structural::ConcreteCloseParen);
         continue;
       }
 
       if (std::holds_alternative<SemIR::SpecificInterface>(next)) {
         const auto& interface = std::get<SemIR::SpecificInterface>(next);
         auto args = GetSpecificArgs(interface.specific_id);
-        ++position_;  // Opening of type.
         if (args.empty()) {
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
         } else {
-          structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType());
           PushArgs(args);
         }
@@ -169,15 +163,12 @@ class TypeStructureBuilder {
       }
 
       if (std::holds_alternative<SymbolicType>(next)) {
-        SetFirstSymbolic(position_);
-        ++position_;
-        structure_.push_back(TypeStructure::Structural::Symbolic);
+        AppendStructural(TypeStructure::Structural::Symbolic);
         continue;
       }
 
       if (std::holds_alternative<NonTypeValue>(next)) {
-        ++position_;
-        structure_.push_back(TypeStructure::Structural::Concrete);
+        AppendStructural(TypeStructure::Structural::Concrete);
         continue;
       }
 
@@ -207,46 +198,39 @@ class TypeStructureBuilder {
 
         case CARBON_KIND(SemIR::AssociatedEntityType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::BoolType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::FloatType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::GenericClassType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::GenericInterfaceType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::ImplWitnessAccess type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::IntType int_type): {
-          ++position_;  // Opening of type.
           if (context_.constant_values().Get(inst_id).is_concrete()) {
-            structure_.push_back(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete);
           } else {
-            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType{});
             PushArgs({int_type.bit_width_id});
           }
@@ -254,40 +238,34 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::IntLiteralType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::LegacyFloatType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::PointerType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::StringType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
         case CARBON_KIND(SemIR::TypeType type): {
           (void)type;
-          ++position_;
-          structure_.push_back(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
 
           // ==== Aggregate types ====
 
         case CARBON_KIND(SemIR::ArrayType array_type): {
-          ++position_;  // Opening of type.
-          structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType{});
           Push(array_type.element_type_id);
           PushInstId(array_type.bound_id);
@@ -295,11 +273,10 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::ClassType class_type): {
           auto args = GetSpecificArgs(class_type.specific_id);
-          ++position_;  // Opening of type.
           if (args.empty()) {
-            structure_.push_back(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete);
           } else {
-            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType{});
             PushArgs(args);
           }
@@ -314,8 +291,7 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::FacetType facet_type): {
           auto facet_type_info =
               context_.facet_types().Get(facet_type.facet_type_id);
-          ++position_;  // Opening of type.
-          structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           // TODO: The need for `.closing` goes away when other_requirements
           // does. Are there other places we need to look for symbolics in
           // FacetTypeInfo at that point? For now we treat it as having a
@@ -332,11 +308,10 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {
           auto inner_types = context_.type_blocks().Get(tuple_type.elements_id);
-          ++position_;  // Opening of type.
           if (inner_types.empty()) {
-            structure_.push_back(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete);
           } else {
-            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType{});
             for (auto type :
                  context_.type_blocks().Get(tuple_type.elements_id)) {
@@ -348,11 +323,10 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::StructType struct_type): {
           auto fields =
               context_.struct_type_fields().Get(struct_type.fields_id);
-          ++position_;  // Opening of type.
           if (fields.empty()) {
-            structure_.push_back(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete);
           } else {
-            structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType{});
             for (const auto& field : fields) {
               Push(field.type_id);
@@ -397,14 +371,6 @@ class TypeStructureBuilder {
     return context_.types().GetTypeIdForTypeInstId(inst_id);
   }
 
-  // Sets the `distance` in `first_symbolic_distance_` if it does not already
-  // have a non-infinite value.
-  auto SetFirstSymbolic(int distance) -> void {
-    if (first_symbolic_distance_ == TypeStructure::InfiniteDistance) {
-      first_symbolic_distance_ = distance;
-    }
-  }
-
   auto GetSpecificArgs(SemIR::SpecificId specific_id)
       -> llvm::ArrayRef<SemIR::InstId> {
     if (specific_id == SemIR::SpecificId::None) {
@@ -435,9 +401,19 @@ class TypeStructureBuilder {
 
   auto Push(WorkItem item) -> void { work_list_.push_back(item); }
 
+  auto AppendStructural(TypeStructure::Structural structural) -> void {
+    if (structural == TypeStructure::Structural::Symbolic) {
+      // Sets the `distance` in `first_symbolic_distance_` if it does not
+      // already have a non-infinite value.
+      if (first_symbolic_distance_ == TypeStructure::InfiniteDistance) {
+        first_symbolic_distance_ = structure_.size();
+      }
+    }
+    structure_.push_back(structural);
+  }
+
   Context& context_;
   llvm::SmallVector<WorkItem> work_list_;
-  int position_;
   int first_symbolic_distance_;
   llvm::SmallVector<TypeStructure::Structural> structure_;
 };
