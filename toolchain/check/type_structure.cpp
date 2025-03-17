@@ -121,16 +121,7 @@ class TypeStructureBuilder {
     // The self type comes first in the type structure, so we push it last, as
     // the queue works from the back.
     Push(interface_constraint);
-
-    auto maybe_self_type_id = TryGetInstIdAsTypeId(self_inst_id);
-    if (std::holds_alternative<SemIR::TypeId>(maybe_self_type_id)) {
-      auto self_type_id = std::get<SemIR::TypeId>(maybe_self_type_id);
-      CARBON_CHECK(self_type_id != SemIR::TypeId::None);
-      Push(self_type_id);
-    } else {
-      CARBON_CHECK(std::holds_alternative<SymbolicType>(maybe_self_type_id));
-      Push(SymbolicType());
-    }
+    PushInstId(self_inst_id);
     BuildTypeStructure();
 
     return TypeStructure(std::exchange(structure_, {}),
@@ -299,6 +290,7 @@ class TypeStructureBuilder {
           structure_.push_back(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType{});
           Push(array_type.element_type_id);
+          PushInstId(array_type.bound_id);
           break;
         }
         case CARBON_KIND(SemIR::ClassType class_type): {
@@ -425,15 +417,19 @@ class TypeStructureBuilder {
   // Push all arguments from the array.
   auto PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
     for (auto arg_id : llvm::reverse(args)) {
-      auto maybe_type_id = TryGetInstIdAsTypeId(arg_id);
-      if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
-        Push(SymbolicType());
-      } else if (auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
-                 type_id.has_value()) {
-        Push(type_id);
-      } else {
-        Push(NonTypeValue());
-      }
+      PushInstId(arg_id);
+    }
+  }
+
+  auto PushInstId(SemIR::InstId inst_id) -> void {
+    auto maybe_type_id = TryGetInstIdAsTypeId(inst_id);
+    if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
+      Push(SymbolicType());
+    } else if (auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
+               type_id.has_value()) {
+      Push(type_id);
+    } else {
+      Push(NonTypeValue());
     }
   }
 
