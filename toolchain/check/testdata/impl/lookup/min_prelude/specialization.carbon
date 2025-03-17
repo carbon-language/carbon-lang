@@ -100,8 +100,8 @@ impl forall [T:! type] C(()) as Z(T) where .X = C(T) {}
 impl forall [T:! type] C(T) as Z(C(())) where .X = () {}
 
 fn F() {
-  // The specialization of `Z(C)` should match in preference to the blanket impl
-  // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
+  // The specialization of `C(())` should match in preference to the blanket impl
+  // of `C(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
   //
   // TODO: C(T) is C(()) so this should work?
