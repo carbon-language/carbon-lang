@@ -251,6 +251,31 @@ fn F() {
   let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
 }
 
+// --- specialed_class_with_symbolic_facet_value_param.carbon
+
+interface Z {
+  let X:! type;
+}
+
+impl forall [T:! type] T as Z where .X = T {}
+
+interface Y {}
+class C(T:! Y) {}
+
+class D {}
+impl D as Y {}
+
+// D can be either a concrete or symbolic FacetValue, depending on what the
+// caller has.
+impl forall [D:! Y] C(D) as Z where .X = () {}
+
+fn F[D:! Y](d: D) {
+  // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
+  // because we are in a generic where `D` is an unknown type, which will cause
+  // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
+  let a: C(D).(Z.X) = ();
+}
+
 // --- cycle_in_deduce_avoided_by_specialization.carbon
 library "[[@TEST_NAME]]";
 
