@@ -206,6 +206,20 @@ class TypeStructureBuilder {
           AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
+        case CARBON_KIND(SemIR::FacetType facet_type): {
+          (void)facet_type;
+          // A `FacetType` instruction shows up in the self type of impl lookup
+          // queries like `C(D)` where `C` requires its parameter to satisfy
+          // some `FacetType` `Z`. The `D` argument is converted to a
+          // `FacetValue` satisfying `Z`, and the type of `C` in the self type
+          // has a specific with the type of that `FacetValue`, which is the
+          // `FacetType` satisfying `Z` we see here.
+          //
+          // The `FacetValue` may still be symbolic in generic code but its
+          // type, the `FacetType` here, is concrete.
+          AppendStructural(TypeStructure::Structural::Concrete);
+          break;
+        }
         case CARBON_KIND(SemIR::FloatType type): {
           (void)type;
           AppendStructural(TypeStructure::Structural::Concrete);
@@ -286,24 +300,6 @@ class TypeStructureBuilder {
           // We don't put the `const` into the type structure since it is a
           // modifier; just move to the inner type.
           Push(const_type.inner_id);
-          break;
-        }
-        case CARBON_KIND(SemIR::FacetType facet_type): {
-          auto facet_type_info =
-              context_.facet_types().Get(facet_type.facet_type_id);
-          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
-          // TODO: The need for `.closing` goes away when other_requirements
-          // does. Are there other places we need to look for symbolics in
-          // FacetTypeInfo at that point? For now we treat it as having a
-          // symbolic at the end of the facet type, so facet types with
-          // other_requirements are chosen with lower priority than those
-          // without.
-          Push(CloseType{.closing = facet_type_info.other_requirements
-                                        ? CloseWithSymbolic
-                                        : CloseWithConcrete});
-          for (const auto& i : facet_type_info.impls_constraints) {
-            PushArgs(GetSpecificArgs(i.specific_id));
-          }
           break;
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {
