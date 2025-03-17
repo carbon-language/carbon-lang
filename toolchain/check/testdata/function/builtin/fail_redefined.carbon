@@ -43,18 +43,18 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.type.b6a92a.1: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d852be.1: %.type.b6a92a.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
-// CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.type.b6a92a.2: type = fn_type @.2 [concrete]
-// CHECK:STDOUT:   %.d852be.2: %.type.b6a92a.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
-// CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.type.b6a92a.3: type = fn_type @.3 [concrete]
-// CHECK:STDOUT:   %.d852be.3: %.type.b6a92a.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.00d7e7.1: type = fn_type @A.1 [concrete]
+// CHECK:STDOUT:   %A.1db889.1: %A.type.00d7e7.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.00d7e7.2: type = fn_type @A.2 [concrete]
+// CHECK:STDOUT:   %A.1db889.2: %A.type.00d7e7.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %B.type.e168e5.1: type = fn_type @B.1 [concrete]
+// CHECK:STDOUT:   %B.d1e2df.1: %B.type.e168e5.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %B.type.e168e5.2: type = fn_type @B.2 [concrete]
+// CHECK:STDOUT:   %B.d1e2df.2: %B.type.e168e5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.type.de0bfe.1: type = fn_type @C.1 [concrete]
+// CHECK:STDOUT:   %C.1b0370.1: %C.type.de0bfe.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.type.de0bfe.2: type = fn_type @C.2 [concrete]
+// CHECK:STDOUT:   %C.1b0370.2: %C.type.de0bfe.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -68,12 +68,12 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .A = %A.decl.loc11
+// CHECK:STDOUT:     .B = %B.decl.loc21
+// CHECK:STDOUT:     .C = %C.decl.loc31
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
+// CHECK:STDOUT:   %A.decl.loc11: %A.type.00d7e7.1 = fn_decl @A.1 [concrete = constants.%A.1db889.1] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
@@ -98,7 +98,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc19: %.type.b6a92a.1 = fn_decl @.1 [concrete = constants.%.d852be.1] {
+// CHECK:STDOUT:   %A.decl.loc19: %A.type.00d7e7.2 = fn_decl @A.2 [concrete = constants.%A.1db889.2] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
@@ -123,7 +123,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
+// CHECK:STDOUT:   %B.decl.loc21: %B.type.e168e5.1 = fn_decl @B.1 [concrete = constants.%B.d1e2df.1] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
@@ -148,7 +148,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc29: %.type.b6a92a.2 = fn_decl @.2 [concrete = constants.%.d852be.2] {
+// CHECK:STDOUT:   %B.decl.loc29: %B.type.e168e5.2 = fn_decl @B.2 [concrete = constants.%B.d1e2df.2] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
@@ -173,7 +173,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [concrete = constants.%C] {
+// CHECK:STDOUT:   %C.decl.loc31: %C.type.de0bfe.1 = fn_decl @C.1 [concrete = constants.%C.1b0370.1] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
@@ -198,7 +198,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc39: %.type.b6a92a.3 = fn_decl @.3 [concrete = constants.%.d852be.3] {
+// CHECK:STDOUT:   %C.decl.loc39: %C.type.de0bfe.2 = fn_decl @C.2 [concrete = constants.%C.1b0370.2] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
@@ -225,23 +225,23 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @A.1(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @A.2(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @B.1(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.2(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @B.2(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.1(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.3(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.2(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:

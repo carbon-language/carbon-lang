@@ -378,10 +378,11 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     bool result;
     auto parse_kind = context_.parse_tree().node_kind(node_id);
     switch (parse_kind) {
-#define CARBON_PARSE_NODE_KIND(Name)                              \
-  case Parse::NodeKind::Name: {                                   \
-    result = HandleParseNode(context_, Parse::Name##Id(node_id)); \
-    break;                                                        \
+#define CARBON_PARSE_NODE_KIND(Name)                                   \
+  case Parse::NodeKind::Name: {                                        \
+    result = HandleParseNode(                                          \
+        context_, context_.parse_tree().As<Parse::Name##Id>(node_id)); \
+    break;                                                             \
   }
 #include "toolchain/parse/node_kind.def"
     }

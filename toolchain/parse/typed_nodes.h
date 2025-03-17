@@ -174,11 +174,21 @@ using UnderscoreName =
 
 // A name qualifier with parameters, such as `A(T:! type).` or `A[T:! type](N:!
 // T).`.
-struct NameQualifierWithParams {
-  static constexpr auto Kind = NodeKind::NameQualifierWithParams.Define(
-      {.bracketed_by = IdentifierNameBeforeParams::Kind});
+struct IdentifierNameQualifierWithParams {
+  static constexpr auto Kind =
+      NodeKind::IdentifierNameQualifierWithParams.Define(
+          {.bracketed_by = IdentifierNameBeforeParams::Kind});
 
   IdentifierNameBeforeParamsId name;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<ExplicitParamListId> params;
+  Lex::PeriodTokenIndex token;
+};
+struct KeywordNameQualifierWithParams {
+  static constexpr auto Kind = NodeKind::KeywordNameQualifierWithParams.Define(
+      {.bracketed_by = KeywordNameBeforeParams::Kind});
+
+  KeywordNameBeforeParamsId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
@@ -205,9 +215,9 @@ struct KeywordNameQualifierWithoutParams {
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
-  llvm::SmallVector<
-      NodeIdOneOf<NameQualifierWithParams, IdentifierNameQualifierWithoutParams,
-                  KeywordNameQualifierWithoutParams>>
+  llvm::SmallVector<NodeIdOneOf<
+      IdentifierNameQualifierWithParams, IdentifierNameQualifierWithoutParams,
+      KeywordNameQualifierWithParams, KeywordNameQualifierWithoutParams>>
       qualifiers;
   AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;

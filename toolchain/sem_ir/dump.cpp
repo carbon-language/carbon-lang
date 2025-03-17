@@ -192,8 +192,34 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
       llvm::errs() << " " << file.insts().Get(name_scope.inst_id());
     }
     DumpNameIfValid(file, name_scope.name_id());
+    llvm::errs() << '\n';
+    for (const auto& entry : name_scope.entries()) {
+      llvm::errs() << "  - " << entry.name_id;
+      DumpNameIfValid(file, entry.name_id);
+      llvm::errs() << ": ";
+      if (entry.result.is_poisoned()) {
+        llvm::errs() << "<poisoned>\n";
+      } else if (entry.result.is_found()) {
+        switch (entry.result.access_kind()) {
+          case AccessKind::Public:
+            llvm::errs() << "public ";
+            break;
+          case AccessKind::Protected:
+            llvm::errs() << "protected ";
+            break;
+          case AccessKind::Private:
+            llvm::errs() << "private ";
+            break;
+        }
+        DumpNoNewline(file, entry.result.target_inst_id());
+        llvm::errs() << "\n";
+      } else {
+        llvm::errs() << "<not-found>\n";
+      }
+    }
+  } else {
+    llvm::errs() << '\n';
   }
-  llvm::errs() << '\n';
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,

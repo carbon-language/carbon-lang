@@ -53,8 +53,8 @@ fn NS.Foo();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NS.type: type = fn_type @NS [concrete]
+// CHECK:STDOUT:   %NS: %NS.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -77,11 +77,11 @@ fn NS.Foo();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {} {}
+// CHECK:STDOUT:   %NS.decl: %NS.type = fn_decl @NS [concrete = constants.%NS] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
+// CHECK:STDOUT: fn @NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
 // CHECK:STDOUT:

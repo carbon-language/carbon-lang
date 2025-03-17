@@ -20,6 +20,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -406,7 +407,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   auto queue_block_insts = [&](ScopeId scope_id,
                                llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.has_value()) {
+      if (inst_id.has_value() && !SemIR::IsSingletonInstId(inst_id)) {
         insts.push_back(std::make_pair(scope_id, inst_id));
       }
     }
@@ -615,10 +616,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(FacetAccessWitness inst): {
         auto name_id = facet_access_name_id(inst.facet_value_inst_id);
+        RawStringOstream out;
         if (name_id.has_value()) {
-          add_inst_name_id(name_id, ".as_wit");
+          out << ".as_wit.iface" << inst.index.index;
+          add_inst_name_id(name_id, out.TakeStr());
         } else {
-          add_inst_name("as_wit");
+          out << "as_wit.iface" << inst.index.index;
+          add_inst_name(out.TakeStr());
         }
         continue;
       }

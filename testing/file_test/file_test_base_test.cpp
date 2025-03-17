@@ -264,9 +264,9 @@ auto FileTestBaseTest::Run(
   PrintArgs(test_args, output_stream);
 
   auto filename = std::filesystem::path(test_name().str()).filename();
-  if (filename == "args.carbon") {
-    // 'args.carbon' has custom arguments, so don't do regular argument
-    // validation for it.
+  if (filename == "args.carbon" || filename == "include_file.carbon") {
+    // 'args.carbon' and 'include_file.carbon' have custom arguments, so don't
+    // do regular argument validation for them.
     return {{.success = true}};
   }
 

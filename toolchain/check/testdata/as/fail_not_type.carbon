@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_not_type.carbon
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:19: error: cannot implicitly convert value of type `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:19: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: let n: i32 = 1 as 2;
 // CHECK:STDERR:                   ^
 // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]

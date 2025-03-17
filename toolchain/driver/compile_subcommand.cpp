@@ -227,6 +227,23 @@ Whether to use the implicit prelude import. Enabled by default.
         arg_b.Default(true);
         arg_b.Set(&prelude_import);
       });
+  b.AddFlag(
+      {
+          .name = "custom-core",
+          .value_name = "CUSTOM_CORE",
+          .help = R"""(
+Whether to use a custom Core package, the files for which must all be included
+in the compile command line.
+
+The prelude library in the Core package is imported automatically. By default,
+the Core package shipped with the toolchain is used, and its files do not need
+to be specified in the compile command line.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(false);
+        arg_b.Set(&custom_core);
+      });
   b.AddStringOption(
       {
           .name = "exclude-dump-file-prefix",
@@ -581,9 +598,10 @@ auto CompilationUnit::RunLower(
     // TODO: Consider disabling instruction naming by default if we're not
     // producing textual LLVM IR.
     SemIR::InstNamer inst_namer(&*sem_ir_);
-    module_ = Lower::LowerToLLVM(
-        *llvm_context_, tree_and_subtrees_getters_for_debug_info,
-        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
+    module_ = Lower::LowerToLLVM(*llvm_context_,
+                                 tree_and_subtrees_getters_for_debug_info,
+                                 input_filename_, *sem_ir_, sem_ir_->cpp_ast(),
+                                 &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");
@@ -739,7 +757,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Replace this with a search for library api files in a
   // package-specific search path based on the library name.
   llvm::SmallVector<std::string> prelude;
-  if (options_.prelude_import &&
+  if (options_.prelude_import && !options_.custom_core &&
       options_.phase >= CompileOptions::Phase::Check) {
     if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
