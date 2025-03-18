@@ -9,7 +9,6 @@
 
 #include "common/map.h"
 #include "common/ostream.h"
-//
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -75,7 +74,7 @@ class Context {
     return tree_and_subtrees_getter_();
   }
 
-  SemIR::File& sem_ir() { return *sem_ir_; }
+  auto sem_ir() -> SemIR::File& { return *sem_ir_; }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
   // Convenience functions for major phase data.
