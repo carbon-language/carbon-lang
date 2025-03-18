@@ -110,8 +110,8 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
   return true;
 }
 
-// A class that builds a `TypeStructure` for an `Impl` that represents its self
-// type.
+// A class that builds a `TypeStructure` for an `Impl`, or an impl lookup query,
+// that represents its self type and interface.
 class TypeStructureBuilder {
  public:
   explicit TypeStructureBuilder(Context& context) : context_(context) {}
