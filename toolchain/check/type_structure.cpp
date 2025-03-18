@@ -173,34 +173,30 @@ class TypeStructureBuilder {
       CARBON_KIND_SWITCH(inst) {
           // ==== Symbolic types ====
 
-        case CARBON_KIND(SemIR::BindSymbolicName type): {
-          (void)type;
-          Push(SymbolicType());
-          break;
-        }
-        case CARBON_KIND(SemIR::SymbolicBindingPattern type): {
-          (void)type;
-          Push(SymbolicType());
-          break;
-        }
-        case CARBON_KIND(SemIR::FacetAccessType type): {
-          (void)type;
+        case SemIR::BindSymbolicName::Kind:
+        case SemIR::SymbolicBindingPattern::Kind:
+        case SemIR::FacetAccessType::Kind: {
           Push(SymbolicType());
           break;
         }
 
           // ==== Concrete types ====
 
-        case CARBON_KIND(SemIR::AssociatedEntityType type): {
-          (void)type;
+        case SemIR::AssociatedEntityType::Kind:
+        case SemIR::BoolType::Kind:
+        case SemIR::FloatType::Kind:
+        case SemIR::GenericClassType::Kind:
+        case SemIR::GenericInterfaceType::Kind:
+        case SemIR::ImplWitnessAccess::Kind:
+        case SemIR::IntLiteralType::Kind:
+        case SemIR::LegacyFloatType::Kind:
+        case SemIR::PointerType::Kind:
+        case SemIR::StringType::Kind:
+        case SemIR::TypeType::Kind: {
           AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
-        case CARBON_KIND(SemIR::BoolType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
+
         case CARBON_KIND(SemIR::FacetType facet_type): {
           (void)facet_type;
           // A `FacetType` instruction shows up in the self type of impl lookup
@@ -215,26 +211,6 @@ class TypeStructureBuilder {
           AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
-        case CARBON_KIND(SemIR::FloatType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
-        case CARBON_KIND(SemIR::GenericClassType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
-        case CARBON_KIND(SemIR::GenericInterfaceType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
-        case CARBON_KIND(SemIR::ImplWitnessAccess type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
         case CARBON_KIND(SemIR::IntType int_type): {
           if (context_.constant_values().Get(inst_id).is_concrete()) {
             AppendStructural(TypeStructure::Structural::Concrete);
@@ -243,31 +219,6 @@ class TypeStructureBuilder {
             Push(CloseType{});
             PushArgs({int_type.bit_width_id});
           }
-          break;
-        }
-        case CARBON_KIND(SemIR::IntLiteralType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
-        case CARBON_KIND(SemIR::LegacyFloatType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
-        case CARBON_KIND(SemIR::PointerType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
-        case CARBON_KIND(SemIR::StringType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
-          break;
-        }
-        case CARBON_KIND(SemIR::TypeType type): {
-          (void)type;
-          AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
 
