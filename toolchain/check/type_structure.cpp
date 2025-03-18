@@ -215,7 +215,7 @@ class TypeStructureBuilder {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
-            Push(CloseType{});
+            Push(CloseType());
             PushArgs({int_type.bit_width_id});
           }
           break;
@@ -225,7 +225,7 @@ class TypeStructureBuilder {
 
         case CARBON_KIND(SemIR::ArrayType array_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
-          Push(CloseType{});
+          Push(CloseType());
           Push(array_type.element_type_id);
           PushInstId(array_type.bound_id);
           break;
@@ -236,7 +236,7 @@ class TypeStructureBuilder {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
-            Push(CloseType{});
+            Push(CloseType());
             PushArgs(args);
           }
           break;
@@ -249,7 +249,7 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::PointerType pointer_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
-          Push(CloseType{});
+          Push(CloseType());
           Push(pointer_type.pointee_id);
           break;
         }
@@ -259,7 +259,7 @@ class TypeStructureBuilder {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
-            Push(CloseType{});
+            Push(CloseType());
             for (auto type :
                  context_.type_blocks().Get(tuple_type.elements_id)) {
               Push(type);
@@ -274,7 +274,7 @@ class TypeStructureBuilder {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
-            Push(CloseType{});
+            Push(CloseType());
             for (const auto& field : fields) {
               Push(field.type_id);
             }
