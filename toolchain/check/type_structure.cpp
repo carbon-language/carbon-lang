@@ -6,7 +6,6 @@
 
 #include <variant>
 
-#include "llvm/ADT/ScopeExit.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/facet_type_info.h"
@@ -48,57 +47,64 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
     // From here we know one side is a Symbolic and the other is not. We can
     // match the Symbolic against either a single Concrete or a larger bracketed
     // set of Concrete structural elements.
-    //
-    // We move the symbolic to the RHS to make only one case to handle below,
-    // and make sure the cursors are swapped back at the bottom of the loop
-    // iteration, so that they compare with the correct `end()`s.
-    auto unswap =
-        llvm::make_scope_exit([&] { std::swap(lhs_cursor, rhs_cursor); });
-    if (*lhs_cursor == Structural::Symbolic) {
-      std::swap(lhs_cursor, rhs_cursor);
-    } else {
-      unswap.release();
-    }
 
-    // Consume the symbolic on the RHS.
-    ++rhs_cursor;
+    // Returns false if the lhs and rhs can not match, true if we should
+    // continue checking for compatibility.
+    auto consume_symbolic = [](const auto*& lhs_cursor,
+                               const auto*& rhs_cursor) -> bool {
+      // Consume the symbolic on the RHS.
+      ++rhs_cursor;
 
-    // There's a Concrete on the LHS; it matches with the Symbolic and is
-    // consumed.
-    if (*lhs_cursor == Structural::Concrete) {
-      ++lhs_cursor;
-      continue;
-    }
-
-    // The symbolic on the RHS is in the same position as a close paren on the
-    // LHS, which means the structures can not match.
-    //
-    // Example:
-    // - ((c))
-    // - ((c?))
-    if (*lhs_cursor == Structural::ConcreteCloseParen) {
-      return false;
-    }
-
-    // There's an open paren on the LHS; the Symbolic matches with everything on
-    // the LHS up to the matching closing paren.
-    CARBON_CHECK(*lhs_cursor == Structural::ConcreteOpenParen);
-    int depth = 0;
-    do {
-      switch (*lhs_cursor) {
-        case Structural::ConcreteOpenParen:
-          depth += 1;
-          break;
-        case Structural::ConcreteCloseParen:
-          depth -= 1;
-          break;
-        case Structural::Concrete:
-          break;
-        case Structural::Symbolic:
-          break;
+      // There's a Concrete on the LHS; it matches with the Symbolic and is
+      // consumed.
+      if (*lhs_cursor == Structural::Concrete) {
+        ++lhs_cursor;
+        return true;
       }
-      ++lhs_cursor;
-    } while (depth > 0);
+
+      // The symbolic on the RHS is in the same position as a close paren on the
+      // LHS, which means the structures can not match.
+      //
+      // Example:
+      // - ((c))
+      // - ((c?))
+      if (*lhs_cursor == Structural::ConcreteCloseParen) {
+        return false;
+      }
+
+      // There's an open paren on the LHS; the Symbolic matches with everything
+      // on the LHS up to the matching closing paren.
+      CARBON_CHECK(*lhs_cursor == Structural::ConcreteOpenParen);
+      int depth = 0;
+      do {
+        switch (*lhs_cursor) {
+          case Structural::ConcreteOpenParen:
+            depth += 1;
+            break;
+          case Structural::ConcreteCloseParen:
+            depth -= 1;
+            break;
+          case Structural::Concrete:
+            break;
+          case Structural::Symbolic:
+            break;
+        }
+        ++lhs_cursor;
+      } while (depth > 0);
+      return true;
+    };
+
+    // We move the symbolic to the RHS to make only one case to handle in the
+    // lambda.
+    if (*lhs_cursor == Structural::Symbolic) {
+      if (!consume_symbolic(rhs_cursor, lhs_cursor)) {
+        return false;
+      }
+    } else {
+      if (!consume_symbolic(lhs_cursor, rhs_cursor)) {
+        return false;
+      }
+    }
   }
 
   return true;
