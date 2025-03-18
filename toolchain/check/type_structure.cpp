@@ -139,22 +139,13 @@ class TypeStructureBuilder {
       auto next = work_list_.back();
       work_list_.pop_back();
 
-      if (auto* close_type = std::get_if<CloseType>(&next)) {
-        switch (close_type->closing) {
-          case CloseOnly:
-            break;
-          case CloseWithConcrete:
-            AppendStructural(TypeStructure::Structural::Concrete);
-            break;
-          case CloseWithSymbolic:
-            AppendStructural(TypeStructure::Structural::Symbolic);
-            break;
-        }
+      if (std::holds_alternative<CloseType>(next)) {
         AppendStructural(TypeStructure::Structural::ConcreteCloseParen);
         continue;
       }
 
-      if (const auto* interface = std::get_if<SemIR::SpecificInterface>(&next)) {
+      if (const auto* interface =
+              std::get_if<SemIR::SpecificInterface>(&next)) {
         auto args = GetSpecificArgs(interface->specific_id);
         if (args.empty()) {
           AppendStructural(TypeStructure::Structural::Concrete);
@@ -340,20 +331,22 @@ class TypeStructureBuilder {
     }
   }
 
-  enum CloseTypeClosing {
-    CloseOnly,
-    CloseWithConcrete,
-    CloseWithSymbolic,
-  };
-  struct CloseType {
-    CloseTypeClosing closing = CloseOnly;
-  };
+  // A work item to mark the closing paren for an aggregate concrete type.
+  struct CloseType {};
+  // A work item to mark a symbolic type.
   struct SymbolicType {};
+  // A work item to mark a non-type value.
   struct NonTypeValue {};
 
   using WorkItem = std::variant<SemIR::TypeId, SymbolicType, NonTypeValue,
                                 SemIR::SpecificInterface, CloseType>;
 
+  // Get the TypeId for an instruction that is not a facet value, otherwise
+  // return SymbolicType to indicate the instruction is a symbolic facet value.
+  //
+  // If the instruction is not a type value, the return is TypeId::None.
+  //
+  // We reuse the `SymbolicType` work item here to give a nice return type.
   auto TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
       -> std::variant<SemIR::TypeId, SymbolicType> {
     if (auto facet_value =
@@ -387,6 +380,7 @@ class TypeStructureBuilder {
     return context_.types().GetTypeIdForTypeInstId(inst_id);
   }
 
+  // Get the instructions in the specific's instruction block as an ArrayRef.
   auto GetSpecificArgs(SemIR::SpecificId specific_id)
       -> llvm::ArrayRef<SemIR::InstId> {
     if (specific_id == SemIR::SpecificId::None) {
@@ -396,13 +390,15 @@ class TypeStructureBuilder {
     return context_.inst_blocks().Get(specific.args_id);
   }
 
-  // Push all arguments from the array.
+  // Push all arguments from the array into the work queue.
   auto PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
     for (auto arg_id : llvm::reverse(args)) {
       PushInstId(arg_id);
     }
   }
 
+  // Push an instruction's type value into the work queue, or a marker if the
+  // instruction has a symbolic value.
   auto PushInstId(SemIR::InstId inst_id) -> void {
     auto maybe_type_id = TryGetInstIdAsTypeId(inst_id);
     if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
@@ -415,8 +411,10 @@ class TypeStructureBuilder {
     }
   }
 
+  // Push the next step into the work queue.
   auto Push(WorkItem item) -> void { work_list_.push_back(item); }
 
+  // Append a structural element to the TypeStructure being built.
   auto AppendStructural(TypeStructure::Structural structural) -> void {
     if (structural == TypeStructure::Structural::Symbolic) {
       // Sets the `distance` in `first_symbolic_distance_` if it does not
