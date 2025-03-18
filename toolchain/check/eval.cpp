@@ -352,7 +352,7 @@ static auto MakeFacetTypeResult(Context& context,
 // deleted. This prevents conversion to InstId.
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::AbsoluteInstId inst_id, Phase* phase)
-    -> SemIR::InstBlockId = delete;
+    -> SemIR::InstId = delete;
 
 // If the given instruction is constant, returns its constant value.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
