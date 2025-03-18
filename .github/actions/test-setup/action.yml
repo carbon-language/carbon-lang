@@ -154,7 +154,7 @@ runs:
         # spaces.
         for f in $(
             git diff --name-only $GIT_BASE_SHA -- \
-              '**/*.h' '**/*.cpp' '**/*.cpp'); do
+              '**/*.h' '**/*.cpp' '**/*.def'); do
           echo "  union '$f'" >> $QUERY_FILE
         done
 
