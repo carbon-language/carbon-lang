@@ -109,6 +109,10 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::InstId inst_id)
     -> void {
   SemIR::Dump(context.sem_ir(), inst_id);
+  auto loc_id = context.sem_ir().insts().GetLocId(inst_id);
+  llvm::errs() << "  - ";
+  DumpNoNewline(context, loc_id);
+  llvm::errs() << '\n';
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
