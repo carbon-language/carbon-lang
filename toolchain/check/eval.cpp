@@ -375,6 +375,11 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
   return eval_context.context().types().GetTypeIdForTypeConstantId(const_id);
 }
 
+// AbsoluteInstBlockId can not have its values substituted.
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::AbsoluteInstBlockId inst_block_id,
+                             Phase* phase) -> SemIR::InstBlockId = delete;
+
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values.
 static auto GetConstantValue(EvalContext& eval_context,
