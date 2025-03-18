@@ -483,8 +483,13 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     }
   }
 
-  auto handle_specific_function = [&](SemIRLoc loc,
-                                      SemIR::SpecificId specific_id) {
+  // Note that more required definitions can be added during this loop.
+  // NOLINTNEXTLINE
+  for (size_t i = 0; i != context_.function_definitions_required().size();
+       ++i) {
+    // This is using the location for the use. We could track the
+    // list of enclosing locations if this was used from a generic.
+    auto [loc, specific_id] = context_.function_definitions_required()[i];
     if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                         "use of undefined generic function");
@@ -498,16 +503,6 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
           .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
           .Emit();
     }
-  };
-
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE
-  for (size_t i = 0; i != context_.function_definitions_required().size();
-       ++i) {
-    // This is using the location for the use. We could track the
-    // list of enclosing locations if this was used from a generic.
-    auto [loc, specific_id] = context_.function_definitions_required()[i];
-    handle_specific_function(loc, specific_id);
   }
 }
 
