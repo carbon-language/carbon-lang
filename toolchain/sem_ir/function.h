@@ -21,11 +21,11 @@ struct FunctionFields {
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
-  // This block consists of references to the
-  // `AnyParam` insts that represent the function's `Call` parameters. The
-  // "`Call` parameters" are the parameters corresponding to the arguments that
-  // are passed to a `Call` inst, so they do not include compile-time
-  // parameters, but they do include the return slot.
+  // This block consists of references to the `AnyParam` insts that represent
+  // the function's `Call` parameters. The "`Call` parameters" are the
+  // parameters corresponding to the arguments that are passed to a `Call`
+  // inst, so they do not include compile-time parameters, but they do include
+  // the return slot.
   //
   // The parameters appear in declaration order: `self` (if present), then the
   // explicit runtime parameters, then the return slot (which is "declared" by
