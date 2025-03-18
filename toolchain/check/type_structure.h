@@ -44,6 +44,8 @@ class TypeStructure : public Printable<TypeStructure> {
                rhs.distance_to_first_symbolic_type_;
       }
     }
+    // TODO: If they have a symbolic in the same position, we could use further
+    // symbolic types to get an ordering.
     return std::weak_ordering::equivalent;
   }
 

@@ -32,6 +32,10 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
       return false;
     }
     // Same structural element on both sides, they match and both are consumed.
+    //
+    // TODO: If we kept the constant value of the concrete element in the type
+    // structure, then we could compare them and use that to eliminate matching
+    // impls that are not actually compatible.
     if (*lhs_cursor == *rhs_cursor) {
       ++lhs_cursor;
       ++rhs_cursor;
