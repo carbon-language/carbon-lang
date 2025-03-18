@@ -188,7 +188,7 @@ class Context {
 
   // An ongoing impl lookup, used to ensure termination.
   struct ImplLookupStackEntry {
-    SemIR::ConstantId type_const_id;
+    SemIR::ConstantId query_self_const_id;
     SemIR::ConstantId query_facet_type_const_id;
     // The location of the impl being looked at for the stack entry.
     SemIR::InstId impl_loc = SemIR::InstId::None;

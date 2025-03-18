@@ -233,6 +233,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
        .self_type_id = SemIR::TypeId::None,
        .inheritance_kind = inheritance_kind}};
 
+  DiagnoseIfGenericMissingExplicitParameters(context, class_info);
+
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
                  class_info, is_definition,
                  introducer.modifier_set.GetAccessKind());

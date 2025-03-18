@@ -20,6 +20,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -406,7 +407,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   auto queue_block_insts = [&](ScopeId scope_id,
                                llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.has_value()) {
+      if (inst_id.has_value() && !SemIR::IsSingletonInstId(inst_id)) {
         insts.push_back(std::make_pair(scope_id, inst_id));
       }
     }
@@ -532,8 +533,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case BindingPattern::Kind:
       case SymbolicBindingPattern::Kind: {
         auto inst = untyped_inst.As<AnyBindingPattern>();
-        add_inst_name_id(
-            sem_ir_->entity_names().Get(inst.entity_name_id).name_id, ".patt");
+        auto name_id = NameId::Underscore;
+        if (inst.entity_name_id.has_value()) {
+          name_id = sem_ir_->entity_names().Get(inst.entity_name_id).name_id;
+        }
+        add_inst_name_id(name_id, ".patt");
         continue;
       }
       case CARBON_KIND(BoolLiteral inst): {

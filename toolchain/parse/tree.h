@@ -78,7 +78,7 @@ class Tree : public Printable<Tree> {
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {
-    ImportDeclId node_id;
+    AnyPackagingDeclId node_id = AnyPackagingDeclId::None;
     PackageNameId package_id = PackageNameId::None;
     // TODO: Move LibraryNameId to Base and use it here.
     StringLiteralValueId library_id = StringLiteralValueId::None;
@@ -157,7 +157,8 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto As(NodeId n) const -> T {
     CARBON_DCHECK(n.has_value());
-    CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
+    CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)),
+                  "cannot convert {0} to {1}", node_kind(n), typeid(T).name());
     return T::UnsafeMake(n);
   }
 

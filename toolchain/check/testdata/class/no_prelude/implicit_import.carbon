@@ -33,7 +33,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
@@ -53,7 +53,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `class C` [RedeclRedef]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
@@ -74,7 +74,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+8]]:7: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class B {}
 // CHECK:STDERR:       ^
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias B = C;
 // CHECK:STDERR:       ^
@@ -111,8 +111,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_21.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_21.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,8 +164,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_32.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_32.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,8 +218,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C.2 [concrete = constants.%C.f794a0.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,8 +275,8 @@ class B {}
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_25.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_25.2 = import <none>
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

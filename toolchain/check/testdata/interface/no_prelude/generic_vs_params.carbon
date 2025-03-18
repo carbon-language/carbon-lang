@@ -48,6 +48,26 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 interface A(T: type) {}
 
+// --- fail_implicit_params_only_empty.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_implicit_params_only_empty.carbon:[[@LINE+4]]:14: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
+// CHECK:STDERR: interface Bar[] {}
+// CHECK:STDERR:              ^~
+// CHECK:STDERR:
+interface Bar[] {}
+
+// --- fail_implicit_params_only.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_implicit_params_only.carbon:[[@LINE+4]]:14: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
+// CHECK:STDERR: interface Bar[T:! type] {}
+// CHECK:STDERR:              ^~~~~~~~~~
+// CHECK:STDERR:
+interface Bar[T:! type] {}
+
 // CHECK:STDOUT: --- params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -370,4 +390,74 @@ interface A(T: type) {}
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar.type.982: type = generic_interface_type @Bar [concrete]
+// CHECK:STDOUT:   %Bar.generic: %Bar.type.982 = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.type.ea3: type = facet_type <@Bar> [concrete]
+// CHECK:STDOUT:   %Self: %Bar.type.ea3 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: %Bar.type.982 = interface_decl @Bar [concrete = constants.%Bar.generic] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Bar {
+// CHECK:STDOUT:   %Self: %Bar.type.ea3 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_implicit_params_only.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Bar.type.982: type = generic_interface_type @Bar [concrete]
+// CHECK:STDOUT:   %Bar.generic: %Bar.type.982 = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.type.7ed: type = facet_type <@Bar, @Bar(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %Bar.type.7ed = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: %Bar.type.982 = interface_decl @Bar [concrete = constants.%Bar.generic] {
+// CHECK:STDOUT:     %T.patt.loc8_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc8_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @Bar(%T.loc8_15.1: type) {
+// CHECK:STDOUT:   %T.loc8_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar, @Bar(%T.loc8_15.2)> [symbolic = %Bar.type (constants.%Bar.type.7ed)]
+// CHECK:STDOUT:   %Self.2: %Bar.type.7ed = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:     %Self.1: @Bar.%Bar.type (%Bar.type.7ed) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Bar(constants.%T) {
+// CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Bar(%T.loc8_15.2) {}
 // CHECK:STDOUT:

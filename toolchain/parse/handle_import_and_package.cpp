@@ -39,9 +39,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
                               bool is_impl,
                               llvm::function_ref<auto()->void> on_parse_error)
     -> void {
-  Tree::PackagingNames names{
-      .node_id = ImportDeclId::UnsafeMake(NodeId(state.subtree_start)),
-      .is_export = is_export};
+  Tree::PackagingNames names = {.is_export = is_export};
 
   // Parse the package name.
   if (declaration == NodeKind::LibraryDecl ||
@@ -115,13 +113,14 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
   }
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
+    auto node_id = context.AddNode(declaration, *semi, state.has_error);
+    names.node_id = context.tree().As<AnyPackagingDeclId>(node_id);
+
     if (declaration == NodeKind::ImportDecl) {
       context.AddImport(names);
     } else {
       context.set_packaging_decl(names, is_impl);
     }
-
-    context.AddNode(declaration, *semi, state.has_error);
   } else {
     context.DiagnoseExpectedDeclSemi(context.tokens().GetKind(state.token));
     on_parse_error();

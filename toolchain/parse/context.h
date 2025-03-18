@@ -11,6 +11,7 @@
 #include "common/vlog.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/precedence.h"
 #include "toolchain/parse/state.h"
@@ -131,12 +132,14 @@ class Context {
   }
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void {
+  // TODO: Look into switching to a typed node return.
+  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> NodeId {
     CARBON_CHECK(has_error || (kind != NodeKind::InvalidParse &&
                                kind != NodeKind::InvalidParseStart &&
                                kind != NodeKind::InvalidParseSubtree),
                  "{0} nodes must always have an error", kind);
     tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+    return NodeId(tree_->node_impls_.size() - 1);
   }
 
   // Adds an invalid parse node.

@@ -12,21 +12,42 @@
 namespace Carbon::Check {
 
 struct AddImportNamespaceResult {
+  // The namespace scope id.
   SemIR::NameScopeId name_scope_id;
+
+  // The namespace instruction id.
   SemIR::InstId inst_id;
-  bool is_duplicate_of_namespace_in_current_package;
 };
 
-// Adds a namespace to the IR. The bool on return is true if there was a name
-// conflict. diagnose_duplicate_namespace is used when handling a cross-package
-// import, where an existing namespace is in the current package and the new
-// namespace is a different package.
+// Adds a namespace to the IR. Associates the namespace with the import referred
+// in `import_id`, if any. Do not try to add the namespace `name_id` to the
+// scope and don't check if it already exists. Used when the name is added
+// afterwards.
 auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                         SemIR::NameId name_id,
                         SemIR::NameScopeId parent_scope_id,
-                        bool diagnose_duplicate_namespace,
-                        llvm::function_ref<SemIR::InstId()> make_import_id)
-    -> AddImportNamespaceResult;
+                        SemIR::InstId import_id) -> AddImportNamespaceResult;
+
+struct AddImportNamespaceToScopeResult {
+  AddImportNamespaceResult add_result;
+
+  // When trying to add the namespace name, whether it already exists and refers
+  // to a namespace.
+  bool is_duplicate_of_namespace_in_current_package = false;
+};
+
+// Adds a namespace to the IR. Associates the namespace with the import returned
+// from `make_import_id`, which must return a value. Tries to add the namespace
+// `name_id` to the scope. If the name already exists, diagnose only if
+// `diagnose_duplicate_namespace` is true or if it doesn't refer to a namespace.
+// `diagnose_duplicate_namespace` is used when handling a cross-package import,
+// where an existing namespace is in the current package and the new namespace
+// is a different package.
+auto AddImportNamespaceToScope(
+    Context& context, SemIR::TypeId namespace_type_id, SemIR::NameId name_id,
+    SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
+    llvm::function_ref<SemIR::InstId()> make_import_id)
+    -> AddImportNamespaceToScopeResult;
 
 // Imports the API file's name lookup information into a corresponding
 // implementation file. Only information for the current package will be copied;

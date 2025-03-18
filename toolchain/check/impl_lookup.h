@@ -10,9 +10,12 @@
 
 namespace Carbon::Check {
 
-// Looks up the witnesses to use for a particular type and a facet type naming a
-// set of interfaces required to be implemented for that type, as well as
-// possible constraints on those interfaces.
+// Looks up the witnesses to use for a type value or facet value, and a facet
+// type naming a set of interfaces required to be implemented for that type, as
+// well as possible constraints on those interfaces.
+//
+// N.B. In the future, `TypeType` will become a facet type, at which point type
+// values will also be facet values.
 //
 // The return value is one of:
 // - An InstBlockId value, containing an `ImplWitness` instruction for each
@@ -28,7 +31,7 @@ namespace Carbon::Check {
 // - An error value, indicating the program is invalid and a diagonstic has been
 //   produced, either in this function or before.
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
-                       SemIR::ConstantId type_const_id,
+                       SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
     -> SemIR::InstBlockIdOrError;
 

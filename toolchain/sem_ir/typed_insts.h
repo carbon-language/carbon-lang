@@ -336,6 +336,10 @@ struct AnyBindingPattern {
 
   InstKind kind;
   TypeId type_id;
+
+  // The name declared by the binding pattern. `None` indicates that the
+  // pattern has `_` in the name position, and so does not truly declare
+  // a name.
   EntityNameId entity_name_id;
 };
 
@@ -876,10 +880,11 @@ struct ImportCppDecl {
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
-  static constexpr auto Kind = InstKind::ImportDecl.Define<Parse::ImportDeclId>(
-      {.ir_name = "import",
-       .constant_kind = InstConstantKind::Never,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::ImportDecl.Define<Parse::AnyPackagingDeclId>(
+          {.ir_name = "import",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   NameId package_id;
 };

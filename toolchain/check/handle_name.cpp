@@ -91,8 +91,12 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
   return true;
 }
 
-static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
-    -> SemIR::NameId {
+// Returns the `NameId` for an identifier node.
+static auto GetIdentifierAsNameId(
+    Context& context, Parse::NodeIdOneOf<Parse::IdentifierNameNotBeforeParamsId,
+                                         Parse::IdentifierNameBeforeParamsId,
+                                         Parse::IdentifierNameExprId>
+                          node_id) -> SemIR::NameId {
   CARBON_CHECK(!context.parse_tree().node_has_error(node_id),
                "TODO: Support checking error parse nodes");
   auto token = context.parse_tree().node_token(node_id);
@@ -129,7 +133,7 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
 auto HandleParseNode(Context& context,
                      Parse::IdentifierNameNotBeforeParamsId node_id) -> bool {
   // The parent is responsible for binding the name.
-  context.node_stack().Push(node_id, GetIdentifierAsName(context, node_id));
+  context.node_stack().Push(node_id, GetIdentifierAsNameId(context, node_id));
   return true;
 }
 
@@ -140,26 +144,48 @@ auto HandleParseNode(Context& context,
   context.full_pattern_stack().PushFullPattern(
       FullPatternStack::Kind::ImplicitParamList);
   // The parent is responsible for binding the name.
-  context.node_stack().Push(node_id, GetIdentifierAsName(context, node_id));
+  context.node_stack().Push(node_id, GetIdentifierAsNameId(context, node_id));
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
     -> bool {
-  auto name_id = GetIdentifierAsName(context, node_id);
+  auto name_id = GetIdentifierAsNameId(context, node_id);
   context.node_stack().Push(node_id,
                             HandleNameAsExpr(context, node_id, name_id));
   return true;
 }
 
+// Returns the `NameId` for a keyword node.
+static auto GetKeywordAsNameId(
+    Context& context, Parse::NodeIdOneOf<Parse::KeywordNameNotBeforeParamsId,
+                                         Parse::KeywordNameBeforeParamsId>
+                          node_id) -> SemIR::NameId {
+  auto token = context.parse_tree().node_token(node_id);
+  switch (auto token_kind = context.tokens().GetKind(token)) {
+    case Lex::TokenKind::Destroy:
+      return SemIR::NameId::Destroy;
+    default:
+      CARBON_FATAL("Unexpected token kind: {0}", token_kind);
+  }
+}
+
 auto HandleParseNode(Context& context,
                      Parse::KeywordNameNotBeforeParamsId node_id) -> bool {
-  return context.TODO(node_id, "KeywordNameNotBeforeParamsId");
+  // The parent is responsible for binding the name.
+  context.node_stack().Push(node_id, GetKeywordAsNameId(context, node_id));
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::KeywordNameBeforeParamsId node_id)
     -> bool {
-  return context.TODO(node_id, "KeywordNameBeforeParamsId");
+  // Push a pattern block stack entry to handle the parameter pattern.
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
+  // The parent is responsible for binding the name.
+  context.node_stack().Push(node_id, GetKeywordAsNameId(context, node_id));
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::BaseNameId node_id) -> bool {
@@ -191,18 +217,34 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::IdentifierNameQualifierWithParamsId /*node_id*/)
-    -> bool {
+// Common logic for name qualifiers.
+static auto ApplyNameQualifier(Context& context) -> bool {
   context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
   return true;
 }
 
 auto HandleParseNode(Context& context,
+                     Parse::IdentifierNameQualifierWithParamsId /*node_id*/)
+    -> bool {
+  return ApplyNameQualifier(context);
+}
+
+auto HandleParseNode(Context& context,
                      Parse::IdentifierNameQualifierWithoutParamsId /*node_id*/)
     -> bool {
-  context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
-  return true;
+  return ApplyNameQualifier(context);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::KeywordNameQualifierWithParamsId /*node_id*/)
+    -> bool {
+  return ApplyNameQualifier(context);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::KeywordNameQualifierWithoutParamsId /*node_id*/)
+    -> bool {
+  return ApplyNameQualifier(context);
 }
 
 auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
@@ -239,17 +281,6 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     context.node_stack().Push(node_id, member_id);
   }
   return true;
-}
-
-auto HandleParseNode(Context& context,
-                     Parse::KeywordNameQualifierWithParamsId node_id) -> bool {
-  return context.TODO(node_id, "KeywordNameQualifierWithParamsId");
-}
-
-auto HandleParseNode(Context& context,
-                     Parse::KeywordNameQualifierWithoutParamsId node_id)
-    -> bool {
-  return context.TODO(node_id, "KeywordNameQualifierWithoutParamsId");
 }
 
 auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {
