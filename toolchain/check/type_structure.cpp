@@ -59,13 +59,6 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
       // Consume the symbolic on the RHS.
       ++rhs_cursor;
 
-      // There's a Concrete on the LHS; it matches with the Symbolic and is
-      // consumed.
-      if (*lhs_cursor == Structural::Concrete) {
-        ++lhs_cursor;
-        return true;
-      }
-
       // The symbolic on the RHS is in the same position as a close paren on the
       // LHS, which means the structures can not match.
       //
@@ -76,9 +69,12 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
         return false;
       }
 
-      // There's an open paren on the LHS; the Symbolic matches with everything
-      // on the LHS up to the matching closing paren.
-      CARBON_CHECK(*lhs_cursor == Structural::ConcreteOpenParen);
+      // There's either a Concrete element or an open paren on the LHS. If it's
+      // the former, the Symbolic just matches with it. If it's the latter, the
+      // Symbolic matches with everything on the LHS up to the matching closing
+      // paren.
+      CARBON_CHECK(*lhs_cursor == Structural::Concrete ||
+                   *lhs_cursor == Structural::ConcreteOpenParen);
       int depth = 0;
       do {
         switch (*lhs_cursor) {
