@@ -139,9 +139,8 @@ class TypeStructureBuilder {
       auto next = work_list_.back();
       work_list_.pop_back();
 
-      if (std::holds_alternative<CloseType>(next)) {
-        auto close_type = std::get<CloseType>(next);
-        switch (close_type.closing) {
+      if (auto* close_type = std::get_if<CloseType>(&next)) {
+        switch (close_type->closing) {
           case CloseOnly:
             break;
           case CloseWithConcrete:
@@ -155,9 +154,8 @@ class TypeStructureBuilder {
         continue;
       }
 
-      if (std::holds_alternative<SemIR::SpecificInterface>(next)) {
-        const auto& interface = std::get<SemIR::SpecificInterface>(next);
-        auto args = GetSpecificArgs(interface.specific_id);
+      if (const auto* interface = std::get_if<SemIR::SpecificInterface>(&next)) {
+        auto args = GetSpecificArgs(interface->specific_id);
         if (args.empty()) {
           AppendStructural(TypeStructure::Structural::Concrete);
         } else {
