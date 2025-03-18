@@ -367,10 +367,10 @@ fn D() {}
 // CHECK:STDOUT: --- fail_def_ownership.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.00d7e7.1: type = fn_type @A.1 [concrete]
+// CHECK:STDOUT:   %A.1db889.1: %A.type.00d7e7.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.00d7e7.2: type = fn_type @A.2 [concrete]
+// CHECK:STDOUT:   %A.1db889.2: %A.type.00d7e7.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
@@ -378,7 +378,7 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.A: %A.type = import_ref Main//fns, A, loaded [concrete = constants.%A]
+// CHECK:STDOUT:   %Main.A: %A.type.00d7e7.1 = import_ref Main//fns, A, loaded [concrete = constants.%A.1db889.1]
 // CHECK:STDOUT:   %Main.C = import_ref Main//fns, C, unloaded
 // CHECK:STDOUT:   %Main.D = import_ref Main//fns, D, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -398,7 +398,7 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.d85] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.00d7e7.2 = fn_decl @A.2 [concrete = constants.%A.1db889.2] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {
 // CHECK:STDOUT:     %int_32.loc23_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc23_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -413,9 +413,9 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "fns.carbon"];
+// CHECK:STDOUT: fn @A.1() [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: fn @A.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

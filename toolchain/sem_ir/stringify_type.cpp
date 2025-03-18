@@ -473,6 +473,19 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(SpecificImplFunction inst): {
+        auto callee = SemIR::GetCalleeFunction(sem_ir, inst.callee_id);
+        if (callee.function_id.has_value()) {
+          // TODO: The specific_id here is for the interface member, but the
+          // entity we're passing is the impl member. This might result in
+          // strange output once we render specific arguments properly.
+          step_stack.PushEntityName(sem_ir.functions().Get(callee.function_id),
+                                    inst.specific_id);
+        } else {
+          step_stack.PushString("<invalid specific function>");
+        }
+        break;
+      }
       case CARBON_KIND(StructType inst): {
         auto fields = sem_ir.struct_type_fields().Get(inst.fields_id);
         if (fields.empty()) {

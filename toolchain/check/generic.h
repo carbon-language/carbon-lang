@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_GENERIC_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -86,6 +87,11 @@ auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
 // This is used to name the entity in diagnostics.
 auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
     -> SemIR::InstId;
+
+// Diagnoses if an entity has implicit parameters, indicating it's generic, but
+// is missing explicit parameters.
+auto DiagnoseIfGenericMissingExplicitParameters(
+    Context& context, SemIR::EntityWithParamsBase& entity_base) -> void;
 
 }  // namespace Carbon::Check
 

@@ -37,7 +37,7 @@ class Y {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B.29a: type = class_type @B.2 [concrete]
 // CHECK:STDOUT:   %Y: type = class_type @Y [concrete]
-// CHECK:STDOUT:   %.65d: type = class_type @.1 [concrete]
+// CHECK:STDOUT:   %B.768: type = class_type @B.3 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -103,7 +103,7 @@ class Y {
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [concrete = constants.%.65d] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.3 [concrete = constants.%B.768] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -111,11 +111,11 @@ class Y {
 // CHECK:STDOUT:   .Self = constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: class @B.3 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.65d
+// CHECK:STDOUT:   .Self = constants.%B.768
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

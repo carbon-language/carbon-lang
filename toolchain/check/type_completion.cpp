@@ -588,9 +588,15 @@ static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser,
                          MakeDiagnosticBuilderFn abstract_diagnoser) -> bool {
-  // TODO: For symbolic types, should add a RequireConcreteType instruction,
-  // like RequireCompleteType.
+  // TODO: For symbolic types, should add an implicit constraint that they are
+  // not abstract.
   CARBON_CHECK(abstract_diagnoser);
+
+  // The representation of a facet type does not depend on its definition, so
+  // they are considered "concrete" even when not complete.
+  if (context.types().IsFacetType(type_id)) {
+    return true;
+  }
 
   if (!RequireCompleteType(context, type_id, loc_id, diagnoser)) {
     return false;

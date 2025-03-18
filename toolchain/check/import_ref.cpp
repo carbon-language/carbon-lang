@@ -2314,6 +2314,7 @@ static auto AddInterfaceDefinition(ImportContext& context,
       new_interface.first_owning_decl_id, SemIR::NameId::None,
       new_interface.parent_scope_id);
   auto& new_scope = context.local_name_scopes().Get(new_interface.scope_id);
+  new_scope.set_is_interface_definition();
   const auto& import_scope =
       context.import_name_scopes().Get(import_interface.scope_id);
 
@@ -3276,9 +3277,12 @@ static auto HasCompatibleImportedNodeKind(SemIR::InstKind imported_kind,
   }
   if (imported_kind == SemIR::ImportDecl::Kind &&
       local_kind == SemIR::Namespace::Kind) {
-    static_assert(
-        std::is_convertible_v<decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
-                              decltype(SemIR::Namespace::Kind)::TypedNodeId>);
+    // TODO: Consider supporting NodeIdOneOf conversions to make the below work.
+    // But this extra validation is the primary use-case at present.
+    // static_assert(
+    //     std::is_convertible_v<
+    //         decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
+    //         decltype(SemIR::Namespace::Kind)::TypedNodeId>);
     return true;
   }
   return false;

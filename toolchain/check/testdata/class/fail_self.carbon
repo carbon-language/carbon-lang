@@ -43,7 +43,7 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `WrongSelf` to `Class` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `WrongSelf` to `Class` [ConversionFailure]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:3: note: type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)` [MissingImplInMemberAccessNote]

@@ -10,6 +10,7 @@
 #include "toolchain/check/check.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -27,15 +28,16 @@ struct PackageImports {
 
   // Use the constructor so that the SmallVector is only constructed
   // as-needed.
-  explicit PackageImports(PackageNameId package_id, Parse::ImportDeclId node_id)
+  explicit PackageImports(PackageNameId package_id,
+                          Parse::AnyPackagingDeclId node_id)
       : package_id(package_id), node_id(node_id) {}
 
   // The identifier of the imported package.
   PackageNameId package_id;
-  // The first `import` declaration in the file, which declared the package's
-  // identifier (even if the import failed). Used for associating diagnostics
-  // not specific to a single import.
-  Parse::ImportDeclId node_id;
+  // The first `package` or `import` declaration in the file, which declared the
+  // package's identifier (even if the import failed). Used for associating
+  // diagnostics not specific to a single import.
+  Parse::AnyPackagingDeclId node_id;
   // The associated `import` instruction. Has a value after a file is checked.
   SemIR::InstId import_decl_id = SemIR::InstId::None;
   // Whether there's an import that failed to load.

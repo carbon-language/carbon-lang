@@ -11,62 +11,57 @@
 // --- STDIN
 [[@LSP:foo:]]
 [[@LSP:foo]]
-[[@LSP:bar:content]]
+[[@LSP:bar:"content": 0]]
 [[@LSP:baz:
-multi
-line
+"multi": 0,
+"line": 1
 ]]
-[[@LSP-CALL:bar:content]]
+[[@LSP-CALL:bar:"content": 0]]
 [[@LSP-CALL:baz:
-multi
-line]]
+"multi": 0,
+"line": 1]]
 [[@LSP-REPLY:7]]
-[[@LSP-REPLY:8:bar]]
+[[@LSP-REPLY:8:"bar": 0]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: --- STDIN:
-// CHECK:STDERR: Content-Length: 37
+// CHECK:STDERR: Content-Length: 34
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "method": "foo"}
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"foo"}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 37
+// CHECK:STDERR: Content-Length: 34
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "method": "foo"}
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"foo"}
 // CHECK:STDERR:
 // CHECK:STDERR: Content-Length: 46
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "method": "bar", content}
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"bar","content":0}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 50
+// CHECK:STDERR: Content-Length: 53
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "method": "baz",
-// CHECK:STDERR: multi
-// CHECK:STDERR: line
-// CHECK:STDERR: }
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"baz","multi":0,"line":1}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 67
+// CHECK:STDERR: Content-Length: 64
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "method": "bar", "id": 1, "params": {content}}
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"bar","id":1,"params":{"content":0}}
 // CHECK:STDERR:
 // CHECK:STDERR: Content-Length: 71
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "method": "baz", "id": 2, "params": {
-// CHECK:STDERR: multi
-// CHECK:STDERR: line}}
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"baz","id":2,"params":{"line":1,"multi":0}}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 31
+// CHECK:STDERR: Content-Length: 28
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "id": "7"}
+// CHECK:STDERR: {"jsonrpc":"2.0","id":"7"}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 48
+// CHECK:STDERR: Content-Length: 47
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "id": "8", "result": {bar}}
+// CHECK:STDERR: {"jsonrpc":"2.0","id":"8","result":{"bar":0}}
 // CHECK:STDERR:
-// CHECK:STDERR: Content-Length: 38
+// CHECK:STDERR: Content-Length: 35
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc": "2.0", "method": "exit"}
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"exit"}
 // CHECK:STDERR:
 // CHECK:STDERR:
 // CHECK:STDOUT: 1 args: `default_args`

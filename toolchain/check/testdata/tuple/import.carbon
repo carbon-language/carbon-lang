@@ -34,7 +34,7 @@ impl package Implicit;
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
 // CHECK:STDERR: var c_bad: C((1, 2, 3)) = F();
 // CHECK:STDERR:              ^~~~~~~~~
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: implicit.carbon:7:9: note: initializing generic parameter `X` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(X:! (i32, i32)) {}
 // CHECK:STDERR:         ^
@@ -45,7 +45,7 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert value of type `C((1, 2))` to `C((3, 4))` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert value of type `C((1, 2))` to `C((3, 4))` [ConversionFailure]
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+4]]:1: note: type `C((1, 2))` does not implement interface `Core.ImplicitAs(C((3, 4)))` [MissingImplInMemberAccessNote]
@@ -358,7 +358,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1191 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1167 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -551,7 +551,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1191 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1167 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -669,7 +669,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1191 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1167 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

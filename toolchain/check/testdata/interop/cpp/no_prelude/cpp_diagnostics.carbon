@@ -23,7 +23,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "one_error.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "one_error.h";
 
@@ -46,7 +46,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "multiple_errors.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "multiple_errors.h";
 
@@ -65,7 +65,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR: import Cpp library "one_warning.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "one_warning.h";
 
@@ -92,7 +92,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR: import Cpp library "multiple_warnings.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "multiple_warnings.h";
 
@@ -115,7 +115,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "one_error_and_one_warning.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "one_error_and_one_warning.h";
 
@@ -150,7 +150,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "multiple_errors_and_multiple_warnings.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
 
@@ -176,7 +176,7 @@ import Cpp library "one_warning.h";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR: import Cpp library "multiple_warnings.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "multiple_warnings.h";
 
@@ -211,7 +211,7 @@ import Cpp library "one_error_and_one_warning.h";
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "multiple_errors_and_multiple_warnings.h";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
 
@@ -219,6 +219,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -236,6 +237,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -252,7 +254,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -267,7 +271,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- import_cpp_file_with_multiple_warnings.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -283,6 +289,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -300,6 +307,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -316,7 +324,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT: --- import_multiple_cpp_files_with_warnings.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {}
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -333,6 +343,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

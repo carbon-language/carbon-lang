@@ -33,7 +33,8 @@ class FileContext {
       std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
           tree_and_subtrees_getters_for_debug_info,
       llvm::StringRef module_name, const SemIR::File& sem_ir,
-      const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream);
+      clang::ASTUnit* cpp_ast, const SemIR::InstNamer* inst_namer,
+      llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
   // the main execution loop.
@@ -91,6 +92,7 @@ class FileContext {
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
+  auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
@@ -161,6 +163,10 @@ class FileContext {
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
+
+  // A mutable Clang AST is necessary for lowering since using the AST in lower
+  // modifies it.
+  clang::ASTUnit* cpp_ast_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;

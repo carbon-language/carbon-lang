@@ -18,10 +18,21 @@ auto DeduceGenericCallArguments(
     SemIR::InstId self_id, llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::SpecificId;
 
+// Data from the `Impl` that is used by deduce.
+//
+// We don't use a reference to an `Impl` as deduction can invalidate the
+// reference by causing impl declarations to be imported from `Core` during
+// conversion.
+struct DeduceImpl {
+  SemIR::InstId self_id;
+  SemIR::GenericId generic_id;
+  SemIR::SpecificId specific_id;
+};
+
 // Deduces the impl arguments to use in a use of a parameterized impl. Returns
 // `None` if deduction fails.
-auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
-                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
+auto DeduceImplArguments(Context& context, SemIR::LocId loc_id, DeduceImpl impl,
+                         SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId;
 

@@ -12,13 +12,13 @@
 
 // CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: imports from the current package must omit the package name [ImportCurrentPackageByName]
 // CHECK:STDERR: import Main;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 import Main;
 
 // CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: imports from the current package must omit the package name [ImportCurrentPackageByName]
 // CHECK:STDERR: import Main library "lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Main library "lib";
 
@@ -28,13 +28,13 @@ package NotMain;
 
 // CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: error: cannot import `Main` from other packages [ImportMainPackage]
 // CHECK:STDERR: import Main;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 import Main;
 
 // CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: error: cannot import `Main` from other packages [ImportMainPackage]
 // CHECK:STDERR: import Main library "lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Main library "lib";
 
@@ -44,7 +44,7 @@ package This;
 
 // CHECK:STDERR: fail_this.carbon:[[@LINE+4]]:1: error: file cannot import itself [ImportSelf]
 // CHECK:STDERR: import This;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 import This;
 
@@ -54,7 +54,7 @@ package This library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: error: file cannot import itself [ImportSelf]
 // CHECK:STDERR: import library "this_lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import library "this_lib";
 
@@ -68,7 +68,7 @@ impl package Implicit;
 
 // CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
 // CHECK:STDERR: import Implicit;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Implicit;
 
@@ -82,7 +82,7 @@ impl package Implicit library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
 // CHECK:STDERR: import Implicit library "implicit_lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Implicit library "implicit_lib";
 
@@ -91,7 +91,7 @@ package NotFound;
 
 // CHECK:STDERR: fail_not_found.carbon:[[@LINE+4]]:1: error: imported API 'ImportNotFound' not found [ImportNotFound]
 // CHECK:STDERR: import ImportNotFound;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import ImportNotFound;
 

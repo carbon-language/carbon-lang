@@ -13,6 +13,8 @@ inputs:
     required: true
   targets_file:
     required: true
+  use_direct_targets:
+    default: 'false'
 
 outputs:
   has_code:
@@ -90,7 +92,7 @@ runs:
     # Build and run all targets on branch pushes to ensure we always have a
     # clean tree. We don't expect this to be an interactive path and so don't
     # optimize the latency of this step.
-    - name: Compute impacted pull request targets (for push)
+    - name: Using all targets for push
       if: steps.filter.outputs.has_code == 'true' && github.event_name == 'push'
       shell: bash
       env:
@@ -102,8 +104,10 @@ runs:
     # Bazel-based diffing. This lets PRs and the merge queue have a much more
     # efficient test CI action by avoiding even enumerating (and downloading)
     # all of the unaffected Bazel targets.
-    - name: Compute impacted pull request targets
-      if: steps.filter.outputs.has_code == 'true' && github.event_name != 'push'
+    - name: Compute indirect pull request targets
+      if:
+        steps.filter.outputs.has_code == 'true' && github.event_name != 'push'
+        && inputs.use_direct_targets != 'true'
       shell: bash
       env:
         # Compute the base SHA from the different event structures.
@@ -123,3 +127,42 @@ runs:
         # no targets or there may only be non-test targets that we want to
         # build, so simply inject an explicit no-op test target.
         echo "//scripts:no_op_test" >> $TARGETS_FILE
+
+    # Run the query to generate the targets file.
+    - name: Compute direct pull request targets
+      if:
+        steps.filter.outputs.has_code == 'true' && github.event_name != 'push'
+        && inputs.use_direct_targets == 'true'
+      shell: bash
+      env:
+        GIT_BASE_SHA: ${{ inputs.base_sha }}
+        QUERY_FILE: ${{ inputs.targets_file }}.query
+        TARGETS_FILE: ${{ inputs.targets_file }}
+      run: |
+        # First fetch the relevant base into the git repository.
+        git fetch --depth=1 origin $GIT_BASE_SHA
+
+        # Generate the query file. `same_pkg_direct_rdeps` is used to try to
+        # only get targets that contain modified files as srcs or hdrs (or
+        # similar artifacts).
+        echo 'same_pkg_direct_rdeps(' > $QUERY_FILE
+
+        # Start with an uninteresting file so that we can `union` below.
+        echo '  scripts/no_op_test.py' >> $QUERY_FILE
+
+        # Use `union` to join the list of files. Add quotes to defend against
+        # spaces. Note we can filter to the intersection of Carbon extensions
+        # and the supported list at:
+        # https://github.com/erenon/bazel_clang_tidy/blob/master/clang_tidy/clang_tidy.bzl#L65
+        for f in $(
+            git diff --name-only $GIT_BASE_SHA -- '**/*.h' '**/*.cpp'); do
+          echo "  union '$f'" >> $QUERY_FILE
+        done
+
+        echo ')' >> $QUERY_FILE
+
+        # Use query because cquery doesn't support `same_pkg_direct_rdeps`.
+        ./scripts/run_bazel.py \
+          --attempts=5 \
+          query --query_file=$QUERY_FILE \
+          > $TARGETS_FILE

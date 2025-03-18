@@ -375,6 +375,11 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
   return eval_context.context().types().GetTypeIdForTypeConstantId(const_id);
 }
 
+// AbsoluteInstBlockId can not have its values substituted.
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::AbsoluteInstBlockId inst_block_id,
+                             Phase* phase) -> SemIR::InstBlockId = delete;
+
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values.
 static auto GetConstantValue(EvalContext& eval_context,
@@ -1661,6 +1666,8 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
   // argument value.
   if (auto value = eval_context.GetCompileTimeBindValue(bind_name.bind_index());
       value.has_value()) {
+    // TODO: This seems incorrect: patterns don't typically evaluate to the
+    // value matched by the pattern.
     return value;
   }
 

@@ -336,6 +336,10 @@ struct AnyBindingPattern {
 
   InstKind kind;
   TypeId type_id;
+
+  // The name declared by the binding pattern. `None` indicates that the
+  // pattern has `_` in the name position, and so does not truly declare
+  // a name.
   EntityNameId entity_name_id;
 };
 
@@ -876,10 +880,11 @@ struct ImportCppDecl {
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
-  static constexpr auto Kind = InstKind::ImportDecl.Define<Parse::ImportDeclId>(
-      {.ir_name = "import",
-       .constant_kind = InstConstantKind::Never,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::ImportDecl.Define<Parse::AnyPackagingDeclId>(
+          {.ir_name = "import",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   NameId package_id;
 };
@@ -1332,6 +1337,29 @@ struct SpecificFunctionType {
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
+};
+
+// A specific instance of a function from an impl, named as the function from
+// the interface.
+//
+// This value is the callee in a call of the form `(T as Interface).F()`. The
+// specific that we determine for such a call is a specific for `Interface.F`,
+// but what we need is a specific for the function in the `impl`. This
+// instruction computes that specific function.
+struct SpecificImplFunction {
+  static constexpr auto Kind =
+      InstKind::SpecificImplFunction.Define<Parse::NodeId>(
+          {.ir_name = "specific_impl_function",
+           .constant_kind = InstConstantKind::SymbolicOnly});
+
+  // Always the builtin SpecificFunctionType.
+  TypeId type_id;
+  // The expression denoting the callee. This will be a function from an impl
+  // witness.
+  InstId callee_id;
+  // The specific instance of the interface function that was called, including
+  // all the compile-time arguments.
+  SpecificId specific_id;
 };
 
 // Splices a block into the location where this appears. This may be an
