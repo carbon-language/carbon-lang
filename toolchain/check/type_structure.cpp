@@ -190,7 +190,6 @@ class TypeStructureBuilder {
         case SemIR::ImplWitnessAccess::Kind:
         case SemIR::IntLiteralType::Kind:
         case SemIR::LegacyFloatType::Kind:
-        case SemIR::PointerType::Kind:
         case SemIR::StringType::Kind:
         case SemIR::TypeType::Kind: {
           AppendStructural(TypeStructure::Structural::Concrete);
@@ -246,6 +245,12 @@ class TypeStructureBuilder {
           // We don't put the `const` into the type structure since it is a
           // modifier; just move to the inner type.
           Push(const_type.inner_id);
+          break;
+        }
+        case CARBON_KIND(SemIR::PointerType pointer_type): {
+          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+          Push(CloseType{});
+          Push(pointer_type.pointee_id);
           break;
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {

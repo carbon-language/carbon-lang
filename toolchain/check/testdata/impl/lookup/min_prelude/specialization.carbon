@@ -242,6 +242,44 @@ fn F[D:! Y](d: D) {
   let a: C(D).(Z.X) = ();
 }
 
+// --- pointer_specialization_first.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let X:! type;
+}
+
+class C {}
+impl C* as Z where .X = C {}
+
+impl forall [T:! type] T* as Z where .X = () {}
+
+fn F() {
+  // The specialization of `Z(C)` should match in preference to the blanket impl
+  // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
+  // which will fail to typecheck here.
+  let a: (C*).(Z.X) = {} as C;
+}
+
+// --- pointer_specialization_second.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let X:! type;
+}
+
+impl forall [T:! type] T* as Z where .X = () {}
+
+class C {}
+impl C* as Z where .X = C {}
+
+fn F() {
+  // The specialization of `Z(C)` should match in preference to the blanket impl
+  // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
+  // which will fail to typecheck here.
+  let a: (C*).(Z.X) = {} as C;
+}
+
 // --- cycle_in_deduce_avoided_by_specialization.carbon
 library "[[@TEST_NAME]]";
 
