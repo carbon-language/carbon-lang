@@ -217,7 +217,7 @@ fn F() {
   let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
 }
 
-// --- specialed_class_with_symbolic_facet_value_param.carbon
+// --- specialized_class_with_symbolic_facet_value_param.carbon
 
 interface Z {
   let X:! type;
