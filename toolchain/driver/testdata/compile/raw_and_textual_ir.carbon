@@ -27,7 +27,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_slot_pattern: inst27, body: [inst_block10]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block7, return_slot_pattern: inst27, body: [inst_block10]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}

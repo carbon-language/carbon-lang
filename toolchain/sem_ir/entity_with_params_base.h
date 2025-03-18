@@ -47,7 +47,6 @@ struct EntityWithParamsBase {
     pattern_block_id = definition.pattern_block_id;
     implicit_param_patterns_id = definition.implicit_param_patterns_id;
     param_patterns_id = definition.param_patterns_id;
-    call_params_id = definition.call_params_id;
     definition_id = definition.definition_id;
   }
 
@@ -111,21 +110,6 @@ struct EntityWithParamsBase {
   // A block containing, for each element of the explicit parameter list tuple
   // pattern, a reference to the root pattern inst for that element.
   InstBlockId param_patterns_id;
-
-  // If this entity is a function, this block consists of references to the
-  // `AnyParam` insts that represent the function's `Call` parameters. The
-  // "`Call` parameters" are the parameters corresponding to the arguments that
-  // are passed to a `Call` inst, so they do not include compile-time
-  // parameters, but they do include the return slot.
-  //
-  // The parameters appear in declaration order: `self` (if present), then the
-  // explicit runtime parameters, then the return slot (which is "declared" by
-  // the function's return type declaration). This is not populated on imported
-  // functions, because it is relevant only for a function definition.
-  //
-  // TODO: Can this be moved to `Function`, since it is not applicable to other
-  // kinds of entities?
-  InstBlockId call_params_id;
 
   // True if declarations are `extern`.
   bool is_extern;
