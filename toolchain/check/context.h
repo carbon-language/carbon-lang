@@ -75,7 +75,7 @@ class Context {
     return tree_and_subtrees_getter_();
   }
 
-  auto sem_ir() -> SemIR::File& { return *sem_ir_; }
+  SemIR::File& sem_ir() { return *sem_ir_; }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
   // Convenience functions for major phase data.
