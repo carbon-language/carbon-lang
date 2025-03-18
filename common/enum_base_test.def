@@ -11,6 +11,9 @@
 #define CARBON_ENUM_BASE_TEST_KIND(Name)
 #endif
 
+#define X inline int F() {}
+X
+
 CARBON_ENUM_BASE_TEST_KIND(Beep)
 CARBON_ENUM_BASE_TEST_KIND(Boop)
 CARBON_ENUM_BASE_TEST_KIND(Burr)

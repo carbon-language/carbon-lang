@@ -153,7 +153,8 @@ runs:
         # Use `union` to join the list of files. Add quotes to defend against
         # spaces.
         for f in $(
-            git diff --name-only $GIT_BASE_SHA -- '**/*.h' '**/*.cpp'); do
+            git diff --name-only $GIT_BASE_SHA -- \
+              '**/*.h' '**/*.cpp' '**/*.cpp'); do
           echo "  union '$f'" >> $QUERY_FILE
         done
 
