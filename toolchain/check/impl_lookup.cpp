@@ -377,8 +377,9 @@ static auto FindWitnessInImpls(
     stack.back().impl_loc = candidate.loc_inst_id;
     // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls to
     // be imported, invalidating any pointer into `context.impls()`.
-    auto witness_id = GetWitnessIdForImpl(
-        context, loc_id, query_self_const_id, specific_interface, candidate.impl_id);
+    auto witness_id =
+        GetWitnessIdForImpl(context, loc_id, query_self_const_id,
+                            specific_interface, candidate.impl_id);
     if (witness_id.has_value()) {
       return witness_id;
     }
