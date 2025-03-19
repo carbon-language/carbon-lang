@@ -88,7 +88,7 @@ class DiagnosticEmitter {
     template <typename... Args>
     auto Emit() & -> void;
 
-    // Prevent trivial uses of the builder.
+    // Prevent trivial uses of the builder; always `static_assert`s.
     template <typename... Args>
     auto Emit() && -> void;
 
@@ -299,11 +299,13 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() & -> void {
 namespace Internal {
 template <typename LocT>
 static constexpr bool AlwaysFalse = false;
-}
+}  // namespace Internal
 
 template <typename LocT>
 template <typename... Args>
 auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() && -> void {
+  // TODO: This is required by clang-16, but `false` may work in newer clang
+  // versions. Replace when possible.
   static_assert(Internal::AlwaysFalse<LocT>,
                 "Use `emitter.Emit(...)` or "
                 "`emitter.Build(...).Note(...).Emit(...)` "
