@@ -17,8 +17,7 @@ auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 
 // Convenience for AddInst with typed nodes.
 template <typename InstT, typename LocT>
-auto AddInst(Context& context, LocT loc, InstT inst)
-    -> decltype(AddInst(context, SemIR::LocIdAndInst(loc, inst))) {
+auto AddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
@@ -39,8 +38,7 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 
 // Convenience for AddInstInNoBlock with typed nodes.
 template <typename InstT, typename LocT>
-auto AddInstInNoBlock(Context& context, LocT loc, InstT inst)
-    -> decltype(AddInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst))) {
+auto AddInstInNoBlock(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
 }
 
@@ -51,8 +49,7 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 
 // Convenience for GetOrAddInst with typed nodes.
 template <typename InstT, typename LocT>
-auto GetOrAddInst(Context& context, LocT loc, InstT inst)
-    -> decltype(GetOrAddInst(context, SemIR::LocIdAndInst(loc, inst))) {
+auto GetOrAddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return GetOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
