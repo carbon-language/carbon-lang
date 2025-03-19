@@ -31,7 +31,8 @@ FileContext::FileContext(
     std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
         tree_and_subtrees_getters_for_debug_info,
     llvm::StringRef module_name, const SemIR::File& sem_ir,
-    const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream)
+    clang::ASTUnit* cpp_ast, const SemIR::InstNamer* inst_namer,
+    llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       di_builder_(*llvm_module_),
@@ -42,6 +43,7 @@ FileContext::FileContext(
       tree_and_subtrees_getters_for_debug_info_(
           tree_and_subtrees_getters_for_debug_info),
       sem_ir_(&sem_ir),
+      cpp_ast_(cpp_ast),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
   CARBON_CHECK(!sem_ir.has_errors(),

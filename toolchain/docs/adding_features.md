@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Running tests](#running-tests)
     -   [Updating tests](#updating-tests)
         -   [Reviewing test deltas](#reviewing-test-deltas)
+    -   [Minimal Core prelude](#minimal-core-prelude)
     -   [Verbose output](#verbose-output)
     -   [Stack traces](#stack-traces)
     -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
@@ -486,6 +487,28 @@ invokes the `file_test` autoupdate support. See
 Using `autoupdate_testdata.py` can be useful to produce deltas during the
 development process because it allows `git status` and `git diff` to be used to
 examine what changed.
+
+### Minimal Core prelude
+
+For most file tests in `check/`, very little of the `Core` package is used, and
+the test is not intentionally testing the `Core` package itself. Compiling the
+entire `Core` package adds a lot of noise during interactive debugging, which
+can be avoided by using a minimal prelude.
+
+To replace the production `Core` package with a minimal one, add the path to a
+minimal `Core` package and `prelude` library to the file test with the
+`INCLUDE-FILE` directive, and tell the toolchain to avoid loading the production
+`Core` package by adding `--custom-core` to the `EXTRA-ARGS` directive, for
+example:
+
+```
+// INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
+// EXTRA-ARGS: --custom-core
+```
+
+We have a set of minimal `Core` preludes for testing different compiler feature
+areas in `//toolchain/testing/min_prelude/`. Each file begins with the line
+`package Core library "prelude";` to make it provide a prelude.
 
 ### Verbose output
 

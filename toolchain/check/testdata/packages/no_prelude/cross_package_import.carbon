@@ -126,7 +126,7 @@ library "[[@TEST_NAME]]";
 import library "main_other_ns";
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: in import [InImport]
 // CHECK:STDERR: main_other_ns.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace Other;
@@ -155,7 +155,7 @@ import Other library "other_fn";
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 namespace Other;
 
@@ -173,7 +173,7 @@ import Other library "other_fn";
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 namespace Other.Nested;
 
@@ -191,7 +191,7 @@ import Other library "other_fn";
 // CHECK:STDERR:    ^~~~~
 // CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Other.G() {}
 
@@ -474,8 +474,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.b19: %.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.700976.2: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.7e9a3e.2: %F.type.700976.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -492,12 +492,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [concrete = constants.%.b19] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.700976.2 = fn_decl @F.2 [concrete = constants.%F.7e9a3e.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F.1() [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -43,7 +43,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %impl_witness.df4: <witness> = impl_witness (@impl.c6e.%Op.decl) [concrete]
 // CHECK:STDOUT:   %Op.type.de2: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.df9: %Op.type.de2 = struct_value () [concrete]
-// CHECK:STDOUT:   %LeftShift.facet: %LeftShift.type = facet_value %C, %impl_witness.df4 [concrete]
+// CHECK:STDOUT:   %LeftShift.facet: %LeftShift.type = facet_value %C, (%impl_witness.df4) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %LeftShiftAssign.type: type = facet_type <@LeftShiftAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.1de: type = fn_type @Op.3 [concrete]
@@ -51,13 +51,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.386: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.8fc: %Op.type.386 = struct_value () [concrete]
-// CHECK:STDOUT:   %LeftShiftAssign.facet: %LeftShiftAssign.type = facet_value %C, %impl_witness.842 [concrete]
+// CHECK:STDOUT:   %LeftShiftAssign.facet: %LeftShiftAssign.type = facet_value %C, (%impl_witness.842) [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.ad2: type = fn_type_with_self_type %Op.type.789, %LeftShift.facet [concrete]
+// CHECK:STDOUT:   %.949: type = fn_type_with_self_type %Op.type.789, %LeftShift.facet [concrete]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [concrete]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.b73: type = fn_type_with_self_type %Op.type.1de, %LeftShiftAssign.facet [concrete]
+// CHECK:STDOUT:   %.243: type = fn_type_with_self_type %Op.type.1de, %LeftShiftAssign.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -204,7 +204,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.ad2 = impl_witness_access constants.%impl_witness.df4, element0 [concrete = constants.%Op.df9]
+// CHECK:STDOUT:   %impl.elem0: %.949 = impl_witness_access constants.%impl_witness.df4, element0 [concrete = constants.%Op.df9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc26
@@ -216,7 +216,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.b73 = impl_witness_access constants.%impl_witness.842, element0 [concrete = constants.%Op.8fc]
+// CHECK:STDOUT:   %impl.elem0: %.243 = impl_witness_access constants.%impl_witness.842, element0 [concrete = constants.%Op.8fc]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc31, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc31
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)

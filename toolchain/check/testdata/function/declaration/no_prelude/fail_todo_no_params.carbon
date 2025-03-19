@@ -36,6 +36,15 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn A -> ();
 
+// --- fail_todo_implicit_only.carbon
+
+library "[[@TEST_NAME]]";
+// CHECK:STDERR: fail_todo_implicit_only.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fn A[] -> ();
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+fn A[] -> ();
+
 // --- fail_todo_arrow_body.carbon
 
 // TODO: We don't have parsing support for this yet.
@@ -127,6 +136,31 @@ fn A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> %empty_tuple.type;
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_implicit_only.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
+// CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
+// CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A[]() -> %empty_tuple.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_arrow_body.carbon
 // CHECK:STDOUT:

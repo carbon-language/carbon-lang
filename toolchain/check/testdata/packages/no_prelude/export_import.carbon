@@ -369,8 +369,8 @@ export Poison;
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_29.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_29.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc4: %C = var_pattern %c.patt

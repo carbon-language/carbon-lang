@@ -39,7 +39,7 @@ class A {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl) [concrete]
 // CHECK:STDOUT:   %Make.type.351: type = fn_type @Make.2 [concrete]
 // CHECK:STDOUT:   %Make.b73: %Make.type.351 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

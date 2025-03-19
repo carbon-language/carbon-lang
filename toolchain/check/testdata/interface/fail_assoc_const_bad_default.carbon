@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]

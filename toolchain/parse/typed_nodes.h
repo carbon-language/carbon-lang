@@ -167,13 +167,28 @@ using SelfTypeNameExpr =
 using BaseName =
     LeafNode<NodeKind::BaseName, Lex::BaseTokenIndex, NodeCategory::MemberName>;
 
+// The `_` token, when used in the name position of a binding pattern.
+using UnderscoreName =
+    LeafNode<NodeKind::UnderscoreName, Lex::UnderscoreTokenIndex,
+             NodeCategory::NonExprName>;
+
 // A name qualifier with parameters, such as `A(T:! type).` or `A[T:! type](N:!
 // T).`.
-struct NameQualifierWithParams {
-  static constexpr auto Kind = NodeKind::NameQualifierWithParams.Define(
-      {.bracketed_by = IdentifierNameBeforeParams::Kind});
+struct IdentifierNameQualifierWithParams {
+  static constexpr auto Kind =
+      NodeKind::IdentifierNameQualifierWithParams.Define(
+          {.bracketed_by = IdentifierNameBeforeParams::Kind});
 
   IdentifierNameBeforeParamsId name;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<ExplicitParamListId> params;
+  Lex::PeriodTokenIndex token;
+};
+struct KeywordNameQualifierWithParams {
+  static constexpr auto Kind = NodeKind::KeywordNameQualifierWithParams.Define(
+      {.bracketed_by = KeywordNameBeforeParams::Kind});
+
+  KeywordNameBeforeParamsId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
@@ -200,9 +215,9 @@ struct KeywordNameQualifierWithoutParams {
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
-  llvm::SmallVector<
-      NodeIdOneOf<NameQualifierWithParams, IdentifierNameQualifierWithoutParams,
-                  KeywordNameQualifierWithoutParams>>
+  llvm::SmallVector<NodeIdOneOf<
+      IdentifierNameQualifierWithParams, IdentifierNameQualifierWithoutParams,
+      KeywordNameQualifierWithParams, KeywordNameQualifierWithoutParams>>
       qualifiers;
   AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;
@@ -323,7 +338,7 @@ struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+  AnyRuntimeBindingPatternName name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -333,7 +348,7 @@ struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+  AnyRuntimeBindingPatternName name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -344,7 +359,7 @@ struct TemplateBindingName {
       NodeKind::TemplateBindingName.Define({.child_count = 1});
 
   Lex::TemplateTokenIndex token;
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
+  AnyRuntimeBindingPatternName name;
 };
 
 // `name:! Type`
@@ -352,7 +367,9 @@ struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, TemplateBindingName>
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              TemplateBindingName>
       name;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;

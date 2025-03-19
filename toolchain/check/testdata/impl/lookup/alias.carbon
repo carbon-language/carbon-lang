@@ -41,10 +41,10 @@ fn G(c: C) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.a02: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.dc7: %F.type.a02 = struct_value () [concrete]
-// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.447: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [concrete]
+// CHECK:STDOUT:   %.be1: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -124,11 +124,11 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.447 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
+// CHECK:STDOUT:   %impl.elem0.loc24: %.be1 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
 // CHECK:STDOUT:   %F.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc25: %.447 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
+// CHECK:STDOUT:   %impl.elem0.loc25: %.be1 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
 // CHECK:STDOUT:   %F.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -72,10 +72,11 @@ class C(C:! type) {
 // CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, %impl_witness.d39 [concrete]
-// CHECK:STDOUT:   %.a0b: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
+// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.val: %C.d45 = struct_value (%int_1.5d2) [concrete]
 // CHECK:STDOUT: }
@@ -139,10 +140,11 @@ class C(C:! type) {
 // CHECK:STDOUT:   %v.var: ref %C.d45 = var v
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc8_26.1: %struct_type.x.c96 = struct_literal (%int_1)
-// CHECK:STDOUT:   %impl.elem0: %.a0b = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %bound_method, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %specific_fn(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc8_26.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_26.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc8_26.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.3: ref %i32 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc8_26.4: init %i32 = initialize_from %.loc8_26.2 to %.loc8_26.3 [concrete = constants.%int_1.5d2]
@@ -183,11 +185,11 @@ class C(C:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = bind_symbolic_name C, 0 [symbolic]
+// CHECK:STDOUT:   %C.8b3: type = bind_symbolic_name C, 0 [symbolic]
 // CHECK:STDOUT:   %C.patt: type = symbolic_binding_pattern C, 0 [symbolic]
-// CHECK:STDOUT:   %.type: type = generic_class_type @.1 [concrete]
-// CHECK:STDOUT:   %.generic: %.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.de1: type = class_type @.1, @.1(%C) [symbolic]
+// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.f06: type = class_type @C, @C(%C.8b3) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -208,8 +210,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%C.loc13_11.1: type) {
-// CHECK:STDOUT:   %C.loc13_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C)]
+// CHECK:STDOUT: generic class @C(%C.loc13_11.1: type) {
+// CHECK:STDOUT:   %C.loc13_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C.8b3)]
 // CHECK:STDOUT:   %C.patt.loc13_11.2: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -219,23 +221,23 @@ class C(C:! type) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.de1
+// CHECK:STDOUT:     .Self = constants.%C.f06
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [concrete = constants.%.generic] {
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %C.patt.loc13_11.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C)]
+// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(constants.%C) {
-// CHECK:STDOUT:   %C.loc13_11.2 => constants.%C
-// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C
+// CHECK:STDOUT: specific @C(constants.%C.8b3) {
+// CHECK:STDOUT:   %C.loc13_11.2 => constants.%C.8b3
+// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon

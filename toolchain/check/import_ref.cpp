@@ -1230,7 +1230,6 @@ static auto GetIncompleteLocalEntityBase(
       .param_patterns_id = import_base.param_patterns_id.has_value()
                                ? SemIR::InstBlockId::Empty
                                : SemIR::InstBlockId::None,
-      .call_params_id = SemIR::InstBlockId::None,
       .is_extern = import_base.is_extern,
       .extern_library_id = extern_library_id,
       .non_owning_decl_id = import_base.non_owning_decl_id.has_value()
@@ -1910,7 +1909,8 @@ static auto MakeFunctionDecl(ImportContext& context,
   // Start with an incomplete function.
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
-       {.return_slot_pattern_id = SemIR::InstId::None,
+       {.call_params_id = SemIR::InstBlockId::None,
+        .return_slot_pattern_id = SemIR::InstId::None,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = GetFunctionType(
@@ -2314,6 +2314,7 @@ static auto AddInterfaceDefinition(ImportContext& context,
       new_interface.first_owning_decl_id, SemIR::NameId::None,
       new_interface.parent_scope_id);
   auto& new_scope = context.local_name_scopes().Get(new_interface.scope_id);
+  new_scope.set_is_interface_definition();
   const auto& import_scope =
       context.import_name_scopes().Get(import_interface.scope_id);
 
@@ -2438,7 +2439,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
                                    SemIR::WitnessType::SingletonInstId),
-       .facet_value_inst_id = facet_value_inst_id});
+       .facet_value_inst_id = facet_value_inst_id,
+       .index = inst.index});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2488,7 +2490,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetValue inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
   auto type_inst_id = GetLocalConstantInstId(resolver, inst.type_inst_id);
-  auto witness_inst_id = GetLocalConstantInstId(resolver, inst.witness_inst_id);
+  auto witnesses = GetLocalInstBlockContents(resolver, inst.witnesses_block_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2498,7 +2500,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
        .type_inst_id = type_inst_id,
-       .witness_inst_id = witness_inst_id});
+       .witnesses_block_id = GetLocalCanonicalInstBlockId(
+           resolver, inst.witnesses_block_id, witnesses)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -3274,9 +3277,12 @@ static auto HasCompatibleImportedNodeKind(SemIR::InstKind imported_kind,
   }
   if (imported_kind == SemIR::ImportDecl::Kind &&
       local_kind == SemIR::Namespace::Kind) {
-    static_assert(
-        std::is_convertible_v<decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
-                              decltype(SemIR::Namespace::Kind)::TypedNodeId>);
+    // TODO: Consider supporting NodeIdOneOf conversions to make the below work.
+    // But this extra validation is the primary use-case at present.
+    // static_assert(
+    //     std::is_convertible_v<
+    //         decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
+    //         decltype(SemIR::Namespace::Kind)::TypedNodeId>);
     return true;
   }
   return false;

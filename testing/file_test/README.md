@@ -116,6 +116,19 @@ Some keywords can be inserted for content:
         -   `id`: Assigned from `<id>`.
         -   `result`: Optionally assigned from `<extra content>`.
 
+    Additional substitutions are made to `<extra contents>` in the following
+    cases:
+
+    -   ```
+        [[@LSP-NOTIFY:textDocument/didOpen:"textDocument": {
+            "uri": "file:/<filename>",
+            "text": "FROM_FILE_SPLIT"
+        }]]
+        ```
+
+        The keyword `FROM_FILE_SPLIT` is substituted with the content of the
+        file split `<filename>`. All other properties are unchanged.
+
 -   ```
     [[@TEST_NAME]]
     ```
@@ -194,6 +207,17 @@ Supported comment markers are:
 
     `EXTRA-ARGS` can be specified at most once, and a test cannot specify both
     `ARGS` and `EXTRA-ARGS`.
+
+-   ```
+    // INCLUDE-FILE: <path/from/repository/root>
+    ```
+
+    Includes the specified file in the test's virtual file system and adds the
+    path to the test's arguments.
+
+    This can be used to provide a minimal `Core` package (and `prelude` library)
+    in toolchain tests. See the
+    [toolchain docs](/toolchain/docs/adding_features.md) for how.
 
 -   ```
     // SET-CAPTURE-CONSOLE-OUTPUT

@@ -1029,57 +1029,52 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // The value is a type or facet value, so it has a constant value. We get
     // that to unwrap things like NameRef and get to the underlying type or
     // facet value instruction so that we can use `TryGetAs`.
-    auto lookup_inst_id = sem_ir.constant_values().GetConstantInstId(value_id);
+    auto const_value_id = sem_ir.constant_values().GetConstantInstId(value_id);
 
     if (auto facet_access_type_inst =
-            sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(lookup_inst_id)) {
+            sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(const_value_id)) {
       // Conversion from a `FacetAccessType` to a `FacetValue` of the target
       // `FacetType` if the instruction in the `FacetAccessType` is of a
       // `FacetType` that satisfies the requirements of the target `FacetType`.
-      auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
-
       // If the `FacetType` exactly matches the target `FacetType` then we can
       // shortcut and use that value, and avoid impl lookup.
+      auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
         return facet_value_inst_id;
       }
-
-      auto witness_inst_id = LookupImplWitness(
-          context, loc_id, context.constant_values().Get(facet_value_inst_id),
-          context.types().GetConstantId(target.type_id));
-      if (witness_inst_id != SemIR::InstId::None) {
-        return AddInst<SemIR::FacetValue>(context, loc_id,
-                                          {.type_id = target.type_id,
-                                           .type_inst_id = lookup_inst_id,
-                                           .witness_inst_id = witness_inst_id});
-      }
     }
 
-    if (sem_ir.types().Is<SemIR::FacetType>(
-            sem_ir.insts().Get(lookup_inst_id).type_id())) {
-      // Conversion from a facet value to a `FacetValue` of the target
-      // `FacetType`. We move up to the higher typish level, and convert the
-      // `FacetType` (which is of type TypeType) directly. If the `FacetType`
-      // itself implements the target `FacetType` (`impl Iface1 as Iface2`),
-      // then we will produce a `FacetValue` of the target `FacetType`.
-      lookup_inst_id = context.types().GetInstId(
-          sem_ir.insts().Get(lookup_inst_id).type_id());
-    }
-
-    if (sem_ir.types().Is<SemIR::TypeType>(
-            sem_ir.insts().Get(lookup_inst_id).type_id())) {
-      // Conversion from a type value (which has type `type`) to a facet value
-      // (which has type `FacetType`), if the type satisfies the requirements of
-      // the target `FacetType`, as determined by finding an impl witness. This
-      // binds the value to the `FacetType` with a `FacetValue`.
-      auto witness_inst_id = LookupImplWitness(
-          context, loc_id, sem_ir.constant_values().Get(lookup_inst_id),
-          sem_ir.types().GetConstantId(target.type_id));
-      if (witness_inst_id != SemIR::InstId::None) {
-        return AddInst<SemIR::FacetValue>(context, loc_id,
-                                          {.type_id = target.type_id,
-                                           .type_inst_id = lookup_inst_id,
-                                           .witness_inst_id = witness_inst_id});
+    // Conversion from a facet value (which has type `FacetType`) or a type
+    // value (which has type `TypeType`) to a facet value. We can do this if the
+    // type satisfies the requirements of the target `FacetType`, as determined
+    // by finding impl witnesses for the target FacetType.
+    auto lookup_result = LookupImplWitness(
+        context, loc_id, sem_ir.constant_values().Get(const_value_id),
+        sem_ir.types().GetConstantId(target.type_id));
+    if (lookup_result.has_value()) {
+      if (lookup_result.has_error_value()) {
+        return SemIR::ErrorInst::SingletonInstId;
+      } else {
+        // We bind the input value to the target `FacetType` with a
+        // `FacetValue`, which requires an instruction of type `TypeType`. So if
+        // we are converting from a facet value, we get its `type` via an extra
+        // `FacetAccessType` instruction.
+        auto type_inst_id = SemIR::InstId::None;
+        if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+          type_inst_id =
+              AddInst(context, loc_id,
+                      SemIR::FacetAccessType{
+                          .type_id = SemIR::TypeType::SingletonTypeId,
+                          .facet_value_inst_id = const_value_id,
+                      });
+        } else {
+          type_inst_id = const_value_id;
+        }
+        return AddInst<SemIR::FacetValue>(
+            context, loc_id,
+            {.type_id = target.type_id,
+             .type_inst_id = type_inst_id,
+             .witnesses_block_id = lookup_result.inst_block_id()});
       }
     }
   }
@@ -1114,6 +1109,59 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
   return SemIR::ErrorInst::SingletonInstId;
 }
 
+static auto DiagnoseConversionFailureToConstraintValue(Context& context,
+                                                       SemIR::LocId loc_id,
+                                                       SemIR::InstId expr_id,
+                                                       ConversionTarget target)
+    -> DiagnosticBuilder {
+  CARBON_DCHECK(target.type_id == SemIR::TypeType::SingletonTypeId ||
+                context.types().Is<SemIR::FacetType>(target.type_id));
+
+  auto type_of_expr_id = context.insts().Get(expr_id).type_id();
+  if (context.types().IsFacetType(type_of_expr_id)) {
+    // If the source type is/has a facet value, then we can include its
+    // FacetType in the diagnostic to help explain what interfaces the
+    // source type implements.
+    auto facet_value_inst_id = SemIR::InstId::None;
+    if (auto facet_access_type =
+            context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
+      facet_value_inst_id = facet_access_type->facet_value_inst_id;
+    } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
+      facet_value_inst_id = expr_id;
+    }
+
+    if (facet_value_inst_id.has_value()) {
+      CARBON_DIAGNOSTIC(
+          ConversionFailureFacetToFacet, Error,
+          "cannot{0:| implicitly} convert type {1} that implements {2} "
+          "into type implementing {3}{0: with `as`|}",
+          BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
+      return context.emitter().Build(
+          loc_id, ConversionFailureFacetToFacet,
+          target.kind == ConversionTarget::ExplicitAs, expr_id,
+          facet_value_inst_id, target.type_id);
+    } else {
+      CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
+                        "cannot{0:| implicitly} convert type {1} "
+                        "into type implementing {2}{0: with `as`|}",
+                        BoolAsSelect, InstIdAsType, SemIR::TypeId);
+      return context.emitter().Build(
+          loc_id, ConversionFailureTypeToFacet,
+          target.kind == ConversionTarget::ExplicitAs, expr_id, target.type_id);
+    }
+  } else {
+    CARBON_DIAGNOSTIC(
+        ConversionFailureNonTypeToFacet, Error,
+        "cannot{0:| implicitly} convert non-type value of type {1} "
+        "{2:to|into type implementing} {3}{0: with `as`|}",
+        BoolAsSelect, TypeOfInstId, BoolAsSelect, SemIR::TypeId);
+    return context.emitter().Build(
+        loc_id, ConversionFailureNonTypeToFacet,
+        target.kind == ConversionTarget::ExplicitAs, expr_id,
+        target.type_id == SemIR::TypeType::SingletonTypeId, target.type_id);
+  }
+}
+
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertToValueAction action) -> SemIR::InstId {
   return Convert(
@@ -1146,7 +1194,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // We can only perform initialization for complete, non-abstract types.
+  // We can only perform initialization for complete, non-abstract types. Note
+  // that `RequireConcreteType` returns true for facet types, since their
+  // representation is fixed. This allows us to support using the `Self` of an
+  // interface inside its definition.
   if (!RequireConcreteType(
           context, target.type_id, loc_id,
           [&] {
@@ -1223,19 +1274,24 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (!target.diagnose) {
         return context.emitter().BuildSuppressed();
       }
-      // TODO: Should this message change to say "object of type" when
-      // converting from a reference expression?
-      CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                        "cannot implicitly convert value of type {0} to {1}",
-                        TypeOfInstId, SemIR::TypeId);
-      CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
-                        "cannot convert value of type {0} to {1} with `as`",
-                        TypeOfInstId, SemIR::TypeId);
-      return context.emitter().Build(loc_id,
-                                     target.kind == ConversionTarget::ExplicitAs
-                                         ? ExplicitAsConversionFailure
-                                         : ImplicitAsConversionFailure,
-                                     expr_id, target.type_id);
+      if (target.type_id == SemIR::TypeType::SingletonTypeId ||
+          sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+        // TODO: Move this to PerformBuiltinConversion(). See
+        // https://github.com/carbon-language/carbon-lang/issues/5122.
+        return DiagnoseConversionFailureToConstraintValue(context, loc_id,
+                                                          expr_id, target);
+      } else {
+        // TODO: Should this message change to say "object of type" when
+        // converting from a reference expression?
+        CARBON_DIAGNOSTIC(ConversionFailure, Error,
+                          "cannot{0:| implicitly} convert value of type {1} to "
+                          "{2}{0: with `as`|}",
+                          BoolAsSelect, TypeOfInstId, SemIR::TypeId);
+        return context.emitter().Build(
+            loc_id, ConversionFailure,
+            target.kind == ConversionTarget::ExplicitAs, expr_id,
+            target.type_id);
+      }
     });
 
     // Pull a value directly out of the initializer if possible and wanted.

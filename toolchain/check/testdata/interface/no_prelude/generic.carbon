@@ -91,7 +91,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %impl_witness.49b: <witness> = impl_witness (@impl.90b.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.005: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.317: %F.type.005 = struct_value () [concrete]
-// CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.683 = facet_value %C, %impl_witness.49b [concrete]
+// CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.683 = facet_value %C, (%impl_witness.49b) [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
 // CHECK:STDOUT:   %N: %T.8b3 = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T.8b3 = symbolic_binding_pattern N, 1 [symbolic]
@@ -500,10 +500,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: specific @Generic(constants.%A) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%A
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%A
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.c7c
-// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.a53) {

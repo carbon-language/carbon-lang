@@ -38,7 +38,11 @@ auto GetPrettyNameFromPatternId(const File& sem_ir, InstId pattern_id)
   }
 
   if (auto binding_pattern = inst.TryAs<AnyBindingPattern>()) {
-    return sem_ir.entity_names().Get(binding_pattern->entity_name_id).name_id;
+    if (binding_pattern->entity_name_id.has_value()) {
+      return sem_ir.entity_names().Get(binding_pattern->entity_name_id).name_id;
+    } else {
+      return NameId::Underscore;
+    }
   }
 
   return NameId::None;

@@ -36,7 +36,7 @@ class X {
 // CHECK:STDOUT:   %B.4af: %B.type.d47 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, %impl_witness [concrete]
+// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }

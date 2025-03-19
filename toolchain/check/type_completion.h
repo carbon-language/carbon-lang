@@ -40,9 +40,15 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
     -> bool;
 
-// Like `RequireCompleteType`, but also require the type to not be an abstract
-// class type. If it is, `abstract_diagnoser` is used to diagnose the problem,
-// and this function returns false.
+// Returns true for types that have an object representation that may be used as
+// a return type or variable type. Returns true for all facet types, since their
+// representation is always the same and is never considered abstract.
+// Otherwise, this is like `RequireCompleteType`, but also require the type to
+// not be abstract. If it is, `abstract_diagnoser` is used to diagnose the
+// problem, and this function returns false.
+//
+// Note: class types are abstract if marked using the `abstract` keyword; tuple
+// and struct types are abstract if any element is abstract.
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser,
                          MakeDiagnosticBuilderFn abstract_diagnoser) -> bool;

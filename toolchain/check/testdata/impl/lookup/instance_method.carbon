@@ -40,12 +40,12 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.f36: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.4c3: %F.type.f36 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
-// CHECK:STDOUT:   %.f8b: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
+// CHECK:STDOUT:   %.ed5: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -161,7 +161,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.f8b = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.4c3]
+// CHECK:STDOUT:   %impl.elem0: %.ed5 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.4c3]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %F.call: init %i32 = call %bound_method(%c.ref)
 // CHECK:STDOUT:   %.loc24_15.1: %i32 = value_of_initializer %F.call

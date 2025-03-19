@@ -93,7 +93,7 @@ class ArrayStack {
   auto empty() const -> bool { return array_offsets_.empty(); }
 
  private:
-  // For each pushed array, the start index in elements_.
+  // For each pushed array, the start index in `values_`.
   llvm::SmallVector<int32_t> array_offsets_;
 
   // The full set of elements in all arrays.

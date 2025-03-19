@@ -151,8 +151,8 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_46.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_46.2 = import <none>
 // CHECK:STDOUT:   impl_decl @impl.064930.2 [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -198,8 +198,8 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_only_in_api.carbon
@@ -252,8 +252,8 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_32.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_32.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_decl_only_in_api.carbon"] {
@@ -315,8 +315,8 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_40.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_40.2 = import <none>
 // CHECK:STDOUT:   impl_decl @impl.590fe9.2 [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -354,8 +354,8 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_33.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_33.2 = import <none>
 // CHECK:STDOUT:   %D.decl: type = interface_decl @D [concrete = constants.%D.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()

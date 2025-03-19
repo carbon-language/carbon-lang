@@ -349,6 +349,12 @@ static auto MakeFacetTypeResult(Context& context,
 // with constant phase, and if so, returns the corresponding constant value.
 // Overloads are provided for different kinds of ID.
 
+// AbsoluteInstId can not have its values substituted, so this overload is
+// deleted. This prevents conversion to InstId.
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::AbsoluteInstId inst_id, Phase* phase)
+    -> SemIR::InstId = delete;
+
 // If the given instruction is constant, returns its constant value.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
@@ -410,6 +416,12 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
       LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
   return eval_context.context().types().GetTypeIdForTypeConstantId(const_id);
 }
+
+// AbsoluteInstBlockId can not have its values substituted, so this overload is
+// deleted. This prevents conversion to InstBlockId.
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::AbsoluteInstBlockId inst_block_id,
+                             Phase* phase) -> SemIR::InstBlockId = delete;
 
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values.
@@ -1712,6 +1724,8 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
   // argument value.
   if (auto value = eval_context.GetCompileTimeBindValue(bind_name.bind_index());
       value.has_value()) {
+    // TODO: This seems incorrect: patterns don't typically evaluate to the
+    // value matched by the pattern.
     return value;
   }
 

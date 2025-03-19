@@ -62,6 +62,8 @@ static auto BuildInterfaceDecl(Context& context,
       name, interface_decl_id, /*is_extern=*/false,
       SemIR::LibraryNameId::None)};
 
+  DiagnoseIfGenericMissingExplicitParameters(context, interface_info);
+
   // Check whether this is a redeclaration.
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(
@@ -154,6 +156,9 @@ auto HandleParseNode(Context& context,
   interface_info.definition_id = interface_decl_id;
   interface_info.scope_id = context.name_scopes().Add(
       interface_decl_id, SemIR::NameId::None, interface_info.parent_scope_id);
+  context.name_scopes()
+      .Get(interface_info.scope_id)
+      .set_is_interface_definition();
 
   auto self_specific_id =
       context.generics().GetSelfSpecific(interface_info.generic_id);

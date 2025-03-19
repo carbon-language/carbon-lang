@@ -50,13 +50,13 @@ fn Test() {
 // CHECK:STDOUT:   %impl_witness.226: <witness> = impl_witness (@impl.8f9.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.853: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.08a: %Convert.type.853 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.a10: %ImplicitAs.type.ac8 = facet_value %i32, %impl_witness.226 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.034: %ImplicitAs.type.ac8 = facet_value %i32, (%impl_witness.226) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %impl_witness.c53: <witness> = impl_witness (@impl.c94.%Convert.decl) [concrete]
 // CHECK:STDOUT:   %Convert.type.8a1: type = fn_type @Convert.3 [concrete]
 // CHECK:STDOUT:   %Convert.c7a: %Convert.type.8a1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.208: %ImplicitAs.type.205 = facet_value %X, %impl_witness.c53 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.601: %ImplicitAs.type.205 = facet_value %X, (%impl_witness.c53) [concrete]
 // CHECK:STDOUT:   %Sink_i32.type: type = fn_type @Sink_i32 [concrete]
 // CHECK:STDOUT:   %Sink_i32: %Sink_i32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
@@ -70,9 +70,9 @@ fn Test() {
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Source.specific_fn.363: <specific function> = specific_function %Source, @Source(%X) [concrete]
-// CHECK:STDOUT:   %.d2d: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.208 [concrete]
+// CHECK:STDOUT:   %.28a: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.601 [concrete]
 // CHECK:STDOUT:   %Source.specific_fn.cc7: <specific function> = specific_function %Source, @Source(%i32) [concrete]
-// CHECK:STDOUT:   %.d10: type = fn_type_with_self_type %Convert.type.665, %ImplicitAs.facet.a10 [concrete]
+// CHECK:STDOUT:   %.b06: type = fn_type_with_self_type %Convert.type.665, %ImplicitAs.facet.034 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -258,7 +258,7 @@ fn Test() {
 // CHECK:STDOUT:   %Source.specific_fn.loc30: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [concrete = constants.%Source.specific_fn.363]
 // CHECK:STDOUT:   %.loc30_20.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.specific_fn.loc30() to %.loc30_20.1
-// CHECK:STDOUT:   %impl.elem0.loc30: %.d2d = impl_witness_access constants.%impl_witness.c53, element0 [concrete = constants.%Convert.c7a]
+// CHECK:STDOUT:   %impl.elem0.loc30: %.28a = impl_witness_access constants.%impl_witness.c53, element0 [concrete = constants.%Convert.c7a]
 // CHECK:STDOUT:   %bound_method.loc30: <bound method> = bound_method %Source.call.loc30, %impl.elem0.loc30
 // CHECK:STDOUT:   %.loc30_20.2: ref %X = temporary %.loc30_20.1, %Source.call.loc30
 // CHECK:STDOUT:   %.loc30_20.3: %X = bind_value %.loc30_20.2
@@ -272,7 +272,7 @@ fn Test() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %Source.specific_fn.loc31: <specific function> = specific_function %Source.ref.loc31, @Source(constants.%i32) [concrete = constants.%Source.specific_fn.cc7]
 // CHECK:STDOUT:   %Source.call.loc31: init %i32 = call %Source.specific_fn.loc31()
-// CHECK:STDOUT:   %impl.elem0.loc31: %.d10 = impl_witness_access constants.%impl_witness.226, element0 [concrete = constants.%Convert.08a]
+// CHECK:STDOUT:   %impl.elem0.loc31: %.b06 = impl_witness_access constants.%impl_witness.226, element0 [concrete = constants.%Convert.08a]
 // CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %Source.call.loc31, %impl.elem0.loc31
 // CHECK:STDOUT:   %.loc31_20.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc31_20.2: %i32 = value_of_initializer %Source.call.loc31

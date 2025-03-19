@@ -107,6 +107,8 @@ CARBON_PARSE_NODE_KIND(SelfValueName)
 CARBON_PARSE_NODE_KIND(SelfValueNameExpr)
 CARBON_PARSE_NODE_KIND(SelfTypeNameExpr)
 
+CARBON_PARSE_NODE_KIND(UnderscoreName)
+
 CARBON_PARSE_NODE_KIND(BaseName)
 CARBON_PARSE_NODE_KIND(PackageExpr)
 CARBON_PARSE_NODE_KIND(CoreNameExpr)
@@ -126,8 +128,9 @@ CARBON_PARSE_NODE_KIND(LibraryDecl)
 
 CARBON_PARSE_NODE_KIND(LibrarySpecifier)
 
-CARBON_PARSE_NODE_KIND(NameQualifierWithParams)
+CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithParams)
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithoutParams)
+CARBON_PARSE_NODE_KIND(KeywordNameQualifierWithParams)
 CARBON_PARSE_NODE_KIND(KeywordNameQualifierWithoutParams)
 
 CARBON_PARSE_NODE_KIND(ExportIntroducer)

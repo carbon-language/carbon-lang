@@ -131,11 +131,11 @@ import Other library "o1";
 
 // --- fail_import_conflict.impl.carbon
 
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+9]]:6: in import [InImport]
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+9]]:1: in import [InImport]
 // CHECK:STDERR: import_conflict.carbon:4:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: import Other library "o1";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+5]]:6: in import [InImport]
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+5]]:1: in import [InImport]
 // CHECK:STDERR: local_other.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
@@ -156,8 +156,8 @@ impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+9]]:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: import Other library "o1";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: import_conflict_reverse.carbon:4:1: in import [InImport]
 // CHECK:STDERR: local_other.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class Other {}
@@ -346,8 +346,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:     .c2 = %c2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_35.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_35.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c1.patt: %C1 = binding_pattern c1
 // CHECK:STDOUT:     %.loc6: %C1 = var_pattern %c1.patt
@@ -424,8 +424,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .C1 = imports.%Main.C1
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c1.patt: %C1 = binding_pattern c1
 // CHECK:STDOUT:     %.loc6: %C1 = var_pattern %c1.patt
@@ -491,8 +491,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %.loc4_1: %C = var_pattern %c.patt
@@ -568,8 +568,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .o1 = %o1
 // CHECK:STDOUT:     .o2 = %o2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_25.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_25.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o1.patt: %O1 = binding_pattern o1
@@ -659,8 +659,8 @@ import Other library "o1";
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:     .o1 = %o1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o1.patt: %O1 = binding_pattern o1
@@ -717,8 +717,8 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc11_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc11_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc11_31.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc11_31.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -747,8 +747,8 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_39.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_39.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
