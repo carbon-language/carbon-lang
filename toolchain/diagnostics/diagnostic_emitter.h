@@ -90,12 +90,7 @@ class DiagnosticEmitter {
 
     // Prevent trivial uses of the builder.
     template <typename... Args>
-    auto Emit() && -> void {
-      static_assert(
-          false,
-          "Use `emitter.Emit(...)` or `emitter.Build(...).Note(...).Emit(...)` "
-          "instead of `emitter.Build(...).Emit(...)`");
-    }
+    auto Emit() && -> void;
 
     // Returns true if this DiagnosticBuilder may emit a diagnostic. Can be used
     // to avoid excess work computing notes, etc, if no diagnostic is going to
@@ -301,6 +296,20 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() & -> void {
   emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
 }
 
+namespace Internal {
+template <typename LocT>
+static constexpr bool AlwaysFalse = false;
+}
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() && -> void {
+  static_assert(Internal::AlwaysFalse<LocT>,
+                "Use `emitter.Emit(...)` or "
+                "`emitter.Build(...).Note(...).Emit(...)` "
+                "instead of `emitter.Build(...).Emit(...)`");
+}
+
 template <typename LocT>
 template <typename... Args>
 DiagnosticEmitter<LocT>::DiagnosticBuilder::DiagnosticBuilder(
@@ -375,9 +384,7 @@ auto DiagnosticEmitter<LocT>::Emit(
     Internal::NoTypeDeduction<Args>... args) -> void {
   DiagnosticBuilder builder(this, loc, diagnostic_base,
                             {MakeAny<Args>(args)...});
-  // TODO: Workaround for clang-16 rvalue ref qualifier behavior; remove when
-  // the static_cast isn't needed on the oldest supported compiler..
-  static_cast<DiagnosticBuilder&>(builder).Emit();
+  builder.Emit();
 }
 
 template <typename LocT>
