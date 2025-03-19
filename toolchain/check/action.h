@@ -46,10 +46,7 @@ auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
 // Convenience wrapper for `AddDependentActionSplice`.
 template <typename LocT, typename InstT>
 auto AddDependentActionSplice(Context& context, LocT loc, InstT inst,
-                              SemIR::TypeId result_type_id)
-    -> decltype(AddDependentActionSplice(context,
-                                         SemIR::LocIdAndInst(loc, inst),
-                                         result_type_id)) {
+                              SemIR::TypeId result_type_id) -> SemIR::InstId {
   return AddDependentActionSplice(context, SemIR::LocIdAndInst(loc, inst),
                                   result_type_id);
 }
