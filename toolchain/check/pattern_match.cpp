@@ -11,6 +11,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/subpattern.h"
 #include "toolchain/check/type.h"
@@ -257,7 +258,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           AddrSelfIsNonRef);
       // Add fake reference expression to preserve invariants.
       auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
-      scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(
+      scrutinee_ref_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
           context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
   }
   auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
@@ -436,7 +437,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Caller: {
-      storage_id = AddInst<SemIR::TemporaryStorage>(
+      storage_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
           context, pattern_loc_id, {.type_id = var_pattern.type_id});
       CARBON_CHECK(entry.scrutinee_id.has_value());
       break;

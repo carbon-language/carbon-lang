@@ -1,0 +1,441 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/no_prelude/destroy_calls.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/no_prelude/destroy_calls.carbon
+
+// --- types.carbon
+
+library "[[@TEST_NAME]]";
+
+class NoAddr {
+  fn Make() -> NoAddr;
+  fn destroy[self: Self]();
+}
+
+class WithAddr {
+  fn Make() -> WithAddr;
+  fn destroy[addr self: Self*]();
+}
+
+// --- implicit_return.carbon
+
+library "[[@TEST_NAME]]";
+import library "types";
+
+fn F() {
+  var a: NoAddr;
+  var b: WithAddr;
+}
+
+// --- nested_scope.carbon
+
+library "[[@TEST_NAME]]";
+import library "types";
+
+fn F() {
+  var a: NoAddr;
+  var b: WithAddr;
+  if (true) {
+    // TODO: Destroy in nested scope.
+    var c: WithAddr;
+  }
+}
+
+// --- temp.carbon
+
+library "[[@TEST_NAME]]";
+import library "types";
+
+fn F() {
+  // TODO: The scoping of these destroy calls is incorrect. Maybe we need to
+  // establish statement scopes?
+  NoAddr.Make();
+  WithAddr.Make();
+}
+
+// CHECK:STDOUT: --- types.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %NoAddr: type = class_type @NoAddr [concrete]
+// CHECK:STDOUT:   %Make.type.bc9: type = fn_type @Make.1 [concrete]
+// CHECK:STDOUT:   %Make.1be: %Make.type.bc9 = struct_value () [concrete]
+// CHECK:STDOUT:   %destroy.type.bc5: type = fn_type @destroy.1 [concrete]
+// CHECK:STDOUT:   %destroy.60f: %destroy.type.bc5 = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %WithAddr: type = class_type @WithAddr [concrete]
+// CHECK:STDOUT:   %Make.type.e14: type = fn_type @Make.2 [concrete]
+// CHECK:STDOUT:   %Make.b0a: %Make.type.e14 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %WithAddr [concrete]
+// CHECK:STDOUT:   %destroy.type.02f: type = fn_type @destroy.2 [concrete]
+// CHECK:STDOUT:   %destroy.8d0: %destroy.type.02f = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .NoAddr = %NoAddr.decl
+// CHECK:STDOUT:     .WithAddr = %WithAddr.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %NoAddr.decl: type = class_decl @NoAddr [concrete = constants.%NoAddr] {} {}
+// CHECK:STDOUT:   %WithAddr.decl: type = class_decl @WithAddr [concrete = constants.%WithAddr] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @NoAddr {
+// CHECK:STDOUT:   %Make.decl: %Make.type.bc9 = fn_decl @Make.1 [concrete = constants.%Make.1be] {
+// CHECK:STDOUT:     %return.patt: %NoAddr = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %NoAddr = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %NoAddr.ref: type = name_ref NoAddr, file.%NoAddr.decl [concrete = constants.%NoAddr]
+// CHECK:STDOUT:     %return.param: ref %NoAddr = out_param call_param0
+// CHECK:STDOUT:     %return: ref %NoAddr = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.bc5 = fn_decl @destroy.1 [concrete = constants.%destroy.60f] {
+// CHECK:STDOUT:     %self.patt: %NoAddr = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %NoAddr = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %NoAddr = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%NoAddr [concrete = constants.%NoAddr]
+// CHECK:STDOUT:     %self: %NoAddr = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%NoAddr
+// CHECK:STDOUT:   .NoAddr = <poisoned>
+// CHECK:STDOUT:   .Make = %Make.decl
+// CHECK:STDOUT:   .destroy = %destroy.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @WithAddr {
+// CHECK:STDOUT:   %Make.decl: %Make.type.e14 = fn_decl @Make.2 [concrete = constants.%Make.b0a] {
+// CHECK:STDOUT:     %return.patt: %WithAddr = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %WithAddr = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %WithAddr.ref: type = name_ref WithAddr, file.%WithAddr.decl [concrete = constants.%WithAddr]
+// CHECK:STDOUT:     %return.param: ref %WithAddr = out_param call_param0
+// CHECK:STDOUT:     %return: ref %WithAddr = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.02f = fn_decl @destroy.2 [concrete = constants.%destroy.8d0] {
+// CHECK:STDOUT:     %self.patt: %ptr = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %.loc11_14: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc11_29: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%WithAddr [concrete = constants.%WithAddr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %WithAddr [concrete = constants.%ptr]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %self: %ptr = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%WithAddr
+// CHECK:STDOUT:   .WithAddr = <poisoned>
+// CHECK:STDOUT:   .Make = %Make.decl
+// CHECK:STDOUT:   .destroy = %destroy.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Make.1() -> %NoAddr;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Make.2() -> %WithAddr;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.2[addr %self.param_patt: %ptr]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- implicit_return.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NoAddr: type = class_type @NoAddr [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %destroy.type.bc5: type = fn_type @destroy.1 [concrete]
+// CHECK:STDOUT:   %destroy.60f: %destroy.type.bc5 = struct_value () [concrete]
+// CHECK:STDOUT:   %WithAddr: type = class_type @WithAddr [concrete]
+// CHECK:STDOUT:   %destroy.type.02f: type = fn_type @destroy.2 [concrete]
+// CHECK:STDOUT:   %destroy.8d0: %destroy.type.02f = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.b4e: type = ptr_type %WithAddr [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.NoAddr: type = import_ref Main//types, NoAddr, loaded [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %Main.WithAddr: type = import_ref Main//types, WithAddr, loaded [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc10_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.8d0]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .NoAddr = imports.%Main.NoAddr
+// CHECK:STDOUT:     .WithAddr = imports.%Main.WithAddr
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @NoAddr [from "types.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.f42
+// CHECK:STDOUT:   .Make = imports.%Main.import_ref.b5b
+// CHECK:STDOUT:   .destroy = imports.%Main.import_ref.7fe
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @WithAddr [from "types.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.95d
+// CHECK:STDOUT:   .Make = imports.%Main.import_ref.1cb
+// CHECK:STDOUT:   .destroy = imports.%Main.import_ref.54e
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %NoAddr = binding_pattern a
+// CHECK:STDOUT:     %.loc6_3.1: %NoAddr = var_pattern %a.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a.var: ref %NoAddr = var a
+// CHECK:STDOUT:   %destroy.ref.1: %destroy.type.bc5 = name_ref destroy, imports.%Main.import_ref.7fe [concrete = constants.%destroy.60f]
+// CHECK:STDOUT:   %destroy.bound.1: <bound method> = bound_method %a.var, %destroy.ref.1
+// CHECK:STDOUT:   %NoAddr.ref: type = name_ref NoAddr, imports.%Main.NoAddr [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %a: ref %NoAddr = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %WithAddr = binding_pattern b
+// CHECK:STDOUT:     %.loc7: %WithAddr = var_pattern %b.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b.var: ref %WithAddr = var b
+// CHECK:STDOUT:   %destroy.ref.2: %destroy.type.02f = name_ref destroy, imports.%Main.import_ref.54e [concrete = constants.%destroy.8d0]
+// CHECK:STDOUT:   %destroy.bound.2: <bound method> = bound_method %b.var, %destroy.ref.2
+// CHECK:STDOUT:   %WithAddr.ref: type = name_ref WithAddr, imports.%Main.WithAddr [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %b: ref %WithAddr = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %a.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
+// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %b.var
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%addr)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]() [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.2[addr <unexpected>.inst60: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- nested_scope.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NoAddr: type = class_type @NoAddr [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %destroy.type.bc5: type = fn_type @destroy.1 [concrete]
+// CHECK:STDOUT:   %destroy.60f: %destroy.type.bc5 = struct_value () [concrete]
+// CHECK:STDOUT:   %WithAddr: type = class_type @WithAddr [concrete]
+// CHECK:STDOUT:   %destroy.type.02f: type = fn_type @destroy.2 [concrete]
+// CHECK:STDOUT:   %destroy.8d0: %destroy.type.02f = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.b4e: type = ptr_type %WithAddr [concrete]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.NoAddr: type = import_ref Main//types, NoAddr, loaded [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %Main.WithAddr: type = import_ref Main//types, WithAddr, loaded [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc10_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.8d0]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .NoAddr = imports.%Main.NoAddr
+// CHECK:STDOUT:     .WithAddr = imports.%Main.WithAddr
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @NoAddr [from "types.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.f42
+// CHECK:STDOUT:   .Make = imports.%Main.import_ref.b5b
+// CHECK:STDOUT:   .destroy = imports.%Main.import_ref.7fe
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @WithAddr [from "types.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.95d
+// CHECK:STDOUT:   .Make = imports.%Main.import_ref.1cb
+// CHECK:STDOUT:   .destroy = imports.%Main.import_ref.54e
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %NoAddr = binding_pattern a
+// CHECK:STDOUT:     %.loc6_3.1: %NoAddr = var_pattern %a.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a.var: ref %NoAddr = var a
+// CHECK:STDOUT:   %destroy.ref.1: %destroy.type.bc5 = name_ref destroy, imports.%Main.import_ref.7fe [concrete = constants.%destroy.60f]
+// CHECK:STDOUT:   %destroy.bound.1: <bound method> = bound_method %a.var, %destroy.ref.1
+// CHECK:STDOUT:   %NoAddr.ref: type = name_ref NoAddr, imports.%Main.NoAddr [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %a: ref %NoAddr = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %WithAddr = binding_pattern b
+// CHECK:STDOUT:     %.loc7: %WithAddr = var_pattern %b.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b.var: ref %WithAddr = var b
+// CHECK:STDOUT:   %destroy.ref.2: %destroy.type.02f = name_ref destroy, imports.%Main.import_ref.54e [concrete = constants.%destroy.8d0]
+// CHECK:STDOUT:   %destroy.bound.2: <bound method> = bound_method %b.var, %destroy.ref.2
+// CHECK:STDOUT:   %WithAddr.ref.loc7: type = name_ref WithAddr, imports.%Main.WithAddr [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %b: ref %WithAddr = bind_name b, %b.var
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   if %true br !if.then else br !if.else
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.then:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %WithAddr = binding_pattern c
+// CHECK:STDOUT:     %.loc9: %WithAddr = var_pattern %c.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.var: ref %WithAddr = var c
+// CHECK:STDOUT:   %destroy.ref.3: %destroy.type.02f = name_ref destroy, imports.%Main.import_ref.54e [concrete = constants.%destroy.8d0]
+// CHECK:STDOUT:   %destroy.bound.3: <bound method> = bound_method %c.var, %destroy.ref.3
+// CHECK:STDOUT:   %WithAddr.ref.loc9: type = name_ref WithAddr, imports.%Main.WithAddr [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %c: ref %WithAddr = bind_name c, %c.var
+// CHECK:STDOUT:   br !if.else
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.else:
+// CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %a.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
+// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %b.var
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%addr)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]() [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.2[addr <unexpected>.inst60: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- temp.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NoAddr: type = class_type @NoAddr [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Make.type.bc9: type = fn_type @Make.1 [concrete]
+// CHECK:STDOUT:   %Make.1be: %Make.type.bc9 = struct_value () [concrete]
+// CHECK:STDOUT:   %destroy.type.bc5: type = fn_type @destroy.1 [concrete]
+// CHECK:STDOUT:   %destroy.60f: %destroy.type.bc5 = struct_value () [concrete]
+// CHECK:STDOUT:   %WithAddr: type = class_type @WithAddr [concrete]
+// CHECK:STDOUT:   %Make.type.e14: type = fn_type @Make.2 [concrete]
+// CHECK:STDOUT:   %Make.b0a: %Make.type.e14 = struct_value () [concrete]
+// CHECK:STDOUT:   %destroy.type.02f: type = fn_type @destroy.2 [concrete]
+// CHECK:STDOUT:   %destroy.8d0: %destroy.type.02f = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.b4e: type = ptr_type %WithAddr [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.NoAddr: type = import_ref Main//types, NoAddr, loaded [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %Main.WithAddr: type = import_ref Main//types, WithAddr, loaded [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.784: %Make.type.bc9 = import_ref Main//types, loc5_22, loaded [concrete = constants.%Make.1be]
+// CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.974: %Make.type.e14 = import_ref Main//types, loc10_24, loaded [concrete = constants.%Make.b0a]
+// CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.8d0]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .NoAddr = imports.%Main.NoAddr
+// CHECK:STDOUT:     .WithAddr = imports.%Main.WithAddr
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @NoAddr [from "types.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.f42
+// CHECK:STDOUT:   .Make = imports.%Main.import_ref.784
+// CHECK:STDOUT:   .destroy = imports.%Main.import_ref.7fe
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @WithAddr [from "types.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.95d
+// CHECK:STDOUT:   .Make = imports.%Main.import_ref.974
+// CHECK:STDOUT:   .destroy = imports.%Main.import_ref.54e
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %NoAddr.ref: type = name_ref NoAddr, imports.%Main.NoAddr [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %Make.ref.loc8: %Make.type.bc9 = name_ref Make, imports.%Main.import_ref.784 [concrete = constants.%Make.1be]
+// CHECK:STDOUT:   %.loc8_15.1: ref %NoAddr = temporary_storage
+// CHECK:STDOUT:   %destroy.ref.1: %destroy.type.bc5 = name_ref destroy, imports.%Main.import_ref.7fe [concrete = constants.%destroy.60f]
+// CHECK:STDOUT:   %destroy.bound.1: <bound method> = bound_method %.loc8_15.1, %destroy.ref.1
+// CHECK:STDOUT:   %Make.call.loc8: init %NoAddr = call %Make.ref.loc8() to %.loc8_15.1
+// CHECK:STDOUT:   %.loc8_15.2: ref %NoAddr = temporary %.loc8_15.1, %Make.call.loc8
+// CHECK:STDOUT:   %WithAddr.ref: type = name_ref WithAddr, imports.%Main.WithAddr [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %Make.ref.loc9: %Make.type.e14 = name_ref Make, imports.%Main.import_ref.974 [concrete = constants.%Make.b0a]
+// CHECK:STDOUT:   %.loc9_17.1: ref %WithAddr = temporary_storage
+// CHECK:STDOUT:   %destroy.ref.2: %destroy.type.02f = name_ref destroy, imports.%Main.import_ref.54e [concrete = constants.%destroy.8d0]
+// CHECK:STDOUT:   %destroy.bound.2: <bound method> = bound_method %.loc9_17.1, %destroy.ref.2
+// CHECK:STDOUT:   %Make.call.loc9: init %WithAddr = call %Make.ref.loc9() to %.loc9_17.1
+// CHECK:STDOUT:   %.loc9_17.2: ref %WithAddr = temporary %.loc9_17.1, %Make.call.loc9
+// CHECK:STDOUT:   %.loc8_15.3: %NoAddr = bind_value %.loc8_15.1
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.1(%.loc8_15.3)
+// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %.loc9_17.1
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%addr)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Make.1() -> %NoAddr [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]() [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Make.2() -> %WithAddr [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.2[addr <unexpected>.inst66: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT:

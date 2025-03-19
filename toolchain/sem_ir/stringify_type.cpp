@@ -598,6 +598,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case AccessMemberAction::Kind:
+      case AccessOptionalMemberAction::Kind:
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
