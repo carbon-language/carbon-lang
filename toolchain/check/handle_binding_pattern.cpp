@@ -63,18 +63,16 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           is_template);
       if (is_generic) {
         bind_id = AddInstInNoBlock(
-            context, SemIR::LocIdAndInst(name_node,
-                                         SemIR::BindSymbolicName{
-                                             .type_id = cast_type_id,
-                                             .entity_name_id = entity_name_id,
-                                             .value_id = SemIR::InstId::None}));
+            context, name_node,
+            SemIR::BindSymbolicName{.type_id = cast_type_id,
+                                    .entity_name_id = entity_name_id,
+                                    .value_id = SemIR::InstId::None});
       } else {
-        bind_id = AddInstInNoBlock(
-            context,
-            SemIR::LocIdAndInst(
-                name_node, SemIR::BindName{.type_id = cast_type_id,
-                                           .entity_name_id = entity_name_id,
-                                           .value_id = SemIR::InstId::None}));
+        bind_id =
+            AddInstInNoBlock(context, name_node,
+                             SemIR::BindName{.type_id = cast_type_id,
+                                             .entity_name_id = entity_name_id,
+                                             .value_id = SemIR::InstId::None});
       }
     }
 
@@ -195,10 +193,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         .decl_block_id = SemIR::InstBlockId::None};
     auto decl_id = AddPlaceholderInstInNoBlock(
         context,
-        SemIR::LocIdAndInst(
-            context.parse_tree().As<Parse::CompileTimeBindingPatternId>(
-                node_id),
-            assoc_const_decl));
+        context.parse_tree().As<Parse::CompileTimeBindingPatternId>(node_id),
+        assoc_const_decl);
     assoc_const_decl.assoc_const_id = context.associated_constants().Add(
         {.name_id = name_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),

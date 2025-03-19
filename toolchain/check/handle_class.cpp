@@ -222,8 +222,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
                        .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
-  auto class_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, class_decl));
+  auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {

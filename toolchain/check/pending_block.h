@@ -8,6 +8,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -59,34 +60,26 @@ class PendingBlock {
   // Replace the instruction at target_id with the instructions in this block.
   // The new value for target_id should be value_id.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
-    auto value = context_.insts().GetWithLocId(value_id);
+    SemIR::LocIdAndInst value = context_.insts().GetWithLocId(value_id);
 
     // There are three cases here:
 
-    if (insts_.empty()) {
-      // 1) The block is empty. Replace `target_id` with an empty splice
-      // pointing at `value_id`.
-      ReplaceLocIdAndInstBeforeConstantUse(
-          context_, target_id,
-          SemIR::LocIdAndInst(
-              value.loc_id,
-              SemIR::SpliceBlock{.type_id = value.inst.type_id(),
-                                 .block_id = SemIR::InstBlockId::Empty,
-                                 .result_id = value_id}));
-    } else if (insts_.size() == 1 && insts_[0] == value_id) {
-      // 2) The block is {value_id}. Replace `target_id` with the instruction
-      // referred to by `value_id`. This is intended to be the common case.
-      ReplaceLocIdAndInstBeforeConstantUse(context_, target_id, value);
+    if (insts_.size() == 1 && insts_[0] == value_id) {
+      // 1) The block is {value_id}. Replace `target_id` with the instruction
+      //    referred to by `value_id`. This is intended to be the common case.
     } else {
+      // 2) The block is empty. Replace `target_id` with an empty splice
+      //    pointing at `value_id`.
       // 3) Anything else: splice it into the IR, replacing `target_id`.
-      ReplaceLocIdAndInstBeforeConstantUse(
-          context_, target_id,
-          SemIR::LocIdAndInst(
-              value.loc_id,
-              SemIR::SpliceBlock{.type_id = value.inst.type_id(),
-                                 .block_id = context_.inst_blocks().Add(insts_),
-                                 .result_id = value_id}));
+      SemIR::InstBlockId block_id = insts_.empty()
+                                        ? SemIR::InstBlockId::Empty
+                                        : context_.inst_blocks().Add(insts_);
+      value.inst = SemIR::SpliceBlock{.type_id = value.inst.type_id(),
+                                      .block_id = block_id,
+                                      .result_id = value_id};
     }
+
+    ReplaceLocIdAndInstBeforeConstantUse(context_, target_id, value);
 
     // Prepare to stash more pending instructions.
     insts_.clear();

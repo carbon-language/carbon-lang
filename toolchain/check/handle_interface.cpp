@@ -55,8 +55,7 @@ static auto BuildInterfaceDecl(Context& context,
   auto interface_decl =
       SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
                            SemIR::InterfaceId::None, decl_block_id};
-  auto interface_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, interface_decl));
+  auto interface_decl_id = AddPlaceholderInst(context, node_id, interface_decl);
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,

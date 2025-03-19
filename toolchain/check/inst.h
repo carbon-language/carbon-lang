@@ -90,12 +90,26 @@ auto AddPatternInst(Context& context,
 auto AddPlaceholderInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
+// Convenience for AddPlaceholderInst with typed nodes.
+template <typename InstT, typename LocT>
+auto AddPlaceholderInst(Context& context, LocT loc, InstT inst)
+    -> SemIR::InstId {
+  return AddPlaceholderInst(context, SemIR::LocIdAndInst(loc, inst));
+}
+
 // Adds an instruction in no block, returning the produced ID. Should be used
 // rarely. The instruction is a placeholder that is expected to be replaced by
 // `ReplaceInstBeforeConstantUse`.
 auto AddPlaceholderInstInNoBlock(Context& context,
                                  SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
+
+// Convenience for AddPlaceholderInstInNoBlock with typed nodes.
+template <typename InstT, typename LocT>
+auto AddPlaceholderInstInNoBlock(Context& context, LocT loc, InstT inst)
+    -> SemIR::InstId {
+  return AddPlaceholderInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
+}
 
 // Replaces the instruction at `inst_id` with `loc_id_and_inst`. The
 // instruction is required to not have been used in any constant evaluation,

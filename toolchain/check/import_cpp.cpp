@@ -223,8 +223,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, SemIR::InstBlockId::Empty};
-  auto decl_id = AddPlaceholderInst(
-      context, SemIR::LocIdAndInst(Parse::NodeId::None, function_decl));
+  auto decl_id =
+      AddPlaceholderInst(context, Parse::NodeId::None, function_decl);
 
   auto function_info = SemIR::Function{
       {.name_id = name_id,

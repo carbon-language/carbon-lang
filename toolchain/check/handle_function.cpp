@@ -464,8 +464,7 @@ static auto BuildFunctionDecl(Context& context,
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None,
                                        context.inst_block_stack().Pop()};
-  auto decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, function_decl));
+  auto decl_id = AddPlaceholderInst(context, node_id, function_decl);
   RequestVtableIfVirtual(context, node_id, virtual_modifier, parent_scope_inst,
                          decl_id);
 

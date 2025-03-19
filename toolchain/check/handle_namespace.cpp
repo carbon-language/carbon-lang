@@ -42,8 +42,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto namespace_inst = SemIR::Namespace{
       GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
       SemIR::NameScopeId::None, SemIR::InstId::None};
-  auto namespace_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, namespace_inst));
+  auto namespace_id = AddPlaceholderInst(context, node_id, namespace_inst);
 
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id,

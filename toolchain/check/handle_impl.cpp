@@ -380,8 +380,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Add the impl declaration.
   SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
-  auto impl_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, impl_decl));
+  auto impl_decl_id = AddPlaceholderInst(context, node_id, impl_decl);
 
   SemIR::Impl impl_info = {name_context.MakeEntityWithParamsBase(
                                name, impl_decl_id,

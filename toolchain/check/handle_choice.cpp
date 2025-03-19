@@ -54,8 +54,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
       SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
                        .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
-  auto class_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, class_decl));
+  auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   context.decl_name_stack().AddNameOrDiagnose(name_context, class_decl_id,
                                               SemIR::AccessKind::Public);
@@ -193,12 +192,11 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
     -> void {
   SemIR::InstId discriminant_value_id = [&] {
     if (choice_info.num_alternative_bits == 0) {
-      return AddInst(context, SemIR::LocIdAndInst(
-                                  binding.node_id,
-                                  SemIR::TupleLiteral{
-                                      .type_id = GetTupleType(context, {}),
-                                      .elements_id = SemIR::InstBlockId::Empty,
-                                  }));
+      return AddInst(context, binding.node_id,
+                     SemIR::TupleLiteral{
+                         .type_id = GetTupleType(context, {}),
+                         .elements_id = SemIR::InstBlockId::Empty,
+                     });
     } else {
       return MakeIntLiteral(context, binding.node_id,
                             context.ints().Add(alternative_index));
@@ -210,30 +208,28 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
 
   auto self_value_id = ConvertToValueOfType(
       context, binding.node_id,
-      AddInst(context, SemIR::LocIdAndInst(
-                           binding.node_id,
-                           SemIR::StructLiteral{
-                               .type_id = choice_info.self_struct_type_id,
-                               .elements_id =
-                                   [&] {
-                                     context.inst_block_stack().Push();
-                                     context.inst_block_stack().AddInstId(
-                                         discriminant_value_id);
-                                     return context.inst_block_stack().Pop();
-                                   }(),
-                           })),
+      AddInst(context, binding.node_id,
+              SemIR::StructLiteral{
+                  .type_id = choice_info.self_struct_type_id,
+                  .elements_id =
+                      [&] {
+                        context.inst_block_stack().Push();
+                        context.inst_block_stack().AddInstId(
+                            discriminant_value_id);
+                        return context.inst_block_stack().Pop();
+                      }(),
+              }),
       choice_info.self_type_id);
 
   auto entity_name_id = context.entity_names().Add(
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_info.name_scope_id});
-  auto bind_name_id = AddInst(
-      context, SemIR::LocIdAndInst(binding.node_id,
-                                   SemIR::BindName{
-                                       .type_id = choice_info.self_type_id,
-                                       .entity_name_id = entity_name_id,
-                                       .value_id = self_value_id,
-                                   }));
+  auto bind_name_id = AddInst(context, binding.node_id,
+                              SemIR::BindName{
+                                  .type_id = choice_info.self_type_id,
+                                  .entity_name_id = entity_name_id,
+                                  .value_id = self_value_id,
+                              });
   context.name_scopes()
       .Get(choice_info.name_scope_id)
       .AddRequired({.name_id = binding.name_component.name_id,
