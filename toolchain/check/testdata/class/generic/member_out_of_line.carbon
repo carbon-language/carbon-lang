@@ -144,35 +144,35 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
-// CHECK:STDOUT:     %n.patt: %T = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %T = value_param_pattern %n.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %T = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %n.patt: @F.%T.loc5 (%T) = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: @F.%T.loc5 (%T) = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:     %return.patt: @F.%T.loc5 (%T) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @F.%T.loc5 (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.param.loc10: %T = value_param call_param0
-// CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.loc10: %T = bind_name n, %n.param.loc10
-// CHECK:STDOUT:     %return.param.loc10: ref %T = out_param call_param1
-// CHECK:STDOUT:     %return.loc10: ref %T = return_slot %return.param.loc10
+// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0 [symbolic = @Class.%T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = %T.loc5 (constants.%T)]
+// CHECK:STDOUT:     %n.param.loc10: @F.%T.loc5 (%T) = value_param call_param0
+// CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = %T.loc5 (constants.%T)]
+// CHECK:STDOUT:     %n.loc10: @F.%T.loc5 (%T) = bind_name n, %n.param.loc10
+// CHECK:STDOUT:     %return.param.loc10: ref @F.%T.loc5 (%T) = out_param call_param1
+// CHECK:STDOUT:     %return.loc10: ref @F.%T.loc5 (%T) = return_slot %return.param.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = constants.%G] {
-// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %T = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: @G.%Class (%Class) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @G.%Class (%Class) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: @G.%T.loc6 (%T) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @G.%T.loc6 (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc14: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc14 [symbolic = constants.%T]
-// CHECK:STDOUT:     %self.param.loc14: %Class = value_param call_param0
-// CHECK:STDOUT:     %.loc14_28.1: type = splice_block %Self.ref.loc14 [symbolic = constants.%Class] {
-// CHECK:STDOUT:       %.loc14_28.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = constants.%Class]
-// CHECK:STDOUT:       %Self.ref.loc14: type = name_ref Self, %.loc14_28.2 [symbolic = constants.%Class]
+// CHECK:STDOUT:     %T.loc14: type = bind_symbolic_name T, 0 [symbolic = @Class.%T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc14 [symbolic = %T.loc6 (constants.%T)]
+// CHECK:STDOUT:     %self.param.loc14: @G.%Class (%Class) = value_param call_param0
+// CHECK:STDOUT:     %.loc14_28.1: type = splice_block %Self.ref.loc14 [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:       %.loc14_28.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %Self.ref.loc14: type = name_ref Self, %.loc14_28.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc14: %Class = bind_name self, %self.param.loc14
-// CHECK:STDOUT:     %return.param.loc14: ref %T = out_param call_param1
-// CHECK:STDOUT:     %return.loc14: ref %T = return_slot %return.param.loc14
+// CHECK:STDOUT:     %self.loc14: @G.%Class (%Class) = bind_name self, %self.param.loc14
+// CHECK:STDOUT:     %return.param.loc14: ref @G.%T.loc6 (%T) = out_param call_param1
+// CHECK:STDOUT:     %return.loc14: ref @G.%T.loc6 (%T) = return_slot %return.param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,10 +193,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
-// CHECK:STDOUT:       %n.patt: %T = binding_pattern n
-// CHECK:STDOUT:       %n.param_patt: %T = value_param_pattern %n.patt, call_param0
-// CHECK:STDOUT:       %return.patt: %T = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %T = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %n.patt: @F.%T.loc5 (%T) = binding_pattern n
+// CHECK:STDOUT:       %n.param_patt: @F.%T.loc5 (%T) = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @F.%T.loc5 (%T) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @F.%T.loc5 (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T.loc5 (constants.%T)]
 // CHECK:STDOUT:       %n.param.loc5: @F.%T.loc5 (%T) = value_param call_param0
@@ -206,10 +206,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %return.loc5: ref @F.%T.loc5 (%T) = return_slot %return.param.loc5
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = @Class.%G (constants.%G)] {
-// CHECK:STDOUT:       %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %return.patt: %T = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %T = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @G.%Class (%Class) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @G.%Class (%Class) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @G.%T.loc6 (%T) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @G.%T.loc6 (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T.loc6 (constants.%T)]
 // CHECK:STDOUT:       %self.param.loc6: @G.%Class (%Class) = value_param call_param0
@@ -244,7 +244,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc5 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param_patt: %T) -> %T {
+// CHECK:STDOUT:   fn(%n.param_patt: @F.%T.loc5 (%T)) -> @F.%T.loc5 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @F.%T.loc5 (%T) = name_ref n, %n.loc10
 // CHECK:STDOUT:     return %n.ref
@@ -260,7 +260,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @G.%Class (%Class), @G.%T.loc6 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @G.%T.loc6 (%T) [symbolic = %require_complete.loc15 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: %Class]() -> %T {
+// CHECK:STDOUT:   fn[%self.param_patt: @G.%Class (%Class)]() -> @G.%T.loc6 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class) = name_ref self, %self.loc14
 // CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc7_8 [concrete = @Class.%.loc7_8]
@@ -339,23 +339,23 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: @B.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %B = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %a.patt: %T = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %T = value_param_pattern %a.patt, call_param1
+// CHECK:STDOUT:     %self.patt: @F.%B (%B) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.%B (%B) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %a.patt: @F.%T.loc6 (%T) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%T.loc6 (%T) = value_param_pattern %a.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:     %N.loc10: %T = bind_symbolic_name N, 1 [symbolic = constants.%N]
-// CHECK:STDOUT:     %self.param.loc10: %B = value_param call_param0
-// CHECK:STDOUT:     %.loc10_33.1: type = splice_block %Self.ref.loc10 [symbolic = constants.%B] {
-// CHECK:STDOUT:       %.loc10_33.2: type = specific_constant constants.%B, @B(constants.%T, constants.%N) [symbolic = constants.%B]
-// CHECK:STDOUT:       %Self.ref.loc10: type = name_ref Self, %.loc10_33.2 [symbolic = constants.%B]
+// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0 [symbolic = @A.%T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10 [symbolic = @B.%T (constants.%T)]
+// CHECK:STDOUT:     %N.loc10: @B.%T (%T) = bind_symbolic_name N, 1 [symbolic = @B.%N.loc5_11.2 (constants.%N)]
+// CHECK:STDOUT:     %self.param.loc10: @F.%B (%B) = value_param call_param0
+// CHECK:STDOUT:     %.loc10_33.1: type = splice_block %Self.ref.loc10 [symbolic = %B (constants.%B)] {
+// CHECK:STDOUT:       %.loc10_33.2: type = specific_constant constants.%B, @B(constants.%T, constants.%N) [symbolic = %B (constants.%B)]
+// CHECK:STDOUT:       %Self.ref.loc10: type = name_ref Self, %.loc10_33.2 [symbolic = %B (constants.%B)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc10: %B = bind_name self, %self.param.loc10
-// CHECK:STDOUT:     %a.param.loc10: %T = value_param call_param1
-// CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:     %a.loc10: %T = bind_name a, %a.param.loc10
+// CHECK:STDOUT:     %self.loc10: @F.%B (%B) = bind_name self, %self.param.loc10
+// CHECK:STDOUT:     %a.param.loc10: @F.%T.loc6 (%T) = value_param call_param1
+// CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = %T.loc6 (constants.%T)]
+// CHECK:STDOUT:     %a.loc10: @F.%T.loc6 (%T) = bind_name a, %a.param.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -395,10 +395,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @B.%F.type (%F.type) = fn_decl @F [symbolic = @B.%F (constants.%F)] {
-// CHECK:STDOUT:       %self.patt: %B = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: %B = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %a.patt: %T = binding_pattern a
-// CHECK:STDOUT:       %a.param_patt: %T = value_param_pattern %a.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @F.%B (%B) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%B (%B) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %a.patt: @F.%T.loc6 (%T) = binding_pattern a
+// CHECK:STDOUT:       %a.param_patt: @F.%T.loc6 (%T) = value_param_pattern %a.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param.loc6: @F.%B (%B) = value_param call_param0
 // CHECK:STDOUT:       %.loc6_16.1: type = splice_block %Self.ref.loc6 [symbolic = %B (constants.%B)] {
@@ -429,7 +429,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %require_complete.loc10_31: <witness> = require_complete_type @F.%B (%B) [symbolic = %require_complete.loc10_31 (constants.%require_complete.fca)]
 // CHECK:STDOUT:   %require_complete.loc10_40: <witness> = require_complete_type @F.%T.loc6 (%T) [symbolic = %require_complete.loc10_40 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: %B](%a.param_patt: %T) {
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%B (%B)](%a.param_patt: @F.%T.loc6 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

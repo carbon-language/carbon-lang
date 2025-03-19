@@ -467,6 +467,8 @@ CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
 // Generics.
 CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
+CARBON_DIAGNOSTIC_KIND(GenericDiffersFromPreviousDecl)
+CARBON_DIAGNOSTIC_KIND(GenericDiffersFromPreviousDeclNote)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)

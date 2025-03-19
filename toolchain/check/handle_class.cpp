@@ -252,7 +252,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
           context, class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
-    FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
+    auto prev_decl_generic_id =
+        context.classes().Get(class_decl.class_id).generic_id;
+    FinishGenericRedecl(context, class_decl_id, prev_decl_generic_id);
   }
 
   // Write the class ID into the ClassDecl.

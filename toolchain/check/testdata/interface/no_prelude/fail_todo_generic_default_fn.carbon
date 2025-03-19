@@ -56,7 +56,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %return.patt: @F.2.%Self.as_type.loc23_24.2 (%Self.as_type) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.2.%Self.as_type.loc23_24.2 (%Self.as_type) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc23_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc23_6: type = bind_symbolic_name T, 0 [symbolic = @I.%T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc23_35.1: @F.2.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc23_35: @F.2.%I.type (%I.type.325) = name_ref Self, %.loc23_35.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc23_35: type = facet_access_type %Self.ref.loc23_35 [symbolic = %Self.as_type.loc23_24.2 (constants.%Self.as_type)]
@@ -127,10 +127,9 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc13_14.1 (%Self.as_type)]() -> @F.1.%Self.as_type.loc13_14.1 (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(%T.loc23_6.1: type, @I.%Self.1: @I.%I.type (%I.type.325)) {
-// CHECK:STDOUT:   %T.loc23_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc23_6.2)> [symbolic = %I.type (constants.%I.type.325)]
+// CHECK:STDOUT: generic fn @F.2(%T.loc23_6: type, @I.%Self.1: @I.%I.type (%I.type.325)) {
+// CHECK:STDOUT:   %T.loc23_24: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_24 (constants.%T)]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc23_24)> [symbolic = %I.type (constants.%I.type.325)]
 // CHECK:STDOUT:   %Self: %I.type.325 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc23_24.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc23_24.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:
@@ -169,12 +168,11 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: specific @I(%T.loc11_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%Self) {
-// CHECK:STDOUT:   %T.loc23_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.loc23_24 => constants.%T
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc23_24.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.2.%T.loc23_6.2) {}
+// CHECK:STDOUT: specific @I(@F.2.%T.loc23_24) {}
 // CHECK:STDOUT:

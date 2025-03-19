@@ -430,8 +430,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
-    const auto& first_impl = context.impls().Get(impl_decl.impl_id);
-    FinishGenericRedecl(context, impl_decl_id, first_impl.generic_id);
+    auto prev_decl_generic_id =
+        context.impls().Get(impl_decl.impl_id).generic_id;
+    FinishGenericRedecl(context, impl_decl_id, prev_decl_generic_id);
   }
 
   // Write the impl ID into the ImplDecl.

@@ -224,7 +224,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc7_15.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc8: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc8: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type.982 = interface_decl @Bar [concrete = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc10_15.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10_15.2 (constants.%a.patt)]
@@ -236,7 +236,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc10_15.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc11: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc11: %C = bind_symbolic_name a, 0 [symbolic = %a.loc10_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -326,7 +326,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc6_21.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_21.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_21.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -472,7 +472,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc6_15.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_15.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0 [symbolic = constants.%a]
+// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

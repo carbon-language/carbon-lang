@@ -38,7 +38,7 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
 
 // Merge a redeclaration of an entity that might be a generic into the original
 // declaration.
-auto FinishGenericRedecl(Context& context, SemIR::InstId decl_id,
+auto FinishGenericRedecl(Context& context, SemIRLoc loc,
                          SemIR::GenericId generic_id) -> void;
 
 // Finish processing a potentially generic definition.
