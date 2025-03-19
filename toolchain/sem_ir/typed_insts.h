@@ -1424,10 +1424,10 @@ struct StructInit {
 
 // A literal struct value, such as `{.a = 1, .b = 2}`.
 struct StructLiteral {
-  static constexpr auto Kind =
-      InstKind::StructLiteral.Define<Parse::StructLiteralId>(
-          {.ir_name = "struct_literal",
-           .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind = InstKind::StructLiteral.Define<
+      Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                         Parse::ChoiceDefinitionId, Parse::StructLiteralId>>(
+      {.ir_name = "struct_literal", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1501,10 +1501,10 @@ struct TupleInit {
 
 // A literal tuple value.
 struct TupleLiteral {
-  static constexpr auto Kind =
-      InstKind::TupleLiteral.Define<Parse::TupleLiteralId>(
-          {.ir_name = "tuple_literal",
-           .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind = InstKind::TupleLiteral.Define<
+      Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                         Parse::ChoiceDefinitionId, Parse::TupleLiteralId>>(
+      {.ir_name = "tuple_literal", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstBlockId elements_id;

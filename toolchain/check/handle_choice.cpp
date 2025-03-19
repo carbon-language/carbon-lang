@@ -138,8 +138,10 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   return true;
 }
 
-static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
-    -> void {
+static auto AddChoiceAlternative(
+    Context& context, Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                                         Parse::ChoiceDefinitionId>
+                          node_id) -> void {
   // Note, there is nothing like a ChoiceAlternativeIntroducer node, so no parse
   // node to pop here.
   auto name_component = PopNameComponent(context);
@@ -191,7 +193,7 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
     -> void {
   SemIR::InstId discriminant_value_id = [&] {
     if (choice_info.num_alternative_bits == 0) {
-      return AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
+      return AddInst(context, SemIR::LocIdAndInst(
                                   binding.node_id,
                                   SemIR::TupleLiteral{
                                       .type_id = GetTupleType(context, {}),
@@ -208,7 +210,7 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
 
   auto self_value_id = ConvertToValueOfType(
       context, binding.node_id,
-      AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
+      AddInst(context, SemIR::LocIdAndInst(
                            binding.node_id,
                            SemIR::StructLiteral{
                                .type_id = choice_info.self_struct_type_id,
@@ -226,12 +228,12 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_info.name_scope_id});
   auto bind_name_id = AddInst(
-      context, SemIR::LocIdAndInst::UncheckedLoc(
-                   binding.node_id, SemIR::BindName{
-                                        .type_id = choice_info.self_type_id,
-                                        .entity_name_id = entity_name_id,
-                                        .value_id = self_value_id,
-                                    }));
+      context, SemIR::LocIdAndInst(binding.node_id,
+                                   SemIR::BindName{
+                                       .type_id = choice_info.self_type_id,
+                                       .entity_name_id = entity_name_id,
+                                       .value_id = self_value_id,
+                                   }));
   context.name_scopes()
       .Get(choice_info.name_scope_id)
       .AddRequired({.name_id = binding.name_component.name_id,

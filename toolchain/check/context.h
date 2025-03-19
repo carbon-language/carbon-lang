@@ -177,7 +177,9 @@ class Context {
   // known. This represents each binding to be done at the end of checking the
   // Choice type.
   struct ChoiceDeferredBinding {
-    Parse::NodeId node_id;
+    Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                       Parse::ChoiceDefinitionId>
+        node_id;
     NameComponent name_component;
   };
   auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
