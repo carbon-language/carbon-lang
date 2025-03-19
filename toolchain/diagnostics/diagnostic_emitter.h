@@ -375,7 +375,9 @@ auto DiagnosticEmitter<LocT>::Emit(
     Internal::NoTypeDeduction<Args>... args) -> void {
   DiagnosticBuilder builder(this, loc, diagnostic_base,
                             {MakeAny<Args>(args)...});
-  builder.Emit();
+  // TODO: Workaround for clang-16 rvalue ref qualifier behavior; remove when
+  // the static_cast isn't needed on the oldest supported compiler..
+  static_cast<DiagnosticBuilder&>(builder).Emit();
 }
 
 template <typename LocT>
