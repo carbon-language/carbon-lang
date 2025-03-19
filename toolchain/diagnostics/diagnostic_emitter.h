@@ -86,7 +86,16 @@ class DiagnosticEmitter {
     // Emits the built diagnostic and its attached notes.
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
-    auto Emit() -> void;
+    auto Emit() & -> void;
+
+    // Prevent trivial uses of the builder.
+    template <typename... Args>
+    auto Emit() && -> void {
+      static_assert(
+          false,
+          "Use `emitter.Emit(...)` or `emitter.Build(...).Note(...).Emit(...)` "
+          "instead of `emitter.Build(...).Emit(...)`");
+    }
 
     // Returns true if this DiagnosticBuilder may emit a diagnostic. Can be used
     // to avoid excess work computing notes, etc, if no diagnostic is going to
@@ -282,7 +291,7 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Note(
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() -> void {
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() & -> void {
   if (!emitter_) {
     return;
   }
@@ -364,8 +373,9 @@ template <typename... Args>
 auto DiagnosticEmitter<LocT>::Emit(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     Internal::NoTypeDeduction<Args>... args) -> void {
-  DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
-      .Emit();
+  DiagnosticBuilder builder(this, loc, diagnostic_base,
+                            {MakeAny<Args>(args)...});
+  builder.Emit();
 }
 
 template <typename LocT>

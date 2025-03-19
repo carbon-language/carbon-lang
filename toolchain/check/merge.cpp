@@ -89,7 +89,7 @@ auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
   CARBON_DIAGNOSTIC(
       ExternRequiresDeclInApiFile, Error,
       "`extern` entities must have a declaration in the API file");
-  context.emitter().Build(loc, ExternRequiresDeclInApiFile).Emit();
+  context.emitter().Emit(loc, ExternRequiresDeclInApiFile);
 }
 
 auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
