@@ -298,7 +298,7 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() & -> void {
 
 namespace Internal {
 template <typename LocT>
-static constexpr bool AlwaysFalse = false;
+concept AlwaysFalse = false;
 }  // namespace Internal
 
 template <typename LocT>
