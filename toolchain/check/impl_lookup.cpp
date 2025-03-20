@@ -378,22 +378,13 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
 
   // If the self type is a FacetAccessType, work with the facet value directly,
-  // which gives us the interfaces available through the FacetAccessType. We
-  // will do the same for the impls we try to match.
+  // which gives us the potential witnesses to avoid looking for impl
+  // declarations. We will do the same for the impl declarations we try to match
+  // so that we can compare the self constant values.
   if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
           context.constant_values().GetInstId(query_self_const_id))) {
     query_self_const_id =
         context.constant_values().Get(access->facet_value_inst_id);
-  }
-
-  // For a concrete FacetValue, we want to look through it at the underlying
-  // type to find all interfaces it implements. This supports conversion from a
-  // FacetValue to any other possible FacetValue. See
-  // https://github.com/carbon-language/carbon-lang/issues/5137.
-  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
-          context.constant_values().GetInstId(query_self_const_id))) {
-    query_self_const_id =
-        context.constant_values().Get(facet_value->type_inst_id);
   }
 
   auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,
@@ -433,14 +424,35 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       .query_self_const_id = query_self_const_id,
       .query_facet_type_const_id = query_facet_type_const_id,
   });
+
+  // We look for a witness in two different places if the query self type is a
+  // facet value. First we try to find a witness on the facet value itself. This
+  // avoids the need to do impl lookups which are more expensive. If that fails,
+  // then we go look for an impl declaration as we would for other self types.
+  auto facet_value_self_const_id = query_self_const_id;
+
+  // When the query is a concrete FacetValue, we want to look through it at the
+  // underlying type to find all interfaces it implements. This supports
+  // conversion from a FacetValue to any other possible FacetValue, since
+  // conversion depends on impl lookup to verify it is a valid type change. See
+  // https://github.com/carbon-language/carbon-lang/issues/5137. We can't do
+  // this step earlier than inside impl lookup since we want the converted facet
+  // value in `facet_value_self_const_id` to avoid looking for impl
+  // declarations.
+  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
+          context.constant_values().GetInstId(query_self_const_id))) {
+    query_self_const_id =
+        context.constant_values().Get(facet_value->type_inst_id);
+  }
+
   // We need to find a witness for each interface in `interfaces`. Every
   // consumer of a facet type needs to agree on the order of interfaces used for
   // its witnesses.
   for (const auto& interface : interfaces) {
     // TODO: Since both `interfaces` and `query_self_const_id` are sorted lists,
     // do an O(N+M) merge instead of O(N*M) nested loops.
-    auto result_witness_id =
-        FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
+    auto result_witness_id = FindWitnessInFacet(
+        context, loc_id, facet_value_self_const_id, interface);
     if (!result_witness_id.has_value()) {
       result_witness_id =
           FindWitnessInImpls(context, loc_id, query_self_const_id, interface);
