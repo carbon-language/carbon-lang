@@ -1816,12 +1816,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.import_ref.5ab: type = import_ref PackageHasParam//default, loc4_16, loaded [symbolic = @AnyParam.%T (constants.%T)]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.34c: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.601 = import_ref PackageHasParam//default, inst30 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.import_ref.601 = import_ref PackageHasParam//default, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.dc1 = import_ref PackageHasParam//default, inst36 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.import_ref.dc1 = import_ref PackageHasParam//default, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.import_ref.5e7: %Y.assoc_type = import_ref PackageHasParam//default, loc7_22, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %PackageHasParam.K: %K.type.311 = import_ref PackageHasParam//default, K, loaded [concrete = constants.%K.7a1]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst36 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst37 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -2024,16 +2024,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.import_ref.5ab: type = import_ref PackageHasParam//default, loc4_16, loaded [symbolic = @AnyParam.%T (constants.%T)]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.34c: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.601 = import_ref PackageHasParam//default, inst30 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.import_ref.601 = import_ref PackageHasParam//default, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %PackageGenericClass.GenericClass: %GenericClass.type = import_ref PackageGenericClass//default, GenericClass, loaded [concrete = constants.%GenericClass.generic]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.5ab: type = import_ref PackageGenericClass//default, loc6_20, loaded [symbolic = @GenericClass.%U (constants.%U)]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.8f2: <witness> = import_ref PackageGenericClass//default, loc6_31, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageGenericClass.import_ref.065 = import_ref PackageGenericClass//default, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.065 = import_ref PackageGenericClass//default, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.dc1 = import_ref PackageHasParam//default, inst36 [no loc], unloaded
+// CHECK:STDOUT:   %PackageHasParam.import_ref.dc1 = import_ref PackageHasParam//default, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.import_ref.5e7: %Y.assoc_type = import_ref PackageHasParam//default, loc7_22, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %PackageHasParam.K = import_ref PackageHasParam//default, K, unloaded
-// CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst36 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst37 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.f23: <witness> = import_ref PackageGenericClass//default, loc8_66, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.a0e: type = import_ref PackageGenericClass//default, loc8_43, loaded [concrete = constants.%AnyParam.d71]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.ca6: type = import_ref PackageGenericClass//default, loc8_63, loaded [concrete = constants.%Y.type]
