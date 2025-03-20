@@ -210,6 +210,15 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // `impl T as ...` for some other type `T` and should not be considered.
   auto deduced_self_const_id = SemIR::GetConstantValueInSpecific(
       context.sem_ir(), specific_id, impl.self_id);
+  // In a generic `impl forall` the self type can be a FacetAccessType, which
+  // will not be the same constant value as a query facet value. We move through
+  // to the facet value here, and if the query was a FacetAccessType we did the
+  // same there so they still match.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(deduced_self_const_id))) {
+    deduced_self_const_id =
+        context.constant_values().Get(access->facet_value_inst_id);
+  }
   if (query_self_const_id != deduced_self_const_id) {
     return SemIR::InstId::None;
   }
@@ -266,11 +275,6 @@ static auto FindWitnessInFacet(
     const SemIR::SpecificInterface& specific_interface) -> SemIR::InstId {
   SemIR::InstId facet_inst_id =
       context.constant_values().GetInstId(facet_const_id);
-  if (auto access =
-          context.insts().TryGetAs<SemIR::FacetAccessType>(facet_inst_id)) {
-    facet_inst_id = context.constant_values().GetConstantInstId(
-        access->facet_value_inst_id);
-  }
   SemIR::TypeId facet_type_id = context.insts().Get(facet_inst_id).type_id();
   if (auto facet_type_inst =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_id)) {
@@ -371,6 +375,25 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     // The query facet type value is indeed a facet type.
     CARBON_CHECK(context.insts().Is<SemIR::FacetType>(
         context.constant_values().GetInstId(query_facet_type_const_id)));
+  }
+
+  // If the self type is a FacetAccessType, work with the facet value directly,
+  // which gives us the interfaces available through the FacetAccessType. We
+  // will do the same for the impls we try to match.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(query_self_const_id))) {
+    query_self_const_id =
+        context.constant_values().Get(access->facet_value_inst_id);
+  }
+
+  // For a concrete FacetValue, we want to look through it at the underlying
+  // type to find all interfaces it implements. This supports conversion from a
+  // FacetValue to any other possible FacetValue. See
+  // https://github.com/carbon-language/carbon-lang/issues/5137.
+  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
+          context.constant_values().GetInstId(query_self_const_id))) {
+    query_self_const_id =
+        context.constant_values().Get(facet_value->type_inst_id);
   }
 
   auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,

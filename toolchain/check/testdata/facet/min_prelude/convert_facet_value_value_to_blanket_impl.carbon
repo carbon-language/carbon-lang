@@ -168,12 +168,16 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) = name_ref a, %a
-// CHECK:STDOUT:     %.loc21_43.1: %Animal.type = converted constants.%T.as_type.2ad, constants.%T.fd4 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
+// CHECK:STDOUT:     %T.as_type.loc21_43.1: type = facet_access_type constants.%T.fd4 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
+// CHECK:STDOUT:     %.loc21_43.1: type = converted constants.%T.fd4, %T.as_type.loc21_43.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
+// CHECK:STDOUT:     %.loc21_43.2: %Animal.type = converted %.loc21_43.1, constants.%T.fd4 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
 // CHECK:STDOUT:     %Eats.facet.loc21_43.1: %Eats.type = facet_value constants.%T.as_type.2ad, (constants.%impl_witness.11010a.2) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
-// CHECK:STDOUT:     %.loc21_43.2: %Eats.type = converted constants.%T.as_type.2ad, %Eats.facet.loc21_43.1 [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
-// CHECK:STDOUT:     %.loc21_43.3: %Animal.type = converted constants.%T.as_type.2ad, constants.%T.fd4 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
+// CHECK:STDOUT:     %.loc21_43.3: %Eats.type = converted constants.%T.as_type.2ad, %Eats.facet.loc21_43.1 [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %T.as_type.loc21_43.2: type = facet_access_type constants.%T.fd4 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
+// CHECK:STDOUT:     %.loc21_43.4: type = converted constants.%T.fd4, %T.as_type.loc21_43.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
+// CHECK:STDOUT:     %.loc21_43.5: %Animal.type = converted %.loc21_43.4, constants.%T.fd4 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
 // CHECK:STDOUT:     %Eats.facet.loc21_43.2: %Eats.type = facet_value constants.%T.as_type.2ad, (constants.%impl_witness.11010a.2) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
-// CHECK:STDOUT:     %.loc21_43.4: %Eats.type = converted constants.%T.as_type.2ad, %Eats.facet.loc21_43.2 [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %.loc21_43.6: %Eats.type = converted constants.%T.as_type.2ad, %Eats.facet.loc21_43.2 [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:     %Feed.specific_fn.loc21_37.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [symbolic = %Feed.specific_fn.loc21_37.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc21_37.1(%a.ref)
 // CHECK:STDOUT:     return
