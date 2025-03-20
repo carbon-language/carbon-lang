@@ -290,19 +290,25 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::TypeOfInst type_of): {
           (void)type_of;
           auto const_id = context_.constant_values().Get(inst_id);
-          // TODO: TypeOfInst should not be encountered in impl lookup, since it
-          // is only generated for template-dependent values and impl lookup on
-          // such values should be deferred to type-checking the specific. So
-          // this should become a CARBON_FATAL code path. For now it is
-          // possible, though, to reach here and it results in a diagnostic.
+          // TODO: TypeOfInst should not be encountered in impl lookup with a
+          // template-dependent value, since impl lookup on such values should
+          // be deferred to type-checking the specific. So this should become a
+          // CARBON_FATAL code path. For now it is possible, though, to reach
+          // here and it results in a diagnostic.
           //
-          // If TypeOfInst was used for more general metaprogramming then we may
-          // need to handle it, and use its constant value to determine the type
-          // being generated, and perhaps handle symbolic (non-template) values
-          // too.
+          // However, TypeOfInst can be determined to be a concrete value for a
+          // template value with a non-template dependent type. This currently
+          // does not happen though, the TypeOfInst is always template
+          // dependent. If it does in the future then we will want to use the
+          // concrete constant value instruction of `inst_id` in the type
+          // structure:
           //   if (const_id.is_concrete()) {
           //     PushInstId(context_.constant_values().GetInstId(const_id));
           //   }
+          //
+          // If TypeOfInst was used for more general metaprogramming then we may
+          // need to handle both concrete and perhaps symbolic (non-template)
+          // values of TypeOfInst.
           CARBON_CHECK(const_id.is_symbolic());
           auto sym = context_.constant_values().GetSymbolicConstant(const_id);
           CARBON_CHECK(sym.dependence == SemIR::ConstantDependence::Template,
