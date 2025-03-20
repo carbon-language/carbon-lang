@@ -376,7 +376,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eat.1(constants.%Eats.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- toolchain/testing/min_prelude/convert.carbon
+// CHECK:STDOUT: --- include_files/convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]

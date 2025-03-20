@@ -15,7 +15,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "testing/file_test/file_system.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
 
@@ -96,6 +95,21 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
 auto ToolchainFileTest::GetArgReplacements() const
     -> llvm::StringMap<std::string> {
   return {{"core_package_dir", installation_.core_package()}};
+}
+
+// Adds a file to the fs.
+static auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+    -> ErrorOr<Success> {
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+      llvm::MemoryBuffer::getFile(path);
+  if (file.getError()) {
+    return ErrorBuilder() << "Getting `" << path
+                          << "`: " << file.getError().message();
+  }
+  if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
+    return ErrorBuilder() << "Duplicate file: `" << path << "`";
+  }
+  return Success();
 }
 
 auto ToolchainFileTest::Run(

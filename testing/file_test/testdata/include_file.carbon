@@ -9,4 +9,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //testing/file_test:file_test_base_test -- --dump_output --file_tests=testing/file_test/testdata/include_file.carbon
 
-// CHECK:STDOUT: 3 args: `default_args`, `include_file.carbon`, `testing/file_test/testdata/no_line_number.carbon`
+// CHECK:STDOUT: 3 args: `default_args`, `include_file.carbon`, `include_files/no_line_number.carbon`

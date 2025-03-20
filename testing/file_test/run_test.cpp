@@ -11,7 +11,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "testing/file_test/file_system.h"
 #include "testing/file_test/file_test_base.h"
 #include "testing/file_test/test_file.h"
 
@@ -27,10 +26,10 @@ using ::testing::internal::GetCapturedStdout;
 static constexpr llvm::StringLiteral StdinFilename = "STDIN";
 
 // Does replacements in ARGS for %s and %t.
-static auto DoArgReplacements(
-    llvm::SmallVector<std::string>& test_args,
-    const llvm::StringMap<std::string>& replacements,
-    const llvm::SmallVector<TestFile::Split>& split_files) -> ErrorOr<Success> {
+static auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
+                              const llvm::StringMap<std::string>& replacements,
+                              llvm::ArrayRef<TestFile::Split*> split_files)
+    -> ErrorOr<Success> {
   for (auto* it = test_args.begin(); it != test_args.end(); ++it) {
     auto percent = it->find("%");
     if (percent == std::string::npos) {
@@ -48,7 +47,7 @@ static auto DoArgReplacements(
         }
         it = test_args.erase(it);
         for (const auto& split : split_files) {
-          const std::string& filename = split.filename;
+          const std::string& filename = split->filename;
           if (filename == StdinFilename || filename.ends_with(".h")) {
             continue;
           }
@@ -89,17 +88,21 @@ static auto DoArgReplacements(
 
 auto RunTestFile(const FileTestBase& test_base, bool dump_output,
                  TestFile& test_file) -> ErrorOr<Success> {
+  llvm::SmallVector<TestFile::Split*> all_splits;
+  for (auto& split : test_file.file_splits) {
+    all_splits.push_back(&split);
+  }
+  for (auto& split : test_file.include_file_splits) {
+    all_splits.push_back(&split);
+  }
+
   // Process arguments.
   if (test_file.test_args.empty()) {
     test_file.test_args = test_base.GetDefaultArgs();
     test_file.test_args.append(test_file.extra_args);
   }
-  for (const auto& include_file : test_file.include_files) {
-    test_file.test_args.push_back(include_file);
-  }
-  CARBON_RETURN_IF_ERROR(DoArgReplacements(test_file.test_args,
-                                           test_base.GetArgReplacements(),
-                                           test_file.file_splits));
+  CARBON_RETURN_IF_ERROR(DoArgReplacements(
+      test_file.test_args, test_base.GetArgReplacements(), all_splits));
 
   // stdin needs to exist on-disk for compatibility. We'll use a pointer for it.
   FILE* input_stream = nullptr;
@@ -114,22 +117,18 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
   // Create the files in-memory.
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
-  for (const auto& split : test_file.file_splits) {
-    if (split.filename == StdinFilename) {
+  for (const auto& split : all_splits) {
+    if (split->filename == StdinFilename) {
       input_stream = tmpfile();
-      fwrite(split.content.c_str(), sizeof(char), split.content.size(),
+      fwrite(split->content.c_str(), sizeof(char), split->content.size(),
              input_stream);
       rewind(input_stream);
-    } else if (!fs->addFile(split.filename, /*ModificationTime=*/0,
+    } else if (!fs->addFile(split->filename, /*ModificationTime=*/0,
                             llvm::MemoryBuffer::getMemBuffer(
-                                split.content, split.filename,
+                                split->content, split->filename,
                                 /*RequiresNullTerminator=*/false))) {
-      return ErrorBuilder() << "File is repeated: " << split.filename;
+      return ErrorBuilder() << "File is repeated: " << split->filename;
     }
-  }
-
-  for (llvm::StringRef file_path : test_file.include_files) {
-    CARBON_RETURN_IF_ERROR(AddFile(*fs, file_path));
   }
 
   // Convert the arguments to StringRef and const char* to match the

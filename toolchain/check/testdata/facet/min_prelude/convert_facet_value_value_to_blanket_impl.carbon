@@ -227,7 +227,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(@HandleAnimal.%Eats.facet.loc21_43.3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- toolchain/testing/min_prelude/convert.carbon
+// CHECK:STDOUT: --- include_files/convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
