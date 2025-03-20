@@ -613,7 +613,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.9d4: %J_where.type = import_ref Main//state_constraints, loc13_10, loaded [symbolic = @Impls.%V (constants.%V)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

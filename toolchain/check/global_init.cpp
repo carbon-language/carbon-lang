@@ -44,12 +44,12 @@ auto GlobalInit::Finalize() -> void {
         .pattern_block_id = SemIR::InstBlockId::Empty,
         .implicit_param_patterns_id = SemIR::InstBlockId::None,
         .param_patterns_id = SemIR::InstBlockId::Empty,
-        .call_params_id = SemIR::InstBlockId::Empty,
         .is_extern = false,
         .extern_library_id = SemIR::LibraryNameId::None,
         .non_owning_decl_id = SemIR::InstId::None,
         .first_owning_decl_id = SemIR::InstId::None},
-       {.return_slot_pattern_id = SemIR::InstId::None,
+       {.call_params_id = SemIR::InstBlockId::Empty,
+        .return_slot_pattern_id = SemIR::InstId::None,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 

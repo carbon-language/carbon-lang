@@ -260,10 +260,22 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // Nothing to do. This value should never be consumed.
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::SpecificImplFunction /*inst*/) -> void {
+  // Nothing to do. This value should never be consumed.
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlockContents(inst.block_id);
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::SpliceInst /*inst*/) -> void {
+  // TODO: Get the constant value of the spliced instruction from the current
+  // specific, and lower the instruction in that constant value.
+  CARBON_FATAL("Template lowering not implemented yet");
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

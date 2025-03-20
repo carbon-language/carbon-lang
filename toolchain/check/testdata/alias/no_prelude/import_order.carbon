@@ -92,7 +92,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %Main.c: type = import_ref Main//a, c, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.d: type = import_ref Main//a, d, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.146: <witness> = import_ref Main//a, loc4_22, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %C.elem = import_ref Main//a, loc4_16, loaded [concrete = %.2fc]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

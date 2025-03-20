@@ -15,6 +15,7 @@ filegroup(
 cc_library(
     name = "context",
     srcs = [
+        "action.cpp",
         "call.cpp",
         "context.cpp",
         "control_flow.cpp",
@@ -50,6 +51,7 @@ cc_library(
         "type_structure.cpp",
     ],
     hdrs = [
+        "action.h",
         "call.h",
         "context.h",
         "control_flow.h",

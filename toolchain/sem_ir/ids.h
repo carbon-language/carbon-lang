@@ -92,6 +92,29 @@ class DestInstId : public InstId {
   using InstId::InstId;
 };
 
+// An ID of an instruction that is referenced as a meta-operand of an action.
+// This should only be used as the type of a field within a typed instruction
+// class.
+//
+// This is used to model cases where an action's operand is not the value
+// produced by another instruction, but is the other instruction itself. This is
+// common for actions representing template instantiation.
+//
+// This behaves in most respects like an InstId field, but evaluation of the
+// instruction that has this field will not fail if the instruction does not
+// have a constant value. If the instruction has a constant value, it will still
+// be replaced by its constant value during evaluation like normal, but if it
+// has a non-constant value, the field is left unchanged by evaluation.
+class MetaInstId : public InstId {
+ public:
+  // Support implicit conversion from InstId so that InstId and MetaInstId
+  // have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr MetaInstId(InstId inst_id) : InstId(inst_id) {}
+
+  using InstId::InstId;
+};
+
 // The ID of a constant value of an expression. An expression is either:
 //
 // - a concrete constant, whose value does not depend on any generic parameters,

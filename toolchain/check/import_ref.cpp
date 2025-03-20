@@ -1230,7 +1230,6 @@ static auto GetIncompleteLocalEntityBase(
       .param_patterns_id = import_base.param_patterns_id.has_value()
                                ? SemIR::InstBlockId::Empty
                                : SemIR::InstBlockId::None,
-      .call_params_id = SemIR::InstBlockId::None,
       .is_extern = import_base.is_extern,
       .extern_library_id = extern_library_id,
       .non_owning_decl_id = import_base.non_owning_decl_id.has_value()
@@ -1910,7 +1909,8 @@ static auto MakeFunctionDecl(ImportContext& context,
   // Start with an incomplete function.
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
-       {.return_slot_pattern_id = SemIR::InstId::None,
+       {.call_params_id = SemIR::InstBlockId::None,
+        .return_slot_pattern_id = SemIR::InstId::None,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = GetFunctionType(

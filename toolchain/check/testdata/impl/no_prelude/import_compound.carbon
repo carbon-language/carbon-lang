@@ -363,14 +363,14 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.NonInstance: type = import_ref Main//lib, NonInstance, loaded [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %Main.Instance = import_ref Main//lib, Instance, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.69f: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f85: %NonInstance.type = import_ref Main//lib, inst15 [no loc], loaded [symbolic = constants.%Self.73c]
+// CHECK:STDOUT:   %Main.import_ref.f85: %NonInstance.type = import_ref Main//lib, inst16 [no loc], loaded [symbolic = constants.%Self.73c]
 // CHECK:STDOUT:   %Main.import_ref.826: <witness> = import_ref Main//lib, loc7_30, loaded [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.ded207.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst40 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c1d = import_ref Main//lib, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ab2 = import_ref Main//lib, loc15_27, unloaded
@@ -471,21 +471,21 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.69f: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0.b0b]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f85: %NonInstance.type = import_ref Main//lib, inst15 [no loc], loaded [symbolic = constants.%Self.73c]
+// CHECK:STDOUT:   %Main.import_ref.f85: %NonInstance.type = import_ref Main//lib, inst16 [no loc], loaded [symbolic = constants.%Self.73c]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst24 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst24 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst25 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ded207.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst40 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c1d = import_ref Main//lib, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ab2 = import_ref Main//lib, loc15_27, unloaded
@@ -650,21 +650,21 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.69f: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0.b0b]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f85: %NonInstance.type = import_ref Main//lib, inst15 [no loc], loaded [symbolic = constants.%Self.73c]
+// CHECK:STDOUT:   %Main.import_ref.f85: %NonInstance.type = import_ref Main//lib, inst16 [no loc], loaded [symbolic = constants.%Self.73c]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst24 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst24 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst25 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ded207.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst40 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c1d = import_ref Main//lib, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ab2 = import_ref Main//lib, loc15_27, unloaded
@@ -823,11 +823,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.NonInstance = import_ref Main//lib, NonInstance, unloaded
 // CHECK:STDOUT:   %Main.Instance: type = import_ref Main//lib, Instance, loaded [concrete = constants.%Instance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst40 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.7cb: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst39 [no loc], loaded [symbolic = constants.%Self.cf8]
-// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst40 [no loc], loaded [symbolic = constants.%Self.cf8]
+// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.93f = import_ref Main//lib, loc4_9, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded
@@ -960,11 +960,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst40 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.7cb: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst39 [no loc], loaded [symbolic = constants.%Self.cf8]
-// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst40 [no loc], loaded [symbolic = constants.%Self.cf8]
+// CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.93f = import_ref Main//lib, loc4_9, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded

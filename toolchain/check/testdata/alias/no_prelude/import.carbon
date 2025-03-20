@@ -119,7 +119,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %Main.c_alias: type = import_ref Main//class1, c_alias, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.a = import_ref Main//class1, a, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//class1, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//class1, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//class1, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -164,8 +164,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.c_alias_alias: type = import_ref Main//class2, c_alias_alias, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.b = import_ref Main//class2, b, unloaded
-// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//class2, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//class2, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//class2, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//class2, inst23 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

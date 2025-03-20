@@ -58,6 +58,7 @@ jobs:
             github.event.merge_group.base_sha }}
           remote_cache_key: ${{ secrets.CARBON_BUILDS_GITHUB }}
           targets_file: ${{ runner.temp }}/targets
+          use_direct_targets: true
 
       # Run in the clang-tidy config. This is done as part of tests so that we
       # aren't duplicating bazel/llvm setup.
@@ -69,9 +70,9 @@ jobs:
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
           ./scripts/run_bazel.py \
-            --attempts=5 \
-            build --config=clang-tidy -k \
-            --target_pattern_file=$TARGETS_FILE
+              --attempts=5 \
+              build --config=clang-tidy -k \
+              --target_pattern_file=$TARGETS_FILE
 
       # See "Disk space before build" in `test-setup`.
       - name: Disk space after build

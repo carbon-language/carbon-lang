@@ -7,6 +7,9 @@
 #include "common/vlog.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic_region_stack.h"
+#include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -38,9 +41,14 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
     }
   }
 
+  // Template-dependent instructions are handled separately by
+  // `AddDependentActionInst`.
+  CARBON_CHECK(
+      inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
+      "Use AddDependentActionInst to add an action instruction");
+
   // Keep track of dependent instructions.
   if (dep_kind != GenericRegionStack::DependencyKind::None) {
-    // TODO: Also check for template-dependent instructions.
     context.generic_region_stack().AddDependentInst(
         {.inst_id = inst_id, .kind = dep_kind});
   }
@@ -58,6 +66,28 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
   auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n", loc_id_and_inst.inst);
   FinishInst(context, inst_id, loc_id_and_inst.inst);
+  return inst_id;
+}
+
+auto AddDependentActionInst(Context& context,
+                            SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+  CARBON_VLOG_TO(context.vlog_stream(), "AddDependentActionInst: {0}\n",
+                 loc_id_and_inst.inst);
+
+  // Set the constant value of this instruction to point back to itself.
+  auto const_id = context.constant_values().AddSymbolicConstant(
+      {.inst_id = inst_id,
+       .generic_id = SemIR::GenericId::None,
+       .index = SemIR::GenericInstIndex::None,
+       .dependence = SemIR::ConstantDependence::Template});
+  context.constant_values().Set(inst_id, const_id);
+
+  // Register the instruction to be added to the eval block.
+  context.generic_region_stack().AddDependentInst(
+      {.inst_id = inst_id,
+       .kind = GenericRegionStack::DependencyKind::Template});
   return inst_id;
 }
 

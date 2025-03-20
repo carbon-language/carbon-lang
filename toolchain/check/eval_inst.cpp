@@ -4,7 +4,9 @@
 
 #include "toolchain/check/eval_inst.h"
 
+#include "toolchain/check/action.h"
 #include "toolchain/check/facet_type.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -299,6 +301,61 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
       context.sem_ir(), inst.specific_id, inst.inst_id));
 }
 
+auto EvalConstantInst(Context& context, SemIRLoc loc,
+                      SemIR::SpecificImplFunction inst) -> ConstantEvalResult {
+  auto callee_inst = context.insts().Get(inst.callee_id);
+  // If the callee is not a function value, we're not ready to evaluate this
+  // yet. Build a symbolic `SpecificImplFunction` constant.
+  if (!callee_inst.Is<SemIR::StructValue>()) {
+    return ConstantEvalResult::NewSamePhase(inst);
+  }
+  auto callee_type_id = callee_inst.type_id();
+  auto callee_fn_type =
+      context.types().TryGetAs<SemIR::FunctionType>(callee_type_id);
+  if (!callee_fn_type) {
+    return ConstantEvalResult::NewSamePhase(inst);
+  }
+
+  // If the callee function found in the impl witness is not generic, the result
+  // is simply that function.
+  // TODO: We could do this even before the callee is concrete.
+  auto generic_id =
+      context.functions().Get(callee_fn_type->function_id).generic_id;
+  if (!generic_id.has_value()) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst.callee_id));
+  }
+
+  // Find the arguments to use.
+  auto enclosing_specific_id = callee_fn_type->specific_id;
+  auto enclosing_args = context.inst_blocks().Get(
+      context.specifics().GetArgsOrEmpty(enclosing_specific_id));
+  auto interface_fn_args = context.inst_blocks().Get(
+      context.specifics().GetArgsOrEmpty(inst.specific_id));
+
+  // Form new specific for the generic callee function. The arguments for this
+  // specific are the enclosing arguments of the callee followed by the
+  // remaining arguments from the interface function. Impl checking has ensured
+  // that these arguments can also be used for the function in the impl witness.
+  auto num_params = context.inst_blocks()
+                        .Get(context.generics().Get(generic_id).bindings_id)
+                        .size();
+  llvm::SmallVector<SemIR::InstId> args;
+  args.reserve(num_params);
+  args.append(enclosing_args.begin(), enclosing_args.end());
+  int remaining_params = num_params - args.size();
+  CARBON_CHECK(static_cast<int>(interface_fn_args.size()) >= remaining_params);
+  args.append(interface_fn_args.end() - remaining_params,
+              interface_fn_args.end());
+  auto specific_id = MakeSpecific(context, loc, generic_id, args);
+
+  // TODO: Add the new `SpecificFunction` to definitions_required.
+  return ConstantEvalResult::NewSamePhase(
+      SemIR::SpecificFunction{.type_id = inst.type_id,
+                              .callee_id = inst.callee_id,
+                              .specific_id = specific_id});
+}
+
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::SpliceBlock inst) -> ConstantEvalResult {
   // SpliceBlock evaluates to the result value that is (typically) within the
@@ -306,6 +363,23 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   // instructions.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.result_id));
+}
+
+auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                      SemIR::SpliceInst inst) -> ConstantEvalResult {
+  // The constant value of a SpliceInst is the constant value of the instruction
+  // being spliced. Note that `inst.inst_id` is the instruction being spliced,
+  // so we need to go through another round of obtaining the constant value in
+  // addition to the one performed by the eval infrastructure.
+  if (auto inst_value =
+          context.insts().TryGetAs<SemIR::InstValue>(inst.inst_id)) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst_value->inst_id));
+  }
+  // TODO: Consider creating a new `ValueOfInst` instruction analogous to
+  // `TypeOfInst` to defer determining the constant value until we know the
+  // instruction. Alternatively, produce a symbolic `SpliceInst` constant.
+  return ConstantEvalResult::NotConstant;
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
@@ -334,6 +408,17 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
                       SemIR::TupleInit inst) -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
+auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                      SemIR::TypeOfInst inst) -> ConstantEvalResult {
+  // Grab the type from the instruction produced as our operand.
+  if (auto inst_value =
+          context.insts().TryGetAs<SemIR::InstValue>(inst.inst_id)) {
+    return ConstantEvalResult::Existing(context.types().GetConstantId(
+        context.insts().Get(inst_value->inst_id).type_id()));
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,

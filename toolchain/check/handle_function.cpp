@@ -178,6 +178,7 @@ static auto MergeFunctionRedecl(Context& context,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
+    prev_function.call_params_id = new_function.call_params_id;
     prev_function.return_slot_pattern_id = new_function.return_slot_pattern_id;
     prev_function.self_param_id = new_function.self_param_id;
   }
@@ -473,7 +474,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library),
-                      {.return_slot_pattern_id = name.return_slot_pattern_id,
+                      {.call_params_id = name.call_params_id,
+                       .return_slot_pattern_id = name.return_slot_pattern_id,
                        .virtual_modifier = virtual_modifier,
                        .self_param_id = self_param_id}};
   if (is_definition) {

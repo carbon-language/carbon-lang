@@ -88,6 +88,8 @@ class NodeExtractor {
     }
   }
 
+  auto tree() -> const Tree& { return tree_->tree(); }
+
  private:
   const TreeAndSubtrees* tree_;
   const Lex::TokenizedBuffer* tokens_;
@@ -155,7 +157,7 @@ struct Extractable<NodeIdForKind<Kind>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdForKind<Kind>> {
     if (extractor.MatchesNodeIdForKind(Kind)) {
-      return NodeIdForKind<Kind>::UnsafeMake(extractor.ExtractNode());
+      return extractor.tree().As<NodeIdForKind<Kind>>(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
@@ -182,7 +184,8 @@ struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdInCategory<Category>> {
     if (extractor.MatchesNodeIdInCategory(Category)) {
-      return NodeIdInCategory<Category>::UnsafeMake(extractor.ExtractNode());
+      return extractor.tree().As<NodeIdInCategory<Category>>(
+          extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
@@ -227,7 +230,7 @@ struct Extractable<NodeIdOneOf<T...>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdOneOf<T...>> {
     if (extractor.MatchesNodeIdOneOf({T::Kind...})) {
-      return NodeIdOneOf<T...>::UnsafeMake(extractor.ExtractNode());
+      return extractor.tree().As<NodeIdOneOf<T...>>(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }

@@ -1168,6 +1168,15 @@ class FormatterImpl {
     FormatImportRefRhs(inst.import_ir_inst_id, inst.entity_name_id, "unloaded");
   }
 
+  auto FormatInstRhs(InstValue inst) -> void {
+    out_ << ' ';
+    OpenBrace();
+    // TODO: Should we use a more compact representation in the case where the
+    // inst is a SpliceBlock?
+    FormatInst(inst.inst_id);
+    CloseBrace();
+  }
+
   auto FormatInstRhs(NameBindingDecl inst) -> void {
     FormatTrailingBlock(inst.pattern_block_id);
   }
@@ -1366,6 +1375,10 @@ class FormatterImpl {
   }
 
   auto FormatName(DestInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
+  auto FormatName(MetaInstId id) -> void {
     FormatName(static_cast<InstId>(id));
   }
 

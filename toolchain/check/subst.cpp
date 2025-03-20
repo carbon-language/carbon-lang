@@ -76,6 +76,7 @@ static auto PushOperand(Context& context, Worklist& worklist,
 
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>:
+    case SemIR::IdKind::For<SemIR::MetaInstId>:
       if (SemIR::InstId inst_id(arg); inst_id.has_value()) {
         worklist.Push(inst_id);
       }
@@ -160,7 +161,8 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
   };
 
   switch (kind) {
-    case SemIR::IdKind::For<SemIR::InstId>: {
+    case SemIR::IdKind::For<SemIR::InstId>:
+    case SemIR::IdKind::For<SemIR::MetaInstId>: {
       SemIR::InstId inst_id(arg);
       if (!inst_id.has_value()) {
         return arg;

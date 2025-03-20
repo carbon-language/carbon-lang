@@ -30,7 +30,7 @@ class ConstantEvalResult {
   // Produce an existing constant as the result of an evaluation.
   static constexpr auto Existing(SemIR::ConstantId existing_id)
       -> ConstantEvalResult {
-    CARBON_CHECK(existing_id.is_constant());
+    CARBON_CHECK(existing_id.has_value());
     return ConstantEvalResult(existing_id);
   }
 
