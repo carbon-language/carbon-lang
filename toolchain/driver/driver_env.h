@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_DRIVER_ENV_H_
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_ENV_H_
 
-//
-
 #include <cstdio>
 #include <utility>
 
