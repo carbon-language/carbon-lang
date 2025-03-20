@@ -239,6 +239,10 @@ fn F[D:! Y](d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
+  //
+  // TODO: The type of `.X` should actually be symbolic here, unless the impl is
+  // effectively final (since the lookup query uses a symbolic `D` in its
+  // input). But we don't have support for either of those yet.
   let a: C(D).(Z.X) = ();
 }
 
