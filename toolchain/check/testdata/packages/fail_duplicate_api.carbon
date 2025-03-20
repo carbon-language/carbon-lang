@@ -22,7 +22,7 @@ library "lib";
 
 // CHECK:STDERR: fail_main_lib2.carbon:[[@LINE+4]]:1: error: library's API previously provided by `main_lib1.carbon` [DuplicateLibraryApi]
 // CHECK:STDERR: library "lib";
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 library "lib";
 
@@ -34,7 +34,7 @@ package Package;
 
 // CHECK:STDERR: fail_package2.carbon:[[@LINE+4]]:1: error: library's API previously provided by `package1.carbon` [DuplicateLibraryApi]
 // CHECK:STDERR: package Package;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 package Package;
 
@@ -46,7 +46,7 @@ package Package library "lib";
 
 // CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+4]]:1: error: library's API previously provided by `package_lib1.carbon` [DuplicateLibraryApi]
 // CHECK:STDERR: package Package library "lib";
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 package Package library "lib";
 

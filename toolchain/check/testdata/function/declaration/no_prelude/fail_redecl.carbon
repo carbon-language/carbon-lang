@@ -66,25 +66,25 @@ fn E() {}
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
-// CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.type.b6a92a.1: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d852be.1: %.type.b6a92a.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.type.de0bfe.1: type = fn_type @C.1 [concrete]
+// CHECK:STDOUT:   %C.1b0370.1: %C.type.de0bfe.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.type.de0bfe.2: type = fn_type @C.2 [concrete]
+// CHECK:STDOUT:   %C.1b0370.2: %C.type.de0bfe.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
-// CHECK:STDOUT:   %E.type: type = fn_type @E [concrete]
-// CHECK:STDOUT:   %E: %E.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.type.b6a92a.2: type = fn_type @.2 [concrete]
-// CHECK:STDOUT:   %.d852be.2: %.type.b6a92a.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %E.type.851869.1: type = fn_type @E.1 [concrete]
+// CHECK:STDOUT:   %E.237d29.1: %E.type.851869.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %E.type.851869.2: type = fn_type @E.2 [concrete]
+// CHECK:STDOUT:   %E.237d29.2: %E.type.851869.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl.loc11
 // CHECK:STDOUT:     .B = %B.decl.loc21
-// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .C = %C.decl.loc31
 // CHECK:STDOUT:     .D = %D.decl.loc41
-// CHECK:STDOUT:     .E = %E.decl
+// CHECK:STDOUT:     .E = %E.decl.loc51
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl.loc11: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %A.decl.loc19: %A.type = fn_decl @A [concrete = constants.%A] {} {}
@@ -110,8 +110,8 @@ fn E() {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.loc29: %empty_tuple.type = bind_name x, %x.param.loc29
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.decl.loc39: %.type.b6a92a.1 = fn_decl @.1 [concrete = constants.%.d852be.1] {
+// CHECK:STDOUT:   %C.decl.loc31: %C.type.de0bfe.1 = fn_decl @C.1 [concrete = constants.%C.1b0370.1] {} {}
+// CHECK:STDOUT:   %C.decl.loc39: %C.type.de0bfe.2 = fn_decl @C.2 [concrete = constants.%C.1b0370.2] {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -124,29 +124,29 @@ fn E() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc41: %D.type = fn_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %D.decl.loc49: %D.type = fn_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [concrete = constants.%E] {} {}
-// CHECK:STDOUT:   %.decl.loc59: %.type.b6a92a.2 = fn_decl @.2 [concrete = constants.%.d852be.2] {} {}
+// CHECK:STDOUT:   %E.decl.loc51: %E.type.851869.1 = fn_decl @E.1 [concrete = constants.%E.237d29.1] {} {}
+// CHECK:STDOUT:   %E.decl.loc59: %E.type.851869.2 = fn_decl @E.2 [concrete = constants.%E.237d29.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%x.param_patt: %empty_tuple.type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C();
+// CHECK:STDOUT: fn @C.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%x.param_patt: %empty_tuple.type);
+// CHECK:STDOUT: fn @C.2(%x.param_patt: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E() {
+// CHECK:STDOUT: fn @E.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.2() {
+// CHECK:STDOUT: fn @E.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -21,7 +21,7 @@ import Other;
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-4]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Other;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 namespace Other;
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:10: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]

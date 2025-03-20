@@ -181,13 +181,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Main.Basic: type = import_ref Main//a, Basic, loaded [concrete = constants.%Basic.type]
 // CHECK:STDOUT:   %Main.ForwardDeclared: type = import_ref Main//a, ForwardDeclared, loaded [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f.2f5 = import_ref Main//a, f_ref, loaded
-// CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst20 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.152: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.b26]
 // CHECK:STDOUT:   %Main.import_ref.30b: %Basic.assoc_type = import_ref Main//a, loc9_9, loaded [concrete = constants.%assoc1.0bf]
 // CHECK:STDOUT:   %Main.T.44f = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.eea = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.52b = import_ref Main//a, inst33 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.52b = import_ref Main//a, inst34 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.de0: %ForwardDeclared.assoc_type = import_ref Main//a, loc16_8, loaded [concrete = constants.%assoc0.c94]
 // CHECK:STDOUT:   %Main.import_ref.c9c: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.660]
 // CHECK:STDOUT:   %Main.T.6ee = import_ref Main//a, T, unloaded

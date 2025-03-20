@@ -472,12 +472,14 @@ class NodeStack {
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::ForIn:
+      case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
       case Parse::NodeKind::IfConditionStart:
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
       case Parse::NodeKind::InvalidParseStart:
+      case Parse::NodeKind::KeywordNameQualifierWithParams:
       case Parse::NodeKind::KeywordNameQualifierWithoutParams:
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
@@ -498,7 +500,6 @@ class NodeStack {
       case Parse::NodeKind::MatchStatementStart:
       case Parse::NodeKind::NamedConstraintDefinitionStart:
       case Parse::NodeKind::NamedConstraintIntroducer:
-      case Parse::NodeKind::NameQualifierWithParams:
       case Parse::NodeKind::NamespaceStart:
       case Parse::NodeKind::PackageIntroducer:
       case Parse::NodeKind::ParenExprStart:

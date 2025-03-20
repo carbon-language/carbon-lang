@@ -21,6 +21,18 @@ struct FunctionFields {
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
+  // This block consists of references to the `AnyParam` insts that represent
+  // the function's `Call` parameters. The "`Call` parameters" are the
+  // parameters corresponding to the arguments that are passed to a `Call`
+  // inst, so they do not include compile-time parameters, but they do include
+  // the return slot.
+  //
+  // The parameters appear in declaration order: `self` (if present), then the
+  // explicit runtime parameters, then the return slot (which is "declared" by
+  // the function's return type declaration). This is not populated on imported
+  // functions, because it is relevant only for a function definition.
+  InstBlockId call_params_id;
+
   // A reference to the instruction in the entity's pattern block that depends
   // on all other pattern insts pertaining to the return slot pattern. This may
   // or may not be used by the function, depending on whether the return type
@@ -72,6 +84,9 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
+    if (call_params_id.has_value()) {
+      out << ", call_params_id: " << call_params_id;
+    }
     if (return_slot_pattern_id.has_value()) {
       out << ", return_slot_pattern: " << return_slot_pattern_id;
     }

@@ -447,27 +447,23 @@ static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
 
 auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
     -> void {
+  auto start_id = AddNode<NodeKind::FunctionDefinitionStart>(token, has_error);
   if (ParsingInDeferredDefinitionScope(*this)) {
-    deferred_definition_stack_.push_back(tree_->deferred_definitions_.Add(
-        {.start_id = FunctionDefinitionStartId::UnsafeMake(
-             NodeId(tree_->node_impls_.size()))}));
+    deferred_definition_stack_.push_back(
+        tree_->deferred_definitions_.Add({.start_id = start_id}));
   }
-
-  AddNode(NodeKind::FunctionDefinitionStart, token, has_error);
 }
 
 auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
     -> void {
+  auto definition_id = AddNode<NodeKind::FunctionDefinition>(token, has_error);
   if (ParsingInDeferredDefinitionScope(*this)) {
     auto definition_index = deferred_definition_stack_.pop_back_val();
     auto& definition = tree_->deferred_definitions_.Get(definition_index);
-    definition.definition_id =
-        FunctionDefinitionId::UnsafeMake(NodeId(tree_->node_impls_.size()));
+    definition.definition_id = definition_id;
     definition.next_definition_index =
         DeferredDefinitionIndex(tree_->deferred_definitions().size());
   }
-
-  AddNode(NodeKind::FunctionDefinition, token, has_error);
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

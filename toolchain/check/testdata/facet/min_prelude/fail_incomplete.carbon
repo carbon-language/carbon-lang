@@ -19,7 +19,7 @@ fn G[T:! A](t: T) {}
 fn H[T:! A & B](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert value of type `type` to `A` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert type `C` into type implementing `A` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   ({} as C) as (C as A);
   // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.As(A)` [MissingImplInMemberAccessNote]
@@ -28,7 +28,7 @@ fn F() {
   // CHECK:STDERR:
   ({} as C) as (C as A);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert value of type `type` to `A & B` with `as` [ExplicitAsConversionFailure]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert type `C` into type implementing `A & B` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   ({} as C) as (C as (A & B));
   // CHECK:STDERR:                 ^~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
@@ -37,7 +37,7 @@ fn F() {
   // CHECK:STDERR:
   ({} as C) as (C as (A & B));
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `A` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
@@ -49,7 +49,7 @@ fn F() {
   // CHECK:STDERR:
   G({} as C);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `type` to `A & B` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `A & B` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]

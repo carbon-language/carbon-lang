@@ -88,13 +88,12 @@ fn G() {
 // CHECK:STDOUT:   %Generic.facet.0aa: %Generic.type.91ccba.2 = facet_value %U.as_type, (%U.as_wit.iface0) [symbolic]
 // CHECK:STDOUT:   %.10b: type = fn_type_with_self_type %F.type.f439a9.2, %Generic.facet.0aa [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.10b = impl_witness_access %U.as_wit.iface0, element0 [symbolic]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.1(%T, %Generic.facet.0aa) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @F.1(%T, %Generic.facet.0aa) [symbolic]
 // CHECK:STDOUT:   %G.type.9f9: type = fn_type @G.3 [concrete]
 // CHECK:STDOUT:   %G.57b: %G.type.9f9 = struct_value () [concrete]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet.8bd) [concrete]
 // CHECK:STDOUT:   %complete_type.997: <witness> = complete_type_witness %Generic.type.769 [concrete]
 // CHECK:STDOUT:   %.1eb: type = fn_type_with_self_type %F.type.4cf, %Generic.facet.8bd [concrete]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.a56, @F.1(%GenericParam, %Generic.facet.8bd) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -249,7 +248,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.facet: @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2) = facet_value %U.as_type.loc30_4.2, (%U.as_wit.iface0.loc30_4.2) [symbolic = %Generic.facet (constants.%Generic.facet.0aa)]
 // CHECK:STDOUT:   %.loc30_4.3: type = fn_type_with_self_type %F.type, %Generic.facet [symbolic = %.loc30_4.3 (constants.%.10b)]
 // CHECK:STDOUT:   %impl.elem0.loc30_4.2: @CallGenericMethod.%.loc30_4.3 (%.10b) = impl_witness_access %U.as_wit.iface0.loc30_4.2, element0 [symbolic = %impl.elem0.loc30_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %specific_fn.loc30_4.2: <specific function> = specific_function %impl.elem0.loc30_4.2, @F.1(%T.loc29_22.2, %Generic.facet) [symbolic = %specific_fn.loc30_4.2 (constants.%specific_fn)]
+// CHECK:STDOUT:   %specific_impl_fn.loc30_4.2: <specific function> = specific_impl_function %impl.elem0.loc30_4.2, @F.1(%T.loc29_22.2, %Generic.facet) [symbolic = %specific_impl_fn.loc30_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc29_22.1: type, %U.patt.loc29_32.1: @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2)) {
 // CHECK:STDOUT:   !entry:
@@ -260,8 +259,8 @@ fn G() {
 // CHECK:STDOUT:     %.loc30_4.2: type = converted %U.ref, %U.as_type.loc30_4.1 [symbolic = %U.as_type.loc30_4.2 (constants.%U.as_type)]
 // CHECK:STDOUT:     %U.as_wit.iface0.loc30_4.1: <witness> = facet_access_witness %U.ref, element0 [symbolic = %U.as_wit.iface0.loc30_4.2 (constants.%U.as_wit.iface0)]
 // CHECK:STDOUT:     %impl.elem0.loc30_4.1: @CallGenericMethod.%.loc30_4.3 (%.10b) = impl_witness_access %U.as_wit.iface0.loc30_4.1, element0 [symbolic = %impl.elem0.loc30_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %specific_fn.loc30_4.1: <specific function> = specific_function %impl.elem0.loc30_4.1, @F.1(constants.%T, constants.%Generic.facet.0aa) [symbolic = %specific_fn.loc30_4.2 (constants.%specific_fn)]
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %specific_fn.loc30_4.1()
+// CHECK:STDOUT:     %specific_impl_fn.loc30_4.1: <specific function> = specific_impl_function %impl.elem0.loc30_4.1, @F.1(constants.%T, constants.%Generic.facet.0aa) [symbolic = %specific_impl_fn.loc30_4.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %.loc30_7: init %empty_tuple.type = call %specific_impl_fn.loc30_4.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -350,6 +349,6 @@ fn G() {
 // CHECK:STDOUT:   %Generic.facet => constants.%Generic.facet.8bd
 // CHECK:STDOUT:   %.loc30_4.3 => constants.%.1eb
 // CHECK:STDOUT:   %impl.elem0.loc30_4.2 => constants.%F.a56
-// CHECK:STDOUT:   %specific_fn.loc30_4.2 => constants.%F.specific_fn
+// CHECK:STDOUT:   %specific_impl_fn.loc30_4.2 => constants.%F.a56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

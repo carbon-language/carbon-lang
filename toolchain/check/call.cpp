@@ -167,36 +167,50 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   }
 
   if (callee_specific_id->has_value()) {
-    auto inner_callee_id = callee_id;
-    if (auto bound_method =
-            context.insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
-      inner_callee_id = GetOrAddInst(
-          context, context.insts().GetLocId(bound_method->function_decl_id),
+    auto generic_callee_id = callee_id;
+
+    // Strip off a bound_method so that we can form a constant specific callee.
+    auto bound_method = context.insts().TryGetAs<SemIR::BoundMethod>(callee_id);
+    if (bound_method) {
+      generic_callee_id = bound_method->function_decl_id;
+    }
+
+    // Form a specific callee.
+    if (callee_function.self_type_id.has_value()) {
+      // This is an associated function in an interface; the callee is the
+      // specific function in the impl that corresponds to the specific function
+      // we deduced.
+      callee_id = GetOrAddInst(
+          context, context.insts().GetLocId(generic_callee_id),
+          SemIR::SpecificImplFunction{
+              .type_id = GetSingletonType(
+                  context, SemIR::SpecificFunctionType::SingletonInstId),
+              .callee_id = generic_callee_id,
+              .specific_id = *callee_specific_id});
+      // TODO: Add to `definitions_required` when evaluating the
+      // `SpecificImplFunction`.
+    } else {
+      // This is a regular generic function. The callee is the specific function
+      // we deduced.
+      callee_id = GetOrAddInst(
+          context, context.insts().GetLocId(generic_callee_id),
           SemIR::SpecificFunction{
               .type_id = GetSingletonType(
                   context, SemIR::SpecificFunctionType::SingletonInstId),
-              .callee_id = bound_method->function_decl_id,
+              .callee_id = generic_callee_id,
               .specific_id = *callee_specific_id});
+      // TODO: The specific function could be a symbolic constant. Delay doing
+      // this until we form a concrete `SpecificFunction` constant.
+      context.definitions_required().push_back(callee_id);
+    }
+
+    // Add the `self` argument back if there was one.
+    if (bound_method) {
       callee_id = GetOrAddInst<SemIR::BoundMethod>(
           context, loc_id,
           {.type_id = bound_method->type_id,
            .object_id = bound_method->object_id,
-           .function_decl_id = inner_callee_id});
-    } else {
-      callee_id = GetOrAddInst(
-          context, context.insts().GetLocId(callee_id),
-          SemIR::SpecificFunction{
-              .type_id = GetSingletonType(
-                  context, SemIR::SpecificFunctionType::SingletonInstId),
-              .callee_id = callee_id,
-              .specific_id = *callee_specific_id});
-      inner_callee_id = callee_id;
-    }
-    if (callee_function.self_type_id.has_value()) {
-      // This is an associated function, and will be required to be defined as
-      // part of checking that the impl is complete.
-    } else {
-      context.definitions_required().push_back(inner_callee_id);
+           .function_decl_id = callee_id});
     }
   }
 

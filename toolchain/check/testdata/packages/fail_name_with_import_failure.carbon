@@ -10,9 +10,9 @@
 
 // --- fail_implicit.impl.carbon
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:6: error: corresponding API for 'Implicit' not found [LibraryApiNotFound]
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: error: corresponding API for 'Implicit' not found [LibraryApiNotFound]
 // CHECK:STDERR: impl package Implicit;
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl package Implicit;
 

@@ -86,7 +86,11 @@ class DiagnosticEmitter {
     // Emits the built diagnostic and its attached notes.
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
-    auto Emit() -> void;
+    auto Emit() & -> void;
+
+    // Prevent trivial uses of the builder; always `static_assert`s.
+    template <typename... Args>
+    auto Emit() && -> void;
 
     // Returns true if this DiagnosticBuilder may emit a diagnostic. Can be used
     // to avoid excess work computing notes, etc, if no diagnostic is going to
@@ -282,7 +286,7 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Note(
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() -> void {
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() & -> void {
   if (!emitter_) {
     return;
   }
@@ -290,6 +294,22 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() -> void {
     annotate_fn(*this);
   }
   emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
+}
+
+namespace Internal {
+template <typename LocT>
+concept AlwaysFalse = false;
+}  // namespace Internal
+
+template <typename LocT>
+template <typename... Args>
+auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() && -> void {
+  // TODO: This is required by clang-16, but `false` may work in newer clang
+  // versions. Replace when possible.
+  static_assert(Internal::AlwaysFalse<LocT>,
+                "Use `emitter.Emit(...)` or "
+                "`emitter.Build(...).Note(...).Emit(...)` "
+                "instead of `emitter.Build(...).Emit(...)`");
 }
 
 template <typename LocT>
@@ -364,8 +384,9 @@ template <typename... Args>
 auto DiagnosticEmitter<LocT>::Emit(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     Internal::NoTypeDeduction<Args>... args) -> void {
-  DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
-      .Emit();
+  DiagnosticBuilder builder(this, loc, diagnostic_base,
+                            {MakeAny<Args>(args)...});
+  builder.Emit();
 }
 
 template <typename LocT>

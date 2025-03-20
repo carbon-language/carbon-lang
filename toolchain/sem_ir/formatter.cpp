@@ -663,7 +663,8 @@ class FormatterImpl {
     const auto& scope = sem_ir_->name_scopes().Get(id);
 
     if (scope.entries().empty() && scope.extended_scopes().empty() &&
-        scope.import_ir_scopes().empty() && !scope.has_error()) {
+        scope.import_ir_scopes().empty() && !scope.is_cpp_scope() &&
+        !scope.has_error()) {
       // Name scope is empty.
       return;
     }
@@ -721,6 +722,11 @@ class FormatterImpl {
       }
       Indent();
       out_ << "import " << label << "\n";
+    }
+
+    if (scope.is_cpp_scope()) {
+      Indent();
+      out_ << "import Cpp//...\n";
     }
 
     if (scope.has_error()) {
@@ -1162,6 +1168,15 @@ class FormatterImpl {
     FormatImportRefRhs(inst.import_ir_inst_id, inst.entity_name_id, "unloaded");
   }
 
+  auto FormatInstRhs(InstValue inst) -> void {
+    out_ << ' ';
+    OpenBrace();
+    // TODO: Should we use a more compact representation in the case where the
+    // inst is a SpliceBlock?
+    FormatInst(inst.inst_id);
+    CloseBrace();
+  }
+
   auto FormatInstRhs(NameBindingDecl inst) -> void {
     FormatTrailingBlock(inst.pattern_block_id);
   }
@@ -1208,6 +1223,10 @@ class FormatterImpl {
   auto FormatArg(BoolValue v) -> void { out_ << v; }
 
   auto FormatArg(EntityNameId id) -> void {
+    if (!id.has_value()) {
+      out_ << "_";
+      return;
+    }
     const auto& info = sem_ir_->entity_names().Get(id);
     FormatName(info.name_id);
     if (info.bind_index().has_value()) {
@@ -1356,6 +1375,10 @@ class FormatterImpl {
   }
 
   auto FormatName(DestInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
+  auto FormatName(MetaInstId id) -> void {
     FormatName(static_cast<InstId>(id));
   }
 

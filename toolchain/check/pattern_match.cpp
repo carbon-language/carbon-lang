@@ -203,20 +203,30 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       std::exchange(context.bind_name_map().Lookup(entry.pattern_id).value(),
                     {.bind_name_id = SemIR::InstId::None,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
+  // bind_name_id doesn't have a value in the case of an unused binding pattern,
+  // but type_expr_region_id should always be populated.
+  CARBON_CHECK(type_expr_region_id.has_value());
   InsertHere(context, type_expr_region_id);
   auto value_id = SemIR::InstId::None;
   if (kind_ == MatchKind::Local) {
-    value_id = ConvertToValueOrRefOfType(
-        context, context.insts().GetLocId(entry.scrutinee_id),
-        entry.scrutinee_id, binding_pattern.type_id);
+    value_id =
+        Convert(context, context.insts().GetLocId(entry.scrutinee_id),
+                entry.scrutinee_id,
+                {.kind = bind_name_id.has_value() ? ConversionTarget::ValueOrRef
+                                                  : ConversionTarget::Discarded,
+                 .type_id = binding_pattern.type_id});
   } else {
+    // In a function call, conversion is handled while matching the enclosing
+    // `*ParamPattern`.
     value_id = entry.scrutinee_id;
   }
-  auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
-  CARBON_CHECK(!bind_name.value_id.has_value());
-  bind_name.value_id = value_id;
-  ReplaceInstBeforeConstantUse(context, bind_name_id, bind_name);
-  context.inst_block_stack().AddInstId(bind_name_id);
+  if (bind_name_id.has_value()) {
+    auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
+    CARBON_CHECK(!bind_name.value_id.has_value());
+    bind_name.value_id = value_id;
+    ReplaceInstBeforeConstantUse(context, bind_name_id, bind_name);
+    context.inst_block_stack().AddInstId(bind_name_id);
+  }
 }
 
 auto MatchContext::DoEmitPatternMatch(Context& context,

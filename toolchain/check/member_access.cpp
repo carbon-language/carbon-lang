@@ -8,6 +8,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
@@ -459,6 +460,22 @@ static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
 auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
                          SemIR::InstId base_id, SemIR::NameId name_id)
     -> SemIR::InstId {
+  // TODO: Member access for dependent member names is supposed to perform a
+  // lookup in both the template definition context and the template
+  // instantiation context, and reject if both succeed but find different
+  // things.
+  return HandleAction<SemIR::AccessMemberAction>(
+      context, loc_id,
+      {.type_id = SemIR::InstType::SingletonTypeId,
+       .base_id = base_id,
+       .name_id = name_id});
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::AccessMemberAction action) -> SemIR::InstId {
+  SemIR::InstId base_id = action.base_id;
+  SemIR::NameId name_id = action.name_id;
+
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);

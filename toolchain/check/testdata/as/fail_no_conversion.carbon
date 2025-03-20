@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_no_conversion.carbon
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:21: error: cannot convert value of type `Core.IntLiteral` to `(i32, i32)` with `as` [ExplicitAsConversionFailure]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:21: error: cannot convert value of type `Core.IntLiteral` to `(i32, i32)` with `as` [ConversionFailure]
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:21: note: type `Core.IntLiteral` does not implement interface `Core.As((i32, i32))` [MissingImplInMemberAccessNote]

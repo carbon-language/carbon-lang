@@ -92,7 +92,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %Test.C = import_ref Test//def, C, unloaded
 // CHECK:STDOUT:   %Test.A: type = import_ref Test//def, A, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//def, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Test.import_ref.2c4 = import_ref Test//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref.2c4 = import_ref Test//def, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

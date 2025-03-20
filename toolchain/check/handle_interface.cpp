@@ -62,6 +62,8 @@ static auto BuildInterfaceDecl(Context& context,
       name, interface_decl_id, /*is_extern=*/false,
       SemIR::LibraryNameId::None)};
 
+  DiagnoseIfGenericMissingExplicitParameters(context, interface_info);
+
   // Check whether this is a redeclaration.
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(

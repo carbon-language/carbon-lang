@@ -50,8 +50,8 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Undefined.type: type = facet_type <@Undefined> [concrete]
-// CHECK:STDOUT:   %.type.b6a: type = fn_type @.1 [concrete]
-// CHECK:STDOUT:   %.d85: %.type.b6a = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BeingDefined.type: type = facet_type <@BeingDefined> [concrete]
@@ -60,8 +60,8 @@ interface BeingDefined {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BeingDefined.assoc_type: type = assoc_entity_type %BeingDefined.type [concrete]
 // CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, @BeingDefined.%H.decl [concrete]
-// CHECK:STDOUT:   %.type.5fb: type = fn_type @.2 [concrete]
-// CHECK:STDOUT:   %.b15: %.type.5fb = struct_value () [concrete]
+// CHECK:STDOUT:   %I.type: type = fn_type @I [concrete]
+// CHECK:STDOUT:   %I: %I.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -71,7 +71,7 @@ interface BeingDefined {
 // CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Undefined.decl: type = interface_decl @Undefined [concrete = constants.%Undefined.type] {} {}
-// CHECK:STDOUT:   %.decl: %.type.b6a = fn_decl @.1 [concrete = constants.%.d85] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [concrete = constants.%Test] {} {}
 // CHECK:STDOUT:   %BeingDefined.decl: type = interface_decl @BeingDefined [concrete = constants.%BeingDefined.type] {} {}
 // CHECK:STDOUT: }
@@ -90,7 +90,7 @@ interface BeingDefined {
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, %H.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %.decl: %.type.5fb = fn_decl @.2 [concrete = constants.%.b15] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [concrete = constants.%I] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -99,7 +99,7 @@ interface BeingDefined {
 // CHECK:STDOUT:   witness = (%H.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
@@ -112,11 +112,11 @@ interface BeingDefined {
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.2(@BeingDefined.%Self: %BeingDefined.type) {
+// CHECK:STDOUT: generic fn @I(@BeingDefined.%Self: %BeingDefined.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.2(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {}
 // CHECK:STDOUT:

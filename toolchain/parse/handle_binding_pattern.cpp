@@ -46,6 +46,9 @@ auto HandleBindingPattern(Context& context) -> void {
     // parameter list of a function.
     context.AddLeafNode(NodeKind::SelfValueName, *self);
     has_name = true;
+  } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
+    context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
+    has_name = true;
   }
   if (!has_name) {
     // Add a placeholder for the name.

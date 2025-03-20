@@ -107,6 +107,23 @@ using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 template <typename... T>
   requires(sizeof...(T) >= 2)
 struct NodeIdOneOf : public NodeId {
+ private:
+  // True if `OtherT` is one of `T`.
+  template <typename OtherT>
+  static constexpr bool Contains = (std::is_same<OtherT, T>{} || ...);
+
+  // True if `NodeIdOneOf<SubsetT...>` is a subset of this `NodeIdOneOf`.
+  template <typename Unused>
+  static constexpr bool IsSubset = false;
+  template <typename... SubsetT>
+  static constexpr bool IsSubset<NodeIdOneOf<SubsetT...>> =
+      (Contains<SubsetT> && ...);
+
+  // Private to prevent accidental explicit construction from an untyped
+  // NodeId.
+  explicit constexpr NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
+
+ public:
   // Provide a factory function for construction from `NodeId`. This doesn't
   // validate the type, so it's unsafe.
   static constexpr auto UnsafeMake(NodeId node_id) -> NodeIdOneOf {
@@ -114,17 +131,17 @@ struct NodeIdOneOf : public NodeId {
   }
 
   template <const NodeKind& Kind>
-    requires((T::Kind == Kind) || ...)
+    requires(Contains<NodeIdForKind<Kind>>)
   // NOLINTNEXTLINE(google-explicit-constructor)
   NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {}
 
+  template <typename OtherNodeIdOneOf>
+    requires(IsSubset<OtherNodeIdOneOf>)
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  NodeIdOneOf(OtherNodeIdOneOf node_id) : NodeId(node_id) {}
+
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
-
- private:
-  // Private to prevent accidental explicit construction from an untyped
-  // NodeId.
-  explicit constexpr NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
 };
 
 using AnyClassDeclId =
@@ -138,9 +155,15 @@ using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
-using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDeclId>;
+using AnyNamespaceId =
+    NodeIdOneOf<NamespaceId, ImportDeclId, LibraryDeclId, PackageDeclId>;
+using AnyPackagingDeclId =
+    NodeIdOneOf<ImportDeclId, LibraryDeclId, PackageDeclId>;
 using AnyPointerDeferenceExprId =
     NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
+using AnyRuntimeBindingPatternName =
+    NodeIdOneOf<IdentifierNameNotBeforeParamsId, SelfValueNameId,
+                UnderscoreNameId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

@@ -54,6 +54,13 @@ enum class InstConstantKind : int8_t {
   // a symbolic constant but never a concrete constant. The instruction may have
   // a concrete constant value of a different kind.
   SymbolicOnly,
+  // This instruction is a metaprogramming or template instantiation action that
+  // generates an instruction. Like `SymbolicOnly`, it may define a symbolic
+  // constant, depending on its operands, but never defines a concrete constant.
+  // The instruction may have a concrete constant value that is a generated
+  // instruction. Constant evaluation support for types with this constant kind
+  // is provided automatically, by calling `PerformDelayedAction`.
+  InstAction,
   // This instruction can define a symbolic or concrete constant, but might not
   // have a constant value, might have a constant value that is not defined by
   // itself, or might result in a compile-time error, depending on its operands.

@@ -21,7 +21,7 @@ impl C as Core.AddAssign {
 }
 
 fn Test(a: C, b: D) -> C {
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:14: error: cannot implicitly convert value of type `D` to `C` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:14: error: cannot implicitly convert value of type `D` to `C` [ConversionFailure]
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:              ^
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:14: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
@@ -36,7 +36,7 @@ fn Test(a: C, b: D) -> C {
 
 fn TestAssign(b: D) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:8: error: cannot implicitly convert value of type `D` to `C` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:8: error: cannot implicitly convert value of type `D` to `C` [ConversionFailure]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:8: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]

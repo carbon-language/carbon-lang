@@ -247,6 +247,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id) -> void {
   DumpNoNewline(file, specific_id);
   llvm::errs() << '\n';
+  Dump(file, file.specifics().Get(specific_id).args_id);
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,
