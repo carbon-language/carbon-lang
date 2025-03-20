@@ -163,6 +163,11 @@ class TypeStructureBuilder {
       }
 
       if (std::holds_alternative<NonTypeValue>(next)) {
+        // TODO: Include the value's type into the structure, with the type
+        // coming first and paired together with the value, like:
+        // `{TypeWithPossibleNestedTypes, Concrete}`.
+        // We might want a different bracket marker than ConcreteOpenParen for
+        // this so that it can look different in the type structure when dumped.
         AppendStructural(TypeStructure::Structural::Concrete);
         continue;
       }
