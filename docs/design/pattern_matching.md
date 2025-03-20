@@ -126,9 +126,16 @@ A name binding pattern is a pattern.
 -   _binding-pattern_ ::= _identifier_ `:` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
+If the binding pattern is enclosed by a `var` pattern, it is a _variable binding
+pattern_. Otherwise, it is a _value binding pattern_.
+
 The _identifier_ specifies the name of the _binding_. The type of the binding is
 specified by the _expression_. The scrutinee is implicitly converted to that
-type if necessary. The binding is then _bound_ to the converted value.
+type if necessary. If the pattern is a variable binding pattern, the scrutinee
+is then converted to an initializing expression, and used to initialize a
+complete object allocated by the `var` pattern, and the name is _bound_ to that
+object. Otherwise, the scrutinee is converted to a value expression, and the
+name is bound to that expression.
 
 ```carbon
 fn F() -> i32 {
@@ -287,15 +294,12 @@ specified.
 
 ### `var`
 
-A `var` prefix indicates that a pattern provides mutable storage for the
-scrutinee.
+A `var` prefix indicates that binding patterns within it are variable binding
+patterns rather than value binding patterns.
 
 -   _proper-pattern_ ::= `var` _proper-pattern_
 
-A `var` pattern matches when its nested pattern matches. The type of the storage
-is the resolved type of the nested _pattern_. Any binding patterns within the
-nested pattern refer to portions of the corresponding storage rather than to the
-scrutinee.
+A `var` pattern matches when its nested pattern matches.
 
 ```carbon
 fn F(p: i32*);
@@ -303,25 +307,8 @@ fn G() {
   match ((1, 2)) {
     // `n` is a mutable `i32`.
     case (var n: i32, 1) => { F(&n); }
-    // `n` and `m` are the elements of a mutable `(i32, i32)`.
+    // `n` and `m` are separate mutable `i32`s.
     case var (n: i32, m: i32) => { F(if n then &n else &m); }
-  }
-}
-```
-
-Pattern matching precedes the initialization of the storage for any `var`
-patterns. An introduced variable is only initialized if the complete pattern
-matches.
-
-```carbon
-class X {
-  destructor { Print("Destroyed!"); }
-}
-fn F(x: X) {
-  match ((x, 1 as i32)) {
-    case (var y: X, 0) => {}
-    case (var z: X, 1) => {}
-    // Prints "Destroyed!" only once, when `z` is destroyed.
   }
 }
 ```
@@ -643,12 +630,12 @@ We will diagnose the following situations:
 
 ## Pattern usage
 
-This section is a skeletal design, added to support [the overview](README.md).
-It should not be treated as accepted by the core team; rather, it is a
-placeholder until we have more time to examine this detail. Please feel welcome
-to rewrite and update as appropriate.
-
 ### Pattern match control flow
+
+`match` is a skeletal design, added to support [the overview](README.md). Aside
+from [guards](#guards), it should not be treated as accepted by the core team;
+rather, it is a placeholder until we have more time to examine this detail.
+Please feel welcome to rewrite and update as appropriate.
 
 The most powerful form and easiest to explain form of pattern matching is a
 dedicated control flow construct that subsumes the `switch` of C and C++ into
@@ -701,6 +688,10 @@ composed of the following:
 In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
+
+Any initializing expressions in the scrutinee of a `match` statement are
+[materialized](values.md#temporary-materialization) before pattern matching
+begins, so that the result can be reused by multiple `case`s.
 
 #### Guards
 
