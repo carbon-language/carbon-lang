@@ -8,6 +8,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
@@ -283,6 +284,24 @@ class TypeStructureBuilder {
             for (const auto& field : fields) {
               Push(field.type_id);
             }
+          }
+          break;
+        }
+        case CARBON_KIND(SemIR::TypeOfInst type_of): {
+          auto const_id = context_.constant_values().Get(inst_id);
+          if (const_id.is_concrete()) {
+            // TODO: We would need to actually run the `type_of.inst_id` action
+            // to figure out what inst value it produces and its type. Do we
+            // need to worry about side effects? The inst pointed to by type_of
+            // is an action which is itself a non-type value of type InstType.
+            (void)type_of.inst_id;
+            AppendStructural(TypeStructure::Structural::Concrete);
+          } else if (const_id.is_symbolic()) {
+            auto sym = context_.constant_values().GetSymbolicConstant(const_id);
+            CARBON_CHECK(sym.dependence == SemIR::ConstantDependence::Template,
+                         "TypeOfInst with non-template symbolic value?");
+            context_.TODO(context_.insts().GetLocId(inst_id),
+                          "Impl lookup on template-dependent type value");
           }
           break;
         }

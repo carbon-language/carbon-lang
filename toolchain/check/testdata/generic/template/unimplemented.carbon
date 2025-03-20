@@ -14,6 +14,10 @@ library "[[@TEST_NAME]]";
 
 // Check that we get a reasonable diagnostic for an unimplemented operation on a template dependent expression.
 fn F[template T:! type](x: T) -> i32 {
+  // CHECK:STDERR: fail_todo_unimplemented_operator.carbon:[[@LINE+8]]:10: error: semantics TODO: `Impl lookup on template-dependent type value` [SemanticsTodo]
+  // CHECK:STDERR:   return x.n * 3;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_unimplemented_operator.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Mul` in type `<dependent type>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return x.n * 3;
   // CHECK:STDERR:          ^~~~~~~
@@ -98,15 +102,15 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc5_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc10_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc5_15.2 (%T) [template]
-// CHECK:STDOUT:   %.loc10_11.4: <instruction> = access_member_action %.loc10_11.1, n [template]
-// CHECK:STDOUT:   %.loc10_11.5: type = type_of_inst %.loc10_11.4 [template]
+// CHECK:STDOUT:   %.loc14_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc5_15.2 (%T) [template]
+// CHECK:STDOUT:   %.loc14_11.4: <instruction> = access_member_action %.loc14_11.1, n [template]
+// CHECK:STDOUT:   %.loc14_11.5: type = type_of_inst %.loc14_11.4 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc5_15.1: type](%x.param_patt: @F.%T.loc5_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc5_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc10_11.1: @F.%T.loc5_15.2 (%T) = splice_inst %.loc10_11.3
-// CHECK:STDOUT:     %.loc10_11.2: @F.%.loc10_11.5 (@F.%.loc10_11.5) = splice_inst %.loc10_11.4
+// CHECK:STDOUT:     %.loc14_11.1: @F.%T.loc5_15.2 (%T) = splice_inst %.loc14_11.3
+// CHECK:STDOUT:     %.loc14_11.2: @F.%.loc14_11.5 (@F.%.loc14_11.5) = splice_inst %.loc14_11.4
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
