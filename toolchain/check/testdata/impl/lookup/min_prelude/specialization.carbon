@@ -305,3 +305,110 @@ impl C(()) as Z where .X = C(()) {}
 fn F() {
   let a: C(()).(Z.X) = {} as C(());
 }
+
+// --- todo_fail_specialization_written_after_use_is_poisoned.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+class C {}
+
+impl forall [T:! type] T as Z(T) where .X = () {}
+
+fn F() {
+  let a: C.(Z(C).X) = ();
+}
+
+// TODO: This impl changes the result of a previous lookup. The previous lookup
+// should have created a poison value that this trips and thus generates a
+// diagnostic.
+impl C as Z(C) where .X = C {}
+
+// --- fail_todo_final_specialization_before_generic_use_of_type_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+class C {}
+
+impl forall [T:! type] T as Z(T) where .X = () {}
+
+// This impl is effectively final, since it's all concrete.
+impl C as Z(C) where .X = C {}
+
+fn F[U:! type](T:! Z(U)) {
+  // TODO: The value of `.X` can be known to be `C` here.
+  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+7]]:23: error: cannot implicitly convert value of type `C` to `T.(Z(U).X)` [ConversionFailure]
+  // CHECK:STDERR:   let a: T.(Z(U).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+4]]:23: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(U).X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: T.(Z(U).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR:
+  let a: T.(Z(U).X) = {} as C;
+}
+
+// --- fail_specialization_written_after_generic_use_of_type_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+class C {}
+
+impl forall [T:! type] T as Z(T) where .X = () {}
+
+fn F[U:! type](T:! Z(U)) {
+  // The value of `.X` is symbolic, it can't be assigned a value of type `C`.
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:23: error: cannot implicitly convert value of type `C` to `T.(Z(U).X)` [ConversionFailure]
+  // CHECK:STDERR:   let a: T.(Z(U).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:23: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(U).X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: T.(Z(U).X) = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR:
+  let a: T.(Z(U).X) = {} as C;
+}
+
+impl C as Z(C) where .X = C {}
+
+// --- fail_specialization_written_after_generic_use.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let V:! type;
+  fn F() -> V;
+}
+
+interface Y {}
+impl forall [T:! Y] T as Z where .V = () {
+  fn F() -> () { return (); }
+}
+
+fn G(U:! Y) -> U.(Z.V) {
+  return U.(Z.F)();
+}
+
+class C {
+  impl as Y {}
+}
+
+impl C as Z where .V = {} {
+  fn F() -> {} { return {}; }
+}
+
+fn H() {
+  // CHECK:STDERR: fail_specialization_written_after_generic_use.carbon:[[@LINE+7]]:15: error: cannot implicitly convert value of type `()` to `{}` [ConversionFailure]
+  // CHECK:STDERR:   let x: {} = G(C);
+  // CHECK:STDERR:               ^~~~
+  // CHECK:STDERR: fail_specialization_written_after_generic_use.carbon:[[@LINE+4]]:15: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let x: {} = G(C);
+  // CHECK:STDERR:               ^~~~
+  // CHECK:STDERR:
+  let x: {} = G(C);
+}
