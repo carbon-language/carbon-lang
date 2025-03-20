@@ -185,6 +185,15 @@ class TypeStructureBuilder {
           Push(SymbolicType());
           break;
         }
+        case SemIR::TypeOfInst::Kind: {
+          // TODO: For a template value with a fixed type, such as `template n:!
+          // i32`, we could look at the type of the value to see if it's
+          // template-dependent (which it's not here) and add that type to the
+          // type structure?
+          // https://github.com/carbon-language/carbon-lang/pull/5124#discussion_r2006617038
+          Push(SymbolicType());
+          break;
+        }
 
           // ==== Concrete types ====
 
@@ -285,36 +294,6 @@ class TypeStructureBuilder {
               Push(field.type_id);
             }
           }
-          break;
-        }
-        case CARBON_KIND(SemIR::TypeOfInst type_of): {
-          (void)type_of;
-          auto const_id = context_.constant_values().Get(inst_id);
-          // TODO: TypeOfInst should not be encountered in impl lookup with a
-          // template-dependent value, since impl lookup on such values should
-          // be deferred to type-checking the specific. So this should become a
-          // CARBON_FATAL code path. For now it is possible, though, to reach
-          // here and it results in a diagnostic.
-          //
-          // However, TypeOfInst can be determined to be a concrete value for a
-          // template value with a non-template dependent type. This currently
-          // does not happen though, the TypeOfInst is always template
-          // dependent. If it does in the future then we will want to use the
-          // concrete constant value instruction of `inst_id` in the type
-          // structure:
-          //   if (const_id.is_concrete()) {
-          //     PushInstId(context_.constant_values().GetInstId(const_id));
-          //   }
-          //
-          // If TypeOfInst was used for more general metaprogramming then we may
-          // need to handle both concrete and perhaps symbolic (non-template)
-          // values of TypeOfInst.
-          CARBON_CHECK(const_id.is_symbolic());
-          auto sym = context_.constant_values().GetSymbolicConstant(const_id);
-          CARBON_CHECK(sym.dependence == SemIR::ConstantDependence::Template,
-                       "TypeOfInst with non-template symbolic value?");
-          context_.TODO(context_.insts().GetLocId(inst_id),
-                        "Impl lookup on template-dependent type value");
           break;
         }
         default:
