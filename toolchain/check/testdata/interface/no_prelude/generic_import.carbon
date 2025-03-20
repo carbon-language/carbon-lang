@@ -114,17 +114,17 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [concrete]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, %impl_witness [concrete]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, (%impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [concrete = constants.%AddWith.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst24 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.550 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.F: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be3)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst24 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst25 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self)]
 // CHECK:STDOUT:   %Main.import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

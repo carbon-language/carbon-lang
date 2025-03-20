@@ -68,6 +68,12 @@ struct EntityNameStore : public ValueStore<EntityNameId> {
                 .is_template = is_template});
   }
 
+  // Convert an `EntityName` to a canonical ID. All calls to this with
+  // equivalent `EntityName`s will return the same `EntityNameId`. Same as
+  // `MakeCanonical(Add(name))` except that no new `EntityName` is added if we
+  // already have a canonical `EntityNameId` for that name.
+  auto AddCanonical(EntityName name) -> EntityNameId;
+
   // Convert an ID to a canonical ID. All calls to this with equivalent
   // `EntityName`s will return the same `EntityNameId`.
   auto MakeCanonical(EntityNameId id) -> EntityNameId;
@@ -91,6 +97,13 @@ class EntityNameStore::KeyContext : public TranslatingKeyContext<KeyContext> {
  private:
   const EntityNameStore* store_;
 };
+
+inline auto EntityNameStore::AddCanonical(EntityName name) -> EntityNameId {
+  return canonical_ids_
+      .Insert(
+          name, [&] { return Add(name); }, KeyContext(this))
+      .key();
+}
 
 inline auto EntityNameStore::MakeCanonical(EntityNameId id) -> EntityNameId {
   return canonical_ids_.Insert(id, KeyContext(this)).key();

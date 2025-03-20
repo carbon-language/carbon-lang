@@ -192,6 +192,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case NameBindingDecl::Kind:
       case Namespace::Kind:
       case OutParamPattern::Kind:
+      case RefParamPattern::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:
@@ -240,6 +241,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
+      case AccessMemberAction::Kind:
       case AddrOf::Kind:
       case ArrayType::Kind:
       case AssociatedConstantDecl::Kind:
@@ -257,6 +259,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
+      case ConvertToValueAction::Kind:
       case FacetAccessType::Kind:
       case FacetAccessWitness::Kind:
       case FacetType::Kind:
@@ -271,6 +274,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ImplWitnessAccess::Kind:
       case ImportCppDecl::Kind:
       case ImportDecl::Kind:
+      case InstType::Kind:
+      case InstValue::Kind:
       case IntLiteralType::Kind:
       case IntType::Kind:
       case IntValue::Kind:
@@ -278,9 +283,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case LegacyFloatType::Kind:
       case NamespaceType::Kind:
       case PointerType::Kind:
+      case RefineTypeAction::Kind:
       case RequireCompleteType::Kind:
       case SpecificFunction::Kind:
       case SpecificFunctionType::Kind:
+      case SpecificImplFunction::Kind:
       case StringLiteral::Kind:
       case StringType::Kind:
       case StructType::Kind:
@@ -288,6 +295,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case SymbolicBindingPattern::Kind:
       case TupleType::Kind:
       case TupleValue::Kind:
+      case TypeOfInst::Kind:
       case TypeType::Kind:
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
@@ -345,6 +353,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
+      case SpliceInst::Kind:
+        // TODO: Add ExprCategory::Dependent.
+        return value_category;
+
       case StructLiteral::Kind:
       case TupleLiteral::Kind:
         return ExprCategory::Mixed;
@@ -368,6 +380,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         return ExprCategory::EphemeralRef;
 
       case OutParam::Kind:
+      case RefParam::Kind:
         // TODO: Consider introducing a separate category for OutParam:
         // unlike other DurableRefs, it permits initialization.
         return ExprCategory::DurableRef;

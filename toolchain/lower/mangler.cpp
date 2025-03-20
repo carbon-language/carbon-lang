@@ -136,6 +136,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
+  if (function.cpp_decl) {
+    return MangleCppClang(function.cpp_decl);
+  }
   RawStringOstream os;
   os << "_C";
 
@@ -156,6 +159,17 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   }
 
   return os.TakeStr();
+}
+
+auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
+  CARBON_CHECK(
+      cpp_mangle_context_,
+      "Mangling of a C++ imported declaration without a Clang `MangleContext`");
+
+  RawStringOstream cpp_mangled_name;
+  cpp_mangle_context_->mangleName(decl, cpp_mangled_name);
+
+  return cpp_mangled_name.TakeStr();
 }
 
 }  // namespace Carbon::Lower

@@ -139,9 +139,9 @@ using IdKind = TypeEnum<
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,
     // From sem_ir/ids.h.
-    InstId, AbsoluteInstId, DestInstId, AnyRawId, ConstantId, EntityNameId,
-    CompileTimeBindIndex, CallParamIndex, FacetTypeId, FunctionId, ClassId,
-    InterfaceId, AssociatedConstantId, ImplId, GenericId, SpecificId,
+    InstId, AbsoluteInstId, DestInstId, MetaInstId, AnyRawId, ConstantId,
+    EntityNameId, CompileTimeBindIndex, CallParamIndex, FacetTypeId, FunctionId,
+    ClassId, InterfaceId, AssociatedConstantId, ImplId, GenericId, SpecificId,
     ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId, NameScopeId,
     InstBlockId, AbsoluteInstBlockId, DeclInstBlockId, LabelId, ExprRegionId,
     StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex, LibraryNameId,

@@ -443,7 +443,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   std::vector<llvm::Value*> args;
 
   auto inst_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), callee_function.resolved_specific_id, inst.type_id);
+      context.sem_ir(), context.specific_id(), inst.type_id);
 
   if (SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst_type_id)
           .has_return_slot()) {

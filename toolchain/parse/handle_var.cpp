@@ -117,4 +117,28 @@ auto HandleVarFinishAsFor(Context& context) -> void {
   context.AddNode(NodeKind::ForIn, end_token, state.has_error);
 }
 
+auto HandleVariablePattern(Context& context) -> void {
+  auto state = context.PopState();
+  if (state.in_var_pattern) {
+    CARBON_DIAGNOSTIC(NestedVar, Error, "`var` nested within another `var`");
+    context.emitter().Emit(*context.position(), NestedVar);
+    state.has_error = true;
+  }
+  context.PushState(State::FinishVariablePattern);
+  context.ConsumeChecked(Lex::TokenKind::Var);
+
+  context.PushStateForPattern(State::Pattern, /*in_var_pattern=*/true);
+}
+
+auto HandleFinishVariablePattern(Context& context) -> void {
+  auto state = context.PopState();
+  context.AddNode(NodeKind::VariablePattern, state.token, state.has_error);
+
+  // Propagate errors to the parent state so that they can take different
+  // actions on invalid patterns.
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+}
+
 }  // namespace Carbon::Parse

@@ -256,7 +256,7 @@ auto FileTestCase::TestBody() -> void {
     llvm::errs() << "\nTo test this file alone, run:\n  "
                  << GetBazelCommand(BazelMode::Test, test_info_->test_name)
                  << "\n\n";
-    if (test_file.autoupdate_line_number) {
+    if (!test_file.autoupdate_line_number) {
       llvm::errs() << "\nThis test is NOAUTOUPDATE.\n\n";
     }
   }

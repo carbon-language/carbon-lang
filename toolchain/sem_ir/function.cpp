@@ -18,20 +18,22 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                            .self_type_id = InstId::None,
                            .self_id = InstId::None,
                            .is_error = false};
+  if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
+    result.self_id = bound_method->object_id;
+    callee_id = bound_method->function_decl_id;
+  }
+
   if (specific_id.has_value()) {
     callee_id = sem_ir.constant_values().GetInstIdIfValid(
         GetConstantValueInSpecific(sem_ir, specific_id, callee_id));
+    CARBON_CHECK(callee_id.has_value(),
+                 "Invalid callee id in a specific context");
   }
 
   if (auto specific_function =
           sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
     result.resolved_specific_id = specific_function->specific_id;
     callee_id = specific_function->callee_id;
-  }
-
-  if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
-    result.self_id = bound_method->object_id;
-    callee_id = bound_method->function_decl_id;
   }
 
   // Identify the function we're calling by its type.
@@ -84,32 +86,6 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   return {{.inst_id = param_pattern_id,
            .inst = *param_pattern_inst,
            .entity_name_id = binding_pattern.entity_name_id}};
-}
-
-auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
-    -> SemIR::NameId {
-  auto inst_id = pattern_id;
-  auto inst = sem_ir.insts().Get(inst_id);
-
-  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
-    inst_id = addr_pattern->inner_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (inst_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::NameId::None;
-  }
-
-  if (auto param_pattern_inst = inst.TryAs<SemIR::AnyParamPattern>()) {
-    inst_id = param_pattern_inst->subpattern_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (inst.Is<ReturnSlotPattern>()) {
-    return SemIR::NameId::ReturnSlot;
-  }
-  auto binding_pattern = inst.As<AnyBindingPattern>();
-  return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
 }
 
 auto Function::GetDeclaredReturnType(const File& file,

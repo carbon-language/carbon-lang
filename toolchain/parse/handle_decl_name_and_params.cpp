@@ -86,17 +86,13 @@ auto HandleDeclNameAndParams(Context& context) -> void {
 auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   auto state = context.PopState();
 
+  state.state = State::DeclNameAndParamsAfterParams;
+  context.PushState(state);
+
   if (!context.PositionIs(Lex::TokenKind::OpenParen)) {
-    CARBON_DIAGNOSTIC(
-        ParamsRequiredAfterImplicit, Error,
-        "a `(` for parameters is required after implicit parameters");
-    context.emitter().Emit(*context.position(), ParamsRequiredAfterImplicit);
-    context.ReturnErrorOnState();
     return;
   }
 
-  state.state = State::DeclNameAndParamsAfterParams;
-  context.PushState(state);
   context.PushState(State::PatternListAsExplicit);
 }
 
@@ -104,8 +100,11 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
-    context.AddNode(NodeKind::NameQualifierWithParams, *period,
-                    state.has_error);
+    auto start_kind = context.tree().node_kind(NodeId(state.subtree_start));
+    auto node_kind = start_kind == NodeKind::IdentifierNameBeforeParams
+                         ? NodeKind::IdentifierNameQualifierWithParams
+                         : NodeKind::KeywordNameQualifierWithParams;
+    context.AddNode(node_kind, *period, state.has_error);
     context.PushState(State::DeclNameAndParams);
   }
 }

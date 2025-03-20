@@ -181,7 +181,9 @@ class Context {
   // known. This represents each binding to be done at the end of checking the
   // Choice type.
   struct ChoiceDeferredBinding {
-    Parse::NodeId node_id;
+    Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                       Parse::ChoiceDefinitionId>
+        node_id;
     NameComponent name_component;
   };
   auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
@@ -192,8 +194,8 @@ class Context {
 
   // An ongoing impl lookup, used to ensure termination.
   struct ImplLookupStackEntry {
-    SemIR::ConstantId type_const_id;
-    SemIR::ConstantId interface_const_id;
+    SemIR::ConstantId query_self_const_id;
+    SemIR::ConstantId query_facet_type_const_id;
     // The location of the impl being looked at for the stack entry.
     SemIR::InstId impl_loc = SemIR::InstId::None;
   };

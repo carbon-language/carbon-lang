@@ -8,10 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/document_symbol/nested.carbon
 
+// --- class.carbon
+class A {
+  fn F();
+  fn G() {}
+}
+
 // --- STDIN
 [[@LSP-NOTIFY:textDocument/didOpen:
-  "textDocument": {"uri": "file:/class.carbon", "languageId": "carbon",
-                   "text": "class A {\n  fn F();\n  fn G() {}\n}\n"}
+  "textDocument": {
+    "uri": "file:/class.carbon",
+    "languageId": "carbon",
+    "text": "FROM_FILE_SPLIT"
+  }
 ]]
 [[@LSP-CALL:textDocument/documentSymbol:
   "textDocument": {"uri": "file:/class.carbon"}

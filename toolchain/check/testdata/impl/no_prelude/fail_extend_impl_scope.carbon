@@ -162,13 +162,13 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.c94.%Zero.decl) [concrete]
 // CHECK:STDOUT:   %Zero.type.e33: type = fn_type @Zero.3 [concrete]
 // CHECK:STDOUT:   %Zero.dec: %Zero.type.e33 = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, %impl_witness [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.c37: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
+// CHECK:STDOUT:   %.728: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -264,7 +264,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc32_5.4: ref %Point = temporary %.loc32_5.2, %.loc32_5.3
 // CHECK:STDOUT:   %.loc32_7: ref %Point = converted %.loc32_5.1, %.loc32_5.4
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.c37 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Zero.dec]
+// CHECK:STDOUT:   %impl.elem0: %.728 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Zero.dec]
 // CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

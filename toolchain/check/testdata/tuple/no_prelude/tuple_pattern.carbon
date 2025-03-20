@@ -496,8 +496,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .x = <unexpected>.inst21.loc9_8
-// CHECK:STDOUT:   .y = <unexpected>.inst25.loc9_15
+// CHECK:STDOUT:   .x = <unexpected>.inst22.loc9_8
+// CHECK:STDOUT:   .y = <unexpected>.inst26.loc9_15
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
@@ -522,7 +522,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc9_20: %tuple.type = tuple_pattern (<unexpected>.inst20.loc9_9, <unexpected>.inst23.loc9_16)
+// CHECK:STDOUT:     %.loc9_20: %tuple.type = tuple_pattern (<unexpected>.inst21.loc9_9, <unexpected>.inst24.loc9_16)
 // CHECK:STDOUT:     %.loc9_3: %tuple.type = var_pattern %.loc9_20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %tuple.type = var <none>
@@ -531,8 +531,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = <unexpected>.inst20.loc9_9
-// CHECK:STDOUT:   .y = <unexpected>.inst23.loc9_16
+// CHECK:STDOUT:   .x = <unexpected>.inst21.loc9_9
+// CHECK:STDOUT:   .y = <unexpected>.inst24.loc9_16
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -547,10 +547,10 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .x = <unexpected>.inst17.loc8_6
-// CHECK:STDOUT:     .y = <unexpected>.inst21.loc8_13
-// CHECK:STDOUT:     .a = <unexpected>.inst31.loc14_6
-// CHECK:STDOUT:     .b = <unexpected>.inst35.loc14_13
+// CHECK:STDOUT:     .x = <unexpected>.inst18.loc8_6
+// CHECK:STDOUT:     .y = <unexpected>.inst22.loc8_13
+// CHECK:STDOUT:     .a = <unexpected>.inst32.loc14_6
+// CHECK:STDOUT:     .b = <unexpected>.inst36.loc14_13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x

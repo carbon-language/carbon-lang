@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_DRIVER_FILE_TEST_BASE_H_
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_FILE_TEST_BASE_H_
 
+#include <filesystem>
+#include <optional>
 #include <string>
 
 #include "common/error.h"
@@ -13,6 +15,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/file_test/file_system.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
 
@@ -58,10 +61,6 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
-  // Adds a file to the fs.
-  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path) const
-      -> ErrorOr<Success>;
-
   // Controls whether `Run()` includes the prelude.
   auto is_no_prelude() const -> bool {
     return test_name().find("/no_prelude/") != llvm::StringRef::npos;
@@ -220,21 +219,6 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
   }
-}
-
-auto ToolchainFileTest::AddFile(llvm::vfs::InMemoryFileSystem& fs,
-                                llvm::StringRef path) const
-    -> ErrorOr<Success> {
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
-      llvm::MemoryBuffer::getFile(path);
-  if (file.getError()) {
-    return ErrorBuilder() << "Getting `" << path
-                          << "`: " << file.getError().message();
-  }
-  if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
-    return ErrorBuilder() << "Duplicate file: `" << path << "`";
-  }
-  return Success();
 }
 
 }  // namespace Carbon::Testing

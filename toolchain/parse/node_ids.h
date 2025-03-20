@@ -40,9 +40,20 @@ template <const NodeKind& K>
 struct NodeIdForKind : public NodeId {
   // NOLINTNEXTLINE(readability-identifier-naming)
   static const NodeKind& Kind;
-  constexpr explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
+
+  // Provide a factory function for construction from `NodeId`. This doesn't
+  // validate the type, so it's unsafe.
+  static constexpr auto UnsafeMake(NodeId node_id) -> NodeIdForKind {
+    return NodeIdForKind(node_id);
+  }
+
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdForKind(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
+
+ private:
+  // Private to prevent accidental explicit construction from an untyped
+  // NodeId.
+  explicit constexpr NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
 };
 template <const NodeKind& K>
 const NodeKind& NodeIdForKind<K>::Kind = K;
@@ -54,6 +65,12 @@ const NodeKind& NodeIdForKind<K>::Kind = K;
 // NodeId that matches any NodeKind whose `category()` overlaps with `Category`.
 template <NodeCategory::RawEnumType Category>
 struct NodeIdInCategory : public NodeId {
+  // Provide a factory function for construction from `NodeId`. This doesn't
+  // validate the type, so it's unsafe.
+  static constexpr auto UnsafeMake(NodeId node_id) -> NodeIdInCategory {
+    return NodeIdInCategory(node_id);
+  }
+
   // Support conversion from `NodeIdForKind<Kind>` if Kind's category
   // overlaps with `Category`.
   template <const NodeKind& Kind>
@@ -62,9 +79,13 @@ struct NodeIdInCategory : public NodeId {
     CARBON_CHECK(Kind.category().HasAnyOf(Category));
   }
 
-  constexpr explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdInCategory(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
+
+ private:
+  // Private to prevent accidental explicit construction from an untyped
+  // NodeId.
+  explicit constexpr NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
 };
 
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
@@ -84,14 +105,41 @@ using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 
 // NodeId with kind that matches one of the `T::Kind`s.
 template <typename... T>
+  requires(sizeof...(T) >= 2)
 struct NodeIdOneOf : public NodeId {
-  static_assert(sizeof...(T) >= 2, "Expected at least two types.");
-  constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
-  template <const NodeKind& Kind>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
-    static_assert(((T::Kind == Kind) || ...));
+ private:
+  // True if `OtherT` is one of `T`.
+  template <typename OtherT>
+  static constexpr bool Contains = (std::is_same<OtherT, T>{} || ...);
+
+  // True if `NodeIdOneOf<SubsetT...>` is a subset of this `NodeIdOneOf`.
+  template <typename Unused>
+  static constexpr bool IsSubset = false;
+  template <typename... SubsetT>
+  static constexpr bool IsSubset<NodeIdOneOf<SubsetT...>> =
+      (Contains<SubsetT> && ...);
+
+  // Private to prevent accidental explicit construction from an untyped
+  // NodeId.
+  explicit constexpr NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
+
+ public:
+  // Provide a factory function for construction from `NodeId`. This doesn't
+  // validate the type, so it's unsafe.
+  static constexpr auto UnsafeMake(NodeId node_id) -> NodeIdOneOf {
+    return NodeIdOneOf(node_id);
   }
+
+  template <const NodeKind& Kind>
+    requires(Contains<NodeIdForKind<Kind>>)
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {}
+
+  template <typename OtherNodeIdOneOf>
+    requires(IsSubset<OtherNodeIdOneOf>)
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  NodeIdOneOf(OtherNodeIdOneOf node_id) : NodeId(node_id) {}
+
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
 };
@@ -107,9 +155,15 @@ using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
-using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDeclId>;
+using AnyNamespaceId =
+    NodeIdOneOf<NamespaceId, ImportDeclId, LibraryDeclId, PackageDeclId>;
+using AnyPackagingDeclId =
+    NodeIdOneOf<ImportDeclId, LibraryDeclId, PackageDeclId>;
 using AnyPointerDeferenceExprId =
     NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
+using AnyRuntimeBindingPatternName =
+    NodeIdOneOf<IdentifierNameNotBeforeParamsId, SelfValueNameId,
+                UnderscoreNameId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

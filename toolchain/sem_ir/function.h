@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
+#include "clang/AST/Decl.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -19,6 +20,18 @@ struct FunctionFields {
 
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
+
+  // This block consists of references to the `AnyParam` insts that represent
+  // the function's `Call` parameters. The "`Call` parameters" are the
+  // parameters corresponding to the arguments that are passed to a `Call`
+  // inst, so they do not include compile-time parameters, but they do include
+  // the return slot.
+  //
+  // The parameters appear in declaration order: `self` (if present), then the
+  // explicit runtime parameters, then the return slot (which is "declared" by
+  // the function's return type declaration). This is not populated on imported
+  // functions, because it is relevant only for a function definition.
+  InstBlockId call_params_id;
 
   // A reference to the instruction in the entity's pattern block that depends
   // on all other pattern insts pertaining to the return slot pattern. This may
@@ -49,6 +62,13 @@ struct FunctionFields {
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
+
+  // If the function is imported from C++, points to the Clang declaration in
+  // the AST. Used for mangling. The AST is owned by `CompileSubcommand` so we
+  // expect it to be live from `Function` creation to mangling.
+  // TODO: #4666 Ensure we can easily serialize/deserialize this. Consider decl
+  // ID to point into the AST.
+  const clang::NamedDecl* cpp_decl = nullptr;
 };
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
@@ -64,6 +84,9 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
+    if (call_params_id.has_value()) {
+      out << ", call_params_id: " << call_params_id;
+    }
     if (return_slot_pattern_id.has_value()) {
       out << ", return_slot_pattern: " << return_slot_pattern_id;
     }
@@ -85,11 +108,6 @@ struct Function : public EntityWithParamsBase,
   static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
                                                InstId param_pattern_id)
       -> std::optional<ParamPatternInfo>;
-
-  // Gets the name from the name binding instruction, or `None` if this pattern
-  // has been replaced with BuiltinErrorInst.
-  static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
-      -> SemIR::NameId;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is

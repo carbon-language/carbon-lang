@@ -33,7 +33,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+12]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
@@ -57,7 +57,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
@@ -94,8 +94,8 @@ extern fn A();
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_21.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_21.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -134,8 +134,8 @@ extern fn A();
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_26.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_26.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,8 +171,8 @@ extern fn A();
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_27.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_27.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -33,7 +33,8 @@ class FileContext {
       std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
           tree_and_subtrees_getters_for_debug_info,
       llvm::StringRef module_name, const SemIR::File& sem_ir,
-      const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream);
+      clang::ASTUnit* cpp_ast, const SemIR::InstNamer* inst_namer,
+      llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
   // the main execution loop.
@@ -76,7 +77,8 @@ class FileContext {
   }
 
   // Returns a global value for the given instruction.
-  auto GetGlobal(SemIR::InstId inst_id) -> llvm::Value*;
+  auto GetGlobal(SemIR::InstId inst_id, SemIR::SpecificId specific_id)
+      -> llvm::Value*;
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* {
@@ -90,12 +92,27 @@ class FileContext {
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
+  auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
   }
 
  private:
+  struct FunctionTypeInfo {
+    llvm::FunctionType* type;
+    llvm::SmallVector<SemIR::InstId> param_inst_ids;
+    llvm::Type* return_type = nullptr;
+    SemIR::InstId return_param_id = SemIR::InstId::None;
+  };
+
+  // Retrieve various features of the function's type useful for constructing
+  // the `llvm::Type` for the `llvm::Function`. If any part of the type can't be
+  // manifest (eg: incomplete return or parameter types), then the result is as
+  // if the type was `void()`.
+  auto BuildFunctionTypeInfo(const SemIR::Function& function,
+                             SemIR::SpecificId specific_id) -> FunctionTypeInfo;
+
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
   auto BuildFunctionDecl(SemIR::FunctionId function_id,
@@ -146,6 +163,10 @@ class FileContext {
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
+
+  // A mutable Clang AST is necessary for lowering since using the AST in lower
+  // modifies it.
+  clang::ASTUnit* cpp_ast_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;

@@ -42,7 +42,7 @@ fn F() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .n = <unexpected>.inst43.loc15_5
+// CHECK:STDOUT:     .n = <unexpected>.inst44.loc15_5
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

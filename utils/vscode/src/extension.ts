@@ -30,7 +30,7 @@ function splitQuotedString(argsString: string): string[] {
   const args: string[] = [];
   let arg = '';
   // Track whether there's an arg to handle `""` and similar.
-  let hasArg = true;
+  let hasArg = false;
   // Whether this is in a quote-delimited section.
   let inSingleQuotes = false;
   let inDoubleQuotes = false;

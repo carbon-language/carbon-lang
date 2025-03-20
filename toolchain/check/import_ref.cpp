@@ -1230,7 +1230,6 @@ static auto GetIncompleteLocalEntityBase(
       .param_patterns_id = import_base.param_patterns_id.has_value()
                                ? SemIR::InstBlockId::Empty
                                : SemIR::InstBlockId::None,
-      .call_params_id = SemIR::InstBlockId::None,
       .is_extern = import_base.is_extern,
       .extern_library_id = extern_library_id,
       .non_owning_decl_id = import_base.non_owning_decl_id.has_value()
@@ -1910,7 +1909,8 @@ static auto MakeFunctionDecl(ImportContext& context,
   // Start with an incomplete function.
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
-       {.return_slot_pattern_id = SemIR::InstId::None,
+       {.call_params_id = SemIR::InstBlockId::None,
+        .return_slot_pattern_id = SemIR::InstId::None,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = GetFunctionType(
@@ -2134,10 +2134,14 @@ struct SpecificInterfaceData {
 static auto GetLocalSpecificInstanceData(
     ImportRefResolver& resolver, SemIR::SpecificInterface import_interface)
     -> SpecificInterfaceData {
-  return {.interface_const_id = GetLocalConstantId(
-              resolver, resolver.import_interfaces()
-                            .Get(import_interface.interface_id)
-                            .first_owning_decl_id),
+  SemIR::ConstantId interface_const_id = SemIR::ConstantId::None;
+  if (import_interface.interface_id.has_value()) {
+    interface_const_id =
+        GetLocalConstantId(resolver, resolver.import_interfaces()
+                                         .Get(import_interface.interface_id)
+                                         .first_owning_decl_id);
+  }
+  return {.interface_const_id = interface_const_id,
           .specific_data =
               GetLocalSpecificData(resolver, import_interface.specific_id)};
 }
@@ -2146,6 +2150,9 @@ static auto GetLocalSpecificInterface(ImportContext& context,
                                       SemIR::SpecificId import_specific_id,
                                       SpecificInterfaceData interface_data)
     -> SemIR::SpecificInterface {
+  if (!interface_data.interface_const_id.has_value()) {
+    return SemIR::SpecificInterface::None;
+  }
   // Find the corresponding interface type. For a non-generic interface,
   // this is the type of the interface declaration. For a generic interface,
   // build a interface type referencing this specialization of the generic
@@ -2307,6 +2314,7 @@ static auto AddInterfaceDefinition(ImportContext& context,
       new_interface.first_owning_decl_id, SemIR::NameId::None,
       new_interface.parent_scope_id);
   auto& new_scope = context.local_name_scopes().Get(new_interface.scope_id);
+  new_scope.set_is_interface_definition();
   const auto& import_scope =
       context.import_name_scopes().Get(import_interface.scope_id);
 
@@ -2431,7 +2439,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
                                    SemIR::WitnessType::SingletonInstId),
-       .facet_value_inst_id = facet_value_inst_id});
+       .facet_value_inst_id = facet_value_inst_id,
+       .index = inst.index});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2481,7 +2490,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetValue inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
   auto type_inst_id = GetLocalConstantInstId(resolver, inst.type_inst_id);
-  auto witness_inst_id = GetLocalConstantInstId(resolver, inst.witness_inst_id);
+  auto witnesses = GetLocalInstBlockContents(resolver, inst.witnesses_block_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2491,7 +2500,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
        .type_inst_id = type_inst_id,
-       .witness_inst_id = witness_inst_id});
+       .witnesses_block_id = GetLocalCanonicalInstBlockId(
+           resolver, inst.witnesses_block_id, witnesses)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

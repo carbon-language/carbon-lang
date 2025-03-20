@@ -19,6 +19,8 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -405,7 +407,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   auto queue_block_insts = [&](ScopeId scope_id,
                                llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.has_value()) {
+      if (inst_id.has_value() && !SemIR::IsSingletonInstId(inst_id)) {
         insts.push_back(std::make_pair(scope_id, inst_id));
       }
     }
@@ -531,8 +533,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case BindingPattern::Kind:
       case SymbolicBindingPattern::Kind: {
         auto inst = untyped_inst.As<AnyBindingPattern>();
-        add_inst_name_id(
-            sem_ir_->entity_names().Get(inst.entity_name_id).name_id, ".patt");
+        auto name_id = NameId::Underscore;
+        if (inst.entity_name_id.has_value()) {
+          name_id = sem_ir_->entity_names().Get(inst.entity_name_id).name_id;
+        }
+        add_inst_name_id(name_id, ".patt");
         continue;
       }
       case CARBON_KIND(BoolLiteral inst): {
@@ -611,10 +616,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(FacetAccessWitness inst): {
         auto name_id = facet_access_name_id(inst.facet_value_inst_id);
+        RawStringOstream out;
         if (name_id.has_value()) {
-          add_inst_name_id(name_id, ".as_wit");
+          out << ".as_wit.iface" << inst.index.index;
+          add_inst_name_id(name_id, out.TakeStr());
         } else {
-          add_inst_name("as_wit");
+          out << "as_wit.iface" << inst.index.index;
+          add_inst_name(out.TakeStr());
         }
         continue;
       }
@@ -755,6 +763,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         }
         continue;
       }
+      case CARBON_KIND(InstValue inst): {
+        insts.push_back({scope_id, inst.inst_id});
+        add_inst_name(
+            ("inst." + sem_ir_->insts().Get(inst.inst_id).kind().ir_name())
+                .str());
+        continue;
+      }
       case CARBON_KIND(InterfaceDecl inst): {
         const auto& interface_info =
             sem_ir_->interfaces().Get(inst.interface_id);
@@ -790,15 +805,16 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case OutParam::Kind:
+      case RefParam::Kind:
       case ValueParam::Kind: {
         add_inst_name_id(untyped_inst.As<AnyParam>().pretty_name_id, ".param");
         continue;
       }
       case OutParamPattern::Kind:
+      case RefParamPattern::Kind:
       case ValueParamPattern::Kind: {
-        add_inst_name_id(
-            SemIR::Function::GetNameFromPatternId(*sem_ir_, inst_id),
-            ".param_patt");
+        add_inst_name_id(SemIR::GetPrettyNameFromPatternId(*sem_ir_, inst_id),
+                         ".param_patt");
         continue;
       }
       case PointerType::Kind: {
@@ -814,16 +830,22 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(SpecificFunction inst): {
-        InstId callee_id = inst.callee_id;
-        if (auto method = sem_ir_->insts().TryGetAs<BoundMethod>(callee_id)) {
-          callee_id = method->function_decl_id;
-        }
-        auto type_id = sem_ir_->insts().Get(callee_id).type_id();
+        auto type_id = sem_ir_->insts().Get(inst.callee_id).type_id();
         if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {
           add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
                            ".specific_fn");
         } else {
           add_inst_name("specific_fn");
+        }
+        continue;
+      }
+      case CARBON_KIND(SpecificImplFunction inst): {
+        auto type_id = sem_ir_->insts().Get(inst.callee_id).type_id();
+        if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {
+          add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
+                           ".specific_impl_fn");
+        } else {
+          add_inst_name("specific_impl_fn");
         }
         continue;
       }

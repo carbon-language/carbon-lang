@@ -587,8 +587,10 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       // Replace the deduced arg with its value converted to the parameter
       // type. The conversion of the argument type must produce a constant value
       // to be used in deduction.
-      if (context().constant_values().Get(converted_arg_id).is_constant()) {
-        deduced_arg_id = converted_arg_id;
+      if (auto const_inst_id =
+              context().constant_values().GetConstantInstId(converted_arg_id);
+          const_inst_id.has_value()) {
+        deduced_arg_id = const_inst_id;
       } else {
         if (diagnose_) {
           CARBON_DIAGNOSTIC(RuntimeConversionDuringCompTimeDeduction, Error,
@@ -639,11 +641,10 @@ auto DeduceGenericCallArguments(
   return deduction.MakeSpecific();
 }
 
-// Deduces the impl arguments to use in a use of a parameterized impl. Returns
-// `None` if deduction fails.
-auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
-                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
-                         SemIR::ConstantId constraint_id) -> SemIR::SpecificId {
+auto DeduceImplArguments(Context& context, SemIR::LocId loc_id, DeduceImpl impl,
+                         SemIR::ConstantId self_id,
+                         SemIR::SpecificId constraint_specific_id)
+    -> SemIR::SpecificId {
   DeductionContext deduction(context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
                              /*self_type_id=*/SemIR::InstId::None,
@@ -652,8 +653,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
   // Prepare to perform deduction of the type and interface.
   deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id),
                 /*needs_substitution=*/false);
-  deduction.Add(impl.constraint_id,
-                context.constant_values().GetInstId(constraint_id),
+  deduction.Add(impl.specific_id, constraint_specific_id,
                 /*needs_substitution=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {

@@ -48,6 +48,19 @@
 
 namespace Carbon::SemIR {
 
+// An action that performs simple member access, `base.name`.
+struct AccessMemberAction {
+  static constexpr auto Kind =
+      InstKind::AccessMemberAction.Define<Parse::NodeId>(
+          {.ir_name = "access_member_action",
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId base_id;
+  NameId name_id;
+};
+
 // Common representation for declarations describing the foundation type of a
 // class -- either its adapted type or its base class.
 struct AnyFoundationDecl {
@@ -336,6 +349,10 @@ struct AnyBindingPattern {
 
   InstKind kind;
   TypeId type_id;
+
+  // The name declared by the binding pattern. `None` indicates that the
+  // pattern has `_` in the name position, and so does not truly declare
+  // a name.
   EntityNameId entity_name_id;
 };
 
@@ -578,6 +595,20 @@ struct ConstType {
   TypeId inner_id;
 };
 
+// An action that performs simple conversion to a value expression of a given
+// type.
+struct ConvertToValueAction {
+  static constexpr auto Kind =
+      InstKind::ConvertToValueAction.Define<Parse::NodeId>(
+          {.ir_name = "convert_to_value_action",
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId inst_id;
+  TypeId target_type_id;
+};
+
 // Records that a type conversion `original as new_type` was done, producing the
 // result.
 struct Converted {
@@ -655,6 +686,9 @@ struct FacetAccessWitness {
   TypeId type_id;
   // An instruction that evaluates to a `FacetValue`.
   InstId facet_value_inst_id;
+  // An index to a single `ImplWitness` in the witness block of the `FacetValue`
+  // from `facet_value_inst_id`.
+  ElementIndex index;
 };
 
 // A facet type value.
@@ -670,8 +704,8 @@ struct FacetType {
   FacetTypeId facet_type_id;
 };
 
-// A facet value, the value of a facet type. This consists of a type and a
-// witness that it satisfies the facet type.
+// A facet value, the value of a facet type. This consists of a type and a set
+// of witnesses that it satisfies the required interfaces of the facet type.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value", .constant_kind = InstConstantKind::Always});
@@ -680,8 +714,11 @@ struct FacetValue {
   TypeId type_id;
   // The type that you will get if you cast this value to `type`.
   InstId type_inst_id;
-  // An `ImplWitness` instruction (TODO: `FacetTypeWitness`).
-  InstId witness_inst_id;
+  // The set of `ImplWitness` instructions for a `FacetType`. The witnesses are
+  // in the same order as the set of `required_interfaces` in the
+  // `CompleteFacetType` of the `FacetType` from `type_id`, so that an index
+  // from one can be used with the other.
+  InstBlockId witnesses_block_id;
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
@@ -838,7 +875,7 @@ struct ImplWitness {
        // constants.
        .is_lowered = false});
 
-  // Always the builtin witness type.
+  // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
   AbsoluteInstBlockId elements_id;
   SpecificId specific_id;
@@ -870,10 +907,11 @@ struct ImportCppDecl {
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
-  static constexpr auto Kind = InstKind::ImportDecl.Define<Parse::ImportDeclId>(
-      {.ir_name = "import",
-       .constant_kind = InstConstantKind::Never,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::ImportDecl.Define<Parse::AnyPackagingDeclId>(
+          {.ir_name = "import",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   NameId package_id;
 };
@@ -923,6 +961,32 @@ struct InitializeFrom {
   TypeId type_id;
   InstId src_id;
   DestInstId dest_id;
+};
+
+// Used as the type of template actions that produce instructions.
+struct InstType {
+  static constexpr auto Kind = InstKind::InstType.Define<Parse::NoneNodeId>(
+      {.ir_name = "<instruction>",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+
+  TypeId type_id;
+};
+
+// A value of type `InstType` that refers to an instruction. This is used to
+// represent an instruction as a value for use as a result of a template action.
+struct InstValue {
+  static constexpr auto Kind = InstKind::InstValue.Define<Parse::NoneNodeId>(
+      {.ir_name = "inst_value",
+       .is_type = InstIsType::Never,
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId inst_id;
 };
 
 // An interface declaration.
@@ -1040,10 +1104,9 @@ struct NamespaceType {
   TypeId type_id;
 };
 
-// A `Call` parameter for a function or other parameterized block. The sub-kinds
-// differ only in their expression category.
+// A `Call` parameter for a function or other parameterized block.
 struct AnyParam {
-  static constexpr InstKind Kinds[] = {InstKind::OutParam,
+  static constexpr InstKind Kinds[] = {InstKind::OutParam, InstKind::RefParam,
                                        InstKind::ValueParam};
 
   InstKind kind;
@@ -1067,6 +1130,17 @@ struct OutParam {
   NameId pretty_name_id;
 };
 
+// A by-reference `Call` parameter. See AnyParam for member documentation.
+struct RefParam {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeId>(
+      {.ir_name = "ref_param", .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  CallParamIndex index;
+  NameId pretty_name_id;
+};
+
 // A by-value `Call` parameter. See AnyParam for member documentation.
 struct ValueParam {
   // TODO: Make Parse::NodeId more specific.
@@ -1083,6 +1157,7 @@ struct ValueParam {
 // of the corresponding parameter inst.
 struct AnyParamPattern {
   static constexpr InstKind Kinds[] = {InstKind::OutParamPattern,
+                                       InstKind::RefParamPattern,
                                        InstKind::ValueParamPattern};
 
   InstKind kind;
@@ -1098,6 +1173,19 @@ struct OutParamPattern {
           {.ir_name = "out_param_pattern",
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  CallParamIndex index;
+};
+
+// A pattern that represents a by-reference `Call` parameter.
+struct RefParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "ref_param_pattern",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1128,6 +1216,19 @@ struct PointerType {
 
   TypeId type_id;
   TypeId pointee_id;
+};
+
+// An action that performs type refinement for an instruction, by creating an
+// instruction that converts from a template symbolic type to a concrete type.
+struct RefineTypeAction {
+  static constexpr auto Kind = InstKind::RefineTypeAction.Define<Parse::NodeId>(
+      {.ir_name = "refine_type_action",
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId inst_id;
+  TypeId inst_type_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and
@@ -1304,6 +1405,29 @@ struct SpecificFunctionType {
   TypeId type_id;
 };
 
+// A specific instance of a function from an impl, named as the function from
+// the interface.
+//
+// This value is the callee in a call of the form `(T as Interface).F()`. The
+// specific that we determine for such a call is a specific for `Interface.F`,
+// but what we need is a specific for the function in the `impl`. This
+// instruction computes that specific function.
+struct SpecificImplFunction {
+  static constexpr auto Kind =
+      InstKind::SpecificImplFunction.Define<Parse::NodeId>(
+          {.ir_name = "specific_impl_function",
+           .constant_kind = InstConstantKind::SymbolicOnly});
+
+  // Always the builtin SpecificFunctionType.
+  TypeId type_id;
+  // The expression denoting the callee. This will be a function from an impl
+  // witness.
+  InstId callee_id;
+  // The specific instance of the interface function that was called, including
+  // all the compile-time arguments.
+  SpecificId specific_id;
+};
+
 // Splices a block into the location where this appears. This may be an
 // expression, producing a result with a given type. For example, when
 // constructing from aggregates we may figure out which conversions are required
@@ -1315,6 +1439,19 @@ struct SpliceBlock {
   TypeId type_id;
   AbsoluteInstBlockId block_id;
   InstId result_id;
+};
+
+// Splices an instruction computed by an action into the location where this
+// appears.
+struct SpliceInst {
+  static constexpr auto Kind =
+      InstKind::SpliceInst.Define<Parse::NodeId>({.ir_name = "splice_inst"});
+
+  TypeId type_id;
+  // The instruction that computes the instruction to splice. The type of this
+  // instruction should be InstType. If evaluation has succeeded, this will be
+  // an InstValue.
+  InstId inst_id;
 };
 
 // A literal string value.
@@ -1366,10 +1503,10 @@ struct StructInit {
 
 // A literal struct value, such as `{.a = 1, .b = 2}`.
 struct StructLiteral {
-  static constexpr auto Kind =
-      InstKind::StructLiteral.Define<Parse::StructLiteralId>(
-          {.ir_name = "struct_literal",
-           .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind = InstKind::StructLiteral.Define<
+      Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                         Parse::ChoiceDefinitionId, Parse::StructLiteralId>>(
+      {.ir_name = "struct_literal", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1443,10 +1580,10 @@ struct TupleInit {
 
 // A literal tuple value.
 struct TupleLiteral {
-  static constexpr auto Kind =
-      InstKind::TupleLiteral.Define<Parse::TupleLiteralId>(
-          {.ir_name = "tuple_literal",
-           .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind = InstKind::TupleLiteral.Define<
+      Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                         Parse::ChoiceDefinitionId, Parse::TupleLiteralId>>(
+      {.ir_name = "tuple_literal", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1485,6 +1622,24 @@ struct TupleValue {
 
   TypeId type_id;
   InstBlockId elements_id;
+};
+
+// Returns the type of the instruction produced by an action. For example, given
+//
+//   %inst: <instruction> = some_action
+//
+// the instruction `type_of_inst %inst` evaluates to the type of the instruction
+// that the action generates.
+struct TypeOfInst {
+  static constexpr auto Kind = InstKind::TypeOfInst.Define<Parse::NodeId>(
+      {.ir_name = "type_of_inst",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::SymbolicOnly});
+
+  TypeId type_id;
+  // The instruction that computes the instruction whose type is returned. The
+  // type of this instruction should be InstType.
+  InstId inst_id;
 };
 
 // Tracks expressions which are valid as types. This has a deliberately
@@ -1623,7 +1778,7 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of witnesses.
+// The type of `ImplWitness` instructions.
 struct WitnessType {
   static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
       {.ir_name = "<witness>",

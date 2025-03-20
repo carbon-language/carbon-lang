@@ -118,13 +118,6 @@ class ConstantValueStore {
     return GetInstId(Get(inst_id));
   }
 
-  // Returns whether two constant IDs represent the same constant value. This
-  // includes the case where they might be in different generics and thus might
-  // have different ConstantIds, but are still symbolically equal.
-  auto AreEqualAcrossDeclarations(ConstantId a, ConstantId b) const -> bool {
-    return GetInstId(a) == GetInstId(b);
-  }
-
   auto AddSymbolicConstant(SymbolicConstant constant) -> ConstantId {
     symbolic_constants_.push_back(constant);
     return ConstantId::ForSymbolicConstantIndex(symbolic_constants_.size() - 1);

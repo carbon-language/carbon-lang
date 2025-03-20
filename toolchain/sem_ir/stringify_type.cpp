@@ -40,6 +40,7 @@ class StepStack {
       Inst,
       FixedString,
       Name,
+      Index,
     };
 
     Kind kind;
@@ -51,6 +52,8 @@ class StepStack {
       const char* fixed_string;
       // The name to print, when kind is Name.
       NameId name_id;
+      // The element index to print, when kind is Index.
+      ElementIndex element_index;
     };
   };
 
@@ -70,6 +73,9 @@ class StepStack {
   }
   auto PushNameId(NameId name_id) -> void {
     steps_.push_back({.kind = Step::Name, .name_id = name_id});
+  }
+  auto PushElementIndex(ElementIndex element_index) -> void {
+    steps_.push_back({.kind = Step::Index, .element_index = element_index});
   }
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
@@ -162,6 +168,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case StepStack::Step::FixedString:
         out << step.fixed_string;
         continue;
+      case StepStack::Step::Index:
+        out << step.element_index.index;
+        continue;
       case StepStack::Step::Name:
         out << sem_ir.names().GetFormatted(step.name_id);
         continue;
@@ -180,6 +189,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case SemIR::BoundMethodType::Kind:
       case SemIR::ErrorInst::Kind:
       case SemIR::IntLiteralType::Kind:
+      case SemIR::InstType::Kind:
       case SemIR::LegacyFloatType::Kind:
       case SemIR::NamespaceType::Kind:
       case SemIR::SpecificFunctionType::Kind:
@@ -253,6 +263,8 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(FacetAccessWitness inst): {
         out << "<witness for ";
         step_stack.PushString(">");
+        step_stack.PushElementIndex(inst.index);
+        step_stack.PushString(", interface ");
         step_stack.PushInstId(inst.facet_value_inst_id);
         break;
       }
@@ -462,6 +474,19 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(SpecificImplFunction inst): {
+        auto callee = SemIR::GetCalleeFunction(sem_ir, inst.callee_id);
+        if (callee.function_id.has_value()) {
+          // TODO: The specific_id here is for the interface member, but the
+          // entity we're passing is the impl member. This might result in
+          // strange output once we render specific arguments properly.
+          step_stack.PushEntityName(sem_ir.functions().Get(callee.function_id),
+                                    inst.specific_id);
+        } else {
+          step_stack.PushString("<invalid specific function>");
+        }
+        break;
+      }
       case CARBON_KIND(StructType inst): {
         auto fields = sem_ir.struct_type_fields().Get(inst.fields_id);
         if (fields.empty()) {
@@ -551,6 +576,17 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case SemIR::TypeOfInst::Kind: {
+        // Print the constant value if we've already computed the inst.
+        auto const_inst_id =
+            sem_ir.constant_values().GetConstantInstId(step.inst_id);
+        if (const_inst_id.has_value() && const_inst_id != step.inst_id) {
+          step_stack.PushInstId(const_inst_id);
+          break;
+        }
+        out << "<dependent type>";
+        break;
+      }
       case CARBON_KIND(UnboundElementType inst): {
         out << "<unbound element of class ";
         step_stack.PushString(">");
@@ -561,6 +597,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << "<vtable ptr>";
         break;
       }
+      case AccessMemberAction::Kind:
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -584,6 +621,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ClassElementAccess::Kind:
       case ClassInit::Kind:
       case CompleteTypeWitness::Kind:
+      case ConvertToValueAction::Kind:
       case Converted::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
@@ -595,10 +633,14 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:
+      case InstValue::Kind:
       case InterfaceDecl::Kind:
       case NameBindingDecl::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
+      case RefParam::Kind:
+      case RefParamPattern::Kind:
+      case RefineTypeAction::Kind:
       case RequireCompleteType::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
@@ -609,6 +651,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ReturnSlotPattern::Kind:
       case SpecificConstant::Kind:
       case SpliceBlock::Kind:
+      case SpliceInst::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
       case StructInit::Kind:

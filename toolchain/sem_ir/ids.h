@@ -92,6 +92,29 @@ class DestInstId : public InstId {
   using InstId::InstId;
 };
 
+// An ID of an instruction that is referenced as a meta-operand of an action.
+// This should only be used as the type of a field within a typed instruction
+// class.
+//
+// This is used to model cases where an action's operand is not the value
+// produced by another instruction, but is the other instruction itself. This is
+// common for actions representing template instantiation.
+//
+// This behaves in most respects like an InstId field, but evaluation of the
+// instruction that has this field will not fail if the instruction does not
+// have a constant value. If the instruction has a constant value, it will still
+// be replaced by its constant value during evaluation like normal, but if it
+// has a non-constant value, the field is left unchanged by evaluation.
+class MetaInstId : public InstId {
+ public:
+  // Support implicit conversion from InstId so that InstId and MetaInstId
+  // have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr MetaInstId(InstId inst_id) : InstId(inst_id) {}
+
+  using InstId::InstId;
+};
+
 // The ID of a constant value of an expression. An expression is either:
 //
 // - a concrete constant, whose value does not depend on any generic parameters,
@@ -424,6 +447,8 @@ struct FloatKind : public IdBase<FloatKind> {
   X(ChoiceDiscriminant)                                          \
   /* The name of the package `Core`. */                          \
   X(Core)                                                        \
+  /* The name of `destroy`. */                                   \
+  X(Destroy)                                                     \
   /* The name of `package`. */                                   \
   X(PackageNamespace)                                            \
   /* The name of `.Self`. */                                     \
@@ -434,6 +459,8 @@ struct FloatKind : public IdBase<FloatKind> {
   X(SelfType)                                                    \
   /* The name of `self`. */                                      \
   X(SelfValue)                                                   \
+  /* The name of `_`. */                                         \
+  X(Underscore)                                                  \
   /* The name of `vptr`. */                                      \
   X(Vptr)
 
@@ -550,6 +577,51 @@ constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
 constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
+
+// Contains either an `InstBlockId` value, an error value, or
+// `InstBlockId::None`.
+//
+// Error values are treated as values, though they are not representable as an
+// `InstBlockId` (unlike for the singleton error `InstId`).
+class InstBlockIdOrError {
+ public:
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  InstBlockIdOrError(SemIR::InstBlockId inst_block_id)
+      : InstBlockIdOrError(inst_block_id, false) {}
+
+  static auto MakeError() -> InstBlockIdOrError {
+    return {SemIR::InstBlockId::None, true};
+  }
+
+  // Returns whether this class contains either an InstBlockId (other than
+  // `None`) or an error.
+  //
+  // An error is treated as a value (as same for the singleton error `InstId`),
+  // but it can not actually be materialized as an error value outside of this
+  // class.
+  auto has_value() const -> bool {
+    return has_error_value() || inst_block_id_.has_value();
+  }
+
+  // Returns whether this class contains an error value.
+  auto has_error_value() const -> bool { return error_; }
+
+  // Returns the id of a non-empty inst block, or `None` if `has_value()` is
+  // false.
+  //
+  // Only valid to call if `has_error_value()` is false.
+  auto inst_block_id() const -> SemIR::InstBlockId {
+    CARBON_CHECK(!has_error_value());
+    return inst_block_id_;
+  }
+
+ private:
+  InstBlockIdOrError(SemIR::InstBlockId inst_block_id, bool error)
+      : inst_block_id_(inst_block_id), error_(error) {}
+
+  SemIR::InstBlockId inst_block_id_;
+  bool error_;
+};
 
 // An ID of an instruction block that is referenced absolutely by an
 // instruction. This should only be used as the type of a field within a typed
