@@ -39,7 +39,6 @@ cc_library(
     hdrs = ["file_test_base.h"],
     deps = [
         ":autoupdate",
-        ":file_system",
         ":manifest",
         "//common:check",
         "//common:error",
