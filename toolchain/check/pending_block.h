@@ -62,21 +62,16 @@ class PendingBlock {
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
     SemIR::LocIdAndInst value = context_.insts().GetWithLocId(value_id);
 
-    // There are three cases here:
-
     if (insts_.size() == 1 && insts_[0] == value_id) {
-      // 1) The block is {value_id}. Replace `target_id` with the instruction
-      //    referred to by `value_id`. This is intended to be the common case.
+      // The block is {value_id}. Replace `target_id` with the instruction
+      // referred to by `value_id`. This is intended to be the common case.
     } else {
-      // 2) The block is empty. Replace `target_id` with an empty splice
-      //    pointing at `value_id`.
-      // 3) Anything else: splice it into the IR, replacing `target_id`.
-      SemIR::InstBlockId block_id = insts_.empty()
-                                        ? SemIR::InstBlockId::Empty
-                                        : context_.inst_blocks().Add(insts_);
-      value.inst = SemIR::SpliceBlock{.type_id = value.inst.type_id(),
-                                      .block_id = block_id,
-                                      .result_id = value_id};
+      // Anything else: splice it into the IR, replacing `target_id`. This
+      // includes empty blocks, which `Add` handles.
+      value.inst =
+          SemIR::SpliceBlock{.type_id = value.inst.type_id(),
+                             .block_id = context_.inst_blocks().Add(insts_),
+                             .result_id = value_id};
     }
 
     ReplaceLocIdAndInstBeforeConstantUse(context_, target_id, value);
