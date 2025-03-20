@@ -191,37 +191,38 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
 // Returns the return type of the given function declaration.
 // Currently only void and 32-bit int are supported.
 // TODO: Support more return types.
-static auto GetReturnType(Context& context,
+static auto GetReturnType(Context& context, SemIRLoc loc_id,
                           const clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
-  auto ret_type = clang_decl->getReturnType().getCanonicalType();
+  clang::QualType ret_type = clang_decl->getReturnType().getCanonicalType();
   if (ret_type->isVoidType()) {
     return SemIR::InstId::None;
   }
-  const int supported_int_width = 32;
-  if (ret_type->isSignedIntegerType() &&
-      clang_decl->getASTContext().getTypeSize(ret_type) ==
-          supported_int_width &&
-      clang_decl->getASTContext().getTargetInfo().getIntWidth() ==
-          supported_int_width) {
-    auto size_id = context.ints().Add(supported_int_width);
-    auto type_id = MakeIntType(context, Parse::NodeId::None,
-                               SemIR::IntKind::Signed, size_id);
-    auto type_inst_id = MakeIntTypeLiteral(context, Parse::NodeId::None,
-                                           SemIR::IntKind::Signed, size_id);
+  const auto* builtin_type = dyn_cast<clang::BuiltinType>(ret_type);
+  if (builtin_type && builtin_type->getKind() == clang::BuiltinType::Int) {
+    // TODO: Detect when integer types aren't the expected sizes
+    IntId size_id = context.ints().Add(32);
+    // TODO: Fill in a location for the type once available.
+    SemIR::TypeId type_id = MakeIntType(context, Parse::NodeId::None,
+                                        SemIR::IntKind::Signed, size_id);
+    // TODO: Fill in a location for the type once available.
+    SemIR::InstId type_inst_id = MakeIntTypeLiteral(
+        context, Parse::NodeId::None, SemIR::IntKind::Signed, size_id);
 
-    auto return_slot_pattern_id = AddInstInNoBlock(
-        // TODO: have a location for the return type once available.
+    SemIR::InstId return_slot_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location for the return type once available.
         context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
                      {.type_id = type_id, .type_inst_id = type_inst_id})));
-    auto param_pattern_id = AddInstInNoBlock(
-        // TODO: same here, have a location for the return type once available.
+    SemIR::InstId param_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location for the return type once available.
         context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
                      {.type_id = type_id,
                       .subpattern_id = return_slot_pattern_id,
                       .index = SemIR::CallParamIndex::None})));
     return param_pattern_id;
   }
+  context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
+                                     ret_type.getAsString()));
   return SemIR::ErrorInst::SingletonInstId;
 }
 
@@ -249,13 +250,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  auto return_slot_pattern_id = GetReturnType(context, clang_decl);
+  auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
   if (SemIR::ErrorInst::SingletonInstId == return_slot_pattern_id) {
-    context.TODO(
-        loc_id,
-        llvm::formatv(
-            "Unsupported: return type: {0}",
-            clang_decl->getReturnType().getCanonicalType().getAsString()));
     return SemIR::ErrorInst::SingletonInstId;
   }
 

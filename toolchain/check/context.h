@@ -155,6 +155,10 @@ class Context {
     return import_ref_ids_;
   }
 
+  auto ast_context() -> clang::ASTContext& {
+    return sem_ir().cpp_ast()->getASTContext();
+  }
+
   // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
