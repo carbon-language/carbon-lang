@@ -477,6 +477,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Sets the contents of a placeholder block to the given content.
   auto ReplacePlaceholder(InstBlockId block_id, llvm::ArrayRef<InstId> content)
       -> void {
+    CARBON_CHECK(block_id != SemIR::InstBlockId::Empty);
     CARBON_CHECK(Get(block_id).empty(),
                  "inst block content set more than once");
     values().Get(block_id) = AllocateCopy(content);
