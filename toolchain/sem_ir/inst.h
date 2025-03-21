@@ -474,7 +474,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     return values().Add(llvm::MutableArrayRef<ElementType>());
   }
 
-  // Sets the contents of an empty block to the given content.
+  // Sets the contents of a placeholder block to the given content.
   auto ReplacePlaceholder(InstBlockId block_id, llvm::ArrayRef<InstId> content)
       -> void {
     CARBON_CHECK(Get(block_id).empty(),
