@@ -564,6 +564,73 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
   return member_id;
 }
 
+// Logic shared by GetAssociatedValue() and PerformCompoundMemberAccess().
+static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
+                                   SemIR::InstId base_id,
+                                   const SemIR::AssociatedEntity& assoc_entity,
+                                   SemIR::TypeId interface_type_id,
+                                   SemIR::SpecificId interface_specific_id)
+    -> SemIR::InstId {
+  // Convert to the interface type of the associated member, to get a facet
+  // value.
+  auto facet_inst_id =
+      ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
+  if (facet_inst_id == SemIR::ErrorInst::SingletonInstId) {
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  // That facet value has both the self type we need below and the witness
+  // we are going to use to look up the value of the associated member.
+  auto self_type_const_id = TryEvalInst(
+      context, SemIR::InstId::None,
+      SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
+                             .facet_value_inst_id = facet_inst_id});
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(self_type_const_id);
+  auto witness_id =
+      GetOrAddInst(context, loc_id,
+                   SemIR::FacetAccessWitness{
+                       .type_id = GetSingletonType(
+                           context, SemIR::WitnessType::SingletonInstId),
+                       .facet_value_inst_id = facet_inst_id,
+                       // There's only one interface in this facet type.
+                       .index = SemIR::ElementIndex(0)});
+  // Before we can access the element of the witness, we need to figure out
+  // the type of that element. It depends on the self type and the specific
+  // interface.
+  auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
+      context, loc_id, interface_specific_id, assoc_entity.decl_id,
+      self_type_id, witness_id);
+  // Now that we have the witness, an index into it, and the type of the
+  // result, return the element of the witness.
+  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
+                                                {.type_id = assoc_type_id,
+                                                 .witness_id = witness_id,
+                                                 .index = assoc_entity.index});
+}
+
+auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
+                        SemIR::InstId base_id,
+                        SemIR::InstId assoc_entity_inst_id,
+                        SemIR::TypeId interface_type_id) -> SemIR::InstId {
+  // TODO: This function shares a code with PerformCompoundMemberAccess(),
+  // it would be nice to reduce the duplication.
+
+  auto interface_type = GetInterfaceFromFacetType(context, interface_type_id);
+  // An associated entity is always associated with a single interface.
+  CARBON_CHECK(interface_type);
+
+  auto value_inst_id =
+      context.constant_values().GetConstantInstId(assoc_entity_inst_id);
+  CARBON_CHECK(value_inst_id.has_value());
+  auto assoc_entity =
+      context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
+  auto decl_id = assoc_entity.decl_id;
+  LoadImportRef(context, decl_id);
+
+  return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
+                                interface_type_id, interface_type->specific_id);
+}
+
 auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id,
@@ -610,43 +677,12 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                             member_id, missing_impl_diagnoser);
       // Next we will perform instance binding.
     } else {
-      // Step 2b: For non-instance methods and associated constants, we convert
-      // to the interface type of the associated member, to get a facet value.
-      auto facet_inst_id =
-          ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
-      if (facet_inst_id == SemIR::ErrorInst::SingletonInstId) {
-        return SemIR::ErrorInst::SingletonInstId;
-      }
-      // That facet value has both the self type we need below and the witness
-      // we are going to use to look up the value of the associated member.
-      auto self_type_const_id = TryEvalInst(
-          context, SemIR::InstId::None,
-          SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
-                                 .facet_value_inst_id = facet_inst_id});
-      auto self_type_id =
-          context.types().GetTypeIdForTypeConstantId(self_type_const_id);
-      auto witness_id =
-          GetOrAddInst(context, loc_id,
-                       SemIR::FacetAccessWitness{
-                           .type_id = GetSingletonType(
-                               context, SemIR::WitnessType::SingletonInstId),
-                           .facet_value_inst_id = facet_inst_id,
-                           // There's only one interface in this facet type.
-                           .index = SemIR::ElementIndex(0)});
-      // Before we can access the element of the witness, we need to figure out
-      // the type of that element. It depends on the self type and the specific
-      // interface.
-      auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-          context, loc_id, interface_type->specific_id, decl_id, self_type_id,
-          witness_id);
-      // Now that we have the witness, an index into it, and the type of the
-      // result, return the element of the witness. No instance binding to do,
-      // so return instead of continuing.
-      return GetOrAddInst<SemIR::ImplWitnessAccess>(
-          context, loc_id,
-          {.type_id = assoc_type_id,
-           .witness_id = witness_id,
-           .index = assoc_entity.index});
+      // Step 2b: For non-instance methods and associated constants, we access
+      // the value of the associated constant, and don't do any instance
+      // binding.
+      return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
+                                    interface_type_id,
+                                    interface_type->specific_id);
     }
   } else if (context.insts().Is<SemIR::TupleType>(
                  context.constant_values().GetInstId(base_type_const_id))) {

@@ -121,7 +121,7 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
 
   return AddInst(
       context,
-      SemIR::LocIdAndInst::UncheckedLoc(
+      SemIR::LocIdAndInst(
           pattern.loc_id,
           SemIR::VarStorage{
               .type_id = pattern.inst.type_id(),

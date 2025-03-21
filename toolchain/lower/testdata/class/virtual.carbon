@@ -52,11 +52,9 @@ base class Base {
 
 fn Fn() {
   var i: i32 = 3;
-  // TODO: make `i` initialize `m` here (it currently initializes the vptr instead)
   var v: Base = {.m = i};
-  // TODO: fix crash here
-  // var v: Base = {.m = 3};
   v.m = 5;
+  var u: Base = {.m = 3};
 }
 
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
@@ -142,24 +140,31 @@ fn Fn() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !9
+// CHECK:STDOUT:   %u.var = alloca { ptr, i32 }, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !9
 // CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %v.var), !dbg !9
-// CHECK:STDOUT:   %.loc12_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store ptr null, ptr %.loc12_24.2.vptr, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc12_23 = load i32, ptr %i.var, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc12_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12_23, ptr %.loc12_24.5.m, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc15_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !12
-// CHECK:STDOUT:   store i32 5, ptr %.loc15_4.m, align 4, !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store ptr null, ptr %.loc11_24.2.vptr, align 8, !dbg !10
+// CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc11_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.5.m, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !12
+// CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %u.var), !dbg !9
+// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   store ptr null, ptr %.loc13_24.2.vptr, align 8, !dbg !13
+// CHECK:STDOUT:   %.loc13_24.6.m = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 1, !dbg !13
+// CHECK:STDOUT:   store i32 3, ptr %.loc13_24.6.m, align 4, !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT: uselistorder i32 1, { 0, 2, 3, 1, 4, 5 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
@@ -176,7 +181,8 @@ fn Fn() {
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.MemberInit", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 10, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 17, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 23, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 3, scope: !8)
-// CHECK:STDOUT: !13 = !DILocation(line: 9, column: 1, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 17, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 23, scope: !8)
+// CHECK:STDOUT: !12 = !DILocation(line: 12, column: 3, scope: !8)
+// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 17, scope: !8)
+// CHECK:STDOUT: !14 = !DILocation(line: 9, column: 1, scope: !8)

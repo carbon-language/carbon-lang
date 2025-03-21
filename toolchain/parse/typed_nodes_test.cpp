@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <forward_list>
+#include <type_traits>
 
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -397,6 +398,24 @@ TEST_F(TypedNodeTest, CategoryMatches) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   CategoryMatches(Name::Kind, NodeKind::Name, #Name);
 #include "toolchain/parse/node_kind.def"
+}
+
+TEST_F(TypedNodeTest, NodeIdOneOf) {
+  auto id1 = Parse::ChoiceDefinitionId::None;
+  Parse::NodeIdOneOf<Parse::ChoiceDefinitionId, Parse::ChoiceIntroducer> id2 =
+      id1;
+  Parse::NodeIdOneOf<Parse::ChoiceDefinitionId, Parse::ChoiceIntroducer,
+                     Parse::ChoiceDefinitionStartId>
+      id3 = id1;
+  Parse::NodeIdOneOf<Parse::ChoiceDefinitionId, Parse::ChoiceIntroducer,
+                     Parse::ChoiceSignature>
+      id4 = id1;
+  id3 = id2;
+  id4 = id2;
+  static_assert(!std::is_assignable_v<decltype(id2), decltype(id3)>);
+  static_assert(!std::is_assignable_v<decltype(id2), decltype(id4)>);
+  static_assert(!std::is_assignable_v<decltype(id4), decltype(id3)>);
+  static_assert(!std::is_assignable_v<decltype(id3), decltype(id4)>);
 }
 
 }  // namespace

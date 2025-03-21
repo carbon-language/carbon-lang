@@ -444,7 +444,7 @@ auto DeductionContext::Deduce() -> bool {
         // TODO: Match field name order between param and arg.
         break;
 
-      case SemIR::FacetAccessType::Kind:
+      case CARBON_KIND(SemIR::FacetAccessType access): {
         // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`.
         // `G` is a symbolic binding, whose type is a facet type, but `G as
         // type` converts into a `FacetAccessType`.
@@ -454,9 +454,9 @@ auto DeductionContext::Deduce() -> bool {
         // argument would be a facet value, whose type is the same facet type of
         // `G`. So here we "undo" the `as type` operation that's built into the
         // `g` parameter's type.
-        Add(param_inst.As<SemIR::FacetAccessType>().facet_value_inst_id, arg_id,
-            needs_substitution);
+        Add(access.facet_value_inst_id, arg_id, needs_substitution);
         continue;
+      }
 
         // TODO: Handle more cases.
 

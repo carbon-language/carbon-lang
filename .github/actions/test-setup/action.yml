@@ -154,8 +154,8 @@ runs:
         # spaces. Note we can filter to the intersection of Carbon extensions
         # and the supported list at:
         # https://github.com/erenon/bazel_clang_tidy/blob/master/clang_tidy/clang_tidy.bzl#L65
-        for f in $(
-            git diff --name-only $GIT_BASE_SHA -- '**/*.h' '**/*.cpp'); do
+        for f in $(git diff --name-only --diff-filter=d \
+                     $GIT_BASE_SHA -- '**/*.h' '**/*.cpp'); do
           echo "  union '$f'" >> $QUERY_FILE
         done
 

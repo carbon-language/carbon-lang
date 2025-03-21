@@ -3277,12 +3277,9 @@ static auto HasCompatibleImportedNodeKind(SemIR::InstKind imported_kind,
   }
   if (imported_kind == SemIR::ImportDecl::Kind &&
       local_kind == SemIR::Namespace::Kind) {
-    // TODO: Consider supporting NodeIdOneOf conversions to make the below work.
-    // But this extra validation is the primary use-case at present.
-    // static_assert(
-    //     std::is_convertible_v<
-    //         decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
-    //         decltype(SemIR::Namespace::Kind)::TypedNodeId>);
+    static_assert(
+        std::is_convertible_v<decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
+                              decltype(SemIR::Namespace::Kind)::TypedNodeId>);
     return true;
   }
   return false;

@@ -24,6 +24,7 @@ class Printable {
   // Provides simple printing for debuggers.
   LLVM_DUMP_METHOD void Dump() const {
     static_cast<const DerivedT*>(this)->Print(llvm::errs());
+    llvm::errs() << '\n';
   }
 
   // Supports printing to llvm::raw_ostream.

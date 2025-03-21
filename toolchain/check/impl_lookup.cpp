@@ -214,6 +214,15 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // `impl T as ...` for some other type `T` and should not be considered.
   auto deduced_self_const_id = SemIR::GetConstantValueInSpecific(
       context.sem_ir(), specific_id, impl.self_id);
+  // In a generic `impl forall` the self type can be a FacetAccessType, which
+  // will not be the same constant value as a query facet value. We move through
+  // to the facet value here, and if the query was a FacetAccessType we did the
+  // same there so they still match.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(deduced_self_const_id))) {
+    deduced_self_const_id =
+        context.constant_values().Get(access->facet_value_inst_id);
+  }
   if (query_self_const_id != deduced_self_const_id) {
     return SemIR::InstId::None;
   }
@@ -270,11 +279,6 @@ static auto FindWitnessInFacet(
     const SemIR::SpecificInterface& specific_interface) -> SemIR::InstId {
   SemIR::InstId facet_inst_id =
       context.constant_values().GetInstId(facet_const_id);
-  if (auto access =
-          context.insts().TryGetAs<SemIR::FacetAccessType>(facet_inst_id)) {
-    facet_inst_id = context.constant_values().GetConstantInstId(
-        access->facet_value_inst_id);
-  }
   SemIR::TypeId facet_type_id = context.insts().Get(facet_inst_id).type_id();
   if (auto facet_type_inst =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_id)) {
@@ -409,6 +413,16 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         context.constant_values().GetInstId(query_facet_type_const_id)));
   }
 
+  // If the self type is a FacetAccessType, work with the facet value directly,
+  // which gives us the potential witnesses to avoid looking for impl
+  // declarations. We will do the same for the impl declarations we try to match
+  // so that we can compare the self constant values.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(query_self_const_id))) {
+    query_self_const_id =
+        context.constant_values().Get(access->facet_value_inst_id);
+  }
+
   auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,
                                             query_facet_type_const_id);
   for (auto import_ir : import_irs) {
@@ -446,14 +460,35 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       .query_self_const_id = query_self_const_id,
       .query_facet_type_const_id = query_facet_type_const_id,
   });
+
+  // We look for a witness in two different places if the query self type is a
+  // facet value. First we try to find a witness on the facet value itself. This
+  // avoids the need to do impl lookups which are more expensive. If that fails,
+  // then we go look for an impl declaration as we would for other self types.
+  auto facet_value_self_const_id = query_self_const_id;
+
+  // When the query is a concrete FacetValue, we want to look through it at the
+  // underlying type to find all interfaces it implements. This supports
+  // conversion from a FacetValue to any other possible FacetValue, since
+  // conversion depends on impl lookup to verify it is a valid type change. See
+  // https://github.com/carbon-language/carbon-lang/issues/5137. We can't do
+  // this step earlier than inside impl lookup since we want the converted facet
+  // value in `facet_value_self_const_id` to avoid looking for impl
+  // declarations.
+  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
+          context.constant_values().GetInstId(query_self_const_id))) {
+    query_self_const_id =
+        context.constant_values().Get(facet_value->type_inst_id);
+  }
+
   // We need to find a witness for each interface in `interfaces`. Every
   // consumer of a facet type needs to agree on the order of interfaces used for
   // its witnesses.
   for (const auto& interface : interfaces) {
     // TODO: Since both `interfaces` and `query_self_const_id` are sorted lists,
     // do an O(N+M) merge instead of O(N*M) nested loops.
-    auto result_witness_id =
-        FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
+    auto result_witness_id = FindWitnessInFacet(
+        context, loc_id, facet_value_self_const_id, interface);
     if (!result_witness_id.has_value()) {
       result_witness_id =
           FindWitnessInImpls(context, loc_id, query_self_const_id, interface);

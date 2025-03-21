@@ -70,6 +70,9 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
       "clang-tool", std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
+  // Remove link to the diagnostics consumer before its deletion.
+  ast->getDiagnostics().setClient(nullptr);
+
   // TODO: Implement and use a DynamicRecursiveASTVisitor to traverse the AST.
   int num_errors = diagnostics_consumer.getNumErrors();
   int num_warnings = diagnostics_consumer.getNumWarnings();
