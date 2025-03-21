@@ -341,7 +341,7 @@ impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
 impl forall [T:! type] T as Z(C) where .X = C {}
 
 fn F[U:! type](T:! Z(C)) {
-  // TODO: The value of `.X` can be known to be `C` here when the impl `Z(C)` is
+  // TODO: The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
   // final.
   // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert value of type `C` to `T.(Z(C).X)` [ConversionFailure]
   // CHECK:STDERR:   let a: T.X = {} as C;
