@@ -278,6 +278,9 @@ class ImportContext {
     return import_ir().name_scopes();
   }
   auto import_specifics() -> decltype(auto) { return import_ir().specifics(); }
+  auto import_specific_interfaes() -> decltype(auto) {
+    return import_ir().specific_interfaces();
+  }
   auto import_string_literal_values() -> decltype(auto) {
     return import_ir().string_literal_values();
   }
@@ -338,6 +341,9 @@ class ImportContext {
     return local_ir().name_scopes();
   }
   auto local_specifics() -> decltype(auto) { return local_ir().specifics(); }
+  auto local_specific_interfaces() -> decltype(auto) {
+    return local_ir().specific_interfaces();
+  }
   auto local_string_literal_values() -> decltype(auto) {
     return local_ir().string_literal_values();
   }
@@ -2505,6 +2511,33 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ImplSymbolicWitness inst)
+    -> ResolveResult {
+  auto query_self_inst_id =
+      GetLocalConstantInstId(resolver, inst.query_self_inst_id);
+
+  const auto& import_specific_interface =
+      resolver.import_specific_interfaes().Get(
+          inst.query_specific_interface_id);
+  auto data = GetLocalSpecificInstanceData(resolver, import_specific_interface);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto specific_interface = GetLocalSpecificInterface(
+      resolver, import_specific_interface.specific_id, data);
+  auto query_specific_interface_id =
+      resolver.local_specific_interfaces().Add(specific_interface);
+  return ResolveAs<SemIR::ImplSymbolicWitness>(
+      resolver,
+      {.type_id = GetSingletonType(resolver.local_context(),
+                                   SemIR::WitnessSymbolicType::SingletonInstId),
+       .query_self_inst_id = query_self_inst_id,
+       .query_specific_interface_id = query_specific_interface_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
@@ -2667,6 +2700,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::SpecificFunction>(
+      resolver,
+      {.type_id = type_id, .callee_id = callee_id, .specific_id = specific_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::SpecificImplFunction inst)
+    -> ResolveResult {
+  auto callee_id = GetLocalConstantInstId(resolver, inst.callee_id);
+  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto type_id = GetSingletonType(resolver.local_context(),
+                                  SemIR::SpecificFunctionType::SingletonInstId);
+  auto specific_id =
+      GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
+  return ResolveAs<SemIR::SpecificImplFunction>(
       resolver,
       {.type_id = type_id, .callee_id = callee_id, .specific_id = specific_id});
 }
@@ -2884,6 +2935,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ImplDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
     }
+    case CARBON_KIND(SemIR::ImplSymbolicWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::ImplWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2912,6 +2966,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::SpecificFunction inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::SpecificImplFunction inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {

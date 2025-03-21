@@ -11,6 +11,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -83,13 +84,13 @@ class TypeCompleter {
       -> SemIR::CompleteTypeInfo;
 
   template <typename InstT>
-    requires(
-        InstT::Kind.template IsAnyOf<
-            SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
-            SemIR::ErrorInst, SemIR::FloatType, SemIR::IntType,
-            SemIR::IntLiteralType, SemIR::LegacyFloatType, SemIR::NamespaceType,
-            SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
-            SemIR::VtableType, SemIR::WitnessType>())
+    requires(InstT::Kind.template IsAnyOf<
+             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
+             SemIR::ErrorInst, SemIR::FloatType, SemIR::IntType,
+             SemIR::IntLiteralType, SemIR::LegacyFloatType,
+             SemIR::NamespaceType, SemIR::PointerType,
+             SemIR::SpecificFunctionType, SemIR::TypeType, SemIR::VtableType,
+             SemIR::WitnessSymbolicType, SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     return {.value_repr = MakeCopyValueRepr(type_id)};

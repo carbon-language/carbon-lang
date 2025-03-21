@@ -27,6 +27,7 @@ struct Function;
 struct Generic;
 struct CompleteFacetType;
 struct Specific;
+struct SpecificInterface;
 struct ImportCpp;
 struct ImportIR;
 struct ImportIRInst;
@@ -302,6 +303,14 @@ struct GenericId : public IdBase<GenericId> {
 struct SpecificId : public IdBase<SpecificId> {
   static constexpr llvm::StringLiteral Label = "specific";
   using ValueType = Specific;
+
+  using IdBase::IdBase;
+};
+
+// The ID of a SpecificInterface, which is an interface and a specific pair.
+struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
+  static constexpr llvm::StringLiteral Label = "specific_interface";
+  using ValueType = SpecificInterface;
 
   using IdBase::IdBase;
 };

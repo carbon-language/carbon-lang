@@ -640,9 +640,9 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 }
 
 template <typename InstT>
-  requires(InstT::Kind
-               .template IsAnyOf<SemIR::BoundMethodType, SemIR::IntLiteralType,
-                                 SemIR::NamespaceType, SemIR::WitnessType>())
+  requires(InstT::Kind.template IsAnyOf<
+           SemIR::BoundMethodType, SemIR::IntLiteralType, SemIR::NamespaceType,
+           SemIR::WitnessSymbolicType, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

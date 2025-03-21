@@ -68,7 +68,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//base, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//base, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//base, inst17 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,7 +95,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//export, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//export, inst19 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//export, inst20 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

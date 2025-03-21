@@ -34,6 +34,8 @@ class SemIRLoc {
  private:
   // Only allow member access for diagnostics.
   friend class SemIRLocDiagnosticEmitter;
+  // And also for eval to unwrap a LocId for calling into the rest of Check.
+  friend class UnwrapSemIRLoc;
 
   union {
     SemIR::InstId inst_id_;

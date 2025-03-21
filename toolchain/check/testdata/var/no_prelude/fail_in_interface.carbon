@@ -35,7 +35,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .v = <unexpected>.inst21.loc16_7
+// CHECK:STDOUT:   .v = <unexpected>.inst22.loc16_7
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -270,6 +270,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case ImplSymbolicWitness::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
       case ImportCppDecl::Kind:
@@ -304,6 +305,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ValueParamPattern::Kind:
       case VtableType::Kind:
       case WhereExpr::Kind:
+      case WitnessSymbolicType::Kind:
       case WitnessType::Kind:
         return value_category;
 

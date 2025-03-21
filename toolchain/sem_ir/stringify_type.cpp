@@ -197,6 +197,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case SemIR::TypeType::Kind:
       case SemIR::VtableType::Kind:
       case SemIR::Vtable::Kind:
+      case SemIR::WitnessSymbolicType::Kind:
       case SemIR::WitnessType::Kind: {
         // Singleton instructions use their IR name as a label.
         out << untyped_inst.kind().ir_name();
@@ -372,6 +373,13 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(ImplWitnessAccess inst): {
         auto witness_inst_id =
             sem_ir.constant_values().GetConstantInstId(inst.witness_id);
+        if (auto symbolic_witness =
+                sem_ir.insts().TryGetAs<SemIR::ImplSymbolicWitness>(
+                    witness_inst_id)) {
+          // TODO: Include the query in the diagnostic output?
+          step_stack.PushString("<symbolic>");
+          break;
+        }
         auto witness =
             sem_ir.insts().GetAs<FacetAccessWitness>(witness_inst_id);
         auto witness_type_id =
@@ -628,6 +636,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case ImplSymbolicWitness::Kind:
       case ImplWitness::Kind:
       case ImportCppDecl::Kind:
       case ImportDecl::Kind:

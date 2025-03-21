@@ -868,6 +868,25 @@ struct ImplDecl {
   DeclInstBlockId decl_block_id;
 };
 
+// A symbolic witness that a type implements an interface. It represented a
+// promise that the query can be satisfied without providing which impl
+// declaration satisfies it. When evaluated, it does lookup again to form a
+// concrete ImplWitness from a more specific query.
+struct ImplSymbolicWitness {
+  static constexpr auto Kind =
+      InstKind::ImplSymbolicWitness.Define<Parse::NodeId>(
+          {.ir_name = "impl_symbolic_witness",
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+  // TODO: Consider making this a singleton inst?
+
+  // Always the type of the builtin `WitnessSymbolicType` singleton instruction.
+  TypeId type_id;
+  // The self type (or facet value) and interface of the impl lookup query.
+  InstId query_self_inst_id;
+  SpecificInterfaceId query_specific_interface_id;
+};
+
 // A witness that a type implements an interface.
 struct ImplWitness {
   static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
@@ -1778,6 +1797,20 @@ struct WhereExpr {
   // argument of the `where`.
   InstId period_self_id;
   InstBlockId requirements_id;
+};
+
+// The type of `ImplSymbolicWitness` instructions.
+struct WitnessSymbolicType {
+  static constexpr auto Kind =
+      InstKind::WitnessSymbolicType.Define<Parse::NoneNodeId>(
+          {.ir_name = "<symbolic witness>",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+
+  TypeId type_id;
 };
 
 // The type of `ImplWitness` instructions.

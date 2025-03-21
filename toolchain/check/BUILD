@@ -103,6 +103,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
+        "//toolchain/base:value_store",
         "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",

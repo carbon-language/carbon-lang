@@ -34,6 +34,7 @@ auto Dump(const File& file, NameId name_id) -> void;
 auto Dump(const File& file, NameScopeId name_scope_id) -> void;
 auto Dump(const File& file, CompleteFacetTypeId complete_facet_type_id) -> void;
 auto Dump(const File& file, SpecificId specific_id) -> void;
+auto Dump(const File& file, SpecificInterfaceId specific_interface_id) -> void;
 auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id) -> void;
 auto Dump(const File& file, TypeBlockId type_block_id) -> void;
 auto Dump(const File& file, TypeId type_id) -> void;

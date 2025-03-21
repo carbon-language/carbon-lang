@@ -10,6 +10,7 @@
 #include "common/map.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/full_pattern_stack.h"
@@ -232,6 +233,10 @@ class Context {
     return sem_ir().complete_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
+  auto specific_interfaces()
+      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+    return sem_ir().specific_interfaces();
+  }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {

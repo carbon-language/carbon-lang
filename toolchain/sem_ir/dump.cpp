@@ -247,7 +247,21 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id) -> void {
   DumpNoNewline(file, specific_id);
   llvm::errs() << '\n';
-  Dump(file, file.specifics().Get(specific_id).args_id);
+  if (specific_id.has_value()) {
+    Dump(file, file.specifics().Get(specific_id).args_id);
+  }
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           SpecificInterfaceId specific_interface_id) -> void {
+  const auto& interface = file.specific_interfaces().Get(specific_interface_id);
+  llvm::errs() << specific_interface_id;
+  llvm::errs() << '\n';
+  llvm::errs() << "  - interface: ";
+  DumpNoNewline(file, interface.interface_id);
+  llvm::errs() << '\n';
+  llvm::errs() << "  - specific_id: ";
+  Dump(file, interface.specific_id);
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,
@@ -335,6 +349,10 @@ LLVM_DUMP_METHOD static auto MakeCompleteFacetTypeId(int id)
 }
 LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
   return SpecificId(id);
+}
+LLVM_DUMP_METHOD static auto MakeSpecificInterfaceId(int id)
+    -> SpecificInterfaceId {
+  return SpecificInterfaceId(id);
 }
 LLVM_DUMP_METHOD static auto MakeStructTypeFieldsId(int id)
     -> StructTypeFieldsId {

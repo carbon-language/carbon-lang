@@ -1388,6 +1388,15 @@ class FormatterImpl {
     FormatArg(specific.args_id);
   }
 
+  auto FormatName(SpecificInterfaceId id) -> void {
+    const auto& interface = sem_ir_->specific_interfaces().Get(id);
+    FormatName(interface.interface_id);
+    if (interface.specific_id.has_value()) {
+      out_ << ", ";
+      FormatArg(interface.specific_id);
+    }
+  }
+
   auto FormatLabel(InstBlockId id) -> void {
     out_ << inst_namer_->GetLabelFor(scope_, id);
   }

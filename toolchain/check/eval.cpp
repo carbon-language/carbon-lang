@@ -153,6 +153,10 @@ class EvalContext {
   auto interfaces() -> const ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
+  auto specific_interfaces()
+      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+    return sem_ir().specific_interfaces();
+  }
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }
@@ -551,6 +555,20 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
   return MakeSpecific(eval_context.context(), eval_context.fallback_loc(),
                       specific.generic_id, args_id);
+}
+
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::SpecificInterfaceId specific_interface_id,
+                             Phase* phase) -> SemIR::SpecificInterfaceId {
+  const auto& interface =
+      eval_context.specific_interfaces().Get(specific_interface_id);
+  if (!interface.specific_id.has_value()) {
+    return specific_interface_id;
+  }
+  return eval_context.specific_interfaces().Add(
+      {.interface_id = interface.interface_id,
+       .specific_id =
+           GetConstantValue(eval_context, interface.specific_id, phase)});
 }
 
 // Like `GetConstantValue` but does a `FacetTypeId` -> `FacetTypeInfo`
@@ -1839,6 +1857,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
   };
   [[clang::musttail]] return EvalInstFns[inst.kind().AsInt()](eval_context,
                                                               inst_id, inst);
+}
+
+auto TryEvalInst(Context& context, SemIR::LocId loc_id, SemIR::InstId inst_id,
+                 SemIR::Inst inst) -> SemIR::ConstantId {
+  EvalContext eval_context(context, loc_id);
+  return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)

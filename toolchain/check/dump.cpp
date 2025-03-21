@@ -148,6 +148,12 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 }
 
 LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::SpecificInterfaceId specific_interface_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), specific_interface_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(
     const Context& context, SemIR::StructTypeFieldsId struct_type_fields_id)
     -> void {
   SemIR::Dump(context.sem_ir(), struct_type_fields_id);

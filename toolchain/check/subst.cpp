@@ -104,6 +104,12 @@ static auto PushOperand(Context& context, Worklist& worklist,
     case SemIR::IdKind::For<SemIR::SpecificId>:
       push_specific(SemIR::SpecificId(arg));
       break;
+    case SemIR::IdKind::For<SemIR::SpecificInterfaceId>: {
+      auto interface =
+          context.specific_interfaces().Get(SemIR::SpecificInterfaceId(arg));
+      push_specific(interface.specific_id);
+      break;
+    }
     case SemIR::IdKind::For<SemIR::FacetTypeId>: {
       const auto& facet_type_info =
           context.facet_types().Get(SemIR::FacetTypeId(arg));
@@ -204,6 +210,17 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
     }
     case SemIR::IdKind::For<SemIR::SpecificId>: {
       return pop_specific(SemIR::SpecificId(arg)).index;
+    }
+    case SemIR::IdKind::For<SemIR::SpecificInterfaceId>: {
+      auto interface =
+          context.specific_interfaces().Get(SemIR::SpecificInterfaceId(arg));
+      auto specific_id = pop_specific(interface.specific_id);
+      return context.specific_interfaces()
+          .Add({
+              .interface_id = interface.interface_id,
+              .specific_id = specific_id,
+          })
+          .index;
     }
     case SemIR::IdKind::For<SemIR::FacetTypeId>: {
       const auto& old_facet_type_info =

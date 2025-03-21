@@ -217,7 +217,7 @@ fn F() {
   let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
 }
 
-// --- specialized_class_with_symbolic_facet_value_param.carbon
+// --- fail_specialized_class_with_symbolic_facet_value_param.carbon
 
 interface Z {
   let X:! type;
@@ -239,10 +239,13 @@ fn F[D:! Y](d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
-  //
-  // TODO: The type of `.X` should actually be symbolic here, unless the impl is
-  // effectively final (since the lookup query uses a symbolic `D` in its
-  // input). But we don't have support for either of those yet.
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert value of type `()` to `<symbolic>` [ConversionFailure]
+  // CHECK:STDERR:   let a: C(D).(Z.X) = ();
+  // CHECK:STDERR:                       ^~
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(<symbolic>)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: C(D).(Z.X) = ();
+  // CHECK:STDERR:                       ^~
+  // CHECK:STDERR:
   let a: C(D).(Z.X) = ();
 }
 
@@ -379,7 +382,7 @@ fn F[U:! type](T:! Z(C)) {
 // TODO: Make this `final`.
 impl forall [T:! type] T as Z(C) where .X = C {}
 
-// --- fail_specialization_written_after_generic_use.carbon
+// --- specialization_written_after_generic_use.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -405,12 +408,34 @@ impl C as Z where .V = {} {
 }
 
 fn H() {
-  // CHECK:STDERR: fail_specialization_written_after_generic_use.carbon:[[@LINE+7]]:15: error: cannot implicitly convert value of type `()` to `{}` [ConversionFailure]
-  // CHECK:STDERR:   let x: {} = G(C);
-  // CHECK:STDERR:               ^~~~
-  // CHECK:STDERR: fail_specialization_written_after_generic_use.carbon:[[@LINE+4]]:15: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let x: {} = G(C);
-  // CHECK:STDERR:               ^~~~
-  // CHECK:STDERR:
+  let x: {} = G(C);
+}
+
+// --- specialization_written_after_generic_use_with_generic_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let V:! type;
+  fn F() -> V;
+}
+
+interface Y {}
+impl forall [T:! Y] T as Z(T) where .V = () {
+  fn F() -> () { return (); }
+}
+
+fn G(U:! Y) -> U.(Z(U).V) {
+  return U.(Z(U).F)();
+}
+
+class C {
+  impl as Y {}
+}
+
+impl C as Z(C) where .V = {} {
+  fn F() -> {} { return {}; }
+}
+
+fn H() {
   let x: {} = G(C);
 }
