@@ -42,7 +42,7 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
   // Finalize the block.
   if (!insts.empty() && id != SemIR::InstBlockId::Unreachable) {
     if (id.has_value()) {
-      sem_ir_->inst_blocks().Set(id, insts);
+      sem_ir_->inst_blocks().ReplacePlaceholder(id, insts);
     } else {
       id = sem_ir_->inst_blocks().Add(insts);
     }

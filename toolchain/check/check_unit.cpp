@@ -515,10 +515,11 @@ auto CheckUnit::FinishRun() -> void {
   context_.scope_stack().Pop();
 
   // Finalizes the list of exports on the IR.
-  context_.inst_blocks().Set(SemIR::InstBlockId::Exports, context_.exports());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,
+                                            context_.exports());
   // Finalizes the ImportRef inst block.
-  context_.inst_blocks().Set(SemIR::InstBlockId::ImportRefs,
-                             context_.import_ref_ids());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::ImportRefs,
+                                            context_.import_ref_ids());
   // Finalizes __global_init.
   context_.global_init().Finalize();
 

@@ -462,20 +462,21 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }
 
-  // Reserves and returns a block ID. The contents of the block should be
-  // specified by calling Set, or similar.
-  auto AddPlaceholder() -> InstBlockId {
-    return values().Add(llvm::MutableArrayRef<ElementType>());
-  }
-
   // Adds an uninitialized block of the given size. The caller is expected to
   // modify values.
   auto AddUninitialized(size_t size) -> InstBlockId {
     return values().Add(AllocateUninitialized(size));
   }
 
+  // Reserves and returns a block ID. The contents of the block should be
+  // specified by calling ReplacePlaceholder.
+  auto AddPlaceholder() -> InstBlockId {
+    return values().Add(llvm::MutableArrayRef<ElementType>());
+  }
+
   // Sets the contents of an empty block to the given content.
-  auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
+  auto ReplacePlaceholder(InstBlockId block_id, llvm::ArrayRef<InstId> content)
+      -> void {
     CARBON_CHECK(Get(block_id).empty(),
                  "inst block content set more than once");
     values().Get(block_id) = AllocateCopy(content);
