@@ -150,38 +150,31 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     auto dependence = orig_symbolic_const.dependence;
 
     // We might already have an instruction in the eval block if a transitive
-    // operand of this instruction has the same constant value, or from a
-    // previous declaration.
-    if (auto result = constants_in_generic_.Lookup(const_inst_id)) {
-      return result.value();
-    }
+    // operand of this instruction has the same constant value.
+    auto result = constants_in_generic_.Insert(const_inst_id, [&] {
+      if (inside_redeclaration_) {
+        // Adding instructions to a redeclaration causes crashes later since it
+        // causes us to produce invalid indices into the original declaration's
+        // set of instructions. So we terminate now and avoid adding a new
+        // instruction and new index. It should not be possible to create this
+        // situation where a generic redeclaration introduces new instructions
+        // to the eval block.
+        CARBON_FATAL("generic redeclaration differs from previous declaration");
+      }
 
-    if (inside_redeclaration_) {
-      // Adding instructions to a redeclaration causes crashes later since it
-      // causes us to produce invalid indices into the original declaration's
-      // set of instructions. So we diagnose it and avoid adding a new
-      // instruction and new index.
-      CARBON_DIAGNOSTIC(
-          GenericDiffersFromPreviousDecl, Error,
-          "generic redeclaration differs from previous declaration");
-      context_.emitter().Emit(loc_id_, GenericDiffersFromPreviousDecl);
-
-      return SemIR::ErrorInst::SingletonInstId;
-    }
-
-    // TODO: Add a function on `Context` to add the instruction without
-    // inserting it into the dependent instructions list or computing a
-    // constant value for it.
-    // TODO: Is the location we pick here always appropriate for the new
-    // instruction?
-    auto inst_id = context_.sem_ir().insts().AddInNoBlock(
-        SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
-    auto const_id = AddGenericConstantInstToEvalBlock(
-        context_, generic_id_, region_, const_inst_id, inst_id, dependence);
-    context_.constant_values().Set(inst_id, const_id);
-
-    constants_in_generic_.Insert(const_inst_id, inst_id);
-    return inst_id;
+      // TODO: Add a function on `Context` to add the instruction without
+      // inserting it into the dependent instructions list or computing a
+      // constant value for it.
+      // TODO: Is the location we pick here always appropriate for the new
+      // instruction?
+      auto inst_id = context_.sem_ir().insts().AddInNoBlock(
+          SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
+      auto const_id = AddGenericConstantInstToEvalBlock(
+          context_, generic_id_, region_, const_inst_id, inst_id, dependence);
+      context_.constant_values().Set(inst_id, const_id);
+      return inst_id;
+    });
+    return result.value();
   }
 
  private:
@@ -260,8 +253,7 @@ static auto AddGenericConstantToEvalBlock(
       context, generic_id, region, context.insts().GetLocId(inst_id),
       constants_in_generic, inside_redeclaration);
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
-  if (new_inst_id == const_inst_id &&
-      new_inst_id != SemIR::ErrorInst::SingletonInstId) {
+  if (new_inst_id == const_inst_id) {
     // It's possible that no substitutions were necessary in this instruction.
     // This can happen if the instruction has a dependent operand that is
     // already in the eval block, such as an action. In this case, we still
@@ -322,12 +314,6 @@ static auto PopulateConstantsFromDeclaration(
 
 // Builds and returns a block of instructions whose constant values need to be
 // evaluated in order to resolve a generic to a specific.
-//
-// For the definition region, we would always want to populate constants from
-// the declaration, so `populate_constants_from_previous_declaration` should be
-// true. It should also be true for redeclations, where there is a previous
-// declaration to work from. It should be false for the first declaration of an
-// entity only.
 static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
                                  SemIR::GenericInstIndex::Region region,
                                  bool inside_redeclaration)
@@ -504,27 +490,17 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
   return generic_id;
 }
 
-auto FinishGenericRedecl(Context& context, SemIRLoc loc,
-                         SemIR::GenericId generic_id) -> void {
+auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
+    -> void {
   if (!generic_id.has_value()) {
     context.generic_region_stack().Pop();
     return;
   }
 
-  {
-    // The `loc` is not passed along here, so point any diagnostic to the
-    // location of the redeclaration with a note.
-    DiagnosticAnnotationScope annotate_diagnostics(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(GenericDiffersFromPreviousDeclNote, Note,
-                            "in generic redeclaration here");
-          builder.Note(loc, GenericDiffersFromPreviousDeclNote);
-        });
-    auto definition_block_id = MakeGenericEvalBlock(
-        context, generic_id, SemIR::GenericInstIndex::Region::Declaration,
-        /*inside_redeclaration=*/true);
-    CARBON_CHECK(definition_block_id == SemIR::InstBlockId::Empty);
-  }
+  auto definition_block_id = MakeGenericEvalBlock(
+      context, generic_id, SemIR::GenericInstIndex::Region::Declaration,
+      /*inside_redeclaration=*/true);
+  CARBON_CHECK(definition_block_id == SemIR::InstBlockId::Empty);
 
   context.generic_region_stack().Pop();
 }

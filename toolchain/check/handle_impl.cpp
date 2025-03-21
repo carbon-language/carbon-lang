@@ -432,7 +432,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   } else {
     auto prev_decl_generic_id =
         context.impls().Get(impl_decl.impl_id).generic_id;
-    FinishGenericRedecl(context, impl_decl_id, prev_decl_generic_id);
+    FinishGenericRedecl(context, prev_decl_generic_id);
   }
 
   // Write the impl ID into the ImplDecl.

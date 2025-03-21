@@ -129,7 +129,7 @@ static auto BuildInterfaceDecl(Context& context,
   } else {
     auto prev_decl_generic_id =
         context.interfaces().Get(interface_decl.interface_id).generic_id;
-    FinishGenericRedecl(context, interface_decl_id, prev_decl_generic_id);
+    FinishGenericRedecl(context, prev_decl_generic_id);
   }
 
   // Write the interface ID into the InterfaceDecl.

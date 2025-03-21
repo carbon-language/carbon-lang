@@ -225,7 +225,7 @@ static auto PushNameQualifierScope(Context& context, SemIRLoc loc,
   // Close the generic stack scope and open a new one for whatever comes after
   // the qualifier. As this is a qualifier it must not be the initial
   // declaration of the entity, so we treat it as a redeclaration.
-  FinishGenericRedecl(context, loc, generic_id);
+  FinishGenericRedecl(context, generic_id);
   // What follows the qualifier will be a declaration. The signature of an
   // entity is also a declaration even if it is followed by curly braces
   // providing the definition.

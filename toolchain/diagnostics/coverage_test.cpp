@@ -51,11 +51,6 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     // - Require all diagnostics produced by compiling have their first location
     //   be in the file being compiled, never an import.
     DiagnosticKind::LanguageServerDiagnosticInWrongFile,
-
-    // We don't know how to hit this diagnostic, but should it happen we want to
-    // diagnose it.
-    DiagnosticKind::GenericDiffersFromPreviousDecl,
-    DiagnosticKind::GenericDiffersFromPreviousDeclNote,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

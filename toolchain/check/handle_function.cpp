@@ -506,7 +506,7 @@ static auto BuildFunctionDecl(Context& context,
   } else {
     auto prev_decl_generic_id =
         context.functions().Get(function_decl.function_id).generic_id;
-    FinishGenericRedecl(context, decl_id, prev_decl_generic_id);
+    FinishGenericRedecl(context, prev_decl_generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
 
