@@ -29,7 +29,7 @@ auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
   int index = id_stack_.size() - depth - 1;
   auto& slot = id_stack_[index];
   if (!slot.has_value()) {
-    slot = sem_ir_->inst_blocks().AddDefaultValue();
+    slot = sem_ir_->inst_blocks().AddPlaceholder();
   }
   return slot;
 }

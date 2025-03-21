@@ -145,8 +145,6 @@ The indices typically use `IdBase`.
 `ValueStore`s APIs follow the shape of simple array access and mutation:
 
 -   `Add` which takes a value and returns the index.
--   `AddDefaultValue` which adds a default-constructed value and returns the
-    index.
 -   `Get` takes an index and returns a reference to the value (possibly a
     constant reference).
 -   Other vector-like functionality, including `size` or `Reserve`

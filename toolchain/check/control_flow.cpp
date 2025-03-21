@@ -16,7 +16,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
   if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
-  auto block_id = context.inst_blocks().AddDefaultValue();
+  auto block_id = context.inst_blocks().AddPlaceholder();
   AddInst<BranchNode>(context, node_id, {block_id, args...});
   return block_id;
 }
@@ -47,7 +47,7 @@ auto AddConvergenceBlockAndPush(Context& context, Parse::NodeId node_id,
   for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
     if (context.inst_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
-        new_block_id = context.inst_blocks().AddDefaultValue();
+        new_block_id = context.inst_blocks().AddPlaceholder();
       }
       CARBON_CHECK(node_id.has_value());
       AddInst<SemIR::Branch>(context, node_id, {.target_id = new_block_id});
@@ -67,7 +67,7 @@ auto AddConvergenceBlockWithArgAndPush(
   for (auto arg_id : block_args) {
     if (context.inst_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
-        new_block_id = context.inst_blocks().AddDefaultValue();
+        new_block_id = context.inst_blocks().AddPlaceholder();
       }
       AddInst<SemIR::BranchWithArg>(
           context, node_id, {.target_id = new_block_id, .arg_id = arg_id});

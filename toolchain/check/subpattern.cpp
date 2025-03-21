@@ -20,7 +20,7 @@ auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
     // will be determined later.
     AddInst(context,
             SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
-                {.target_id = context.inst_blocks().AddDefaultValue()}));
+                {.target_id = context.inst_blocks().AddPlaceholder()}));
   } else {
     // This single-block region will be inserted as a SpliceBlock, so we don't
     // need control flow out of it.

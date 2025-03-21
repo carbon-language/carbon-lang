@@ -452,22 +452,33 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
  public:
   using BaseType = BlockValueStore<InstBlockId>;
 
-  using BaseType::AddDefaultValue;
-  using BaseType::AddUninitialized;
-
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
       : BaseType(allocator) {
-    auto exports_id = AddDefaultValue();
+    auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
-    auto import_refs_id = AddDefaultValue();
+    auto import_refs_id = AddPlaceholder();
     CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
-    auto global_init_id = AddDefaultValue();
+    auto global_init_id = AddPlaceholder();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }
 
+  // Reserves and returns a block ID. The contents of the block should be
+  // specified by calling Set, or similar.
+  auto AddPlaceholder() -> InstBlockId {
+    return values().Add(llvm::MutableArrayRef<ElementType>());
+  }
+
+  // Adds an uninitialized block of the given size. The caller is expected to
+  // modify values.
+  auto AddUninitialized(size_t size) -> InstBlockId {
+    return values().Add(AllocateUninitialized(size));
+  }
+
+  // Sets the contents of an empty block to the given content.
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
-    CARBON_CHECK(block_id != InstBlockId::Unreachable);
-    BlockValueStore<InstBlockId>::SetContent(block_id, content);
+    CARBON_CHECK(Get(block_id).empty(),
+                 "inst block content set more than once");
+    values().Get(block_id) = AllocateCopy(content);
   }
 
   // Returns the contents of the specified block, or an empty array if the block
