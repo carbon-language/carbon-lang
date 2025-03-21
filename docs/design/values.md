@@ -156,13 +156,12 @@ fn Sum(x: i32, y: i32) -> i32 {
 Value bindings require the matched expression to be a _value expression_,
 converting it into one as necessary.
 
-A _variable pattern_ can be introduced with the `var` keyword to create an
-object with storage when matched. Every binding pattern name introduced within a
-variable pattern is called a _variable binding_ and forms a
-[_durable reference expression_](#durable-reference-expressions) to an object
-within the variable pattern's storage when used. Variable patterns require their
-matched expression to be an _initializing expression_ and provide their storage
-to it to be initialized.
+The `var` keyword is a prefix operator that marks all binding patterns nested
+within its operand as _variable binding patterns_. A variable binding pattern
+creates an object with storage when matched, and forms a
+[_durable reference expression_](#durable-reference-expressions) to that object.
+It requires the matched expression to be an _initializing expression_ and
+provides its storage to it to be initialized.
 
 ```carbon
 fn MutateThing(ptr: i64*);
@@ -510,7 +509,7 @@ the provided storage.
 managed and linked to from here.
 
 The first place where an initializing expression is _required_ is to satisfy
-[_variable patterns_](#binding-patterns-and-local-variables-with-let-and-var).
+[_variable binding patterns_](#binding-patterns-and-local-variables-with-let-and-var).
 These require the expression they match to be an initializing expression for the
 storage they create. The simplest example is the expression after the `=` in a
 local `var` declaration.
@@ -531,7 +530,7 @@ as the referent of the resulting ephemeral reference expression.
 Function calls in Carbon are modeled directly as initializing expressions --
 they require storage as an input and when evaluated cause that storage to be
 initialized with an object. This means that when a function call is used to
-initialize some variable pattern as here:
+initialize some variable binding pattern as here:
 
 ```carbon
 fn CreateMyObject() -> MyType {
@@ -542,7 +541,22 @@ var x: MyType = CreateMyObject();
 ```
 
 The `<return-expression>` in the `return` statement actually initializes the
-storage provided for `x`. There is no "copy" or other step.
+storage provided for `x`. There is no "copy" or other step. Note that this only
+applies when the function call is used to initialize a single binding pattern:
+
+```carbon
+fn CreateTuple() -> (i32, i32) {
+  return <return-expression>;
+}
+
+// Materializes the result of `CreateTuple()`, and then copy-initializes  `x`
+// and `y` from its elements.
+var (x: i32, y: i32) = CreateTuple();
+```
+
+> **Open question:** Can this limitation be removed? This would require ending
+> the lifetime of the materialized tuple without ending the lifetime of its
+> elements.
 
 All `return` statement expressions are required to be initializing expressions
 and in fact initialize the storage provided to the function's call expression.
