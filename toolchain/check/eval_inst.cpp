@@ -224,21 +224,20 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
 
 auto EvalConstantInst(Context& context, SemIRLoc loc,
                       SemIR::ImplSymbolicWitness inst) -> ConstantEvalResult {
-  auto result = DeferredLookupSingleImplWitness(
+  auto result = EvalLookupSingleImplWitness(
       context, UnwrapSemIRLoc()(context, loc), inst);
-  if (std::holds_alternative<UseOriginalImplSymbolicWitness>(result)) {
-    return ConstantEvalResult::NewSamePhase(inst);
-  }
-  auto impl_witness_inst_id = std::get<SemIR::InstId>(result);
-  if (!impl_witness_inst_id.has_value()) {
+  if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
     // eval block, since we only add the deferred lookup instruction (being
     // evaluated here) to the semir if the lookup succeeds.
     return ConstantEvalResult::NotConstant;
   }
+  if (!result.has_concrete_value()) {
+    return ConstantEvalResult::NewSamePhase(inst);
+  }
   return ConstantEvalResult::Existing(
-      context.constant_values().Get(impl_witness_inst_id));
+      context.constant_values().Get(result.GetConcreteWitness()));
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc loc,

@@ -190,8 +190,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
                                 bool query_is_concrete,
                                 SemIR::ConstantId query_self_const_id,
                                 const SemIR::SpecificInterface& interface,
-                                SemIR::ImplId impl_id)
-    -> LookupSingleImplWitnessResult {
+                                SemIR::ImplId impl_id) -> EvalImplLookupResult {
   // The impl may have generic arguments, in which case we need to deduce them
   // to find what they are given the specific type and interface query. We use
   // that specific to map values in the impl to the deduced values.
@@ -283,7 +282,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
         SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                           impl.witness_id));
   } else {
-    return UseOriginalImplSymbolicWitness();
+    return EvalImplLookupResult::MakeNonFinalResult();
   }
 }
 
@@ -451,13 +450,13 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.inst_blocks().AddCanonical(result_witness_ids);
 }
 
-auto DeferredLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                                     SemIR::ImplSymbolicWitness deferred_query)
-    -> LookupSingleImplWitnessResult {
+auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
+                                 SemIR::ImplSymbolicWitness eval_query)
+    -> EvalImplLookupResult {
   SemIR::ConstantId query_self_const_id =
-      context.constant_values().Get(deferred_query.query_self_inst_id);
+      context.constant_values().Get(eval_query.query_self_inst_id);
   SemIR::SpecificInterfaceId query_specific_interface_id =
-      deferred_query.query_specific_interface_id;
+      eval_query.query_specific_interface_id;
 
   // NOTE: Do not retain this reference to the SpecificInterface obtained from a
   // SpecificInterfaceId. Doing impl lookup does deduce which can do more impl
@@ -582,11 +581,8 @@ auto DeferredLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     auto result = GetWitnessIdForImpl(
         context, loc_id, query_is_concrete, query_self_const_id,
         query_specific_interface, candidate.impl_id);
-    if (std::holds_alternative<UseOriginalImplSymbolicWitness>(result)) {
+    if (result.has_value()) {
       return result;
-    } else if (auto witness_id = std::get<SemIR::InstId>(result);
-               witness_id.has_value()) {
-      return witness_id;
     }
   }
   return SemIR::InstId::None;
