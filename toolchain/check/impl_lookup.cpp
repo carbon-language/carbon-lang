@@ -321,104 +321,32 @@ static auto FindWitnessInFacet(
   return SemIR::InstId::None;
 }
 
-// Finds the best impl among all available impls that provides the
-// `specific_interface` for the type in `type_const_id`, and returns a witness
-// for that impl. Returns `None` if no match was found.
+// Begin a search for an impl declaration matching the query. We do this by
+// creating an ImplSymbolicWitness instruction and evaluating. If it's able to
+// find a final concrete impl, then it will evaluate to that `ImplWitness` but
+// if not, it will evaluate to itself as a symbolic witness to be further
+// evaluated with a more specific query when building a specific for the generic
+// context the query came from.
 static auto FindWitnessInImpls(Context& context, SemIR::LocId loc_id,
-                               bool query_is_concrete,
                                SemIR::ConstantId query_self_const_id,
-                               SemIR::SpecificInterface specific_interface)
-    -> LookupSingleImplWitnessResult {
-  struct CandidateImpl {
-    SemIR::ImplId impl_id;
-    SemIR::InstId loc_inst_id;
-    TypeStructure type_structure;
-  };
-
-  auto query_type_structure = BuildTypeStructure(
-      context, context.constant_values().GetInstId(query_self_const_id),
-      specific_interface);
-
-  llvm::SmallVector<CandidateImpl> candidate_impl_ids;
-  for (auto [id, impl] : context.impls().enumerate()) {
-    // If the impl's interface_id differs from the query, then this impl can not
-    // possibly provide the queried interface.
-    if (impl.interface.interface_id != specific_interface.interface_id) {
-      continue;
-    }
-
-    // When the impl's interface_id matches, but the interface is generic, the
-    // impl may or may not match based on restrictions in the generic parameters
-    // of the impl.
-    //
-    // As a shortcut, if the impl's constraint is not symbolic (does not depend
-    // on any generic parameters), then we can determine that we match if the
-    // specific ids match exactly.
-    auto impl_interface_const_id =
-        context.constant_values().Get(impl.constraint_id);
-    if (!impl_interface_const_id.is_symbolic()) {
-      if (impl.interface.specific_id != specific_interface.specific_id) {
-        continue;
-      }
-    }
-
-    // This check comes first to avoid deduction with an invalid impl. We use an
-    // error value to indicate an error during creation of the impl, such as a
-    // recursive impl which will cause deduction to recurse infinitely.
-    if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
-      continue;
-    }
-    CARBON_CHECK(impl.witness_id.has_value());
-
-    auto type_structure =
-        BuildTypeStructure(context, impl.self_id, impl.interface);
-    if (!query_type_structure.IsCompatibleWith(type_structure)) {
-      continue;
-    }
-
-    candidate_impl_ids.push_back(
-        {id, impl.definition_id, std::move(type_structure)});
+                               SemIR::SpecificInterface interface)
+    -> SemIR::InstId {
+  auto witness_const_id = TryEvalInst(
+      context, loc_id, SemIR::InstId::None,
+      SemIR::ImplSymbolicWitness{
+          .type_id = GetSingletonType(
+              context, SemIR::WitnessSymbolicType::SingletonInstId),
+          .query_self_inst_id =
+              context.constant_values().GetInstId(query_self_const_id),
+          .query_specific_interface_id =
+              context.specific_interfaces().Add(interface),
+      });
+  // We use a NotConstant result from eval to communicate back an impl
+  // lookup failure. See `EvalConstantInst()` for `ImplSymbolicWitness`.
+  if (!witness_const_id.is_constant()) {
+    return SemIR::InstId::None;
   }
-
-  auto compare = [](auto& lhs, auto& rhs) -> bool {
-    // TODO: Allow Carbon code to provide a priority ordering explicitly. For
-    // now they have all the same priority, so the priority is the order in
-    // which they are found in code.
-
-    // Sort by their type structures. Higher value in type structure comes
-    // first, so we use `>` comparison.
-    return lhs.type_structure > rhs.type_structure;
-  };
-  // Stable sort is used so that impls that are seen first are preferred when
-  // they have an equal priority ordering.
-  std::ranges::stable_sort(candidate_impl_ids, compare);
-
-  for (const auto& candidate : candidate_impl_ids) {
-    {
-      // NOTE: Don't retain a reference into the stack, it may be invalidated if
-      // we do further impl lookups when GetWitnessIdForImpl() does deduction.
-      auto& stack = context.impl_lookup_stack();
-      // In deferred lookup for a symbolic impl witness, while building a
-      // specific, there may be no stack yet as this may be the first lookup. If
-      // further lookups are started as a result in deduce, they will build the
-      // stack.
-      if (!stack.empty()) {
-        stack.back().impl_loc = candidate.loc_inst_id;
-      }
-    }
-    // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls to
-    // be imported, invalidating any pointer into `context.impls()`.
-    auto result = GetWitnessIdForImpl(context, loc_id, query_is_concrete,
-                                      query_self_const_id, specific_interface,
-                                      candidate.impl_id);
-    if (std::holds_alternative<UseOriginalImplSymbolicWitness>(result)) {
-      return result;
-    } else if (auto witness_id = std::get<SemIR::InstId>(result);
-               witness_id.has_value()) {
-      return witness_id;
-    }
-  }
-  return SemIR::InstId::None;
+  return context.constant_values().GetInstId(witness_const_id);
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
@@ -498,22 +426,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     auto result_witness_id =
         FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
     if (!result_witness_id.has_value()) {
-      auto witness_const_id = TryEvalInst(
-          context, loc_id, SemIR::InstId::None,
-          SemIR::ImplSymbolicWitness{
-              .type_id = GetSingletonType(
-                  context, SemIR::WitnessSymbolicType::SingletonInstId),
-              .query_self_inst_id =
-                  context.constant_values().GetInstId(query_self_const_id),
-              .query_specific_interface_id =
-                  context.specific_interfaces().Add(interface),
-          });
-      // We use a NotConstant result from eval to communicate back an impl
-      // lookup failure. See `EvalConstantInst()` for `ImplSymbolicWitness`.
-      if (witness_const_id.is_constant()) {
-        result_witness_id =
-            context.constant_values().GetInstId(witness_const_id);
-      }
+      result_witness_id =
+          FindWitnessInImpls(context, loc_id, query_self_const_id, interface);
     }
     if (result_witness_id.has_value()) {
       result_witness_ids.push_back(result_witness_id);
@@ -585,8 +499,97 @@ auto DeferredLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
         context.constant_values().Get(facet_value->type_inst_id);
   }
 
-  return FindWitnessInImpls(context, loc_id, query_is_concrete,
-                            query_self_const_id, query_specific_interface);
+  struct CandidateImpl {
+    SemIR::ImplId impl_id;
+    SemIR::InstId loc_inst_id;
+    TypeStructure type_structure;
+  };
+
+  auto query_type_structure = BuildTypeStructure(
+      context, context.constant_values().GetInstId(query_self_const_id),
+      query_specific_interface);
+
+  llvm::SmallVector<CandidateImpl> candidate_impl_ids;
+  for (auto [id, impl] : context.impls().enumerate()) {
+    // If the impl's interface_id differs from the query, then this impl can
+    // not possibly provide the queried interface.
+    if (impl.interface.interface_id != query_specific_interface.interface_id) {
+      continue;
+    }
+
+    // When the impl's interface_id matches, but the interface is generic, the
+    // impl may or may not match based on restrictions in the generic
+    // parameters of the impl.
+    //
+    // As a shortcut, if the impl's constraint is not symbolic (does not
+    // depend on any generic parameters), then we can determine that we match
+    // if the specific ids match exactly.
+    auto impl_interface_const_id =
+        context.constant_values().Get(impl.constraint_id);
+    if (!impl_interface_const_id.is_symbolic()) {
+      if (impl.interface.specific_id != query_specific_interface.specific_id) {
+        continue;
+      }
+    }
+
+    // This check comes first to avoid deduction with an invalid impl. We use
+    // an error value to indicate an error during creation of the impl, such
+    // as a recursive impl which will cause deduction to recurse infinitely.
+    if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+      continue;
+    }
+    CARBON_CHECK(impl.witness_id.has_value());
+
+    auto type_structure =
+        BuildTypeStructure(context, impl.self_id, impl.interface);
+    if (!query_type_structure.IsCompatibleWith(type_structure)) {
+      continue;
+    }
+
+    candidate_impl_ids.push_back(
+        {id, impl.definition_id, std::move(type_structure)});
+  }
+
+  auto compare = [](auto& lhs, auto& rhs) -> bool {
+    // TODO: Allow Carbon code to provide a priority ordering explicitly. For
+    // now they have all the same priority, so the priority is the order in
+    // which they are found in code.
+
+    // Sort by their type structures. Higher value in type structure comes
+    // first, so we use `>` comparison.
+    return lhs.type_structure > rhs.type_structure;
+  };
+  // Stable sort is used so that impls that are seen first are preferred when
+  // they have an equal priority ordering.
+  std::ranges::stable_sort(candidate_impl_ids, compare);
+
+  for (const auto& candidate : candidate_impl_ids) {
+    {
+      // NOTE: Don't retain a reference into the stack, it may be invalidated
+      // if we do further impl lookups when GetWitnessIdForImpl() does
+      // deduction.
+      auto& stack = context.impl_lookup_stack();
+      // In deferred lookup for a symbolic impl witness, while building a
+      // specific, there may be no stack yet as this may be the first lookup.
+      // If further lookups are started as a result in deduce, they will build
+      // the stack.
+      if (!stack.empty()) {
+        stack.back().impl_loc = candidate.loc_inst_id;
+      }
+    }
+    // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls
+    // to be imported, invalidating any pointer into `context.impls()`.
+    auto result = GetWitnessIdForImpl(
+        context, loc_id, query_is_concrete, query_self_const_id,
+        query_specific_interface, candidate.impl_id);
+    if (std::holds_alternative<UseOriginalImplSymbolicWitness>(result)) {
+      return result;
+    } else if (auto witness_id = std::get<SemIR::InstId>(result);
+               witness_id.has_value()) {
+      return witness_id;
+    }
+  }
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check
