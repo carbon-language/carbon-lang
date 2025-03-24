@@ -257,15 +257,9 @@ static auto AddGenericConstantToEvalBlock(
       context, generic_id, region, context.insts().GetLocId(inst_id),
       constants_in_generic, inside_redeclaration);
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
-  if (new_inst_id == const_inst_id) {
-    // It's possible that no substitutions were necessary in this instruction.
-    // This can happen if the instruction has a dependent operand that is
-    // already in the eval block, such as an action. In this case, we still
-    // build a new instruction, so that the same instruction doesn't appear in
-    // multiple blocks.
-    new_inst_id =
-        callbacks.Rebuild(new_inst_id, context.insts().Get(new_inst_id));
-  }
+  CARBON_CHECK(new_inst_id != const_inst_id,
+               "No substitutions performed for generic constant {0}",
+               context.insts().Get(inst_id));
   return context.constant_values().Get(new_inst_id);
 }
 
