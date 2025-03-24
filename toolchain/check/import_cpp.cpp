@@ -204,9 +204,9 @@ static auto GetReturnType(Context& context, SemIRLoc loc_id,
   if (ret_type->isVoidType()) {
     return SemIR::InstId::None;
   }
-  const auto* builtin_type = dyn_cast<clang::BuiltinType>(ret_type);
-  if (builtin_type && builtin_type->getKind() == clang::BuiltinType::Int) {
-    // TODO: Detect when integer types aren't the expected sizes
+  if (const auto* builtin_type = dyn_cast<clang::BuiltinType>(ret_type);
+      builtin_type && builtin_type->getKind() == clang::BuiltinType::Int) {
+    // TODO: Detect when integer types aren't the expected sizes.
     IntId size_id = context.ints().Add(32);
     // TODO: Fill in a location for the type once available.
     SemIR::TypeId type_id = MakeIntType(context, Parse::NodeId::None,
