@@ -6,6 +6,7 @@
 #define CARBON_COMMON_SET_H_
 
 #include <concepts>
+#include <type_traits>
 
 #include "common/check.h"
 #include "common/hashtable_key_context.h"
