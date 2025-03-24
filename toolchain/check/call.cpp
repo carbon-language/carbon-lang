@@ -55,12 +55,13 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                       "{0} argument{0:s} passed to "
                       "{1:=0:function|=1:generic class|=2:generic interface}"
                       " expecting {2} argument{2:s}",
-                      IntAsSelect, IntAsSelect, IntAsSelect);
+                      Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+                      Diagnostics::IntAsSelect);
     CARBON_DIAGNOSTIC(
         InCallToEntity, Note,
         "calling {0:=0:function|=1:generic class|=2:generic interface}"
         " declared here",
-        IntAsSelect);
+        Diagnostics::IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
                static_cast<int>(entity_kind_for_diagnostic), params.size())
@@ -218,7 +219,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   SemIR::InstId return_slot_arg_id = SemIR::InstId::None;
   SemIR::ReturnTypeInfo return_info = [&] {
     auto& function = context.functions().Get(callee_function.function_id);
-    DiagnosticAnnotationScope annotate_diagnostics(
+    Diagnostics::AnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
                             "return type declared here");

@@ -35,16 +35,16 @@ enum class Lookahead : int32_t {
 class Context {
  public:
   // A token-based emitter for use during parse.
-  class Emitter : public DiagnosticEmitter<Lex::TokenIndex> {
+  class TokenEmitter : public Diagnostics::Emitter<Lex::TokenIndex> {
    public:
-    explicit Emitter(DiagnosticConsumer* consumer, Context* context)
-        : DiagnosticEmitter(consumer), context_(context) {}
+    explicit TokenEmitter(Diagnostics::Consumer* consumer, Context* context)
+        : Emitter(consumer), context_(context) {}
 
    protected:
     // Applies the `position_` to the `last_byte_offset` returned by
     // `TokenToDiagnosticLoc`.
     auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+        -> Diagnostics::ConvertedLoc override {
       auto converted = context_->tokens().TokenToDiagnosticLoc(token);
       converted.last_byte_offset =
           std::max(converted.last_byte_offset,
@@ -122,7 +122,7 @@ class Context {
                 "StateStackEntry has unexpected size!");
 
   explicit Context(Tree* tree, Lex::TokenizedBuffer* tokens,
-                   DiagnosticConsumer* consumer,
+                   Diagnostics::Consumer* consumer,
                    llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
@@ -407,7 +407,7 @@ class Context {
 
   auto has_errors() const -> bool { return err_tracker_.seen_error(); }
 
-  auto emitter() -> Emitter& { return emitter_; }
+  auto emitter() -> TokenEmitter& { return emitter_; }
 
   auto position() -> Lex::TokenIterator& { return position_; }
   auto position() const -> Lex::TokenIterator { return position_; }
@@ -440,8 +440,8 @@ class Context {
   Tree* tree_;
   Lex::TokenizedBuffer* tokens_;
 
-  ErrorTrackingDiagnosticConsumer err_tracker_;
-  Emitter emitter_;
+  Diagnostics::ErrorTrackingConsumer err_tracker_;
+  TokenEmitter emitter_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

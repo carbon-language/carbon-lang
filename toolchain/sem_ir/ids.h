@@ -470,7 +470,7 @@ struct NameId : public IdBase<NameId> {
   static constexpr llvm::StringLiteral Label = "name";
 
   // names().GetFormatted() is used for diagnostics.
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // An enum of special names.
   enum class SpecialNameId : uint8_t {
@@ -699,7 +699,7 @@ struct TypeId : public IdBase<TypeId> {
   // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
   // `InstId` describing how the type was written should be preferred, using
   // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   using IdBase::IdBase;
 
@@ -746,7 +746,7 @@ struct ElementIndex : public IndexBase<ElementIndex> {
 // The ID of a library name. This is either a string literal or `default`.
 struct LibraryNameId : public IdBase<LibraryNameId> {
   static constexpr llvm::StringLiteral Label = "library_name";
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // The name of `default`.
   static const LibraryNameId Default;

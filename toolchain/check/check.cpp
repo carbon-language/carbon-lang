@@ -302,7 +302,7 @@ static auto BuildApiMapAndDiagnosePackaging(
         CARBON_DIAGNOSTIC(
             IncorrectExtension, Error,
             "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}",
-            BoolAsSelect);
+            Diagnostics::BoolAsSelect);
         auto diag = unit_info.emitter.Build(
             packaging ? packaging->names.node_id : Parse::NodeId::None,
             IncorrectExtension, is_impl);

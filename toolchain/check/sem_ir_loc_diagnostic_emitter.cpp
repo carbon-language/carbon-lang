@@ -12,7 +12,7 @@ namespace Carbon::Check {
 
 auto SemIRLocDiagnosticEmitter::ConvertLoc(SemIRLoc loc,
                                            ContextFnT context_fn) const
-    -> ConvertedDiagnosticLoc {
+    -> Diagnostics::ConvertedLoc {
   auto converted = ConvertLocImpl(loc, context_fn);
 
   // Use the token when possible, but -1 is the default value.
@@ -35,7 +35,7 @@ auto SemIRLocDiagnosticEmitter::ConvertLoc(SemIRLoc loc,
 
 auto SemIRLocDiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
                                                ContextFnT context_fn) const
-    -> ConvertedDiagnosticLoc {
+    -> Diagnostics::ConvertedLoc {
   llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
       loc.is_inst_id_ ? SemIR::GetAbsoluteNodeId(sem_ir_, loc.inst_id_)
                       : SemIR::GetAbsoluteNodeId(sem_ir_, loc.loc_id_);
@@ -59,7 +59,7 @@ auto SemIRLocDiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
 
 auto SemIRLocDiagnosticEmitter::ConvertLocInFile(
     SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
-    ContextFnT /*context_fn*/) const -> ConvertedDiagnosticLoc {
+    ContextFnT /*context_fn*/) const -> Diagnostics::ConvertedLoc {
   const auto& tree_and_subtrees =
       tree_and_subtrees_getters_[absolute_node_id.check_ir_id.index]();
   return tree_and_subtrees.NodeToDiagnosticLoc(absolute_node_id.node_id,
@@ -118,7 +118,7 @@ auto SemIRLocDiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
   }
-  return DiagnosticEmitter<SemIRLoc>::ConvertArg(arg);
+  return Diagnostics::Emitter<SemIRLoc>::ConvertArg(arg);
 }
 
 }  // namespace Carbon::Check

@@ -9,7 +9,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
 // Buffers incoming diagnostics for printing and sorting.
 //
@@ -19,12 +19,12 @@ namespace Carbon {
 // `Diagnostic::messages[0]` will always be a location in the consumer's primary
 // file, but if it needs to correspond to a different file, the
 // `last_byte_offset` must still indicate an offset within the primary file.
-class SortingDiagnosticConsumer : public DiagnosticConsumer {
+class SortingConsumer : public Consumer {
  public:
-  explicit SortingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
+  explicit SortingConsumer(Consumer& next_consumer)
       : next_consumer_(&next_consumer) {}
 
-  ~SortingDiagnosticConsumer() override {
+  ~SortingConsumer() override {
     // We choose not to automatically flush diagnostics here, because they are
     // likely to refer to data that gets destroyed before the diagnostics
     // consumer is destroyed, because the diagnostics consumer is typically
@@ -55,9 +55,9 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   // specify 0.
   llvm::SmallVector<Diagnostic, 0> diagnostics_;
 
-  DiagnosticConsumer* next_consumer_;
+  Consumer* next_consumer_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_

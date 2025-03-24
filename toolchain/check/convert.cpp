@@ -270,12 +270,12 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
       CARBON_DIAGNOSTIC(ArrayInitFromLiteralArgCountMismatch, Error,
                         "cannot initialize array of {0} element{0:s} from {1} "
                         "initializer{1:s}",
-                        IntAsSelect, IntAsSelect);
+                        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect);
       CARBON_DIAGNOSTIC(
           ArrayInitFromExprArgCountMismatch, Error,
           "cannot initialize array of {0} element{0:s} from tuple "
           "with {1} element{1:s}",
-          IntAsSelect, IntAsSelect);
+          Diagnostics::IntAsSelect, Diagnostics::IntAsSelect);
       context.emitter().Emit(value_loc_id,
                              literal_elems.empty()
                                  ? ArrayInitFromExprArgCountMismatch
@@ -359,7 +359,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
           TupleInitElementCountMismatch, Error,
           "cannot initialize tuple of {0} element{0:s} from tuple "
           "with {1} element{1:s}",
-          IntAsSelect, IntAsSelect);
+          Diagnostics::IntAsSelect, Diagnostics::IntAsSelect);
       context.emitter().Emit(value_loc_id, TupleInitElementCountMismatch,
                              dest_elem_types.size(), src_elem_types.size());
     }
@@ -459,7 +459,8 @@ static auto ConvertStructToStructOrClass(Context& context,
           StructInitElementCountMismatch, Error,
           "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
           "with {2} field{2:s}",
-          BoolAsSelect, IntAsSelect, IntAsSelect);
+          Diagnostics::BoolAsSelect, Diagnostics::IntAsSelect,
+          Diagnostics::IntAsSelect);
       context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
                              ToClass, dest_elem_fields_size,
                              src_elem_fields.size());
@@ -869,7 +870,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         // While the types are the same, the conversion can still fail if it
         // performs a copy while converting the value to another category, and
         // the type (or some part of it) is not copyable.
-        DiagnosticAnnotationScope annotate_diagnostics(
+        Diagnostics::AnnotationScope annotate_diagnostics(
             &context.emitter(), [&](auto& builder) {
               CARBON_DIAGNOSTIC(InCopy, Note, "in copy of {0}", TypeOfInstId);
               builder.Note(value_id, InCopy, value_id);
@@ -1135,7 +1136,7 @@ static auto DiagnoseConversionFailureToConstraintValue(Context& context,
           ConversionFailureFacetToFacet, Error,
           "cannot{0:| implicitly} convert type {1} that implements {2} "
           "into type implementing {3}{0: with `as`|}",
-          BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
+          Diagnostics::BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
       return context.emitter().Build(
           loc_id, ConversionFailureFacetToFacet,
           target.kind == ConversionTarget::ExplicitAs, expr_id,
@@ -1144,7 +1145,7 @@ static auto DiagnoseConversionFailureToConstraintValue(Context& context,
       CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
                         "cannot{0:| implicitly} convert type {1} "
                         "into type implementing {2}{0: with `as`|}",
-                        BoolAsSelect, InstIdAsType, SemIR::TypeId);
+                        Diagnostics::BoolAsSelect, InstIdAsType, SemIR::TypeId);
       return context.emitter().Build(
           loc_id, ConversionFailureTypeToFacet,
           target.kind == ConversionTarget::ExplicitAs, expr_id, target.type_id);
@@ -1154,7 +1155,8 @@ static auto DiagnoseConversionFailureToConstraintValue(Context& context,
         ConversionFailureNonTypeToFacet, Error,
         "cannot{0:| implicitly} convert non-type value of type {1} "
         "{2:to|into type implementing} {3}{0: with `as`|}",
-        BoolAsSelect, TypeOfInstId, BoolAsSelect, SemIR::TypeId);
+        Diagnostics::BoolAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
+        SemIR::TypeId);
     return context.emitter().Build(
         loc_id, ConversionFailureNonTypeToFacet,
         target.kind == ConversionTarget::ExplicitAs, expr_id,
@@ -1286,7 +1288,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         CARBON_DIAGNOSTIC(ConversionFailure, Error,
                           "cannot{0:| implicitly} convert value of type {1} to "
                           "{2}{0: with `as`|}",
-                          BoolAsSelect, TypeOfInstId, SemIR::TypeId);
+                          Diagnostics::BoolAsSelect, TypeOfInstId,
+                          SemIR::TypeId);
         return context.emitter().Build(
             loc_id, ConversionFailure,
             target.kind == ConversionTarget::ExplicitAs, expr_id,

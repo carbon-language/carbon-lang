@@ -225,7 +225,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   CARBON_DIAGNOSTIC(
       ClassInvalidMemberAccess, Error,
       "cannot access {0:private|protected} member `{1}` of type {2}",
-      BoolAsSelect, SemIR::NameId, SemIR::TypeId);
+      Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
   context.emitter()
       .Build(loc, ClassInvalidMemberAccess,
@@ -424,7 +424,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
-        DiagnosticAnnotationScope annotate_diagnostics(
+        Diagnostics::AnnotationScope annotate_diagnostics(
             &context.emitter(), [&](auto& builder) {
               CARBON_DIAGNOSTIC(FromExtendHere, Note,
                                 "declared as an extended scope here");

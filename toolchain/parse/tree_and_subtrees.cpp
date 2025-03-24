@@ -260,7 +260,7 @@ auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
 }
 
 auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
-    -> ConvertedDiagnosticLoc {
+    -> Diagnostics::ConvertedLoc {
   // Support the invalid token as a way to emit only the filename, when there
   // is no line association.
   if (!node_id.has_value()) {

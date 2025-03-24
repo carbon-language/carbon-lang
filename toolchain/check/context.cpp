@@ -8,7 +8,7 @@
 
 namespace Carbon::Check {
 
-Context::Context(DiagnosticEmitter<SemIRLoc>* emitter,
+Context::Context(Diagnostics::Emitter<SemIRLoc>* emitter,
                  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                  SemIR::File* sem_ir, int imported_ir_count, int total_ir_count,
                  llvm::raw_ostream* vlog_stream)

@@ -378,7 +378,7 @@ auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
 }
 
 auto TokenizedBuffer::SourcePointerToDiagnosticLoc(const char* loc) const
-    -> ConvertedDiagnosticLoc {
+    -> Diagnostics::ConvertedLoc {
   CARBON_CHECK(StringRefContainsPointer(source_->text(), loc),
                "location not within buffer");
   int32_t offset = loc - source_->text().begin();
@@ -416,7 +416,7 @@ auto TokenizedBuffer::SourcePointerToDiagnosticLoc(const char* loc) const
 }
 
 auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
-    -> ConvertedDiagnosticLoc {
+    -> Diagnostics::ConvertedLoc {
   // Map the token location into a position within the source buffer.
   const char* token_start =
       source_->text().begin() + GetTokenInfo(token).byte_offset();
