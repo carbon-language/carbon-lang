@@ -206,8 +206,15 @@ static auto GetReturnType(Context& context, SemIRLoc loc_id,
   }
   if (const auto* builtin_type = dyn_cast<clang::BuiltinType>(ret_type);
       builtin_type && builtin_type->getKind() == clang::BuiltinType::Int) {
-    // TODO: Detect when integer types aren't the expected sizes.
-    IntId size_id = context.ints().Add(32);
+    constexpr int SupportedIntWidth = 32;
+    if (auto int_size = context.ast_context().getTypeSize(ret_type);
+        int_size != SupportedIntWidth) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: return type: {0}, size: {1}",
+                                 ret_type.getAsString(), int_size));
+      return SemIR::ErrorInst::SingletonInstId;
+    }
+    IntId size_id = context.ints().Add(SupportedIntWidth);
     // TODO: Fill in a location for the type once available.
     SemIR::TypeId type_id = MakeIntType(context, Parse::NodeId::None,
                                         SemIR::IntKind::Signed, size_id);
