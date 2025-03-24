@@ -73,7 +73,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericInterface.type: type = facet_type <@GenericInterface, @GenericInterface(%T.loc11_28.2)> [symbolic = %GenericInterface.type (constants.%GenericInterface.type.3fe)]
-// CHECK:STDOUT:   %Self.2: %GenericInterface.type.3fe = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.2: @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @GenericInterface(%T.loc11_28.2) [symbolic = %F.type (constants.%F.type.a4b)]
 // CHECK:STDOUT:   %F: @GenericInterface.%F.type (%F.type.a4b) = struct_value () [symbolic = %F (constants.%F.3d9)]
 // CHECK:STDOUT:   %GenericInterface.assoc_type: type = assoc_entity_type @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe) [symbolic = %GenericInterface.assoc_type (constants.%GenericInterface.assoc_type)]

@@ -255,7 +255,7 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
                  inst.type_id().index);
   if (type_id == inst.type_id().index && arg0 == inst.arg0() &&
       arg1 == inst.arg1()) {
-    return inst_id;
+    return callbacks.ReuseUnchanged(inst_id);
   }
 
   // TODO: Do we need to require this type to be complete?
