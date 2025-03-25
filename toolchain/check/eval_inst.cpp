@@ -237,7 +237,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
     return ConstantEvalResult::NewSamePhase(inst);
   }
   return ConstantEvalResult::Existing(
-      context.constant_values().Get(result.GetConcreteWitness()));
+      context.constant_values().Get(result.concrete_witness()));
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc loc,

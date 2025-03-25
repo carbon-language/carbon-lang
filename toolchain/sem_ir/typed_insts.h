@@ -878,7 +878,6 @@ struct ImplSymbolicWitness {
           {.ir_name = "impl_symbolic_witness",
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
-  // TODO: Consider making this a singleton inst?
 
   // Always the type of the builtin `WitnessSymbolicType` singleton instruction.
   TypeId type_id;

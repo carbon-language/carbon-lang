@@ -255,8 +255,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id) -> void {
 LLVM_DUMP_METHOD auto Dump(const File& file,
                            SpecificInterfaceId specific_interface_id) -> void {
   const auto& interface = file.specific_interfaces().Get(specific_interface_id);
-  llvm::errs() << specific_interface_id;
-  llvm::errs() << '\n';
+  llvm::errs() << specific_interface_id << '\n';
   llvm::errs() << "  - interface: ";
   DumpNoNewline(file, interface.interface_id);
   llvm::errs() << '\n';

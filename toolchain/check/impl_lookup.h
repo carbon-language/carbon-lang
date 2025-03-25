@@ -75,7 +75,7 @@ class EvalImplLookupResult {
 
   // Only valid if `has_concrete_value()` is true. Returns the witness id for
   // the found impl declaration, or None if `has_value()` is false.
-  auto GetConcreteWitness() const -> SemIR::InstId {
+  auto concrete_witness() const -> SemIR::InstId {
     return std::get<SemIR::InstId>(result_);
   }
 
