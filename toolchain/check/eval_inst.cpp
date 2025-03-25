@@ -230,7 +230,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
     // eval block, since we only add the deferred lookup instruction (being
-    // evaluated here) to the semir if the lookup succeeds.
+    // evaluated here) to the SemIR if the lookup succeeds.
     return ConstantEvalResult::NotConstant;
   }
   if (!result.has_concrete_value()) {
