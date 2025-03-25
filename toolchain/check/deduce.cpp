@@ -471,8 +471,10 @@ auto DeductionContext::Deduce() -> bool {
           auto [kind0, kind1] = param_inst.ArgKinds();
           worklist_.AddInstArg(kind0, param_inst.arg0(), arg_inst.arg0(),
                                needs_substitution);
-          worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
-                               needs_substitution);
+          if (arg_inst.kind() != SemIR::InstKind::FacetValue) {
+            worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
+                                 needs_substitution);
+          }
           continue;
         }
         break;
