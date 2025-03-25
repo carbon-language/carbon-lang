@@ -869,8 +869,8 @@ struct ImplDecl {
 };
 
 // A symbolic witness that a type implements an interface. It represents a
-// promise that an impl lookup query can be satisfied without providing which impl
-// declaration satisfies it. When evaluated, it does lookup again to form a
+// promise that an impl lookup query can be satisfied without providing which
+// impl declaration satisfies it. When evaluated, it does lookup again to form a
 // concrete ImplWitness from a more specific query.
 struct ImplSymbolicWitness {
   static constexpr auto Kind =
