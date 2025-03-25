@@ -549,7 +549,7 @@ fn CreateTuple() -> (i32, i32) {
   return <return-expression>;
 }
 
-// Materializes the result of `CreateTuple()`, and then copy-initializes  `x`
+// Materializes the result of `CreateTuple()`, and then copy-initializes `x`
 // and `y` from its elements.
 var (x: i32, y: i32) = CreateTuple();
 ```
