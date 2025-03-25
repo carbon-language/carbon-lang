@@ -21,9 +21,9 @@ namespace Carbon::Check {
 // When calling from eval to various Check functions, we need the actual LocId.
 // This allows us to unwrap the SemIRLoc to do so.
 //
-// TODO: We could do this unwrap at the entrance to eval, and work with LocId
-// everywhere in eval, instead of deferring it to points where we exit eval back
-// into Check.
+// TODO: Decide whether to refactor calls everywhere to accept `SemIRLoc`, or
+// fold `SemIRLoc` into `LocId`. Either way, we would like eval to call other
+// code without unwrapping `SemIRLoc`.
 class UnwrapSemIRLoc {
  public:
   auto operator()(Context& context, SemIRLoc loc) -> SemIR::LocId {
