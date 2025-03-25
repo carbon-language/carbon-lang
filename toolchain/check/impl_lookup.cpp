@@ -560,7 +560,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   };
   // Stable sort is used so that impls that are seen first are preferred when
   // they have an equal priority ordering.
-  std::ranges::stable_sort(candidate_impl_ids, compare);
+  llvm::stable_sort(candidate_impl_ids, compare);
 
   for (const auto& candidate : candidate_impl_ids) {
     {
