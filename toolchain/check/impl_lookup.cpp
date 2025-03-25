@@ -207,7 +207,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
                                .specific_id = impl.interface.specific_id},
                               query_self_const_id, interface.specific_id);
       if (!specific_id.has_value()) {
-        return SemIR::InstId::None;
+        return EvalImplLookupResult::MakeNone();
       }
     }
   }
@@ -229,7 +229,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
         context.constant_values().Get(access->facet_value_inst_id);
   }
   if (query_self_const_id != deduced_self_const_id) {
-    return SemIR::InstId::None;
+    return EvalImplLookupResult::MakeNone();
   }
 
   // The impl's constraint is a facet type which it is implementing for the self
@@ -240,7 +240,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
       context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
           context.sem_ir(), specific_id, impl.constraint_id));
   if (deduced_constraint_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::InstId::None;
+    return EvalImplLookupResult::MakeNone();
   }
 
   auto deduced_constraint_facet_type_id =
@@ -254,7 +254,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 
   if (deduced_constraint_facet_type_info.other_requirements) {
     // TODO: Remove this when other requirements goes away.
-    return SemIR::InstId::None;
+    return EvalImplLookupResult::MakeNone();
   }
 
   // The specifics in the queried interface must match the deduced specifics in
@@ -263,7 +263,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
       deduced_constraint_facet_type_info.impls_constraints[0].specific_id;
   auto query_interface_specific_id = interface.specific_id;
   if (impl_interface_specific_id != query_interface_specific_id) {
-    return SemIR::InstId::None;
+    return EvalImplLookupResult::MakeNone();
   }
 
   LoadImportRef(context, impl.witness_id);
@@ -278,11 +278,11 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
       (context.constant_values().Get(impl.self_id).is_concrete() &&
        context.constant_values().Get(impl.constraint_id).is_concrete());
   if (query_is_concrete || impl_is_effectively_final) {
-    return context.constant_values().GetInstId(
-        SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                          impl.witness_id));
+    return EvalImplLookupResult::MakeFinal(
+        context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
+            context.sem_ir(), specific_id, impl.witness_id)));
   } else {
-    return EvalImplLookupResult::MakeNonFinalResult();
+    return EvalImplLookupResult::MakeNonFinal();
   }
 }
 
@@ -585,7 +585,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       return result;
     }
   }
-  return SemIR::InstId::None;
+  return EvalImplLookupResult::MakeNone();
 }
 
 }  // namespace Carbon::Check

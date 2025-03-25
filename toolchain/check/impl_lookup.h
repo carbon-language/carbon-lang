@@ -9,6 +9,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -47,10 +48,13 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 //   specializations.
 class EvalImplLookupResult {
  public:
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  EvalImplLookupResult(SemIR::InstId inst_id) : result_(inst_id) {}
-
-  static auto MakeNonFinalResult() -> EvalImplLookupResult {
+  static auto MakeNone() -> EvalImplLookupResult {
+    return EvalImplLookupResult(SemIR::InstId::None);
+  }
+  static auto MakeFinal(SemIR::InstId inst_id) -> EvalImplLookupResult {
+    return EvalImplLookupResult(inst_id);
+  }
+  static auto MakeNonFinal() -> EvalImplLookupResult {
     return EvalImplLookupResult(FoundNonFinalImpl());
   }
 
@@ -78,6 +82,7 @@ class EvalImplLookupResult {
  private:
   struct FoundNonFinalImpl {};
 
+  explicit EvalImplLookupResult(SemIR::InstId inst_id) : result_(inst_id) {}
   explicit EvalImplLookupResult(FoundNonFinalImpl f) : result_(f) {}
 
   std::variant<SemIR::InstId, FoundNonFinalImpl> result_;
