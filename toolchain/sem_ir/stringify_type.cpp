@@ -373,8 +373,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(ImplWitnessAccess inst): {
         auto witness_inst_id =
             sem_ir.constant_values().GetConstantInstId(inst.witness_id);
-        if (auto symbolic_witness =
-                sem_ir.insts().TryGetAs<SemIR::ImplSymbolicWitness>(
+        if (sem_ir.insts().Is<SemIR::ImplSymbolicWitness>(
                     witness_inst_id)) {
           // TODO: Include the query in the diagnostic output?
           step_stack.PushString("<symbolic>");
