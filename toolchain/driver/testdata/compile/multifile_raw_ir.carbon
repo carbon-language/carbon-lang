@@ -98,7 +98,7 @@ fn B() {
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: -1, is_template: 0}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
-// CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1}
+// CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1, call_params_id: inst_block_empty}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}

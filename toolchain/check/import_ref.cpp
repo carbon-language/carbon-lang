@@ -11,6 +11,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/constant.h"
@@ -19,6 +20,7 @@
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -1121,6 +1123,67 @@ static auto GetLocalReturnSlotPatternId(
            .index = param_pattern.index}));
 }
 
+static auto GetLocalCallParamsId(ImportContext& context,
+                                 SemIR::InstBlockId call_params_id)
+    -> SemIR::InstBlockId {
+  if (!call_params_id.has_value() ||
+      call_params_id == SemIR::InstBlockId::Empty) {
+    return call_params_id;
+  }
+
+  const auto& call_params = context.import_inst_blocks().Get(call_params_id);
+  llvm::SmallVector<SemIR::InstId> new_call_params;
+
+  for (auto call_param : call_params) {
+    auto any_param = context.import_insts().GetAs<SemIR::AnyParam>(call_param);
+    auto type_id = context.local_context().types().GetTypeIdForTypeConstantId(
+        GetLocalConstantIdChecked(context, any_param.type_id));
+    SemIR::InstId new_param_id = SemIR::InstId::None;
+
+    // TODO: Remove code duplication
+    auto out_param =
+        context.import_insts().TryGetAs<SemIR::OutParam>(call_param);
+    if (out_param) {
+      auto loc_id_inst = MakeImportedLocIdAndInst<SemIR::OutParam>(
+          context.local_context(), AddImportIRInst(context, call_param),
+          {.type_id = type_id,
+           .index = out_param->index,
+           .pretty_name_id =
+               GetLocalNameId(context, out_param->pretty_name_id)});
+      new_param_id = AddInstInNoBlock(context.local_context(), loc_id_inst);
+    }
+
+    auto ref_param =
+        context.import_insts().TryGetAs<SemIR::RefParam>(call_param);
+    if (ref_param) {
+      auto loc_id_inst = MakeImportedLocIdAndInst<SemIR::RefParam>(
+          context.local_context(), AddImportIRInst(context, call_param),
+          {.type_id = type_id,
+           .index = ref_param->index,
+           .pretty_name_id =
+               GetLocalNameId(context, ref_param->pretty_name_id)});
+      new_param_id = AddInstInNoBlock(context.local_context(), loc_id_inst);
+    }
+
+    auto value_param =
+        context.import_insts().TryGetAs<SemIR::ValueParam>(call_param);
+    if (value_param) {
+      auto loc_id_inst = MakeImportedLocIdAndInst<SemIR::ValueParam>(
+          context.local_context(), AddImportIRInst(context, call_param),
+          {.type_id = type_id,
+           .index = value_param->index,
+           .pretty_name_id =
+               GetLocalNameId(context, value_param->pretty_name_id)});
+      new_param_id = AddInstInNoBlock(context.local_context(), loc_id_inst);
+    }
+
+    // Params are of one the above types, so a new param id must exist now.
+    CARBON_CHECK(new_param_id.has_value());
+    new_call_params.push_back(new_param_id);
+  }
+  return context.local_inst_blocks().Add(new_call_params);
+}
+
 // Translates a NameScopeId from the import IR to a local NameScopeId. Adds
 // unresolved constants to the resolver's work stack.
 static auto GetLocalNameScopeId(ImportRefResolver& resolver,
@@ -1987,6 +2050,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalParamPatternsId(resolver, import_function.param_patterns_id);
   new_function.return_slot_pattern_id = GetLocalReturnSlotPatternId(
       resolver, import_function.return_slot_pattern_id);
+  new_function.call_params_id =
+      GetLocalCallParamsId(resolver, import_function.call_params_id);
+
   SetGenericData(resolver, import_function.generic_id, new_function.generic_id,
                  generic_data);
 
