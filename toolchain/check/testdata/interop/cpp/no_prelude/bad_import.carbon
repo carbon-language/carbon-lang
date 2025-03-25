@@ -32,7 +32,7 @@ import Cpp library "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+8]]:1: error: 1 error and 0 warnings in 1 `Cpp` import:
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+8]]:1: error: Error in imported C++ code:
 // CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: fatal error: '\"foo.h\"' file not found
 // CHECK:STDERR:     1 | #include "\"foo.h\""
 // CHECK:STDERR:       |          ^~~~~~~~~~~

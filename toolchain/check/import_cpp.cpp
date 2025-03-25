@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 
-#include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Tooling/Tooling.h"
 #include "common/raw_string_ostream.h"
@@ -44,6 +44,71 @@ static auto GenerateCppIncludesHeaderCode(
   return code;
 }
 
+namespace {
+
+class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
+ public:
+  CarbonClangDiagnosticConsumer(Context& context, SemIRLoc loc)
+      : context_(context), loc_(loc) {}
+
+  void HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
+                        const clang::Diagnostic& info) override {
+    DiagnosticConsumer::HandleDiagnostic(diag_level, info);
+
+    llvm::SmallString<100> message;
+    info.FormatDiagnostic(message);
+
+    std::string diagnostics_str;
+    llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
+    clang::TextDiagnostic text_diagnostic(
+        diagnostics_stream,
+        // TODO: Consider allowing setting `LangOptions` or use
+        // `ASTContext::getLangOptions()`.
+        clang::LangOptions(),
+        // TODO: Consider allowing setting `DiagnosticOptions` or use
+        // `ASTUnit::getDiagnostics().::getLangOptions().getDiagnosticOptions()`.
+        new clang::DiagnosticOptions());
+    text_diagnostic.emitDiagnostic(
+        clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
+        diag_level, message, info.getRanges(), info.getFixItHints());
+
+    switch (diag_level) {
+      case clang::DiagnosticsEngine::Ignored:
+      case clang::DiagnosticsEngine::Note:
+      case clang::DiagnosticsEngine::Remark: {
+        context_.TODO(
+            loc_, llvm::formatv(
+                      "Unsupported: C++ diagnostic level for diagnostic {0}",
+                      diagnostics_str));
+        return;
+      }
+      case clang::DiagnosticsEngine::Warning: {
+        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
+                          "Warning in imported C++ code:\n{0}", std::string);
+
+        // TODO: Use a more specific location.
+        context_.emitter().Emit(loc_, CppInteropParseWarning, diagnostics_str);
+        return;
+      }
+      case clang::DiagnosticsEngine::Error:
+      case clang::DiagnosticsEngine::Fatal: {
+        CARBON_DIAGNOSTIC(CppInteropParseError, Error,
+                          "Error in imported C++ code:\n{0}", std::string);
+
+        // TODO: Use a more specific location.
+        context_.emitter().Emit(loc_, CppInteropParseError, diagnostics_str);
+        return;
+      }
+    }
+  }
+
+ private:
+  Context& context_;
+  SemIRLoc loc_;
+};
+
+}  // namespace
+
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
 // error.
@@ -59,10 +124,8 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   std::string diagnostics_str;
   llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
 
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options(
-      new clang::DiagnosticOptions());
-  clang::TextDiagnosticPrinter diagnostics_consumer(diagnostics_stream,
-                                                    diagnostic_options.get());
+  CarbonClangDiagnosticConsumer diagnostics_consumer(context, loc);
+
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(context, imports),
@@ -74,26 +137,7 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   // Remove link to the diagnostics consumer before its deletion.
   ast->getDiagnostics().setClient(nullptr);
 
-  // TODO: Implement and use a DynamicRecursiveASTVisitor to traverse the AST.
-  int num_errors = diagnostics_consumer.getNumErrors();
-  int num_warnings = diagnostics_consumer.getNumWarnings();
-  int num_imports = imports.size();
-  if (num_errors > 0) {
-    // TODO: Remove the warnings part when there are no warnings.
-    CARBON_DIAGNOSTIC(
-        CppInteropParseError, Error,
-        "{0} error{0:s} and {1} warning{1:s} in {2} `Cpp` import{2:s}:\n{3}",
-        IntAsSelect, IntAsSelect, IntAsSelect, std::string);
-    context.emitter().Emit(loc, CppInteropParseError, num_errors, num_warnings,
-                           num_imports, diagnostics_str);
-  } else if (num_warnings > 0) {
-    CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
-                      "{0} warning{0:s} in `Cpp` {1} import{1:s}:\n{2}",
-                      IntAsSelect, IntAsSelect, std::string);
-    context.emitter().Emit(loc, CppInteropParseWarning, num_warnings,
-                           num_imports, diagnostics_str);
-  }
-  return {std::move(ast), !ast || num_errors > 0};
+  return {std::move(ast), !ast || diagnostics_consumer.getNumErrors() > 0};
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
