@@ -387,16 +387,20 @@ library "[[@TEST_NAME]]";
 
 interface Z {
   let V:! type;
-  fn F() -> V;
+  fn ZZ() -> V;
 }
 
 interface Y {}
 impl forall [T:! Y] T as Z where .V = () {
-  fn F() -> () { return (); }
+  fn ZZ() -> () { return (); }
+}
+
+fn H(W:! Z, X: W.(Z.V)) -> W.(Z.V) {
+  return X;
 }
 
 fn G(U:! Y) -> U.(Z.V) {
-  return U.(Z.F)();
+  return H(U, U.(Z.ZZ)());
 }
 
 class C {
@@ -404,10 +408,10 @@ class C {
 }
 
 impl C as Z where .V = {} {
-  fn F() -> {} { return {}; }
+  fn ZZ() -> {} { return {}; }
 }
 
-fn H() {
+fn F() {
   let x: {} = G(C);
 }
 
@@ -416,16 +420,20 @@ library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
   let V:! type;
-  fn F() -> V;
+  fn ZZ() -> V;
 }
 
 interface Y {}
 impl forall [T:! Y] T as Z(T) where .V = () {
-  fn F() -> () { return (); }
+  fn ZZ() -> () { return (); }
+}
+
+fn H(U:! Y, W:! Y & Z(U), X: W.(Z(U).V)) -> W.(Z(U).V) {
+  return X;
 }
 
 fn G(U:! Y) -> U.(Z(U).V) {
-  return U.(Z(U).F)();
+  return H(U, U, U.(Z(U).ZZ)());
 }
 
 class C {
@@ -433,9 +441,9 @@ class C {
 }
 
 impl C as Z(C) where .V = {} {
-  fn F() -> {} { return {}; }
+  fn ZZ() -> {} { return {}; }
 }
 
-fn H() {
+fn F() {
   let x: {} = G(C);
 }
