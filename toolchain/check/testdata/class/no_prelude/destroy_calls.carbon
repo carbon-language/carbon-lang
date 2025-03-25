@@ -58,6 +58,31 @@ fn F() {
   WithAddr.Make();
 }
 
+// --- fail_recovery.carbon
+
+library "[[@TEST_NAME]]";
+
+class NoSelf {
+  // CHECK:STDERR: fail_recovery.carbon:[[@LINE+4]]:3: error: missing implicit `self` parameter [DestroyFunctionMissingSelf]
+  // CHECK:STDERR:   fn destroy();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  fn destroy();
+}
+
+class Args {
+  // CHECK:STDERR: fail_recovery.carbon:[[@LINE+4]]:26: error: unexpected parameter [DestroyFunctionNonEmptyExplicitParams]
+  // CHECK:STDERR:   fn destroy[self: Self](x: ());
+  // CHECK:STDERR:                          ^~~~~
+  // CHECK:STDERR:
+  fn destroy[self: Self](x: ());
+}
+
+fn F() {
+  var a: NoSelf;
+  var b: Args;
+}
+
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -325,12 +350,12 @@ fn F() {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %WithAddr = binding_pattern c
-// CHECK:STDOUT:     %.loc9: %WithAddr = var_pattern %c.patt
+// CHECK:STDOUT:     %.loc10: %WithAddr = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %WithAddr = var c
 // CHECK:STDOUT:   %destroy.ref.3: %destroy.type.02f = name_ref destroy, imports.%Main.import_ref.54e [concrete = constants.%destroy.8d0]
 // CHECK:STDOUT:   %destroy.bound.3: <bound method> = bound_method %c.var, %destroy.ref.3
-// CHECK:STDOUT:   %WithAddr.ref.loc9: type = name_ref WithAddr, imports.%Main.WithAddr [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %WithAddr.ref.loc10: type = name_ref WithAddr, imports.%Main.WithAddr [concrete = constants.%WithAddr]
 // CHECK:STDOUT:   %c: ref %WithAddr = bind_name c, %c.var
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
@@ -438,4 +463,95 @@ fn F() {
 // CHECK:STDOUT: fn @Make.2() -> %WithAddr [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @destroy.2[addr <unexpected>.inst66: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_recovery.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %NoSelf: type = class_type @NoSelf [concrete]
+// CHECK:STDOUT:   %destroy.type.d69: type = fn_type @destroy.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %destroy.ab7: %destroy.type.d69 = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Args: type = class_type @Args [concrete]
+// CHECK:STDOUT:   %destroy.type.ba0: type = fn_type @destroy.2 [concrete]
+// CHECK:STDOUT:   %destroy.723: %destroy.type.ba0 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .NoSelf = %NoSelf.decl
+// CHECK:STDOUT:     .Args = %Args.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %NoSelf.decl: type = class_decl @NoSelf [concrete = constants.%NoSelf] {} {}
+// CHECK:STDOUT:   %Args.decl: type = class_decl @Args [concrete = constants.%Args] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @NoSelf {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.d69 = fn_decl @destroy.1 [concrete = constants.%destroy.ab7] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%NoSelf
+// CHECK:STDOUT:   .destroy = %destroy.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Args {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.ba0 = fn_decl @destroy.2 [concrete = constants.%destroy.723] {
+// CHECK:STDOUT:     %self.patt: %Args = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %Args = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, call_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %Args = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Args [concrete = constants.%Args]
+// CHECK:STDOUT:     %self: %Args = bind_name self, %self.param
+// CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param1
+// CHECK:STDOUT:     %.loc17_30.1: type = splice_block %.loc17_30.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc17_30.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc17_30.3: type = converted %.loc17_30.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Args
+// CHECK:STDOUT:   .destroy = %destroy.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.1();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @destroy.2[%self.param_patt: %Args]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %NoSelf = binding_pattern a
+// CHECK:STDOUT:     %.loc21: %NoSelf = var_pattern %a.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a.var: ref %NoSelf = var a
+// CHECK:STDOUT:   %destroy.ref.1: %destroy.type.d69 = name_ref destroy, @NoSelf.%destroy.decl [concrete = constants.%destroy.ab7]
+// CHECK:STDOUT:   %NoSelf.ref: type = name_ref NoSelf, file.%NoSelf.decl [concrete = constants.%NoSelf]
+// CHECK:STDOUT:   %a: ref %NoSelf = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %Args = binding_pattern b
+// CHECK:STDOUT:     %.loc22_3.1: %Args = var_pattern %b.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b.var: ref %Args = var b
+// CHECK:STDOUT:   %destroy.ref.2: %destroy.type.ba0 = name_ref destroy, @Args.%destroy.decl [concrete = constants.%destroy.723]
+// CHECK:STDOUT:   %destroy.bound: <bound method> = bound_method %b.var, %destroy.ref.2
+// CHECK:STDOUT:   %Args.ref: type = name_ref Args, file.%Args.decl [concrete = constants.%Args]
+// CHECK:STDOUT:   %b: ref %Args = bind_name b, %b.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.ref.1()
+// CHECK:STDOUT:   %.loc22_3.2: %Args = bind_value %b.var
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound(%.loc22_3.2)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
