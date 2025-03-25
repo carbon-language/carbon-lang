@@ -334,8 +334,8 @@ static auto FindWitnessInImpls(Context& context, SemIR::LocId loc_id,
   auto witness_const_id = TryEvalInst(
       context, loc_id, SemIR::InstId::None,
       SemIR::ImplSymbolicWitness{
-          .type_id = GetSingletonType(
-              context, SemIR::WitnessSymbolicType::SingletonInstId),
+          .type_id =
+              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
           .query_self_inst_id =
               context.constant_values().GetInstId(query_self_const_id),
           .query_specific_interface_id =

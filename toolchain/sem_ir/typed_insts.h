@@ -879,7 +879,7 @@ struct ImplSymbolicWitness {
            .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 
-  // Always the type of the builtin `WitnessSymbolicType` singleton instruction.
+  // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
   // The self type (or facet value) and interface of the impl lookup query.
   InstId query_self_inst_id;
@@ -1798,21 +1798,9 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplSymbolicWitness` instructions.
-struct WitnessSymbolicType {
-  static constexpr auto Kind =
-      InstKind::WitnessSymbolicType.Define<Parse::NoneNodeId>(
-          {.ir_name = "<symbolic witness>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-
-  TypeId type_id;
-};
-
-// The type of `ImplWitness` instructions.
+// The type of `ImplWitness` and `ImplSymbolicType` instructions. The latter
+// will evaluate at some point during specific computation into the former, and
+// their types should not change in the process.
 struct WitnessType {
   static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
       {.ir_name = "<witness>",

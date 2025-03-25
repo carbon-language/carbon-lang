@@ -207,7 +207,6 @@ class TypeStructureBuilder {
         case SemIR::LegacyFloatType::Kind:
         case SemIR::StringType::Kind:
         case SemIR::TypeType::Kind:
-        case SemIR::WitnessSymbolicType::Kind:
         case SemIR::WitnessType::Kind: {
           AppendStructural(TypeStructure::Structural::Concrete);
           break;

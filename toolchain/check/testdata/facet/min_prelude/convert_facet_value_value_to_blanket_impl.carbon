@@ -45,7 +45,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.234: <witness> = require_complete_type %T.as_type.2ad [symbolic]
 // CHECK:STDOUT:   %impl_witness.11010a.2: <witness> = impl_witness (), @impl(%T.fd4) [symbolic]
-// CHECK:STDOUT:   %Eats.impl_symbolic_witness: <symbolic witness> = impl_symbolic_witness %T.fd4, @Eats [symbolic]
+// CHECK:STDOUT:   %Eats.impl_symbolic_witness: <witness> = impl_symbolic_witness %T.fd4, @Eats [symbolic]
 // CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %T.as_type.2ad, (%Eats.impl_symbolic_witness) [symbolic]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet) [symbolic]
 // CHECK:STDOUT: }
@@ -161,7 +161,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) [symbolic = %require_complete (constants.%require_complete.234)]
-// CHECK:STDOUT:   %Eats.impl_symbolic_witness: <symbolic witness> = impl_symbolic_witness %T.loc21_17.2, @Eats [symbolic = %Eats.impl_symbolic_witness (constants.%Eats.impl_symbolic_witness)]
+// CHECK:STDOUT:   %Eats.impl_symbolic_witness: <witness> = impl_symbolic_witness %T.loc21_17.2, @Eats [symbolic = %Eats.impl_symbolic_witness (constants.%Eats.impl_symbolic_witness)]
 // CHECK:STDOUT:   %Eats.facet.loc21_43.3: %Eats.type = facet_value %T.as_type.loc21_32.2, (%Eats.impl_symbolic_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc21_37.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc21_43.3) [symbolic = %Feed.specific_fn.loc21_37.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:

@@ -2532,7 +2532,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   return ResolveAs<SemIR::ImplSymbolicWitness>(
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
-                                   SemIR::WitnessSymbolicType::SingletonInstId),
+                                   SemIR::WitnessType::SingletonInstId),
        .query_self_inst_id = query_self_inst_id,
        .query_specific_interface_id = query_specific_interface_id});
 }

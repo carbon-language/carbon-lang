@@ -197,7 +197,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case SemIR::TypeType::Kind:
       case SemIR::VtableType::Kind:
       case SemIR::Vtable::Kind:
-      case SemIR::WitnessSymbolicType::Kind:
       case SemIR::WitnessType::Kind: {
         // Singleton instructions use their IR name as a label.
         out << untyped_inst.kind().ir_name();

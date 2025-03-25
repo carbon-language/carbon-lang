@@ -305,7 +305,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ValueParamPattern::Kind:
       case VtableType::Kind:
       case WhereExpr::Kind:
-      case WitnessSymbolicType::Kind:
       case WitnessType::Kind:
         return value_category;
 
