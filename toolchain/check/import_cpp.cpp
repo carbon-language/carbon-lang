@@ -55,8 +55,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
   // Generates a Carbon warning for each Clang warning and a Carbon error for
   // each Clang error or fatal.
-  void HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
-                        const clang::Diagnostic& info) override {
+  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
+                        const clang::Diagnostic& info) -> void override {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
 
     llvm::SmallString<256> message;
@@ -83,7 +83,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       case clang::DiagnosticsEngine::Remark: {
         context_.TODO(
             loc_, llvm::formatv(
-                      "Unsupported: C++ diagnostic level for diagnostic {0}",
+                      "Unsupported: C++ diagnostic level for diagnostic\n{0}",
                       diagnostics_str));
         return;
       }
