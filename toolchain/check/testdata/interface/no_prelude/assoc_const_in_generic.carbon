@@ -32,7 +32,7 @@ fn H() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.dac = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.325: type = facet_type <@I, @I(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %I.type.325 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.209: %I.type.325 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 2 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 2 [symbolic]
 // CHECK:STDOUT:   %F.type.2ae: type = fn_type @F, @I(%T) [symbolic]
@@ -48,6 +48,7 @@ fn H() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %I.type.885: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
+// CHECK:STDOUT:   %Self.4e2: %I.type.885 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.684: type = fn_type @F, @I(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %F.a8d: %F.type.684 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type.67f: type = assoc_entity_type %I.type.885 [concrete]
@@ -81,14 +82,14 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc11_13.2)> [symbolic = %I.type (constants.%I.type.325)]
-// CHECK:STDOUT:   %Self.2: %I.type.325 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.2: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.209)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type.2ae)]
 // CHECK:STDOUT:   %F: @I.%F.type (%F.type.2ae) = struct_value () [symbolic = %F (constants.%F.bb2)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I.%I.type (%I.type.325) [symbolic = %I.assoc_type (constants.%I.assoc_type.955)]
 // CHECK:STDOUT:   %assoc0.loc12_22.2: @I.%I.assoc_type (%I.assoc_type.955) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc12_22.2 (constants.%assoc0.fef)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.209)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.2ae) = fn_decl @F [symbolic = @I.%F (constants.%F.bb2)] {
 // CHECK:STDOUT:       %U.patt.loc12_8.1: type = symbolic_binding_pattern U, 2 [symbolic = %U.patt.loc12_8.2 (constants.%U.patt)]
 // CHECK:STDOUT:       %return.patt: @F.%U.loc12_8.1 (%U) = return_slot_pattern
@@ -153,14 +154,14 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
-// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %Self.2 => constants.%Self.209
 // CHECK:STDOUT:   %F.type => constants.%F.type.2ae
 // CHECK:STDOUT:   %F => constants.%F.bb2
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.955
 // CHECK:STDOUT:   %assoc0.loc12_22.2 => constants.%assoc0.fef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%T, constants.%Self, constants.%U) {
+// CHECK:STDOUT: specific @F(constants.%T, constants.%Self.209, constants.%U) {
 // CHECK:STDOUT:   %U.loc12_8.1 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc12_8.2 => constants.%U
 // CHECK:STDOUT: }
@@ -192,7 +193,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.885
-// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %Self.2 => constants.%Self.4e2
 // CHECK:STDOUT:   %F.type => constants.%F.type.684
 // CHECK:STDOUT:   %F => constants.%F.a8d
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.67f

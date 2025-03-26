@@ -118,25 +118,6 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
       return true;
     }
 
-    // If the instruction is a symbolic binding, build a version in the eval
-    // block.
-    if (auto binding =
-            context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
-      if (context_.entity_names()
-              .Get(binding->entity_name_id)
-              .bind_index()
-              .has_value()) {
-        inst_id = Rebuild(inst_id, *binding);
-        return true;
-      }
-    }
-
-    if (auto pattern =
-            context_.insts().TryGetAs<SemIR::SymbolicBindingPattern>(inst_id)) {
-      inst_id = Rebuild(inst_id, *pattern);
-      return true;
-    }
-
     return false;
   }
 
@@ -177,6 +158,20 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     return result.value();
   }
 
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) const
+      -> SemIR::InstId override {
+    auto inst = context_.insts().Get(orig_inst_id);
+    CARBON_CHECK(
+        inst.Is<SemIR::BindSymbolicName>() ||
+            inst.Is<SemIR::SymbolicBindingPattern>(),
+        "Instruction {0} has symbolic constant value but no symbolic operands",
+        inst);
+
+    // Rebuild the instruction anyway so that it's included in the eval block.
+    // TODO: Can we just reuse the instruction in this case?
+    return Rebuild(orig_inst_id, inst);
+  }
+
  private:
   Context& context_;
   SemIR::GenericId generic_id_;
@@ -211,6 +206,15 @@ class RebuildTemplateActionInEvalBlockCallbacks final
     }
     return RebuildGenericConstantInEvalBlockCallbacks::Rebuild(orig_inst_id,
                                                                new_inst);
+  }
+
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) const
+      -> SemIR::InstId override {
+    if (orig_inst_id == action_inst_id_) {
+      return orig_inst_id;
+    }
+    return RebuildGenericConstantInEvalBlockCallbacks::ReuseUnchanged(
+        orig_inst_id);
   }
 
  private:
@@ -253,15 +257,9 @@ static auto AddGenericConstantToEvalBlock(
       context, generic_id, region, context.insts().GetLocId(inst_id),
       constants_in_generic, inside_redeclaration);
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
-  if (new_inst_id == const_inst_id) {
-    // It's possible that no substitutions were necessary in this instruction.
-    // This can happen if the instruction has a dependent operand that is
-    // already in the eval block, such as an action. In this case, we still
-    // build a new instruction, so that the same instruction doesn't appear in
-    // multiple blocks.
-    new_inst_id =
-        callbacks.Rebuild(new_inst_id, context.insts().Get(new_inst_id));
-  }
+  CARBON_CHECK(new_inst_id != const_inst_id,
+               "No substitutions performed for generic constant {0}",
+               context.insts().Get(inst_id));
   return context.constant_values().Get(new_inst_id);
 }
 

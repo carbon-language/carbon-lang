@@ -245,6 +245,9 @@ class Context {
   auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
     return sem_ir().import_ir_insts();
   }
+  auto ast_context() -> clang::ASTContext& {
+    return sem_ir().cpp_ast()->getASTContext();
+  }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();

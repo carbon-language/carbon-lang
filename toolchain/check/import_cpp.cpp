@@ -19,6 +19,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -196,6 +197,52 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
   return lookup;
 }
 
+// Returns the return type of the given function declaration.
+// Currently only void and 32-bit int are supported.
+// TODO: Support more return types.
+static auto GetReturnType(Context& context, SemIRLoc loc_id,
+                          const clang::FunctionDecl* clang_decl)
+    -> SemIR::InstId {
+  clang::QualType ret_type = clang_decl->getReturnType().getCanonicalType();
+  if (ret_type->isVoidType()) {
+    return SemIR::InstId::None;
+  }
+  if (const auto* builtin_type = dyn_cast<clang::BuiltinType>(ret_type);
+      builtin_type && builtin_type->getKind() == clang::BuiltinType::Int) {
+    constexpr int SupportedIntWidth = 32;
+    uint64_t int_size = context.ast_context().getTypeSize(ret_type);
+    if (int_size != SupportedIntWidth) {
+      // TODO: Add tests for this case.
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: return type: {0}, size: {1}",
+                                 ret_type.getAsString(), int_size));
+      return SemIR::ErrorInst::SingletonInstId;
+    }
+    IntId size_id = context.ints().Add(int_size);
+    // TODO: Fill in a location for the type once available.
+    SemIR::TypeId type_id = MakeIntType(context, Parse::NodeId::None,
+                                        SemIR::IntKind::Signed, size_id);
+    // TODO: Fill in a location for the type once available.
+    SemIR::InstId type_inst_id = MakeIntTypeLiteral(
+        context, Parse::NodeId::None, SemIR::IntKind::Signed, size_id);
+
+    SemIR::InstId return_slot_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location for the return type once available.
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
+                     {.type_id = type_id, .type_inst_id = type_inst_id})));
+    SemIR::InstId param_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location for the return type once available.
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
+                     {.type_id = type_id,
+                      .subpattern_id = return_slot_pattern_id,
+                      .index = SemIR::CallParamIndex::None})));
+    return param_pattern_id;
+  }
+  context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
+                                     ret_type.getAsString()));
+  return SemIR::ErrorInst::SingletonInstId;
+}
+
 // Imports a function declaration from Clang to Carbon. If successful, returns
 // the new Carbon function declaration `InstId`.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
@@ -219,8 +266,9 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Function with parameters");
     return SemIR::ErrorInst::SingletonInstId;
   }
-  if (!clang_decl->getReturnType()->isVoidType()) {
-    context.TODO(loc_id, "Unsupported: Function with non-void return type");
+
+  auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
+  if (SemIR::ErrorInst::SingletonInstId == return_slot_pattern_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -244,7 +292,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .first_owning_decl_id = decl_id,
        .definition_id = SemIR::InstId::None},
       {.call_params_id = SemIR::InstBlockId::Empty,
-       .return_slot_pattern_id = SemIR::InstId::None,
+       .return_slot_pattern_id = return_slot_pattern_id,
        .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
        .self_param_id = SemIR::InstId::None,
        .cpp_decl = clang_decl}};
@@ -300,17 +348,17 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  auto lookup = ClangLookup(context, loc_id, scope_id, name_id);
-  if (!lookup) {
-    return SemIR::InstId::None;
-  }
-
   DiagnosticAnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCppNameLookup, Note,
                           "in `Cpp` name lookup for `{0}`", SemIR::NameId);
         builder.Note(loc_id, InCppNameLookup, name_id);
       });
+
+  auto lookup = ClangLookup(context, loc_id, scope_id, name_id);
+  if (!lookup) {
+    return SemIR::InstId::None;
+  }
 
   if (!lookup->isSingleResult()) {
     context.TODO(loc_id,
