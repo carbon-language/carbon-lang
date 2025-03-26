@@ -19,15 +19,16 @@
 
 namespace Carbon::LanguageServer {
 
+namespace {
 // A consumer for turning diagnostics into a `textDocument/publishDiagnostics`
 // notification.
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics
-class PublishDiagnosticConsumer : public Diagnostics::Consumer {
+class DiagnosticConsumer : public Diagnostics::Consumer {
  public:
   // Initializes params with the target file information.
-  explicit PublishDiagnosticConsumer(Context* context,
-                                     const clang::clangd::URIForFile& uri,
-                                     std::optional<int64_t> version)
+  explicit DiagnosticConsumer(Context* context,
+                              const clang::clangd::URIForFile& uri,
+                              std::optional<int64_t> version)
       : context_(context), params_{.uri = uri, .version = version} {}
 
   // Turns a diagnostic into an LSP diagnostic.
@@ -98,6 +99,7 @@ class PublishDiagnosticConsumer : public Diagnostics::Consumer {
   Context* context_;
   clang::clangd::PublishDiagnosticsParams params_;
 };
+}  // namespace
 
 auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                             llvm::StringRef text) -> void {
@@ -109,7 +111,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   source_.reset();
 
   // A consumer to gather diagnostics for the file.
-  PublishDiagnosticConsumer consumer(&context, uri_, version);
+  DiagnosticConsumer consumer(&context, uri_, version);
 
   // TODO: Make the processing asynchronous, to better handle rapid text
   // updates.

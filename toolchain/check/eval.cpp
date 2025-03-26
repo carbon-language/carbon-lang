@@ -187,9 +187,7 @@ class EvalContext {
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
-  auto emitter() -> Diagnostics::Emitter<SemIRLoc>& {
-    return context().emitter();
-  }
+  auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
 
  private:
   // The type-checking context in which we're performing evaluation.

@@ -14,7 +14,7 @@ static auto StartDiagnoseNotAllowed(
     Context& context,
     const Diagnostics::DiagnosticBase<TokenKinds...>& diagnostic_base,
     Parse::NodeId modifier_node, Lex::TokenKind declaration_kind)
-    -> Diagnostics::Emitter<SemIRLoc>::DiagnosticBuilder {
+    -> DiagnosticBuilder {
   if constexpr (sizeof...(TokenKinds) == 0) {
     return context.emitter().Build(modifier_node, diagnostic_base);
   } else if constexpr (sizeof...(TokenKinds) == 1) {
