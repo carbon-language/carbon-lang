@@ -49,7 +49,8 @@ struct Impl : public EntityWithParamsBase,
               public ImplFields,
               public Printable<Impl> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{self: " << self_id << ", constraint: " << constraint_id << "}";
+    out << "{self: " << self_id << ", constraint: " << constraint_id
+        << ", witness: " << witness_id << "}";
   }
 
   // Determines whether this impl has been fully defined. This is false until we

@@ -19,6 +19,9 @@ static auto DumpNameIfValid(const File& file, NameId name_id) -> void {
 
 static auto DumpNoNewline(const File& file, ConstantId const_id) -> void {
   llvm::errs() << const_id;
+  if (!const_id.has_value()) {
+    return;
+  }
   if (const_id.is_symbolic()) {
     llvm::errs() << ": "
                  << file.constant_values().GetSymbolicConstant(const_id);
@@ -121,18 +124,34 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id) -> void {
 
 LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id) -> void {
   llvm::errs() << generic_id;
-  if (generic_id.has_value()) {
-    llvm::errs() << ": " << file.generics().Get(generic_id);
+  if (!generic_id.has_value()) {
+    llvm::errs() << '\n';
+    return;
   }
-  llvm::errs() << '\n';
+  llvm::errs() << ": " << file.generics().Get(generic_id) << '\n';
+  Dump(file, file.generics().Get(generic_id).bindings_id);
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> void {
   llvm::errs() << impl_id;
-  if (impl_id.has_value()) {
-    llvm::errs() << ": " << file.impls().Get(impl_id);
+  if (!impl_id.has_value()) {
+    llvm::errs() << '\n';
+    return;
   }
+
+  const auto& impl = file.impls().Get(impl_id);
+  llvm::errs() << ": " << impl << '\n';
+  llvm::errs() << "  - interface_id: ";
+  DumpNoNewline(file, impl.interface.interface_id);
   llvm::errs() << '\n';
+  llvm::errs() << "  - specific_id: ";
+  DumpNoNewline(file, impl.interface.specific_id);
+  llvm::errs() << '\n';
+  if (impl.interface.specific_id.has_value()) {
+    auto inst_block_id =
+        file.specifics().Get(impl.interface.specific_id).args_id;
+    Dump(file, inst_block_id);
+  }
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
