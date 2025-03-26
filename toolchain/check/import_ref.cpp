@@ -1138,47 +1138,15 @@ static auto GetLocalCallParamsId(ImportContext& context,
     auto any_param = context.import_insts().GetAs<SemIR::AnyParam>(call_param);
     auto type_id = context.local_context().types().GetTypeIdForTypeConstantId(
         GetLocalConstantIdChecked(context, any_param.type_id));
-    SemIR::InstId new_param_id = SemIR::InstId::None;
-
-    // TODO: Remove code duplication
-    auto out_param =
-        context.import_insts().TryGetAs<SemIR::OutParam>(call_param);
-    if (out_param) {
-      auto loc_id_inst = MakeImportedLocIdAndInst<SemIR::OutParam>(
-          context.local_context(), AddImportIRInst(context, call_param),
-          {.type_id = type_id,
-           .index = out_param->index,
-           .pretty_name_id =
-               GetLocalNameId(context, out_param->pretty_name_id)});
-      new_param_id = AddInstInNoBlock(context.local_context(), loc_id_inst);
-    }
-
-    auto ref_param =
-        context.import_insts().TryGetAs<SemIR::RefParam>(call_param);
-    if (ref_param) {
-      auto loc_id_inst = MakeImportedLocIdAndInst<SemIR::RefParam>(
-          context.local_context(), AddImportIRInst(context, call_param),
-          {.type_id = type_id,
-           .index = ref_param->index,
-           .pretty_name_id =
-               GetLocalNameId(context, ref_param->pretty_name_id)});
-      new_param_id = AddInstInNoBlock(context.local_context(), loc_id_inst);
-    }
-
-    auto value_param =
-        context.import_insts().TryGetAs<SemIR::ValueParam>(call_param);
-    if (value_param) {
-      auto loc_id_inst = MakeImportedLocIdAndInst<SemIR::ValueParam>(
-          context.local_context(), AddImportIRInst(context, call_param),
-          {.type_id = type_id,
-           .index = value_param->index,
-           .pretty_name_id =
-               GetLocalNameId(context, value_param->pretty_name_id)});
-      new_param_id = AddInstInNoBlock(context.local_context(), loc_id_inst);
-    }
-
-    // Params are of one the above types, so a new param id must exist now.
-    CARBON_CHECK(new_param_id.has_value());
+    auto loc_id_inst = MakeImportedLocIdAndInst<SemIR::AnyParam>(
+        context.local_context(), AddImportIRInst(context, call_param),
+        {.kind = any_param.kind,
+         .type_id = type_id,
+         .index = any_param.index,
+         .pretty_name_id = GetLocalNameId(context, any_param.pretty_name_id)});
+    SemIR::InstId new_param_id =
+        AddInstInNoBlock(context.local_context(), loc_id_inst);
+    CARBON_CHECK(new_param_id.has_value() && "Expected valid new_param_id");
     new_call_params.push_back(new_param_id);
   }
   return context.local_inst_blocks().Add(new_call_params);

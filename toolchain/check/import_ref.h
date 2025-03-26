@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -70,6 +71,21 @@ auto MakeImportedLocIdAndInst(Context& context,
     Internal::CheckCompatibleImportedNodeKind(context, imported_loc_id,
                                               InstT::Kind);
   }
+  return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
+}
+
+// Returns a LocIdAndInst for an `Any*` instruction with an imported location.
+// `Any` instructions don't have a NodeId directly associated but have a `kind`
+// member as a field. Checks that the imported location is compatible with the
+// kind of instruction being created.
+template <typename InstT>
+  requires(!SemIR::Internal::HasNodeId<InstT> &&
+           SemIR::Internal::HasKindMemberAsField<InstT>)
+auto MakeImportedLocIdAndInst(Context& context,
+                              SemIR::ImportIRInstId imported_loc_id, InstT inst)
+    -> SemIR::LocIdAndInst {
+  Internal::CheckCompatibleImportedNodeKind(context, imported_loc_id,
+                                            inst.kind);
   return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
 }
 
