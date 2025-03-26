@@ -58,8 +58,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     llvm::SmallString<100> message;
     info.FormatDiagnostic(message);
 
-    std::string diagnostics_str;
-    llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
+    RawStringOstream diagnostics_stream;
     clang::TextDiagnostic text_diagnostic(
         diagnostics_stream,
         // TODO: Consider allowing setting `LangOptions` or use
@@ -71,6 +70,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     text_diagnostic.emitDiagnostic(
         clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
         diag_level, message, info.getRanges(), info.getFixItHints());
+
+    std::string diagnostics_str = diagnostics_stream.TakeStr();
 
     switch (diag_level) {
       case clang::DiagnosticsEngine::Ignored:
