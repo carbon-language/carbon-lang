@@ -35,11 +35,15 @@ static auto GetTypePrecedence(InstKind kind) -> int {
 namespace {
 
 // Contains the stack of steps for `StringifyTypeExpr`.
+//
+// Note that when pushing items onto the stack, they're printed in the reverse
+// order of when they were pushed. All reference lifetimes must match the
+// lifetime of `StringifyTypeExpr`.
 class StepStack {
  public:
   // An individual step in the stack, which stringifies some component of a type
   // name.
-  using Step = std::variant<InstId, const char*, NameId, ElementIndex>;
+  using Step = std::variant<InstId, llvm::StringRef, NameId, ElementIndex>;
 
   // Support `Push` for a qualified name. e.g., `A.B.C`.
   using QualifiedNameItem = std::pair<NameScopeId, NameId>;
@@ -49,9 +53,9 @@ class StepStack {
 
   // The full set of things which can be pushed, including all members of
   // `Step`.
-  using PushItem =
-      std::variant<InstId, const char*, NameId, ElementIndex, QualifiedNameItem,
-                   EntityNameItem, EntityNameId, TypeId, llvm::ListSeparator*>;
+  using PushItem = std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
+                                QualifiedNameItem, EntityNameItem, EntityNameId,
+                                TypeId, llvm::ListSeparator*>;
 
   // Starts a new stack, which always contains the first instruction to
   // stringify.
@@ -62,7 +66,7 @@ class StepStack {
 
   // These push basic entries onto the stack.
   auto PushInstId(InstId inst_id) -> void { steps_.push_back(inst_id); }
-  auto PushString(const char* string) -> void { steps_.push_back(string); }
+  auto PushString(llvm::StringRef string) -> void { steps_.push_back(string); }
   auto PushNameId(NameId name_id) -> void { steps_.push_back(name_id); }
   auto PushElementIndex(ElementIndex element_index) -> void {
     steps_.push_back(element_index);
@@ -104,11 +108,15 @@ class StepStack {
 
   // Pushes a sequence of items onto the stack. This handles reversal, such that
   // the caller can pass items in print order instead of stack order.
+  //
+  // Note that with `ListSeparator`, the object's reference isn't stored, but
+  // the separator `StringRef` will be. That should be a constant though, so is
+  // safe.
   auto Push(llvm::ArrayRef<PushItem> items) -> void {
     for (auto item : llvm::reverse(items)) {
       VariantMatch(
           item, [&](InstId inst_id) { PushInstId(inst_id); },
-          [&](const char* string) { PushString(string); },
+          [&](llvm::StringRef string) { PushString(string); },
           [&](NameId name_id) { PushNameId(name_id); },
           [&](ElementIndex element_index) { PushElementIndex(element_index); },
           [&](QualifiedNameItem qualified_name) {
@@ -121,13 +129,7 @@ class StepStack {
             PushEntityNameId(entity_name_id);
           },
           [&](TypeId type_id) { PushTypeId(type_id); },
-          [&](llvm::ListSeparator* sep) {
-            llvm::StringRef this_sep = *sep;
-            // The separator will be null-terminated when non-empty.
-            if (!this_sep.empty()) {
-              PushString(this_sep.data());
-            }
-          });
+          [&](llvm::ListSeparator* sep) { PushString(*sep); });
     }
   }
 
@@ -624,7 +626,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
 #include "toolchain/sem_ir/inst_kind.def"
           }
         },
-        [&](const char* string) { out << string; },
+        [&](llvm::StringRef string) { out << string; },
         [&](NameId name_id) { out << sem_ir.names().GetFormatted(name_id); },
         [&](ElementIndex element_index) { out << element_index.index; });
   }
