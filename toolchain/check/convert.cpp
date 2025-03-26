@@ -499,8 +499,9 @@ static auto ConvertStructToStructOrClass(Context& context,
                             dest_elem_fields.size()});
   for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     if (dest_field.name_id == SemIR::NameId::Vptr) {
-      bool NonConstexprToClass = ToClass;
-      CARBON_CHECK(NonConstexprToClass, "Only classes should have vptrs.");
+      if constexpr (!ToClass) {
+        CARBON_FATAL("Only classes should have vptrs.");
+      }
       target.init_block->InsertHere();
       auto dest_id =
           AddInst<SemIR::ClassElementAccess>(context, value_loc_id,
