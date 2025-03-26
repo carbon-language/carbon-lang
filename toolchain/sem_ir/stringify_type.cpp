@@ -112,7 +112,7 @@ class StepStack {
   // Note that with `ListSeparator`, the object's reference isn't stored, but
   // the separator `StringRef` will be. That should be a constant though, so is
   // safe.
-  auto Push(llvm::ArrayRef<PushItem> items) -> void {
+  auto PushArray(llvm::ArrayRef<PushItem> items) -> void {
     for (auto item : llvm::reverse(items)) {
       VariantMatch(
           item, [&](InstId inst_id) { PushInstId(inst_id); },
@@ -131,6 +131,10 @@ class StepStack {
           [&](TypeId type_id) { PushTypeId(type_id); },
           [&](llvm::ListSeparator* sep) { PushString(*sep); });
     }
+  }
+  template<typename ...T>
+  auto Push(T ...items) -> void {
+    PushArray({items...});
   }
 
   auto empty() const -> bool { return steps_.empty(); }
