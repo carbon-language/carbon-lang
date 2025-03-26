@@ -155,7 +155,9 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::TypeId type_id,
       auto destroy_id =
           PerformMemberAccess(context, SemIR::LocId::None, inst_id,
                               SemIR::NameId::Destroy, /*required=*/false);
-      context.scope_stack().destroy_id_stack().AppendToTop(destroy_id);
+      if (destroy_id.has_value()) {
+        context.scope_stack().destroy_id_stack().AppendToTop(destroy_id);
+      }
       break;
     }
 
