@@ -144,6 +144,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %T.loc11_14.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc11_14.2 (constants.%T.826)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc11: <witness> = impl_witness (), @impl.c3d(constants.%T.826) [symbolic = @impl.c3d.%impl_witness (constants.%impl_witness.d14)]
+// CHECK:STDOUT:   %.loc11: %I.type = converted constants.%T.as_type.b70, constants.%T.826 [symbolic = constants.%T.826]
 // CHECK:STDOUT:   impl_decl @impl.793 [concrete] {
 // CHECK:STDOUT:     %T.patt.loc12_14.1: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.371)]
 // CHECK:STDOUT:   } {
@@ -155,6 +156,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %T.loc12_14.1: %J.type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T.ccd)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness (), @impl.793(constants.%T.ccd) [symbolic = @impl.793.%impl_witness (constants.%impl_witness.d94)]
+// CHECK:STDOUT:   %.loc12: %J.type = converted constants.%T.as_type.3df, constants.%T.ccd [symbolic = constants.%T.ccd]
 // CHECK:STDOUT:   impl_decl @impl.c93 [concrete] {
 // CHECK:STDOUT:     %T.patt.loc13_14.1: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_14.2 (constants.%T.patt.036)]
 // CHECK:STDOUT:   } {
@@ -166,6 +168,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %T.loc13_14.1: %K.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_14.2 (constants.%T.09f)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness (), @impl.c93(constants.%T.09f) [symbolic = @impl.c93.%impl_witness (constants.%impl_witness.8aa)]
+// CHECK:STDOUT:   %.loc13: %K.type = converted constants.%T.as_type.037, constants.%T.09f [symbolic = constants.%T.09f]
 // CHECK:STDOUT:   impl_decl @impl.9e6 [concrete] {
 // CHECK:STDOUT:     %T.patt.loc14_14.1: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_14.2 (constants.%T.patt.29d)]
 // CHECK:STDOUT:   } {
@@ -177,6 +180,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %T.loc14_14.1: %L.type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T.1d2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness (), @impl.9e6(constants.%T.1d2) [symbolic = @impl.9e6.%impl_witness (constants.%impl_witness.da5)]
+// CHECK:STDOUT:   %.loc14: %L.type = converted constants.%T.as_type.0ed, constants.%T.1d2 [symbolic = constants.%T.1d2]
 // CHECK:STDOUT:   impl_decl @impl.c3d [concrete] {
 // CHECK:STDOUT:     %T.patt.loc11_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_14.2 (constants.%T.patt.3ad)]
 // CHECK:STDOUT:   } {
@@ -383,6 +387,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %T.loc7_14.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc7: <witness> = impl_witness (), @impl.bfd509.1(constants.%T) [symbolic = @impl.bfd509.1.%impl_witness (constants.%impl_witness.1896b7.1)]
+// CHECK:STDOUT:   %.loc7: %I.type = converted constants.%T.as_type, constants.%T [symbolic = constants.%T]
 // CHECK:STDOUT:   impl_decl @impl.bfd509.2 [concrete] {
 // CHECK:STDOUT:     %T.patt.loc15_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -394,6 +399,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %T.loc15_14.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (), @impl.bfd509.2(constants.%T) [symbolic = @impl.bfd509.2.%impl_witness (constants.%impl_witness.1896b7.2)]
+// CHECK:STDOUT:   %.loc15: %I.type = converted constants.%T.as_type, constants.%T [symbolic = constants.%T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

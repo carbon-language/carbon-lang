@@ -22,9 +22,9 @@ impl forall [U:! type] U as I where .T = () {}
 
 class C {}
 
-// CHECK:STDERR: fail_no_binding_used.carbon:[[@LINE+4]]:14: error: `impl` with unused generic binding [ImplUnusedBinding]
+// CHECK:STDERR: fail_no_binding_used.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
 // CHECK:STDERR: impl forall [V:! type] C as I where .T = {} {}
-// CHECK:STDERR:              ^
+// CHECK:STDERR:             ^~~~~~~~~~
 // CHECK:STDERR:
 impl forall [V:! type] C as I where .T = {} {}
 
@@ -51,6 +51,10 @@ class C {}
 // should be diagnosed. Currently we can only diagnose when the impl's self and
 // constaint types are concrete.
 // https://discord.com/channels/655572317891461132/941071822756143115/1354563497731686550
+// CHECK:STDERR: todo_fail_one_binding_unused.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
+// CHECK:STDERR: impl forall [V:! type, W:! type] V as I where .T = {} {}
+// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [V:! type, W:! type] V as I where .T = {} {}
 
 fn F() {
@@ -58,4 +62,31 @@ fn F() {
   // second is more specific. If the second was matched, it would not type
   // check.
   let x: C.(I.T) = ();
+}
+
+// --- fail_todo_inherited_binding_unused.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let T:! type;
+}
+
+impl forall [U:! type] U as I where .T = {} {}
+
+class C(U:! type) {
+  // There is a generic binding around, but it's okay to not name it here.
+  impl C(()) as I where .T = () {}
+}
+
+fn F() {
+  // TODO: Why does this not match the `impl` defined in class C?
+
+  // CHECK:STDERR: fail_todo_inherited_binding_unused.carbon:[[@LINE+7]]:24: error: cannot implicitly convert value of type `()` to `{}` [ConversionFailure]
+  // CHECK:STDERR:   let x: C(()).(I.T) = ();
+  // CHECK:STDERR:                        ^~
+  // CHECK:STDERR: fail_todo_inherited_binding_unused.carbon:[[@LINE+4]]:24: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let x: C(()).(I.T) = ();
+  // CHECK:STDERR:                        ^~
+  // CHECK:STDERR:
+  let x: C(()).(I.T) = ();
 }
