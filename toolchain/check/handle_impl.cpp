@@ -428,6 +428,35 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
+
+    // Looking to see if there are any generic parameters on the `impl`
+    // declaration itself, not just generics inherited from it being written
+    // inside a generic context. If so, and the `impl` is concrete, the generic
+    // params will prevent the `impl` declaration from ever being used.
+    if (context.constant_values().Get(impl_info.self_id).is_concrete() &&
+        context.constant_values().Get(impl_info.constraint_id).is_concrete()) {
+      bool has_generic_param = false;
+      if (name.implicit_param_patterns_id.has_value()) {
+        for (auto inst_id :
+             context.inst_blocks().Get(name.implicit_param_patterns_id)) {
+          if (inst_id != SemIR::ErrorInst::SingletonInstId) {
+            has_generic_param = true;
+            break;
+          }
+        }
+      }
+      if (has_generic_param) {
+        // TODO: We should be able to diagnose an `impl` with a symbolic self
+        // and/or constraint, where it refers to some but not all of its
+        // generic parameters.
+        CARBON_DIAGNOSTIC(ImplUnusedBinding, Error,
+                          "`impl` with unused generic binding");
+        context.emitter().Emit(
+            context.inst_blocks().Get(
+                context.generics().Get(impl_info.generic_id).bindings_id)[0],
+            ImplUnusedBinding);
+      }
+    }
   } else {
     auto prev_decl_generic_id =
         context.impls().Get(impl_decl.impl_id).generic_id;
