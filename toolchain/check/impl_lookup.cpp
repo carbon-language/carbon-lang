@@ -451,6 +451,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.inst_blocks().AddCanonical(result_witness_ids);
 }
 
+// Returns whether the query is concrete, it is false if the self type or
+// interface specifics have a symbolic dependency.
 static auto QueryIsConcrete(Context& context, SemIR::ConstantId self_const_id,
                             SemIR::SpecificInterface& specific_interface)
     -> bool {
@@ -478,6 +480,7 @@ struct CandidateImpl {
   TypeStructure type_structure;
 };
 
+// Returns the list of candidates impls for lookup to select from.
 static auto CollectCandidateImplsForQuery(
     Context& context, const TypeStructure& query_type_structure,
     SemIR::SpecificInterface& query_specific_interface)
@@ -577,6 +580,8 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   auto query_type_structure = BuildTypeStructure(
       context, context.constant_values().GetInstId(query_self_const_id),
       query_specific_interface);
+  bool query_is_concrete =
+      QueryIsConcrete(context, query_self_const_id, query_specific_interface);
 
   auto candidate_impls = CollectCandidateImplsForQuery(
       context, query_type_structure, query_specific_interface);
@@ -596,9 +601,8 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls
     // to be imported, invalidating any pointer into `context.impls()`.
     auto result = GetWitnessIdForImpl(
-        context, loc_id,
-        QueryIsConcrete(context, query_self_const_id, query_specific_interface),
-        query_self_const_id, query_specific_interface, candidate.impl_id);
+        context, loc_id, query_is_concrete, query_self_const_id,
+        query_specific_interface, candidate.impl_id);
     if (result.has_value()) {
       return result;
     }
