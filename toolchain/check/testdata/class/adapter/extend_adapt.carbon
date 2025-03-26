@@ -95,7 +95,7 @@ class StructAdapter {
 
 fn F(a: StructAdapter) -> i32 {
   // TODO: This should be allowed.
-  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+4]]:10: error: member name `b` not found in `StructAdapter` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+4]]:10: error: member name `b` not found in `StructAdapter` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
@@ -131,7 +131,7 @@ class IntAdapter {
 
 fn F(a: IntAdapter) -> i32 {
   // Builtin types have no member names.
-  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+4]]:10: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+4]]:10: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   return a.foo;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:

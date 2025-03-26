@@ -33,7 +33,7 @@ interface Interface(T:! type) {
 }
 
 fn AccessMissingGeneric[T:! type](I:! Interface(T)) -> T {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(T)` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(T)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   return I.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
   // CHECK:STDERR:
@@ -41,7 +41,7 @@ fn AccessMissingGeneric[T:! type](I:! Interface(T)) -> T {
 }
 
 fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   return I.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
   // CHECK:STDERR:

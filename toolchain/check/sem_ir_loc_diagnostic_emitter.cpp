@@ -114,6 +114,9 @@ auto SemIRLocDiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
            StringifyTypeExpr(*sem_ir_, sem_ir_->types().GetInstId(*type_id)) +
            "`";
   }
+  if (auto* specific_id = llvm::any_cast<SemIR::SpecificId>(&arg)) {
+    return "`" + StringifySpecific(*sem_ir_, *specific_id) + "`";
+  }
   if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
