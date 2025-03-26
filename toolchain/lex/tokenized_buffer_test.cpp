@@ -1034,7 +1034,7 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // A 128-bit APInt should be plenty large, but if needed in the future it can
   // be widened without issue.
   llvm::APInt bits = llvm::APInt::getZero(128);
-  for ([[maybe_unused]] int _ : llvm::seq(1, 30)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(1, 30)) {
     code.append("9");
     bits = bits * 10 + 9;
     auto [buffer, value_stores] =
@@ -1157,7 +1157,7 @@ TEST_F(LexerTest, DiagnosticFileTooLarge) {
   static constexpr size_t NumLines = 10'000'000;
   std::string input;
   input.reserve(NumLines * 3);
-  for ([[maybe_unused]] int _ : llvm::seq(NumLines)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(NumLines)) {
     input += "{}\n";
   }
   EXPECT_CALL(consumer,

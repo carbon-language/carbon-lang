@@ -117,13 +117,13 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
 
   // Check we have a value for all non-function associated constants in the
   // witness.
-  for (auto index : llvm::seq(assoc_entities.size())) {
-    auto decl_id = assoc_entities[index];
+  for (auto [assoc_entity, witness_value] :
+       llvm::zip(assoc_entities, witness_block)) {
+    auto decl_id = assoc_entity;
     decl_id = context.constant_values().GetConstantInstId(decl_id);
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      auto& witness_value = witness_block[index];
       if (!witness_value.has_value()) {
         CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
                           "associated constant {0} not given a value in impl "
@@ -137,7 +137,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
                        .Get(decl->assoc_const_id)
                        .name_id,
                    interface.name_id)
-            .Note(assoc_entities[index], AssociatedConstantHere)
+            .Note(assoc_entity, AssociatedConstantHere)
             .Emit();
 
         witness_value = SemIR::ErrorInst::SingletonInstId;

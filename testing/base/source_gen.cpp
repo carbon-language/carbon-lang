@@ -347,7 +347,7 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
 
   auto class_gen_state = ClassGenState(*this, num_classes, params.class_params,
                                        params.type_use_params);
-  for ([[maybe_unused]] int _ : llvm::seq(num_classes)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(num_classes)) {
     source << "\n";
     GenerateClassDef(params.class_params, class_gen_state, source);
   }
@@ -421,7 +421,7 @@ auto SourceGen::GetSingleLengthIdentifiers(int length, int number)
 
   if (static_cast<int>(idents.size()) < number) {
     idents.reserve(number);
-    for ([[maybe_unused]] int _ : llvm::seq<int>(idents.size(), number)) {
+    for ([[maybe_unused]] auto _ : llvm::seq<int>(idents.size(), number)) {
       auto ident_storage =
           llvm::MutableArrayRef(reinterpret_cast<char*>(storage_.Allocate(
                                     /*Size=*/length, /*Alignment=*/1)),
@@ -523,7 +523,7 @@ auto SourceGen::AppendUniqueIdentifiers(
     unique_idents.GrowForInsertCount(count - number);
 
     // Generate the needed number of identifiers.
-    for ([[maybe_unused]] int _ : llvm::seq<int>(count, number)) {
+    for ([[maybe_unused]] auto _ : llvm::seq<int>(count, number)) {
       // Allocate stable storage for the identifier so we can form stable
       // `StringRef`s to it.
       auto ident_storage =
@@ -849,7 +849,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   // by collecting them before inserting that type into the valid set.
   llvm::SmallVector<llvm::StringRef> field_type_names;
   field_type_names.reserve(params.private_field_decls);
-  for ([[maybe_unused]] int _ : llvm::seq(params.private_field_decls)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(params.private_field_decls)) {
     field_type_names.push_back(state.GetValidTypeName());
   }
 
@@ -860,7 +860,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
 
   UniqueIdentifierPopper unique_member_names(*this, state.member_names());
   llvm::ListSeparator line_sep("\n");
-  for ([[maybe_unused]] int _ : llvm::seq(params.public_function_decls)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(params.public_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(
         unique_member_names.Pop(), /*is_private=*/false,
@@ -869,7 +869,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
         /*indent=*/"  ", state.param_names(),
         [&] { return state.GetValidTypeName(); }, os);
   }
-  for ([[maybe_unused]] int _ : llvm::seq(params.public_method_decls)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(params.public_method_decls)) {
     os << line_sep;
     GenerateFunctionDecl(
         unique_member_names.Pop(), /*is_private=*/false,
@@ -884,7 +884,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     line_sep = llvm::ListSeparator("\n");
   }
 
-  for ([[maybe_unused]] int _ : llvm::seq(params.private_function_decls)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(params.private_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(
         unique_member_names.Pop(), /*is_private=*/true,
@@ -893,7 +893,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
         /*indent=*/"  ", state.param_names(),
         [&] { return state.GetValidTypeName(); }, os);
   }
-  for ([[maybe_unused]] int _ : llvm::seq(params.private_method_decls)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(params.private_method_decls)) {
     os << line_sep;
     GenerateFunctionDecl(
         unique_member_names.Pop(), /*is_private=*/true,

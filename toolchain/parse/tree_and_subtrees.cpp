@@ -27,7 +27,7 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
           kind, size_stack.size());
       for (auto i : llvm::seq(kind.child_count())) {
         auto child = size_stack.pop_back_val();
-        CARBON_CHECK((size_t)child.index < subtree_sizes_.size());
+        CARBON_CHECK(static_cast<size_t>(child.index) < subtree_sizes_.size());
         size += subtree_sizes_[child.index];
         if (kind.has_bracket() && i == kind.child_count() - 1) {
           CARBON_CHECK(kind.bracket() == tree.node_kind(child),
@@ -223,8 +223,7 @@ auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
     CARBON_CHECK(next_depth <= depth, "Cannot have the next depth increase!");
-    for (int close_children_count : llvm::seq(0, depth - next_depth)) {
-      (void)close_children_count;
+    for ([[maybe_unused]] auto _ : llvm::seq(depth - next_depth)) {
       output << "]}";
     }
 
