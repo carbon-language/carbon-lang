@@ -498,20 +498,14 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
   auto base_loc_id = context.insts().GetLocId(base_id);
-  if (required) {
-    if (!RequireCompleteType(context, base_type_id, base_loc_id, [&] {
-          CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
-                            "member access into object of incomplete type {0}",
-                            TypeOfInstId);
-          return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
-                                         base_id);
-        })) {
-      return SemIR::ErrorInst::SingletonInstId;
-    }
-  } else {
-    if (!TryToCompleteType(context, base_type_id, base_loc_id)) {
-      return SemIR::ErrorInst::SingletonInstId;
-    }
+  if (!RequireCompleteType(context, base_type_id, base_loc_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
+                          "member access into object of incomplete type {0}",
+                          TypeOfInstId);
+        return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
+                                       base_id);
+      })) {
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Materialize a temporary for the base expression if necessary.
@@ -545,11 +539,13 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                           SemIR::NameId);
         context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
                                name_id);
+        return SemIR::ErrorInst::SingletonInstId;
+      } else {
+        return SemIR::InstId::None;
       }
-      return SemIR::ErrorInst::SingletonInstId;
     }
 
-    if (required && base_type_id != SemIR::ErrorInst::SingletonTypeId) {
+    if (base_type_id != SemIR::ErrorInst::SingletonTypeId) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                         "type {0} does not support qualified expressions",
                         TypeOfInstId);

@@ -334,12 +334,12 @@ fn F() {
 // CHECK:STDOUT:   %destroy.bound.3: <bound method> = bound_method %with_addr.var, %destroy.ref.3
 // CHECK:STDOUT:   %WithAddr.ref: type = name_ref WithAddr, imports.%Main.WithAddr [concrete = constants.%WithAddr]
 // CHECK:STDOUT:   %with_addr: ref %WithAddr = bind_name with_addr, %with_addr.var
-// CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %no_addr.var
-// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
+// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %with_addr.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.3(%addr)
 // CHECK:STDOUT:   %.loc7_3.2: %ExplicitReturn = bind_value %explicit_return.var
 // CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
-// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %with_addr.var
-// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.3(%addr)
+// CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %no_addr.var
+// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -471,12 +471,12 @@ fn F() {
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %no_addr.var
-// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
+// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %with_addr.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.3(%addr)
 // CHECK:STDOUT:   %.loc7_3.2: %ExplicitReturn = bind_value %explicit_return.var
 // CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
-// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %with_addr.var
-// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.3(%addr)
+// CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %no_addr.var
+// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -591,12 +591,12 @@ fn F() {
 // CHECK:STDOUT:   %destroy.bound.3: <bound method> = bound_method %.loc10_17.1, %destroy.ref.3
 // CHECK:STDOUT:   %Make.call.loc10: init %WithAddr = call %Make.ref.loc10() to %.loc10_17.1
 // CHECK:STDOUT:   %.loc10_17.2: ref %WithAddr = temporary %.loc10_17.1, %Make.call.loc10
-// CHECK:STDOUT:   %.loc8_15.3: %NoAddr = bind_value %.loc8_15.1
-// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.1(%.loc8_15.3)
+// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %.loc10_17.1
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.3(%addr)
 // CHECK:STDOUT:   %.loc9_23.3: %ExplicitReturn = bind_value %.loc9_23.1
 // CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%.loc9_23.3)
-// CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %.loc10_17.1
-// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.3(%addr)
+// CHECK:STDOUT:   %.loc8_15.3: %NoAddr = bind_value %.loc8_15.1
+// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.1(%.loc8_15.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -697,9 +697,9 @@ fn F() {
 // CHECK:STDOUT:   %destroy.bound: <bound method> = bound_method %b.var, %destroy.ref.2
 // CHECK:STDOUT:   %Args.ref: type = name_ref Args, file.%Args.decl [concrete = constants.%Args]
 // CHECK:STDOUT:   %b: ref %Args = bind_name b, %b.var
-// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.ref.1()
 // CHECK:STDOUT:   %.loc22_3.2: %Args = bind_value %b.var
-// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound(%.loc22_3.2)
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound(%.loc22_3.2)
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.ref.1()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

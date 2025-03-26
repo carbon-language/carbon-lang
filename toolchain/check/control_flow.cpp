@@ -175,7 +175,7 @@ static auto AddCleanupBlock(Context& context) -> void {
     return;
   }
 
-  for (auto destroy_id : destroy_ids) {
+  for (auto destroy_id : llvm::reverse(destroy_ids)) {
     PerformCall(context, SemIR::LocId::None, destroy_id, {});
   }
 }
