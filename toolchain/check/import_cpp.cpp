@@ -59,7 +59,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
                         const clang::Diagnostic& info) override {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
 
-    llvm::SmallString<100> message;
+    llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
 
     RawStringOstream diagnostics_stream;
