@@ -84,6 +84,67 @@ inline auto PrintToString(const T& val) -> std::string {
   return str;
 }
 
+namespace Internal {
+// Support specifying which dump function to use for printing.
+//
+// Code should call `StreamedDump` or `StreamedDumpNoNewline` instead of using
+// this directly.
+enum class StreamedDumpCall {
+  Dump,
+  DumpNoNewline,
+  DumpNameIfValid,
+};
+}  // namespace Internal
+
+// Streams a dump call, to allow more stream-based printing in `Dump` functions.
+// Note this always goes to `llvm::errs()`.
+template <
+    Internal::StreamedDumpCall DumpCall = Internal::StreamedDumpCall::Dump,
+    typename ContextT, typename DumpableT>
+inline auto StreamedDump(const ContextT& context, const DumpableT& dumpable)
+    -> auto {
+  // A wrapper class for the actual streamed print.
+  class Printer : public Printable<Printer> {
+   public:
+    explicit Printer(const ContextT& context, const DumpableT& dumpable)
+        : context_(&context), dumpable_(&dumpable) {}
+
+    auto Print(llvm::raw_ostream& /*out*/) const -> void {
+      if constexpr (DumpCall == Internal::StreamedDumpCall::Dump) {
+        Dump(*context_, *dumpable_);
+      } else if constexpr (DumpCall ==
+                           Internal::StreamedDumpCall::DumpNoNewline) {
+        DumpNoNewline(*context_, *dumpable_);
+      } else if constexpr (DumpCall ==
+                           Internal::StreamedDumpCall::DumpNameIfValid) {
+        DumpNameIfValid(*context_, *dumpable_);
+      } else {
+        static_assert(false, "unreachable");
+      }
+    }
+
+   private:
+    const ContextT* context_;
+    const DumpableT* dumpable_;
+  };
+
+  return Printer(context, dumpable);
+}
+
+template <typename ContextT, typename DumpableT>
+inline auto StreamedDumpNoNewline(const ContextT& context,
+                                  const DumpableT& dumpable) -> auto {
+  return StreamedDump<Internal::StreamedDumpCall::DumpNoNewline>(context,
+                                                                 dumpable);
+}
+
+template <typename ContextT, typename DumpableT>
+inline auto StreamedDumpNameIfValid(const ContextT& context,
+                                    const DumpableT& dumpable) -> auto {
+  return StreamedDump<Internal::StreamedDumpCall::DumpNameIfValid>(context,
+                                                                   dumpable);
+}
+
 }  // namespace Carbon
 
 namespace llvm {

@@ -40,8 +40,9 @@ static auto DumpNoNewline(const File& file, InterfaceId interface_id) -> void {
   llvm::errs() << interface_id;
   if (interface_id.has_value()) {
     const auto& interface = file.interfaces().Get(interface_id);
-    llvm::errs() << ": " << interface;
-    DumpNameIfValid(file, interface.name_id);
+    llvm::errs()
+        << ": "
+        << interface << StreamedDumpNameIfValid(file, interface.name_id);
   }
 }
 
@@ -56,15 +57,14 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> void {
   llvm::errs() << class_id;
   if (class_id.has_value()) {
     const auto& class_obj = file.classes().Get(class_id);
-    llvm::errs() << ": " << class_obj;
-    DumpNameIfValid(file, class_obj.name_id);
+    llvm::errs() << ": " << class_obj
+                 << StreamedDumpNameIfValid(file, class_obj.name_id);
   }
   llvm::errs() << '\n';
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id) -> void {
-  DumpNoNewline(file, const_id);
-  llvm::errs() << '\n';
+  llvm::errs() << StreamedDumpNoNewline(file, const_id) << '\n';
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
@@ -72,8 +72,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
   llvm::errs() << entity_name_id;
   if (entity_name_id.has_value()) {
     auto entity_name = file.entity_names().Get(entity_name_id);
-    llvm::errs() << ": " << entity_name;
-    DumpNameIfValid(file, entity_name.name_id);
+    llvm::errs() << ": " << entity_name
+                 << StreamedDumpNameIfValid(file, entity_name.name_id);
   }
   llvm::errs() << '\n';
 }
@@ -85,24 +85,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
     const auto& facet_type = file.facet_types().Get(facet_type_id);
     llvm::errs() << ": " << facet_type << '\n';
     for (auto impls : facet_type.impls_constraints) {
-      llvm::errs() << "  - ";
-      DumpNoNewline(file, impls.interface_id);
+      llvm::errs() << "  - " << StreamedDumpNoNewline(file, impls.interface_id);
       if (impls.specific_id.has_value()) {
-        llvm::errs() << "; ";
-        DumpNoNewline(file, impls.specific_id);
+        llvm::errs() << "; " << StreamedDumpNoNewline(file, impls.specific_id);
       }
       llvm::errs() << '\n';
     }
     for (auto rewrite : facet_type.rewrite_constraints) {
-      llvm::errs() << "  - ";
-      Dump(file, rewrite.lhs_const_id);
-      llvm::errs() << "  - ";
-      Dump(file, rewrite.rhs_const_id);
+      llvm::errs() << "  - " << StreamedDump(file, rewrite.lhs_const_id)
+                   << "  - " << StreamedDump(file, rewrite.rhs_const_id);
     }
     if (auto complete_id = file.complete_facet_types().TryGetId(facet_type_id);
         complete_id.has_value()) {
-      llvm::errs() << "complete: ";
-      Dump(file, complete_id);
+      llvm::errs() << "complete: " << StreamedDump(file, complete_id);
     }
   } else {
     llvm::errs() << '\n';
@@ -113,8 +108,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id) -> void {
   llvm::errs() << function_id;
   if (function_id.has_value()) {
     const auto& function = file.functions().Get(function_id);
-    llvm::errs() << ": " << function;
-    DumpNameIfValid(file, function.name_id);
+    llvm::errs() << ": " << function
+                 << StreamedDumpNameIfValid(file, function.name_id);
   }
   llvm::errs() << '\n';
 }
@@ -142,21 +137,18 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
     llvm::errs() << ":";
     auto inst_block = file.inst_blocks().Get(inst_block_id);
     for (auto inst_id : inst_block) {
-      llvm::errs() << "\n  - ";
-      DumpNoNewline(file, inst_id);
+      llvm::errs() << "\n  - " << StreamedDumpNoNewline(file, inst_id);
     }
   }
   llvm::errs() << '\n';
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> void {
-  DumpNoNewline(file, inst_id);
-  llvm::errs() << '\n';
+  llvm::errs() << StreamedDumpNoNewline(file, inst_id) << '\n';
   if (inst_id.has_value()) {
     Inst inst = file.insts().Get(inst_id);
     if (inst.type_id().has_value()) {
-      llvm::errs() << "  - type ";
-      Dump(file, inst.type_id());
+      llvm::errs() << "  - type " << StreamedDump(file, inst.type_id());
     }
     ConstantId const_id = file.constant_values().Get(inst_id);
     if (const_id.has_value()) {
@@ -172,14 +164,11 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> void {
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, InterfaceId interface_id) -> void {
-  DumpNoNewline(file, interface_id);
-  llvm::errs() << '\n';
+  llvm::errs() << StreamedDumpNoNewline(file, interface_id) << '\n';
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, NameId name_id) -> void {
-  llvm::errs() << name_id;
-  DumpNameIfValid(file, name_id);
-  llvm::errs() << '\n';
+  llvm::errs() << name_id << StreamedDumpNameIfValid(file, name_id) << '\n';
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
@@ -191,12 +180,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
     if (name_scope.inst_id().has_value()) {
       llvm::errs() << " " << file.insts().Get(name_scope.inst_id());
     }
-    DumpNameIfValid(file, name_scope.name_id());
-    llvm::errs() << '\n';
+    llvm::errs() << StreamedDumpNameIfValid(file, name_scope.name_id()) << '\n';
     for (const auto& entry : name_scope.entries()) {
-      llvm::errs() << "  - " << entry.name_id;
-      DumpNameIfValid(file, entry.name_id);
-      llvm::errs() << ": ";
+      llvm::errs() << "  - " << entry.name_id
+                   << StreamedDumpNameIfValid(file, entry.name_id) << ": ";
       if (entry.result.is_poisoned()) {
         llvm::errs() << "<poisoned>\n";
       } else if (entry.result.is_found()) {
@@ -211,8 +198,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
             llvm::errs() << "private ";
             break;
         }
-        DumpNoNewline(file, entry.result.target_inst_id());
-        llvm::errs() << "\n";
+        llvm::errs() << StreamedDumpNoNewline(file,
+                                              entry.result.target_inst_id())
+                     << "\n";
       } else {
         llvm::errs() << "<not-found>\n";
       }
@@ -230,11 +218,11 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
         file.complete_facet_types().Get(complete_facet_type_id);
     for (auto [i, req_interface] :
          llvm::enumerate(complete_facet_type.required_interfaces)) {
-      llvm::errs() << "  - ";
-      DumpNoNewline(file, req_interface.interface_id);
+      llvm::errs() << "  - "
+                   << StreamedDumpNoNewline(file, req_interface.interface_id);
       if (req_interface.specific_id.has_value()) {
-        llvm::errs() << "; ";
-        DumpNoNewline(file, req_interface.specific_id);
+        llvm::errs() << "; "
+                     << StreamedDumpNoNewline(file, req_interface.specific_id);
       }
       if (static_cast<int>(i) < complete_facet_type.num_to_impl) {
         llvm::errs() << " (to impl)";
@@ -245,8 +233,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id) -> void {
-  DumpNoNewline(file, specific_id);
-  llvm::errs() << '\n';
+  llvm::errs() << StreamedDumpNoNewline(file, specific_id) << '\n';
   if (specific_id.has_value()) {
     Dump(file, file.specifics().Get(specific_id).args_id);
   }
@@ -255,12 +242,11 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id) -> void {
 LLVM_DUMP_METHOD auto Dump(const File& file,
                            SpecificInterfaceId specific_interface_id) -> void {
   const auto& interface = file.specific_interfaces().Get(specific_interface_id);
-  llvm::errs() << specific_interface_id << '\n';
-  llvm::errs() << "  - interface: ";
-  DumpNoNewline(file, interface.interface_id);
-  llvm::errs() << '\n';
-  llvm::errs() << "  - specific_id: ";
-  Dump(file, interface.specific_id);
+  llvm::errs() << specific_interface_id << '\n'
+               << "  - interface: "
+               << StreamedDumpNoNewline(file, interface.interface_id) << '\n'
+               << "  - specific_id: "
+               << StreamedDump(file, interface.specific_id);
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,
@@ -270,8 +256,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     llvm::errs() << ":";
     auto block = file.struct_type_fields().Get(struct_type_fields_id);
     for (auto field : block) {
-      llvm::errs() << "\n  - " << field;
-      DumpNameIfValid(file, field.name_id);
+      llvm::errs() << "\n  - " << field
+                   << StreamedDumpNameIfValid(file, field.name_id);
       if (field.type_id.has_value()) {
         InstId inst_id =
             file.constant_values().GetInstId(field.type_id.AsConstantId());
@@ -289,8 +275,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeBlockId type_block_id)
     llvm::errs() << ":\n";
     auto type_block = file.type_blocks().Get(type_block_id);
     for (auto type_id : type_block) {
-      llvm::errs() << "  - ";
-      Dump(file, type_id);
+      llvm::errs() << "  - " << StreamedDump(file, type_id);
     }
   } else {
     llvm::errs() << '\n';
