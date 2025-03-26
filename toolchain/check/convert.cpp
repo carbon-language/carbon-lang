@@ -499,16 +499,18 @@ static auto ConvertStructToStructOrClass(Context& context,
                             dest_elem_fields.size()});
   for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     if (dest_field.name_id == SemIR::NameId::Vptr) {
-      // CARBON_CHECK(ToClass, "Only classes should have vptrs.");
+      bool NonConstexprToClass = ToClass;
+      CARBON_CHECK(NonConstexprToClass, "Only classes should have vptrs.");
+      target.init_block->InsertHere();
       auto dest_id =
-          AddInst<SemIR::ClassElementAccess>(*target.init_block, value_loc_id,
+          AddInst<SemIR::ClassElementAccess>(context, value_loc_id,
                                              {.type_id = dest_field.type_id,
                                               .base_id = target.init_id,
                                               .index = SemIR::ElementIndex(i)});
       auto vtable_ptr_id = AddInst<SemIR::VtablePtr>(
-          *target.init_block, value_loc_id, {.type_id = dest_field.type_id});
+          context, value_loc_id, {.type_id = dest_field.type_id});
       auto init_id =
-          AddInst<SemIR::InitializeFrom>(*target.init_block, value_loc_id,
+          AddInst<SemIR::InitializeFrom>(context, value_loc_id,
                                          {.type_id = dest_field.type_id,
                                           .src_id = vtable_ptr_id,
                                           .dest_id = dest_id});

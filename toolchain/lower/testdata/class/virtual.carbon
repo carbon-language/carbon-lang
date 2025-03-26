@@ -161,16 +161,16 @@ fn Use() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !9
 // CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %v.var), !dbg !9
-// CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   store ptr null, ptr %.loc11_24.2.vptr, align 8, !dbg !11
-// CHECK:STDOUT:   %.loc11_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.5.m, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store ptr null, ptr %.loc11_24.2.vptr, align 8, !dbg !10
+// CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc11_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.5.m, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !12
 // CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %u.var), !dbg !9
-// CHECK:STDOUT:   %.loc13_24.3.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !13
-// CHECK:STDOUT:   store ptr null, ptr %.loc13_24.3.vptr, align 8, !dbg !13
+// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   store ptr null, ptr %.loc13_24.2.vptr, align 8, !dbg !13
 // CHECK:STDOUT:   %.loc13_24.6.m = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 1, !dbg !13
 // CHECK:STDOUT:   store i32 3, ptr %.loc13_24.6.m, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
@@ -198,8 +198,8 @@ fn Use() {
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.MemberInit", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 10, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 23, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 17, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 17, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 23, scope: !8)
 // CHECK:STDOUT: !12 = !DILocation(line: 12, column: 3, scope: !8)
 // CHECK:STDOUT: !13 = !DILocation(line: 13, column: 17, scope: !8)
 // CHECK:STDOUT: !14 = !DILocation(line: 9, column: 1, scope: !8)
