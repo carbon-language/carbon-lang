@@ -963,10 +963,10 @@ class T2 {
 // CHECK:STDOUT:   %i.ref.loc14_25: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %i.ref.loc14_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.68c = struct_literal (%i.ref.loc14_25, %i.ref.loc14_34)
+// CHECK:STDOUT:   %.loc14_34: %i32 = bind_value %i.ref.loc14_34
 // CHECK:STDOUT:   %.loc14_35.2: ref %ptr.454 = class_element_access %b1.var, element0
 // CHECK:STDOUT:   %.loc14_35.3: ref %ptr.454 = vtable_ptr
 // CHECK:STDOUT:   %.loc14_35.4: init %ptr.454 = initialize_from %.loc14_35.3 to %.loc14_35.2
-// CHECK:STDOUT:   %.loc14_34: %i32 = bind_value %i.ref.loc14_34
 // CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %b1.var, element2
 // CHECK:STDOUT:   %.loc14_35.6: init %i32 = initialize_from %.loc14_34 to %.loc14_35.5
 // CHECK:STDOUT:   %.loc14_25: %i32 = bind_value %i.ref.loc14_25
@@ -985,17 +985,17 @@ class T2 {
 // CHECK:STDOUT:   %int_3.loc15: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc15_35.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc15, %int_5)
-// CHECK:STDOUT:   %.loc15_35.2: ref %ptr.454 = class_element_access %b2.var, element0
-// CHECK:STDOUT:   %.loc15_35.3: ref %ptr.454 = vtable_ptr
-// CHECK:STDOUT:   %.loc15_35.4: init %ptr.454 = initialize_from %.loc15_35.3 to %.loc15_35.2
 // CHECK:STDOUT:   %impl.elem0.loc15_35.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [concrete = constants.%Convert.bound.4e6]
 // CHECK:STDOUT:   %specific_fn.loc15_35.1: <specific function> = specific_function %impl.elem0.loc15_35.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_35.2: <bound method> = bound_method %int_5, %specific_fn.loc15_35.1 [concrete = constants.%bound_method.a25]
 // CHECK:STDOUT:   %int.convert_checked.loc15_35.1: init %i32 = call %bound_method.loc15_35.2(%int_5) [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %.loc15_35.5: init %i32 = converted %int_5, %int.convert_checked.loc15_35.1 [concrete = constants.%int_5.0f6]
+// CHECK:STDOUT:   %.loc15_35.2: init %i32 = converted %int_5, %int.convert_checked.loc15_35.1 [concrete = constants.%int_5.0f6]
+// CHECK:STDOUT:   %.loc15_35.3: ref %ptr.454 = class_element_access %b2.var, element0
+// CHECK:STDOUT:   %.loc15_35.4: ref %ptr.454 = vtable_ptr
+// CHECK:STDOUT:   %.loc15_35.5: init %ptr.454 = initialize_from %.loc15_35.4 to %.loc15_35.3
 // CHECK:STDOUT:   %.loc15_35.6: ref %i32 = class_element_access %b2.var, element2
-// CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [concrete = constants.%int_5.0f6]
+// CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.2 to %.loc15_35.6 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %impl.elem0.loc15_35.2: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15_35.3: <bound method> = bound_method %int_3.loc15, %impl.elem0.loc15_35.2 [concrete = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %specific_fn.loc15_35.2: <specific function> = specific_function %impl.elem0.loc15_35.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
@@ -1004,7 +1004,7 @@ class T2 {
 // CHECK:STDOUT:   %.loc15_35.8: init %i32 = converted %int_3.loc15, %int.convert_checked.loc15_35.2 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc15_35.9: ref %i32 = class_element_access %b2.var, element1
 // CHECK:STDOUT:   %.loc15_35.10: init %i32 = initialize_from %.loc15_35.8 to %.loc15_35.9 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc15_35.11: init %Base = class_init (%.loc15_35.4, %.loc15_35.7, %.loc15_35.10), %b2.var
+// CHECK:STDOUT:   %.loc15_35.11: init %Base = class_init (%.loc15_35.5, %.loc15_35.7, %.loc15_35.10), %b2.var
 // CHECK:STDOUT:   %.loc15_3.2: init %Base = converted %.loc15_35.1, %.loc15_35.11
 // CHECK:STDOUT:   assign %b2.var, %.loc15_3.2
 // CHECK:STDOUT:   %Base.ref.loc15: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
