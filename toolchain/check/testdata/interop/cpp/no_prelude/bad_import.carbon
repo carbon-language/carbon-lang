@@ -32,11 +32,13 @@ import Cpp library "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+8]]:1: error: Error in imported C++ code:
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: fatal error: '\"foo.h\"' file not found
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+10]]:1: error: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: fatal error: '\"foo.h\"' file not found
 // CHECK:STDERR:     1 | #include "\"foo.h\""
 // CHECK:STDERR:       |          ^~~~~~~~~~~
 // CHECK:STDERR:  [CppInteropParseError]
+// CHECK:STDERR: import Cpp library "\"foo.h\"";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
 // CHECK:STDERR: import Cpp library "\"foo.h\"";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

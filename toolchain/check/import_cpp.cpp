@@ -87,21 +87,18 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
                       diagnostics_str));
         return;
       }
-      case clang::DiagnosticsEngine::Warning: {
-        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
-                          "Warning in imported C++ code:\n{0}", std::string);
-
-        // TODO: Use a more specific location.
-        context_.emitter().Emit(loc_, CppInteropParseWarning, diagnostics_str);
-        return;
-      }
+      case clang::DiagnosticsEngine::Warning:
       case clang::DiagnosticsEngine::Error:
       case clang::DiagnosticsEngine::Fatal: {
-        CARBON_DIAGNOSTIC(CppInteropParseError, Error,
-                          "Error in imported C++ code:\n{0}", std::string);
+        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}", std::string);
+        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
 
         // TODO: Use a more specific location.
-        context_.emitter().Emit(loc_, CppInteropParseError, diagnostics_str);
+        context_.emitter().Emit(loc_,
+                                diag_level == clang::DiagnosticsEngine::Warning
+                                    ? CppInteropParseWarning
+                                    : CppInteropParseError,
+                                diagnostics_str);
         return;
       }
     }
@@ -131,6 +128,13 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
 
   std::string diagnostics_str;
   llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
+
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
+        // TODO: Improve the location.
+        builder.Note(loc, InCppImport);
+      });
 
   CarbonClangDiagnosticConsumer diagnostics_consumer(context, loc);
 
