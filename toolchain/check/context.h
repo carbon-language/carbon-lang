@@ -50,7 +50,7 @@ namespace Carbon::Check {
 class Context {
  public:
   // Stores references for work.
-  explicit Context(DiagnosticEmitter<SemIRLoc>* emitter,
+  explicit Context(Diagnostics::Emitter<SemIRLoc>* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
@@ -69,7 +69,7 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return *emitter_; }
+  auto emitter() -> Diagnostics::Emitter<SemIRLoc>& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return tree_and_subtrees_getter_();
@@ -276,7 +276,7 @@ class Context {
 
  private:
   // Handles diagnostics.
-  DiagnosticEmitter<SemIRLoc>* emitter_;
+  Diagnostics::Emitter<SemIRLoc>* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;

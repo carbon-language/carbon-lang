@@ -17,7 +17,7 @@ namespace Carbon::Check {
 
 // Checking information that's tracked per file.
 struct Unit {
-  DiagnosticConsumer* consumer;
+  Diagnostics::Consumer* consumer;
   SharedValueStores* value_stores;
   // The `timings` may be null if nothing is to be recorded.
   Timings* timings;

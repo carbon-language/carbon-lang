@@ -579,7 +579,7 @@ static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
   CARBON_DIAGNOSTIC(
       ClassAbstractHere, Note,
       "{0:=0:uses class that|=1:class} was declared abstract here",
-      IntAsSelect);
+      Diagnostics::IntAsSelect);
   builder.Note(class_info.definition_id, ClassAbstractHere,
                static_cast<int>(direct_use));
 }

@@ -14,7 +14,7 @@
 
 namespace Carbon::Lex {
 
-using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
+using LexerDiagnosticEmitter = Diagnostics::Emitter<const char*>;
 
 static constexpr char MultiLineIndicator[] = R"(''')";
 static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";

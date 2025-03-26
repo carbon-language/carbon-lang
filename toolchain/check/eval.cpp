@@ -187,7 +187,9 @@ class EvalContext {
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
-  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return context().emitter(); }
+  auto emitter() -> Diagnostics::Emitter<SemIRLoc>& {
+    return context().emitter();
+  }
 
  private:
   // The type-checking context in which we're performing evaluation.
@@ -1036,7 +1038,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIRLoc loc,
     CARBON_DIAGNOSTIC(
         CompileTimeShiftOutOfRange, Error,
         "shift distance >= type width of {0} in `{1} {2:<<|>>} {3}`", unsigned,
-        TypedInt, BoolAsSelect, TypedInt);
+        TypedInt, Diagnostics::BoolAsSelect, TypedInt);
     context.emitter().Emit(
         loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
         {.type = lhs.type_id, .value = lhs_val},
@@ -1050,7 +1052,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIRLoc loc,
       context.sem_ir().types().IsSignedInt(rhs.type_id)) {
     CARBON_DIAGNOSTIC(CompileTimeShiftNegative, Error,
                       "shift distance negative in `{0} {1:<<|>>} {2}`",
-                      TypedInt, BoolAsSelect, TypedInt);
+                      TypedInt, Diagnostics::BoolAsSelect, TypedInt);
     context.emitter().Emit(
         loc, CompileTimeShiftNegative, {.type = lhs.type_id, .value = lhs_val},
         builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
@@ -1888,7 +1890,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
                                .values = result,
                            });
 
-  DiagnosticAnnotationScope annotate_diagnostics(
+  Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
                           SemIR::SpecificId);

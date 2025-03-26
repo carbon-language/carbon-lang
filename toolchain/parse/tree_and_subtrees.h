@@ -120,7 +120,7 @@ class TreeAndSubtrees {
   // Converts the node to a diagnostic location, covering either the full
   // subtree or only the token.
   auto NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
-      -> ConvertedDiagnosticLoc;
+      -> Diagnostics::ConvertedLoc;
 
   // Returns an iterable range over the parse tree node and all of its
   // descendants in depth-first postorder.

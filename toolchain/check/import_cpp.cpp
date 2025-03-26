@@ -83,13 +83,15 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
     CARBON_DIAGNOSTIC(
         CppInteropParseError, Error,
         "{0} error{0:s} and {1} warning{1:s} in {2} `Cpp` import{2:s}:\n{3}",
-        IntAsSelect, IntAsSelect, IntAsSelect, std::string);
+        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+        Diagnostics::IntAsSelect, std::string);
     context.emitter().Emit(loc, CppInteropParseError, num_errors, num_warnings,
                            num_imports, diagnostics_str);
   } else if (num_warnings > 0) {
     CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
                       "{0} warning{0:s} in `Cpp` {1} import{1:s}:\n{2}",
-                      IntAsSelect, IntAsSelect, std::string);
+                      Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+                      std::string);
     context.emitter().Emit(loc, CppInteropParseWarning, num_warnings,
                            num_imports, diagnostics_str);
   }
@@ -348,7 +350,7 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  DiagnosticAnnotationScope annotate_diagnostics(
+  Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCppNameLookup, Note,
                           "in `Cpp` name lookup for `{0}`", SemIR::NameId);

@@ -56,10 +56,10 @@ struct DriverEnv {
   bool enable_leaking = false;
 
   // A diagnostic consumer, to be able to connect output.
-  StreamDiagnosticConsumer consumer;
+  Diagnostics::StreamConsumer consumer;
 
   // A diagnostic emitter that has no locations.
-  NoLocDiagnosticEmitter emitter;
+  Diagnostics::NoLocEmitter emitter;
 
   // For CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream = nullptr;

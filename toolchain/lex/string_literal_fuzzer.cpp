@@ -35,7 +35,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
 
   llvm::BumpPtrAllocator allocator;
   volatile auto value =
-      token->ComputeValue(allocator, NullDiagnosticEmitter<const char*>());
+      token->ComputeValue(allocator, Diagnostics::NullEmitter<const char*>());
   (void)value;
 
   return 0;

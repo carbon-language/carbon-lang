@@ -8,7 +8,7 @@
 #include "common/ostream.h"
 #include "llvm/Support/FormatVariadicDetails.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
 // Selects a formatv string based on the value.
 //
@@ -53,20 +53,20 @@ struct IntAsSelect {
   int value;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
 
-// See BoolAsSelect.
+// See Diagnostics::BoolAsSelect.
 template <>
-struct llvm::format_provider<Carbon::BoolAsSelect> {
-  static auto format(const Carbon::BoolAsSelect& wrapper, raw_ostream& out,
-                     StringRef style) -> void;
+struct llvm::format_provider<Carbon::Diagnostics::BoolAsSelect> {
+  static auto format(const Carbon::Diagnostics::BoolAsSelect& wrapper,
+                     raw_ostream& out, StringRef style) -> void;
 };
 
-// See IntAsSelect.
+// See Diagnostics::IntAsSelect.
 template <>
-struct llvm::format_provider<Carbon::IntAsSelect> {
-  static auto format(const Carbon::IntAsSelect& wrapper, raw_ostream& out,
-                     StringRef style) -> void;
+struct llvm::format_provider<Carbon::Diagnostics::IntAsSelect> {
+  static auto format(const Carbon::Diagnostics::IntAsSelect& wrapper,
+                     raw_ostream& out, StringRef style) -> void;
 };
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_FORMAT_PROVIDERS_H_

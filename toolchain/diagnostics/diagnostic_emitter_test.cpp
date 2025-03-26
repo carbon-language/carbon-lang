@@ -13,72 +13,70 @@
 namespace Carbon::Testing {
 namespace {
 
-using ::Carbon::Testing::IsDiagnostic;
-using ::Carbon::Testing::IsSingleDiagnostic;
 using testing::ElementsAre;
 
-class FakeDiagnosticEmitter : public DiagnosticEmitter<int> {
+class FakeEmitter : public Diagnostics::Emitter<int> {
  public:
-  using DiagnosticEmitter::DiagnosticEmitter;
+  using Emitter::Emitter;
 
  protected:
   auto ConvertLoc(int n, ContextFnT /*context_fn*/) const
-      -> ConvertedDiagnosticLoc override {
+      -> Diagnostics::ConvertedLoc override {
     return {.loc = {.line_number = 1, .column_number = n},
             .last_byte_offset = -1};
   }
 };
 
-class DiagnosticEmitterTest : public ::testing::Test {
+class EmitterTest : public ::testing::Test {
  public:
-  DiagnosticEmitterTest() : emitter_(&consumer_) {}
+  EmitterTest() : emitter_(&consumer_) {}
 
   Testing::MockDiagnosticConsumer consumer_;
-  FakeDiagnosticEmitter emitter_;
+  FakeEmitter emitter_;
 };
 
-TEST_F(DiagnosticEmitterTest, EmitSimpleError) {
+TEST_F(EmitterTest, EmitSimpleError) {
   CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
-                             DiagnosticKind::TestDiagnostic,
-                             DiagnosticLevel::Error, 1, 1, "simple error")));
+                             Diagnostics::Kind::TestDiagnostic,
+                             Diagnostics::Level::Error, 1, 1, "simple error")));
   EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
-                             DiagnosticKind::TestDiagnostic,
-                             DiagnosticLevel::Error, 1, 2, "simple error")));
+                             Diagnostics::Kind::TestDiagnostic,
+                             Diagnostics::Level::Error, 1, 2, "simple error")));
   emitter_.Emit(1, TestDiagnostic);
   emitter_.Emit(2, TestDiagnostic);
 }
 
-TEST_F(DiagnosticEmitterTest, EmitSimpleWarning) {
+TEST_F(EmitterTest, EmitSimpleWarning) {
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(consumer_,
               HandleDiagnostic(IsSingleDiagnostic(
-                  DiagnosticKind::TestDiagnostic, DiagnosticLevel::Warning, 1,
-                  1, "simple warning")));
+                  Diagnostics::Kind::TestDiagnostic,
+                  Diagnostics::Level::Warning, 1, 1, "simple warning")));
   emitter_.Emit(1, TestDiagnostic);
 }
 
-TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
+TEST_F(EmitterTest, EmitOneArgDiagnostic) {
   CARBON_DIAGNOSTIC(TestDiagnostic, Error, "arg: `{0}`", std::string);
   EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
-                             DiagnosticKind::TestDiagnostic,
-                             DiagnosticLevel::Error, 1, 1, "arg: `str`")));
+                             Diagnostics::Kind::TestDiagnostic,
+                             Diagnostics::Level::Error, 1, 1, "arg: `str`")));
   emitter_.Emit(1, TestDiagnostic, "str");
 }
 
-TEST_F(DiagnosticEmitterTest, EmitNote) {
+TEST_F(EmitterTest, EmitNote) {
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   CARBON_DIAGNOSTIC(TestDiagnosticNote, Note, "note");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
-          DiagnosticLevel::Warning,
+          Diagnostics::Level::Warning,
           ElementsAre(
-              IsDiagnosticMessage(DiagnosticKind::TestDiagnostic,
-                                  DiagnosticLevel::Warning, 1, 1,
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
                                   "simple warning"),
-              IsDiagnosticMessage(DiagnosticKind::TestDiagnosticNote,
-                                  DiagnosticLevel::Note, 1, 2, "note")))));
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticNote,
+                                  Diagnostics::Level::Note, 1, 2, "note")))));
   emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
 }
 

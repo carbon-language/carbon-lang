@@ -50,16 +50,16 @@ struct PackageImports {
 // information), in addition to the `Unit` itself.
 struct UnitAndImports {
   // Converts a `NodeId` to a diagnostic location for `UnitAndImports`.
-  class Emitter : public DiagnosticEmitter<Parse::NodeId> {
+  class NodeEmitter : public Diagnostics::Emitter<Parse::NodeId> {
    public:
-    explicit Emitter(DiagnosticConsumer* consumer,
-                     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter)
-        : DiagnosticEmitter(consumer),
+    explicit NodeEmitter(Diagnostics::Consumer* consumer,
+                         Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter)
+        : Emitter(consumer),
           tree_and_subtrees_getter_(tree_and_subtrees_getter) {}
 
    protected:
     auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+        -> Diagnostics::ConvertedLoc override {
       return tree_and_subtrees_getter_().NodeToDiagnosticLoc(
           node_id, /*token_only=*/false);
     }
@@ -83,8 +83,8 @@ struct UnitAndImports {
   Unit* unit;
 
   // Emitter information.
-  ErrorTrackingDiagnosticConsumer err_tracker;
-  Emitter emitter;
+  Diagnostics::ErrorTrackingConsumer err_tracker;
+  NodeEmitter emitter;
 
   // List of the outgoing imports. If a package includes unavailable library
   // imports, it has an entry with has_load_error set. Invalid imports (for

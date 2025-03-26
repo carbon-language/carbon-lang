@@ -209,14 +209,14 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   CARBON_DIAGNOSTIC(
       RedeclParamPrevious, Note,
       "previous declaration's corresponding {0:implicit |}parameter here",
-      BoolAsSelect);
+      Diagnostics::BoolAsSelect);
   auto emit_diagnostic = [&]() {
     if (!diagnose) {
       return;
     }
     CARBON_DIAGNOSTIC(RedeclParamDiffers, Error,
                       "redeclaration differs at {0:implicit |}parameter {1}",
-                      BoolAsSelect, int32_t);
+                      Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
         .Build(new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
                param_index + 1)
@@ -277,7 +277,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
                       "type {3} of {0:implicit |}parameter {1} in "
                       "redeclaration differs from previous parameter type {2}",
-                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+                      Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId,
+                      SemIR::TypeId);
     context.emitter()
         .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
                param_index + 1, prev_param_type_id, new_param_pattern.type_id())
@@ -315,11 +316,11 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
                       "redeclaration differs because of "
                       "{1:|missing }{0:implicit |}parameter list",
-                      BoolAsSelect, BoolAsSelect);
+                      Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     CARBON_DIAGNOSTIC(RedeclParamListPrevious, Note,
                       "previously declared "
                       "{1:with|without} {0:implicit |}parameter list",
-                      BoolAsSelect, BoolAsSelect);
+                      Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     context.emitter()
         .Build(new_decl_loc, RedeclParamListDiffers, is_implicit_param,
                new_param_patterns_id.has_value())
@@ -342,11 +343,11 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     CARBON_DIAGNOSTIC(
         RedeclParamCountDiffers, Error,
         "redeclaration differs because of {0:implicit |}parameter count of {1}",
-        BoolAsSelect, int32_t);
+        Diagnostics::BoolAsSelect, int32_t);
     CARBON_DIAGNOSTIC(
         RedeclParamCountPrevious, Note,
         "previously declared with {0:implicit |}parameter count of {1}",
-        BoolAsSelect, int32_t);
+        Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
         .Build(new_decl_loc, RedeclParamCountDiffers, is_implicit_param,
                new_param_pattern_ids.size())

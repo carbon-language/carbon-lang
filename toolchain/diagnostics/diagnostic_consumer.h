@@ -9,25 +9,25 @@
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
 // Receives diagnostics as they are emitted.
-class DiagnosticConsumer {
+class Consumer {
  public:
-  virtual ~DiagnosticConsumer() = default;
+  virtual ~Consumer() = default;
 
   // Handle a diagnostic.
   //
   // This relies on moves of the Diagnostic. At present, diagnostics are
   // allocated on the stack, so their lifetime is that of HandleDiagnostic.
-  // However, SortingDiagnosticConsumer needs a longer lifetime, until all
+  // However, SortingConsumer needs a longer lifetime, until all
   // diagnostics have been produced. As a consequence, it needs to either copy
   // or move the Diagnostic, and right now we're moving due to the overhead of
   // notes.
   //
   // At present, there is no persistent storage of diagnostics because IDEs
   // would be fine with diagnostics being printed immediately and discarded,
-  // without SortingDiagnosticConsumer. If this becomes a performance issue, we
+  // without SortingConsumer. If this becomes a performance issue, we
   // may want to investigate alternative ownership models that address both IDE
   // and CLI user needs.
   virtual auto HandleDiagnostic(Diagnostic diagnostic) -> void = 0;
@@ -37,10 +37,9 @@ class DiagnosticConsumer {
 };
 
 // A diagnostic consumer that prints to a stream.
-class StreamDiagnosticConsumer : public DiagnosticConsumer {
+class StreamConsumer : public Consumer {
  public:
-  explicit StreamDiagnosticConsumer(llvm::raw_ostream* stream)
-      : stream_(stream) {}
+  explicit StreamConsumer(llvm::raw_ostream* stream) : stream_(stream) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override;
   auto Flush() -> void override { stream_->flush(); }
@@ -51,7 +50,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   }
 
  private:
-  auto Print(const DiagnosticMessage& message, llvm::StringRef prefix) -> void;
+  auto Print(const Message& message, llvm::StringRef prefix) -> void;
 
   llvm::raw_ostream* stream_;
 
@@ -63,17 +62,17 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
 };
 
 // Returns a diagnostic consumer instance that prints to stderr.
-auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer&;
+auto ConsoleConsumer() -> Consumer&;
 
 // Diagnostic consumer adaptor that tracks whether any errors have been
 // produced.
-class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
+class ErrorTrackingConsumer : public Consumer {
  public:
-  explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
+  explicit ErrorTrackingConsumer(Consumer& next_consumer)
       : next_consumer_(&next_consumer) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-    seen_error_ |= diagnostic.level == DiagnosticLevel::Error;
+    seen_error_ |= diagnostic.level == Level::Error;
     next_consumer_->HandleDiagnostic(std::move(diagnostic));
   }
 
@@ -84,10 +83,10 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
   auto seen_error() const -> bool { return seen_error_; }
 
  private:
-  DiagnosticConsumer* next_consumer_;
+  Consumer* next_consumer_;
   bool seen_error_ = false;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_CONSUMER_H_

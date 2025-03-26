@@ -17,7 +17,7 @@ auto HandleInvalid(Context& context) -> void {
                context.PopState());
 }
 
-auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+auto Parse(Lex::TokenizedBuffer& tokens, Diagnostics::Consumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree {
   // Delegate to the parser.
   Tree tree(tokens);

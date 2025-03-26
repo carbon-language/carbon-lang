@@ -299,8 +299,8 @@ static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
   }
 }
 
-auto CompileSubcommand::ValidateOptions(NoLocDiagnosticEmitter& emitter) const
-    -> bool {
+auto CompileSubcommand::ValidateOptions(
+    Diagnostics::NoLocEmitter& emitter) const -> bool {
   CARBON_DIAGNOSTIC(
       CompilePhaseFlagConflict, Error,
       "requested dumping {0} but compile phase is limited to `{1}`",
@@ -341,7 +341,7 @@ namespace {
 class CompilationUnit {
  public:
   explicit CompilationUnit(DriverEnv& driver_env, const CompileOptions& options,
-                           DiagnosticConsumer* consumer,
+                           Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename);
 
   // Loads source and lexes it. Returns true on success.
@@ -411,8 +411,8 @@ class CompilationUnit {
   llvm::raw_pwrite_stream* vlog_stream_;
 
   // Diagnostics are sent to consumer_, with optional sorting.
-  std::optional<SortingDiagnosticConsumer> sorting_consumer_;
-  DiagnosticConsumer* consumer_;
+  std::optional<Diagnostics::SortingConsumer> sorting_consumer_;
+  Diagnostics::Consumer* consumer_;
 
   bool success_ = true;
 
@@ -436,7 +436,7 @@ class CompilationUnit {
 
 CompilationUnit::CompilationUnit(DriverEnv& driver_env,
                                  const CompileOptions& options,
-                                 DiagnosticConsumer* consumer,
+                                 Diagnostics::Consumer* consumer,
                                  llvm::StringRef input_filename)
     : driver_env_(&driver_env),
       options_(options),
@@ -445,7 +445,7 @@ CompilationUnit::CompilationUnit(DriverEnv& driver_env,
   if (vlog_stream_ != nullptr || options_.stream_errors) {
     consumer_ = consumer;
   } else {
-    sorting_consumer_ = SortingDiagnosticConsumer(*consumer);
+    sorting_consumer_ = Diagnostics::SortingConsumer(*consumer);
     consumer_ = &*sorting_consumer_;
   }
   if (options_.dump_mem_usage && IncludeInDumps()) {

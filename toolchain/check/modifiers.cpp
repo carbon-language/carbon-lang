@@ -11,9 +11,10 @@ namespace Carbon::Check {
 // Builds the diagnostic for DiagnoseNotAllowed.
 template <typename... TokenKinds>
 static auto StartDiagnoseNotAllowed(
-    Context& context, const DiagnosticBase<TokenKinds...>& diagnostic_base,
+    Context& context,
+    const Diagnostics::DiagnosticBase<TokenKinds...>& diagnostic_base,
     Parse::NodeId modifier_node, Lex::TokenKind declaration_kind)
-    -> DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder {
+    -> Diagnostics::Emitter<SemIRLoc>::DiagnosticBuilder {
   if constexpr (sizeof...(TokenKinds) == 0) {
     return context.emitter().Build(modifier_node, diagnostic_base);
   } else if constexpr (sizeof...(TokenKinds) == 1) {
@@ -34,7 +35,8 @@ static auto StartDiagnoseNotAllowed(
 // declaration kind.
 template <typename... TokenKinds>
 static auto DiagnoseNotAllowed(
-    Context& context, const DiagnosticBase<TokenKinds...>& diagnostic_base,
+    Context& context,
+    const Diagnostics::DiagnosticBase<TokenKinds...>& diagnostic_base,
     Parse::NodeId modifier_node, Lex::TokenKind decl_kind,
     SemIR::LocId context_loc_id) -> void {
   auto diag = StartDiagnoseNotAllowed(context, diagnostic_base, modifier_node,

@@ -812,9 +812,10 @@ auto OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
   // by index.
   new (&arg()->value_action) Arg::ValueActionT(
       [values, match](const Arg& arg, llvm::StringRef value_string) -> bool {
-        for (int i : llvm::seq<int>(0, N)) {
-          if (value_string == arg.value_strings[i]) {
-            match(values[i]);
+        for (auto [value, arg_value_string] :
+             llvm::zip(values, arg.value_strings)) {
+          if (value_string == arg_value_string) {
+            match(value);
             return true;
           }
         }

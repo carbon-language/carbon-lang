@@ -493,7 +493,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       CARBON_DIAGNOSTIC(TuplePatternSizeDoesntMatchLiteral, Error,
                         "tuple pattern expects {0} element{0:s}, but tuple "
                         "literal has {1}",
-                        IntAsSelect, IntAsSelect);
+                        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect);
       context.emitter().Emit(pattern_loc_id, TuplePatternSizeDoesntMatchLiteral,
                              subpattern_ids.size(), subscrutinee_ids.size());
       return;
@@ -531,7 +531,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
   if (entry.pattern_id == SemIR::ErrorInst::SingletonInstId) {
     return;
   }
-  DiagnosticAnnotationScope annotate_diagnostics(
+  Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         if (kind_ == MatchKind::Caller) {
           CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
