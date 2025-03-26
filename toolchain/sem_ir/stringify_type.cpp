@@ -132,8 +132,10 @@ class StepStack {
           [&](llvm::ListSeparator* sep) { PushString(*sep); });
     }
   }
-  template<typename ...T>
-  auto Push(T ...items) -> void {
+
+  // Wraps `PushArray` without requiring `{}` for arguments.
+  template <typename... T>
+  auto Push(T... items) -> void {
     PushArray({items...});
   }
 
@@ -220,7 +222,7 @@ class Stringifier {
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, ArrayType inst) -> void {
     *out_ << "[";
-    step_stack_->Push({inst.element_type_id, "; ", inst.bound_id, "]"});
+    step_stack_->Push(inst.element_type_id, "; ", inst.bound_id, "]");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, AssociatedConstantDecl inst)
@@ -234,7 +236,7 @@ class Stringifier {
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, AssociatedEntityType inst)
       -> void {
     *out_ << "<associated entity in ";
-    step_stack_->Push({inst.interface_type_id, ">"});
+    step_stack_->Push(inst.interface_type_id, ">");
   }
 
   template <typename InstT>
@@ -300,7 +302,7 @@ class Stringifier {
           sem_ir_->constant_values().GetInstId(rewrite.lhs_const_id);
       auto rhs_const_id =
           sem_ir_->constant_values().GetInstId(rewrite.rhs_const_id);
-      step_stack_->Push({" ", lhs_const_id, " = ", rhs_const_id});
+      step_stack_->Push(" ", lhs_const_id, " = ", rhs_const_id);
       some_where = true;
     }
     // TODO: Other restrictions from facet_type_info.
@@ -324,7 +326,7 @@ class Stringifier {
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, FacetValue inst) -> void {
     // No need to output the witness.
-    step_stack_->Push({inst.type_inst_id, " as ", inst.type_id});
+    step_stack_->Push(inst.type_inst_id, " as ", inst.type_id);
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, FloatType inst) -> void {
@@ -335,7 +337,7 @@ class Stringifier {
       sem_ir_->ints().Get(width_value->int_id).print(*out_, /*isSigned=*/false);
     } else {
       *out_ << "Core.Float(";
-      step_stack_->Push({inst.bit_width_id, ")"});
+      step_stack_->Push(inst.bit_width_id, ")");
     }
   }
 
@@ -358,25 +360,25 @@ class Stringifier {
     }
 
     *out_ << "<type of ";
-    step_stack_->Push({fn_name, " in ", inst.self_id, ">"});
+    step_stack_->Push(fn_name, " in ", inst.self_id, ">");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, GenericClassType inst)
       -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     *out_ << "<type of ";
-    step_stack_->Push({StepStack::QualifiedNameItem{class_info.parent_scope_id,
-                                                    class_info.name_id},
-                       ">"});
+    step_stack_->Push(StepStack::QualifiedNameItem{class_info.parent_scope_id,
+                                                   class_info.name_id},
+                      ">");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, GenericInterfaceType inst)
       -> void {
     const auto& interface = sem_ir_->interfaces().Get(inst.interface_id);
     *out_ << "<type of ";
-    step_stack_->Push({StepStack::QualifiedNameItem{interface.parent_scope_id,
-                                                    interface.name_id},
-                       ">"});
+    step_stack_->Push(StepStack::QualifiedNameItem{interface.parent_scope_id,
+                                                   interface.name_id},
+                      ">");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, ImplWitnessAccess inst)
@@ -418,7 +420,7 @@ class Stringifier {
            StepStack::EntityNameItem{interface, impls_constraint->specific_id},
            "."});
     } else {
-      step_stack_->Push({".(TODO: ", witness_type_id});
+      step_stack_->Push(".(TODO: ", witness_type_id);
     }
 
     bool period_self = false;
@@ -451,7 +453,7 @@ class Stringifier {
       sem_ir_->ints().Get(width_value->int_id).print(*out_, /*isSigned=*/false);
     } else {
       *out_ << (inst.int_kind.is_signed() ? "Int(" : "UInt(");
-      step_stack_->Push({inst.bit_width_id, ")"});
+      step_stack_->Push(inst.bit_width_id, ")");
     }
   }
 
@@ -470,7 +472,7 @@ class Stringifier {
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, PointerType inst) -> void {
-    step_stack_->Push({inst.pointee_id, "*"});
+    step_stack_->Push(inst.pointee_id, "*");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, SpecificFunction inst)
@@ -508,7 +510,7 @@ class Stringifier {
     step_stack_->PushString("}");
     llvm::ListSeparator sep;
     for (auto field : llvm::reverse(fields)) {
-      step_stack_->Push({".", field.name_id, ": ", field.type_id, &sep});
+      step_stack_->Push(".", field.name_id, ": ", field.type_id, &sep);
     }
   }
 
@@ -530,7 +532,7 @@ class Stringifier {
     llvm::ListSeparator sep;
     for (auto [field, value_inst_id] :
          llvm::reverse(llvm::zip(fields, field_values))) {
-      step_stack_->Push({".", field.name_id, " = ", value_inst_id, &sep});
+      step_stack_->Push(".", field.name_id, " = ", value_inst_id, &sep);
     }
   }
 
@@ -549,7 +551,7 @@ class Stringifier {
     }
     llvm::ListSeparator sep;
     for (auto ref : llvm::reverse(refs)) {
-      step_stack_->Push({ref, &sep});
+      step_stack_->Push(ref, &sep);
     }
   }
 
@@ -568,7 +570,7 @@ class Stringifier {
     }
     llvm::ListSeparator sep;
     for (auto ref : llvm::reverse(refs)) {
-      step_stack_->Push({ref, &sep});
+      step_stack_->Push(ref, &sep);
     }
   }
 
@@ -585,7 +587,7 @@ class Stringifier {
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, UnboundElementType inst)
       -> void {
     *out_ << "<unbound element of class ";
-    step_stack_->Push({inst.class_type_id, ">"});
+    step_stack_->Push(inst.class_type_id, ">");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, VtablePtr /*inst*/)
