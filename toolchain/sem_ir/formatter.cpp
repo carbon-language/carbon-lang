@@ -379,7 +379,7 @@ class FormatterImpl {
     out_ << " as ";
     FormatName(impl_info.constraint_id);
 
-    if (impl_info.is_defined()) {
+    if (impl_info.is_complete()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
