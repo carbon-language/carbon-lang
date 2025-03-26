@@ -281,8 +281,8 @@ class Stringifier {
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, FacetAccessWitness inst)
       -> void {
     *out_ << "<witness for ";
-    step_stack_->Push(
-        {inst.facet_value_inst_id, ", interface ", inst.index, ">"});
+    step_stack_->Push(inst.facet_value_inst_id, ", interface ", inst.index,
+                      ">");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, FacetType inst) -> void {
@@ -320,7 +320,7 @@ class Stringifier {
       const auto& interface_info =
           sem_ir_->interfaces().Get(impls.interface_id);
       step_stack_->Push(
-          {StepStack::EntityNameItem(interface_info, impls.specific_id), &sep});
+          StepStack::EntityNameItem(interface_info, impls.specific_id), &sep);
     }
   }
 
@@ -345,7 +345,7 @@ class Stringifier {
     const auto& fn = sem_ir_->functions().Get(inst.function_id);
     *out_ << "<type of ";
     step_stack_->Push(
-        {StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">"});
+        StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/,
@@ -416,9 +416,9 @@ class Stringifier {
         step_stack_->PushInstId(entity_inst_id);
       }
       step_stack_->Push(
-          {".(",
-           StepStack::EntityNameItem{interface, impls_constraint->specific_id},
-           "."});
+          ".(",
+          StepStack::EntityNameItem{interface, impls_constraint->specific_id},
+          ".");
     } else {
       step_stack_->Push(".(TODO: ", witness_type_id);
     }
