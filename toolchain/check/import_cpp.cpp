@@ -46,11 +46,15 @@ static auto GenerateCppIncludesHeaderCode(
 
 namespace {
 
+// Used to convert Clang diagnostics to Carbon diagnostics.
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
+  // Creates an instance with the location that triggers calling Clang.
   CarbonClangDiagnosticConsumer(Context& context, SemIRLoc loc)
       : context_(context), loc_(loc) {}
 
+  // Generates a Carbon warning for each Clang warning and a Carbon error for
+  // each Clang error or fatal.
   void HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
                         const clang::Diagnostic& info) override {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
@@ -104,7 +108,10 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   }
 
  private:
+  // The type-checking context in which we're running Clang.
   Context& context_;
+
+  // The location that triggered calling Clang.
   SemIRLoc loc_;
 };
 
