@@ -90,8 +90,10 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       case clang::DiagnosticsEngine::Warning:
       case clang::DiagnosticsEngine::Error:
       case clang::DiagnosticsEngine::Fatal: {
-        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}", std::string);
-        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
+        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "C++:\n{0}",
+                          std::string);
+        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
+                          std::string);
 
         // TODO: Use a more specific location.
         context_.emitter().Emit(loc_,
