@@ -120,8 +120,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id)
   if (!generic_id.has_value()) {
     return out.TakeStr();
   }
-  llvm::errs() << ": " << file.generics().Get(generic_id) << '\n'
-               << Dump(file, file.generics().Get(generic_id).bindings_id);
+  out << ": " << file.generics().Get(generic_id) << '\n'
+      << Dump(file, file.generics().Get(generic_id).bindings_id);
   return out.TakeStr();
 }
 
