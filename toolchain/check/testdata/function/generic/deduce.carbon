@@ -1872,7 +1872,6 @@ fn F() {
 // CHECK:STDOUT:     %E.loc19_14.1: %facet_type = bind_symbolic_name E, 0 [symbolic = %E.loc19_14.2 (constants.%E)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (), @impl.0ce(constants.%E) [symbolic = @impl.0ce.%impl_witness (constants.%impl_witness.b63)]
-// CHECK:STDOUT:   %.loc19: %facet_type = converted constants.%E.as_type, constants.%E [symbolic = constants.%E]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

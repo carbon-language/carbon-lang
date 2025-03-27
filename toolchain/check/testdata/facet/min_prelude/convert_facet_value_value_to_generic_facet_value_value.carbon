@@ -152,8 +152,6 @@ fn F() {
 // CHECK:STDOUT:     %U.loc25_26.1: %Edible.type = bind_symbolic_name U, 1 [symbolic = %U.loc25_26.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc25: <witness> = impl_witness (), @impl.009(constants.%T.fd4, constants.%U) [symbolic = @impl.009.%impl_witness (constants.%impl_witness.c7c36b.1)]
-// CHECK:STDOUT:   %.loc25_51.1: %Edible.type = converted constants.%U.as_type, constants.%U [symbolic = constants.%U]
-// CHECK:STDOUT:   %.loc25_51.2: %Animal.type = converted constants.%T.as_type.2ad, constants.%T.fd4 [symbolic = constants.%T.fd4]
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
 // CHECK:STDOUT:   impl_decl @impl.27e [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]

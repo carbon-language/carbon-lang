@@ -430,21 +430,23 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
 
-    // Looking to see if there are any generic parameters on the `impl`
-    // declaration itself, not just generics inherited from it being written
-    // inside a generic context. If so, and the `impl` does not actually use all
-    // its generic parameters, then it will never be matched.
-    bool has_generic_param = false;
+    // Looking to see if there are any generic bindings on the `impl`
+    // declaration that are not deducible. If so, and the `impl` does not
+    // actually use all its generic bindings, and will never be matched. This
+    // should be diagnossed to the user.
+    bool has_error_in_implicit_pattern = false;
     if (name.implicit_param_patterns_id.has_value()) {
       for (auto inst_id :
            context.inst_blocks().Get(name.implicit_param_patterns_id)) {
-        if (inst_id != SemIR::ErrorInst::SingletonInstId) {
-          has_generic_param = true;
+        if (inst_id == SemIR::ErrorInst::SingletonInstId) {
+          has_error_in_implicit_pattern = true;
           break;
         }
       }
     }
-    if (has_generic_param) {
+    if (impl_info.generic_id.has_value() && !has_error_in_implicit_pattern &&
+        impl_info.witness_id != SemIR::ErrorInst::SingletonInstId) {
+      context.inst_block_stack().Push();
       auto deduced_specific_id = DeduceImplArguments(
           context, node_id,
           DeduceImpl{.self_id = impl_info.self_id,
@@ -452,13 +454,22 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                      .specific_id = impl_info.interface.specific_id},
           context.constant_values().Get(impl_info.self_id),
           impl_info.interface.specific_id);
+      // TODO: Deduce has side effects in the semir by generating `Converted`
+      // instructions which we will not use here. We should stop generting those
+      // when deducing for impl lookup, but for now we discard them by pushing
+      // an InstBlock on the stack and dropping it here.
+      context.inst_block_stack().PopAndDiscard();
       if (!deduced_specific_id.has_value()) {
-        // TODO: We should be able to diagnose an `impl` with a symbolic self
-        // and/or constraint, where it refers to some but not all of its
-        // generic parameters.
         CARBON_DIAGNOSTIC(ImplUnusedBinding, Error,
                           "`impl` with unused generic binding");
-        context.emitter().Emit(name.implicit_params_loc_id, ImplUnusedBinding);
+        // TODO: This location may be incorrect, the binding may be inherited
+        // from an outer declaration. It would be nice to get the particular
+        // binding that was undeducible back from DeduceImplArguments here and
+        // use that.
+        auto loc = name.implicit_params_loc_id.has_value()
+                       ? name.implicit_params_loc_id
+                       : node_id;
+        context.emitter().Emit(loc, ImplUnusedBinding);
         // Don't try to match the impl at all, save us work and possible future
         // diagnostics.
         context.impls().Get(impl_decl.impl_id).witness_id =

@@ -790,7 +790,6 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %A.loc7_14.1: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc7_14.2 (constants.%A)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.e7b(constants.%A) [symbolic = @impl.e7b.%impl_witness (constants.%impl_witness.110)]
-// CHECK:STDOUT:   %.loc7: %Animal.type = converted constants.%A.as_type, constants.%A [symbolic = constants.%A]
 // CHECK:STDOUT:   %FeedTame2.decl: %FeedTame2.type = fn_decl @FeedTame2 [concrete = constants.%FeedTame2] {
 // CHECK:STDOUT:     %V.patt.loc9_14.1: %facet_type.6ff = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc9_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:     %v.patt: @FeedTame2.%V.as_type.loc9_34.2 (%V.as_type) = binding_pattern v

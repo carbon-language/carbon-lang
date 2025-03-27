@@ -78,7 +78,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %A.loc17_14.1: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc17_14.2 (constants.%A)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl(constants.%A) [symbolic = @impl.%impl_witness (constants.%impl_witness.11010a.1)]
-// CHECK:STDOUT:   %.loc17: %Animal.type = converted constants.%A.as_type, constants.%A [symbolic = constants.%A]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %T.patt.loc19_9.1: %Eats.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_9.2 (constants.%T.patt.6be)]
 // CHECK:STDOUT:     %e.patt: @Feed.%T.as_type.loc19_22.2 (%T.as_type.27d) = binding_pattern e
