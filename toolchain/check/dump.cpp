@@ -86,7 +86,7 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::InstId inst_id)
     -> std::string {
   RawStringOstream out;
   auto loc_id = context.sem_ir().insts().GetLocId(inst_id);
-  out << SemIR::Dump(context.sem_ir(), inst_id) << "\n"
+  out << SemIR::Dump(context.sem_ir(), inst_id) << '\n'
       << "  - " << Dump(context, loc_id);
   return out.TakeStr();
 }
