@@ -94,13 +94,17 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
                           std::string);
         CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
                           std::string);
+        CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
 
         // TODO: Use a more specific location.
-        context_.emitter().Emit(loc_,
-                                diag_level == clang::DiagnosticsEngine::Warning
-                                    ? CppInteropParseWarning
-                                    : CppInteropParseError,
-                                diagnostics_str);
+        context_.emitter()
+            .Build(SemIR::LocId::None,
+                   diag_level == clang::DiagnosticsEngine::Warning
+                       ? CppInteropParseWarning
+                       : CppInteropParseError,
+                   diagnostics_str)
+            .Note(loc_, InCppImport)
+            .Emit();
         return;
       }
     }
@@ -130,13 +134,6 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
 
   std::string diagnostics_str;
   llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
-
-  DiagnosticAnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
-        // TODO: Improve the location.
-        builder.Note(loc, InCppImport);
-      });
 
   CarbonClangDiagnosticConsumer diagnostics_consumer(context, loc);
 
