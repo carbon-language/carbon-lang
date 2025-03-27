@@ -26,10 +26,10 @@ class C {}
 // should be diagnosed.
 //
 // CHECK:STDERR: fail_no_binding_used.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
-// CHECK:STDERR: impl forall [V:! type] C as I where .T = {} {}
+// CHECK:STDERR: impl forall [V:! type] C as I where .T = {.unmatched: ()} {}
 // CHECK:STDERR:             ^~~~~~~~~~
 // CHECK:STDERR:
-impl forall [V:! type] C as I where .T = {} {}
+impl forall [V:! type] C as I where .T = {.unmatched: ()} {}
 
 fn F() {
   // This shows that the first impl declaration was matched even though the
@@ -55,10 +55,10 @@ class C {}
 // https://discord.com/channels/655572317891461132/941071822756143115/1354563497731686550
 //
 // CHECK:STDERR: fail_one_binding_unused.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
-// CHECK:STDERR: impl forall [V:! type, W:! type] V as I where .T = {} {}
+// CHECK:STDERR: impl forall [V:! type, W:! type] V as I where .T = {.unmatched: ()} {}
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [V:! type, W:! type] V as I where .T = {} {}
+impl forall [V:! type, W:! type] V as I where .T = {.unmatched: ()} {}
 
 fn F() {
   // This shows that the first impl declaration was matched even though the
@@ -83,10 +83,10 @@ class C(U:! type) {
   // TODO: We should point the diagnostic at the binding `U` in C.
   //
   // CHECK:STDERR: fail_inherited_binding_unused.carbon:[[@LINE+4]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
-  // CHECK:STDERR:   impl C(()) as I where .T = {} {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl C(()) as I where .T = {.unmatched: ()} {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl C(()) as I where .T = {} {}
+  impl C(()) as I where .T = {.unmatched: ()} {}
 }
 
 fn F() {
@@ -109,10 +109,10 @@ class C(U:! type) {
   // TODO: We should point the diagnostic at the binding `U` in C.
   //
   // CHECK:STDERR: fail_inherited_binding_in_forall_unused.carbon:[[@LINE+4]]:15: error: `impl` with unused generic binding [ImplUnusedBinding]
-  // CHECK:STDERR:   impl forall [V:! type] C(V) as I where .T = {} {}
+  // CHECK:STDERR:   impl forall [V:! type] C(V) as I where .T = {.unmatched: ()} {}
   // CHECK:STDERR:               ^~~~~~~~~~
   // CHECK:STDERR:
-  impl forall [V:! type] C(V) as I where .T = {} {}
+  impl forall [V:! type] C(V) as I where .T = {.unmatched: ()} {}
 }
 
 fn F() {
@@ -126,7 +126,7 @@ interface I {
   let T:! type;
 }
 
-impl forall [U:! type] U as I where .T = {} {}
+impl forall [U:! type] U as I where .T = {.unmatched: ()} {}
 
 class C(U:! type) {
   // `U` can be deduced here, so no diagnostic issued.
@@ -145,7 +145,7 @@ interface I(W:! type) {
   let T:! type;
 }
 
-impl forall [U:! type] U as I(U) where .T = {} {}
+impl forall [U:! type] U as I(U) where .T = {.unmatched: ()} {}
 
 class C(U:! type) {
   // `U` can be deduced here, so no diagnostic issued.
