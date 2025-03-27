@@ -91,6 +91,16 @@ fn F() {
   var b: Args;
 }
 
+// --- not_breaking_generics.carbon
+
+class C(template T:! type) {}
+
+fn F(template T:! type) {
+  var v: C(T);
+}
+
+fn G() { F({}); }
+
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
