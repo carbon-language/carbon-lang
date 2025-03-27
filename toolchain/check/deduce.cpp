@@ -137,37 +137,37 @@ class DeductionWorklist {
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
-  auto AddInstArg(SemIR::IdKind kind, int32_t param, int32_t arg,
+  auto AddInstArg(SemIR::Inst::ArgAndKind param, int32_t arg,
                   bool needs_substitution) -> void {
-    switch (kind) {
+    switch (param.kind) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
         break;
       case SemIR::IdKind::For<SemIR::InstId>:
-        Add(SemIR::InstId(param), SemIR::InstId(arg), needs_substitution);
+        Add(param.As<SemIR::InstId>(), SemIR::InstId(arg), needs_substitution);
         break;
       case SemIR::IdKind::For<SemIR::TypeId>:
-        Add(SemIR::TypeId(param), SemIR::TypeId(arg), needs_substitution);
+        Add(param.As<SemIR::TypeId>(), SemIR::TypeId(arg), needs_substitution);
         break;
       case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
-        AddAll(SemIR::StructTypeFieldsId(param), SemIR::StructTypeFieldsId(arg),
-               needs_substitution);
+        AddAll(param.As<SemIR::StructTypeFieldsId>(),
+               SemIR::StructTypeFieldsId(arg), needs_substitution);
         break;
       case SemIR::IdKind::For<SemIR::InstBlockId>:
-        AddAll(SemIR::InstBlockId(param), SemIR::InstBlockId(arg),
+        AddAll(param.As<SemIR::InstBlockId>(), SemIR::InstBlockId(arg),
                needs_substitution);
         break;
       case SemIR::IdKind::For<SemIR::TypeBlockId>:
-        AddAll(SemIR::TypeBlockId(param), SemIR::TypeBlockId(arg),
+        AddAll(param.As<SemIR::TypeBlockId>(), SemIR::TypeBlockId(arg),
                needs_substitution);
         break;
       case SemIR::IdKind::For<SemIR::SpecificId>:
-        Add(SemIR::SpecificId(param), SemIR::SpecificId(arg),
+        Add(param.As<SemIR::SpecificId>(), SemIR::SpecificId(arg),
             needs_substitution);
         break;
       case SemIR::IdKind::For<SemIR::FacetTypeId>:
-        AddAll(SemIR::FacetTypeId(param), SemIR::FacetTypeId(arg),
+        AddAll(param.As<SemIR::FacetTypeId>(), SemIR::FacetTypeId(arg),
                needs_substitution);
         break;
       default:
@@ -468,10 +468,9 @@ auto DeductionContext::Deduce() -> bool {
           if (arg_inst.kind() != param_inst.kind()) {
             break;
           }
-          auto [kind0, kind1] = param_inst.ArgKinds();
-          worklist_.AddInstArg(kind0, param_inst.arg0(), arg_inst.arg0(),
+          worklist_.AddInstArg(param_inst.arg0_and_kind(), arg_inst.arg0(),
                                needs_substitution);
-          worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
+          worklist_.AddInstArg(param_inst.arg1_and_kind(), arg_inst.arg1(),
                                needs_substitution);
           continue;
         }

@@ -315,30 +315,33 @@ struct Worklist {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }
 
-  // Add an instruction argument to the contents of the current instruction.
+  using AddFnT = auto(Worklist& worklist, int32_t arg) -> void;
+
+  // Returns a lookup table to add an argument of the given kind. Requires a
+  // null IdKind as a parameter in order to get the type pack.
   template <typename... Types>
-  auto AddWithKind(uint64_t arg, TypeEnum<Types...> kind) -> void {
-    using AddFunction = void (*)(Worklist& worklist, uint64_t arg);
-    using Kind = decltype(kind);
+  static constexpr auto MakeAddTable(TypeEnum<Types...>* /*id_kind*/)
+      -> std::array<AddFnT*, SemIR::IdKind::NumValues> {
+    std::array<AddFnT*, SemIR::IdKind::NumValues> table = {};
+    ((table[SemIR::IdKind::template For<Types>.ToIndex()] =
+          [](Worklist& worklist, int32_t arg) {
+            worklist.Add(Inst::FromRaw<Types>(arg));
+          }),
+     ...);
+    table[SemIR::IdKind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
+                                                 int32_t /*arg*/) {
+      CARBON_FATAL("Unexpected invalid argument kind");
+    };
+    table[SemIR::IdKind::None.ToIndex()] = [](Worklist& /*worklist*/,
+                                              int32_t /*arg*/) {};
+    return table;
+  }
 
-    // Build a lookup table to add an argument of the given kind.
-    static constexpr std::array<AddFunction, Kind::NumTypes + 2> Table = [] {
-      std::array<AddFunction, Kind::NumTypes + 2> table;
-      table[Kind::None.ToIndex()] = [](Worklist& /*worklist*/,
-                                       uint64_t /*arg*/) {};
-      table[Kind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
-                                          uint64_t /*arg*/) {
-        CARBON_FATAL("Unexpected invalid argument kind");
-      };
-      ((table[Kind::template For<Types>.ToIndex()] =
-            [](Worklist& worklist, uint64_t arg) {
-              return worklist.Add(Inst::FromRaw<Types>(arg));
-            }),
-       ...);
-      return table;
-    }();
+  // Add an instruction argument to the contents of the current instruction.
+  auto AddWithKind(Inst::ArgAndKind arg) -> void {
+    static constexpr auto Table = MakeAddTable(static_cast<IdKind*>(nullptr));
 
-    Table[kind.ToIndex()](*this, arg);
+    Table[arg.kind.ToIndex()](*this, arg.value);
   }
 
   // Ensure all the instructions on the todo list have fingerprints. To avoid a
@@ -399,7 +402,6 @@ struct Worklist {
       // finish that work and process this instruction again, and if not, we'll
       // pop the instruction at the end of the loop.
       auto inst = next_sem_ir->insts().Get(next_inst_id);
-      auto [arg0_kind, arg1_kind] = inst.ArgKinds();
 
       // Add the instruction's fields to the contents.
       Add(inst.kind());
@@ -411,8 +413,8 @@ struct Worklist {
         Add(inst.type_id());
       }
 
-      AddWithKind(inst.arg0(), arg0_kind);
-      AddWithKind(inst.arg1(), arg1_kind);
+      AddWithKind(inst.arg0_and_kind());
+      AddWithKind(inst.arg1_and_kind());
 
       // If we didn't add any work, we have a fingerprint for this instruction;
       // pop it from the todo list. Otherwise, we leave it on the todo list so

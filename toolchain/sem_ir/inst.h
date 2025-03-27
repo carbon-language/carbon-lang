@@ -127,6 +127,20 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
+  // Associated an argument (usually arg0 or arg1, potentially type_id) with its
+  // IdKind.
+  struct ArgAndKind {
+    // Convenience conversion function.
+    template <typename IdT>
+    auto As() const -> IdT {
+      CARBON_DCHECK(kind == SemIR::IdKind::For<IdT>);
+      return IdT(kind);
+    }
+
+    IdKind kind;
+    int32_t value;
+  };
+
   // Makes an instruction for a singleton. This exists to support simple
   // construction of all singletons by File.
   static auto MakeSingleton(InstKind kind) -> Inst {
@@ -225,20 +239,6 @@ class Inst : public Printable<Inst> {
   // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }
 
-  // Gets the kinds of IDs used for arg0 and arg1 of the specified kind of
-  // instruction.
-  //
-  // TODO: This would ideally live on InstKind, but can't be there for layering
-  // reasons.
-  static auto ArgKinds(InstKind kind) -> std::pair<IdKind, IdKind> {
-    return ArgKindTable[kind.AsInt()];
-  }
-
-  // Gets the kinds of IDs used for arg0 and arg1 of this instruction.
-  auto ArgKinds() const -> std::pair<IdKind, IdKind> {
-    return ArgKinds(kind());
-  }
-
   // Gets the first argument of the instruction. NoneIndex if there is no such
   // argument.
   auto arg0() const -> int32_t { return arg0_; }
@@ -246,6 +246,17 @@ class Inst : public Printable<Inst> {
   // Gets the second argument of the instruction. NoneIndex if there is no such
   // argument.
   auto arg1() const -> int32_t { return arg1_; }
+
+  // Returns arguments with their IdKind.
+  auto type_id_and_kind() const -> ArgAndKind {
+    return {.kind = SemIR::IdKind::For<SemIR::TypeId>, .value = type_id_.index};
+  }
+  auto arg0_and_kind() const -> ArgAndKind {
+    return {.kind = ArgKindTable[kind_].first, .value = arg0_};
+  }
+  auto arg1_and_kind() const -> ArgAndKind {
+    return {.kind = ArgKindTable[kind_].second, .value = arg1_};
+  }
 
   // Sets the type of this instruction.
   auto SetType(TypeId type_id) -> void { type_id_ = type_id; }
@@ -281,6 +292,9 @@ class Inst : public Printable<Inst> {
   friend class InstTestHelper;
 
   // Table mapping instruction kinds to their argument kinds.
+  //
+  // TODO: ArgKindTable would ideally live on InstKind, but can't be there for
+  // layering reasons.
   static const std::pair<IdKind, IdKind> ArgKindTable[];
 
   // Raw constructor, used for testing.

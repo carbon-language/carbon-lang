@@ -44,21 +44,24 @@ auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id) -> bool {
          OperandIsDependent(context, context.constant_values().Get(inst_id));
 }
 
-static auto OperandIsDependent(Context& context, SemIR::IdKind kind,
-                               int32_t arg) -> bool {
-  if (kind == SemIR::IdKind::For<SemIR::MetaInstId>) {
-    return OperandIsDependent(context, SemIR::MetaInstId(arg));
+static auto OperandIsDependent(Context& context, SemIR::Inst::ArgAndKind arg)
+    -> bool {
+  switch (arg.kind) {
+    case SemIR::IdKind::For<SemIR::MetaInstId>:
+      return OperandIsDependent(context, arg.As<SemIR::MetaInstId>());
+
+    case SemIR::IdKind::For<SemIR::TypeId>:
+      return OperandIsDependent(context, arg.As<SemIR::TypeId>());
+
+    case SemIR::IdKind::None:
+    case SemIR::IdKind::For<SemIR::AbsoluteInstId>:
+    case SemIR::IdKind::For<SemIR::NameId>:
+      return false;
+
+    default:
+      // TODO: Properly handle different argument kinds.
+      CARBON_FATAL("Unexpected argument kind for action");
   }
-  if (kind == SemIR::IdKind::For<SemIR::TypeId>) {
-    return OperandIsDependent(context, SemIR::TypeId(arg));
-  }
-  if (kind == SemIR::IdKind::None ||
-      kind == SemIR::IdKind::For<SemIR::AbsoluteInstId> ||
-      kind == SemIR::IdKind::For<SemIR::NameId>) {
-    return false;
-  }
-  // TODO: Properly handle different argument kinds.
-  CARBON_FATAL("Unexpected argument kind for action");
 }
 
 auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
@@ -71,9 +74,8 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
   if (OperandIsDependent(context, action_inst.type_id())) {
     return true;
   }
-  auto [arg0_kind, arg1_kind] = action_inst.ArgKinds();
-  return OperandIsDependent(context, arg0_kind, action_inst.arg0()) ||
-         OperandIsDependent(context, arg1_kind, action_inst.arg1());
+  return OperandIsDependent(context, action_inst.arg0_and_kind()) ||
+         OperandIsDependent(context, action_inst.arg1_and_kind());
 }
 
 static auto AddDependentActionSpliceImpl(Context& context,
@@ -98,14 +100,14 @@ static auto AddDependentActionSpliceImpl(Context& context,
 // their concrete values, so that the action doesn't need to know which specific
 // it is operating on.
 static auto RefineOperand(Context& context, SemIR::LocId loc_id,
-                          SemIR::IdKind kind, int32_t arg) -> int32_t {
-  if (kind == SemIR::IdKind::For<SemIR::MetaInstId>) {
-    auto inst_id = SemIR::MetaInstId(arg);
+                          SemIR::Inst::ArgAndKind arg) -> int32_t {
+  if (arg.kind == SemIR::IdKind::For<SemIR::MetaInstId>) {
+    auto inst_id = arg.As<SemIR::MetaInstId>();
     auto inst = context.insts().Get(inst_id);
     if (inst.Is<SemIR::SpliceInst>()) {
       // The argument will evaluate to the spliced instruction, which is already
       // refined.
-      return arg;
+      return arg.value;
     }
 
     // If the type of the action argument is dependent, refine to an instruction
@@ -127,16 +129,15 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
     return inst_id.index;
   }
 
-  return arg;
+  return arg.value;
 }
 
 // Refine the operands of an action, ensuring that they will refer to concrete
 // instructions that don't have template-dependent types.
 static auto RefineOperands(Context& context, SemIR::LocId loc_id,
                            SemIR::Inst action) -> SemIR::Inst {
-  auto [arg0_kind, arg1_kind] = action.ArgKinds();
-  auto arg0 = RefineOperand(context, loc_id, arg0_kind, action.arg0());
-  auto arg1 = RefineOperand(context, loc_id, arg1_kind, action.arg1());
+  auto arg0 = RefineOperand(context, loc_id, action.arg0_and_kind());
+  auto arg1 = RefineOperand(context, loc_id, action.arg1_and_kind());
   action.SetArgs(arg0, arg1);
   return action;
 }

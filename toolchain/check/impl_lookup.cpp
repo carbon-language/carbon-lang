@@ -71,31 +71,29 @@ static auto FindAssociatedImportIRs(Context& context,
 
     // Visit the operands of the constant.
     auto inst = context.insts().Get(inst_id);
-    auto [arg0_kind, arg1_kind] = inst.ArgKinds();
-    for (auto [arg, kind] :
-         {std::pair{inst.arg0(), arg0_kind}, {inst.arg1(), arg1_kind}}) {
-      switch (kind) {
+    for (auto arg : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
+      switch (arg.kind) {
         case SemIR::IdKind::For<SemIR::InstId>: {
-          if (auto id = SemIR::InstId(arg); id.has_value()) {
+          if (auto id = arg.As<SemIR::InstId>(); id.has_value()) {
             worklist.push_back(id);
           }
           break;
         }
         case SemIR::IdKind::For<SemIR::InstBlockId>: {
-          push_block(SemIR::InstBlockId(arg));
+          push_block(arg.As<SemIR::InstBlockId>());
           break;
         }
         case SemIR::IdKind::For<SemIR::ClassId>: {
-          add_entity(context.classes().Get(SemIR::ClassId(arg)));
+          add_entity(context.classes().Get(arg.As<SemIR::ClassId>()));
           break;
         }
         case SemIR::IdKind::For<SemIR::InterfaceId>: {
-          add_entity(context.interfaces().Get(SemIR::InterfaceId(arg)));
+          add_entity(context.interfaces().Get(arg.As<SemIR::InterfaceId>()));
           break;
         }
         case SemIR::IdKind::For<SemIR::FacetTypeId>: {
           const auto& facet_type_info =
-              context.facet_types().Get(SemIR::FacetTypeId(arg));
+              context.facet_types().Get(arg.As<SemIR::FacetTypeId>());
           for (const auto& impl : facet_type_info.impls_constraints) {
             add_entity(context.interfaces().Get(impl.interface_id));
             push_args(impl.specific_id);
@@ -103,11 +101,11 @@ static auto FindAssociatedImportIRs(Context& context,
           break;
         }
         case SemIR::IdKind::For<SemIR::FunctionId>: {
-          add_entity(context.functions().Get(SemIR::FunctionId(arg)));
+          add_entity(context.functions().Get(arg.As<SemIR::FunctionId>()));
           break;
         }
         case SemIR::IdKind::For<SemIR::SpecificId>: {
-          push_args(SemIR::SpecificId(arg));
+          push_args(arg.As<SemIR::SpecificId>());
           break;
         }
         default: {
