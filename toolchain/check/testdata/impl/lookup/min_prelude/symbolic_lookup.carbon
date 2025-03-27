@@ -48,7 +48,7 @@ class C(T:! X) {}
 // consistently, while comparing the self type (after deduction) to the impl's
 // self type. This verifies we handle the case of the query not having a
 // `FacetAccessType` in the initial query that makes the symbolic lookup
-// instruction (`ImplSymbolicWitness`), but then the self type being replaced
+// instruction (`LookupImplWitness`), but then the self type being replaced
 // with a `FacetAccessType` when evaluating the instruction.
 class D(T:! Y) { adapt C(T); }
 
