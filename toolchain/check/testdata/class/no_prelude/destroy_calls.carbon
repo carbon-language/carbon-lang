@@ -91,8 +91,8 @@ fn F() {
   var b: Args;
 }
 
-// --- not_breaking_generics.carbon
-// CHECK:STDERR: not_breaking_generics.carbon: error: value of type `<dependent type>` is not callable [CallToNonCallable]
+// --- fail_not_breaking_generics.carbon
+// CHECK:STDERR: fail_not_breaking_generics.carbon: error: value of type `<dependent type>` is not callable [CallToNonCallable]
 // CHECK:STDERR:
 
 class C(template T:! type) {}
@@ -715,7 +715,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- not_breaking_generics.carbon
+// CHECK:STDOUT: --- fail_not_breaking_generics.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
