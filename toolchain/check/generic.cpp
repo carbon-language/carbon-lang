@@ -608,40 +608,6 @@ auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
   return true;
 }
 
-auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
-    -> SemIR::InstId {
-  CARBON_CHECK(specific_id.has_value());
-  const auto& specific = context.specifics().Get(specific_id);
-  const auto& generic = context.generics().Get(specific.generic_id);
-  auto decl = context.insts().Get(generic.decl_id);
-  CARBON_KIND_SWITCH(decl) {
-    case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      return context.types().GetInstId(
-          GetClassType(context, class_decl.class_id, specific_id));
-    }
-    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      return context.types().GetInstId(
-          GetInterfaceType(context, interface_decl.interface_id, specific_id));
-    }
-    case SemIR::FunctionDecl::Kind: {
-      return context.constant_values().GetInstId(TryEvalInst(
-          context, SemIR::InstId::None,
-          SemIR::SpecificFunction{
-              .type_id = GetSingletonType(
-                  context, SemIR::SpecificFunctionType::SingletonInstId),
-              .callee_id = generic.decl_id,
-              .specific_id = specific_id}));
-    }
-    case SemIR::AssociatedConstantDecl::Kind: {
-      // TODO: We don't have a good instruction to use here.
-      return generic.decl_id;
-    }
-    default: {
-      CARBON_FATAL("Unknown kind for generic declaration {0}", decl);
-    }
-  }
-}
-
 auto DiagnoseIfGenericMissingExplicitParameters(
     Context& context, SemIR::EntityWithParamsBase& entity_base) -> void {
   if (!entity_base.implicit_param_patterns_id.has_value() ||

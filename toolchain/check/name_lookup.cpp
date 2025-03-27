@@ -349,17 +349,23 @@ static auto DiagnoseMemberNameNotFound(
     llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
   if (lookup_scopes.size() == 1 &&
       lookup_scopes.front().name_scope_id.has_value()) {
-    auto specific_id = lookup_scopes.front().specific_id;
-    auto scope_inst_id = specific_id.has_value()
-                             ? GetInstForSpecific(context, specific_id)
-                             : context.name_scopes()
-                                   .Get(lookup_scopes.front().name_scope_id)
-                                   .inst_id();
-    CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
-                      "member name `{0}` not found in {1}", SemIR::NameId,
-                      InstIdAsType);
-    context.emitter().Emit(loc, MemberNameNotFoundInScope, name_id,
-                           scope_inst_id);
+    if (auto specific_id = lookup_scopes.front().specific_id;
+        specific_id.has_value()) {
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInSpecificScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        SemIR::SpecificId);
+      context.emitter().Emit(loc, MemberNameNotFoundInSpecificScope, name_id,
+                             specific_id);
+    } else {
+      auto scope_inst_id = context.name_scopes()
+                               .Get(lookup_scopes.front().name_scope_id)
+                               .inst_id();
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInInstScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        InstIdAsType);
+      context.emitter().Emit(loc, MemberNameNotFoundInInstScope, name_id,
+                             scope_inst_id);
+    }
     return;
   }
 

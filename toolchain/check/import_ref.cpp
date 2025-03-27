@@ -1791,7 +1791,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_context().types().GetTypeIdForTypeConstantId(
           self_const_id);
 
-  if (import_class.is_defined()) {
+  if (import_class.is_complete()) {
     auto complete_type_witness_id = AddLoadedImportRef(
         resolver,
         GetSingletonType(resolver.local_context(),
@@ -2242,7 +2242,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                          import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
       resolver, import_impl.interface.specific_id, specific_interface_data);
-  if (import_impl.is_defined()) {
+  if (import_impl.is_complete()) {
     AddImplDefinition(resolver, import_impl, new_impl);
   }
 
@@ -2392,7 +2392,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalGenericData(resolver, import_interface.generic_id);
 
   std::optional<SemIR::InstId> self_param_id;
-  if (import_interface.is_defined()) {
+  if (import_interface.is_complete()) {
     self_param_id =
         GetLocalConstantInstId(resolver, import_interface.self_param_id);
   }
@@ -2411,7 +2411,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   SetGenericData(resolver, import_interface.generic_id,
                  new_interface.generic_id, generic_data);
 
-  if (import_interface.is_defined()) {
+  if (import_interface.is_complete()) {
     CARBON_CHECK(self_param_id);
     AddInterfaceDefinition(resolver, import_interface, new_interface,
                            *self_param_id);

@@ -33,7 +33,7 @@ class SemIRLoc {
 
  private:
   // Only allow member access for diagnostics.
-  friend class SemIRLocDiagnosticEmitter;
+  friend class DiagnosticEmitter;
   // And also for eval to unwrap a LocId for calling into the rest of Check.
   friend class UnwrapSemIRLoc;
 
@@ -46,7 +46,11 @@ class SemIRLoc {
   bool token_only_;
 };
 
-using DiagnosticBuilder = Diagnostics::Emitter<SemIRLoc>::DiagnosticBuilder;
+// We define the emitter separately for dependencies, so only provide a base
+// here.
+using DiagnosticEmitterBase = Diagnostics::Emitter<SemIRLoc>;
+
+using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 
 // A function that forms a diagnostic for some kind of problem. The
 // DiagnosticBuilder is returned rather than emitted so that the caller

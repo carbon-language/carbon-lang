@@ -35,9 +35,10 @@ enum class Lookahead : int32_t {
 class Context {
  public:
   // A token-based emitter for use during parse.
-  class TokenEmitter : public Diagnostics::Emitter<Lex::TokenIndex> {
+  class DiagnosticEmitter : public Diagnostics::Emitter<Lex::TokenIndex> {
    public:
-    explicit TokenEmitter(Diagnostics::Consumer* consumer, Context* context)
+    explicit DiagnosticEmitter(Diagnostics::Consumer* consumer,
+                               Context* context)
         : Emitter(consumer), context_(context) {}
 
    protected:
@@ -407,7 +408,7 @@ class Context {
 
   auto has_errors() const -> bool { return err_tracker_.seen_error(); }
 
-  auto emitter() -> TokenEmitter& { return emitter_; }
+  auto emitter() -> DiagnosticEmitter& { return emitter_; }
 
   auto position() -> Lex::TokenIterator& { return position_; }
   auto position() const -> Lex::TokenIterator { return position_; }
@@ -441,7 +442,7 @@ class Context {
   Lex::TokenizedBuffer* tokens_;
 
   Diagnostics::ErrorTrackingConsumer err_tracker_;
-  TokenEmitter emitter_;
+  DiagnosticEmitter emitter_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

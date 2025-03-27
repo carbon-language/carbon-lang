@@ -59,10 +59,7 @@ class StepStack {
 
   // Starts a new stack, which always contains the first instruction to
   // stringify.
-  explicit StepStack(const SemIR::File* file, InstId outer_inst_id)
-      : sem_ir_(file) {
-    PushInstId(outer_inst_id);
-  }
+  explicit StepStack(const SemIR::File* file) : sem_ir_(file) {}
 
   // These push basic entries onto the stack.
   auto PushInstId(InstId inst_id) -> void { steps_.push_back(inst_id); }
@@ -608,13 +605,10 @@ class Stringifier {
 
 }  // namespace
 
-auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
+static auto Stringify(const SemIR::File& sem_ir, StepStack& step_stack)
     -> std::string {
   RawStringOstream out;
 
-  // Note: Since this is a stack, work is resolved in the reverse order from the
-  // order pushed.
-  StepStack step_stack(&sem_ir, outer_inst_id);
   Stringifier stringifier(&sem_ir, &step_stack, &out);
 
   while (!step_stack.empty()) {
@@ -643,6 +637,62 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
   }
 
   return out.TakeStr();
+}
+
+auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
+    -> std::string {
+  StepStack step_stack(&sem_ir);
+  step_stack.PushInstId(outer_inst_id);
+  return Stringify(sem_ir, step_stack);
+}
+
+auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
+    -> std::string {
+  StepStack step_stack(&sem_ir);
+
+  const auto& specific = sem_ir.specifics().Get(specific_id);
+  const auto& generic = sem_ir.generics().Get(specific.generic_id);
+  auto decl = sem_ir.insts().Get(generic.decl_id);
+  CARBON_KIND_SWITCH(decl) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      // Print `Core.Int(N)` as `iN`.
+      // TODO: This duplicates work done in StringifyTypeInst for ClassType.
+      const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
+      if (auto literal_info = NumericTypeLiteralInfo::ForType(
+              sem_ir,
+              SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
+                               .class_id = class_decl.class_id,
+                               .specific_id = specific_id});
+          literal_info.is_valid()) {
+        RawStringOstream out;
+        literal_info.PrintLiteral(sem_ir, out);
+        return out.TakeStr();
+      }
+      step_stack.PushEntityName(class_info, specific_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
+      step_stack.PushEntityName(
+          sem_ir.functions().Get(function_decl.function_id), specific_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+      step_stack.PushEntityName(sem_ir.impls().Get(impl_decl.impl_id),
+                                specific_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      step_stack.PushEntityName(
+          sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
+      break;
+    }
+    default: {
+      // TODO: Include the specific arguments here.
+      step_stack.PushInstId(generic.decl_id);
+      break;
+    }
+  }
+  return Stringify(sem_ir, step_stack);
 }
 
 }  // namespace Carbon::SemIR

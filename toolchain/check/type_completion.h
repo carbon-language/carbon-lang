@@ -81,8 +81,8 @@ auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
                          DiagnosticBuilder& builder) -> void;
 
 // Adds a note to a diagnostic explaining that an interface is not defined.
-auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
-                            DiagnosticBuilder& builder) -> void;
+auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
+                             DiagnosticBuilder& builder) -> void;
 
 }  // namespace Carbon::Check
 

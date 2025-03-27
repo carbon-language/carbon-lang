@@ -14,7 +14,7 @@
 
 namespace Carbon::Lex {
 
-using LexerDiagnosticEmitter = Diagnostics::Emitter<const char*>;
+using DiagnosticEmitter = Diagnostics::Emitter<const char*>;
 
 static constexpr char MultiLineIndicator[] = R"(''')";
 static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
@@ -202,7 +202,7 @@ static auto ComputeIndentOfFinalLine(llvm::StringRef text) -> llvm::StringRef {
 // Check the literal is indented properly, if it's a multi-line litera.
 // Find the leading whitespace that should be removed from each line of a
 // multi-line string literal.
-static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
+static auto CheckIndent(DiagnosticEmitter& emitter, llvm::StringRef text,
                         llvm::StringRef content) -> llvm::StringRef {
   // Find the leading horizontal whitespace on the final line of this literal.
   // Note that for an empty literal, this might not be inside the content.
@@ -222,7 +222,7 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
 }
 
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
-static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
+static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
                                         char*& buffer_cursor) -> bool {
   unsigned code_point;
@@ -279,7 +279,7 @@ static auto AppendFrontOfContents(char*& buffer_cursor,
 // `result` string. `content` is the string content, starting from the first
 // character after the escape sequence introducer (for example, the `n` in
 // `\n`), and will be updated to remove the leading escape sequence.
-static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
+static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            char*& buffer_cursor) -> void {
   CARBON_CHECK(!content.empty(), "should have escaped closing delimiter");
@@ -364,7 +364,7 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
 
 // Expand any escape sequences in the given string literal.
 static auto ExpandEscapeSequencesAndRemoveIndent(
-    LexerDiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
+    DiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
     llvm::StringRef indent, char* buffer) -> llvm::StringRef {
   char* buffer_cursor = buffer;
 
@@ -464,7 +464,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 }
 
 auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
-                                 LexerDiagnosticEmitter& emitter) const
+                                 DiagnosticEmitter& emitter) const
     -> llvm::StringRef {
   if (!is_terminated_) {
     return "";

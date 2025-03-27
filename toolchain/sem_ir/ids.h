@@ -301,6 +301,8 @@ struct GenericId : public IdBase<GenericId> {
 // The ID of a specific, which is the result of specifying the generic arguments
 // for a generic.
 struct SpecificId : public IdBase<SpecificId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "specific";
   using ValueType = Specific;
 

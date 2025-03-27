@@ -9,7 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
+#include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -181,7 +181,7 @@ class CheckUnit {
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::raw_ostream* vlog_stream_;
 
-  SemIRLocDiagnosticEmitter emitter_;
+  DiagnosticEmitter emitter_;
   Context context_;
 };
 

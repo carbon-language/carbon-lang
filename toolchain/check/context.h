@@ -13,6 +13,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
@@ -50,7 +51,7 @@ namespace Carbon::Check {
 class Context {
  public:
   // Stores references for work.
-  explicit Context(Diagnostics::Emitter<SemIRLoc>* emitter,
+  explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
@@ -69,7 +70,7 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto emitter() -> Diagnostics::Emitter<SemIRLoc>& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitterBase& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return tree_and_subtrees_getter_();
@@ -276,7 +277,7 @@ class Context {
 
  private:
   // Handles diagnostics.
-  Diagnostics::Emitter<SemIRLoc>* emitter_;
+  DiagnosticEmitterBase* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;

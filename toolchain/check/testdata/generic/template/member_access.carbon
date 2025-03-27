@@ -33,7 +33,7 @@ fn Test2(x: {.m: i32, .n: i32}) {
 library "[[@TEST_NAME]]";
 
 fn F[template T:! type](x: T) -> i32 {
-  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+3]]:10: error: member name `n` not found in `D` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+3]]:10: error: member name `n` not found in `D` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   return x.n;
   // CHECK:STDERR:          ^~~
   return x.n;

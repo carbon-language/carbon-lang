@@ -52,6 +52,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id)
     -> std::string {
   RawStringOstream out;
   out << const_id;
+  if (!const_id.has_value()) {
+    return out.TakeStr();
+  }
   if (const_id.is_symbolic()) {
     out << ": " << file.constant_values().GetSymbolicConstant(const_id);
   } else if (const_id.is_concrete()) {
@@ -114,17 +117,29 @@ LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id)
     -> std::string {
   RawStringOstream out;
   out << generic_id;
-  if (generic_id.has_value()) {
-    out << ": " << file.generics().Get(generic_id);
+  if (!generic_id.has_value()) {
+    return out.TakeStr();
   }
+  llvm::errs() << ": " << file.generics().Get(generic_id) << '\n'
+               << Dump(file, file.generics().Get(generic_id).bindings_id);
   return out.TakeStr();
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> std::string {
   RawStringOstream out;
   out << impl_id;
-  if (impl_id.has_value()) {
-    out << ": " << file.impls().Get(impl_id);
+  if (!impl_id.has_value()) {
+    return out.TakeStr();
+  }
+  const auto& impl = file.impls().Get(impl_id);
+  out << ": " << impl << '\n'
+      << "  - interface_id: " << Dump(file, impl.interface.interface_id) << '\n'
+      << "  - specific_id: ";
+  DumpSpecificSummary(file, impl.interface.specific_id);
+  if (impl.interface.specific_id.has_value()) {
+    auto inst_block_id =
+        file.specifics().Get(impl.interface.specific_id).args_id;
+    out << '\n' << Dump(file, inst_block_id);
   }
   return out.TakeStr();
 }

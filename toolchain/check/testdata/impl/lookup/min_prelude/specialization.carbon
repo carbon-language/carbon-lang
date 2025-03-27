@@ -183,8 +183,6 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
   // impls of `Z(T)`. If a blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here when constructed from a `C` value.
-  //
-  // TODO: C(T) is C(()) so this should work?
   let a: C(()).(Z(()).X) = {} as C(());
 }
 
@@ -308,26 +306,6 @@ impl C(()) as Z where .X = C(()) {}
 fn F() {
   let a: C(()).(Z.X) = {} as C(());
 }
-
-// --- todo_fail_specialization_written_after_use_is_poisoned.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {
-  let X:! type;
-}
-
-class C {}
-
-impl forall [T:! type] T as Z(T) where .X = () {}
-
-fn F() {
-  let a: C.(Z(C).X) = ();
-}
-
-// TODO: This impl changes the result of a previous lookup. The previous lookup
-// should have created a poison value that this trips and thus generates a
-// diagnostic.
-impl C as Z(C) where .X = C {}
 
 // --- fail_todo_final_specialization_before_generic_use_of_type_constant.carbon
 library "[[@TEST_NAME]]";

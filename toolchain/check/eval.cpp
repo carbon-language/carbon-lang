@@ -187,9 +187,7 @@ class EvalContext {
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
-  auto emitter() -> Diagnostics::Emitter<SemIRLoc>& {
-    return context().emitter();
-  }
+  auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
 
  private:
   // The type-checking context in which we're performing evaluation.
@@ -1893,16 +1891,16 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
-                          InstIdAsType);
-        builder.Note(loc, ResolvingSpecificHere,
-                     GetInstForSpecific(context, specific_id));
+                          SemIR::SpecificId);
+        builder.Note(loc, ResolvingSpecificHere, specific_id);
       });
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
-    CARBON_CHECK(result[i].has_value());
+    CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
+                 context.insts().Get(inst_id));
   }
 
   return context.inst_blocks().Add(result);
