@@ -153,6 +153,10 @@ class EvalContext {
   auto interfaces() -> const ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
+  auto specific_interfaces()
+      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+    return sem_ir().specific_interfaces();
+  }
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }
@@ -183,7 +187,7 @@ class EvalContext {
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
-  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return context().emitter(); }
+  auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
 
  private:
   // The type-checking context in which we're performing evaluation.
@@ -551,6 +555,20 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
   return MakeSpecific(eval_context.context(), eval_context.fallback_loc(),
                       specific.generic_id, args_id);
+}
+
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::SpecificInterfaceId specific_interface_id,
+                             Phase* phase) -> SemIR::SpecificInterfaceId {
+  const auto& interface =
+      eval_context.specific_interfaces().Get(specific_interface_id);
+  if (!interface.specific_id.has_value()) {
+    return specific_interface_id;
+  }
+  return eval_context.specific_interfaces().Add(
+      {.interface_id = interface.interface_id,
+       .specific_id =
+           GetConstantValue(eval_context, interface.specific_id, phase)});
 }
 
 // Like `GetConstantValue` but does a `FacetTypeId` -> `FacetTypeInfo`
@@ -1018,7 +1036,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIRLoc loc,
     CARBON_DIAGNOSTIC(
         CompileTimeShiftOutOfRange, Error,
         "shift distance >= type width of {0} in `{1} {2:<<|>>} {3}`", unsigned,
-        TypedInt, BoolAsSelect, TypedInt);
+        TypedInt, Diagnostics::BoolAsSelect, TypedInt);
     context.emitter().Emit(
         loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
         {.type = lhs.type_id, .value = lhs_val},
@@ -1032,7 +1050,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIRLoc loc,
       context.sem_ir().types().IsSignedInt(rhs.type_id)) {
     CARBON_DIAGNOSTIC(CompileTimeShiftNegative, Error,
                       "shift distance negative in `{0} {1:<<|>>} {2}`",
-                      TypedInt, BoolAsSelect, TypedInt);
+                      TypedInt, Diagnostics::BoolAsSelect, TypedInt);
     context.emitter().Emit(
         loc, CompileTimeShiftNegative, {.type = lhs.type_id, .value = lhs_val},
         builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
@@ -1841,6 +1859,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                                               inst_id, inst);
 }
 
+auto TryEvalInst(Context& context, SemIR::LocId loc_id, SemIR::InstId inst_id,
+                 SemIR::Inst inst) -> SemIR::ConstantId {
+  EvalContext eval_context(context, loc_id);
+  return TryEvalInstInContext(eval_context, inst_id, inst);
+}
+
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   EvalContext eval_context(context, inst_id);
@@ -1864,19 +1888,19 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
                                .values = result,
                            });
 
-  DiagnosticAnnotationScope annotate_diagnostics(
+  Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
-                          InstIdAsType);
-        builder.Note(loc, ResolvingSpecificHere,
-                     GetInstForSpecific(context, specific_id));
+                          SemIR::SpecificId);
+        builder.Note(loc, ResolvingSpecificHere, specific_id);
       });
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
-    CARBON_CHECK(result[i].has_value());
+    CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
+                 context.insts().Get(inst_id));
   }
 
   return context.inst_blocks().Add(result);

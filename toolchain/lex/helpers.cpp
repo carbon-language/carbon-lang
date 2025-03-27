@@ -6,7 +6,7 @@
 
 namespace Carbon::Lex {
 
-auto CanLexInt(DiagnosticEmitter<const char*>& emitter, llvm::StringRef text)
+auto CanLexInt(Diagnostics::Emitter<const char*>& emitter, llvm::StringRef text)
     -> bool {
   // llvm::getAsInteger is used for parsing, but it's quadratic and visibly slow
   // on large integer values. This limit exists to avoid hitting those limits.

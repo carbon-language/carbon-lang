@@ -17,6 +17,12 @@ namespace Carbon::SemIR {
 // expression describing the type.
 auto StringifyTypeExpr(const File& sem_ir, InstId outer_inst_id) -> std::string;
 
+// Produces a string version of the name of a specific. Generally, this should
+// not be called directly. To format a string into a diagnostic, use a
+// diagnostic parameter of type `SemIR::SpecificId`.
+auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
+    -> std::string;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_STRINGIFY_TYPE_H_

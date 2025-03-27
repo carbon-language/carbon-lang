@@ -266,7 +266,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
       // instead so we can generate a "name `.Self` implicitly referenced by
       // designated expression, but not found" diagnostic instead of adding a
       // note to the current "name `.Self` not found" message.
-      DiagnosticAnnotationScope annotate_diagnostics(
+      Diagnostics::AnnotationScope annotate_diagnostics(
           &context.emitter(), [&](auto& builder) {
             CARBON_DIAGNOSTIC(
                 NoPeriodSelfForDesignator, Note,

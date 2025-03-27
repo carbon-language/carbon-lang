@@ -882,6 +882,24 @@ struct ImplDecl {
   DeclInstBlockId decl_block_id;
 };
 
+// A symbolic witness that a type implements an interface. It represents a
+// promise that an impl lookup query can be satisfied without providing which
+// impl declaration satisfies it. When evaluated, it does lookup again to form a
+// concrete ImplWitness from a more specific query.
+struct ImplSymbolicWitness {
+  static constexpr auto Kind =
+      InstKind::ImplSymbolicWitness.Define<Parse::NodeId>(
+          {.ir_name = "impl_symbolic_witness",
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // The self type (or facet value) and interface of the impl lookup query.
+  InstId query_self_inst_id;
+  SpecificInterfaceId query_specific_interface_id;
+};
+
 // A witness that a type implements an interface.
 struct ImplWitness {
   static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
@@ -1808,7 +1826,9 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness` instructions.
+// The type of `ImplWitness` and `ImplSymbolicType` instructions. The latter
+// will evaluate at some point during specific computation into the former, and
+// their types should not change in the process.
 struct WitnessType {
   static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
       {.ir_name = "<witness>",

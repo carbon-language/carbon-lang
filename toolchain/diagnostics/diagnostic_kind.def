@@ -280,7 +280,7 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
-CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(VarInInterfaceDecl)
 
 // Impl checking.
@@ -303,6 +303,7 @@ CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 CARBON_DIAGNOSTIC_KIND(ImplOfNotOneInterface)
+CARBON_DIAGNOSTIC_KIND(ImplUnusedBinding)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
@@ -329,7 +330,8 @@ CARBON_DIAGNOSTIC_KIND(InNameLookup)
 CARBON_DIAGNOSTIC_KIND(NameAmbiguousDueToExtend)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)
 CARBON_DIAGNOSTIC_KIND(MemberNameNotFound)
-CARBON_DIAGNOSTIC_KIND(MemberNameNotFoundInScope)
+CARBON_DIAGNOSTIC_KIND(MemberNameNotFoundInInstScope)
+CARBON_DIAGNOSTIC_KIND(MemberNameNotFoundInSpecificScope)
 CARBON_DIAGNOSTIC_KIND(NoPeriodSelfForDesignator)
 CARBON_DIAGNOSTIC_KIND(UsedBeforeInitialization)
 

@@ -132,52 +132,49 @@ auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
 auto FileContext::GetGlobal(SemIR::InstId inst_id,
                             SemIR::SpecificId specific_id) -> llvm::Value* {
   auto const_id = GetConstantValueInSpecific(sem_ir(), specific_id, inst_id);
-  if (const_id.is_concrete()) {
-    auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
+  CARBON_CHECK(const_id.is_concrete(), "Missing value: {0} {1} {2}", inst_id,
+               specific_id, sem_ir().insts().Get(inst_id));
+  auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
 
-    // For value expressions and initializing expressions, the value produced by
-    // a constant instruction is a value representation of the constant. For
-    // initializing expressions, `FinishInit` will perform a copy if needed.
-    // TODO: Handle reference expression constants.
-    auto* const_value = constants_[const_inst_id.index];
+  // For value expressions and initializing expressions, the value produced by
+  // a constant instruction is a value representation of the constant. For
+  // initializing expressions, `FinishInit` will perform a copy if needed.
+  // TODO: Handle reference expression constants.
+  auto* const_value = constants_[const_inst_id.index];
 
-    // If we want a pointer to the constant, materialize a global to hold it.
-    // TODO: We could reuse the same global if the constant is used more than
-    // once.
-    auto value_rep = SemIR::ValueRepr::ForType(
-        sem_ir(), sem_ir().insts().Get(const_inst_id).type_id());
-    if (value_rep.kind == SemIR::ValueRepr::Pointer) {
-      // Include both the name of the constant, if any, and the point of use in
-      // the name of the variable.
-      llvm::StringRef const_name;
-      llvm::StringRef use_name;
-      if (inst_namer_) {
-        const_name = inst_namer_->GetUnscopedNameFor(const_inst_id);
-        use_name = inst_namer_->GetUnscopedNameFor(inst_id);
-      }
-
-      // We always need to give the global a name even if the instruction namer
-      // doesn't have one to use.
-      if (const_name.empty()) {
-        const_name = "const";
-      }
-      if (use_name.empty()) {
-        use_name = "anon";
-      }
-      llvm::StringRef sep = (use_name[0] == '.') ? "" : ".";
-
-      return new llvm::GlobalVariable(
-          llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
-          /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage,
-          const_value, const_name + sep + use_name);
-    }
-
-    // Otherwise, we can use the constant value directly.
+  auto value_rep = SemIR::ValueRepr::ForType(
+      sem_ir(), sem_ir().insts().Get(const_inst_id).type_id());
+  if (value_rep.kind != SemIR::ValueRepr::Pointer) {
     return const_value;
   }
 
-  CARBON_FATAL("Missing value: {0} {1} {2}", inst_id, specific_id,
-               sem_ir().insts().Get(inst_id));
+  // If we want a pointer to the constant, materialize a global to hold it.
+  // TODO: We could reuse the same global if the constant is used more than
+  // once.
+
+  // Include both the name of the constant, if any, and the point of use in
+  // the name of the variable.
+  llvm::StringRef const_name;
+  llvm::StringRef use_name;
+  if (inst_namer_) {
+    const_name = inst_namer_->GetUnscopedNameFor(const_inst_id);
+    use_name = inst_namer_->GetUnscopedNameFor(inst_id);
+  }
+
+  // We always need to give the global a name even if the instruction namer
+  // doesn't have one to use.
+  if (const_name.empty()) {
+    const_name = "const";
+  }
+  if (use_name.empty()) {
+    use_name = "anon";
+  }
+  llvm::StringRef sep = (use_name[0] == '.') ? "" : ".";
+
+  return new llvm::GlobalVariable(
+      llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
+      /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
+      const_name + sep + use_name);
 }
 
 auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,

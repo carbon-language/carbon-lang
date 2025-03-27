@@ -117,13 +117,12 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
 
   // Check we have a value for all non-function associated constants in the
   // witness.
-  for (auto index : llvm::seq(assoc_entities.size())) {
-    auto decl_id = assoc_entities[index];
-    decl_id = context.constant_values().GetConstantInstId(decl_id);
+  for (auto [assoc_entity, witness_value] :
+       llvm::zip(assoc_entities, witness_block)) {
+    auto decl_id = context.constant_values().GetConstantInstId(assoc_entity);
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      auto& witness_value = witness_block[index];
       if (!witness_value.has_value()) {
         CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
                           "associated constant {0} not given a value in impl "
@@ -137,7 +136,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
                        .Get(decl->assoc_const_id)
                        .name_id,
                    interface.name_id)
-            .Note(assoc_entities[index], AssociatedConstantHere)
+            .Note(assoc_entity, AssociatedConstantHere)
             .Emit();
 
         witness_value = SemIR::ErrorInst::SingletonInstId;
@@ -163,17 +162,17 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
       context.inst_blocks().Get(interface.associated_entities_id);
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
-  for (auto index : llvm::seq(assoc_entities.size())) {
-    auto decl_id = assoc_entities[index];
-    decl_id =
+  for (auto [assoc_entity, witness_value] :
+       llvm::zip(assoc_entities, witness_block)) {
+    auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), impl.interface.specific_id, decl_id));
+            context.sem_ir(), impl.interface.specific_id, assoc_entity));
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
-          witness_block[index] = SemIR::ErrorInst::SingletonInstId;
+          witness_value = SemIR::ErrorInst::SingletonInstId;
           break;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
@@ -187,7 +186,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
                                    fn.name_id, impl.scope_id, impl_scope);
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
-          witness_block[index] = CheckAssociatedFunctionImplementation(
+          witness_value = CheckAssociatedFunctionImplementation(
               context, *fn_type, lookup_result.target_inst_id(), self_type_id,
               impl.witness_id);
         } else {
@@ -201,7 +200,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
           NoteAssociatedFunction(context, builder, fn_type->function_id);
           builder.Emit();
 
-          witness_block[index] = SemIR::ErrorInst::SingletonInstId;
+          witness_value = SemIR::ErrorInst::SingletonInstId;
         }
         break;
       }
@@ -212,7 +211,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
       default:
         CARBON_CHECK(decl_id == SemIR::ErrorInst::SingletonInstId,
                      "Unexpected kind of associated entity {0}", decl);
-        witness_block[index] = SemIR::ErrorInst::SingletonInstId;
+        witness_value = SemIR::ErrorInst::SingletonInstId;
         break;
     }
   }

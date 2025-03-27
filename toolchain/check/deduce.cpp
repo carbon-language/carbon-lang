@@ -332,7 +332,7 @@ auto DeductionContext::Deduce() -> bool {
       // compile-time value (e.g. TupleType) that we can decompose further.
       // So we do this conversion here, even though we will later try convert
       // again when we have deduced all of the bindings.
-      DiagnosticAnnotationScope annotate_diagnostics(
+      Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
               NoteInitializingParam(param_id, builder);
@@ -573,7 +573,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       binding_type_id =
           context().types().GetTypeIdForTypeConstantId(param_type_const_id);
 
-      DiagnosticAnnotationScope annotate_diagnostics(
+      Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
               NoteInitializingParam(binding_id, builder);

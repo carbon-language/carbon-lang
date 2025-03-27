@@ -26,7 +26,7 @@ static void BM_Lex_Int(benchmark::State& state) {
 static void BM_ComputeValue_Float(benchmark::State& state) {
   auto val = NumericLiteral::Lex("0.000001", true);
   CARBON_CHECK(val);
-  auto& emitter = NullDiagnosticEmitter<const char*>();
+  auto& emitter = Diagnostics::NullEmitter<const char*>();
   for (auto _ : state) {
     val->ComputeValue(emitter);
   }
@@ -34,7 +34,7 @@ static void BM_ComputeValue_Float(benchmark::State& state) {
 
 static void BM_ComputeValue_Int(benchmark::State& state) {
   auto val = NumericLiteral::Lex("1_234_567_890", true);
-  auto& emitter = NullDiagnosticEmitter<const char*>();
+  auto& emitter = Diagnostics::NullEmitter<const char*>();
   CARBON_CHECK(val);
   for (auto _ : state) {
     val->ComputeValue(emitter);

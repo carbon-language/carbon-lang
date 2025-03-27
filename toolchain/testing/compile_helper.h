@@ -21,12 +21,12 @@ class CompileHelper {
  public:
   // Returns the result of lex.
   auto GetTokenizedBuffer(llvm::StringRef text,
-                          DiagnosticConsumer* consumer = nullptr)
+                          Diagnostics::Consumer* consumer = nullptr)
       -> Lex::TokenizedBuffer&;
 
   // Returns the result of lex along with shared values.
   auto GetTokenizedBufferWithSharedValueStore(
-      llvm::StringRef text, DiagnosticConsumer* consumer = nullptr)
+      llvm::StringRef text, Diagnostics::Consumer* consumer = nullptr)
       -> std::pair<Lex::TokenizedBuffer&, SharedValueStores&>;
 
   // Returns the result of parse.
@@ -44,7 +44,7 @@ class CompileHelper {
   auto GetSourceBuffer(llvm::StringRef text) -> SourceBuffer&;
 
   // Diagnostics will be printed to console.
-  DiagnosticConsumer& consumer_ = ConsoleDiagnosticConsumer();
+  Diagnostics::Consumer& consumer_ = Diagnostics::ConsoleConsumer();
 
   // An index to generate unique filenames.
   int file_index_ = 0;

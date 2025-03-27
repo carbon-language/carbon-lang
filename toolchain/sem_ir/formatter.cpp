@@ -379,7 +379,7 @@ class FormatterImpl {
     out_ << " as ";
     FormatName(impl_info.constraint_id);
 
-    if (impl_info.is_defined()) {
+    if (impl_info.is_complete()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
@@ -1386,6 +1386,15 @@ class FormatterImpl {
     const auto& specific = sem_ir_->specifics().Get(id);
     FormatName(specific.generic_id);
     FormatArg(specific.args_id);
+  }
+
+  auto FormatName(SpecificInterfaceId id) -> void {
+    const auto& interface = sem_ir_->specific_interfaces().Get(id);
+    FormatName(interface.interface_id);
+    if (interface.specific_id.has_value()) {
+      out_ << ", ";
+      FormatArg(interface.specific_id);
+    }
   }
 
   auto FormatLabel(InstBlockId id) -> void {

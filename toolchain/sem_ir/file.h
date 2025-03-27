@@ -169,6 +169,13 @@ class File : public Printable<File> {
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
+  auto specific_interfaces() -> CanonicalValueStore<SpecificInterfaceId>& {
+    return specific_interfaces_;
+  }
+  auto specific_interfaces() const
+      -> const CanonicalValueStore<SpecificInterfaceId>& {
+    return specific_interfaces_;
+  }
   auto generics() -> GenericStore& { return generics_; }
   auto generics() const -> const GenericStore& { return generics_; }
   auto specifics() -> SpecificStore& { return specifics_; }
@@ -290,6 +297,10 @@ class File : public Printable<File> {
 
   // Storage for impls.
   ImplStore impls_;
+
+  // Storage for specific interfaces, which are an individual unit of impl
+  // lookup for a single interface.
+  CanonicalValueStore<SpecificInterfaceId> specific_interfaces_;
 
   // Storage for generics.
   GenericStore generics_;

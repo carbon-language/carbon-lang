@@ -240,6 +240,17 @@ struct Worklist {
     Add(specific.args_id);
   }
 
+  auto Add(SpecificInterfaceId specific_interface_id) -> void {
+    if (!specific_interface_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    const auto& interface =
+        sem_ir->specific_interfaces().Get(specific_interface_id);
+    Add(interface.interface_id);
+    Add(interface.specific_id);
+  }
+
   auto Add(const llvm::APInt& value) -> void {
     contents.push_back(value.getBitWidth());
     for (auto word : llvm::seq((value.getBitWidth() + 63) / 64)) {

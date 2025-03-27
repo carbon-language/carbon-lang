@@ -560,6 +560,7 @@ fn CallF() {
 // CHECK:STDOUT:   %int_-1: Core.IntLiteral = int_value -1 [concrete]
 // CHECK:STDOUT:   %I.type.057: type = facet_type <@I, @I(%int_-1)> [concrete]
 // CHECK:STDOUT:   %.Self: %I.type.057 = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %Self.e2e: %I.type.057 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.3f5: type = assoc_entity_type %I.type.057 [concrete]
 // CHECK:STDOUT:   %assoc0.34f: %I.assoc_type.3f5 = assoc_entity element0, @I.%V [concrete]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
@@ -627,7 +628,7 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%N.loc4_13.2)> [symbolic = %I.type (constants.%I.type.8a1)]
-// CHECK:STDOUT:   %Self.2: %I.type.8a1 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.3a0)]
+// CHECK:STDOUT:   %Self.2: @I.%I.type (%I.type.8a1) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.3a0)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I.%I.type (%I.type.8a1) [symbolic = %I.assoc_type (constants.%I.assoc_type.656)]
 // CHECK:STDOUT:   %assoc0: @I.%I.assoc_type (%I.assoc_type.656) = assoc_entity element0, %V [symbolic = %assoc0 (constants.%assoc0.6db)]
 // CHECK:STDOUT:
@@ -648,7 +649,7 @@ fn CallF() {
 // CHECK:STDOUT: generic assoc_const @V(@I.%N.loc4_13.1: Core.IntLiteral, @I.%Self.1: @I.%I.type (%I.type.8a1)) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%N)> [symbolic = %I.type (constants.%I.type.8a1)]
-// CHECK:STDOUT:   %Self: %I.type.8a1 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3a0)]
+// CHECK:STDOUT:   %Self: @V.%I.type (%I.type.8a1) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3a0)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.72b)]
 // CHECK:STDOUT:   %array_type: type = array_type %N, @V.%Self.as_type (%Self.as_type.72b) [symbolic = %array_type (constants.%array_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @V.%array_type (%array_type) [symbolic = %require_complete (constants.%require_complete)]
@@ -685,7 +686,7 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.057
-// CHECK:STDOUT:   %Self.2 => constants.%Self.3a0
+// CHECK:STDOUT:   %Self.2 => constants.%Self.e2e
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.3f5
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.34f
 // CHECK:STDOUT: }

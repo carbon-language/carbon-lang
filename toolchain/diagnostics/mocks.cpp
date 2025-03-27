@@ -4,7 +4,7 @@
 
 #include "toolchain/diagnostics/mocks.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
 auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void {
   *os << "Diagnostic{";
@@ -17,21 +17,21 @@ auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void {
   *os << "\"}";
 }
 
-auto PrintTo(DiagnosticLevel level, std::ostream* os) -> void {
+auto PrintTo(Level level, std::ostream* os) -> void {
   switch (level) {
-    case DiagnosticLevel::LocationInfo:
+    case Level::LocationInfo:
       *os << "LocationInfo";
       break;
-    case DiagnosticLevel::Note:
+    case Level::Note:
       *os << "Note";
       break;
-    case DiagnosticLevel::Warning:
+    case Level::Warning:
       *os << "Warning";
       break;
-    case DiagnosticLevel::Error:
+    case Level::Error:
       *os << "Error";
       break;
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
