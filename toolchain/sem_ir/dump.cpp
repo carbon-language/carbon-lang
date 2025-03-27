@@ -134,8 +134,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> std::string {
   const auto& impl = file.impls().Get(impl_id);
   out << ": " << impl << '\n'
       << "  - interface_id: " << Dump(file, impl.interface.interface_id) << '\n'
-      << "  - specific_id: ";
-  DumpSpecificSummary(file, impl.interface.specific_id);
+      << "  - specific_id: "
+      << DumpSpecificSummary(file, impl.interface.specific_id);
   if (impl.interface.specific_id.has_value()) {
     auto inst_block_id =
         file.specifics().Get(impl.interface.specific_id).args_id;
