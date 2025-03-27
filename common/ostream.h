@@ -85,64 +85,40 @@ inline auto PrintToString(const T& val) -> std::string {
 }
 
 namespace Internal {
-// Support specifying which dump function to use for printing.
-//
-// Code should call `StreamedDump` or `StreamedDumpNoNewline` instead of using
-// this directly.
-enum class StreamedDumpCall {
-  Dump,
-  DumpNoNewline,
-  DumpNameIfValid,
+// Makes a call to a function in-stream. Note this doesn't actually use `out`.
+class StreamedCall : public Printable<StreamedCall> {
+ public:
+  using FnT = llvm::function_ref<auto()->void>;
+  explicit StreamedCall(FnT fn) : fn_(fn) {}
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    // Using assert because CHECK depends on ostream.h, and this is only for
+    // dumps so not worth added complexity.
+    assert(&out == &llvm::errs() && "only supporting stderr dumps");
+    fn_();
+  }
+
+ private:
+  FnT fn_;
 };
 }  // namespace Internal
 
 // Streams a dump call, to allow more stream-based printing in `Dump` functions.
 // Note this always goes to `llvm::errs()`.
-template <
-    Internal::StreamedDumpCall DumpCall = Internal::StreamedDumpCall::Dump,
-    typename ContextT, typename DumpableT>
-inline auto StreamedDump(const ContextT& context, const DumpableT& dumpable)
-    -> auto {
-  // A wrapper class for the actual streamed print.
-  class Printer : public Printable<Printer> {
-   public:
-    explicit Printer(const ContextT& context, const DumpableT& dumpable)
-        : context_(&context), dumpable_(&dumpable) {}
-
-    auto Print(llvm::raw_ostream& /*out*/) const -> void {
-      if constexpr (DumpCall == Internal::StreamedDumpCall::Dump) {
-        Dump(*context_, *dumpable_);
-      } else if constexpr (DumpCall ==
-                           Internal::StreamedDumpCall::DumpNoNewline) {
-        DumpNoNewline(*context_, *dumpable_);
-      } else if constexpr (DumpCall ==
-                           Internal::StreamedDumpCall::DumpNameIfValid) {
-        DumpNameIfValid(*context_, *dumpable_);
-      } else {
-        static_assert(false, "unreachable");
-      }
-    }
-
-   private:
-    const ContextT* context_;
-    const DumpableT* dumpable_;
-  };
-
-  return Printer(context, dumpable);
+template <typename... ArgsT>
+inline auto StreamedDump(ArgsT&&... args) -> Internal::StreamedCall {
+  return Internal::StreamedCall(
+      [&args...]() { Dump(std::forward<ArgsT>(args)...); });
 }
-
-template <typename ContextT, typename DumpableT>
-inline auto StreamedDumpNoNewline(const ContextT& context,
-                                  const DumpableT& dumpable) -> auto {
-  return StreamedDump<Internal::StreamedDumpCall::DumpNoNewline>(context,
-                                                                 dumpable);
+template <typename... ArgsT>
+inline auto StreamedDumpNoNewline(ArgsT&&... args) -> Internal::StreamedCall {
+  return Internal::StreamedCall(
+      [&args...]() { DumpNoNewline(std::forward<ArgsT>(args)...); });
 }
-
-template <typename ContextT, typename DumpableT>
-inline auto StreamedDumpNameIfValid(const ContextT& context,
-                                    const DumpableT& dumpable) -> auto {
-  return StreamedDump<Internal::StreamedDumpCall::DumpNameIfValid>(context,
-                                                                   dumpable);
+template <typename... ArgsT>
+inline auto StreamedDumpNameIfValid(ArgsT&&... args) -> Internal::StreamedCall {
+  return Internal::StreamedCall(
+      [&args...]() { DumpNameIfValid(std::forward<ArgsT>(args)...); });
 }
 
 }  // namespace Carbon
