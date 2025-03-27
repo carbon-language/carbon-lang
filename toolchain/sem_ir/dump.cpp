@@ -28,6 +28,16 @@ static auto DumpInstSummary(const File& file, InstId inst_id) -> std::string {
   return out.TakeStr();
 }
 
+static auto DumpSpecificSummary(const File& file, SpecificId specific_id)
+    -> std::string {
+  RawStringOstream out;
+  out << specific_id;
+  if (specific_id.has_value()) {
+    out << ": " << file.specifics().Get(specific_id);
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> std::string {
   RawStringOstream out;
   out << class_id;
@@ -74,7 +84,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   for (auto impls : facet_type.impls_constraints) {
     out << "\n  - " << Dump(file, impls.interface_id);
     if (impls.specific_id.has_value()) {
-      out << "; " << Dump(file, impls.specific_id);
+      out << "; " << DumpSpecificSummary(file, impls.specific_id);
     }
   }
   for (auto rewrite : facet_type.rewrite_constraints) {
@@ -228,7 +238,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
        llvm::enumerate(complete_facet_type.required_interfaces)) {
     out << "\n  - " << Dump(file, req_interface.interface_id);
     if (req_interface.specific_id.has_value()) {
-      out << "; " << Dump(file, req_interface.specific_id);
+      out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
     }
     if (static_cast<int>(i) < complete_facet_type.num_to_impl) {
       out << " (to impl)";
@@ -240,9 +250,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
     -> std::string {
   RawStringOstream out;
-  out << specific_id;
+  out << DumpSpecificSummary(file, specific_id);
   if (specific_id.has_value()) {
-    out << ": " << file.specifics().Get(specific_id);
+    out << "\n" << Dump(file, file.specifics().Get(specific_id).args_id);
   }
   return out.TakeStr();
 }
