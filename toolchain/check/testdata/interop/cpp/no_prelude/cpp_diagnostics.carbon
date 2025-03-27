@@ -365,6 +365,50 @@ import Cpp library "one_error_and_one_warning.h";
 // CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
 
+// --- indirect_error.h
+
+#include "one_error.h"
+
+// --- fail_import_indirect_error.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_import_indirect_error.carbon:[[@LINE+12]]:1: error: In file included from fail_import_indirect_error.carbon.generated.cpp_imports.h:1:
+// CHECK:STDERR: In file included from ./indirect_error.h:2:
+// CHECK:STDERR: ./one_error.h:2:2: error: "error1"
+// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:  [CppInteropParseError]
+// CHECK:STDERR: import Cpp library "indirect_error.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_indirect_error.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
+// CHECK:STDERR: import Cpp library "indirect_error.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+import Cpp library "indirect_error.h";
+
+// --- indirect_warning.h
+
+#include "one_warning.h"
+
+// --- import_indirect_warning.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+12]]:1: warning: In file included from import_indirect_warning.carbon.generated.cpp_imports.h:1:
+// CHECK:STDERR: In file included from ./indirect_warning.h:2:
+// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
+// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:  [CppInteropParseWarning]
+// CHECK:STDERR: import Cpp library "indirect_warning.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
+// CHECK:STDERR: import Cpp library "indirect_warning.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+import Cpp library "indirect_warning.h";
+
 // CHECK:STDOUT: --- fail_import_cpp_file_with_one_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -505,6 +549,41 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
 // CHECK:STDOUT:     import Cpp "one_error_and_one_warning.h"
 // CHECK:STDOUT:     import Cpp "multiple_errors_and_multiple_warnings.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_import_indirect_error.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "indirect_error.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_indirect_warning.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "indirect_warning.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
