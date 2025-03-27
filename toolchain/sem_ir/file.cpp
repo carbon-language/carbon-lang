@@ -47,8 +47,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
   for (auto kind : SingletonInstKinds) {
     auto inst_id =
         insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
-    constant_values_.Set(inst_id,
-                         SemIR::ConstantId::ForConcreteConstant(inst_id));
+    constant_values_.Set(inst_id, ConstantId::ForConcreteConstant(inst_id));
   }
 }
 
@@ -207,7 +206,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
         auto import_ir_inst = ir->import_ir_insts().Get(
-            untyped_inst.As<SemIR::AnyImportRef>().import_ir_inst_id);
+            untyped_inst.As<AnyImportRef>().import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
         inst_id = import_ir_inst.inst_id;
         continue;
@@ -385,6 +384,50 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         // TODO: Consider introducing a separate category for OutParam:
         // unlike other DurableRefs, it permits initialization.
         return ExprCategory::DurableRef;
+    }
+  }
+}
+
+auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
+    -> InstId {
+  while (true) {
+    Inst init_untyped = sem_ir.insts().Get(init_id);
+    CARBON_KIND_SWITCH(init_untyped) {
+      case CARBON_KIND(AsCompatible init): {
+        init_id = init.source_id;
+        continue;
+      }
+      case CARBON_KIND(Converted init): {
+        init_id = init.result_id;
+        continue;
+      }
+      case CARBON_KIND(ArrayInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(ClassInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(StructInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(TupleInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(InitializeFrom init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(Call call): {
+        if (!ReturnTypeInfo::ForType(sem_ir, call.type_id).has_return_slot()) {
+          return InstId::None;
+        }
+        if (!call.args_id.has_value()) {
+          // Argument initialization failed, so we have no return slot.
+          return InstId::None;
+        }
+        return sem_ir.inst_blocks().Get(call.args_id).back();
+      }
+      default:
+        CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);
     }
   }
 }

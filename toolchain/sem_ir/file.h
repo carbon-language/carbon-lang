@@ -391,6 +391,12 @@ enum class ExprCategory : int8_t {
 // Returns the expression category for an instruction.
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
+// Given an initializing expression, find its return slot argument. Returns
+// `None` if there is no return slot, because the initialization is not
+// performed in place.
+auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
+    -> InstId;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FILE_H_
