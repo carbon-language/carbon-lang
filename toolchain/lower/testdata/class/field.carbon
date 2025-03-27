@@ -97,7 +97,7 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'inplace_init_with_nonconst.carbon'
 // CHECK:STDOUT: source_filename = "inplace_init_with_nonconst.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @Other.val.loc24_33.5 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @Other.val.loc15_33.5 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -105,10 +105,10 @@ fn Run() {
 // CHECK:STDOUT:   %u.var = alloca { ptr, {} }, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %o.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %u.var), !dbg !7
-// CHECK:STDOUT:   %.loc24_33.2.a = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   store ptr %o.var, ptr %.loc24_33.2.a, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc24_33.4.b = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc24_33.4.b, ptr align 1 @Other.val.loc24_33.5, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   %.loc15_33.2.a = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   store ptr %o.var, ptr %.loc15_33.2.a, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc15_33.4.b = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc15_33.4.b, ptr align 1 @Other.val.loc15_33.5, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,9 +131,9 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "inplace_init_with_nonconst.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 24, column: 16, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 16, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 11, column: 1, scope: !4)
