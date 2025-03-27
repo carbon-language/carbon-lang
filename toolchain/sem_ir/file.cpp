@@ -310,7 +310,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         return value_category;
 
       case ErrorInst::Kind:
-      case NotFound::Kind:
         return ExprCategory::Error;
 
       case CARBON_KIND(BindName inst): {
