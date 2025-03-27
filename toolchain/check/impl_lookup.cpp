@@ -169,6 +169,21 @@ static auto FindAndDiagnoseImplLookupCycle(
   return false;
 }
 
+// If the constant value is a FacetAccessType instruction, this returns the
+// value of the facet value it points to instead.
+static auto UnwrapFacetAccessType(Context& context, SemIR::ConstantId id)
+    -> SemIR::ConstantId {
+  // If the self type is a FacetAccessType, work with the facet value directly,
+  // which gives us the potential witnesses to avoid looking for impl
+  // declarations. We will do the same for the impl declarations we try to match
+  // so that we can compare the self constant values.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(id))) {
+    return context.constant_values().Get(access->facet_value_inst_id);
+  }
+  return id;
+}
+
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value).
 static auto GetInterfacesFromConstantId(
@@ -224,11 +239,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // will not be the same constant value as a query facet value. We move through
   // to the facet value here, and if the query was a FacetAccessType we did the
   // same there so they still match.
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
-          context.constant_values().GetInstId(deduced_self_const_id))) {
-    deduced_self_const_id =
-        context.constant_values().Get(access->facet_value_inst_id);
-  }
+  deduced_self_const_id = UnwrapFacetAccessType(context, deduced_self_const_id);
   if (query_self_const_id != deduced_self_const_id) {
     return EvalImplLookupResult::MakeNone();
   }
@@ -388,11 +399,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // which gives us the potential witnesses to avoid looking for impl
   // declarations. We will do the same for the impl declarations we try to match
   // so that we can compare the self constant values.
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
-          context.constant_values().GetInstId(query_self_const_id))) {
-    query_self_const_id =
-        context.constant_values().Get(access->facet_value_inst_id);
-  }
+  query_self_const_id = UnwrapFacetAccessType(context, query_self_const_id);
 
   if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
                                      loc_id, query_self_const_id,
@@ -575,6 +582,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
           context.constant_values().GetInstId(query_self_const_id))) {
     query_self_const_id =
         context.constant_values().Get(facet_value->type_inst_id);
+    // If the FacetValue points to a FacetAccessType, we need to unwrap that for
+    // comparison with the impl's self type.
+    query_self_const_id = UnwrapFacetAccessType(context, query_self_const_id);
   }
 
   auto query_type_structure = BuildTypeStructure(
