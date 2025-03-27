@@ -220,6 +220,7 @@ cc_library(
         ":file",
         ":stringify_type",
         "//common:ostream",
+        "//common:raw_string_ostream",
     ],
     # Always link dump methods so they are callable from a debugger
     # even though they are never called.

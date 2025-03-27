@@ -22,9 +22,11 @@ namespace Carbon {
 template <typename DerivedT>
 class Printable {
   // Provides simple printing for debuggers.
-  LLVM_DUMP_METHOD void Dump() const {
-    static_cast<const DerivedT*>(this)->Print(llvm::errs());
-    llvm::errs() << '\n';
+  LLVM_DUMP_METHOD auto Dump() const -> std::string {
+    std::string buffer;
+    llvm::raw_string_ostream stream(buffer);
+    static_cast<const DerivedT*>(this)->Print(stream);
+    return buffer;
   }
 
   // Supports printing to llvm::raw_ostream.
@@ -82,43 +84,6 @@ inline auto PrintToString(const T& val) -> std::string {
   llvm::raw_string_ostream stream(str);
   stream << val;
   return str;
-}
-
-namespace Internal {
-// Makes a call to a function in-stream. Note this doesn't actually use `out`.
-class StreamedCall : public Printable<StreamedCall> {
- public:
-  using FnT = llvm::function_ref<auto()->void>;
-  explicit StreamedCall(FnT fn) : fn_(fn) {}
-
-  auto Print(llvm::raw_ostream& out) const -> void {
-    // Using assert because CHECK depends on ostream.h, and this is only for
-    // dumps so not worth added complexity.
-    assert(&out == &llvm::errs() && "only supporting stderr dumps");
-    fn_();
-  }
-
- private:
-  FnT fn_;
-};
-}  // namespace Internal
-
-// Streams a dump call, to allow more stream-based printing in `Dump` functions.
-// Note this always goes to `llvm::errs()`.
-template <typename... ArgsT>
-inline auto StreamedDump(ArgsT&&... args) -> Internal::StreamedCall {
-  return Internal::StreamedCall(
-      [&args...]() { Dump(std::forward<ArgsT>(args)...); });
-}
-template <typename... ArgsT>
-inline auto StreamedDumpNoNewline(ArgsT&&... args) -> Internal::StreamedCall {
-  return Internal::StreamedCall(
-      [&args...]() { DumpNoNewline(std::forward<ArgsT>(args)...); });
-}
-template <typename... ArgsT>
-inline auto StreamedDumpNameIfValid(ArgsT&&... args) -> Internal::StreamedCall {
-  return Internal::StreamedCall(
-      [&args...]() { DumpNameIfValid(std::forward<ArgsT>(args)...); });
 }
 
 }  // namespace Carbon
