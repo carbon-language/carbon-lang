@@ -306,28 +306,13 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    auto complete_id = RequireCompleteFacetType(
-        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-        loc_id, *base_as_facet_type, [&] {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
-                            "member access into incomplete facet type {0}",
-                            InstIdAsType);
-          return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
-        });
-    if (complete_id.has_value()) {
-      const auto& resolved = context.complete_facet_types().Get(complete_id);
-      for (const auto& interface : resolved.required_interfaces) {
-        auto& interface_info = context.interfaces().Get(interface.interface_id);
-        scopes->push_back({.name_scope_id = interface_info.scope_id,
-                           .specific_id = interface.specific_id});
-      }
-    } else {
-      // Lookup into this scope should fail without producing an error since
-      // `RequireCompleteFacetType` has already issued a diagnostic.
-      scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
-                                    .specific_id = SemIR::SpecificId::None});
-    }
+    RequireDefinedFacetType(context, *base_as_facet_type, scopes, [&] {
+      CARBON_DIAGNOSTIC(QualifiedExprInUndefinedFacetTypeScope, Error,
+                        "member access into undefined facet type {0}",
+                        InstIdAsType);
+      return context.emitter().Build(
+          loc_id, QualifiedExprInUndefinedFacetTypeScope, base_id);
+    });
     return true;
   }
   if (base_const_id == SemIR::ErrorInst::SingletonConstantId) {

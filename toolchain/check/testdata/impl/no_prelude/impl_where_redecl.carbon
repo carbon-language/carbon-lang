@@ -17,25 +17,81 @@ library "[[@TEST_NAME]]";
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+7]]:20: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl () as I where .T = {};
+// CHECK:STDERR:                    ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as I where .T = {};
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+14]]:20: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl () as I where .T = {} and .T impls (type where .Self impls type) {}
+// CHECK:STDERR:                    ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-13]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+7]]:32: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl () as I where .T = {} and .T impls (type where .Self impls type) {}
+// CHECK:STDERR:                                ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-20]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as I where .T = {} and .T impls (type where .Self impls type) {}
+
+impl {} as I;
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+14]]:20: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl {} as I where .T = {} and .T impls (type where .Self impls type) {}
+// CHECK:STDERR:                    ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-30]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+7]]:32: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl {} as I where .T = {} and .T impls (type where .Self impls type) {}
+// CHECK:STDERR:                                ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-37]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl {} as I where .T = {} and .T impls (type where .Self impls type) {}
+
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+14]]:23: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
+// CHECK:STDERR:                       ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-46]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+7]]:35: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
+// CHECK:STDERR:                                   ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-53]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+19]]:23: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl ({},) as I where .T = {} {}
+// CHECK:STDERR:                       ^~
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-61]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-56]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as I where .T = {};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl () as I where .T = {};
-impl () as I where .T = {} and .T impls (type where .Self impls type) {}
-
-// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-43]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl {} as I;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
-impl {} as I;
-impl {} as I where .T = {} and .T impls (type where .Self impls type) {}
-
-// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE-16]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
 impl ({},) as I where .T = {} {}
 
 // --- fail_match_with_empty_interface.carbon

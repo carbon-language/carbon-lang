@@ -17,8 +17,22 @@ interface I {
   let T:! type;
 }
 
+// CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+7]]:43: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: final impl forall [U:! type] U as I where .T = () {}
+// CHECK:STDERR:                                           ^~
+// CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE-7]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I {
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 final impl forall [U:! type] U as I where .T = () {}
 
+// CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+7]]:16: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: fn F(V:! I) -> V.T {
+// CHECK:STDERR:                ^~~
+// CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE-16]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface I {
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(V:! I) -> V.T {
   // TODO: Even though we have a witness that `V impls I` from the constraint
   // on `I`, we should do an impl lookup to see if any effectively final impl
@@ -26,12 +40,5 @@ fn F(V:! I) -> V.T {
   // lookup would find an impl with more specific values for associated
   // constants that we should merge.
 
-  // CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `()` to `V.(I.T)` [ConversionFailure]
-  // CHECK:STDERR:   return ();
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.ImplicitAs(V.(I.T))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   return ();
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
   return ();
 }

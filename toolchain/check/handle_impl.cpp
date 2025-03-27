@@ -302,16 +302,16 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
   return true;
 }
 
-// Checks that the constraint specified for the impl is valid and complete.
+// Checks that the constraint specified for the impl is valid and identified.
 // Returns a pointer to the interface that the impl implements. On error,
-// issues a diagnostic and returns nullptr.
+// issues a diagnostic and returns `None`.
 static auto CheckConstraintIsInterface(Context& context,
                                        const SemIR::Impl& impl)
-    -> const SemIR::CompleteFacetType::RequiredInterface* {
+    -> const SemIR::SpecificInterface {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    return nullptr;
+    return SemIR::SpecificInterface::None;
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
   if (!facet_type) {
@@ -319,30 +319,20 @@ static auto CheckConstraintIsInterface(Context& context,
                       InstIdAsType);
     context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
                            impl.constraint_id);
-    return nullptr;
+    return SemIR::SpecificInterface::None;
   }
 
-  auto complete_id = RequireCompleteFacetType(
-      context, facet_type_id, context.insts().GetLocId(impl.constraint_id),
-      *facet_type, [&] {
-        CARBON_DIAGNOSTIC(ImplAsIncompleteFacetType, Error,
-                          "impl as incomplete facet type {0}", InstIdAsType);
-        return context.emitter().Build(impl.latest_decl_id(),
-                                       ImplAsIncompleteFacetType,
-                                       impl.constraint_id);
-      });
-  if (!complete_id.has_value()) {
-    return nullptr;
-  }
-  const auto& complete = context.complete_facet_types().Get(complete_id);
-  if (complete.num_to_impl != 1) {
+  auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+  const auto& identified = context.identified_facet_types().Get(identified_id);
+  if (!identified.interface_id.has_value()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
     context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
-                           complete.num_to_impl);
-    return nullptr;
+                           identified.num_to_impl_FIXME);
+    return SemIR::SpecificInterface::None;
   }
-  return &complete.required_interfaces.front();
+  return {.interface_id = identified.interface_id,
+          .specific_id = identified.specific_id};
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the
@@ -388,13 +378,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                            {.self_id = self_inst_id,
                             .constraint_id = constraint_inst_id,
                             .interface = SemIR::SpecificInterface::None}};
-
-  const SemIR::CompleteFacetType::RequiredInterface* required_interface =
-      CheckConstraintIsInterface(context, impl_info);
-  if (required_interface) {
-    impl_info.interface = *required_interface;
-  }
-
+  impl_info.interface = CheckConstraintIsInterface(context, impl_info);
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
@@ -416,8 +400,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.has_value()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
-    if (required_interface) {
-      impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
+    if (impl_info.interface.interface_id.has_value()) {
+      impl_info.witness_id =
+          ImplWitnessForDeclaration(context, impl_info, is_definition);
     } else {
       impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
       // TODO: We might also want to mark that the name scope for the impl has

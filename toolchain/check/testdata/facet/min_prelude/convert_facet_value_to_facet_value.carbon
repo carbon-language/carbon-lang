@@ -27,6 +27,13 @@ fn F() {
   G(C);
   G(C as Y);
   G(C as Z);
+  // CHECK:STDERR: convert_concrete_facet_value_to_facet_value.carbon:[[@LINE+7]]:11: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   G(C as (Y & Z));
+  // CHECK:STDERR:           ^~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface BitAnd {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   G(C as (Y & Z));
 
   G(((((C as Y) as type) as Y) as type) as Y);

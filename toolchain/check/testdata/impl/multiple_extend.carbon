@@ -7,6 +7,206 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/multiple_extend.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/multiple_extend.carbon
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/io.carbon:18:26: error: member access into undefined facet type `Negate` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: fn EOF() -> i32 { return -1; }
+// CHECK:STDERR:                          ^~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/io.carbon:9:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Negate {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:115:13: error: member access into undefined facet type `Add` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self + other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:10:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:122:13: error: member access into undefined facet type `BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self & other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:129:13: error: member access into undefined facet type `BitOr` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self | other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:136:13: error: member access into undefined facet type `BitXor` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self ^ other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:143:13: error: member access into undefined facet type `Div` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self / other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:150:13: error: member access into undefined facet type `LeftShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self << other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:157:13: error: member access into undefined facet type `Mod` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self % other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:65:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:164:13: error: member access into undefined facet type `Mul` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self * other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:171:13: error: member access into undefined facet type `RightShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self >> other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:178:13: error: member access into undefined facet type `Sub` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self - other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:30:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:187:5: error: member access into undefined facet type `SubAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self -= 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:194:5: error: member access into undefined facet type `AddAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self += 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:126:13: error: member access into undefined facet type `Add` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self + other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:10:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:133:13: error: member access into undefined facet type `BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self & other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:140:13: error: member access into undefined facet type `BitOr` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self | other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:147:13: error: member access into undefined facet type `BitXor` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self ^ other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:154:13: error: member access into undefined facet type `Div` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self / other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:161:13: error: member access into undefined facet type `LeftShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self << other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:168:13: error: member access into undefined facet type `Mod` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self % other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:65:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:175:13: error: member access into undefined facet type `Mul` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self * other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:182:13: error: member access into undefined facet type `RightShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self >> other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:189:13: error: member access into undefined facet type `Sub` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self - other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:30:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:198:5: error: member access into undefined facet type `SubAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self -= 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:205:5: error: member access into undefined facet type `AddAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self += 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 
 // --- different_impl_member_names.carbon
 
@@ -24,15 +224,105 @@ class C {
   extend impl as HasF {
     fn F() {}
   }
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+10]]:18: error: member access into undefined facet type `HasF` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   extend impl as HasG {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasF {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-9]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasF {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   extend impl as HasG {
     fn G() {}
   }
 }
 
 fn H(c: C) {
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `HasG` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   C.F();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-27]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasG {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-12]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasG {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasF` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   C.F();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-41]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasF {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-35]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasF {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   C.F();
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `HasG` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   c.F();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-48]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasG {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-33]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasG {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasF` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   c.F();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-62]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasF {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-56]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasF {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   c.F();
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `HasG` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   C.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-69]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasG {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-54]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasG {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasF` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   C.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-83]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasF {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-77]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasF {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   C.G();
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `HasG` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   c.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-90]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasG {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-75]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasG {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasF` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   c.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-104]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasF {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_member_names.carbon:[[@LINE-98]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasF {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   c.G();
 }
 
@@ -52,20 +342,62 @@ class D {
   extend impl as HasA1 {
     fn A() {}
   }
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+10]]:18: error: member access into undefined facet type `HasA1` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   extend impl as HasA2 {
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasA1 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-9]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasA1 {
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
   extend impl as HasA2 {
     fn A() {}
   }
 }
 
 fn B(d: D) {
-  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+4]]:3: error: ambiguous use of name `A` found in multiple extended scopes [NameAmbiguousDueToExtend]
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `HasA2` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   D.A();
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-27]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasA2 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-12]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasA2 {
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasA1` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   D.A();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-41]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasA1 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-35]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasA1 {
+  // CHECK:STDERR:                  ^~~~~
   // CHECK:STDERR:
   D.A();
-  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+4]]:3: error: ambiguous use of name `A` found in multiple extended scopes [NameAmbiguousDueToExtend]
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `HasA2` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   d.A();
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-48]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasA2 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-33]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasA2 {
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasA1` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   d.A();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-62]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasA1 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE-56]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasA1 {
+  // CHECK:STDERR:                  ^~~~~
   // CHECK:STDERR:
   d.A();
 }
@@ -90,9 +422,49 @@ class E {
 }
 
 fn H(e: E) {
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasI` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   E.I();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-19]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasI {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-12]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasI {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   E.I();
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasI` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   e.I();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-30]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasI {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-23]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasI {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   e.I();
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasI` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   E.J();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-41]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasI {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-34]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasI {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   E.J();
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `HasI` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   e.J();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-52]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasI {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: different_impl_and_base.carbon:[[@LINE-45]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasI {
+  // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   e.J();
 }
 
@@ -116,14 +488,26 @@ class L {
 }
 
 fn M(l: L) {
-   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+4]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+10]]:4: error: member access into undefined facet type `HasK` [QualifiedExprInUndefinedFacetTypeScope]
    // CHECK:STDERR:    L.K();
    // CHECK:STDERR:    ^~~
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+   // CHECK:STDERR: interface HasK {
+   // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE-12]]:18: note: declared as an extended scope here [FromExtendHere]
+   // CHECK:STDERR:   extend impl as HasK {
+   // CHECK:STDERR:                  ^~~~
    // CHECK:STDERR:
    L.K();
-   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+4]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+10]]:4: error: member access into undefined facet type `HasK` [QualifiedExprInUndefinedFacetTypeScope]
    // CHECK:STDERR:    l.K();
    // CHECK:STDERR:    ^~~
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE-26]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+   // CHECK:STDERR: interface HasK {
+   // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE-23]]:18: note: declared as an extended scope here [FromExtendHere]
+   // CHECK:STDERR:   extend impl as HasK {
+   // CHECK:STDERR:                  ^~~~
    // CHECK:STDERR:
    l.K();
 }
@@ -149,6 +533,16 @@ class O {
   extend impl as HasN1 {
     fn N() {}
   }
+  // CHECK:STDERR: ambiguity_hidden.carbon:[[@LINE+10]]:18: error: member access into undefined facet type `HasN1` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   extend impl as HasN2 {
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: ambiguity_hidden.carbon:[[@LINE-16]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface HasN1 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: ambiguity_hidden.carbon:[[@LINE-9]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as HasN1 {
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
   extend impl as HasN2 {
     fn N() {}
   }
@@ -166,7 +560,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [concrete]
 // CHECK:STDOUT:   %Self.f0c: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.b7b: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.f50: %F.type.b7b = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type %HasF.type [concrete]
 // CHECK:STDOUT:   %assoc0.992: %HasF.assoc_type = assoc_entity element0, @HasF.%F.decl [concrete]
@@ -189,8 +582,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.1bc: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [concrete]
-// CHECK:STDOUT:   %.bba: type = fn_type_with_self_type %G.type.d27, %HasG.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -217,7 +608,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -230,8 +621,6 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   .HasG = <poisoned>
-// CHECK:STDOUT:   .G = <poisoned>
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -243,7 +632,6 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .G = %assoc0
-// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,7 +648,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   witness = @C.%impl_witness.loc16
+// CHECK:STDOUT:   witness = @C.%impl_witness.loc26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -273,7 +661,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.096.%G.decl) [concrete = constants.%impl_witness.42a]
+// CHECK:STDOUT:   %impl_witness.loc26: <witness> = impl_witness (@impl.096.%G.decl) [concrete = constants.%impl_witness.42a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -307,22 +695,14 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0.992]
-// CHECK:STDOUT:   %impl.elem0.loc22: %.1bc = impl_witness_access constants.%impl_witness.329, element0 [concrete = constants.%F.ad8]
-// CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %impl.elem0.loc22()
-// CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc23: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0.992]
-// CHECK:STDOUT:   %impl.elem0.loc23: %.1bc = impl_witness_access constants.%impl_witness.329, element0 [concrete = constants.%F.ad8]
-// CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %impl.elem0.loc23()
-// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc24: %HasG.assoc_type = name_ref G, @HasG.%assoc0 [concrete = constants.%assoc0.58a]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.bba = impl_witness_access constants.%impl_witness.42a, element0 [concrete = constants.%G.957]
-// CHECK:STDOUT:   %G.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
-// CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc25: %HasG.assoc_type = name_ref G, @HasG.%assoc0 [concrete = constants.%assoc0.58a]
-// CHECK:STDOUT:   %impl.elem0.loc25: %.bba = impl_witness_access constants.%impl_witness.42a, element0 [concrete = constants.%G.957]
-// CHECK:STDOUT:   %G.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
+// CHECK:STDOUT:   %C.ref.loc52: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc52: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c.ref.loc73: %C = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc73: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref.loc94: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %G.ref.loc94: <error> = name_ref G, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c.ref.loc115: %C = name_ref c, %c
+// CHECK:STDOUT:   %G.ref.loc115: <error> = name_ref G, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -388,7 +768,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %d.param_patt: %D = value_param_pattern %d.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %D = value_param call_param0
-// CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc31: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %d: %D = bind_name d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -401,7 +781,6 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .A = %assoc0
-// CHECK:STDOUT:   .HasA2 = <poisoned>
 // CHECK:STDOUT:   witness = (%A.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -429,7 +808,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
-// CHECK:STDOUT:   witness = @D.%impl_witness.loc16
+// CHECK:STDOUT:   witness = @D.%impl_witness.loc26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -442,7 +821,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:     %HasA2.ref: type = name_ref HasA2, file.%HasA2.decl [concrete = constants.%HasA2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.390.%A.decl) [concrete = constants.%impl_witness.baf]
+// CHECK:STDOUT:   %impl_witness.loc26: <witness> = impl_witness (@impl.390.%A.decl) [concrete = constants.%impl_witness.baf]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -475,10 +854,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%d.param_patt: %D) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %D.ref.loc26: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %A.ref.loc26: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %D.ref.loc52: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:   %A.ref.loc52: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
-// CHECK:STDOUT:   %A.ref.loc31: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc73: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -515,7 +894,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base.0ff [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.52d: type = fn_type_with_self_type %I.type.9bd, %HasI.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -555,7 +933,6 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .I = %assoc0
-// CHECK:STDOUT:   .J = <poisoned>
 // CHECK:STDOUT:   witness = (%I.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -617,20 +994,16 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%e.param_patt: %E) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [concrete = constants.%E]
-// CHECK:STDOUT:   %I.ref.loc20: %HasI.assoc_type = name_ref I, @HasI.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc20: %.52d = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%I.e74]
-// CHECK:STDOUT:   %I.call.loc20: init %empty_tuple.type = call %impl.elem0.loc20()
-// CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
-// CHECK:STDOUT:   %I.ref.loc21: %HasI.assoc_type = name_ref I, @HasI.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc21: %.52d = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%I.e74]
-// CHECK:STDOUT:   %I.call.loc21: init %empty_tuple.type = call %impl.elem0.loc21()
-// CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [concrete = constants.%E]
-// CHECK:STDOUT:   %J.ref.loc22: %J.type = name_ref J, @B.%J.decl [concrete = constants.%J]
-// CHECK:STDOUT:   %J.call.loc22: init %empty_tuple.type = call %J.ref.loc22()
-// CHECK:STDOUT:   %e.ref.loc23: %E = name_ref e, %e
-// CHECK:STDOUT:   %J.ref.loc23: %J.type = name_ref J, @B.%J.decl [concrete = constants.%J]
-// CHECK:STDOUT:   %J.call.loc23: init %empty_tuple.type = call %J.ref.loc23()
+// CHECK:STDOUT:   %E.ref.loc30: type = name_ref E, file.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %I.ref.loc30: <error> = name_ref I, <error> [concrete = <error>]
+// CHECK:STDOUT:   %e.ref.loc41: %E = name_ref e, %e
+// CHECK:STDOUT:   %I.ref.loc41: <error> = name_ref I, <error> [concrete = <error>]
+// CHECK:STDOUT:   %E.ref.loc52: type = name_ref E, file.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %J.ref.loc52: %J.type = name_ref J, @B.%J.decl [concrete = constants.%J]
+// CHECK:STDOUT:   %J.call.loc52: init %empty_tuple.type = call %J.ref.loc52()
+// CHECK:STDOUT:   %e.ref.loc63: %E = name_ref e, %e
+// CHECK:STDOUT:   %J.ref.loc63: %J.type = name_ref J, @B.%J.decl [concrete = constants.%J]
+// CHECK:STDOUT:   %J.call.loc63: init %empty_tuple.type = call %J.ref.loc63()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -643,6 +1016,7 @@ fn P(o: O) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %K.type.5a4: type = fn_type @K.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %K.801: %K.type.5a4 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -760,10 +1134,12 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M(%l.param_patt: %L) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %L.ref.loc24: type = name_ref L, file.%L.decl [concrete = constants.%L]
-// CHECK:STDOUT:   %K.ref.loc24: <error> = name_ref K, <error> [concrete = <error>]
+// CHECK:STDOUT:   %L.ref.loc30: type = name_ref L, file.%L.decl [concrete = constants.%L]
+// CHECK:STDOUT:   %K.ref.loc30: %K.type.5a4 = name_ref K, @Base.%K.decl [concrete = constants.%K.801]
+// CHECK:STDOUT:   %K.call.loc30: init %empty_tuple.type = call %K.ref.loc30()
 // CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
-// CHECK:STDOUT:   %K.ref.loc29: <error> = name_ref K, <error> [concrete = <error>]
+// CHECK:STDOUT:   %K.ref.loc41: %K.type.5a4 = name_ref K, @Base.%K.decl [concrete = constants.%K.801]
+// CHECK:STDOUT:   %K.call.loc41: init %empty_tuple.type = call %K.ref.loc41()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -836,7 +1212,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %o.param_patt: %O = value_param_pattern %o.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %O = value_param call_param0
-// CHECK:STDOUT:     %O.ref.loc27: type = name_ref O, file.%O.decl [concrete = constants.%O]
+// CHECK:STDOUT:     %O.ref.loc37: type = name_ref O, file.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %o: %O = bind_name o, %o.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -849,7 +1225,6 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .N = %assoc0
-// CHECK:STDOUT:   .HasN2 = <poisoned>
 // CHECK:STDOUT:   witness = (%N.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -877,7 +1252,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %N.decl
-// CHECK:STDOUT:   witness = @O.%impl_witness.loc21
+// CHECK:STDOUT:   witness = @O.%impl_witness.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NBase {
@@ -904,7 +1279,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [concrete = constants.%O]
 // CHECK:STDOUT:     %HasN2.ref: type = name_ref HasN2, file.%HasN2.decl [concrete = constants.%HasN2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc21: <witness> = impl_witness (@impl.117.%N.decl) [concrete = constants.%impl_witness.599]
+// CHECK:STDOUT:   %impl_witness.loc31: <witness> = impl_witness (@impl.117.%N.decl) [concrete = constants.%impl_witness.599]
 // CHECK:STDOUT:   %N.decl: %N.type.8b4 = fn_decl @N.6 [concrete = constants.%N.cc3] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.9c6 [concrete = constants.%complete_type.121]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -948,12 +1323,12 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @P(%o.param_patt: %O) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %O.ref.loc28: type = name_ref O, file.%O.decl [concrete = constants.%O]
-// CHECK:STDOUT:   %N.ref.loc28: %N.type.8b4 = name_ref N, @O.%N.decl [concrete = constants.%N.cc3]
-// CHECK:STDOUT:   %N.call.loc28: init %empty_tuple.type = call %N.ref.loc28()
+// CHECK:STDOUT:   %O.ref.loc38: type = name_ref O, file.%O.decl [concrete = constants.%O]
+// CHECK:STDOUT:   %N.ref.loc38: %N.type.8b4 = name_ref N, @O.%N.decl [concrete = constants.%N.cc3]
+// CHECK:STDOUT:   %N.call.loc38: init %empty_tuple.type = call %N.ref.loc38()
 // CHECK:STDOUT:   %o.ref: %O = name_ref o, %o
-// CHECK:STDOUT:   %N.ref.loc29: %N.type.8b4 = name_ref N, @O.%N.decl [concrete = constants.%N.cc3]
-// CHECK:STDOUT:   %N.call.loc29: init %empty_tuple.type = call %N.ref.loc29()
+// CHECK:STDOUT:   %N.ref.loc39: %N.type.8b4 = name_ref N, @O.%N.decl [concrete = constants.%N.cc3]
+// CHECK:STDOUT:   %N.call.loc39: init %empty_tuple.type = call %N.ref.loc39()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

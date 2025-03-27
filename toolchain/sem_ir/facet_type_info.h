@@ -100,21 +100,27 @@ constexpr FacetTypeInfo::RewriteConstraint
     FacetTypeInfo::RewriteConstraint::None = {.lhs_const_id = ConstantId::None,
                                               .rhs_const_id = ConstantId::None};
 
-struct CompleteFacetType {
-  // TODO: Add additional fields, for example to support types other than
-  // `.Self` implementation requirements.
+struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
+  IdentifiedFacetType()
+      : interface_id(InterfaceId::None), num_to_impl_FIXME(0) {}
+
   // Interfaces mentioned explicitly in the facet type expression, or
-  // transitively through a named constraint.
+  // transitively through a named constraint. Sorted and deduplicated.
   llvm::SmallVector<RequiredInterface> required_interfaces;
 
-  // Number of interfaces from `interfaces` to implement if this is the facet
-  // type to the right of an `impl`...`as`. Invalid to use in that position
-  // unless this value is 1.
-  int num_to_impl;
-
-  // TODO: Which interfaces to perform name lookup into.
+  // The single interface from `required_interfaces` to implement if this is
+  // the facet type to the right of an `impl`...`as`, or `None` if no such
+  // single interface.
+  InterfaceId interface_id;
+  union {
+    // If `interface_id` is `None`, the number of interfaces to report in a
+    // diagnostic about why this facet type can't be implemented.
+    int num_to_impl_FIXME;
+    // If `interface_id` is not `None`, the specific for that interface.
+    SpecificId specific_id;
+  };
 
   // Sorts and deduplicates `required_interfaces`. Call after building the sets
   // of interfaces, and then don't mutate them value afterwards.

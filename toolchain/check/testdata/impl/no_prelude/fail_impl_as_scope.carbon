@@ -53,7 +53,7 @@ interface Z {
    // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+7]]:4: error: impl as incomplete facet type `Z` [ImplAsIncompleteFacetType]
    // CHECK:STDERR:    impl as Z {
    // CHECK:STDERR:    ^~~~~~~~~~~
-   // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE-11]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
+   // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE-11]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
    // CHECK:STDERR: interface Z {
    // CHECK:STDERR: ^~~~~~~~~~~~~
    // CHECK:STDERR:
@@ -74,7 +74,21 @@ fn F() {
   // Even if the `impl` is diagnosed above, we must not add the impl of the
   // interface to itself in a way that allows it to be used during impl lookup,
   // or we end up with infinite impl lookup recursion here.
+  // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `Z` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   Point.(Z.Zero)();
+  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE-35]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   Point.(Z.Zero)();
+  // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+7]]:18: error: member access into undefined facet type `Z` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   ({} as Point).(Z.Method)();
+  // CHECK:STDERR:                  ^~~~~~~~
+  // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE-43]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   ({} as Point).(Z.Method)();
 }
 
@@ -212,7 +226,6 @@ class X {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Zero.type.822: type = fn_type @Zero.1 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Zero.d14: %Zero.type.822 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type %Z.type [concrete]
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, @Z.%Zero.decl [concrete]
@@ -236,9 +249,7 @@ class X {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.071: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.2c0: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -388,26 +399,17 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Point.ref.loc35: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %Z.ref.loc35: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%Point, (constants.%impl_witness) [concrete = constants.%Z.facet]
-// CHECK:STDOUT:   %.loc35: %Z.type = converted %Point.ref.loc35, %Z.facet [concrete = constants.%Z.facet]
-// CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc35, element0 [concrete = constants.%impl_witness]
-// CHECK:STDOUT:   %impl.elem0: %.071 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%Zero.dec]
-// CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
-// CHECK:STDOUT:   %.loc36_5.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %Point.ref.loc36: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %.loc36_5.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc36_5.3: init %Point = class_init (), %.loc36_5.2 [concrete = constants.%Point.val]
-// CHECK:STDOUT:   %.loc36_5.4: ref %Point = temporary %.loc36_5.2, %.loc36_5.3
-// CHECK:STDOUT:   %.loc36_7.1: ref %Point = converted %.loc36_5.1, %.loc36_5.4
-// CHECK:STDOUT:   %Z.ref.loc36: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Method.ref: %Z.assoc_type = name_ref Method, @Z.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %impl.elem1: %.2c0 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%Method.2c2]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc36_7.1, %impl.elem1
-// CHECK:STDOUT:   %.loc36_7.2: %Point = bind_value %.loc36_7.1
-// CHECK:STDOUT:   %Method.call: init %empty_tuple.type = call %bound_method(%.loc36_7.2)
+// CHECK:STDOUT:   %Point.ref.loc42: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %Z.ref.loc42: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Zero.ref: <error> = name_ref Zero, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc50_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Point.ref.loc50: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %.loc50_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc50_5.3: init %Point = class_init (), %.loc50_5.2 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc50_5.4: ref %Point = temporary %.loc50_5.2, %.loc50_5.3
+// CHECK:STDOUT:   %.loc50_7: ref %Point = converted %.loc50_5.1, %.loc50_5.4
+// CHECK:STDOUT:   %Z.ref.loc50: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Method.ref: <error> = name_ref Method, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

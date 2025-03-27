@@ -35,5 +35,13 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn InstanceCallImport(n: {.i: ()}) {
+  // CHECK:STDERR: import_instance_success.carbon:[[@LINE+8]]:6: error: member access into undefined facet type `Instance` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   n.(Instance.G)();
+  // CHECK:STDERR:      ^~~~~~~~~~
+  // CHECK:STDERR: import_instance_success.carbon:[[@LINE-6]]:1: in import [InImport]
+  // CHECK:STDERR: fail_lib.carbon:11:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface Instance {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   n.(Instance.G)();
 }

@@ -348,7 +348,7 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
                     InstIdAsType);
   auto builder = context.emitter().Build(
       loc, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
-  NoteUndefinedInterface(context, interface_id, builder);
+  NoteIncompleteInterface(context, interface_id, builder);
   builder.Emit();
 }
 

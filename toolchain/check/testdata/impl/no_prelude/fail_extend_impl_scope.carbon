@@ -45,7 +45,7 @@ interface Z {
   // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+7]]:3: error: impl as incomplete facet type `Z` [ImplAsIncompleteFacetType]
   // CHECK:STDERR:   extend impl as Z {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-10]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-10]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR: interface Z {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -64,6 +64,16 @@ fn F() {
   // Even if the `extend impl` is diagnosed above, we must not add the impl of
   // the interface to itself in a way that allows it to be used during impl
   // lookup, or we end up with infinite impl lookup recursion here.
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `Z` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   ({} as Point).Zero();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-32]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-15]]:18: note: declared as an extended scope here [FromExtendHere]
+  // CHECK:STDERR:   extend impl as Z {
+  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:
   ({} as Point).Zero();
 }
 
@@ -152,7 +162,6 @@ fn F() {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Zero.type.822: type = fn_type @Zero.1 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Zero.d14: %Zero.type.822 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type %Z.type [concrete]
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, @Z.%Zero.decl [concrete]
@@ -168,7 +177,6 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.728: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -257,15 +265,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc32_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc42_5.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Point.ref: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %.loc32_5.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc32_5.3: init %Point = class_init (), %.loc32_5.2 [concrete = constants.%Point.val]
-// CHECK:STDOUT:   %.loc32_5.4: ref %Point = temporary %.loc32_5.2, %.loc32_5.3
-// CHECK:STDOUT:   %.loc32_7: ref %Point = converted %.loc32_5.1, %.loc32_5.4
-// CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.728 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Zero.dec]
-// CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:   %.loc42_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc42_5.3: init %Point = class_init (), %.loc42_5.2 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc42_5.4: ref %Point = temporary %.loc42_5.2, %.loc42_5.3
+// CHECK:STDOUT:   %.loc42_7: ref %Point = converted %.loc42_5.1, %.loc42_5.4
+// CHECK:STDOUT:   %Zero.ref: <error> = name_ref Zero, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

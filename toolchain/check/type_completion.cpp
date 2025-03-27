@@ -284,18 +284,11 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      if (context_.complete_facet_types()
-              .TryGetId(inst.facet_type_id)
-              .has_value()) {
-        break;
-      }
       const auto& facet_type_info =
           context_.facet_types().Get(inst.facet_type_id);
 
-      SemIR::CompleteFacetType result;
-      result.required_interfaces.reserve(
-          facet_type_info.impls_constraints.size());
-      // Every mentioned interface needs to be defined.
+      // FIXME: Require identified, and use that list of interfaces.
+      // Every mentioned interface needs to be complete.
       for (auto impl_interface : facet_type_info.impls_constraints) {
         // TODO: expand named constraints
         auto interface_id = impl_interface.interface_id;
@@ -303,7 +296,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         if (!interface.is_defined()) {
           if (diagnoser_) {
             auto builder = diagnoser_();
-            NoteUndefinedInterface(context_, interface_id, builder);
+            NoteIncompleteInterface(context_, interface_id, builder);
             builder.Emit();
           }
           return false;
@@ -312,18 +305,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         if (impl_interface.specific_id.has_value()) {
           ResolveSpecificDefinition(context_, loc_, impl_interface.specific_id);
         }
-        result.required_interfaces.push_back(
-            {.interface_id = interface_id,
-             .specific_id = impl_interface.specific_id});
       }
-      result.CanonicalizeRequiredInterfaces();
-
-      // TODO: Distinguish interfaces that are required but would not be
-      // implemented, such as those from `where .Self impls I`.
-      result.num_to_impl = result.required_interfaces.size();
-
-      // TODO: Process other kinds of requirements.
-      context_.complete_facet_types().Add(inst.facet_type_id, result);
       break;
     }
 
@@ -620,16 +602,73 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
-                              SemIR::LocId loc_id,
-                              const SemIR::FacetType& facet_type,
-                              MakeDiagnosticBuilderFn diagnoser)
-    -> SemIR::CompleteFacetTypeId {
-  if (!RequireCompleteType(context, type_id, loc_id, diagnoser)) {
-    return SemIR::CompleteFacetTypeId::None;
+auto RequireIdentifiedFacetType(Context& context,
+                                const SemIR::FacetType& facet_type)
+    -> SemIR::IdentifiedFacetTypeId {
+  if (auto identified_id =
+          context.identified_facet_types().TryGetId(facet_type.facet_type_id);
+      identified_id.has_value()) {
+    return identified_id;
+  }
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+
+  SemIR::IdentifiedFacetType result;
+  result.required_interfaces = facet_type_info.impls_constraints;
+  // TODO: expand named constraints
+  result.CanonicalizeRequiredInterfaces();
+
+  // TODO: Distinguish interfaces that are required but would not be
+  // implemented, such as those from `where .Self impls I`.
+  if (result.required_interfaces.size() == 1) {
+    const auto& interface = result.required_interfaces.front();
+    result.interface_id = interface.interface_id;
+    result.specific_id = interface.specific_id;
+  } else {
+    result.num_to_impl_FIXME = result.required_interfaces.size();
   }
 
-  return context.complete_facet_types().TryGetId(facet_type.facet_type_id);
+  // TODO: Process other kinds of requirements.
+  return context.identified_facet_types().Add(facet_type.facet_type_id, result);
+}
+
+static auto NoteInterfaceForwardDeclared(SemIR::InstId decl_id,
+                                         DiagnosticBuilder& builder) {
+  CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                    "interface was forward declared here");
+  builder.Note(decl_id, InterfaceForwardDeclaredHere);
+}
+
+auto RequireDefinedFacetType(Context& context,
+                             const SemIR::FacetType& facet_type,
+                             llvm::SmallVector<LookupScope>* scopes,
+                             MakeDiagnosticBuilderFn diagnoser) -> void {
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+  std::optional<DiagnosticBuilder> builder;
+  bool added_a_scope = false;
+  for (const auto& impls : facet_type_info.impls_constraints) {
+    const auto& interface_info = context.interfaces().Get(impls.interface_id);
+    if (interface_info.is_being_defined()) {
+      scopes->push_back({.name_scope_id = interface_info.scope_id,
+                         .specific_id = impls.specific_id});
+      added_a_scope = true;
+    } else {
+      if (!builder) {
+        builder = diagnoser();
+      }
+      NoteInterfaceForwardDeclared(interface_info.latest_decl_id(), *builder);
+    }
+  }
+  if (builder) {
+    builder->Emit();
+  }
+  if (!added_a_scope) {
+    // Don't produce any more errors looking into this scope since we've already
+    // issued a diagnostic on error.
+    scopes->push_back({.name_scope_id = SemIR::NameScopeId::None,
+                       .specific_id = SemIR::SpecificId::None});
+  }
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,
@@ -668,19 +707,17 @@ auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
   }
 }
 
-auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
-                            DiagnosticBuilder& builder) -> void {
+auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
+                             DiagnosticBuilder& builder) -> void {
   const auto& interface_info = context.interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {
-    CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
+    CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Note,
                       "interface is currently being defined");
     builder.Note(interface_info.definition_id,
-                 InterfaceUndefinedWithinDefinition);
+                 InterfaceIncompleteWithinDefinition);
   } else {
-    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
-                      "interface was forward declared here");
-    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
+    NoteInterfaceForwardDeclared(interface_info.latest_decl_id(), builder);
   }
 }
 

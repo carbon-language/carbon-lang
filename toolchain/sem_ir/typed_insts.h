@@ -718,7 +718,7 @@ struct FacetValue {
   InstId type_inst_id;
   // The set of `ImplWitness` instructions for a `FacetType`. The witnesses are
   // in the same order as the set of `required_interfaces` in the
-  // `CompleteFacetType` of the `FacetType` from `type_id`, so that an index
+  // `IdentifiedFacetType` of the `FacetType` from `type_id`, so that an index
   // from one can be used with the other.
   InstBlockId witnesses_block_id;
 };

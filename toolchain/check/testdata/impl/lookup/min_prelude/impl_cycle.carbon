@@ -33,12 +33,12 @@ fn F() {
   // CHECK:STDERR: impl forall [T:! Z] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:3: error: cannot convert type `Point` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `Core.As(Z)` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:9:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface As(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Point as Z;
 }
@@ -60,6 +60,13 @@ class Point {}
 
 fn F() {
   // TODO: A cycle should be found in the `impl forall T as Z` above.
+  // CHECK:STDERR: todo_fail_impl_simple_where_cycle.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `Core.ImplicitAs(type where...)` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   Point as Z;
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Point as Z;
 }
 
@@ -70,24 +77,24 @@ interface Z {}
 interface Y {}
 
 // This creates a dependency cycle with itself.
+// CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:18: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
+// CHECK:STDERR:                  ^~~~~
+// CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! Z & Y] T as Z {}
 
 class Point {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+14]]:3: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `Core.As(Z)` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-8]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:3: error: cannot convert type `Point` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:9:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface As(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Point as Z;
 }
@@ -107,7 +114,7 @@ impl forall [T:! Z] T as X {}
 class C {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+34]]:3: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-9]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
@@ -120,12 +127,26 @@ fn F() {
   // CHECK:STDERR: impl forall [T:! Z] T as X {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+21]]:3: error: member access into undefined facet type `Core.ImplicitAs(X)` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+14]]:3: error: member access into undefined facet type `Core.ImplicitAs(Y)` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `Core.As(Z)` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   C as Z;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:9:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface As(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   C as Z;
 }
@@ -155,19 +176,19 @@ fn F() {
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `Core.ImplicitAs(ComparableWith(C))` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   Compare({} as C, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(C))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Compare({} as C, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Compare({} as C, {} as C);
 
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+23]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+33]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as C, {} as D);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-34]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
@@ -180,38 +201,58 @@ fn F() {
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `D` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `Core.ImplicitAs(ComparableWith(D))` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   Compare({} as C, {} as D);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(C))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Compare({} as C, {} as D);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-44]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `Core.ImplicitAs(ComparableWith(C))` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   Compare({} as C, {} as D);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-54]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Compare({} as C, {} as D);
 
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+23]]:3: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+33]]:3: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as D, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-59]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-69]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-62]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-72]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-59]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-69]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `ComparableWith(D)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: member access into undefined facet type `Core.ImplicitAs(ComparableWith(C))` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   Compare({} as D, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(D))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-79]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `Core.ImplicitAs(ComparableWith(D))` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   Compare({} as D, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-69]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-89]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -286,6 +327,16 @@ fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
 
 fn F() {
   Compare({} as C, {} as C);
+  // CHECK:STDERR: impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `Core.ImplicitAs(ComparableTo(C))` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   Compare({} as C, {} as D);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Compare({} as C, {} as D);
   Compare({} as D, {} as C);
 }

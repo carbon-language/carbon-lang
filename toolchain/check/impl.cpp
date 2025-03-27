@@ -84,10 +84,9 @@ static auto CheckAssociatedFunctionImplementation(
   return impl_decl_id;
 }
 
-// Builds an initial empty witness.
-// TODO: Fill the witness with the rewrites from the declaration.
-auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
-    -> SemIR::InstId {
+// Builds an initial witness from the rewrites in the facet type, if any.
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
+                               bool is_definition) -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
 
   auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
@@ -96,10 +95,10 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  return ResolveFacetTypeImplWitness(
+  return InitialFacetTypeImplWitness(
       context, context.insts().GetLocId(impl.latest_decl_id()),
       impl.constraint_id, impl.self_id, impl.interface,
-      context.generics().GetSelfSpecific(impl.generic_id));
+      context.generics().GetSelfSpecific(impl.generic_id), is_definition);
 }
 
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
@@ -110,6 +109,14 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
+  if (witness_block.empty()) {
+    if (!RequireCompleteFacetTypeForImplDefinition(
+            context, impl.latest_decl_id(), impl.constraint_id)) {
+      return;
+    }
+    witness_block = AllocateFacetTypeImplWitness(
+        context, impl.interface.interface_id, witness.elements_id);
+  }
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
