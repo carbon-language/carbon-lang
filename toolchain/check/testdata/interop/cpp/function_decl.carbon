@@ -45,6 +45,23 @@ fn F() {
   Cpp.foo_float();
 }
 
+// --- int_param_function_decl.h
+
+auto foo_int(int c, int d) -> void;
+
+// --- import_int_param_function_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_param_function_decl.h";
+
+fn Carb_func(a: i32, b:i32)  {}
+
+fn F() {
+  Cpp.foo_int(1, 2);
+  Carb_func(1, 2);
+}
+
 // CHECK:STDOUT: --- import_int_return_function_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

@@ -26,6 +26,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -197,6 +198,18 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
   return lookup;
 }
 
+static auto IsInt32(Context& context, clang::QualType type) -> bool {
+  const auto* builtin_type = dyn_cast<clang::BuiltinType>(type);
+  return builtin_type && builtin_type->getKind() == clang::BuiltinType::Int &&
+         context.ast_context().getTypeSize(type) == 32;
+}
+
+static auto MakeInt32Type(Context& context) -> SemIR::TypeId {
+  IntId size_id = context.ints().Add(32);
+  return MakeIntType(context, Parse::NodeId::None, SemIR::IntKind::Signed,
+                     size_id);
+}
+
 // Returns the return type of the given function declaration.
 // Currently only void and 32-bit int are supported.
 // TODO: Support more return types.
@@ -262,10 +275,29 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Template function");
     return SemIR::ErrorInst::SingletonInstId;
   }
-  if (!clang_decl->param_empty()) {
-    context.TODO(loc_id, "Unsupported: Function with parameters");
-    return SemIR::ErrorInst::SingletonInstId;
+
+  llvm::SmallVector<SemIR::InstId> params;
+  auto param_patterns_id = context.inst_blocks().AddPlaceholder();
+  for (auto* param : clang_decl->parameters()) {
+    clang::QualType param_type = param->getType().getCanonicalType();
+    if (!IsInt32(context, param_type)) {
+      context.TODO(loc_id, "Unsupported: Param type");
+      return SemIR::ErrorInst::SingletonInstId;
+    }
+    SemIR::TypeId type_id = MakeInt32Type(context);
+    auto binding_pattern_id = AddInstInNoBlock(
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::BindingPattern(
+                     {.type_id = type_id,
+                      .entity_name_id = SemIR::EntityNameId::None})));
+    SemIR::InstId var_pattern_id = AddInstInNoBlock(
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::ValueParamPattern(
+                     {.type_id = type_id,
+                      .subpattern_id = binding_pattern_id,
+                      .index = SemIR::CallParamIndex::None})));
+
+    params.push_back(var_pattern_id);
   }
+  context.inst_blocks().ReplacePlaceholder(param_patterns_id, params);
 
   auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
   if (SemIR::ErrorInst::SingletonInstId == return_slot_pattern_id) {
@@ -285,7 +317,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .last_param_node_id = Parse::NodeId::None,
        .pattern_block_id = SemIR::InstBlockId::Empty,
        .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
-       .param_patterns_id = SemIR::InstBlockId::Empty,
+       .param_patterns_id = param_patterns_id,
        .is_extern = false,
        .extern_library_id = SemIR::LibraryNameId::None,
        .non_owning_decl_id = SemIR::InstId::None,
