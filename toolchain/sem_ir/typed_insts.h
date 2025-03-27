@@ -1120,6 +1120,17 @@ struct NamespaceType {
   TypeId type_id;
 };
 
+// Used when name lookup succeeds in a way that needs to return a not-found
+// entry, particularly for member access.
+struct NotFound {
+  static constexpr auto Kind = InstKind::NotFound.Define<Parse::NoneNodeId>(
+      {.ir_name = "<not found>",
+       .is_type = InstIsType::Never,
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+};
+
 // A `Call` parameter for a function or other parameterized block.
 struct AnyParam {
   static constexpr InstKind Kinds[] = {InstKind::OutParam, InstKind::RefParam,

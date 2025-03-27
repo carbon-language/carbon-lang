@@ -541,7 +541,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                                name_id);
         return SemIR::ErrorInst::SingletonInstId;
       } else {
-        return SemIR::InstId::None;
+        return SemIR::NotFound::SingletonInstId;
       }
     }
 
