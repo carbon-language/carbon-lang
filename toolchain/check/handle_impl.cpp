@@ -455,9 +455,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
           context.constant_values().Get(impl_info.self_id),
           impl_info.interface.specific_id);
       // TODO: Deduce has side effects in the semir by generating `Converted`
-      // instructions which we will not use here. We should stop generting those
-      // when deducing for impl lookup, but for now we discard them by pushing
-      // an InstBlock on the stack and dropping it here.
+      // instructions which we will not use here. We should stop generating
+      // those when deducing for impl lookup, but for now we discard them by
+      // pushing an InstBlock on the stack and dropping it here.
       context.inst_block_stack().PopAndDiscard();
       if (!deduced_specific_id.has_value()) {
         CARBON_DIAGNOSTIC(ImplUnusedBinding, Error,
