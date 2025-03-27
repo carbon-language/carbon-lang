@@ -280,7 +280,7 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
-CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(VarInInterfaceDecl)
 
 // Impl checking.

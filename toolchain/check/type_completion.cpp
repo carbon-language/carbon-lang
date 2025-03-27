@@ -304,7 +304,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         if (!interface.is_complete()) {
           if (diagnoser_) {
             auto builder = diagnoser_();
-            NoteUndefinedInterface(context_, interface_id, builder);
+            NoteIncompleteInterface(context_, interface_id, builder);
             builder.Emit();
           }
           return false;
@@ -669,15 +669,15 @@ auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
   }
 }
 
-auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
-                            DiagnosticBuilder& builder) -> void {
+auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
+                             DiagnosticBuilder& builder) -> void {
   const auto& interface_info = context.interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {
-    CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
+    CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Note,
                       "interface is currently being defined");
     builder.Note(interface_info.definition_id,
-                 InterfaceUndefinedWithinDefinition);
+                 InterfaceIncompleteWithinDefinition);
   } else {
     CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
                       "interface was forward declared here");
