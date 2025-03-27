@@ -2511,7 +2511,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ImplSymbolicWitness inst)
+                                SemIR::LookupImplWitness inst)
     -> ResolveResult {
   auto query_self_inst_id =
       GetLocalConstantInstId(resolver, inst.query_self_inst_id);
@@ -2529,7 +2529,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_specific_interface.specific_id, data);
   auto query_specific_interface_id =
       resolver.local_specific_interfaces().Add(specific_interface);
-  return ResolveAs<SemIR::ImplSymbolicWitness>(
+  return ResolveAs<SemIR::LookupImplWitness>(
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
                                    SemIR::WitnessType::SingletonInstId),
@@ -2935,7 +2935,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ImplDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
     }
-    case CARBON_KIND(SemIR::ImplSymbolicWitness inst): {
+    case CARBON_KIND(SemIR::LookupImplWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitness inst): {

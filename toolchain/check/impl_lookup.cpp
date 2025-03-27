@@ -322,7 +322,7 @@ static auto FindWitnessInFacet(
 }
 
 // Begin a search for an impl declaration matching the query. We do this by
-// creating an ImplSymbolicWitness instruction and evaluating. If it's able to
+// creating an LookupImplWitness instruction and evaluating. If it's able to
 // find a final concrete impl, then it will evaluate to that `ImplWitness` but
 // if not, it will evaluate to itself as a symbolic witness to be further
 // evaluated with a more specific query when building a specific for the generic
@@ -333,7 +333,7 @@ static auto FindWitnessInImpls(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   auto witness_const_id = TryEvalInst(
       context, loc_id, SemIR::InstId::None,
-      SemIR::ImplSymbolicWitness{
+      SemIR::LookupImplWitness{
           .type_id =
               GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
           .query_self_inst_id =
@@ -342,7 +342,7 @@ static auto FindWitnessInImpls(Context& context, SemIR::LocId loc_id,
               context.specific_interfaces().Add(interface),
       });
   // We use a NotConstant result from eval to communicate back an impl
-  // lookup failure. See `EvalConstantInst()` for `ImplSymbolicWitness`.
+  // lookup failure. See `EvalConstantInst()` for `LookupImplWitness`.
   if (!witness_const_id.is_constant()) {
     return SemIR::InstId::None;
   }
@@ -546,7 +546,7 @@ static auto CollectCandidateImplsForQuery(
 }
 
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                                 SemIR::ImplSymbolicWitness eval_query)
+                                 SemIR::LookupImplWitness eval_query)
     -> EvalImplLookupResult {
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
