@@ -109,6 +109,12 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
+  // `witness.elements_id` will be `SemIR::InstBlockId::Empty` when the
+  // definition is the first declaration and the interface has no members. The
+  // other case where `witness_block` will be empty is when we are using a
+  // placeholder witness. This happens when there is a forward declaration of
+  // the impl and the facet type has no rewrite constraints and so it wasn't
+  // required to be complete.
   if (witness.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty()) {
     if (!RequireCompleteFacetTypeForImplDefinition(
