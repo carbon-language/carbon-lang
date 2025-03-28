@@ -101,9 +101,8 @@ static auto AddDependentActionSpliceImpl(Context& context,
 // it is operating on.
 static auto RefineOperand(Context& context, SemIR::LocId loc_id,
                           SemIR::Inst::ArgAndKind arg) -> int32_t {
-  if (arg.kind == SemIR::IdKind::For<SemIR::MetaInstId>) {
-    auto inst_id = arg.As<SemIR::MetaInstId>();
-    auto inst = context.insts().Get(inst_id);
+  if (auto inst_id = arg.TryAs<SemIR::MetaInstId>()) {
+    auto inst = context.insts().Get(*inst_id);
     if (inst.Is<SemIR::SpliceInst>()) {
       // The argument will evaluate to the spliced instruction, which is already
       // refined.
@@ -118,7 +117,7 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
           SemIR::LocIdAndInst(loc_id,
                               SemIR::RefineTypeAction{
                                   .type_id = SemIR::InstType::SingletonTypeId,
-                                  .inst_id = inst_id,
+                                  .inst_id = *inst_id,
                                   .inst_type_id = inst.type_id()}),
           inst.type_id());
     }
@@ -126,7 +125,7 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
     // TODO: Handle the case where the constant value of the instruction is
     // template-dependent.
 
-    return inst_id.index;
+    return inst_id->index;
   }
 
   return arg.value;

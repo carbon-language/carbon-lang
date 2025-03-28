@@ -130,10 +130,19 @@ class Inst : public Printable<Inst> {
   // Associated an argument (usually arg0 or arg1, potentially type_id) with its
   // IdKind.
   struct ArgAndKind {
-    // Convenience conversion function.
+    // Converts to `IdT`, validating the `kind` matches.
     template <typename IdT>
     auto As() const -> IdT {
       CARBON_DCHECK(kind == SemIR::IdKind::For<IdT>);
+      return IdT(value);
+    }
+
+    // Converts to `IdT`, returning nullopt if the kind is incorrect.
+    template <typename IdT>
+    auto TryAs() const -> std::optional<IdT> {
+      if (kind != SemIR::IdKind::For<IdT>) {
+        return std::nullopt;
+      }
       return IdT(value);
     }
 
