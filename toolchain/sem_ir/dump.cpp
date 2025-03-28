@@ -261,8 +261,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
       out << " (to impl)";
     }
     if (!identified_facet_type.interface_id.has_value()) {
-      out << "\n  - (" << identified_facet_type.num_to_impl_FIXME
-          << " to impl)\n";
+      out << "\n  - (" << identified_facet_type.num_to_impl << " to impl)\n";
     }
   }
   return out.TakeStr();

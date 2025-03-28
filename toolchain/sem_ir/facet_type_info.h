@@ -103,8 +103,7 @@ constexpr FacetTypeInfo::RewriteConstraint
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
-  IdentifiedFacetType()
-      : interface_id(InterfaceId::None), num_to_impl_FIXME(0) {}
+  IdentifiedFacetType() : interface_id(InterfaceId::None), num_to_impl(0) {}
 
   // Interfaces mentioned explicitly in the facet type expression, or
   // transitively through a named constraint. Sorted and deduplicated.
@@ -117,7 +116,7 @@ struct IdentifiedFacetType {
   union {
     // If `interface_id` is `None`, the number of interfaces to report in a
     // diagnostic about why this facet type can't be implemented.
-    int num_to_impl_FIXME;
+    int num_to_impl;
     // If `interface_id` is not `None`, the specific for that interface.
     SpecificId specific_id;
   };

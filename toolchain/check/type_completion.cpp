@@ -626,7 +626,7 @@ auto RequireIdentifiedFacetType(Context& context,
     result.interface_id = interface.interface_id;
     result.specific_id = interface.specific_id;
   } else {
-    result.num_to_impl_FIXME = result.required_interfaces.size();
+    result.num_to_impl = result.required_interfaces.size();
   }
 
   // TODO: Process other kinds of requirements.

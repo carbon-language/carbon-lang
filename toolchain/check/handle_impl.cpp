@@ -329,7 +329,7 @@ static auto CheckConstraintIsInterface(Context& context,
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
     context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
-                           identified.num_to_impl_FIXME);
+                           identified.num_to_impl);
     return SemIR::SpecificInterface::None;
   }
   return {.interface_id = identified.interface_id,
