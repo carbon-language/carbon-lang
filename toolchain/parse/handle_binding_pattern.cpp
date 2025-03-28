@@ -25,7 +25,7 @@ auto HandleBindingPattern(Context& context) -> void {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
                         "expected {0:name|`:` or `:!`} in binding pattern",
-                        BoolAsSelect);
+                        Diagnostics::BoolAsSelect);
       context.emitter().Emit(*context.position(), ExpectedBindingPattern,
                              expected_name);
       state.has_error = true;

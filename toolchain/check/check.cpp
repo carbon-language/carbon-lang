@@ -8,8 +8,8 @@
 #include "common/map.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
@@ -302,7 +302,7 @@ static auto BuildApiMapAndDiagnosePackaging(
         CARBON_DIAGNOSTIC(
             IncorrectExtension, Error,
             "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}",
-            BoolAsSelect);
+            Diagnostics::BoolAsSelect);
         auto diag = unit_info.emitter.Build(
             packaging ? packaging->names.node_id : Parse::NodeId::None,
             IncorrectExtension, is_impl);

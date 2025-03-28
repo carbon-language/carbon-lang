@@ -68,7 +68,7 @@ namespace N1;
 namespace N2;
 alias N2.N3 = N1;
 
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:15: error: member name `N1` not found in `N2` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:15: error: member name `N1` not found in `N2` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: alias N2.N4 = N2.N1;
 // CHECK:STDERR:               ^~~~~
 // CHECK:STDERR:
@@ -94,7 +94,7 @@ alias N2.N3 = N1;
 // CHECK:STDERR:
 namespace N2.N1;
 
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:15: error: member name `N1` not found in `N2` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:15: error: member name `N1` not found in `N2` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: alias N2.N4 = N2.N1;
 // CHECK:STDERR:               ^~~~~
 // CHECK:STDERR:

@@ -60,7 +60,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: error: member name `Def` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: var f: () = Test.Def();
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: var f: () = Test.ForwardWithDef();
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:13: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:13: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: var f: () = Test.Forward();
 // CHECK:STDERR:             ^~~~~~~~~~~~
 // CHECK:STDERR:

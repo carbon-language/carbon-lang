@@ -413,7 +413,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                   DeclParams(class_info))) {
         return InvalidResult;
       }
-      if (!class_info.is_defined()) {
+      if (!class_info.is_complete()) {
         DiagnoseQualifiedDeclInIncompleteClassScope(
             *context_, name_context.loc_id, class_decl.class_id);
         return InvalidResult;
@@ -427,7 +427,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                   DeclParams(interface_info))) {
         return InvalidResult;
       }
-      if (!interface_info.is_defined()) {
+      if (!interface_info.is_complete()) {
         DiagnoseQualifiedDeclInUndefinedInterfaceScope(
             *context_, name_context.loc_id, interface_decl.interface_id,
             name_context.resolved_inst_id);

@@ -7,7 +7,7 @@
 namespace Carbon::Testing {
 
 auto CompileHelper::GetTokenizedBuffer(llvm::StringRef text,
-                                       DiagnosticConsumer* consumer)
+                                       Diagnostics::Consumer* consumer)
     -> Lex::TokenizedBuffer& {
   auto& source = GetSourceBuffer(text);
 
@@ -18,7 +18,7 @@ auto CompileHelper::GetTokenizedBuffer(llvm::StringRef text,
 }
 
 auto CompileHelper::GetTokenizedBufferWithSharedValueStore(
-    llvm::StringRef text, DiagnosticConsumer* consumer)
+    llvm::StringRef text, Diagnostics::Consumer* consumer)
     -> std::pair<Lex::TokenizedBuffer&, SharedValueStores&> {
   auto& tokens = GetTokenizedBuffer(text, consumer);
   return {tokens, value_store_storage_.front()};

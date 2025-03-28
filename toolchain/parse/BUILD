@@ -123,6 +123,7 @@ cc_library(
     deps = [
         ":tree",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//toolchain/lex:dump",
     ],
     # Always link dump methods.

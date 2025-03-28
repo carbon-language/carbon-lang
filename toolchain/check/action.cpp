@@ -136,7 +136,7 @@ static auto RefineOperands(Context& context, SemIR::LocId loc_id,
                            SemIR::Inst action) -> SemIR::Inst {
   auto [arg0_kind, arg1_kind] = action.ArgKinds();
   auto arg0 = RefineOperand(context, loc_id, arg0_kind, action.arg0());
-  auto arg1 = RefineOperand(context, loc_id, arg0_kind, action.arg1());
+  auto arg1 = RefineOperand(context, loc_id, arg1_kind, action.arg1());
   action.SetArgs(arg0, arg1);
   return action;
 }

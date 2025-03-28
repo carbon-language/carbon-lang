@@ -16,6 +16,10 @@ namespace Carbon::Check {
 // `SemIR::ConstantId::NotConstant`.
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId;
+// Like the above but specific a LocId instead of deriving it from the
+// `inst_id`. This is most useful when passing `None` as the `inst_id`.
+auto TryEvalInst(Context& context, SemIR::LocId loc_id, SemIR::InstId inst_id,
+                 SemIR::Inst inst) -> SemIR::ConstantId;
 
 // Evaluates the eval block for a region of a specific. Produces a block
 // containing the evaluated constant values of the instructions in the eval

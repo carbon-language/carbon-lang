@@ -49,6 +49,13 @@ class PendingBlock {
     return inst_id;
   }
 
+  template <typename InstT, typename LocT>
+  auto AddInstWithCleanup(LocT loc_id, InstT inst) -> SemIR::InstId {
+    auto inst_id = AddInstWithCleanupInNoBlock(context_, loc_id, inst);
+    insts_.push_back(inst_id);
+    return inst_id;
+  }
+
   // Insert the pending block of code at the current position.
   auto InsertHere() -> void {
     for (auto id : insts_) {

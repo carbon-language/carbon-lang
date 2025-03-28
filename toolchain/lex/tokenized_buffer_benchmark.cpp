@@ -214,13 +214,13 @@ class LexerBenchHelper {
       : source_(MakeSourceBuffer(text)) {}
 
   auto Lex() -> TokenizedBuffer {
-    DiagnosticConsumer& consumer = NullDiagnosticConsumer();
+    Diagnostics::Consumer& consumer = Diagnostics::NullConsumer();
     return Lex::Lex(value_stores_, source_, consumer);
   }
 
   auto DiagnoseErrors() -> std::string {
     RawStringOstream result;
-    StreamDiagnosticConsumer consumer(&result);
+    Diagnostics::StreamConsumer consumer(&result);
     auto buffer = Lex::Lex(value_stores_, source_, consumer);
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors(),
@@ -234,8 +234,8 @@ class LexerBenchHelper {
   auto MakeSourceBuffer(llvm::StringRef text) -> SourceBuffer {
     CARBON_CHECK(fs_.addFile(filename_, /*ModificationTime=*/0,
                              llvm::MemoryBuffer::getMemBuffer(text)));
-    return std::move(*SourceBuffer::MakeFromFile(fs_, filename_,
-                                                 ConsoleDiagnosticConsumer()));
+    return std::move(*SourceBuffer::MakeFromFile(
+        fs_, filename_, Diagnostics::ConsoleConsumer()));
   }
 
   SharedValueStores value_stores_;

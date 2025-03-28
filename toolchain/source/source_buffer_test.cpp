@@ -17,8 +17,8 @@ static constexpr llvm::StringLiteral TestFileName = "test.carbon";
 
 TEST(SourceBufferTest, MissingFile) {
   llvm::vfs::InMemoryFileSystem fs;
-  auto buffer =
-      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  auto buffer = SourceBuffer::MakeFromFile(fs, TestFileName,
+                                           Diagnostics::ConsoleConsumer());
   EXPECT_FALSE(buffer);
 }
 
@@ -27,8 +27,8 @@ TEST(SourceBufferTest, SimpleFile) {
   CARBON_CHECK(fs.addFile(TestFileName, /*ModificationTime=*/0,
                           llvm::MemoryBuffer::getMemBuffer("Hello World")));
 
-  auto buffer =
-      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  auto buffer = SourceBuffer::MakeFromFile(fs, TestFileName,
+                                           Diagnostics::ConsoleConsumer());
   ASSERT_TRUE(buffer);
 
   EXPECT_EQ(TestFileName, buffer->filename());
@@ -44,8 +44,8 @@ TEST(SourceBufferTest, NoNull) {
                                        /*BufferName=*/"",
                                        /*RequiresNullTerminator=*/false)));
 
-  auto buffer =
-      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  auto buffer = SourceBuffer::MakeFromFile(fs, TestFileName,
+                                           Diagnostics::ConsoleConsumer());
   ASSERT_TRUE(buffer);
 
   EXPECT_EQ(TestFileName, buffer->filename());
@@ -57,8 +57,8 @@ TEST(SourceBufferTest, EmptyFile) {
   CARBON_CHECK(fs.addFile(TestFileName, /*ModificationTime=*/0,
                           llvm::MemoryBuffer::getMemBuffer("")));
 
-  auto buffer =
-      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  auto buffer = SourceBuffer::MakeFromFile(fs, TestFileName,
+                                           Diagnostics::ConsoleConsumer());
   ASSERT_TRUE(buffer);
 
   EXPECT_EQ(TestFileName, buffer->filename());

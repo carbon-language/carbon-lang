@@ -183,8 +183,6 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
   // impls of `Z(T)`. If a blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here when constructed from a `C` value.
-  //
-  // TODO: C(T) is C(()) so this should work?
   let a: C(()).(Z(()).X) = {} as C(());
 }
 
@@ -309,26 +307,6 @@ fn F() {
   let a: C(()).(Z.X) = {} as C(());
 }
 
-// --- todo_fail_specialization_written_after_use_is_poisoned.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {
-  let X:! type;
-}
-
-class C {}
-
-impl forall [T:! type] T as Z(T) where .X = () {}
-
-fn F() {
-  let a: C.(Z(C).X) = ();
-}
-
-// TODO: This impl changes the result of a previous lookup. The previous lookup
-// should have created a poison value that this trips and thus generates a
-// diagnostic.
-impl C as Z(C) where .X = C {}
-
 // --- fail_todo_final_specialization_before_generic_use_of_type_constant.carbon
 library "[[@TEST_NAME]]";
 
@@ -446,4 +424,37 @@ impl C as Z(C) where .V = {} {
 
 fn F() {
   let x: {} = G(C);
+}
+
+// --- fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let T:! type;
+  fn F[self: Self]() -> T;
+}
+
+impl forall [U:! type] U as I where .T = () {
+  fn F[self: Self]() -> () { return (); }
+}
+final impl forall [V:! type] V* as I where .T = V {
+  fn F[self: Self]() -> V { return *self; }
+}
+
+fn H[W:! type](v: W) -> W.(I.T) {
+  return v.(I.F)();
+}
+
+// The return of `H` is `(X*).(I.T)` which has a final impl making it `X`.
+// While this function is still a generic context, it should see the concrete
+// `X` type and the return of `H(p)` should convert (a no-op) to `X`.
+fn G[X:! type](p: X*) -> X {
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `<symbolic>` to `X` [ConversionFailure]
+  // CHECK:STDERR:   return H(p);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `<symbolic>` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return H(p);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  return H(p);
 }

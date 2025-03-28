@@ -61,7 +61,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: error: member name `Def` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn F(i: Test.Def) {}
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR:
@@ -91,7 +91,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn F(i: Test.ForwardWithDef) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

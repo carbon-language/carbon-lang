@@ -11,6 +11,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -259,7 +260,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::ClassType inst): {
       auto& class_info = context_.classes().Get(inst.class_id);
-      if (!class_info.is_defined()) {
+      if (!class_info.is_complete()) {
         if (diagnoser_) {
           auto builder = diagnoser_();
           NoteIncompleteClass(context_, inst.class_id, builder);
@@ -293,7 +294,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         // TODO: expand named constraints
         auto interface_id = impl_interface.interface_id;
         const auto& interface = context_.interfaces().Get(interface_id);
-        if (!interface.is_defined()) {
+        if (!interface.is_complete()) {
           if (diagnoser_) {
             auto builder = diagnoser_();
             NoteIncompleteInterface(context_, interface_id, builder);
@@ -560,7 +561,7 @@ static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
   CARBON_DIAGNOSTIC(
       ClassAbstractHere, Note,
       "{0:=0:uses class that|=1:class} was declared abstract here",
-      IntAsSelect);
+      Diagnostics::IntAsSelect);
   builder.Note(class_info.definition_id, ClassAbstractHere,
                static_cast<int>(direct_use));
 }
@@ -695,7 +696,7 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
 auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
                          DiagnosticBuilder& builder) -> void {
   const auto& class_info = context.classes().Get(class_id);
-  CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
+  CARBON_CHECK(!class_info.is_complete(), "Class is not incomplete");
   if (class_info.has_definition_started()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "class is incomplete within its definition");
@@ -710,7 +711,7 @@ auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
 auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
                              DiagnosticBuilder& builder) -> void {
   const auto& interface_info = context.interfaces().Get(interface_id);
-  CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
+  CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Note,
                       "interface is currently being defined");

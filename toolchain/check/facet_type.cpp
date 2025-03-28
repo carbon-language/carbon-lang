@@ -241,7 +241,7 @@ auto AllocateFacetTypeImplWitness(Context& context,
                                   SemIR::InstBlockId witness_id)
     -> llvm::MutableArrayRef<SemIR::InstId> {
   const auto& interface = context.interfaces().Get(interface_id);
-  CARBON_CHECK(interface.is_defined());
+  CARBON_CHECK(interface.is_complete());
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   for (auto decl_id : assoc_entities) {
