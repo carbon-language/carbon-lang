@@ -131,8 +131,6 @@ class Inst : public Printable<Inst> {
   // IdKind.
   class ArgAndKind {
    public:
-    using KindEnumType = IdKind;
-
     explicit ArgAndKind(IdKind kind, int32_t value)
         : kind_(kind), value_(value) {}
 
@@ -159,8 +157,6 @@ class Inst : public Printable<Inst> {
     IdKind kind_;
     int32_t value_;
   };
-
-  using KindEnumType = InstKind;
 
   // Makes an instruction for a singleton. This exists to support simple
   // construction of all singletons by File.

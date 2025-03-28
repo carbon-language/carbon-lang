@@ -48,10 +48,11 @@ auto SwitchOn(SwitchT&& switch_value) -> auto {
 // Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`. It explicitly
 // returns `KindT` because that may differ from `CaseT::Kind`, and may not be
 // copyable.
-template <typename SwitchT, typename FnT>
+template <typename SwitchT, typename CaseFnT>
 consteval auto ForCase() -> auto {
-  using KindT = typename std::remove_cvref_t<SwitchT>::KindEnumType;
-  using CaseT = llvm::function_traits<FnT>::template arg_t<0>;
+  using KindT = llvm::function_traits<
+      decltype(&std::remove_cvref_t<SwitchT>::kind)>::result_t;
+  using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;
   return static_cast<KindT::RawEnumType>(KindT::template For<CaseT>);
 }
 
