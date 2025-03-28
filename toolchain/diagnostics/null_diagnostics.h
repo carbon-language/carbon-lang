@@ -7,37 +7,37 @@
 
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
 // Returns a singleton consumer that doesn't print its diagnostics.
-inline auto NullDiagnosticConsumer() -> DiagnosticConsumer& {
-  struct Consumer : DiagnosticConsumer {
+inline auto NullConsumer() -> Consumer& {
+  struct SingletonConsumer : Consumer {
     auto HandleDiagnostic(Diagnostic /*d*/) -> void override {}
   };
-  static auto* consumer = new Consumer;
+  static auto* consumer = new SingletonConsumer;
   return *consumer;
 }
 
 // Returns a singleton emitter that doesn't print its diagnostics.
 template <typename LocT>
-inline auto NullDiagnosticEmitter() -> DiagnosticEmitter<LocT>& {
-  class Emitter : public DiagnosticEmitter<LocT> {
+inline auto NullEmitter() -> Emitter<LocT>& {
+  class SingletonEmitter : public Emitter<LocT> {
    public:
-    using DiagnosticEmitter<LocT>::DiagnosticEmitter;
+    using Emitter<LocT>::Emitter;
 
    protected:
     // Converts a filename directly to the diagnostic location.
     auto ConvertLoc(LocT /*loc*/,
-                    DiagnosticEmitter<LocT>::ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+                    Emitter<LocT>::ContextFnT /*context_fn*/) const
+        -> ConvertedLoc override {
       return {.loc = {}, .last_byte_offset = -1};
     }
   };
 
-  static auto* emitter = new Emitter(&NullDiagnosticConsumer());
+  static auto* emitter = new SingletonEmitter(&NullConsumer());
   return *emitter;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_NULL_DIAGNOSTICS_H_

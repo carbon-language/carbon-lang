@@ -505,10 +505,9 @@ auto MetaPrinter::PrintArgLongValues(const Arg& arg,
   *out_ << indent << "Possible values:\n";
   // TODO: It would be good to add help text for each value and then print it
   // here.
-  for (int i : llvm::seq<int>(0, arg.value_strings.size())) {
-    llvm::StringRef value_string = arg.value_strings[i];
+  for (auto [i, value_string] : llvm::enumerate(arg.value_strings)) {
     *out_ << indent << "- " << value_string;
-    if (arg.has_default && i == arg.default_value_index) {
+    if (arg.has_default && static_cast<int>(i) == arg.default_value_index) {
       *out_ << " (default)";
     }
     *out_ << "\n";
@@ -619,12 +618,11 @@ auto MetaPrinter::PrintRawUsage(const Command& command,
 
     if (!command.positional_args.empty()) {
       bool open_optional = false;
-      for (int i : llvm::seq<int>(0, command.positional_args.size())) {
+      for (auto [i, arg] : llvm::enumerate(command.positional_args)) {
         *out_ << " ";
         if (i != 0 && command.positional_args[i - 1]->is_append) {
           *out_ << "-- ";
         }
-        const auto& arg = command.positional_args[i];
         if (!arg->is_required && !open_optional) {
           *out_ << "[";
           open_optional = true;

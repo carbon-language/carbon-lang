@@ -26,6 +26,15 @@ class SubstInstCallbacks {
   // to `new_inst`.
   virtual auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst) const
       -> SemIR::InstId = 0;
+
+  // Performs any work needed when no substitutions were performed into an
+  // instruction for which `Subst` returned `false`. Provides an opportunity to
+  // perform any necessary updates to the instruction beyond updating its
+  // operands. Returns the new instruction ID to use to refer to `orig_inst_id`.
+  virtual auto ReuseUnchanged(SemIR::InstId orig_inst_id) const
+      -> SemIR::InstId {
+    return orig_inst_id;
+  }
 };
 
 // Performs substitution into `inst_id` and its operands recursively, using

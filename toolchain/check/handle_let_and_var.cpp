@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/generic.h"
@@ -119,12 +120,13 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
   }
   auto pattern = context.insts().GetWithLocId(var_pattern_id);
 
-  return AddInst(context, pattern.loc_id,
-                 SemIR::VarStorage{
-                     .type_id = pattern.inst.type_id(),
-                     .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
-                         context.sem_ir(),
-                         pattern.inst.As<SemIR::VarPattern>().subpattern_id)});
+  return AddInstWithCleanup(
+      context, pattern.loc_id,
+      SemIR::VarStorage{
+          .type_id = pattern.inst.type_id(),
+          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
+              context.sem_ir(),
+              pattern.inst.As<SemIR::VarPattern>().subpattern_id)});
 }
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)

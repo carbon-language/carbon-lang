@@ -108,11 +108,12 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.type.dac: type = generic_interface_type @I [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.dac = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.325: type = facet_type <@I, @I(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %I.type.325 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.209: %I.type.325 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.cfe: <witness> = require_complete_type %I.type.325 [symbolic]
 // CHECK:STDOUT:   %impl_witness.eff: <witness> = impl_witness (), @impl.084(%T) [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.0e2: type = facet_type <@I, @I(%ptr)> [symbolic]
+// CHECK:STDOUT:   %Self.fb4: %I.type.0e2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.0e6: <witness> = require_complete_type %I.type.0e2 [symbolic]
 // CHECK:STDOUT:   %impl_witness.465: <witness> = impl_witness (), @impl.cd2(%T) [symbolic]
 // CHECK:STDOUT: }
@@ -166,10 +167,10 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc5_13.2)> [symbolic = %I.type (constants.%I.type.325)]
-// CHECK:STDOUT:   %Self.2: %I.type.325 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.2: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.209)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.209)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -222,7 +223,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
-// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %Self.2 => constants.%Self.209
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T.loc5_13.2) {}
@@ -245,7 +246,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.0e2
-// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %Self.2 => constants.%Self.fb4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.cd2(constants.%T) {
@@ -268,7 +269,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.type.dac: type = generic_interface_type @I [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.dac = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.325: type = facet_type <@I, @I(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %I.type.325 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.209: %I.type.325 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -279,6 +280,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.type.0e2: type = facet_type <@I, @I(%ptr)> [symbolic]
 // CHECK:STDOUT:   %require_complete.0e6: <witness> = require_complete_type %I.type.0e2 [symbolic]
 // CHECK:STDOUT:   %impl_witness.46542c.1: <witness> = impl_witness (), @impl.cd2fdc.1(%T) [symbolic]
+// CHECK:STDOUT:   %Self.fb4: %I.type.0e2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %impl_witness.eff58b.2: <witness> = impl_witness (), @impl.08450a.2(%T) [symbolic]
 // CHECK:STDOUT:   %impl_witness.eff58b.3: <witness> = impl_witness (), @impl.08450a.3(%T) [symbolic]
 // CHECK:STDOUT:   %impl_witness.46542c.2: <witness> = impl_witness (), @impl.cd2fdc.2(%T) [symbolic]
@@ -359,7 +361,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.325)]
-// CHECK:STDOUT:   %Self: %I.type.325 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -464,7 +466,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
-// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self.209
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T) {}
@@ -487,7 +489,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.0e2
-// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self.fb4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.cd2fdc.1(constants.%T) {
@@ -564,11 +566,12 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.type.2b8: type = generic_interface_type @J [concrete]
 // CHECK:STDOUT:   %J.generic: %J.type.2b8 = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.b72: type = facet_type <@J, @J(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %J.type.b72 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.252: %J.type.b72 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.287: <witness> = require_complete_type %J.type.b72 [symbolic]
 // CHECK:STDOUT:   %impl_witness.0ef: <witness> = impl_witness (), @impl.199(%T) [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %J.type.628: type = facet_type <@J, @J(%ptr)> [symbolic]
+// CHECK:STDOUT:   %Self.fbe: %J.type.628 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.c60: <witness> = require_complete_type %J.type.628 [symbolic]
 // CHECK:STDOUT:   %impl_witness.b80: <witness> = impl_witness (), @impl.dfd(%T) [symbolic]
 // CHECK:STDOUT: }
@@ -613,10 +616,10 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T.loc5_13.2)> [symbolic = %J.type (constants.%J.type.b72)]
-// CHECK:STDOUT:   %Self.2: %J.type.b72 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.2: @J.%J.type (%J.type.b72) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.252)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @J.%J.type (%J.type.b72) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @J.%J.type (%J.type.b72) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.252)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -659,7 +662,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type => constants.%J.type.b72
-// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %Self.2 => constants.%Self.252
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(%T.loc5_13.2) {}
@@ -682,7 +685,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type => constants.%J.type.628
-// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %Self.2 => constants.%Self.fbe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.dfd(constants.%T) {
@@ -705,7 +708,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.type.2b8: type = generic_interface_type @J [concrete]
 // CHECK:STDOUT:   %J.generic: %J.type.2b8 = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.b72: type = facet_type <@J, @J(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %J.type.b72 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.252: %J.type.b72 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -716,6 +719,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.type.628: type = facet_type <@J, @J(%ptr)> [symbolic]
 // CHECK:STDOUT:   %require_complete.c60: <witness> = require_complete_type %J.type.628 [symbolic]
 // CHECK:STDOUT:   %impl_witness.b80f53.1: <witness> = impl_witness (), @impl.dfd2f7.1(%T) [symbolic]
+// CHECK:STDOUT:   %Self.fbe: %J.type.628 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %impl_witness.0ef94b.2: <witness> = impl_witness (), @impl.199bba.2(%T) [symbolic]
 // CHECK:STDOUT:   %impl_witness.0ef94b.3: <witness> = impl_witness (), @impl.199bba.3(%T) [symbolic]
 // CHECK:STDOUT:   %impl_witness.b80f53.2: <witness> = impl_witness (), @impl.dfd2f7.2(%T) [symbolic]
@@ -794,7 +798,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T)> [symbolic = %J.type (constants.%J.type.b72)]
-// CHECK:STDOUT:   %Self: %J.type.b72 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: @J.%J.type (%J.type.b72) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.252)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -889,7 +893,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type => constants.%J.type.b72
-// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self.252
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(%T) {}
@@ -912,7 +916,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type => constants.%J.type.628
-// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self.fbe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.dfd2f7.1(constants.%T) {

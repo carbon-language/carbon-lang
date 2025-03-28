@@ -81,7 +81,7 @@ class [[clang::internal_linkage]] Lexer {
   };
 
   Lexer(SharedValueStores& value_stores, SourceBuffer& source,
-        DiagnosticConsumer& consumer)
+        Diagnostics::Consumer& consumer)
       : buffer_(value_stores, source),
         consumer_(consumer),
         emitter_(&consumer_, &buffer_),
@@ -220,7 +220,7 @@ class [[clang::internal_linkage]] Lexer {
   llvm::SmallVector<TokenIndex> open_groups_;
   bool has_mismatched_brackets_ = false;
 
-  ErrorTrackingDiagnosticConsumer consumer_;
+  Diagnostics::ErrorTrackingConsumer consumer_;
 
   TokenizedBuffer::SourcePointerDiagnosticEmitter emitter_;
 
@@ -1526,7 +1526,7 @@ class Lexer::ErrorRecoveryBuffer {
 };
 
 // Issue an UnmatchedOpening diagnostic.
-static auto DiagnoseUnmatchedOpening(DiagnosticEmitter<TokenIndex>& emitter,
+static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
                                      TokenIndex opening_token) -> void {
   CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
                     "opening symbol without a corresponding closing symbol");
@@ -1610,7 +1610,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
 }
 
 auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
-         DiagnosticConsumer& consumer) -> TokenizedBuffer {
+         Diagnostics::Consumer& consumer) -> TokenizedBuffer {
   return Lexer(value_stores, source, consumer).Lex();
 }
 

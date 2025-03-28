@@ -207,6 +207,7 @@ cc_library(
     deps = [
         ":tokenized_buffer",
         "//common:ostream",
+        "//common:raw_string_ostream",
     ],
     # Always link dump methods.
     alwayslink = 1,

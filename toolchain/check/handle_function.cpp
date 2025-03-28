@@ -29,6 +29,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -641,7 +642,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
           "missing `return` at end of function with declared return type");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      AddInst<SemIR::Return>(context, node_id, {});
+      AddReturnCleanupBlock(context, node_id);
     }
   }
 

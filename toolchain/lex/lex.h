@@ -18,7 +18,7 @@ namespace Carbon::Lex {
 // which will refer into the source.
 auto Lex(SharedValueStores& value_stores,
          SourceBuffer& source [[clang::lifetimebound]],
-         DiagnosticConsumer& consumer) -> TokenizedBuffer;
+         Diagnostics::Consumer& consumer) -> TokenizedBuffer;
 
 }  // namespace Carbon::Lex
 

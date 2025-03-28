@@ -6,6 +6,8 @@
 #define CARBON_TOOLCHAIN_CHECK_CONTROL_FLOW_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/inst.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -61,6 +63,63 @@ auto SetBlockArgResultBeforeConstantUse(Context& context,
 
 // Returns whether the current position in the current block is reachable.
 auto IsCurrentPositionReachable(Context& context) -> bool;
+
+// Determines whether the instruction requires cleanup and, if so, adds it for
+// cleanup blocks. Note for example that a class may not need destruction when
+// neither it nor its members have `destroy` functions.
+auto MaybeAddCleanupForInst(Context& context, SemIR::TypeId type_id,
+                            SemIR::InstId inst_id) -> void;
+
+// Adds an instruction that has cleanup associated.
+template <typename InstT, typename LocT>
+  requires(InstT::Kind.has_cleanup())
+auto AddInstWithCleanup(Context& context, LocT loc, InstT inst)
+    -> SemIR::InstId {
+  auto inst_id = AddInst(context, SemIR::LocIdAndInst(loc, inst));
+  MaybeAddCleanupForInst(context, inst.type_id, inst_id);
+  return inst_id;
+}
+
+// Adds an instruction that has cleanup associated.
+template <typename InstT, typename LocT>
+  requires(InstT::Kind.has_cleanup())
+auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
+    -> SemIR::InstId {
+  auto inst_id = AddInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
+  MaybeAddCleanupForInst(context, inst.type_id, inst_id);
+  return inst_id;
+}
+
+// Cleanup blocks are an effort to share cleanup instructions across equivalent
+// scope-ending instructions (for example, all `return;` instructions are
+// equivalent). Structurally, they should first run non-shared cleanup, then
+// either dispatch to a cleanup block that includes shared cleanup, or invoke
+// the control flow instruction.
+//
+// For example:
+//
+//   fn F() {
+//     var a: C;
+//     if (...) {
+//       // Cleanup block 1: destroy a, return
+//       return;
+//     }
+//
+//     var b: C;
+//     if (...) {
+//       // Cleanup block 2: destroy b, reuse cleanup block 1.
+//       return;
+//     }
+//
+//     DoSomethingMore();
+//     // Cleanup block 3: reuse cleanup block 2.
+//   }
+//
+// TODO: Add support for `return;`, `return <expr>;`, `break;`,and `continue;`;
+// also, add reuse (described above but not done).
+auto AddReturnCleanupBlock(
+    Context& context,
+    typename decltype(SemIR::Return::Kind)::TypedNodeId node_id) -> void;
 
 }  // namespace Carbon::Check
 

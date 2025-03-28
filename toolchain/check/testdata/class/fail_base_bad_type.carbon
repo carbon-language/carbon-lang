@@ -56,7 +56,7 @@ class DeriveFromi32 {
 // but it shouldn't crash.
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 
-// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:70: error: member name `n` not found in `DeriveFromi32` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:70: error: member name `n` not found in `DeriveFromi32` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn AccessMemberWithInvalidBasei32(p: DeriveFromi32*) -> i32 { return (*p).n; }
 // CHECK:STDERR:                                                                      ^~~~~~
 // CHECK:STDERR:
@@ -171,7 +171,7 @@ fn AccessMemberWithInvalidBaseFinal_WithMember(p: DeriveFromFinal*) -> i32 {
 }
 
 fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:10: error: member name `b` not found in `DeriveFromFinal` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:10: error: member name `b` not found in `DeriveFromFinal` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   return (*p).b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:

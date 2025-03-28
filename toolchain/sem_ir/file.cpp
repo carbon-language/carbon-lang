@@ -242,6 +242,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case AccessMemberAction::Kind:
+      case AccessOptionalMemberAction::Kind:
       case AddrOf::Kind:
       case ArrayType::Kind:
       case AssociatedConstantDecl::Kind:
@@ -270,6 +271,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case LookupImplWitness::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
       case ImportCppDecl::Kind:

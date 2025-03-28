@@ -82,11 +82,6 @@ auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
 auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
                                SemIR::SpecificId specific_id) -> bool;
 
-// Returns an instruction describing the entity named by the given specific.
-// This is used to name the entity in diagnostics.
-auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
-    -> SemIR::InstId;
-
 // Diagnoses if an entity has implicit parameters, indicating it's generic, but
 // is missing explicit parameters.
 auto DiagnoseIfGenericMissingExplicitParameters(

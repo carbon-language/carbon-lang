@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
-auto DiagnosticLoc::FormatLocation(llvm::raw_ostream& out) const -> void {
+auto Loc::FormatLocation(llvm::raw_ostream& out) const -> void {
   if (filename.empty()) {
     return;
   }
@@ -23,8 +23,7 @@ auto DiagnosticLoc::FormatLocation(llvm::raw_ostream& out) const -> void {
   out << ": ";
 }
 
-auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out, int indent) const
-    -> void {
+auto Loc::FormatSnippet(llvm::raw_ostream& out, int indent) const -> void {
   if (column_number == -1) {
     return;
   }
@@ -48,4 +47,4 @@ auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out, int indent) const
   out << '\n';
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics

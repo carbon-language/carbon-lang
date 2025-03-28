@@ -177,7 +177,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
       -> void;
 
   // Converts a token to a diagnostic location.
-  auto TokenToDiagnosticLoc(TokenIndex token) const -> ConvertedDiagnosticLoc;
+  auto TokenToDiagnosticLoc(TokenIndex token) const
+      -> Diagnostics::ConvertedLoc;
 
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
@@ -207,15 +208,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
  private:
   friend class Lexer;
 
-  class SourcePointerDiagnosticEmitter : public DiagnosticEmitter<const char*> {
+  class SourcePointerDiagnosticEmitter
+      : public Diagnostics::Emitter<const char*> {
    public:
-    explicit SourcePointerDiagnosticEmitter(DiagnosticConsumer* consumer,
+    explicit SourcePointerDiagnosticEmitter(Diagnostics::Consumer* consumer,
                                             const TokenizedBuffer* tokens)
-        : DiagnosticEmitter(consumer), tokens_(tokens) {}
+        : Emitter(consumer), tokens_(tokens) {}
 
    protected:
     auto ConvertLoc(const char* loc, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+        -> Diagnostics::ConvertedLoc override {
       return tokens_->SourcePointerToDiagnosticLoc(loc);
     }
 
@@ -223,15 +225,15 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     const TokenizedBuffer* tokens_;
   };
 
-  class TokenDiagnosticEmitter : public DiagnosticEmitter<TokenIndex> {
+  class TokenDiagnosticEmitter : public Diagnostics::Emitter<TokenIndex> {
    public:
-    explicit TokenDiagnosticEmitter(DiagnosticConsumer* consumer,
+    explicit TokenDiagnosticEmitter(Diagnostics::Consumer* consumer,
                                     const TokenizedBuffer* tokens)
-        : DiagnosticEmitter(consumer), tokens_(tokens) {}
+        : Emitter(consumer), tokens_(tokens) {}
 
    protected:
     auto ConvertLoc(TokenIndex token, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+        -> Diagnostics::ConvertedLoc override {
       return tokens_->TokenToDiagnosticLoc(token);
     }
 
@@ -241,7 +243,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Converts a pointer into the source to a diagnostic location.
   auto SourcePointerToDiagnosticLoc(const char* loc) const
-      -> ConvertedDiagnosticLoc;
+      -> Diagnostics::ConvertedLoc;
 
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.

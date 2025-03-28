@@ -23,7 +23,7 @@ auto HandleBraceExpr(Context& context) -> void {
 static auto HandleBraceExprParamError(Context& context,
                                       Context::StateStackEntry state,
                                       State param_finish_state) -> void {
-  IntAsSelect mode(0);
+  Diagnostics::IntAsSelect mode(0);
   switch (param_finish_state) {
     case State::BraceExprParamFinishAsType:
       mode.value = 0;
@@ -41,7 +41,7 @@ static auto HandleBraceExprParamError(Context& context,
       ExpectedStructLiteralField, Error,
       "expected {0:=0:`.field: field_type`|"
       "=1:`.field = value`|=2:`.field: field_type` or `.field = value`}",
-      IntAsSelect);
+      Diagnostics::IntAsSelect);
   context.emitter().Emit(*context.position(), ExpectedStructLiteralField, mode);
 
   state.has_error = true;

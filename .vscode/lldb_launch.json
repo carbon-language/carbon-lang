@@ -12,6 +12,7 @@
         "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
         "settings append target.source-map \".\" \"${workspaceFolder}\"",
         "settings append target.source-map \"/proc/self/cwd\" \"${workspaceFolder}\"",
+        "settings set escape-non-printables false",
         "env TEST_TARGET=//toolchain/testing:file_test",
         "env TEST_TMPDIR=/tmp"
       ]
@@ -32,7 +33,8 @@
       "initCommands": [
         "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
         "settings append target.source-map \".\" \"${workspaceFolder}\"",
-        "settings append target.source-map \"/proc/self/cwd\" \"${workspaceFolder}\""
+        "settings append target.source-map \"/proc/self/cwd\" \"${workspaceFolder}\"",
+        "settings set escape-non-printables false"
       ]
     }
   ]

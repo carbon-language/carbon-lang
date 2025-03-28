@@ -15,7 +15,7 @@ namespace Carbon::Parse {
 // Parses the token buffer into a `Tree`.
 //
 // This is the factory function which is used to build parse trees.
-auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+auto Parse(Lex::TokenizedBuffer& tokens, Diagnostics::Consumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree;
 
 }  // namespace Carbon::Parse

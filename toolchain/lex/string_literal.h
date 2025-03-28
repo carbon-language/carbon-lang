@@ -29,7 +29,7 @@ class StringLiteral {
   // deal with, this can return the content directly. Otherwise, the allocator
   // will be used for the StringRef.
   auto ComputeValue(llvm::BumpPtrAllocator& allocator,
-                    DiagnosticEmitter<const char*>& emitter) const
+                    Diagnostics::Emitter<const char*>& emitter) const
       -> llvm::StringRef;
 
   // Get the text corresponding to this literal.
