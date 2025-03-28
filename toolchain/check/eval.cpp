@@ -610,6 +610,24 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.facet_types().Add(info);
 }
 
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::EntityNameId entity_name_id, Phase* phase)
+    -> SemIR::EntityNameId {
+  const auto& bind_name = eval_context.entity_names().Get(entity_name_id);
+  Phase name_phase;
+  if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
+    name_phase = Phase::PeriodSelfSymbolic;
+  } else if (!bind_name.bind_index().has_value()) {
+    name_phase = Phase::Concrete;
+  } else if (bind_name.is_template) {
+    name_phase = Phase::TemplateSymbolic;
+  } else {
+    name_phase = Phase::CheckedSymbolic;
+  }
+  *phase = LatestPhase(*phase, name_phase);
+  return eval_context.entity_names().MakeCanonical(entity_name_id);
+}
+
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
 // has runtime phase.
@@ -1733,27 +1751,22 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
                                                      SemIR::InstId /*inst_id*/,
                                                      SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto bind = inst.As<SemIR::SymbolicBindingPattern>();
-
-  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
-
-  // If we know which specific we're evaluating within and this is an
-  // argument of that specific, its constant value is the corresponding
-  // argument value.
+  // If we know which specific we're evaluating within and this is an argument
+  // of that specific, its constant value is the corresponding argument value.
+  // TODO: This seems incorrect: patterns don't typically evaluate to the value
+  // matched by the pattern.
+  const auto& bind_name = eval_context.entity_names().Get(
+      inst.As<SemIR::SymbolicBindingPattern>().entity_name_id);
   if (auto value = eval_context.GetCompileTimeBindValue(bind_name.bind_index());
       value.has_value()) {
-    // TODO: This seems incorrect: patterns don't typically evaluate to the
-    // value matched by the pattern.
     return value;
   }
 
-  // The constant form of a symbolic binding is an idealized form of the
-  // original, with no equivalent value.
-  bind.entity_name_id =
-      eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-  return MakeConstantResult(
-      eval_context.context(), bind,
-      bind_name.is_template ? Phase::TemplateSymbolic : Phase::CheckedSymbolic);
+  Phase phase = Phase::Concrete;
+  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+    return MakeNonConstantResult(phase);
+  }
+  return MakeConstantResult(eval_context.context(), inst, phase);
 }
 
 // Symbolic bindings are a special case because they can reach into the eval
@@ -1765,30 +1778,26 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
     -> SemIR::ConstantId {
   auto bind = inst.As<SemIR::BindSymbolicName>();
 
+  // If we know which specific we're evaluating within and this is an argument
+  // of that specific, its constant value is the corresponding argument value.
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
-
-  Phase phase;
-  if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
-    phase = Phase::PeriodSelfSymbolic;
-  } else {
-    // If we know which specific we're evaluating within and this is an
-    // argument of that specific, its constant value is the corresponding
-    // argument value.
+  if (bind_name.bind_index().has_value()) {
     if (auto value =
             eval_context.GetCompileTimeBindValue(bind_name.bind_index());
         value.has_value()) {
       return value;
     }
-    phase = bind_name.is_template ? Phase::TemplateSymbolic
-                                  : Phase::CheckedSymbolic;
   }
+
   // The constant form of a symbolic binding is an idealized form of the
   // original, with no equivalent value.
-  bind.entity_name_id =
-      eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+  Phase phase = Phase::Concrete;
   bind.value_id = SemIR::InstId::None;
   if (!ReplaceFieldWithConstantValue(
-          eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase)) {
+          eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase) ||
+      !ReplaceFieldWithConstantValue(eval_context, &bind,
+                                     &SemIR::BindSymbolicName::entity_name_id,
+                                     &phase)) {
     return MakeNonConstantResult(phase);
   }
   return MakeConstantResult(eval_context.context(), bind, phase);
