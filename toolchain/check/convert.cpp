@@ -286,7 +286,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  PendingBlock target_block_storage(context);
+  PendingBlock target_block_storage(&context);
   PendingBlock* target_block =
       target.init_block ? target.init_block : &target_block_storage;
 
@@ -604,7 +604,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::ClassType dest_type,
                                  SemIR::InstId value_id,
                                  ConversionTarget target) -> SemIR::InstId {
-  PendingBlock target_block(context);
+  PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
   CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
   auto object_repr_id =
@@ -1396,7 +1396,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
 auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId target_id,
                 SemIR::InstId value_id) -> SemIR::InstId {
-  PendingBlock target_block(context);
+  PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializer,
                   .type_id = context.insts().Get(target_id).type_id(),

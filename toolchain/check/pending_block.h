@@ -17,7 +17,8 @@ namespace Carbon::Check {
 // that haven't been inserted yet.
 class PendingBlock {
  public:
-  explicit PendingBlock(Context& context) : context_(context) {}
+  // `context` must not be null.
+  explicit PendingBlock(Context* context) : context_(context) {}
 
   PendingBlock(const PendingBlock&) = delete;
   auto operator=(const PendingBlock&) -> PendingBlock& = delete;
@@ -44,14 +45,14 @@ class PendingBlock {
 
   template <typename InstT, typename LocT>
   auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
-    auto inst_id = AddInstInNoBlock(context_, loc_id, inst);
+    auto inst_id = AddInstInNoBlock(*context_, loc_id, inst);
     insts_.push_back(inst_id);
     return inst_id;
   }
 
   template <typename InstT, typename LocT>
   auto AddInstWithCleanup(LocT loc_id, InstT inst) -> SemIR::InstId {
-    auto inst_id = AddInstWithCleanupInNoBlock(context_, loc_id, inst);
+    auto inst_id = AddInstWithCleanupInNoBlock(*context_, loc_id, inst);
     insts_.push_back(inst_id);
     return inst_id;
   }
@@ -59,7 +60,7 @@ class PendingBlock {
   // Insert the pending block of code at the current position.
   auto InsertHere() -> void {
     for (auto id : insts_) {
-      context_.inst_block_stack().AddInstId(id);
+      context_->inst_block_stack().AddInstId(id);
     }
     insts_.clear();
   }
@@ -67,7 +68,7 @@ class PendingBlock {
   // Replace the instruction at target_id with the instructions in this block.
   // The new value for target_id should be value_id.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
-    SemIR::LocIdAndInst value = context_.insts().GetWithLocId(value_id);
+    SemIR::LocIdAndInst value = context_->insts().GetWithLocId(value_id);
 
     if (insts_.size() == 1 && insts_[0] == value_id) {
       // The block is {value_id}. Replace `target_id` with the instruction
@@ -77,18 +78,18 @@ class PendingBlock {
       // includes empty blocks, which `Add` handles.
       value.inst =
           SemIR::SpliceBlock{.type_id = value.inst.type_id(),
-                             .block_id = context_.inst_blocks().Add(insts_),
+                             .block_id = context_->inst_blocks().Add(insts_),
                              .result_id = value_id};
     }
 
-    ReplaceLocIdAndInstBeforeConstantUse(context_, target_id, value);
+    ReplaceLocIdAndInstBeforeConstantUse(*context_, target_id, value);
 
     // Prepare to stash more pending instructions.
     insts_.clear();
   }
 
  private:
-  Context& context_;
+  Context* context_;
   llvm::SmallVector<SemIR::InstId> insts_;
 };
 
