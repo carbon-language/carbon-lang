@@ -51,7 +51,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
   // Creates an instance with the location that triggers calling Clang.
   // `context` must not be null.
-  CarbonClangDiagnosticConsumer(Context* context, SemIRLoc loc)
+  explicit CarbonClangDiagnosticConsumer(Context* context, SemIRLoc loc)
       : context_(context), loc_(loc) {}
 
   // Generates a Carbon warning for each Clang warning and a Carbon error for
