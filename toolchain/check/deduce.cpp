@@ -140,37 +140,39 @@ class DeductionWorklist {
   // Adds a (param, arg) pair for an instruction argument, given its kind.
   auto AddInstArg(SemIR::Inst::ArgAndKind param, int32_t arg,
                   bool needs_substitution) -> void {
-    switch (param.kind) {
+    CARBON_KIND_SWITCH(param) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
         break;
-      case SemIR::IdKind::For<SemIR::InstId>:
-        Add(param.As<SemIR::InstId>(), SemIR::InstId(arg), needs_substitution);
+      case CARBON_KIND(SemIR::InstId inst_id): {
+        Add(inst_id, SemIR::InstId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::TypeId>:
-        Add(param.As<SemIR::TypeId>(), SemIR::TypeId(arg), needs_substitution);
+      }
+      case CARBON_KIND(SemIR::TypeId type_id): {
+        Add(type_id, SemIR::TypeId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
-        AddAll(param.As<SemIR::StructTypeFieldsId>(),
-               SemIR::StructTypeFieldsId(arg), needs_substitution);
+      }
+      case CARBON_KIND(SemIR::StructTypeFieldsId fields_id): {
+        AddAll(fields_id, SemIR::StructTypeFieldsId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::InstBlockId>:
-        AddAll(param.As<SemIR::InstBlockId>(), SemIR::InstBlockId(arg),
-               needs_substitution);
+      }
+      case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+        AddAll(inst_block_id, SemIR::InstBlockId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::TypeBlockId>:
-        AddAll(param.As<SemIR::TypeBlockId>(), SemIR::TypeBlockId(arg),
-               needs_substitution);
+      }
+      case CARBON_KIND(SemIR::TypeBlockId type_block_id): {
+        AddAll(type_block_id, SemIR::TypeBlockId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::SpecificId>:
-        Add(param.As<SemIR::SpecificId>(), SemIR::SpecificId(arg),
-            needs_substitution);
+      }
+      case CARBON_KIND(SemIR::SpecificId specific_id): {
+        Add(specific_id, SemIR::SpecificId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::FacetTypeId>:
-        AddAll(param.As<SemIR::FacetTypeId>(), SemIR::FacetTypeId(arg),
-               needs_substitution);
+      }
+      case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
+        AddAll(facet_type_id, SemIR::FacetTypeId(arg), needs_substitution);
         break;
+      }
       default:
         CARBON_FATAL("unexpected argument kind");
     }

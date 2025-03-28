@@ -341,7 +341,7 @@ struct Worklist {
   auto AddWithKind(Inst::ArgAndKind arg) -> void {
     static constexpr auto Table = MakeAddTable(static_cast<IdKind*>(nullptr));
 
-    Table[arg.kind.ToIndex()](*this, arg.value);
+    Table[arg.kind().ToIndex()](*this, arg.value());
   }
 
   // Ensure all the instructions on the todo list have fingerprints. To avoid a

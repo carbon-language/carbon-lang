@@ -4,6 +4,7 @@
 
 #include "toolchain/check/action.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/constant.h"
@@ -46,12 +47,14 @@ auto OperandIsDependent(Context& context, SemIR::MetaInstId inst_id) -> bool {
 
 static auto OperandIsDependent(Context& context, SemIR::Inst::ArgAndKind arg)
     -> bool {
-  switch (arg.kind) {
-    case SemIR::IdKind::For<SemIR::MetaInstId>:
-      return OperandIsDependent(context, arg.As<SemIR::MetaInstId>());
+  CARBON_KIND_SWITCH(arg) {
+    case CARBON_KIND(SemIR::MetaInstId inst_id): {
+      return OperandIsDependent(context, inst_id);
+    }
 
-    case SemIR::IdKind::For<SemIR::TypeId>:
-      return OperandIsDependent(context, arg.As<SemIR::TypeId>());
+    case CARBON_KIND(SemIR::TypeId type_id): {
+      return OperandIsDependent(context, type_id);
+    }
 
     case SemIR::IdKind::None:
     case SemIR::IdKind::For<SemIR::AbsoluteInstId>:
@@ -106,7 +109,7 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
     if (inst.Is<SemIR::SpliceInst>()) {
       // The argument will evaluate to the spliced instruction, which is already
       // refined.
-      return arg.value;
+      return arg.value();
     }
 
     // If the type of the action argument is dependent, refine to an instruction
@@ -128,7 +131,7 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
     return inst_id->index;
   }
 
-  return arg.value;
+  return arg.value();
 }
 
 // Refine the operands of an action, ensuring that they will refer to concrete

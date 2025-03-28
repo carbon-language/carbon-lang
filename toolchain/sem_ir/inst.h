@@ -127,28 +127,40 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
-  // Associated an argument (usually arg0 or arg1, potentially type_id) with its
+  // Associates an argument (usually arg0 or arg1, potentially type_id) with its
   // IdKind.
-  struct ArgAndKind {
+  class ArgAndKind {
+   public:
+    using KindEnumType = IdKind;
+
+    explicit ArgAndKind(IdKind kind, int32_t value)
+        : kind_(kind), value_(value) {}
+
     // Converts to `IdT`, validating the `kind` matches.
     template <typename IdT>
     auto As() const -> IdT {
-      CARBON_DCHECK(kind == SemIR::IdKind::For<IdT>);
-      return IdT(value);
+      CARBON_DCHECK(kind_ == SemIR::IdKind::For<IdT>);
+      return IdT(value_);
     }
 
     // Converts to `IdT`, returning nullopt if the kind is incorrect.
     template <typename IdT>
     auto TryAs() const -> std::optional<IdT> {
-      if (kind != SemIR::IdKind::For<IdT>) {
+      if (kind_ != SemIR::IdKind::For<IdT>) {
         return std::nullopt;
       }
-      return IdT(value);
+      return IdT(value_);
     }
 
-    IdKind kind;
-    int32_t value;
+    auto kind() const -> IdKind { return kind_; }
+    auto value() const -> int32_t { return value_; }
+
+   private:
+    IdKind kind_;
+    int32_t value_;
   };
+
+  using KindEnumType = InstKind;
 
   // Makes an instruction for a singleton. This exists to support simple
   // construction of all singletons by File.
@@ -258,13 +270,13 @@ class Inst : public Printable<Inst> {
 
   // Returns arguments with their IdKind.
   auto type_id_and_kind() const -> ArgAndKind {
-    return {.kind = SemIR::IdKind::For<SemIR::TypeId>, .value = type_id_.index};
+    return ArgAndKind(SemIR::IdKind::For<SemIR::TypeId>, type_id_.index);
   }
   auto arg0_and_kind() const -> ArgAndKind {
-    return {.kind = ArgKindTable[kind_].first, .value = arg0_};
+    return ArgAndKind(ArgKindTable[kind_].first, arg0_);
   }
   auto arg1_and_kind() const -> ArgAndKind {
-    return {.kind = ArgKindTable[kind_].second, .value = arg1_};
+    return ArgAndKind(ArgKindTable[kind_].second, arg1_);
   }
 
   // Sets the type of this instruction.

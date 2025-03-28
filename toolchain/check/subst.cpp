@@ -4,6 +4,7 @@
 
 #include "toolchain/check/subst.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
@@ -74,50 +75,52 @@ static auto PushOperand(Context& context, Worklist& worklist,
     }
   };
 
-  switch (arg.kind) {
-    case SemIR::IdKind::For<SemIR::InstId>:
-      if (auto inst_id = arg.As<SemIR::InstId>(); inst_id.has_value()) {
+  CARBON_KIND_SWITCH(arg) {
+    case CARBON_KIND(SemIR::InstId inst_id): {
+      if (inst_id.has_value()) {
         worklist.Push(inst_id);
       }
       break;
-    case SemIR::IdKind::For<SemIR::MetaInstId>:
-      if (auto inst_id = arg.As<SemIR::MetaInstId>(); inst_id.has_value()) {
+    }
+    case CARBON_KIND(SemIR::MetaInstId inst_id): {
+      if (inst_id.has_value()) {
         worklist.Push(inst_id);
       }
       break;
-    case SemIR::IdKind::For<SemIR::TypeId>:
-      if (auto type_id = arg.As<SemIR::TypeId>(); type_id.has_value()) {
+    }
+    case CARBON_KIND(SemIR::TypeId type_id): {
+      if (type_id.has_value()) {
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
-    case SemIR::IdKind::For<SemIR::InstBlockId>:
-      push_block(arg.As<SemIR::InstBlockId>());
+    }
+    case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+      push_block(inst_block_id);
       break;
-    case SemIR::IdKind::For<SemIR::StructTypeFieldsId>: {
-      for (auto field : context.struct_type_fields().Get(
-               arg.As<SemIR::StructTypeFieldsId>())) {
+    }
+    case CARBON_KIND(SemIR::StructTypeFieldsId fields_id): {
+      for (auto field : context.struct_type_fields().Get(fields_id)) {
         worklist.Push(context.types().GetInstId(field.type_id));
       }
       break;
     }
-    case SemIR::IdKind::For<SemIR::TypeBlockId>:
-      for (auto type_id :
-           context.type_blocks().Get(arg.As<SemIR::TypeBlockId>())) {
+    case CARBON_KIND(SemIR::TypeBlockId type_block_id): {
+      for (auto type_id : context.type_blocks().Get(type_block_id)) {
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
-    case SemIR::IdKind::For<SemIR::SpecificId>:
-      push_specific(arg.As<SemIR::SpecificId>());
+    }
+    case CARBON_KIND(SemIR::SpecificId specific_id): {
+      push_specific(specific_id);
       break;
-    case SemIR::IdKind::For<SemIR::SpecificInterfaceId>: {
-      auto interface = context.specific_interfaces().Get(
-          arg.As<SemIR::SpecificInterfaceId>());
+    }
+    case CARBON_KIND(SemIR::SpecificInterfaceId interface_id): {
+      auto interface = context.specific_interfaces().Get(interface_id);
       push_specific(interface.specific_id);
       break;
     }
-    case SemIR::IdKind::For<SemIR::FacetTypeId>: {
-      const auto& facet_type_info =
-          context.facet_types().Get(arg.As<SemIR::FacetTypeId>());
+    case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
+      const auto& facet_type_info = context.facet_types().Get(facet_type_id);
       for (auto interface : facet_type_info.impls_constraints) {
         push_specific(interface.specific_id);
       }
@@ -169,33 +172,29 @@ static auto PopOperand(Context& context, Worklist& worklist,
     return context.specifics().GetOrAdd(specific.generic_id, args_id);
   };
 
-  switch (arg.kind) {
-    case SemIR::IdKind::For<SemIR::InstId>: {
-      auto inst_id = arg.As<SemIR::InstId>();
+  CARBON_KIND_SWITCH(arg) {
+    case CARBON_KIND(SemIR::InstId inst_id): {
       if (!inst_id.has_value()) {
-        return arg.value;
+        return arg.value();
       }
       return worklist.Pop().index;
     }
-    case SemIR::IdKind::For<SemIR::MetaInstId>: {
-      auto inst_id = arg.As<SemIR::MetaInstId>();
+    case CARBON_KIND(SemIR::MetaInstId inst_id): {
       if (!inst_id.has_value()) {
-        return arg.value;
+        return arg.value();
       }
       return worklist.Pop().index;
     }
-    case SemIR::IdKind::For<SemIR::TypeId>: {
-      auto type_id = arg.As<SemIR::TypeId>();
+    case CARBON_KIND(SemIR::TypeId type_id): {
       if (!type_id.has_value()) {
-        return arg.value;
+        return arg.value();
       }
       return context.types().GetTypeIdForTypeInstId(worklist.Pop()).index;
     }
-    case SemIR::IdKind::For<SemIR::InstBlockId>: {
-      return pop_block_id(arg.As<SemIR::InstBlockId>()).index;
+    case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+      return pop_block_id(inst_block_id).index;
     }
-    case SemIR::IdKind::For<SemIR::StructTypeFieldsId>: {
-      auto old_fields_id = arg.As<SemIR::StructTypeFieldsId>();
+    case CARBON_KIND(SemIR::StructTypeFieldsId old_fields_id): {
       auto old_fields = context.struct_type_fields().Get(old_fields_id);
       SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(context.sem_ir(),
                                                          old_fields_id);
@@ -206,8 +205,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
       }
       return new_fields.GetCanonical().index;
     }
-    case SemIR::IdKind::For<SemIR::TypeBlockId>: {
-      auto old_type_block_id = arg.As<SemIR::TypeBlockId>();
+    case CARBON_KIND(SemIR::TypeBlockId old_type_block_id): {
       auto size = context.type_blocks().Get(old_type_block_id).size();
       SemIR::CopyOnWriteTypeBlock new_type_block(context.sem_ir(),
                                                  old_type_block_id);
@@ -217,12 +215,11 @@ static auto PopOperand(Context& context, Worklist& worklist,
       }
       return new_type_block.GetCanonical().index;
     }
-    case SemIR::IdKind::For<SemIR::SpecificId>: {
-      return pop_specific(arg.As<SemIR::SpecificId>()).index;
+    case CARBON_KIND(SemIR::SpecificId specific_id): {
+      return pop_specific(specific_id).index;
     }
-    case SemIR::IdKind::For<SemIR::SpecificInterfaceId>: {
-      auto interface = context.specific_interfaces().Get(
-          arg.As<SemIR::SpecificInterfaceId>());
+    case CARBON_KIND(SemIR::SpecificInterfaceId interface_id): {
+      auto interface = context.specific_interfaces().Get(interface_id);
       auto specific_id = pop_specific(interface.specific_id);
       return context.specific_interfaces()
           .Add({
@@ -231,9 +228,9 @@ static auto PopOperand(Context& context, Worklist& worklist,
           })
           .index;
     }
-    case SemIR::IdKind::For<SemIR::FacetTypeId>: {
+    case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
       const auto& old_facet_type_info =
-          context.facet_types().Get(arg.As<SemIR::FacetTypeId>());
+          context.facet_types().Get(facet_type_id);
       SemIR::FacetTypeInfo new_facet_type_info;
       // Since these were added to a stack, we get them back in reverse order.
       new_facet_type_info.rewrite_constraints.resize(
@@ -261,7 +258,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
       return context.facet_types().Add(new_facet_type_info).index;
     }
     default:
-      return arg.value;
+      return arg.value();
   }
 }
 

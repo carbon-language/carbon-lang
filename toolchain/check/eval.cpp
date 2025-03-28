@@ -684,8 +684,8 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
                                    Phase* phase) -> int32_t {
   static constexpr auto Table =
       MakeArgHandlerTable(static_cast<SemIR::IdKind*>(nullptr));
-  return Table[arg_and_kind.kind.ToIndex()](eval_context, arg_and_kind.value,
-                                            phase);
+  return Table[arg_and_kind.kind().ToIndex()](eval_context,
+                                              arg_and_kind.value(), phase);
 }
 
 // Given an instruction, replaces its type and operands with their constant

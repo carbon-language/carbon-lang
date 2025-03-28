@@ -72,40 +72,40 @@ static auto FindAssociatedImportIRs(Context& context,
     // Visit the operands of the constant.
     auto inst = context.insts().Get(inst_id);
     for (auto arg : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
-      switch (arg.kind) {
-        case SemIR::IdKind::For<SemIR::InstId>: {
-          if (auto id = arg.As<SemIR::InstId>(); id.has_value()) {
-            worklist.push_back(id);
+      CARBON_KIND_SWITCH(arg) {
+        case CARBON_KIND(SemIR::InstId inst_id): {
+          if (inst_id.has_value()) {
+            worklist.push_back(inst_id);
           }
           break;
         }
-        case SemIR::IdKind::For<SemIR::InstBlockId>: {
-          push_block(arg.As<SemIR::InstBlockId>());
+        case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+          push_block(inst_block_id);
           break;
         }
-        case SemIR::IdKind::For<SemIR::ClassId>: {
-          add_entity(context.classes().Get(arg.As<SemIR::ClassId>()));
+        case CARBON_KIND(SemIR::ClassId class_id): {
+          add_entity(context.classes().Get(class_id));
           break;
         }
-        case SemIR::IdKind::For<SemIR::InterfaceId>: {
-          add_entity(context.interfaces().Get(arg.As<SemIR::InterfaceId>()));
+        case CARBON_KIND(SemIR::InterfaceId interface_id): {
+          add_entity(context.interfaces().Get(interface_id));
           break;
         }
-        case SemIR::IdKind::For<SemIR::FacetTypeId>: {
+        case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
           const auto& facet_type_info =
-              context.facet_types().Get(arg.As<SemIR::FacetTypeId>());
+              context.facet_types().Get(facet_type_id);
           for (const auto& impl : facet_type_info.impls_constraints) {
             add_entity(context.interfaces().Get(impl.interface_id));
             push_args(impl.specific_id);
           }
           break;
         }
-        case SemIR::IdKind::For<SemIR::FunctionId>: {
-          add_entity(context.functions().Get(arg.As<SemIR::FunctionId>()));
+        case CARBON_KIND(SemIR::FunctionId function_id): {
+          add_entity(context.functions().Get(function_id));
           break;
         }
-        case SemIR::IdKind::For<SemIR::SpecificId>: {
-          push_args(arg.As<SemIR::SpecificId>());
+        case CARBON_KIND(SemIR::SpecificId specific_id): {
+          push_args(specific_id);
           break;
         }
         default: {
