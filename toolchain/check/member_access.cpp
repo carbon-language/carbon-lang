@@ -245,16 +245,15 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
                                     llvm::ArrayRef<LookupScope> lookup_scopes,
-                                    bool lookup_in_type_of_base)
+                                    bool lookup_in_type_of_base, bool required)
     -> SemIR::InstId {
   AccessInfo access_info = {
       .constant_id = name_scope_const_id,
       .highest_allowed_access =
           GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
   };
-  LookupResult result =
-      LookupQualifiedName(context, loc_id, name_id, lookup_scopes,
-                          /*required=*/true, access_info);
+  LookupResult result = LookupQualifiedName(
+      context, loc_id, name_id, lookup_scopes, required, access_info);
 
   if (!result.scope_result.is_found()) {
     return SemIR::ErrorInst::SingletonInstId;
@@ -458,24 +457,31 @@ static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
 }
 
 auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
-                         SemIR::InstId base_id, SemIR::NameId name_id)
-    -> SemIR::InstId {
+                         SemIR::InstId base_id, SemIR::NameId name_id,
+                         bool required) -> SemIR::InstId {
   // TODO: Member access for dependent member names is supposed to perform a
   // lookup in both the template definition context and the template
   // instantiation context, and reject if both succeed but find different
   // things.
-  return HandleAction<SemIR::AccessMemberAction>(
-      context, loc_id,
-      {.type_id = SemIR::InstType::SingletonTypeId,
-       .base_id = base_id,
-       .name_id = name_id});
+  if (required) {
+    return HandleAction<SemIR::AccessMemberAction>(
+        context, loc_id,
+        {.type_id = SemIR::InstType::SingletonTypeId,
+         .base_id = base_id,
+         .name_id = name_id});
+  } else {
+    return HandleAction<SemIR::AccessOptionalMemberAction>(
+        context, loc_id,
+        {.type_id = SemIR::InstType::SingletonTypeId,
+         .base_id = base_id,
+         .name_id = name_id});
+  }
 }
 
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::AccessMemberAction action) -> SemIR::InstId {
-  SemIR::InstId base_id = action.base_id;
-  SemIR::NameId name_id = action.name_id;
-
+// Common logic for `AccessMemberAction` and `AccessOptionalMemberAction`.
+static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId base_id, SemIR::NameId name_id,
+                                bool required) -> SemIR::InstId {
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
@@ -483,23 +489,22 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
     llvm::SmallVector<LookupScope> lookup_scopes;
     if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
                                       &lookup_scopes)) {
-      return LookupMemberNameInScope(context, loc_id, base_id, name_id,
-                                     base_const_id, lookup_scopes,
-                                     /*lookup_in_type_of_base=*/false);
+      return LookupMemberNameInScope(
+          context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
+          /*lookup_in_type_of_base=*/false, /*required=*/required);
     }
   }
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  if (!RequireCompleteType(
-          context, base_type_id, context.insts().GetLocId(base_id), [&] {
-            CARBON_DIAGNOSTIC(
-                IncompleteTypeInMemberAccess, Error,
-                "member access into object of incomplete type {0}",
-                TypeOfInstId);
-            return context.emitter().Build(
-                base_id, IncompleteTypeInMemberAccess, base_id);
-          })) {
+  auto base_loc_id = context.insts().GetLocId(base_id);
+  if (!RequireCompleteType(context, base_type_id, base_loc_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
+                          "member access into object of incomplete type {0}",
+                          TypeOfInstId);
+        return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
+                                       base_id);
+      })) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -528,12 +533,16 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                .index = SemIR::ElementIndex(i)});
         }
       }
-      CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
-                        "type {0} does not have a member `{1}`", TypeOfInstId,
-                        SemIR::NameId);
-      context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
-                             name_id);
-      return SemIR::ErrorInst::SingletonInstId;
+      if (required) {
+        CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
+                          "type {0} does not have a member `{1}`", TypeOfInstId,
+                          SemIR::NameId);
+        context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
+                               name_id);
+        return SemIR::ErrorInst::SingletonInstId;
+      } else {
+        return SemIR::InstId::None;
+      }
     }
 
     if (base_type_id != SemIR::ErrorInst::SingletonTypeId) {
@@ -546,9 +555,9 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
   }
 
   // Perform lookup into the base type.
-  auto member_id = LookupMemberNameInScope(context, loc_id, base_id, name_id,
-                                           base_type_const_id, lookup_scopes,
-                                           /*lookup_in_type_of_base=*/true);
+  auto member_id = LookupMemberNameInScope(
+      context, loc_id, base_id, name_id, base_type_const_id, lookup_scopes,
+      /*lookup_in_type_of_base=*/true, /*required=*/required);
 
   // For name lookup into a facet, never perform instance binding.
   // TODO: According to the design, this should be a "lookup in base" lookup,
@@ -562,6 +571,18 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
   member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);
 
   return member_id;
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::AccessMemberAction action) -> SemIR::InstId {
+  return PerformActionHelper(context, loc_id, action.base_id, action.name_id,
+                             /*required=*/true);
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::AccessOptionalMemberAction action) -> SemIR::InstId {
+  return PerformActionHelper(context, loc_id, action.base_id, action.name_id,
+                             /*required=*/false);
 }
 
 // Logic shared by GetAssociatedValue() and PerformCompoundMemberAccess().

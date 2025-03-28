@@ -242,6 +242,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case AccessMemberAction::Kind:
+      case AccessOptionalMemberAction::Kind:
       case AddrOf::Kind:
       case ArrayType::Kind:
       case AssociatedConstantDecl::Kind:

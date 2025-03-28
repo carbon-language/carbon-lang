@@ -351,7 +351,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
-  NodeIdTraversal traversal(context_, vlog_stream_);
+  NodeIdTraversal traversal(&context_, vlog_stream_);
 
   Parse::NodeId node_id = Parse::NodeId::None;
 

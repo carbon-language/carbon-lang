@@ -10,7 +10,16 @@
 namespace Carbon::Check {
 
 auto ScopeStack::VerifyOnFinish() const -> void {
+  CARBON_CHECK(return_scope_stack_.empty(), "{0}", return_scope_stack_.size());
+  CARBON_CHECK(break_continue_stack_.empty(), "{0}",
+               break_continue_stack_.size());
   CARBON_CHECK(scope_stack_.empty(), "{0}", scope_stack_.size());
+  CARBON_CHECK(destroy_id_stack_.empty(), "{0}",
+               destroy_id_stack_.all_values_size());
+  CARBON_CHECK(non_lexical_scope_stack_.empty(), "{0}",
+               non_lexical_scope_stack_.size());
+  CARBON_CHECK(compile_time_binding_stack_.empty(), "{0}",
+               compile_time_binding_stack_.all_values_size());
   full_pattern_stack_.VerifyOnFinish();
 }
 
@@ -46,16 +55,18 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
-  if (scope_id.has_value()) {
-    non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
-                                        .name_scope_id = scope_id,
-                                        .specific_id = enclosing_specific_id});
-  } else {
+  if (scope_stack_.back().is_lexical_scope()) {
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated specific, so if we start adding lexical scopes associated with
     // specifics, we'll need to somehow track them in lookup.
     CARBON_CHECK(!specific_id.has_value(),
                  "Lexical scope should not have an associated specific.");
+
+    destroy_id_stack_.PushArray();
+  } else {
+    non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
+                                        .name_scope_id = scope_id,
+                                        .specific_id = enclosing_specific_id});
   }
 
   // TODO: Handle this case more gracefully.
@@ -76,7 +87,9 @@ auto ScopeStack::Pop() -> void {
     lexical_results.pop_back();
   });
 
-  if (scope.scope_id.has_value()) {
+  if (scope.is_lexical_scope()) {
+    destroy_id_stack_.PopArray();
+  } else {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
     non_lexical_scope_stack_.pop_back();
   }
@@ -203,10 +216,13 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   CARBON_CHECK(!scope_stack_.empty(), "No scope to suspend");
   SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
                            .suspended_items = {}};
-  if (result.entry.scope_id.has_value()) {
+  if (result.entry.is_lexical_scope()) {
+    CARBON_CHECK(destroy_id_stack_.PeekArray().empty(),
+                 "Missing support to suspend scopes with destructed storage");
+    destroy_id_stack_.PopArray();
+  } else {
     non_lexical_scope_stack_.pop_back();
   }
-
   auto peek_compile_time_bindings = compile_time_binding_stack_.PeekArray();
   result.suspended_items.reserve(result.entry.num_names +
                                  peek_compile_time_bindings.size());
@@ -247,7 +263,9 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
 
   VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 
-  if (scope.entry.scope_id.has_value()) {
+  if (scope.entry.is_lexical_scope()) {
+    destroy_id_stack_.PushArray();
+  } else {
     non_lexical_scope_stack_.push_back(
         {.scope_index = scope.entry.index,
          .name_scope_id = scope.entry.scope_id,

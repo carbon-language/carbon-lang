@@ -61,6 +61,20 @@ struct AccessMemberAction {
   NameId name_id;
 };
 
+// An action that performs member access which should fail silently. For
+// example, `base.destroy`.
+struct AccessOptionalMemberAction {
+  static constexpr auto Kind =
+      InstKind::AccessOptionalMemberAction.Define<Parse::NodeId>(
+          {.ir_name = "access_optional_member_action",
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId base_id;
+  NameId name_id;
+};
+
 // Common representation for declarations describing the foundation type of a
 // class -- either its adapted type or its base class.
 struct AnyFoundationDecl {
@@ -1576,7 +1590,8 @@ struct TemporaryStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TemporaryStorage.Define<Parse::NodeId>(
       {.ir_name = "temporary_storage",
-       .constant_kind = InstConstantKind::Never});
+       .constant_kind = InstConstantKind::Never,
+       .has_cleanup = true});
 
   TypeId type_id;
 };
@@ -1750,7 +1765,9 @@ struct VarPattern {
 struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
-      {.ir_name = "var", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "var",
+       .constant_kind = InstConstantKind::Never,
+       .has_cleanup = true});
 
   TypeId type_id;
 

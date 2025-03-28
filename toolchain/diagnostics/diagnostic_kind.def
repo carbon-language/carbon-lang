@@ -157,6 +157,7 @@ CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
 CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 // Location context.
+CARBON_DIAGNOSTIC_KIND(InCppImport)
 CARBON_DIAGNOSTIC_KIND(InImport)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 

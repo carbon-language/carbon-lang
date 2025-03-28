@@ -122,6 +122,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
+    bool has_cleanup = false;
   };
 
   // Provides a definition for this instruction kind. Should only be called
@@ -221,6 +222,10 @@ class InstKind::Definition : public InstKind {
   // Returns true if `Instruction(A)` == `Instruction(B)` allows deduction to
   // conclude `A` == `B`.
   constexpr auto deduce_through() const -> bool { return info_.deduce_through; }
+
+  // Returns true if this instruction has scoped cleanup associated, typically a
+  // destructor.
+  constexpr auto has_cleanup() const -> bool { return info_.has_cleanup; }
 
  private:
   friend class InstKind;

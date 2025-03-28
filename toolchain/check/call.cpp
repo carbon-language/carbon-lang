@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
@@ -233,7 +234,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     case SemIR::InitRepr::InPlace:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
-      return_slot_arg_id = AddInst<SemIR::TemporaryStorage>(
+      return_slot_arg_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
           context, loc_id, {.type_id = return_info.type_id});
       break;
     case SemIR::InitRepr::None:

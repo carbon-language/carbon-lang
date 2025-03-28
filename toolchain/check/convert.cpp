@@ -13,6 +13,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
@@ -134,7 +135,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // initialize a temporary, rather than two separate instructions.
   auto init = sem_ir.insts().Get(init_id);
   auto loc_id = sem_ir.insts().GetLocId(init_id);
-  auto temporary_id = AddInst<SemIR::TemporaryStorage>(
+  auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
       context, loc_id, {.type_id = init.type_id()});
   return AddInst<SemIR::Temporary>(context, loc_id,
                                    {.type_id = init.type_id(),
@@ -285,7 +286,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  PendingBlock target_block_storage(context);
+  PendingBlock target_block_storage(&context);
   PendingBlock* target_block =
       target.init_block ? target.init_block : &target_block_storage;
 
@@ -293,8 +294,9 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // destination for the array initialization if we weren't given one.
   SemIR::InstId return_slot_arg_id = target.init_id;
   if (!target.init_id.has_value()) {
-    return_slot_arg_id = target_block->AddInst<SemIR::TemporaryStorage>(
-        value_loc_id, {.type_id = target.type_id});
+    return_slot_arg_id =
+        target_block->AddInstWithCleanup<SemIR::TemporaryStorage>(
+            value_loc_id, {.type_id = target.type_id});
   }
 
   // Initialize each element of the array from the corresponding element of the
@@ -602,7 +604,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::ClassType dest_type,
                                  SemIR::InstId value_id,
                                  ConversionTarget target) -> SemIR::InstId {
-  PendingBlock target_block(context);
+  PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
   CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
   auto object_repr_id =
@@ -619,7 +621,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   if (need_temporary) {
     target.kind = ConversionTarget::Initializer;
     target.init_block = &target_block;
-    target.init_id = target_block.AddInst<SemIR::TemporaryStorage>(
+    target.init_id = target_block.AddInstWithCleanup<SemIR::TemporaryStorage>(
         context.insts().GetLocId(value_id), {.type_id = target.type_id});
   }
 
@@ -1394,7 +1396,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
 auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId target_id,
                 SemIR::InstId value_id) -> SemIR::InstId {
-  PendingBlock target_block(context);
+  PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializer,
                   .type_id = context.insts().Get(target_id).type_id(),
