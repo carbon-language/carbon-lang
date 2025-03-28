@@ -27,10 +27,9 @@ namespace {
 //   nested within a type to the work list.
 // - A `BuildInfo` step computes the `CompleteTypeInfo` for a type, once all of
 //   its nested types are complete, and marks the type as complete.
-//
-// `context` mut not be null.
 class TypeCompleter {
  public:
+  // `context` mut not be null.
   TypeCompleter(Context* context, SemIRLoc loc,
                 MakeDiagnosticBuilderFn diagnoser)
       : context_(context), loc_(loc), diagnoser_(diagnoser) {}
